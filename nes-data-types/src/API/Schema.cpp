@@ -246,14 +246,17 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
 }
 
 void Schema::clear() { fields.clear(); }
+
 std::string Schema::getLayoutTypeAsString() const {
     switch (this->layoutType) {
-        case ROW_LAYOUT: return "ROW_LAYOUT";
-        case COLUMNAR_LAYOUT: return "COL_LAYOUT";
+        case Schema::MemoryLayoutType::ROW_LAYOUT: return "ROW_LAYOUT";
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: return "COL_LAYOUT";
     }
 }
 Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }
+
 void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layoutType = layoutType; }
+
 bool Schema::empty() { return fields.empty(); }
 
 }// namespace NES

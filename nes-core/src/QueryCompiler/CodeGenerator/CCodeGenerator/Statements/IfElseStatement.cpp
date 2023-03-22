@@ -29,7 +29,7 @@ IfElseStatement::IfElseStatement(const Statement& condExpr, const Statement& con
     falseCaseStatement->addStatement(condFalseStmt.createCopy());
 }
 
-StatementType IfElseStatement::getStamentType() const { return IF_ELSE_STMT; }
+StatementType IfElseStatement::getStamentType() const { return StatementType::IF_ELSE_STMT; }
 CodeExpressionPtr IfElseStatement::getCode() const {
     std::stringstream code;
     code << "if(" << conditionalExpression->getCode()->code_ << "){" << std::endl;

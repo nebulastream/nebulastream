@@ -32,7 +32,7 @@ IFStatement::IFStatement(StatementPtr condExpr, const StatementPtr& condTrueStmt
     trueCaseStatement->addStatement(condTrueStmt->createCopy());
 }
 
-StatementType IFStatement::getStamentType() const { return IF_STMT; }
+StatementType IFStatement::getStamentType() const { return StatementType::IF_STMT; }
 CodeExpressionPtr IFStatement::getCode() const {
     std::stringstream code;
     code << "if(" << conditionalExpression->getCode()->code_ << "){" << std::endl;

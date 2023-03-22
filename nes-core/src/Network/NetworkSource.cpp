@@ -41,7 +41,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  nesPartition.getOperatorId(),
                  /*default origin id for the network source this is always zero*/ 0,
                  numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE,
+                 GatheringMode::Value::INTERVAL_MODE,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
       waitTime(waitTime), retryTimes(retryTimes) {
@@ -52,7 +52,7 @@ std::optional<Runtime::TupleBuffer> NetworkSource::receiveData() {
     NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
 }
 
-SourceType NetworkSource::getType() const { return NETWORK_SOURCE; }
+SourceType NetworkSource::getType() const { return SourceType::NETWORK_SOURCE; }
 
 std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
@@ -93,7 +93,7 @@ bool NetworkSource::start() {
                                                          }},
                                       successor);
 
-            auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::Initialize, shared_from_base<DataSource>());
+            auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::ReconfigurationType::Initialize, shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
             break;// hack as currently we assume only one executableSuccessor
         }
@@ -108,7 +108,7 @@ bool NetworkSource::fail() {
     bool expected = true;
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG2("NetworkSource: fail called on {}", nesPartition);
-        auto newReconf = ReconfigurationMessage(-1, -1, FailEndOfStream, DataSource::shared_from_base<DataSource>());
+        auto newReconf = ReconfigurationMessage(-1, -1, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
         queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
@@ -125,7 +125,8 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
         NES_DEBUG2("NetworkSource: stop called on {}", nesPartition);
         int invalidId = -1;
         auto newReconf =
-            ReconfigurationMessage(invalidId, invalidId, HardEndOfStream, DataSource::shared_from_base<DataSource>());
+            ReconfigurationMessage(invalidId, invalidId, ReconfigurationType::HardEndOfStream,
+                                   DataSource::shared_from_base<DataSource>());
         queryManager->addReconfigurationMessage(invalidId, invalidId, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
@@ -157,7 +158,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     bool isTermination = false;
     Runtime::QueryTerminationType terminationType;
     switch (task.getType()) {
-        case Runtime::Initialize: {
+        case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
             // been stopped for some reasons
@@ -183,18 +184,18 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                        Runtime::NesThread::getId());
             break;
         }
-        case Runtime::Destroy: {
+        case Runtime::ReconfigurationType::Destroy: {
             // necessary as event channel are lazily created so in the case of an immediate stop
             // they might not be established yet
             terminationType = Runtime::QueryTerminationType::Graceful;
             isTermination = true;
             break;
         }
-        case Runtime::HardEndOfStream: {
+        case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             isTermination = true;
         }
-        case Runtime::SoftEndOfStream: {
+        case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             isTermination = true;
             break;
@@ -216,15 +217,15 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
     NES::DataSource::postReconfigurationCallback(task);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
-        case Runtime::FailEndOfStream: {
+        case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
-        case Runtime::HardEndOfStream: {
+        case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             break;
         }
-        case Runtime::SoftEndOfStream: {
+        case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }

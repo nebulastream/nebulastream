@@ -23,7 +23,7 @@ namespace NES {
  */
 class BasicPhysicalType final : public PhysicalType {
   public:
-    enum NativeType {
+    enum class NativeType : int8_t {
         UINT_8,
         UINT_16,
         UINT_32,

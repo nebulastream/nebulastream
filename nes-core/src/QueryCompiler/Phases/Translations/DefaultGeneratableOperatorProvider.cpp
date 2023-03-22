@@ -251,22 +251,22 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(const QueryPla
 GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperatorProvider::lowerWindowAggregation(
     const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor) {
     switch (windowAggregationDescriptor->getType()) {
-        case Windowing::WindowAggregationDescriptor::Count: {
+        case Windowing::WindowAggregationDescriptor::Type::Count: {
             return GeneratableOperators::GeneratableCountAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Max: {
+        case Windowing::WindowAggregationDescriptor::Type::Max: {
             return GeneratableOperators::GeneratableMaxAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Min: {
+        case Windowing::WindowAggregationDescriptor::Type::Min: {
             return GeneratableOperators::GeneratableMinAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Sum: {
+        case Windowing::WindowAggregationDescriptor::Type::Sum: {
             return GeneratableOperators::GeneratableSumAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Avg: {
+        case Windowing::WindowAggregationDescriptor::Type::Avg: {
             return GeneratableOperators::GeneratableAvgAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Median: {
+        case Windowing::WindowAggregationDescriptor::Type::Median: {
             return GeneratableOperators::GeneratableMedianAggregation::create(windowAggregationDescriptor);
         };
         default:

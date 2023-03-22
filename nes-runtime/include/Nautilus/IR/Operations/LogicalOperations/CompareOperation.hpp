@@ -20,7 +20,7 @@
 namespace NES::Nautilus::IR::Operations {
 class CompareOperation : public Operation {
   public:
-    enum Comparator {
+    enum class Comparator : int8_t {
         // Comparator < 6 is signed int.
         IEQ = 0,
         INE = 1,

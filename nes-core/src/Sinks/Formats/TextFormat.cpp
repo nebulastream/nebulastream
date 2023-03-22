@@ -74,7 +74,7 @@ std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inpu
 
 std::string TextFormat::toString() { return "TEXT_FORMAT"; }
 
-FormatTypes TextFormat::getSinkFormat() { return TEXT_FORMAT; }
+FormatTypes TextFormat::getSinkFormat() { return FormatTypes::TEXT_FORMAT; }
 
 FormatIterator TextFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 

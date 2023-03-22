@@ -37,7 +37,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
 
 NullOutputSink::~NullOutputSink() = default;
 
-SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
+SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     updateWatermarkCallback(inputBuffer);

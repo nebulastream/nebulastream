@@ -23,7 +23,7 @@ namespace NES {
 class SourceMode {
 
   public:
-    enum Value : uint8_t {
+    enum class Value : uint8_t {
         EMPTY_BUFFER = 0,
         WRAP_BUFFER = 1,
         CACHE_COPY = 2,

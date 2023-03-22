@@ -163,7 +163,7 @@ void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipelineP
         newPipeline->addSuccessor(currentPipeline);
         currentPipeline = newPipeline;
     }
-    currentPipeline->setType(OperatorPipeline::SourcePipelineType);
+    currentPipeline->setType(OperatorPipeline::Type::SourcePipelineType);
     currentPipeline->prependOperator(sourceOperator->copy());
 }
 

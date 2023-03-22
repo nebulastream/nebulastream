@@ -23,7 +23,7 @@ ClassDefinition::ClassDefinition(std::string name) : name(std::move(name)) {}
 ClassDefinitionPtr ClassDefinition::create(std::string name) { return std::make_shared<ClassDefinition>(std::move(name)); }
 
 void ClassDefinition::addMethod(Visibility visibility, const FunctionDefinitionPtr& function) {
-    if (visibility == Public) {
+    if (visibility == Visibility::Public) {
         publicFunctions.emplace_back(function);
     } else {
         privateFunctions.emplace_back(function);

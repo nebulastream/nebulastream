@@ -20,28 +20,28 @@ namespace NES {
 
 std::string RequestType::toString(const Value queryStatus) {
     switch (queryStatus) {
-        case Add: return "ADD";
-        case Stop: return "STOP";
-        case Fail: return "FAIL";
-        case Restart: return "RESTART";
-        case Migrate: return "MIGRATE";
-        case Update: return "UPDATE";
+        case Value::Add: return "ADD";
+        case Value::Stop: return "STOP";
+        case Value::Fail: return "FAIL";
+        case Value::Restart: return "RESTART";
+        case Value::Migrate: return "MIGRATE";
+        case Value::Update: return "UPDATE";
     }
 }
 
 RequestType::Value RequestType::getFromString(const std::string queryStatus) {
     if (queryStatus == "ADD") {
-        return Add;
+        return Value::Add;
     } else if (queryStatus == "STOP") {
-        return Stop;
+        return Value::Stop;
     } else if (queryStatus == "FAIL") {
-        return Fail;
+        return Value::Fail;
     } else if (queryStatus == "RESTART") {
-        return Restart;
+        return Value::Restart;
     } else if (queryStatus == "MIGRATE") {
-        return Migrate;
+        return Value::Migrate;
     } else if (queryStatus == "UPDATE") {
-        return Update;
+        return Value::Update;
     } else {
         NES_ERROR2("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);

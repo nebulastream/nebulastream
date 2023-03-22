@@ -24,20 +24,20 @@ namespace QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
-    enum QueryCompiler {
+    enum class QueryCompiler : int8_t {
         // Uses the default query compiler
         DEFAULT_QUERY_COMPILER,
         // Uses the nautilus query compiler
         NAUTILUS_QUERY_COMPILER
     };
-    enum FilterProcessingStrategy {
+    enum class FilterProcessingStrategy : int8_t {
         // Uses a branches to process filter expressions
         BRANCHED,
         // Uses predication for filter expressions if possible
         PREDICATION
     };
 
-    enum CompilationStrategy {
+    enum class CompilationStrategy : int8_t {
         // Use fast compilation strategy, i.e., dose not apply any optimizations and omits debug output.
         FAST,
         // Creates debug output i.e., source code files and applies formatting. No code optimizations.
@@ -46,21 +46,21 @@ class QueryCompilerOptions {
         OPTIMIZE
     };
 
-    enum PipeliningStrategy {
+    enum class PipeliningStrategy : int8_t {
         // Applies operator fusion.
         OPERATOR_FUSION,
         // Places each operator in an individual pipeline.
         OPERATOR_AT_A_TIME
     };
 
-    enum WindowingStrategy {
+    enum class WindowingStrategy : int8_t {
         // Applies default windowing strategy.
         DEFAULT,
         // Applies an experimental thread local implementation for window aggregations
         THREAD_LOCAL
     };
 
-    enum OutputBufferOptimizationLevel {
+    enum class OutputBufferOptimizationLevel : int8_t {
         // Use highest optimization available.
         ALL,
         // create separate result buffer and copy everything over after all operations are applied.

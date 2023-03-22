@@ -38,6 +38,7 @@
 #include <mlir/IR/Value.h>
 #include <mlir/IR/Verifier.h>
 #include <mlir/Support/LLVM.h>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Nautilus::Backends::MLIR {
 
@@ -55,8 +56,8 @@ mlir::Type MLIRLoweringProvider::getMLIRType(IR::Types::StampPtr type) {
     } else if (type->isFloat()) {
         auto value = cast<IR::Types::FloatStamp>(type);
         switch (value->getBitWidth()) {
-            case IR::Types::FloatStamp::F32: return mlir::Float32Type::get(context);
-            case IR::Types::FloatStamp::F64: return mlir::Float64Type::get(context);
+            case IR::Types::FloatStamp::BitWidth::F32: return mlir::Float32Type::get(context);
+            case IR::Types::FloatStamp::BitWidth::F64: return mlir::Float64Type::get(context);
         }
     } else if (type->isAddress()) {
         return mlir::LLVM::LLVMPointerType::get(builder->getI8Type());
@@ -361,7 +362,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstInt
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame& frame) {
     if (auto floatStamp = cast_if<IR::Types::FloatStamp>(constFloatOp->getStamp().get())) {
         auto floatType =
-            (floatStamp->getBitWidth() == IR::Types::FloatStamp::F32) ? builder->getF32Type() : builder->getF64Type();
+            (floatStamp->getBitWidth() == IR::Types::FloatStamp::BitWidth::F32) ? builder->getF32Type() : builder->getF64Type();
         frame.setValue(
             constFloatOp->getIdentifier(),
             builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
@@ -503,7 +504,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame) {
-    if (compareOp->getComparator() == IR::Operations::CompareOperation::IEQ && compareOp->getLeftInput()->getStamp()->isAddress()
+    if (compareOp->getComparator() == IR::Operations::CompareOperation::Comparator::IEQ && compareOp->getLeftInput()->getStamp()->isAddress()
         && compareOp->getRightInput()->getStamp()->isInteger()) {
         // add null check
         auto null =
@@ -516,7 +517,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
         return;
     }
     // < 10: (signed/unsigned) Integer comparison, >= 10: Float comparison.
-    if (compareOp->getComparator() < 10) {
+    if (magic_enum::enum_integer(compareOp->getComparator()) < 10) {
         auto cmpOp = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
                                                           convertToIntMLIRComparison(compareOp->getComparator()),
                                                           frame.getValue(compareOp->getLeftInput()->getIdentifier()),

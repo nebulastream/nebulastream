@@ -76,9 +76,9 @@ DataSource::DataSource(SchemaPtr pSchema,
     //    if (this->executableSuccessors.empty()) {
     //        throw Exceptions::RuntimeException("empty executable successors");
     //    }
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, localBufferManager->getBufferSize());
-    } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, localBufferManager->getBufferSize());
     }
 }
@@ -285,11 +285,11 @@ void DataSource::close() {
 
 void DataSource::runningRoutine() {
     try {
-        if (gatheringMode == GatheringMode::INTERVAL_MODE) {
+        if (gatheringMode == GatheringMode::Value::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();
-        } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+        } else if (gatheringMode == GatheringMode::Value::INGESTION_RATE_MODE) {
             runningRoutineWithIngestionRate();
-        } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
+        } else if (gatheringMode == GatheringMode::Value::ADAPTIVE_MODE) {
             runningRoutineAdaptiveGatheringInterval();
         }
         completedPromise.set_value(true);
@@ -316,7 +316,8 @@ void DataSource::runningRoutineWithIngestionRate() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    NES_DEBUG2("DataSource {} Running Data Source of type={} ingestion rate={}", operatorId, getType(), gatheringIngestionRate);
+    NES_DEBUG2("DataSource {} Running Data Source of type={} ingestion rate={}", operatorId,
+               magic_enum::enum_name(getType()), gatheringIngestionRate);
     if (numBuffersToProcess == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
@@ -402,7 +403,8 @@ void DataSource::runningRoutineWithGatheringInterval() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId, getType(), gatheringInterval.count());
+    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId,
+               magic_enum::enum_name(getType()), gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
@@ -425,7 +427,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                 NES_TRACE2("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} "
                            "operatorId={} orgID={}",
                            operatorId,
-                           getType(),
+                           magic_enum::enum_name(getType()),
                            toString(),
                            buf.getNumberOfTuples(),
                            cnt,
@@ -470,7 +472,9 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId, getType(), gatheringInterval.count());
+    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId,
+               magic_enum::enum_name(getType()),
+               gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
@@ -505,7 +509,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 NES_TRACE2(
                     "DataSource produced buffer{} type={} string={}: Received Data:{} tuples iteration={} operatorId={} orgID={}",
                     operatorId,
-                    getType(),
+                    magic_enum::enum_name(getType()),
                     toString(),
                     buf.getNumberOfTuples(),
                     cnt,

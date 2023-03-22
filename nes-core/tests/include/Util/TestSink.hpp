@@ -42,9 +42,9 @@ class TestSink : public SinkMedium {
         : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
           expectedBuffer(expectedBuffer) {
         auto bufferManager = nodeEngine->getBufferManager(0);
-        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+        } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
             memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         }
     };
@@ -114,7 +114,7 @@ class CollectTestSink : public SinkMedium {
     CollectTestSink(const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine, uint32_t numOfProducers = 1)
         : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0) {
         auto bufferManager = nodeEngine->getBufferManager(0);
-        NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only support for row layouts");
+        NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only support for row layouts");
     };
 
     static std::shared_ptr<TestSink>

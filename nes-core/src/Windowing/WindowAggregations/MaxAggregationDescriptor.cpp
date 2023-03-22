@@ -24,12 +24,12 @@ namespace NES::Windowing {
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessExpressionNodePtr field)
     : WindowAggregationDescriptor(std::move(field)) {
-    this->aggregationType = Max;
+    this->aggregationType = Type::Max;
 }
 
 MaxAggregationDescriptor::MaxAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
     : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
-    this->aggregationType = Max;
+    this->aggregationType = Type::Max;
 }
 
 WindowAggregationPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,

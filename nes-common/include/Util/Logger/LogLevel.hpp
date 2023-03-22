@@ -23,7 +23,7 @@ namespace NES {
  * A specific log level contains all log messages of an lower level.
  * For example if LOG_LEVEL is LOG_WARNING, then it also contains LOG_NONE, LOG_FATAL_ERROR, and LOG_ERROR.
  */
-enum class LogLevel : uint8_t {
+enum class LogLevel : int8_t {
     // Indicates that no information will be logged.
     LOG_NONE = 1,
     // Indicates that only information about fatal errors will be logged.

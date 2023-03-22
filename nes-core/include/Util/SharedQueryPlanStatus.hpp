@@ -34,7 +34,7 @@ class SharedQueryPlanStatus {
      * Stopped: Shared Query Plan was stopped by user.
      * Failed: Shared Query Plan failed because of some reason.
      */
-    enum Value : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed };
+    enum class Value : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed };
 
     /**
      * @brief Get query status from string

@@ -29,7 +29,7 @@ RectangleExpressionNode::RectangleExpressionNode(double latitudeLow,
                                                  double longitudeLow,
                                                  double latitudeHigh,
                                                  double longitudeHigh)
-    : ShapeExpressionNode(Rectangle), latitudeLow(latitudeLow), longitudeLow(longitudeLow), latitudeHigh(latitudeHigh),
+    : ShapeExpressionNode(ShapeType::Rectangle), latitudeLow(latitudeLow), longitudeLow(longitudeLow), latitudeHigh(latitudeHigh),
       longitudeHigh(longitudeHigh) {}
 
 ShapeExpressionNodePtr

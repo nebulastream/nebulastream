@@ -47,7 +47,7 @@ class MonitoringSink : public SinkMedium {
                             uint32_t numOfProducers,
                             QueryId queryId,
                             QuerySubPlanId querySubPlanId,
-                            FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                            FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                             uint64_t numberOfOrigins = 1);
 
     /**

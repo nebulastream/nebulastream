@@ -49,7 +49,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
 
 MonitoringSink::~MonitoringSink() = default;
 
-SinkMediumTypes MonitoringSink::getSinkMediumType() { return MONITORING_SINK; }
+SinkMediumTypes MonitoringSink::getSinkMediumType() { return SinkMediumTypes::MONITORING_SINK; }
 
 bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);

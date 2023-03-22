@@ -30,8 +30,8 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 std::unique_ptr<mlir::Pass> getMLIRLoweringPass(MLIRPassManager::LoweringPass loweringPass) {
     switch (loweringPass) {
-        case MLIRPassManager::LLVM: return mlir::cf::createConvertControlFlowToLLVMPass();
-        case MLIRPassManager::SCF: return mlir::createConvertSCFToCFPass();
+        case MLIRPassManager::LoweringPass::LLVM: return mlir::cf::createConvertControlFlowToLLVMPass();
+        case MLIRPassManager::LoweringPass::SCF: return mlir::createConvertSCFToCFPass();
     }
 }
 

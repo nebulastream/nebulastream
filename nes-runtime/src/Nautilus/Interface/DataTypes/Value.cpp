@@ -34,7 +34,7 @@ std::optional<Value<>> CastToOp(const Value<>& left, const TypeIdentifier* toTyp
         if (plugin->IsCastable(left, toType)) {
             auto castedValue = plugin->CastTo(left, toType).value();
             if (auto ctx = Tracing::TraceContext::get()) {
-                ctx->traceUnaryOperation(Nautilus::Tracing::CAST, left.ref, castedValue.ref);
+                ctx->traceUnaryOperation(Nautilus::Tracing::OpCode::CAST, left.ref, castedValue.ref);
             }
             return castedValue;
         }

@@ -78,9 +78,12 @@ bool SliceCreationOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     outputSchema->clear();
     outputSchema =
         outputSchema
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt", UINT64));
+            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
+                                   BasicType::UINT64))
+            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
+                                   BasicType::UINT64))
+            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt",
+                                   BasicType::UINT64));
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

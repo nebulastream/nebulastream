@@ -77,7 +77,7 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
-                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .apply(Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$sum")))
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
@@ -113,7 +113,7 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProject
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
-                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .apply(Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());

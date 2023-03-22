@@ -26,7 +26,7 @@
 
 namespace NES {
 
-enum SinkMediumTypes {
+enum class SinkMediumTypes : int8_t {
     ZMQ_SINK,
     PRINT_SINK,
     KAFKA_SINK,
@@ -54,7 +54,7 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         QueryId queryId,
                         QuerySubPlanId querySubPlanId,
-                        FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                        FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                         uint64_t numberOfOrigins = 1,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 

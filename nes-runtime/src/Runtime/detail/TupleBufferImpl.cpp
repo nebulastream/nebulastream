@@ -16,6 +16,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <bitset>
+#include <Util/magicenum/magic_enum.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <Util/Backward/backward.hpp>
@@ -59,7 +60,8 @@ MemorySegment::MemorySegment(uint8_t* ptr,
     : ptr(ptr), size(size) {
     NES_ASSERT2_FMT(this->ptr, "invalid ptr");
     NES_ASSERT2_FMT(this->size, "invalid size");
-    controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)), Wrapped);
+    controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)),
+                                              magic_enum::enum_integer(MemorySegmentType::Wrapped));
     controlBlock->prepare();
 }
 
@@ -76,8 +78,8 @@ MemorySegment::~MemorySegment() {
         }
 
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
-        // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
-        if (controlBlock.tag() == Wrapped) {
+        // have to call the destructor, as the memory segment that contains the controlBlock is managed separately.
+        if (controlBlock.tag() == magic_enum::enum_integer(MemorySegmentType::Wrapped)) {
             delete controlBlock.get();
         } else {
             controlBlock->~BufferControlBlock();

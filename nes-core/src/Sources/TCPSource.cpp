@@ -191,7 +191,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             switch (sourceConfig->getDecideMessageSize()->getValue()) {
                 // The user inputted a tuple separator that indicates the end of a tuple. We're going to search for that
                 // tuple seperator and assume that all data until then belongs to the current tuple
-                case Configurations::TUPLE_SEPARATOR:
+                case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
                     try {
                         // search the circularBuffer until Tuple seperator is found to obtain size of tuple
                         inputTupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
@@ -208,7 +208,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         throw e;
                     }
                 // The user inputted a fixed buffer size.
-                case Configurations::USER_SPECIFIED_BUFFER_SIZE:
+                case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
                     try {
                         //set tupleSize to user specified tuple size
                         inputTupleSize = sourceConfig->getSocketBufferSize()->getValue();
@@ -226,7 +226,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     break;
                 // Before each message, the server uses a fixed number of bytes (bytesUsedForSocketBufferSizeTransfer)
                 // to indicate the size of the next tuple.
-                case Configurations::BUFFER_SIZE_FROM_SOCKET:
+                case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET:
                     //when receiving buffer size from socket, we need to check that the buffer was actually popped during the last run, otherwise,
                     //we loose the transmitted size and obtain bytes from the tuple that weren't meant to transmit the size.
                     //This might happen if the size of the tuple was sent and popped, but we only received half of the tuple
@@ -329,7 +329,7 @@ void TCPSource::close() {
     }
 }
 
-SourceType TCPSource::getType() const { return TCP_SOURCE; }
+SourceType TCPSource::getType() const { return SourceType::TCP_SOURCE; }
 
 const TCPSourceTypePtr& TCPSource::getSourceConfig() const { return sourceConfig; }
 

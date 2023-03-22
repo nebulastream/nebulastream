@@ -23,7 +23,7 @@ namespace NES {
 class PlacementStrategy {
 
   public:
-    enum Value : uint8_t {
+    enum class Value : uint8_t {
         TopDown = 0,
         BottomUp = 1,
         IFCOP = 2,

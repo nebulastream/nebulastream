@@ -16,7 +16,7 @@
 namespace NES::Nautilus::IR::Operations {
 
 CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp)
-    : Operation(CastOp, identifier, targetStamp), input(input) {
+    : Operation(OperationType::CastOp, identifier, targetStamp), input(input) {
     input->addUsage(this);
 }
 

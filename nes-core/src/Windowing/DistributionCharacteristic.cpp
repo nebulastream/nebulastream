@@ -38,14 +38,14 @@ DistributionCharacteristicPtr DistributionCharacteristic::createMergingWindowTyp
 DistributionCharacteristic::Type DistributionCharacteristic::getType() { return type; }
 
 std::string DistributionCharacteristic::toString() {
-    if (type == Complete) {
+    if (type == Type::Complete) {
         return "Complete";
     }
-    if (type == Slicing) {
+    if (type == Type::Slicing) {
         return "Slicing";
-    } else if (type == Combining) {
+    } else if (type == Type::Combining) {
         return "Combining";
-    } else if (type == Merging) {
+    } else if (type == Type::Merging) {
         return "Merging";
     } else {
         return "";

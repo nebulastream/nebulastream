@@ -58,6 +58,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
@@ -302,10 +303,10 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     auto sourceType = physicalSourceType->getSourceType();
     NES_DEBUG2("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
                physicalSource->toString(),
-               sourceType);
+               magic_enum::enum_name(sourceType));
 
     switch (sourceType) {
-        case DEFAULT_SOURCE: {
+        case SourceType::DEFAULT_SOURCE: {
             auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
             return DefaultSourceDescriptor::create(
                 schema,
@@ -314,20 +315,20 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                 std::chrono::milliseconds(defaultSourceType->getSourceGatheringInterval()->getValue()).count());
         }
 #ifdef ENABLE_MQTT_BUILD
-        case MQTT_SOURCE: {
+        case SourceType::MQTT_SOURCE: {
             auto mqttSourceType = physicalSourceType->as<MQTTSourceType>();
             return MQTTSourceDescriptor::create(schema, mqttSourceType);
         }
 #endif
-        case CSV_SOURCE: {
+        case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
             return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
         }
-        case SENSE_SOURCE: {
+        case SourceType::SENSE_SOURCE: {
             auto senseSourceType = physicalSourceType->as<SenseSourceType>();
             return SenseSourceDescriptor::create(schema, logicalSourceName, senseSourceType->getUdfs()->getValue());
         }
-        case MEMORY_SOURCE: {
+        case SourceType::MEMORY_SOURCE: {
             auto memorySourceType = physicalSourceType->as<MemorySourceType>();
             return MemorySourceDescriptor::create(schema,
                                                   memorySourceType->getMemoryArea(),
@@ -340,13 +341,13 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   logicalSourceName,
                                                   physicalSourceName);
         }
-        case MONITORING_SOURCE: {
+        case SourceType::MONITORING_SOURCE: {
             auto monitoringSourceType = physicalSourceType->as<MonitoringSourceType>();
             return MonitoringSourceDescriptor::create(
                 monitoringSourceType->getWaitTime(),
                 Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
         }
-        case BENCHMARK_SOURCE: {
+        case SourceType::BENCHMARK_SOURCE: {
             auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
             return BenchmarkSourceDescriptor::create(schema,
                                                      benchmarkSourceType->getMemoryArea(),
@@ -360,13 +361,13 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                      logicalSourceName,
                                                      physicalSourceName);
         }
-        case STATIC_DATA_SOURCE: {
+        case SourceType::STATIC_DATA_SOURCE: {
             auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
             return NES::Experimental::StaticDataSourceDescriptor::create(schema,
                                                                          staticDataSourceType->getPathTableFile(),
                                                                          staticDataSourceType->getLateStart());
         }
-        case LAMBDA_SOURCE: {
+        case SourceType::LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
             return LambdaSourceDescriptor::create(schema,
                                                   lambdaSourceType->getGenerationFunction(),
@@ -378,17 +379,17 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   logicalSourceName,
                                                   physicalSourceName);
         }
-        case MATERIALIZEDVIEW_SOURCE: {
+        case SourceType::MATERIALIZEDVIEW_SOURCE: {
             auto materializeView =
                 physicalSourceType->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceType>();
             return NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(schema,
                                                                                                  materializeView->getId());
         }
-        case TCP_SOURCE: {
+        case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
         }
-        case KAFKA_SOURCE: {
+        case SourceType::KAFKA_SOURCE: {
             auto kafkaSourceType = physicalSourceType->as<KafkaSourceType>();
             return KafkaSourceDescriptor::create(schema,
                                                  kafkaSourceType->getBrokers()->getValue(),

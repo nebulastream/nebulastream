@@ -18,7 +18,7 @@
 
 namespace NES::Nautilus::IR::Operations {
 IfOperation::IfOperation(OperationPtr booleanValue)
-    : Operation(Operation::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue) {}
+    : Operation(Operation::OperationType::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue) {}
 
 OperationPtr IfOperation::getValue() { return booleanValue.lock(); }
 

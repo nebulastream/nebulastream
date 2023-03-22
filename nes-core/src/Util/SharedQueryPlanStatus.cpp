@@ -20,25 +20,25 @@ namespace NES {
 
 std::string SharedQueryPlanStatus::toString(const Value queryStatus) {
     switch (queryStatus) {
-        case Created: return "CREATED";
-        case Deployed: return "DEPLOYED";
-        case Updated: return "UPDATED";
-        case Stopped: return "STOPPED";
-        case Failed: return "FAILED";
+        case Value::Created: return "CREATED";
+        case Value::Deployed: return "DEPLOYED";
+        case Value::Updated: return "UPDATED";
+        case Value::Stopped: return "STOPPED";
+        case Value::Failed: return "FAILED";
     }
 }
 
 SharedQueryPlanStatus::Value SharedQueryPlanStatus::getFromString(const std::string queryStatus) {
     if (queryStatus == "CREATED") {
-        return Created;
+        return Value::Created;
     } else if (queryStatus == "DEPLOYED") {
-        return Deployed;
+        return Value::Deployed;
     } else if (queryStatus == "UPDATED") {
-        return Updated;
+        return Value::Updated;
     } else if (queryStatus == "STOPPED") {
-        return Stopped;
+        return Value::Stopped;
     } else if (queryStatus == "FAILED") {
-        return Failed;
+        return Value::Failed;
     } else {
         NES_ERROR2("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);

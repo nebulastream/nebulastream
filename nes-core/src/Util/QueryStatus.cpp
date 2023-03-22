@@ -20,47 +20,47 @@ namespace NES {
 
 std::string QueryStatus::toString(const Value queryStatus) {
     switch (queryStatus) {
-        case Registered: return "REGISTERED";
-        case Optimizing: return "OPTIMIZING";
-        case Deployed: return "DEPLOYED";
-        case Running: return "RUNNING";
-        case Stopped: return "STOPPED";
-        case MarkedForFailure: return "MARKED-FOR-FAILURE";
-        case Failed: return "FAILED";
-        case Restarting: return "RESTARTING";
-        case Migrating: return "MIGRATING";
-        case MarkedForHardStop: return "MARKED-FOR-HARD-STOP";
-        case MarkedForSoftStop: return "MARKED-FOR-SOFT-STOP";
-        case SoftStopTriggered: return "SOFT-STOP-TRIGGERED";
-        case SoftStopCompleted: return "SOFT-STOP-COMPLETED";
+        case Value::Registered: return "REGISTERED";
+        case Value::Optimizing: return "OPTIMIZING";
+        case Value::Deployed: return "DEPLOYED";
+        case Value::Running: return "RUNNING";
+        case Value::Stopped: return "STOPPED";
+        case Value::MarkedForFailure: return "MARKED-FOR-FAILURE";
+        case Value::Failed: return "FAILED";
+        case Value::Restarting: return "RESTARTING";
+        case Value::Migrating: return "MIGRATING";
+        case Value::MarkedForHardStop: return "MARKED-FOR-HARD-STOP";
+        case Value::MarkedForSoftStop: return "MARKED-FOR-SOFT-STOP";
+        case Value::SoftStopTriggered: return "SOFT-STOP-TRIGGERED";
+        case Value::SoftStopCompleted: return "SOFT-STOP-COMPLETED";
     }
 }
 
 QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
     if (queryStatus == "REGISTERED") {
-        return Registered;
+        return Value::Registered;
     } else if (queryStatus == "OPTIMIZING") {
-        return Optimizing;
+        return Value::Optimizing;
     } else if (queryStatus == "DEPLOYED") {
-        return Deployed;
+        return Value::Deployed;
     } else if (queryStatus == "RUNNING") {
-        return Running;
+        return Value::Running;
     } else if (queryStatus == "MARKED-FOR-HARD-STOP") {
-        return MarkedForHardStop;
+        return Value::MarkedForHardStop;
     } else if (queryStatus == "STOPPED") {
-        return Stopped;
+        return Value::Stopped;
     } else if (queryStatus == "FAILED") {
-        return Failed;
+        return Value::Failed;
     } else if (queryStatus == "MIGRATING") {
-        return Migrating;
+        return Value::Migrating;
     } else if (queryStatus == "SOFT-STOP-COMPLETED") {
-        return SoftStopCompleted;
+        return Value::SoftStopCompleted;
     } else if (queryStatus == "SOFT-STOP-TRIGGERED") {
-        return SoftStopTriggered;
+        return Value::SoftStopTriggered;
     } else if (queryStatus == "MARKED-FOR-SOFT-STOP") {
-        return MarkedForSoftStop;
+        return Value::MarkedForSoftStop;
     } else if (queryStatus == "MARKED-FOR-FAILURE") {
-        return MarkedForFailure;
+        return Value::MarkedForFailure;
     } else {
         NES_ERROR2("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);

@@ -490,7 +490,7 @@ public:
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<normal_mode>(hv);
         const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
-        if (pos.status == ok) {
+        if (pos.status == cuckoo_status::ok) {
             fn(buckets_[pos.index].mapped(pos.slot));
             return true;
         }             return false;
@@ -512,7 +512,7 @@ public:
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<normal_mode>(hv);
         const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
-        if (pos.status == ok) {
+        if (pos.status == cuckoo_status::ok) {
             fn(buckets_[pos.index].mapped(pos.slot));
             return true;
         }             return false;
@@ -535,7 +535,7 @@ public:
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<normal_mode>(hv);
         const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
-        if (pos.status == ok) {
+        if (pos.status == cuckoo_status::ok) {
             if (fn(buckets_[pos.index].mapped(pos.slot))) {
                 del_from_bucket(pos.index, pos.slot);
             }
@@ -570,7 +570,7 @@ public:
         hash_value hv = hashed_key(key);
         auto b = snapshot_and_lock_two<normal_mode>(hv);
         table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
-        if (pos.status == ok) {
+        if (pos.status == cuckoo_status::ok) {
             add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
                           std::forward<Args>(val)...);
         } else {
@@ -578,7 +578,7 @@ public:
                 del_from_bucket(pos.index, pos.slot);
             }
         }
-        return pos.status == ok;
+        return pos.status == cuckoo_status::ok;
     }
 
     /**
@@ -618,7 +618,7 @@ public:
         const hash_value hv = hashed_key(key);
         const auto b = snapshot_and_lock_two<normal_mode>(hv);
         const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
-        if (pos.status == ok) {
+        if (pos.status == cuckoo_status::ok) {
             return buckets_[pos.index].mapped(pos.slot);
         }             throw std::out_of_range("key not found in table");
        
@@ -1126,7 +1126,7 @@ private:
 
     // Status codes for internal functions
 
-    enum cuckoo_status {
+    enum class cuckoo_status : int8_t {
         ok,
         failure,
         failure_key_not_found,
@@ -1153,13 +1153,13 @@ private:
                                const size_type i1, const size_type i2) const {
         int slot = try_read_from_bucket(buckets_[i1], partial, key);
         if (slot != -1) {
-            return table_position{i1, static_cast<size_type>(slot), ok};
+            return table_position{i1, static_cast<size_type>(slot), cuckoo_status::ok};
         }
         slot = try_read_from_bucket(buckets_[i2], partial, key);
         if (slot != -1) {
-            return table_position{i2, static_cast<size_type>(slot), ok};
+            return table_position{i2, static_cast<size_type>(slot), cuckoo_status::ok};
         }
-        return table_position{0, 0, failure_key_not_found};
+        return table_position{0, 0, cuckoo_status::failure_key_not_found};
     }
 
     // try_read_from_bucket will search the bucket for the given key and return
@@ -1201,15 +1201,15 @@ private:
             const size_type hp = hashpower();
             pos = cuckoo_insert<TABLE_MODE>(hv, b, key);
             switch (pos.status) {
-                case ok:
-                case failure_key_duplicated:
+                case cuckoo_status::ok:
+                case cuckoo_status::failure_key_duplicated:
                     return pos;
-                case failure_table_full:
+                case cuckoo_status::failure_table_full:
                     // Expand the table and try again, re-grabbing the locks
                     cuckoo_fast_double<TABLE_MODE, automatic_resize>(hp);
                     b = snapshot_and_lock_two<TABLE_MODE>(hv);
                     break;
-                case failure_under_expansion:
+                case cuckoo_status::failure_under_expansion:
                     // The table was under expansion while we were cuckooing. Re-grab the
                     // locks and try again.
                     b = snapshot_and_lock_two<TABLE_MODE>(hv);
@@ -1245,30 +1245,30 @@ private:
         bucket &b1 = buckets_[b.i1];
         if (!try_find_insert_bucket(b1, res1, hv.partial, key)) {
             return table_position{b.i1, static_cast<size_type>(res1),
-                                  failure_key_duplicated};
+                                  cuckoo_status::failure_key_duplicated};
         }
         bucket &b2 = buckets_[b.i2];
         if (!try_find_insert_bucket(b2, res2, hv.partial, key)) {
             return table_position{b.i2, static_cast<size_type>(res2),
-                                  failure_key_duplicated};
+                                  cuckoo_status::failure_key_duplicated};
         }
         if (res1 != -1) {
-            return table_position{b.i1, static_cast<size_type>(res1), ok};
+            return table_position{b.i1, static_cast<size_type>(res1), cuckoo_status::ok};
         }
         if (res2 != -1) {
-            return table_position{b.i2, static_cast<size_type>(res2), ok};
+            return table_position{b.i2, static_cast<size_type>(res2), cuckoo_status::ok};
         }
 
         // We are unlucky, so let's perform cuckoo hashing.
         size_type insert_bucket = 0;
         size_type insert_slot = 0;
         cuckoo_status st = run_cuckoo<TABLE_MODE>(b, insert_bucket, insert_slot);
-        if (st == failure_under_expansion) {
+        if (st == cuckoo_status::failure_under_expansion) {
             // The run_cuckoo operation operated on an old version of the table,
             // so we have to try again. We signal to the calling insert method
             // to try again by returning failure_under_expansion.
-            return table_position{0, 0, failure_under_expansion};
-        } if (st == ok) {
+            return table_position{0, 0, cuckoo_status::failure_under_expansion};
+        } if (st == cuckoo_status::ok) {
             assert(TABLE_MODE() == locked_table_mode() ||
                    !get_current_locks()[lock_ind(b.i1)].try_lock());
             assert(TABLE_MODE() == locked_table_mode() ||
@@ -1281,17 +1281,17 @@ private:
             // could have inserted the same key into either b.i1 or
             // b.i2, so we check for that before doing the insert.
             table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
-            if (pos.status == ok) {
-                pos.status = failure_key_duplicated;
+            if (pos.status == cuckoo_status::ok) {
+                pos.status = cuckoo_status::failure_key_duplicated;
                 return pos;
             }
-            return table_position{insert_bucket, insert_slot, ok};
+            return table_position{insert_bucket, insert_slot, cuckoo_status::ok};
         }
-        assert(st == failure);
+        assert(st == cuckoo_status::failure);
         LIBCUCKOO_DBG("hash table is full (hashpower = %zu, hash_items = %zu,"
                       "load factor = %.2f), need to increase hashpower\n",
                       hashpower(), size(), load_factor());
-        return table_position{0, 0, failure_table_full};
+        return table_position{0, 0, cuckoo_status::failure_table_full};
     }
 
     // add_to_bucket will insert the given key-value pair into the slot. The key
@@ -1406,9 +1406,9 @@ private:
             // The hashpower changed while we were trying to cuckoo, which means
             // we want to retry. b.i1 and b.i2 should not be locked
             // in this case.
-            return failure_under_expansion;
+            return cuckoo_status::failure_under_expansion;
         }
-        return done ? ok : failure;
+        return done ? cuckoo_status::ok : cuckoo_status::failure;
     }
 
     // cuckoopath_search finds a cuckoo path from one of the starting buckets to
@@ -1687,7 +1687,7 @@ private:
         const size_type new_hp = current_hp + 1;
         auto all_locks_manager = lock_all(TABLE_MODE());
         cuckoo_status st = check_resize_validity<AUTO_RESIZE>(current_hp, new_hp);
-        if (st != ok) {
+        if (st != cuckoo_status::ok) {
             return st;
         }
 
@@ -1755,7 +1755,7 @@ private:
                 rehash_with_workers();
             }
         }
-        return ok;
+        return cuckoo_status::ok;
     }
 
     void move_bucket(buckets_t &old_buckets, buckets_t &new_buckets,
@@ -1824,9 +1824,9 @@ private:
             // Most likely another expansion ran before this one could grab the
             // locks
             LIBCUCKOO_DBG("%s", "another expansion is on-going\n");
-            return failure_under_expansion;
+            return cuckoo_status::failure_under_expansion;
         }
-        return ok;
+        return cuckoo_status::ok;
     }
 
     // When we expand the contanier, we may need to expand the locks array, if
@@ -1868,7 +1868,7 @@ private:
         auto all_locks_manager = lock_all(TABLE_MODE());
         const size_type hp = hashpower();
         cuckoo_status st = check_resize_validity<AUTO_RESIZE>(hp, new_hp);
-        if (st != ok) {
+        if (st != cuckoo_status::ok) {
             return st;
         }
 
@@ -1910,7 +1910,7 @@ private:
         maybe_resize_locks(new_map.bucket_count());
         buckets_.swap(new_map.buckets_);
 
-        return ok;
+        return cuckoo_status::ok;
     }
 
     // Executes the function over the given range, splitting the work between the
@@ -2009,7 +2009,7 @@ private:
         if (n == hp) {
             return false;
         }
-        return cuckoo_expand_simple<TABLE_MODE, manual_resize>(n) == ok;
+        return cuckoo_expand_simple<TABLE_MODE, manual_resize>(n) == cuckoo_status::ok;
     }
 
     template <typename TABLE_MODE> bool cuckoo_reserve(size_type n) {
@@ -2018,7 +2018,7 @@ private:
         if (new_hp == hp) {
             return false;
         }
-        return cuckoo_expand_simple<TABLE_MODE, manual_resize>(new_hp) == ok;
+        return cuckoo_expand_simple<TABLE_MODE, manual_resize>(new_hp) == cuckoo_status::ok;
     }
 
     // Miscellaneous functions
@@ -2491,15 +2491,15 @@ public:
             auto b = map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
             table_position pos =
                     map_.get().template cuckoo_insert_loop<locked_table_mode>(hv, b, key);
-            if (pos.status == ok) {
+            if (pos.status == cuckoo_status::ok) {
                 map_.get().add_to_bucket(pos.index, pos.slot, hv.partial,
                                          std::forward<K>(key),
                                          std::forward<Args>(val)...);
             } else {
-                assert(pos.status == failure_key_duplicated);
+                assert(pos.status == cuckoo_status::failure_key_duplicated);
             }
             return std::make_pair(iterator(map_.get().buckets_, pos.index, pos.slot),
-                                  pos.status == ok);
+                                  pos.status == cuckoo_status::ok);
         }
 
         iterator erase(const_iterator pos) {
@@ -2518,7 +2518,7 @@ public:
                     map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
             const table_position pos =
                     map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
-            if (pos.status == ok) {
+            if (pos.status == cuckoo_status::ok) {
                 map_.get().del_from_bucket(pos.index, pos.slot);
                 return 1;
             }                 return 0;
@@ -2536,7 +2536,7 @@ public:
                     map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
             const table_position pos =
                     map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
-            if (pos.status == ok) {
+            if (pos.status == cuckoo_status::ok) {
                 return iterator(map_.get().buckets_, pos.index, pos.slot);
             }                 return end();
            
@@ -2548,7 +2548,7 @@ public:
                     map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
             const table_position pos =
                     map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2);
-            if (pos.status == ok) {
+            if (pos.status == cuckoo_status::ok) {
                 return const_iterator(map_.get().buckets_, pos.index, pos.slot);
             }                 return end();
            
@@ -2584,7 +2584,7 @@ public:
             const hash_value hv = map_.get().hashed_key(key);
             const auto b =
                     map_.get().template snapshot_and_lock_two<locked_table_mode>(hv);
-            return map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2).status == ok
+            return map_.get().cuckoo_find(key, hv.partial, b.i1, b.i2).status == cuckoo_status::ok
                    ? 1
                    : 0;
         }

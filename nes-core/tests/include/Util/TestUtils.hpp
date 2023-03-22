@@ -261,15 +261,15 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MarkedForHardStop:
-            case QueryStatus::MarkedForSoftStop:
-            case QueryStatus::SoftStopCompleted:
-            case QueryStatus::SoftStopTriggered:
-            case QueryStatus::Stopped:
-            case QueryStatus::Running: {
+            case QueryStatus::Value::MarkedForHardStop:
+            case QueryStatus::Value::MarkedForSoftStop:
+            case QueryStatus::Value::SoftStopCompleted:
+            case QueryStatus::Value::SoftStopTriggered:
+            case QueryStatus::Value::Stopped:
+            case QueryStatus::Value::Running: {
                 return true;
             }
-            case QueryStatus::Failed: {
+            case QueryStatus::Value::Failed: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
                 return false;
             }
@@ -414,7 +414,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Value::Stopped) {
             NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
             return true;
         }
@@ -439,7 +439,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkFailedOrTimeout: check query status");
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Value::Failed) {
             NES_DEBUG("checkFailedOrTimeout: status reached stopped");
             return true;
         }
@@ -567,13 +567,13 @@ template<typename T>
         NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
 
         auto entry = queryCatalogService->getEntryForQuery(queryId);
-        if (entry->getQueryStatus() == QueryStatus::Failed) {
-            // the query failed so we return true as a failure append during execution.
+        if (entry->getQueryStatus() == QueryStatus::Value::Failed) {
+            // the query failed, so we return true as a failure append during execution.
             NES_TRACE("checkStoppedOrTimeout: status reached failed");
             return false;
         }
 
-        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::Stopped;
+        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::Value::Stopped;
 
         // check if result is ready.
         std::ifstream ifs(outputFilePath);

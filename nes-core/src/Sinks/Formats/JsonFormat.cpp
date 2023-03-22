@@ -29,10 +29,10 @@ std::vector<Runtime::TupleBuffer> JsonFormat::getData(Runtime::TupleBuffer&) { N
 std::optional<Runtime::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
 
 std::string JsonFormat::toString() { return "JSON_FORMAT"; }
-FormatTypes JsonFormat::getSinkFormat() { return JSON_FORMAT; }
+FormatTypes JsonFormat::getSinkFormat() { return FormatTypes::JSON_FORMAT; }
 
 FormatIterator JsonFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer) {
-    return FormatIterator(schema, inputBuffer, JSON_FORMAT);
+    return FormatIterator(schema, inputBuffer, FormatTypes::JSON_FORMAT);
 }
 
 }// namespace NES

@@ -22,24 +22,24 @@ OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
     : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), OperatorPipelineType));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), Type::OperatorPipelineType));
 }
 
 OperatorPipelinePtr OperatorPipeline::createSinkPipeline() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), SinkPipelineType));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), Type::SinkPipelineType));
 }
 
 OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), SourcePipelineType));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(Util::getNextPipelineId(), Type::SourcePipelineType));
 }
 
 void OperatorPipeline::setType(Type pipelineType) { this->pipelineType = pipelineType; }
 
-bool OperatorPipeline::isOperatorPipeline() const { return pipelineType == OperatorPipelineType; }
+bool OperatorPipeline::isOperatorPipeline() const { return pipelineType == Type::OperatorPipelineType; }
 
-bool OperatorPipeline::isSinkPipeline() const { return pipelineType == SinkPipelineType; }
+bool OperatorPipeline::isSinkPipeline() const { return pipelineType == Type::SinkPipelineType; }
 
-bool OperatorPipeline::isSourcePipeline() const { return pipelineType == SourcePipelineType; }
+bool OperatorPipeline::isSourcePipeline() const { return pipelineType == Type::SourcePipelineType; }
 
 void OperatorPipeline::addPredecessor(const OperatorPipelinePtr& pipeline) {
     pipeline->successorPipelines.emplace_back(shared_from_this());

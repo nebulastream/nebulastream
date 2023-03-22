@@ -29,7 +29,7 @@ class TimeCharacteristic {
     /**
      * @brief The type as enum.
      */
-    enum Type { IngestionTime, EventTime };
+    enum class Type : int8_t { IngestionTime, EventTime };
     explicit TimeCharacteristic(Type type);
     TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 

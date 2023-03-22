@@ -36,11 +36,12 @@ using TestHarnessWorkerConfigurationPtr = std::shared_ptr<TestHarnessWorkerConfi
 class TestHarnessWorkerConfiguration {
 
   public:
-    enum TestHarnessWorkerSourceType { CSVSource, MemorySource, LambdaSource, NonSource };
+    enum class TestHarnessWorkerSourceType : int8_t { CSVSource, MemorySource, LambdaSource, NonSource };
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, uint32_t workerId) {
         return std::make_shared<TestHarnessWorkerConfiguration>(
-            TestHarnessWorkerConfiguration(std::move(workerConfiguration), NonSource, workerId));
+            TestHarnessWorkerConfiguration(std::move(workerConfiguration), TestHarnessWorkerSourceType::NonSource,
+                                           workerId));
     }
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration,

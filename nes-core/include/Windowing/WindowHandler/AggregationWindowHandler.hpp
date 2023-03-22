@@ -111,11 +111,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::stringstream ss;
         ss << "AggregationWindowHandler(" << handlerType << "," << id << "): ";
         std::string triggerType;
-        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Combining) {
             triggerType = "Combining";
-        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
+        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Slicing) {
             triggerType = "Slicing";
-        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Merging) {
+        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
             triggerType = "Merging";
         } else {
             triggerType = "Complete";
@@ -133,13 +133,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         // TODO switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
-            case Runtime::FailEndOfStream: {
+            case Runtime::ReconfigurationType::FailEndOfStream: {
                 NES_NOT_IMPLEMENTED();
             }
-            case Runtime::SoftEndOfStream: {
+            case Runtime::ReconfigurationType::SoftEndOfStream: {
                 break;
             }
-            case Runtime::HardEndOfStream: {
+            case Runtime::ReconfigurationType::HardEndOfStream: {
                 stop();
                 break;
             }

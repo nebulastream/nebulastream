@@ -20,7 +20,7 @@ namespace NES::Nautilus::IR::Types {
 class FloatStamp : public Stamp {
   public:
     // Bit width for the float
-    enum BitWidth : uint32_t { F32, F64 };
+    enum class BitWidth : uint32_t { F32, F64 };
 
     static const inline auto type = TypeIdentifier::create<FloatStamp>();
     /**

@@ -178,7 +178,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     NES_TRACE2("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
-SourceType CSVSource::getType() const { return CSV_SOURCE; }
+SourceType CSVSource::getType() const { return SourceType::CSV_SOURCE; }
 
 std::string CSVSource::getFilePath() const { return filePath; }
 

@@ -245,7 +245,7 @@ class MemorySegment {
     friend class NES::Runtime::BufferManager;
     friend class NES::Runtime::detail::BufferControlBlock;
 
-    enum MemorySegmentType { Native = 0, Wrapped = 1 };
+    enum class MemorySegmentType : int8_t { Native = 0, Wrapped = 1 };
 
   public:
     MemorySegment(const MemorySegment& other);

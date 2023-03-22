@@ -20,13 +20,13 @@ namespace NES {
 
 LineageType::Value LineageType::getFromString(const std::string lineageType) {
     if (lineageType == "NONE") {
-        return LineageType::NONE;
+        return LineageType::Value::NONE;
     } else if (lineageType == "IN_MEMORY") {
-        return LineageType::IN_MEMORY;
+        return LineageType::Value::IN_MEMORY;
     } else if (lineageType == "PERSISTENT") {
-        return LineageType::PERSISTENT;
+        return LineageType::Value::PERSISTENT;
     } else if (lineageType == "REMOTE") {
-        return LineageType::REMOTE;
+        return LineageType::Value::REMOTE;
     } else {
         NES_THROW_RUNTIME_ERROR("LineageType not supported " + lineageType);
     }

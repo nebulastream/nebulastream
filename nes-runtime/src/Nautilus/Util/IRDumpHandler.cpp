@@ -31,14 +31,14 @@ std::shared_ptr<NESIRDumpHandler> NESIRDumpHandler::create(std::ostream& out) { 
 
 IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBlockPtr thenBlock, int ifParentBlockLevel) {
     auto terminatorOp = thenBlock->getOperations().back();
-    if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
+    if (terminatorOp->getOperationType() == Operations::Operation::OperationType::BranchOp) {
         auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
         if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() <= (uint32_t) ifParentBlockLevel) {
             return branchOp->getNextBlockInvocation().getBlock();
         } else {
             return getNextLowerOrEqualLevelBasicBlock(branchOp->getNextBlockInvocation().getBlock(), ifParentBlockLevel);
         }
-    } else if (terminatorOp->getOperationType() == Operations::Operation::LoopOp) {
+    } else if (terminatorOp->getOperationType() == Operations::Operation::OperationType::LoopOp) {
         auto loopOp = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
         auto loopIfOp =
             std::static_pointer_cast<Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
@@ -47,7 +47,7 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
         } else {
             return getNextLowerOrEqualLevelBasicBlock(loopIfOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
         }
-    } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
+    } else if (terminatorOp->getOperationType() == Operations::Operation::OperationType::IfOp) {
         auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
         if (ifOp->getFalseBlockInvocation().getBlock() != nullptr) {
             return getNextLowerOrEqualLevelBasicBlock(ifOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);

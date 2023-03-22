@@ -30,7 +30,7 @@ using CreateFunctionPtr = Runtime::Execution::ExecutablePipelineStagePtr (*)();
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
                                                                  PipelineStageArity arity,
                                                                  std::string sourceCode)
-    : base(arity), dynamicObject(dynamicObject), currentExecutionStage(NotInitialized), sourceCode(std::move(sourceCode)) {
+    : base(arity), dynamicObject(dynamicObject), currentExecutionStage(ExecutionStage::NotInitialized), sourceCode(std::move(sourceCode)) {
     auto createFunction = dynamicObject->getInvocableMember<CreateFunctionPtr>(MANGELED_ENTRY_POINT);
     this->executablePipelineStage = (*createFunction)();
 }
@@ -50,31 +50,31 @@ CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
 
 uint32_t CompiledExecutablePipelineStage::setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
-    if (currentExecutionStage != NotInitialized) {
+    if (currentExecutionStage != ExecutionStage::NotInitialized) {
         NES_FATAL_ERROR2("CompiledExecutablePipelineStage: The pipeline stage, is already initialized."
                          "It is not allowed to call setup multiple times.");
         return -1;
     }
-    currentExecutionStage = Initialized;
+    currentExecutionStage = ExecutionStage::Initialized;
     return executablePipelineStage->setup(pipelineExecutionContext);
 }
 
 uint32_t CompiledExecutablePipelineStage::start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
-    if (currentExecutionStage != Initialized) {
+    if (currentExecutionStage != ExecutionStage::Initialized) {
         NES_FATAL_ERROR2("CompiledExecutablePipelineStage: The pipeline stage, is not initialized."
                          "It is not allowed to call start if setup was not called.");
         return -1;
     }
     NES_DEBUG2("CompiledExecutablePipelineStage: Start compiled executable pipeline stage");
-    currentExecutionStage = Running;
+    currentExecutionStage = ExecutionStage::Running;
     return executablePipelineStage->start(pipelineExecutionContext);
 }
 
 uint32_t CompiledExecutablePipelineStage::open(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
                                                Runtime::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
-    if (currentExecutionStage != Running) {
+    if (currentExecutionStage != ExecutionStage::Running) {
         NES_FATAL_ERROR2(
             "CompiledExecutablePipelineStage:open The pipeline stage, was not correctly initialized and started. You must first "
             "call setup and start.");
@@ -88,7 +88,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
                                                          Runtime::WorkerContext& workerContext) {
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
-    if (currentExecutionStage != Running) {
+    if (currentExecutionStage != ExecutionStage::Running) {
         NES_DEBUG2("CompiledExecutablePipelineStage:execute The pipeline stage, was not correctly initialized and started. You "
                    "must first "
                    "call setup and start.");
@@ -105,7 +105,7 @@ std::string CompiledExecutablePipelineStage::getCodeAsString() { return sourceCo
 uint32_t CompiledExecutablePipelineStage::close(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
                                                 Runtime::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
-    if (currentExecutionStage != Running) {
+    if (currentExecutionStage != ExecutionStage::Running) {
         NES_FATAL_ERROR2(
             "CompiledExecutablePipelineStage:close The pipeline stage, was not correctly initialized and started. You must first "
             "call setup and start.");
@@ -114,14 +114,14 @@ uint32_t CompiledExecutablePipelineStage::close(Runtime::Execution::PipelineExec
     return this->executablePipelineStage->close(pipelineExecutionContext, workerContext);
 }
 uint32_t CompiledExecutablePipelineStage::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
-    if (currentExecutionStage != Running) {
+    if (currentExecutionStage != ExecutionStage::Running) {
         NES_FATAL_ERROR2(
             "CompiledExecutablePipelineStage:stop The pipeline stage, was not correctly initialized and started. You must first "
             "call setup and start.");
         return -1;
     }
     NES_DEBUG2("CompiledExecutablePipelineStage: Stop compiled executable pipeline stage");
-    currentExecutionStage = Stopped;
+    currentExecutionStage = ExecutionStage::Stopped;
     return executablePipelineStage->stop(pipelineExecutionContext);
 }
 

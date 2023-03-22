@@ -17,7 +17,7 @@
 
 namespace NES {
 
-enum UnaryOperatorType {
+enum class UnaryOperatorType : int8_t {
     ABSOLUTE_VALUE_OF_OP,
     ADDRESS_OF_OP,
     BITWISE_COMPLEMENT_OP,
@@ -40,7 +40,7 @@ enum UnaryOperatorType {
 
 const std::string toString(const UnaryOperatorType& type);
 
-enum BinaryOperatorType {
+enum class BinaryOperatorType : int8_t {
     EQUAL_OP,
     UNEQUAL_OP,
     LESS_THAN_OP,

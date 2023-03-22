@@ -19,30 +19,30 @@ namespace NES::QueryCompilation {
 StatementPtr ExpressionStatement::createCopy() const { return this->copy(); }
 
 BinaryOperatorStatement ExpressionStatement::operator[](const ExpressionStatement& ref) {
-    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
+    return BinaryOperatorStatement(*this, BinaryOperatorType::ARRAY_REFERENCE_OP, ref);
 }
 
 BinaryOperatorStatement ExpressionStatement::accessPtr(const ExpressionStatement& ref) {
-    return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
+    return BinaryOperatorStatement(*this, BinaryOperatorType::MEMBER_SELECT_POINTER_OP, ref);
 }
 
 BinaryOperatorStatement ExpressionStatement::accessPtr(const ExpressionStatementPtr& ref) const {
-    return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_POINTER_OP, ref);
+    return BinaryOperatorStatement(this->copy(), BinaryOperatorType::MEMBER_SELECT_POINTER_OP, ref);
 }
 
 BinaryOperatorStatement ExpressionStatement::accessRef(const ExpressionStatement& ref) {
-    return BinaryOperatorStatement(*this, MEMBER_SELECT_REFERENCE_OP, ref);
+    return BinaryOperatorStatement(*this, BinaryOperatorType::MEMBER_SELECT_REFERENCE_OP, ref);
 }
 
 BinaryOperatorStatement ExpressionStatement::accessRef(ExpressionStatementPtr ref) const {
-    return BinaryOperatorStatement(this->copy(), MEMBER_SELECT_REFERENCE_OP, std::move(ref));
+    return BinaryOperatorStatement(this->copy(), BinaryOperatorType::MEMBER_SELECT_REFERENCE_OP, std::move(ref));
 }
 
 BinaryOperatorStatement ExpressionStatement::assign(const ExpressionStatement& ref) {
-    return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
+    return BinaryOperatorStatement(*this, BinaryOperatorType::ASSIGNMENT_OP, ref);
 }
 
 BinaryOperatorStatement ExpressionStatement::assign(ExpressionStatementPtr ref) const {
-    return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, std::move(ref));
+    return BinaryOperatorStatement(this->copy(), BinaryOperatorType::ASSIGNMENT_OP, std::move(ref));
 }
 }// namespace NES::QueryCompilation

@@ -682,9 +682,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         auto timeCharacteristic = windowType->asTimeBasedWindowType(windowDefinition->getWindowType())->getTimeCharacteristic();
         z3::expr windowTimeKeyVal(*context);
-        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
             windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
         } else {
             NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Characteristic");
@@ -749,23 +749,23 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     assert(windowDefinition->getWindowAggregation().size() == 1);
     auto windowAggregation = windowDefinition->getWindowAggregation()[0];
     switch (windowAggregation->getType()) {
-        case Windowing::WindowAggregationDescriptor::Count: {
+        case Windowing::WindowAggregationDescriptor::Type::Count: {
             aggregate = z3::function("Count", sort, sort);
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Max: {
+        case Windowing::WindowAggregationDescriptor::Type::Max: {
             aggregate = z3::function("Max", sort, sort);
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Min: {
+        case Windowing::WindowAggregationDescriptor::Type::Min: {
             aggregate = z3::function("Min", sort, sort);
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Sum: {
+        case Windowing::WindowAggregationDescriptor::Type::Sum: {
             aggregate = z3::function("Sum", sort, sort);
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Avg: {
+        case Windowing::WindowAggregationDescriptor::Type::Avg: {
             aggregate = z3::function("Avg", sort, sort);
             break;
         }

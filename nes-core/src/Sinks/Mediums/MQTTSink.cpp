@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 /*
@@ -33,7 +34,7 @@ namespace NES {
 const uint32_t NANO_TO_MILLI_SECONDS_MULTIPLIER = 1000000;
 const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 
-SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
+SinkMediumTypes MQTTSink::getSinkMediumType() { return SinkMediumTypes::MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    Runtime::NodeEnginePtr nodeEngine,
@@ -69,7 +70,8 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                                         : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSinkDescriptor::TimeUnits::nanoseconds)
                                            | (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
 
-    client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
+    client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic,
+                                                 magic_enum::enum_integer(qualityOfService));
     NES_TRACE2("MQTTSink::MQTTSink {}: Init MQTT Sink to {}", this->toString(), address);
 }
 
@@ -132,10 +134,10 @@ std::string MQTTSink::toString() const {
     ss << "TOPIC=" << topic << ", ";
     ss << "USER=" << user << ", ";
     ss << "MAX_BUFFERED_MESSAGES=" << maxBufferedMSGs << ", ";
-    ss << "TIME_UNIT=" << timeUnit << ", ";
+    ss << "TIME_UNIT=" << magic_enum::enum_name(timeUnit) << ", ";
     ss << "SEND_PERIOD=" << messageDelay << ", ";
     ss << "SEND_DURATION_IN_NS=" << std::to_string(minDelayBetweenSends.count()) << ", ";
-    ss << "QUALITY_OF_SERVICE=" << std::to_string(qualityOfService) << ", ";
+    ss << "QUALITY_OF_SERVICE=" << std::string(magic_enum::enum_name(qualityOfService)) << ", ";
     ss << "CLIENT_TYPE=" << ((asynchronousClient) ? "ASYMMETRIC_CLIENT" : "SYMMETRIC_CLIENT");
     ss << ")";
     return ss.str();

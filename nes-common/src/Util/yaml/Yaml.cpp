@@ -84,11 +84,12 @@ Exception::eType Exception::Type() const { return m_Type; }
 
 const char* Exception::Message() const { return what(); }
 
-InternalException::InternalException(const std::string& message) : Exception(message, InternalError) {}
+InternalException::InternalException(const std::string& message) : Exception(message, eType::InternalError) {}
 
-ParsingException::ParsingException(const std::string& message) : Exception(message, ParsingError) {}
+ParsingException::ParsingException(const std::string& message) : Exception(message, eType::ParsingError) {}
 
-OperationFatalException::OperationFatalException(const std::string& message) : Exception(message, OperationError) {}
+OperationFatalException::OperationFatalException(const std::string& message) : Exception(message,
+                                                                                         eType::OperationError) {}
 
 class TypeImp {
 
@@ -289,40 +290,40 @@ class NodeImp {
             delete m_pImp;
             m_pImp = nullptr;
         }
-        m_Type = Node::None;
+        m_Type = Node::eType::None;
     }
 
     void InitSequence() {
-        if (m_Type != Node::SequenceType || m_pImp == nullptr) {
+        if (m_Type != Node::eType::SequenceType || m_pImp == nullptr) {
 
             delete m_pImp;
 
             m_pImp = new SequenceImp;
-            m_Type = Node::SequenceType;
+            m_Type = Node::eType::SequenceType;
         }
     }
 
     void InitMap() {
-        if (m_Type != Node::MapType || m_pImp == nullptr) {
+        if (m_Type != Node::eType::MapType || m_pImp == nullptr) {
 
             delete m_pImp;
 
             m_pImp = new MapImp;
-            m_Type = Node::MapType;
+            m_Type = Node::eType::MapType;
         }
     }
 
     void InitScalar() {
-        if (m_Type != Node::ScalarType || m_pImp == nullptr) {
+        if (m_Type != Node::eType::ScalarType || m_pImp == nullptr) {
 
             delete m_pImp;
 
             m_pImp = new ScalarImp;
-            m_Type = Node::ScalarType;
+            m_Type = Node::eType::ScalarType;
         }
     }
 
-    Node::eType m_Type{Node::None};///< Type of node.
+    Node::eType m_Type{Node::eType::None};///< Type of node.
     TypeImp* m_pImp{nullptr};      ///< Imp of type.
 };
 
@@ -342,7 +343,7 @@ class IteratorImp {
 class SequenceIteratorImp : public IteratorImp {
 
   public:
-    [[nodiscard]] Node::eType GetType() const override { return Node::SequenceType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::eType::SequenceType; }
 
     void InitBegin(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.begin(); }
 
@@ -360,7 +361,7 @@ class SequenceIteratorImp : public IteratorImp {
 class MapIteratorImp : public IteratorImp {
 
   public:
-    [[nodiscard]] Node::eType GetType() const override { return Node::MapType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::eType::MapType; }
 
     void InitBegin(SequenceImp*) override {}
 
@@ -378,7 +379,7 @@ class MapIteratorImp : public IteratorImp {
 class SequenceConstIteratorImp : public IteratorImp {
 
   public:
-    [[nodiscard]] Node::eType GetType() const override { return Node::SequenceType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::eType::SequenceType; }
 
     void InitBegin(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.begin(); }
 
@@ -396,7 +397,7 @@ class SequenceConstIteratorImp : public IteratorImp {
 class MapConstIteratorImp : public IteratorImp {
 
   public:
-    [[nodiscard]] Node::eType GetType() const override { return Node::MapType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::eType::MapType; }
 
     void InitBegin(SequenceImp*) override {}
 
@@ -417,36 +418,36 @@ Iterator::Iterator() = default;
 Iterator::~Iterator() {
     if (m_pImp) {
         switch (m_Type) {
-            case SequenceType: delete static_cast<SequenceIteratorImp*>(m_pImp); break;
-            case MapType: delete static_cast<MapIteratorImp*>(m_pImp); break;
+            case eType::SequenceType: delete static_cast<SequenceIteratorImp*>(m_pImp); break;
+            case eType::MapType: delete static_cast<MapIteratorImp*>(m_pImp); break;
             default: break;
         }
     }
 }
 
-Iterator::Iterator(const Iterator& it) : m_Type(None), m_pImp(nullptr) { *this = it; }
+Iterator::Iterator(const Iterator& it) : m_Type(eType::None), m_pImp(nullptr) { *this = it; }
 
 Iterator& Iterator::operator=(const Iterator& it) {
     if (m_pImp) {
         switch (m_Type) {
-            case SequenceType: delete static_cast<SequenceIteratorImp*>(m_pImp); break;
-            case MapType: delete static_cast<MapIteratorImp*>(m_pImp); break;
+            case eType::SequenceType: delete static_cast<SequenceIteratorImp*>(m_pImp); break;
+            case eType::MapType: delete static_cast<MapIteratorImp*>(m_pImp); break;
             default: break;
         }
         m_pImp = nullptr;
-        m_Type = None;
+        m_Type = eType::None;
     }
 
     IteratorImp* pNewImp = nullptr;
 
     switch (it.m_Type) {
-        case SequenceType:
-            m_Type = SequenceType;
+        case eType::SequenceType:
+            m_Type = eType::SequenceType;
             pNewImp = new SequenceIteratorImp;
             dynamic_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
-        case MapType:
-            m_Type = MapType;
+        case eType::MapType:
+            m_Type = eType::MapType;
             pNewImp = new MapIteratorImp;
             dynamic_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
@@ -459,8 +460,8 @@ Iterator& Iterator::operator=(const Iterator& it) {
 
 std::pair<const std::string&, Node&> Iterator::operator*() {
     switch (m_Type) {
-        case SequenceType: return {g_EmptyString, *(static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator->second)}; break;
-        case MapType:
+        case eType::SequenceType: return {g_EmptyString, *(static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator->second)}; break;
+        case eType::MapType:
             return {static_cast<MapIteratorImp*>(m_pImp)->m_Iterator->first,
                     *(static_cast<MapIteratorImp*>(m_pImp)->m_Iterator->second)};
             break;
@@ -473,8 +474,8 @@ std::pair<const std::string&, Node&> Iterator::operator*() {
 
 Yaml::Iterator Iterator::operator++(int) {
     switch (m_Type) {
-        case SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator++; break;
-        case MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator++; break;
+        case eType::SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator++; break;
+        case eType::MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator++; break;
         default: break;
     }
     return *this;
@@ -482,8 +483,8 @@ Yaml::Iterator Iterator::operator++(int) {
 
 Yaml::Iterator Iterator::operator--(int) {
     switch (m_Type) {
-        case SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator--; break;
-        case MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator--; break;
+        case eType::SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator--; break;
+        case eType::MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator--; break;
         default: break;
     }
     return *this;
@@ -495,11 +496,11 @@ bool Iterator::operator==(const Iterator& it) const {
     }
 
     switch (m_Type) {
-        case SequenceType:
+        case eType::SequenceType:
             return static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator
                 == static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
-        case MapType:
+        case eType::MapType:
             return static_cast<MapIteratorImp*>(m_pImp)->m_Iterator == static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
         default: break;
@@ -516,37 +517,37 @@ ConstIterator::ConstIterator() = default;
 ConstIterator::~ConstIterator() {
     if (m_pImp) {
         switch (m_Type) {
-            case SequenceType: delete static_cast<SequenceConstIteratorImp*>(m_pImp); break;
-            case MapType: delete static_cast<MapConstIteratorImp*>(m_pImp); break;
+            case eType::SequenceType: delete static_cast<SequenceConstIteratorImp*>(m_pImp); break;
+            case eType::MapType: delete static_cast<MapConstIteratorImp*>(m_pImp); break;
             default: break;
         }
     }
 }
 
-ConstIterator::ConstIterator(const ConstIterator& it) : m_Type(None), m_pImp(nullptr) { *this = it; }
+ConstIterator::ConstIterator(const ConstIterator& it) : m_Type(eType::None), m_pImp(nullptr) { *this = it; }
 
 ConstIterator& ConstIterator::operator=(const ConstIterator& it) {
     if (m_pImp) {
         switch (m_Type) {
-            case SequenceType: delete static_cast<SequenceConstIteratorImp*>(m_pImp); break;
-            case MapType: delete static_cast<MapConstIteratorImp*>(m_pImp); break;
+            case eType::SequenceType: delete static_cast<SequenceConstIteratorImp*>(m_pImp); break;
+            case eType::MapType: delete static_cast<MapConstIteratorImp*>(m_pImp); break;
             default: break;
         }
         m_pImp = nullptr;
-        m_Type = None;
+        m_Type = eType::None;
     }
 
     IteratorImp* pNewImp = nullptr;
 
     switch (it.m_Type) {
-        case SequenceType:
-            m_Type = SequenceType;
+        case eType::SequenceType:
+            m_Type = eType::SequenceType;
             pNewImp = new SequenceConstIteratorImp;
             dynamic_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator =
                 static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
-        case MapType:
-            m_Type = MapType;
+        case eType::MapType:
+            m_Type = eType::MapType;
             pNewImp = new MapConstIteratorImp;
             dynamic_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
             break;
@@ -559,8 +560,8 @@ ConstIterator& ConstIterator::operator=(const ConstIterator& it) {
 
 std::pair<const std::string&, const Node&> ConstIterator::operator*() {
     switch (m_Type) {
-        case SequenceType: return {g_EmptyString, *(static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator->second)}; break;
-        case MapType:
+        case eType::SequenceType: return {g_EmptyString, *(static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator->second)}; break;
+        case eType::MapType:
             return {static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator->first,
                     *(static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator->second)};
             break;
@@ -573,8 +574,8 @@ std::pair<const std::string&, const Node&> ConstIterator::operator*() {
 
 Yaml::ConstIterator ConstIterator::operator++(int) {
     switch (m_Type) {
-        case SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator++; break;
-        case MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator++; break;
+        case eType::SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator++; break;
+        case eType::MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator++; break;
         default: break;
     }
     return *this;
@@ -582,8 +583,8 @@ Yaml::ConstIterator ConstIterator::operator++(int) {
 
 Yaml::ConstIterator ConstIterator::operator--(int) {
     switch (m_Type) {
-        case SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator--; break;
-        case MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator--; break;
+        case eType::SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator--; break;
+        case eType::MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator--; break;
         default: break;
     }
     return *this;
@@ -595,11 +596,11 @@ bool operator==(const ConstIterator& lhs, const ConstIterator& rhs) {
     }
 
     switch (lhs.m_Type) {
-        case ConstIterator::SequenceType:
+        case ConstIterator::eType::SequenceType:
             return static_cast<SequenceConstIteratorImp*>(lhs.m_pImp)->m_Iterator
                 == static_cast<SequenceConstIteratorImp*>(rhs.m_pImp)->m_Iterator;
             break;
-        case ConstIterator::MapType:
+        case ConstIterator::eType::MapType:
             return static_cast<MapConstIteratorImp*>(lhs.m_pImp)->m_Iterator
                 == static_cast<MapConstIteratorImp*>(rhs.m_pImp)->m_Iterator;
             break;
@@ -618,11 +619,11 @@ bool operator!=(const ConstIterator& lhs, const ConstIterator& rhs) { return !(l
 //    }
 //
 //    switch (m_Type) {
-//        case SequenceType:
+//        case eType::SequenceType:
 //            return static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator
 //                == static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
 //            break;
-//        case MapType:
+//        case eType::MapType:
 //            return static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator
 //                == static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
 //            break;
@@ -647,13 +648,13 @@ Node::~Node() { delete static_cast<NodeImp*>(m_pImp); }
 
 Node::eType Node::Type() const { return NODE_IMP->m_Type; }
 
-bool Node::IsNone() const { return NODE_IMP->m_Type == Node::None; }
+bool Node::IsNone() const { return NODE_IMP->m_Type == Node::eType::None; }
 
-bool Node::IsSequence() const { return NODE_IMP->m_Type == Node::SequenceType; }
+bool Node::IsSequence() const { return NODE_IMP->m_Type == Node::eType::SequenceType; }
 
-bool Node::IsMap() const { return NODE_IMP->m_Type == Node::MapType; }
+bool Node::IsMap() const { return NODE_IMP->m_Type == Node::eType::MapType; }
 
-bool Node::IsScalar() const { return NODE_IMP->m_Type == Node::ScalarType; }
+bool Node::IsScalar() const { return NODE_IMP->m_Type == Node::eType::ScalarType; }
 
 void Node::Clear() { NODE_IMP->Clear(); }
 
@@ -695,7 +696,7 @@ Node& Node::operator[](const std::string& key) {
 }
 
 void Node::Erase(const size_t index) {
-    if (TYPE_IMP == nullptr || NODE_IMP->m_Type != Node::SequenceType) {
+    if (TYPE_IMP == nullptr || NODE_IMP->m_Type != Node::eType::SequenceType) {
         return;
     }
 
@@ -703,7 +704,7 @@ void Node::Erase(const size_t index) {
 }
 
 void Node::Erase(const std::string& key) {
-    if (TYPE_IMP == nullptr || NODE_IMP->m_Type != Node::MapType) {
+    if (TYPE_IMP == nullptr || NODE_IMP->m_Type != Node::eType::MapType) {
         return;
     }
 
@@ -735,13 +736,13 @@ Iterator Node::Begin() {
         IteratorImp* pItImp = nullptr;
 
         switch (NODE_IMP->m_Type) {
-            case Node::SequenceType:
-                it.m_Type = Iterator::SequenceType;
+            case Node::eType::SequenceType:
+                it.m_Type = Iterator::eType::SequenceType;
                 pItImp = new SequenceIteratorImp;
                 pItImp->InitBegin(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
-            case Node::MapType:
-                it.m_Type = Iterator::MapType;
+            case Node::eType::MapType:
+                it.m_Type = Iterator::eType::MapType;
                 pItImp = new MapIteratorImp;
                 pItImp->InitBegin(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
@@ -761,13 +762,13 @@ ConstIterator Node::Begin() const {
         IteratorImp* pItImp = nullptr;
 
         switch (NODE_IMP->m_Type) {
-            case Node::SequenceType:
-                it.m_Type = ConstIterator::SequenceType;
+            case Node::eType::SequenceType:
+                it.m_Type = ConstIterator::eType::SequenceType;
                 pItImp = new SequenceConstIteratorImp;
                 pItImp->InitBegin(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
-            case Node::MapType:
-                it.m_Type = ConstIterator::MapType;
+            case Node::eType::MapType:
+                it.m_Type = ConstIterator::eType::MapType;
                 pItImp = new MapConstIteratorImp;
                 pItImp->InitBegin(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
@@ -787,13 +788,13 @@ Iterator Node::End() {
         IteratorImp* pItImp = nullptr;
 
         switch (NODE_IMP->m_Type) {
-            case Node::SequenceType:
-                it.m_Type = Iterator::SequenceType;
+            case Node::eType::SequenceType:
+                it.m_Type = Iterator::eType::SequenceType;
                 pItImp = new SequenceIteratorImp;
                 pItImp->InitEnd(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
-            case Node::MapType:
-                it.m_Type = Iterator::MapType;
+            case Node::eType::MapType:
+                it.m_Type = Iterator::eType::MapType;
                 pItImp = new MapIteratorImp;
                 pItImp->InitEnd(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
@@ -813,13 +814,13 @@ ConstIterator Node::End() const {
         IteratorImp* pItImp = nullptr;
 
         switch (NODE_IMP->m_Type) {
-            case Node::SequenceType:
-                it.m_Type = ConstIterator::SequenceType;
+            case Node::eType::SequenceType:
+                it.m_Type = ConstIterator::eType::SequenceType;
                 pItImp = new SequenceConstIteratorImp;
                 pItImp->InitEnd(dynamic_cast<SequenceImp*>(TYPE_IMP));
                 break;
-            case Node::MapType:
-                it.m_Type = ConstIterator::MapType;
+            case Node::eType::MapType:
+                it.m_Type = ConstIterator::eType::MapType;
                 pItImp = new MapConstIteratorImp;
                 pItImp->InitEnd(dynamic_cast<MapImp*>(TYPE_IMP));
                 break;
@@ -855,11 +856,11 @@ class ReaderLine {
     explicit ReaderLine(std::string data = "",
                         const size_t no = 0,
                         const size_t offset = 0,
-                        const Node::eType type = Node::None,
+                        const Node::eType type = Node::eType::None,
                         const unsigned char flags = 0)
         : Data(std::move(data)), No(no), Offset(offset), Type(type), Flags(flags) {}
 
-    enum eFlag {
+    enum class eFlag : int8_t {
         LiteralScalarFlag,///< Literal scalar type, defined as "|".
         FoldedScalarFlag, ///< Folded scalar type, defined as "<".
         ScalarNewlineFlag ///< Scalar ends with a newline.
@@ -1077,7 +1078,7 @@ class ParseImp {
 
         // Set next line of all lines.
         if (!m_Lines.empty()) {
-            if (m_Lines.back()->Type != Node::ScalarType) {
+            if (m_Lines.back()->Type != Node::eType::ScalarType) {
                 throw ParsingException(ExceptionMessage(g_ErrorUnexpectedDocumentEnd, *m_Lines.back()));
             }
 
@@ -1110,7 +1111,7 @@ class ParseImp {
             return false;
         }
 
-        pLine->Type = Node::SequenceType;
+        pLine->Type = Node::eType::SequenceType;
 
         ClearTrailingEmptyLines(++it);
 
@@ -1147,7 +1148,7 @@ class ParseImp {
             throw ParsingException(ExceptionMessage(g_ErrorKeyIncorrect, *pLine));
         }
 
-        pLine->Type = Node::MapType;
+        pLine->Type = Node::eType::MapType;
 
         // Get key
         std::string key = pLine->Data.substr(0, tokenPos);
@@ -1204,7 +1205,7 @@ class ParseImp {
         if (IsBlockScalar(value, pLine->No, dummyBlockFlags)) {
             newLineOffset = pLine->Offset;
         }
-        auto* pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::ScalarType);
+        auto* pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::eType::ScalarType);
         it = m_Lines.insert(it, pNewLine);
 
         // Return false in order to handle next line(scalar value).
@@ -1220,7 +1221,7 @@ class ParseImp {
         */
     void PostProcessScalarLine(std::list<ReaderLine*>::iterator& it) {
         ReaderLine* pLine = *it;
-        pLine->Type = Node::ScalarType;
+        pLine->Type = Node::eType::ScalarType;
 
         size_t parentOffset = pLine->Offset;
         if (pLine != m_Lines.front()) {
@@ -1234,7 +1235,7 @@ class ParseImp {
         // Find last empty lines
         while (it != m_Lines.end()) {
             pLine = *it;
-            pLine->Type = Node::ScalarType;
+            pLine->Type = Node::eType::ScalarType;
             if (!pLine->Data.empty()) {
                 if (pLine->Offset <= parentOffset) {
                     break;
@@ -1262,9 +1263,9 @@ class ParseImp {
 
         // Handle next line.
         switch (type) {
-            case Node::SequenceType: ParseSequence(root, it); break;
-            case Node::MapType: ParseMap(root, it); break;
-            case Node::ScalarType: ParseScalar(root, it); break;
+            case Node::eType::SequenceType: ParseSequence(root, it); break;
+            case Node::eType::MapType: ParseMap(root, it); break;
+            case Node::eType::ScalarType: ParseScalar(root, it); break;
             default: break;
         }
 
@@ -1292,21 +1293,21 @@ class ParseImp {
             // Handle value of map
             Node::eType valueType = (*it)->Type;
             switch (valueType) {
-                case Node::SequenceType: ParseSequence(childNode, it); break;
-                case Node::MapType: ParseMap(childNode, it); break;
-                case Node::ScalarType: ParseScalar(childNode, it); break;
+                case Node::eType::SequenceType: ParseSequence(childNode, it); break;
+                case Node::eType::MapType: ParseMap(childNode, it); break;
+                case Node::eType::ScalarType: ParseScalar(childNode, it); break;
                 default: break;
             }
 
             // Check next line. if sequence and correct level, go on, else exit.
-            // If same level but but of type map = error.
+            // If same level but of type map = error.
             if (it == m_Lines.end() || ((pNextLine = *it)->Offset < pLine->Offset)) {
                 break;
             }
             if (pNextLine->Offset > pLine->Offset) {
                 throw ParsingException(ExceptionMessage(g_ErrorIncorrectOffset, *pNextLine));
             }
-            if (pNextLine->Type != Node::SequenceType) {
+            if (pNextLine->Type != Node::eType::SequenceType) {
                 throw InternalException(ExceptionMessage(g_ErrorDiffEntryNotAllowed, *pNextLine));
             }
         }
@@ -1331,14 +1332,14 @@ class ParseImp {
             // Handle value of map
             Node::eType valueType = (*it)->Type;
             switch (valueType) {
-                case Node::SequenceType: ParseSequence(childNode, it); break;
-                case Node::MapType: ParseMap(childNode, it); break;
-                case Node::ScalarType: ParseScalar(childNode, it); break;
+                case Node::eType::SequenceType: ParseSequence(childNode, it); break;
+                case Node::eType::MapType: ParseMap(childNode, it); break;
+                case Node::eType::ScalarType: ParseScalar(childNode, it); break;
                 default: break;
             }
 
             // Check next line. if map and correct level, go on, else exit.
-            // if same level but but of type map = error.
+            // if same level but of type map = error.
             if (it == m_Lines.end() || ((pNextLine = *it)->Offset < pLine->Offset)) {
                 break;
             }
@@ -1364,11 +1365,11 @@ class ParseImp {
         unsigned char blockFlags = 0;
         bool isBlockScalar = IsBlockScalar(pLine->Data, pLine->No, blockFlags);
         const bool newLineFlag =
-            static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::ScalarNewlineFlag)]);
+            static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::ScalarNewlineFlag)]);
         const bool foldedFlag =
-            static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::FoldedScalarFlag)]);
+            static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::FoldedScalarFlag)]);
         const bool literalFlag =
-            static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::LiteralScalarFlag)]);
+            static_cast<bool>(blockFlags & ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::LiteralScalarFlag)]);
         size_t parentOffset = 0;
 
         // Find parent offset
@@ -1381,7 +1382,7 @@ class ParseImp {
         // Move to next iterator/line if current line is a block scalar.
         if (isBlockScalar) {
             ++it;
-            if (it == m_Lines.end() || (pLine = *it)->Type != Node::ScalarType) {
+            if (it == m_Lines.end() || (pLine = *it)->Type != Node::eType::ScalarType) {
                 return;
             }
         }
@@ -1404,7 +1405,7 @@ class ParseImp {
 
                 // Move to next line
                 ++it;
-                if (it == m_Lines.end() || (*it)->Type != Node::ScalarType) {
+                if (it == m_Lines.end() || (*it)->Type != Node::eType::ScalarType) {
                     break;
                 }
 
@@ -1424,7 +1425,7 @@ class ParseImp {
             }
 
             bool addedSpace = false;
-            while (it != m_Lines.end() && (*it)->Type == Node::ScalarType) {
+            while (it != m_Lines.end() && (*it)->Type == Node::eType::ScalarType) {
                 pLine = *it;
 
                 const size_t endOffset = pLine->Data.find_last_not_of(" \t");
@@ -1456,7 +1457,7 @@ class ParseImp {
 
                 // Move to next line
                 ++it;
-                if (it == m_Lines.end() || (*it)->Type != Node::ScalarType) {
+                if (it == m_Lines.end() || (*it)->Type != Node::eType::ScalarType) {
                     if (newLineFlag) {
                         data += "\n";
                     }
@@ -1487,28 +1488,28 @@ class ParseImp {
         for (auto* pLine : m_Lines) {
 
             // Print type
-            if (pLine->Type == Node::SequenceType) {
+            if (pLine->Type == Node::eType::SequenceType) {
                 std::cout << "seq ";
-            } else if (pLine->Type == Node::MapType) {
+            } else if (pLine->Type == Node::eType::MapType) {
                 std::cout << "map ";
-            } else if (pLine->Type == Node::ScalarType) {
+            } else if (pLine->Type == Node::eType::ScalarType) {
                 std::cout << "sca ";
             } else {
                 std::cout << "    ";
             }
 
             // Print flags
-            if (pLine->GetFlag(ReaderLine::FoldedScalarFlag)) {
+            if (pLine->GetFlag(ReaderLine::eFlag::FoldedScalarFlag)) {
                 std::cout << "f";
             } else {
                 std::cout << "-";
             }
-            if (pLine->GetFlag(ReaderLine::LiteralScalarFlag)) {
+            if (pLine->GetFlag(ReaderLine::eFlag::LiteralScalarFlag)) {
                 std::cout << "l";
             } else {
                 std::cout << "-";
             }
-            if (pLine->GetFlag(ReaderLine::ScalarNewlineFlag)) {
+            if (pLine->GetFlag(ReaderLine::eFlag::ScalarNewlineFlag)) {
                 std::cout << "n";
             } else {
                 std::cout << "-";
@@ -1523,16 +1524,16 @@ class ParseImp {
             std::cout << pLine->No << " ";
             std::cout << std::string(pLine->Offset, ' ');
 
-            if (pLine->Type == Node::ScalarType) {
+            if (pLine->Type == Node::eType::ScalarType) {
                 std::string scalarValue = pLine->Data;
                 for (size_t i = 0; (i = scalarValue.find('\n', i)) != std::string::npos;) {
                     scalarValue.replace(i, 1, "\\n");
                     i += 2;
                 }
                 NES_DEBUG(scalarValue);
-            } else if (pLine->Type == Node::MapType) {
+            } else if (pLine->Type == Node::eType::MapType) {
                 NES_DEBUG(pLine->Data + ":");
-            } else if (pLine->Type == Node::SequenceType) {
+            } else if (pLine->Type == Node::eType::SequenceType) {
                 NES_DEBUG("-");
             } else {
                 NES_DEBUG("> UNKOWN TYPE <");
@@ -1587,9 +1588,9 @@ class ParseImp {
                     throw ParsingException(ExceptionMessage(g_ErrorInvalidBlockScalar, line, data));
                 }
             } else {
-                flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::ScalarNewlineFlag)];
+                flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::ScalarNewlineFlag)];
             }
-            flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::LiteralScalarFlag)];
+            flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::LiteralScalarFlag)];
             return true;
         }
 
@@ -1599,9 +1600,9 @@ class ParseImp {
                     throw ParsingException(ExceptionMessage(g_ErrorInvalidBlockScalar, line, data));
                 }
             } else {
-                flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::ScalarNewlineFlag)];
+                flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::ScalarNewlineFlag)];
             }
-            flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::FoldedScalarFlag)];
+            flags |= ReaderLine::FlagMask[static_cast<size_t>(ReaderLine::eFlag::FoldedScalarFlag)];
             return true;
         }
 
@@ -1712,7 +1713,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
     const size_t indention = config.SpaceIndentation;
 
     switch (node.Type()) {
-        case Node::SequenceType: {
+        case Node::eType::SequenceType: {
             for (auto it = node.Begin(); it != node.End(); it++) {
                 const Node& value = (*it).second;
                 if (value.IsNone()) {
@@ -1729,7 +1730,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             }
 
         } break;
-        case Node::MapType: {
+        case Node::eType::MapType: {
             size_t count = 0;
             for (auto it = node.Begin(); it != node.End(); it++) {
                 const Node& value = (*it).second;
@@ -1763,7 +1764,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             }
 
         } break;
-        case Node::ScalarType: {
+        case Node::eType::ScalarType: {
             const auto value = node.As<std::string>();
 
             // Empty scalar
@@ -2004,22 +2005,22 @@ void CopyNode(const Node& from, Node& to) {
     const Node::eType type = from.Type();
 
     switch (type) {
-        case Node::SequenceType:
+        case Node::eType::SequenceType:
             for (auto it = from.Begin(); it != from.End(); it++) {
                 const Node& currentNode = (*it).second;
                 Node& newNode = to.PushBack();
                 CopyNode(currentNode, newNode);
             }
             break;
-        case Node::MapType:
+        case Node::eType::MapType:
             for (auto it = from.Begin(); it != from.End(); it++) {
                 const Node& currentNode = (*it).second;
                 Node& newNode = to[(*it).first];
                 CopyNode(currentNode, newNode);
             }
             break;
-        case Node::ScalarType: to = from.As<std::string>(); break;
-        case Node::None: break;
+        case Node::eType::ScalarType: to = from.As<std::string>(); break;
+        case Node::eType::None: break;
     }
 }
 

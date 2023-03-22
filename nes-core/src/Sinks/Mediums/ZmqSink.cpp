@@ -25,7 +25,7 @@
 
 namespace NES {
 
-SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
+SinkMediumTypes ZmqSink::getSinkMediumType() { return SinkMediumTypes::ZMQ_SINK; }
 
 ZmqSink::ZmqSink(SinkFormatPtr format,
                  Runtime::NodeEnginePtr nodeEngine,

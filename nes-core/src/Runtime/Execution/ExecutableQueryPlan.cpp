@@ -188,7 +188,7 @@ bool ExecutableQueryPlan::stop() {
 void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
-        case FailEndOfStream: {
+        case ReconfigurationType::FailEndOfStream: {
             NES_DEBUG2("Executing FailEndOfStream on qep queryId={} querySubPlanId={}", queryId, querySubPlanId);
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),
                             "Invalid FailEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
@@ -198,7 +198,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                                                   Execution::ExecutableQueryPlanStatus::ErrorState);
             break;
         }
-        case HardEndOfStream: {
+        case ReconfigurationType::HardEndOfStream: {
             NES_DEBUG2("Executing HardEndOfStream on qep queryId={} querySubPlanId={}", queryId, querySubPlanId);
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),
                             "Invalid HardEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
@@ -207,7 +207,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                                                   Execution::ExecutableQueryPlanStatus::Stopped);
             break;
         }
-        case SoftEndOfStream: {
+        case ReconfigurationType::SoftEndOfStream: {
             NES_DEBUG2("QueryExecutionPlan: soft stop request received for query plan {} sub plan {} left tokens = {}",
                        queryId,
                        querySubPlanId,
@@ -282,8 +282,8 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
             ReconfigurationMessage(getQueryId(),
                                    getQuerySubPlanId(),
                                    terminationType == QueryTerminationType::Graceful
-                                       ? SoftEndOfStream
-                                       : (terminationType == QueryTerminationType::HardStop ? HardEndOfStream : FailEndOfStream),
+                                       ? ReconfigurationType::SoftEndOfStream
+                                       : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream : ReconfigurationType::FailEndOfStream),
                                    Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
     }
@@ -304,8 +304,8 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
             ReconfigurationMessage(getQueryId(),
                                    getQuerySubPlanId(),
                                    terminationType == QueryTerminationType::Graceful
-                                       ? SoftEndOfStream
-                                       : (terminationType == QueryTerminationType::HardStop ? HardEndOfStream : FailEndOfStream),
+                                       ? ReconfigurationType::SoftEndOfStream
+                                       : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream : ReconfigurationType::FailEndOfStream),
                                    Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
     }
@@ -325,8 +325,8 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
             ReconfigurationMessage(getQueryId(),
                                    getQuerySubPlanId(),
                                    terminationType == QueryTerminationType::Graceful
-                                       ? SoftEndOfStream
-                                       : (terminationType == QueryTerminationType::HardStop ? HardEndOfStream : FailEndOfStream),
+                                       ? ReconfigurationType::SoftEndOfStream
+                                       : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream : ReconfigurationType::FailEndOfStream),
                                    Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
     }

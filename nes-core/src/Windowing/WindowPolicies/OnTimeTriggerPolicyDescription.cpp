@@ -24,7 +24,7 @@ TriggerType OnTimeTriggerPolicyDescription::getPolicyType() { return this->polic
 uint64_t OnTimeTriggerPolicyDescription::getTriggerTimeInMs() const { return triggerTimeInMs; }
 
 OnTimeTriggerPolicyDescription::OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs)
-    : BaseWindowTriggerPolicyDescriptor(triggerOnTime), triggerTimeInMs(triggerTimeInMs) {}
+    : BaseWindowTriggerPolicyDescriptor(TriggerType::triggerOnTime), triggerTimeInMs(triggerTimeInMs) {}
 
 std::string OnTimeTriggerPolicyDescription::toString() {
     std::stringstream ss;

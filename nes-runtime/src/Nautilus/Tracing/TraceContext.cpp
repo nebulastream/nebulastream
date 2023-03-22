@@ -65,8 +65,8 @@ void TraceContext::traceUnaryOperation(const OpCode& op, const ValueRef& input, 
 }
 
 void TraceContext::traceReturnOperation(const ValueRef& resultRef) {
-    trace(RETURN, [&]() {
-        TraceOperation result = TraceOperation(RETURN);
+    trace(OpCode::RETURN, [&]() {
+        TraceOperation result = TraceOperation(OpCode::RETURN);
         if (!resultRef.type->isVoid()) {
             result.input.emplace_back(resultRef);
         }
@@ -76,35 +76,35 @@ void TraceContext::traceReturnOperation(const ValueRef& resultRef) {
 }
 
 void TraceContext::traceConstOperation(const ValueRef& constRef, const AnyPtr& constantValue) {
-    trace(CONST, [&]() {
-        return Nautilus::Tracing::TraceOperation(CONST, constRef, {constantValue});
+    trace(OpCode::CONST, [&]() {
+        return Nautilus::Tracing::TraceOperation(OpCode::CONST, constRef, {constantValue});
     });
 }
 
 void TraceContext::traceFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
-    trace(CALL, [&]() {
-        return Nautilus::Tracing::TraceOperation(CALL, arguments);
+    trace(OpCode::CALL, [&]() {
+        return Nautilus::Tracing::TraceOperation(OpCode::CALL, arguments);
     });
 }
 
 void TraceContext::traceFunctionCall(const ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
-    trace(CALL, [&]() {
-        return Nautilus::Tracing::TraceOperation(CALL, resultRef, arguments);
+    trace(OpCode::CALL, [&]() {
+        return Nautilus::Tracing::TraceOperation(OpCode::CALL, resultRef, arguments);
     });
 }
 
 void TraceContext::traceStore(const ValueRef& memref, const ValueRef& valueRef) {
-    trace(STORE, [&]() {
-        return Nautilus::Tracing::TraceOperation(STORE, {memref, valueRef});
+    trace(OpCode::STORE, [&]() {
+        return Nautilus::Tracing::TraceOperation(OpCode::STORE, {memref, valueRef});
     });
 }
 
 void TraceContext::traceAssignmentOperation(const ValueRef& targetRef, const ValueRef& sourceRef) {
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
-    if (!isExpectedOperation(ASSIGN)) {
+    if (!isExpectedOperation(OpCode::ASSIGN)) {
         auto tag = tagRecorder.createTag();
-        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::ASSIGN, targetRef, {sourceRef});
+        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::OpCode::ASSIGN, targetRef, {sourceRef});
         executionTrace->addOperation(operation);
         localTagMap.emplace(tag, operation.operationRef);
     }
@@ -133,12 +133,12 @@ void TraceContext::trace(const OpCode& opCode, Functor createOperation) {
 bool TraceContext::traceCMP(const ValueRef& valueRef) {
     uint32_t trueBlock;
     uint32_t falseBlock;
-    if (!isExpectedOperation(CMP)) {
+    if (!isExpectedOperation(OpCode::CMP)) {
         trueBlock = executionTrace->createBlock();
         falseBlock = executionTrace->createBlock();
         executionTrace->getBlock(trueBlock).predecessors.emplace_back(executionTrace->getCurrentBlockIndex());
         executionTrace->getBlock(falseBlock).predecessors.emplace_back(executionTrace->getCurrentBlockIndex());
-        auto operation = TraceOperation(CMP, valueRef, {BlockRef(trueBlock), BlockRef(falseBlock)});
+        auto operation = TraceOperation(OpCode::CMP, valueRef, {BlockRef(trueBlock), BlockRef(falseBlock)});
         executionTrace->addOperation(operation);
     } else {
         // we repeat the operation
@@ -182,7 +182,7 @@ bool TraceContext::isExpectedOperation(const OpCode& opCode) {
     }
     auto currentOperation = &currentBlock.operations[currentOperationCounter];
     // the next operation is a jump we transfer to that block.
-    while (currentOperation->op == JMP) {
+    while (currentOperation->op == OpCode::JMP) {
         executionTrace->setCurrentBlock(std::get<BlockRef>(currentOperation->input[0]).block);
         currentOperationCounter = 0;
         currentOperation = &executionTrace->getCurrentBlock().operations[currentOperationCounter];

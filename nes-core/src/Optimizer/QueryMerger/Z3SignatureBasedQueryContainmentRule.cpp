@@ -23,6 +23,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Optimizer {
 
@@ -63,9 +64,9 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
             //Check if the host and target sink operator signatures match each other
             auto containment =
                 signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
-            NES_TRACE("Z3SignatureBasedQueryContainmentRule: containment: " << containment);
+            NES_TRACE("Z3SignatureBasedQueryContainmentRule: containment: " << magic_enum::enum_name(containment));
             //todo: #3503 create a containment based query merger to update the GQP based on containment relationships
-            if (containment != NO_CONTAINMENT) {
+            if (containment != ContainmentType::NO_CONTAINMENT) {
                 foundMatch = true;
                 matched = true;
             }

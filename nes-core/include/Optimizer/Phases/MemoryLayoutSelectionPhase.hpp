@@ -49,7 +49,7 @@ class MemoryLayoutSelectionPhase {
     /**
      * @brief Represents a particular MemoryLayoutPolicy to select different strategies.
      */
-    enum MemoryLayoutPolicy : uint8_t {
+    enum class MemoryLayoutPolicy : uint8_t {
         // Enforces a row layout for all operators within a query.
         FORCE_ROW_LAYOUT,
         // Enforces a columnar layout for all operators within a query.

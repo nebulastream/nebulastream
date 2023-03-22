@@ -23,7 +23,7 @@ AddressOperation::AddressOperation(OperationIdentifier identifier,
                                    uint64_t fieldOffset,
                                    std::string recordIdxName,
                                    std::string addressSourceName)
-    : Operation(Operation::AddressOp, identifier, Types::StampFactory::createAddressStamp()), dataType(dataType),
+    : Operation(Operation::OperationType::AddressOp, identifier, Types::StampFactory::createAddressStamp()), dataType(dataType),
       recordWidth(getRecordWidth), fieldOffset(fieldOffset), recordIdxName(recordIdxName), addressSourceName(addressSourceName) {}
 
 PrimitiveStamp AddressOperation::getDataType() { return dataType; }

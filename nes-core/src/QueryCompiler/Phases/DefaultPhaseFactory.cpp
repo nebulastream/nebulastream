@@ -38,12 +38,12 @@ PhaseFactoryPtr DefaultPhaseFactory::create() { return std::make_shared<DefaultP
 
 PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
     switch (options->getPipeliningStrategy()) {
-        case QueryCompilerOptions::OPERATOR_FUSION: {
+        case QueryCompilerOptions::PipeliningStrategy::OPERATOR_FUSION: {
             NES_DEBUG2("Create pipelining phase with fuse policy");
             auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
             return DefaultPipeliningPhase::create(operatorFusionPolicy);
         };
-        case QueryCompilerOptions::OPERATOR_AT_A_TIME: {
+        case QueryCompilerOptions::PipeliningStrategy::OPERATOR_AT_A_TIME: {
             NES_DEBUG2("Create pipelining phase with always break policy");
             auto operatorFusionPolicy = OperatorAtATimePolicy::create();
             return DefaultPipeliningPhase::create(operatorFusionPolicy);

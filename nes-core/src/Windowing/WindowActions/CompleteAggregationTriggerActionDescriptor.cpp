@@ -23,6 +23,6 @@ WindowActionDescriptorPtr CompleteAggregationTriggerActionDescriptor::create() {
 ActionType CompleteAggregationTriggerActionDescriptor::getActionType() { return this->action; }
 
 CompleteAggregationTriggerActionDescriptor::CompleteAggregationTriggerActionDescriptor()
-    : BaseWindowActionDescriptor(WindowAggregationTriggerAction) {}
+    : BaseWindowActionDescriptor(ActionType::WindowAggregationTriggerAction) {}
 
 }// namespace NES::Windowing

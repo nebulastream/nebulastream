@@ -91,7 +91,7 @@ void SSACreationPhase::SSACreationPhaseContext::processValueRef(Block& block, Va
             // add to final call
             auto& predBlock = trace->getBlock(predecessor);
             auto& lastOperation = predBlock.operations.back();
-            if (lastOperation.op == JMP || lastOperation.op == CMP) {
+            if (lastOperation.op == OpCode::JMP || lastOperation.op == OpCode::CMP) {
                 for (auto& input : lastOperation.input) {
                     auto& blockRef = std::get<BlockRef>(input);
                     if (blockRef.block == block.blockId) {
@@ -123,7 +123,7 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
         std::unordered_map<ValueRef, ValueRef, ValueRefHasher> assignmentMap;
         for (uint64_t i = 0; i < block.operations.size(); i++) {
             auto& operation = block.operations[i];
-            if (operation.op == CMP) {
+            if (operation.op == OpCode::CMP) {
                 if (auto* valueRef = std::get_if<ValueRef>(&operation.result)) {
                     auto foundAssignment = assignmentMap.find(*valueRef);
                     if (foundAssignment != assignmentMap.end()) {
@@ -132,7 +132,7 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
                     }
                 }
             }
-            if (operation.op == ASSIGN) {
+            if (operation.op == OpCode::ASSIGN) {
                 assignmentMap[get<ValueRef>(operation.result)] = get<ValueRef>(operation.input[0]);
             } else {
                 for (auto& input : operation.input) {
@@ -156,7 +156,7 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
         }
 
         std::erase_if(block.operations, [&](const auto& item) {
-            return item.op == ASSIGN;
+            return item.op == OpCode::ASSIGN;
         });
     }
 }
@@ -197,7 +197,7 @@ void SSACreationPhase::SSACreationPhaseContext::makeBlockArgumentsUnique() {
         }
 
         std::erase_if(block.operations, [&](const auto& item) {
-            return item.op == ASSIGN;
+            return item.op == OpCode::ASSIGN;
         });
     }
 }

@@ -21,8 +21,8 @@ FloatStamp::BitWidth FloatStamp::getBitWidth() const { return bitWidth; }
 
 uint32_t FloatStamp::getNumberOfBits() const {
     switch (getBitWidth()) {
-        case F32: return 32;
-        case F64: return 64;
+        case BitWidth::F32: return 32;
+        case BitWidth::F64: return 64;
     }
 }
 

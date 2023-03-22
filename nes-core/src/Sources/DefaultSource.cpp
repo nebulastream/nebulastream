@@ -47,7 +47,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                       operatorId,
                       originId,
                       numSourceLocalBuffers,
-                      GatheringMode::INTERVAL_MODE,
+                      GatheringMode::Value ::INTERVAL_MODE,
                       std::move(successors)) {
     this->gatheringInterval = std::chrono::milliseconds(gatheringInterval);
 }
@@ -70,27 +70,27 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
+                if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::CHAR) {
                     buffer[recordIndex][fieldIndex].write<char>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::UINT_8) {
                     buffer[recordIndex][fieldIndex].write<uint8_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::UINT_16) {
                     buffer[recordIndex][fieldIndex].write<uint16_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::UINT_32) {
                     buffer[recordIndex][fieldIndex].write<uint32_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::UINT_64) {
                     buffer[recordIndex][fieldIndex].write<uint64_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::INT_8) {
                     buffer[recordIndex][fieldIndex].write<int8_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::INT_16) {
                     buffer[recordIndex][fieldIndex].write<int16_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::INT_32) {
                     buffer[recordIndex][fieldIndex].write<int32_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::INT_64) {
                     buffer[recordIndex][fieldIndex].write<int64_t>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::FLOAT) {
                     buffer[recordIndex][fieldIndex].write<float>(value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::NativeType::DOUBLE) {
                     buffer[recordIndex][fieldIndex].write<double>(value);
                 } else {
                     NES_DEBUG2("This data source only generates data for numeric fields");
@@ -108,7 +108,7 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
     return buffer.getBuffer();
 }
 
-SourceType DefaultSource::getType() const { return DEFAULT_SOURCE; }
+SourceType DefaultSource::getType() const { return SourceType::DEFAULT_SOURCE; }
 
 std::vector<Schema::MemoryLayoutType> DefaultSource::getSupportedLayouts() {
     return {Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::COLUMNAR_LAYOUT};

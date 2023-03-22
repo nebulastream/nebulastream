@@ -23,7 +23,7 @@ namespace NES {
 
 class LineageType {
   public:
-    enum Value : uint8_t {
+    enum class Value : uint8_t {
         NONE = 0,      /// no lineage
         IN_MEMORY = 1, /// lineage is stored in memory on nodes
         PERSISTENT = 2,/// lineage is stored in persistent memory

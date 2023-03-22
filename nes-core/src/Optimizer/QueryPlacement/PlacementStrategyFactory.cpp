@@ -21,6 +21,7 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Optimizer {
 
@@ -29,16 +30,16 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
                                                                const TopologyPtr& topology,
                                                                const TypeInferencePhasePtr& typeInferencePhase) {
     switch (placementStrategy) {
-        case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Manual:
+        case PlacementStrategy::Value::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Value::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Value::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Value::Manual:
             return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
 // #2486        case PlacementStrategy::IFCOP:
 //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 #ifdef TFDEF
-        case PlacementStrategy::MlHeuristic:
+        case PlacementStrategy::Value::MlHeuristic:
             return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 #endif
 
@@ -48,7 +49,8 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
         //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
         //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default: throw Exceptions::RuntimeException("Unknown placement strategy type " + std::to_string(placementStrategy));
+        default: throw Exceptions::RuntimeException("Unknown placement strategy type " +
+                                                        std::string(magic_enum::enum_name(placementStrategy)));
     }
 }
 }// namespace NES::Optimizer

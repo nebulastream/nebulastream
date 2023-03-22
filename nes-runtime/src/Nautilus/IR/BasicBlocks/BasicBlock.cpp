@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Nautilus::IR {
 BasicBlock::BasicBlock(std::string identifier,
@@ -103,20 +104,20 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
 
 [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> BasicBlock::getNextBlocks() {
     // std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> nextBlocks;
-    if (operations.back()->getOperationType() == IR::Operations::Operation::BranchOp) {
+    if (operations.back()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operations.back());
         return std::make_pair(branchOp->getNextBlockInvocation().getBlock(), nullptr);
-    } else if (operations.back()->getOperationType() == IR::Operations::Operation::IfOp) {
+    } else if (operations.back()->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(operations.back());
         return std::make_pair(ifOp->getTrueBlockInvocation().getBlock(), ifOp->getFalseBlockInvocation().getBlock());
-    } else if (operations.back()->getOperationType() == IR::Operations::Operation::LoopOp) {
+    } else if (operations.back()->getOperationType() == IR::Operations::Operation::OperationType::LoopOp) {
         auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(operations.back());
         return std::make_pair(loopOp->getLoopBodyBlock().getBlock(), loopOp->getLoopFalseBlock().getBlock());
-    } else if (operations.back()->getOperationType() == IR::Operations::Operation::ReturnOp) {
+    } else if (operations.back()->getOperationType() == IR::Operations::Operation::OperationType::ReturnOp) {
         return {};
     } else {
-        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: "
-                  << operations.back()->getOperationType());
+        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: " <<
+                    magic_enum::enum_name(operations.back()->getOperationType()));
         NES_NOT_IMPLEMENTED();
     }
 }

@@ -21,10 +21,10 @@ BaseWindowActionDescriptor::BaseWindowActionDescriptor(ActionType action) : acti
 std::string BaseWindowActionDescriptor::toString() { return getTypeAsString(); }
 
 std::string BaseWindowActionDescriptor::getTypeAsString() {
-    if (action == WindowAggregationTriggerAction) {
+    if (action == ActionType::WindowAggregationTriggerAction) {
         return "WindowAggregationTriggerAction";
     }
-    if (action == SliceAggregationTriggerAction) {
+    if (action == ActionType::SliceAggregationTriggerAction) {
         return "SliceAggregationTriggerAction";
     } else {
         return "Unknown Action";

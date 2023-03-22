@@ -30,17 +30,17 @@ class BinaryOperatorStatement : public ExpressionStatement {
     BinaryOperatorStatement(const ExpressionStatementPtr& lhs,
                             const BinaryOperatorType& op,
                             const ExpressionStatementPtr& rhs,
-                            BracketMode bracket_mode = NO_BRACKETS);
+                            BracketMode bracket_mode = BracketMode::NO_BRACKETS);
 
     BinaryOperatorStatement(const ExpressionStatement& lhs,
                             const BinaryOperatorType& op,
                             const ExpressionStatement& rhs,
-                            BracketMode bracket_mode = NO_BRACKETS);
+                            BracketMode bracket_mode = BracketMode::NO_BRACKETS);
 
     ~BinaryOperatorStatement() override = default;
 
     BinaryOperatorStatement
-    addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = NO_BRACKETS);
+    addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = BracketMode::NO_BRACKETS);
 
     static StatementPtr assignToVariable(const VarRefStatement& lhs);
 

@@ -45,7 +45,8 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
         addReconfigurationMessage(
             qep->getQueryId(),
             qep->getQuerySubPlanId(),
-            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
+            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), ReconfigurationType::Destroy,
+                                   inherited1::shared_from_this()),
             false);
 
         queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),
@@ -56,7 +57,8 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
         addReconfigurationMessage(
             qep->getQueryId(),
             qep->getQuerySubPlanId(),
-            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
+            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), ReconfigurationType::Destroy,
+                                   inherited1::shared_from_this()),
             false);
 
         queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),

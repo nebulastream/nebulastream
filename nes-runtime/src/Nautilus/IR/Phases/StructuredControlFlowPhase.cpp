@@ -117,21 +117,21 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
         // control-flow-merge-edges. Also, it is a loop-header-block with 1 numLoopBackEdge. (5-2-1 => 2 still open)
         while (!(mergeBlockFound =
                      mergeBlockCheck(currentBlock, ifOperations, numMergeBlockVisits, newVisit, loopBlockWithVisitedBody))
-               && (currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp)) {
+               && (currentBlock->getTerminatorOp()->getOperationType() != Operation::OperationType::ReturnOp)) {
             auto terminatorOp = currentBlock->getTerminatorOp();
-            if (terminatorOp->getOperationType() == Operation::BranchOp) {
+            if (terminatorOp->getOperationType() == Operation::OperationType::BranchOp) {
                 // If the currentBlock is a simple branch-block, we move to the nextBlock.
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
                 currentBlock = branchOp->getNextBlockInvocation().getBlock();
                 newVisit = true;
-            } else if (terminatorOp->getOperationType() == Operation::IfOp) {
+            } else if (terminatorOp->getOperationType() == Operation::OperationType::IfOp) {
                 // If the currentBlock is an if-block, we push its if-operation on top of our IfOperation stack.
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
                 ifOperations.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
                 // We now follow the if-operation's true-branch until we find a new if-operation or a merge-block.
                 currentBlock = ifOp->getTrueBlockInvocation().getBlock();
                 newVisit = true;
-            } else if (terminatorOp->getOperationType() == Operation::LoopOp) {
+            } else if (terminatorOp->getOperationType() == Operation::OperationType::LoopOp) {
                 loopBlockWithVisitedBody.emplace(currentBlock);
                 if (numMergeBlockVisits.contains(currentBlock->getIdentifier())) {
                     numMergeBlockVisits.erase(currentBlock->getIdentifier());

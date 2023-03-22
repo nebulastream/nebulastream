@@ -19,17 +19,17 @@ namespace NES {
 
 SourceMode::Value SourceMode::getFromString(const std::string sourceMode) {
     if (sourceMode == "emptyBuffer") {
-        return SourceMode::EMPTY_BUFFER;
+        return SourceMode::Value::EMPTY_BUFFER;
     } else if (sourceMode == "wrapBuffer") {
-        return SourceMode::WRAP_BUFFER;
+        return SourceMode::Value::WRAP_BUFFER;
     } else if (sourceMode == "copyBuffer") {
-        return SourceMode::COPY_BUFFER;
+        return SourceMode::Value::COPY_BUFFER;
     } else if (sourceMode == "copyBufferSimdRte") {
-        return SourceMode::COPY_BUFFER_SIMD_RTE;
+        return SourceMode::Value::COPY_BUFFER_SIMD_RTE;
     } else if (sourceMode == "cacheCopy") {
-        return SourceMode::CACHE_COPY;
+        return SourceMode::Value::CACHE_COPY;
     } else if (sourceMode == "copyBufferSimdApex") {
-        return SourceMode::COPY_BUFFER_SIMD_APEX;
+        return SourceMode::Value::COPY_BUFFER_SIMD_APEX;
     } else {
         NES_THROW_RUNTIME_ERROR("mode not supported " << sourceMode);
     }
@@ -38,12 +38,12 @@ SourceMode::Value SourceMode::getFromString(const std::string sourceMode) {
 std::string SourceMode::toString(const Value sourceMode) {
 
     switch (sourceMode) {
-        case EMPTY_BUFFER: return "emptyBuffer";
-        case WRAP_BUFFER: return "wrapBuffer";
-        case COPY_BUFFER: return "copyBuffer";
-        case COPY_BUFFER_SIMD_RTE: return "copyBufferSimdRte";
-        case CACHE_COPY: return "cacheCopy";
-        case COPY_BUFFER_SIMD_APEX: return "copyBufferSimdApex";
+        case Value::EMPTY_BUFFER: return "emptyBuffer";
+        case Value::WRAP_BUFFER: return "wrapBuffer";
+        case Value::COPY_BUFFER: return "copyBuffer";
+        case Value::COPY_BUFFER_SIMD_RTE: return "copyBufferSimdRte";
+        case Value::CACHE_COPY: return "cacheCopy";
+        case Value::COPY_BUFFER_SIMD_APEX: return "copyBufferSimdApex";
     }
 }
 

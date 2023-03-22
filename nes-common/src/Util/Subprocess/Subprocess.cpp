@@ -20,12 +20,13 @@
 #include <fcntl.h>
 #include <thread>
 #include <vector>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Util {
 
 static const size_t READ_BUFFER_SIZE = 128;
 
-enum ends_of_pipe { READ = 0, WRITE = 1 };
+enum class ends_of_pipe : int8_t { READ = 0, WRITE = 1 };
 
 Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
     // initialize pipes
@@ -52,8 +53,8 @@ Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
     }
     NES_DEBUG("Started process " << cmd << " with pid: " << pid);
 
-    ::close(outPipe[WRITE]);
-    this->outputFile = fdopen(outPipe[READ], "r");
+    ::close(outPipe[magic_enum::enum_integer(ends_of_pipe::WRITE)]);
+    this->outputFile = fdopen(outPipe[magic_enum::enum_integer(ends_of_pipe::READ)], "r");
     this->logThread = std::thread([this]() {
         // read till end of process:
         while (!stopped && !feof(outputFile)) {
@@ -80,15 +81,15 @@ bool Subprocess::kill() {
 uint64_t Subprocess::getPid() { return pid; };
 
 void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& argv) {
-    if (dup2(outPipe[WRITE], STDOUT_FILENO) == -1) {
+    if (dup2(outPipe[magic_enum::enum_integer(ends_of_pipe::WRITE)], STDOUT_FILENO) == -1) {
         std::perror("subprocess: dup2() failed");
         return;
     }
 
-    if (outPipe[READ] != -1) {
-        ::close(outPipe[READ]);
+    if (outPipe[magic_enum::enum_integer(ends_of_pipe::READ)] != -1) {
+        ::close(outPipe[magic_enum::enum_integer(ends_of_pipe::READ)]);
     }
-    ::close(outPipe[WRITE]);
+    ::close(outPipe[magic_enum::enum_integer(ends_of_pipe::WRITE)]);
 
     std::vector<char*> cargs;
     cargs.reserve(argv.size() + 1);

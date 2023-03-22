@@ -94,7 +94,7 @@ bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr
 std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan) {
     std::vector<OperatorNodePtr> upStreamPinnedOperators;
     auto queryPlan = sharedQueryPlan->getQueryPlan();
-    if (!queryReconfiguration || SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
+    if (!queryReconfiguration || SharedQueryPlanStatus::Value::Created == sharedQueryPlan->getStatus()) {
         //Fetch all Source operators
         upStreamPinnedOperators = queryPlan->getLeafOperators();
     } else {

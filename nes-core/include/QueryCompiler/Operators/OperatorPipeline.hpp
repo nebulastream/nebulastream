@@ -32,7 +32,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * Source/Sink pipelines only have a single source and sink operator.
      * Operator pipelines consist of arbitrary operators, except sources and sinks.
      */
-    enum Type { SourcePipelineType, SinkPipelineType, OperatorPipelineType };
+    enum class Type : int8_t { SourcePipelineType, SinkPipelineType, OperatorPipelineType };
 
     /**
      * @brief Creates a new operator pipeline

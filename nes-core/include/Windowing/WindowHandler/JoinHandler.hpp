@@ -129,8 +129,8 @@ class JoinHandler : public AbstractJoinHandler {
         std::unique_lock lock(mutex);
         NES_TRACE2("JoinHandler {}: run window action {} forceFlush={}", id, executableJoinAction->toString(), forceFlush);
 
-        auto watermarkLeft = getMinWatermark(leftSide);
-        auto watermarkRight = getMinWatermark(rightSide);
+        auto watermarkLeft = getMinWatermark(JoinSides::leftSide);
+        auto watermarkRight = getMinWatermark(JoinSides::rightSide);
 
         NES_TRACE2("JoinHandler {}: run for watermarkLeft={} watermarkRight={} lastWatermark={}",
                    id,
@@ -195,17 +195,17 @@ class JoinHandler : public AbstractJoinHandler {
         std::unique_lock lock(mutex);
         std::string side = isLeftSide ? "leftSide" : "rightSide";
         NES_TRACE2("JoinHandler {}: updateAllMaxTs with ts={} originId={} side={}", id, ts, originId, side);
-        if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+        if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::TriggerType::triggerOnWatermarkChange) {
             uint64_t beforeMin = 0;
             uint64_t afterMin = 0;
             if (isLeftSide) {
-                beforeMin = getMinWatermark(leftSide);
+                beforeMin = getMinWatermark(JoinSides::leftSide);
                 watermarkProcessorLeft->updateWatermark(ts, sequenceNumber, originId);
-                afterMin = getMinWatermark(leftSide);
+                afterMin = getMinWatermark(JoinSides::leftSide);
             } else {
-                beforeMin = getMinWatermark(rightSide);
+                beforeMin = getMinWatermark(JoinSides::rightSide);
                 watermarkProcessorRight->updateWatermark(ts, sequenceNumber, originId);
-                afterMin = getMinWatermark(rightSide);
+                afterMin = getMinWatermark(JoinSides::rightSide);
             }
 
             NES_TRACE2("JoinHandler {}: updateAllMaxTs with beforeMin={}  afterMin={}", id, beforeMin, afterMin);
@@ -305,10 +305,10 @@ class JoinHandler : public AbstractJoinHandler {
         };
 
         switch (message.getType()) {
-            case Runtime::FailEndOfStream: {
+            case Runtime::ReconfigurationType::FailEndOfStream: {
                 NES_NOT_IMPLEMENTED();
             }
-            case Runtime::SoftEndOfStream: {
+            case Runtime::ReconfigurationType::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
                     NES_DEBUG2("SoftEndOfStream received on join handler {}: going to flush in-flight windows and cleanup",
                                toString());
@@ -319,7 +319,7 @@ class JoinHandler : public AbstractJoinHandler {
                 }
                 break;
             }
-            case Runtime::HardEndOfStream: {
+            case Runtime::ReconfigurationType::HardEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
                     NES_DEBUG2("HardEndOfStream received on join handler {} going to flush in-flight windows and cleanup",
                                toString());

@@ -22,7 +22,7 @@ namespace NES::Monitoring {
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
 */
-enum MetricStoreType { AllEntries, NewestEntry };
+enum class MetricStoreType : int8_t { AllEntries, NewestEntry };
 
 std::string toString(MetricStoreType type);
 

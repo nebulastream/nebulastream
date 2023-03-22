@@ -51,7 +51,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE,
+                 GatheringMode::Value::INTERVAL_MODE,
                  std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode), batchSize(batchSize) {
@@ -228,7 +228,7 @@ bool KafkaSource::connect() {
     return connected;
 }
 
-SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
+SourceType KafkaSource::getType() const { return SourceType::KAFKA_SOURCE; }
 
 std::string KafkaSource::getBrokers() const { return brokers; }
 

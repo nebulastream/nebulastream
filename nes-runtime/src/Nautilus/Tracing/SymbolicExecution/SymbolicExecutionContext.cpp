@@ -21,8 +21,8 @@ namespace NES::Nautilus::Tracing {
 
 bool SymbolicExecutionContext::record(TagRecorder& tr) {
     // special case if we are currently in the follow mode, we switch to record and change the last decision in this execution path.
-    if (currentMode == FOLLOW) {
-        currentMode = RECORD;
+    if (currentMode == SymbolicExecutionContext::MODE::FOLLOW) {
+        currentMode = SymbolicExecutionContext::MODE::RECORD;
         currentExecutionPath.getPath().pop_back();
     }
 
@@ -30,7 +30,7 @@ bool SymbolicExecutionContext::record(TagRecorder& tr) {
     auto foundTag = tagMap.find(tag);
     if (foundTag == tagMap.end()) {
         // If was not visited yet -> store the execution trace and return true.
-        tagMap.emplace(tag, FirstVisit);
+        tagMap.emplace(tag, SymbolicExecutionContext::TagState::FirstVisit);
         currentExecutionPath.append(true);
         currentExecutionPath.setFinalTag(tag);
         inflightExecutionPaths.emplace_back(currentExecutionPath);
@@ -39,13 +39,13 @@ bool SymbolicExecutionContext::record(TagRecorder& tr) {
     // The tag already exists in the tag map.
     // Thus, the if was visited at least once.
     switch (foundTag->second) {
-        case FirstVisit: {
+        case SymbolicExecutionContext::TagState::FirstVisit: {
             // Tag is in FirstVisit state. Thus, it was visited one time -> so we visit the false case.
-            foundTag->second = SecondVisit;
+            foundTag->second = SymbolicExecutionContext::TagState::SecondVisit;
             currentExecutionPath.append(false);
             return false;
         };
-        case SecondVisit: {
+        case SymbolicExecutionContext::TagState::SecondVisit: {
             // The tag is in SecondVisit state -> terminate execution.
             NES_DEBUG("Trace: early terminate via exception.");
             throw TraceTerminationException();
@@ -55,7 +55,7 @@ bool SymbolicExecutionContext::record(TagRecorder& tr) {
 
 bool SymbolicExecutionContext::executeCMP(TagRecorder& tr) {
     currentOperation++;
-    if (currentMode == FOLLOW && currentOperation < currentExecutionPath.getSize()) {
+    if (currentMode == SymbolicExecutionContext::MODE::FOLLOW && currentOperation < currentExecutionPath.getSize()) {
         auto operation = currentExecutionPath[currentOperation - 1];
         return get<0>(operation);
     } else {
@@ -75,9 +75,9 @@ bool SymbolicExecutionContext::shouldContinue() {
         }
         auto element = tagMap.find(trace.getFinalTag());
         NES_ASSERT(element != tagMap.end(), "the tag should exists at this point");
-        if (element->second == FirstVisit) {
+        if (element->second == SymbolicExecutionContext::TagState::FirstVisit) {
             return true;
-        } else if (element->second == SecondVisit) {
+        } else if (element->second == SymbolicExecutionContext::TagState::SecondVisit) {
             // the target tag of this path was already visited two times, so tracing can skip it.
             NES_DEBUG("Skip tag " << element->first);
             inflightExecutionPaths.pop_front();
@@ -92,7 +92,7 @@ void SymbolicExecutionContext::next() {
     // if this is the first iteration the execution context is already initialized
     if (iterations > 0) {
         auto& trace = inflightExecutionPaths.front();
-        currentMode = FOLLOW;
+        currentMode = SymbolicExecutionContext::MODE::FOLLOW;
         currentExecutionPath = std::move(trace);
         inflightExecutionPaths.pop_front();
         currentOperation = 0;

@@ -22,6 +22,8 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
+#include <Util/magicenum/magic_enum.hpp>
+
 #endif// TFDEF
 
 #ifdef TFDEF
@@ -55,7 +57,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
     int inputSize = (int) (TfLiteTensorByteSize(inputTensor));
 
     //Prepare input parameters based on data type
-    if (dataType == BasicPhysicalType::NativeType::INT_64) {
+    if (dataType == magic_enum::enum_integer(BasicPhysicalType::NativeType::INT_64)) {
 
         int* inputData = (int*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
@@ -83,7 +85,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
-    } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
+    } else if (dataType == magic_enum::enum_integer(BasicPhysicalType::NativeType::FLOAT)) {
         //create input for tensor
         float* inputData = (float*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
@@ -111,7 +113,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
-    } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
+    } else if (dataType == magic_enum::enum_integer(BasicPhysicalType::NativeType::DOUBLE)) {
         //create input for tensor
         double* inputData = (double*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
@@ -139,7 +141,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
-    } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
+    } else if (dataType == magic_enum::enum_integer(BasicPhysicalType::NativeType::BOOLEAN)) {
         //create input for tensor
         bool* inputData = (bool*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {

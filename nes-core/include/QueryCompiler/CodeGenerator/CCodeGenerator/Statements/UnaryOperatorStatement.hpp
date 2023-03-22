@@ -25,7 +25,7 @@ CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
 class UnaryOperatorStatement : public ExpressionStatement {
   public:
-    UnaryOperatorStatement(const ExpressionStatement& expr, const UnaryOperatorType& op, BracketMode bracket_mode = NO_BRACKETS);
+    UnaryOperatorStatement(const ExpressionStatement& expr, const UnaryOperatorType& op, BracketMode bracket_mode = BracketMode::NO_BRACKETS);
 
     [[nodiscard]] StatementType getStamentType() const override;
 
@@ -37,8 +37,8 @@ class UnaryOperatorStatement : public ExpressionStatement {
 
   private:
     ExpressionStatementPtr expr_{nullptr};
-    UnaryOperatorType op{INVALID_UNARY_OPERATOR_TYPE};
-    BracketMode bracket_mode{NO_BRACKETS};
+    UnaryOperatorType op{UnaryOperatorType::INVALID_UNARY_OPERATOR_TYPE};
+    BracketMode bracket_mode{BracketMode::NO_BRACKETS};
 };
 
 UnaryOperatorStatement operator&(const ExpressionStatement& ref);
