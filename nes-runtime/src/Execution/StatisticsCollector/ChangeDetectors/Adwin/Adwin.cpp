@@ -191,7 +191,7 @@ void Adwin::deleteElement(){
     }
 }
 
-double Adwin::getEstimation() const{
+double Adwin::getMeanEstimation(){
     if (windowSize > 0) {
         return sum / double(windowSize);
     } else {

@@ -31,16 +31,16 @@ namespace NES::Runtime::Execution {
 class Adwin : public ChangeDetector {
   public:
     /**
-    * @brief Initialize ADWIN.
+    * @brief Initializes ADWIN.
     * @param delta confidence value (0,1) controls sensitivity of detecting concept drift
     * @param M number of buckets
     */
     Adwin(double delta, int M);
 
     /**
-     * @brief Update ADWIN with new element.
-     * @param value
-     * @return
+     * @brief Updates ADWIN with new element.
+     * @param value between 0 and 1
+     * @return true if change was detected, false otherwise.
      */
     bool insertValue(double& value) override;
 
@@ -48,7 +48,8 @@ class Adwin : public ChangeDetector {
      * @brief Get estimated mean.
      * @return estimated mean
      */
-    double getEstimation() const;
+    double getMeanEstimation() override;
+
     void print() const;
     int length() const { return windowSize; }
 

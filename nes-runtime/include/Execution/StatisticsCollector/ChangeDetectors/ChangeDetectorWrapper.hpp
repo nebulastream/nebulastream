@@ -24,7 +24,18 @@ class ChangeDetectorWrapper{
 
   public:
     explicit ChangeDetectorWrapper(std::unique_ptr<ChangeDetector> changeDetector);
+
+    /**
+     * @brief Insert value into change detector.
+     * @return true if change detected, false otherwise
+     */
     bool insertValue(double& value);
+
+    /**
+     * @brief Get estimated mean.
+     * @return estimated mean
+     */
+    double getMeanEstimation();
 
   private:
     std::unique_ptr<ChangeDetector> changeDetector;

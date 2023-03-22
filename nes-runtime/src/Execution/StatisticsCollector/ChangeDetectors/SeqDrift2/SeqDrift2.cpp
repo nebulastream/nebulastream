@@ -50,8 +50,8 @@ bool SeqDrift2::insertValue(double &inputValue) {
     return false;
 }
 
-void SeqDrift2::addToRightReservoir(double inputValue) {
-    right.addElement(inputValue);
+void SeqDrift2::addToRightReservoir(double value) {
+    right.addElement(value);
 }
 
 void SeqDrift2::clearLeftReservoir() {
@@ -167,7 +167,7 @@ double SeqDrift2::adjustForDataRate(double dKr) {
     return dk;
 }
 
-double SeqDrift2::getEstimation() {
+double SeqDrift2::getMeanEstimation() {
     int width = getWidth();
 
     if (width != 0){

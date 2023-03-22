@@ -21,5 +21,8 @@ ChangeDetectorWrapper::ChangeDetectorWrapper(std::unique_ptr<ChangeDetector> cha
 bool ChangeDetectorWrapper::insertValue(double &value) {
     return changeDetector->insertValue(value);
 }
+double ChangeDetectorWrapper::getMeanEstimation() {
+    return changeDetector->getMeanEstimation();
+}
 
 }// namespace NES::Runtime::Execution

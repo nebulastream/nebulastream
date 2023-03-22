@@ -20,7 +20,18 @@ namespace NES::Runtime::Execution {
 class ChangeDetector{
 
   public:
+
+    /**
+     * @brief Insert value into change detector.
+     * @return true if change detected, false otherwise
+     */
     virtual bool insertValue(double& value) = 0;
+
+    /**
+     * @brief Get estimated mean.
+     * @return estimated mean
+     */
+    virtual double getMeanEstimation() = 0;
     virtual ~ChangeDetector() = default;
 
 };

@@ -24,43 +24,47 @@ namespace NES::Runtime::Execution {
 class SeqDrift2 : public ChangeDetector {
   public:
     /**
-     * SeqDrift change detector requires two parameters: significance level and
-     * block size.
+     * @brief SeqDrift change detector requires two parameters: significance level and block size.
      * @param significanceLevel value between 0 and 1, controls the false positive rate
      * @param blockSize sets the interval of two consecutive hypothesis tests
      */
     SeqDrift2(double significanceLevel, int blockSize);
 
     /**
-     * This method can be used to directly interface with SeqDrift change detector.
-     * @param inputValue numerical value
+     * @brief Insert value into SeqDrift change detector.
+     * @param value value between 0 and 1
      * @return true, if change was detected.
      */
     bool insertValue(double& value) override;
-    double getEstimation();
+
+    /**
+     * @brief Get estimated mean.
+     * @return estimated mean.
+     */
+    double getMeanEstimation() override;
 
   private:
 
     /**
-     * Add a new value to right reservoir.
-     * @param inputValue
+     * @brief Adds a new value to right reservoir.
+     * @param value
      * @return void
      */
-    void addToRightReservoir(double inputValue);
+    void addToRightReservoir(double value);
 
     /**
-     * Remove all elements from the reservoir after a drift is detected.
+     * @brief Removes all elements from the reservoir after a drift is detected.
      */
     void clearLeftReservoir();
 
     /**
-     * Copy the data values of the right repository to the left reservoir applying reservoir sampling algorithm.
+     * @brief Copies the values of the right repository to the left reservoir applying reservoir sampling algorithm.
      */
     void moveFromRepositoryToReservoir();
 
     /**
-     * This method returns the type of drift detected The possible values are: DRIFT and NODRIFT
-     * @return
+     * @brief Get the type of drift detected.
+     * @return DRIFT or NODRIFT.
      */
     int getDriftType();
     double getRightRepositoryMean();
@@ -71,12 +75,12 @@ class SeqDrift2 : public ChangeDetector {
     double getVariance();
 
     /**
-     *
+     * @brief
      */
     void optimizeEpsilon();
 
     /**
-     * The effect of multiple tests is to reduce the confidence from δ to δ′which represents
+     * @brief The effect of multiple tests is to reduce the confidence from δ to δ′ which represents
      * the effective (overall) confidence after n successive hypothesis tests have been carried.
      * @param iNumTests number of successive hypothesis tests
      * @return new confidence value delta dash
@@ -84,9 +88,9 @@ class SeqDrift2 : public ChangeDetector {
     double getDriftEpsilon(int iNumTests);
 
     /**
-     * Calculate the optimal k value based on rate of change.
+     * @brief Calculate the optimal k value based on rate of change.
      * @param dKr
-     * @return
+     * @return new k value.
      */
     double adjustForDataRate(double dKr);
 
