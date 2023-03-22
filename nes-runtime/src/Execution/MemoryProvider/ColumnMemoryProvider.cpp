@@ -41,7 +41,7 @@ Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::
     // read all fields
     Nautilus::Record record;
     for (uint64_t i = 0; i < schema->getSize(); i++) {
-        auto fieldName = schema->fields[i]->getName();
+        auto& fieldName = schema->fields[i]->getName();
         if (!includesField(projections, fieldName)) {
             continue;
         }

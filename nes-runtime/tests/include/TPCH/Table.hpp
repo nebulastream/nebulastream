@@ -6,7 +6,9 @@
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <utility>
 namespace NES::Runtime {
