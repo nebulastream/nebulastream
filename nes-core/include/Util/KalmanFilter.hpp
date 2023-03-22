@@ -59,7 +59,7 @@ class KalmanFilter {
                           Eigen::MatrixXd Q,
                           Eigen::MatrixXd R,
                           Eigen::MatrixXd P,
-                          const uint64_t errorWindowSize = 10);
+                          uint64_t errorWindowSize = 10);
 
     /**
      * Simple c-tor of a filter.
@@ -69,7 +69,7 @@ class KalmanFilter {
      *
      * @param errorWindowSize
      */
-    explicit KalmanFilter(const uint64_t errorWindowSize = 10);
+    explicit KalmanFilter(uint64_t errorWindowSize = 10);
 
     /**
      * Initialize the matrices in a filter.
@@ -204,6 +204,11 @@ class KalmanFilter {
      * Error between predict/update
      */
     Eigen::VectorXd innovationError;// eq. 3
+
+    /**
+     * @brief keep last read value from tupleBuffer
+     */
+    Eigen::VectorXd valueVector;
 
     /**
      * Timestep used in updates.

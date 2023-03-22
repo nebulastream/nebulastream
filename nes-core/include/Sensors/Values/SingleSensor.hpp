@@ -31,7 +31,7 @@ namespace Sensors {
  */
 struct __attribute__((packed)) SingleSensor {
     uint64_t id;
-    uint64_t value;
+    double value;
     uint64_t payload;
     uint64_t timestamp;
 

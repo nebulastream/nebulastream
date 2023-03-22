@@ -34,7 +34,7 @@ KalmanFilter::KalmanFilter(double timeStep,
                            const uint64_t errorWindowSize)
     : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q),
       measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
-      timeStep(timeStep), kfErrorWindow(errorWindowSize) {
+      valueVector(1), timeStep(timeStep), kfErrorWindow(errorWindowSize) {
     this->calculateTotalEstimationErrorDivider(errorWindowSize);
     identityMatrix.setIdentity();
 }
@@ -170,11 +170,10 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
     if (!!tupleBuffer) {
-        Eigen::VectorXd valueVector(1);
         auto numOfTuples = tupleBuffer.getNumberOfTuples();
         auto records = tupleBuffer.getBuffer<Sensors::SingleSensor>();
         for (uint64_t i = 0; i < numOfTuples; ++i) {
-            valueVector << records[i].value;
+            this->valueVector << records[i].value;
             this->update(valueVector);
         }
         NES_DEBUG("KalmanFilter::updateFromTupleBuffer: consumed a whole buffer");

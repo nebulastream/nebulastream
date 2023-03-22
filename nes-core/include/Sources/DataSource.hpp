@@ -340,7 +340,12 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @brief the KF associated with a source.
      * We use default values for initialization.
      */
-    std::unique_ptr<KalmanFilter> kFilter;// TODO(Dimitrios) is this the right place to have it?
+    std::unique_ptr<KalmanFilter> kFilter;
+
+    /**
+     * @brief window of W last seen values.
+     */
+    std::vector<double> lastValues;
 
     bool endOfStreamSent{false};// protected by startStopMutex
 };

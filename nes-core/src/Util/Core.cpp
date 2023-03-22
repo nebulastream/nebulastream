@@ -22,19 +22,22 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Topology/Topology.hpp>
+#include <Util/Experimental/PocketFFT.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <random>
+#include <vector>
+#include <tuple>
 
 namespace NES {
 
@@ -220,12 +223,36 @@ std::string Util::trim(const std::string& str) {
     return str.substr(start, end - start + 1);
 }
 
-bool Util::fft() {
-    return false;
+std::vector<std::complex<double>> Util::fft(const std::vector<double>& lastWindowValues) {
+    pocketfft::shape_t shape{lastWindowValues.size()};
+    pocketfft::stride_t stridef(1);  // always 1D shape
+    pocketfft::shape_t axes(1);
+    stridef[0] = sizeof(double);
+    axes[0] = 0;
+    std::vector<std::complex<double>> complexLastValues(lastWindowValues.size());
+    std::vector<std::complex<double>> complexLastValuesRes(lastWindowValues.size());
+    pocketfft::r2c(shape, stridef, stridef, axes, pocketfft::FORWARD,
+                   lastWindowValues.data(), complexLastValues.data(), 1.);
+//    std::transform(lastWindowValues.begin(), lastWindowValues.end(), complexLastValues.begin(),
+//               [](double real_part) { return std::complex<double>(real_part, 0.0); });
+//    pocketfft::c2c(shape, stridef, stridef, axes, pocketfft::FORWARD,
+//                   complexLastValues.data(), complexLastValuesRes.data(), 1.);
+    return complexLastValuesRes;
 }
 
 bool Util::fftfreq() {
     return false;
 }
+
+std::tuple<bool, uint64_t> Util::is_aliased_and_nyq_freq(const std::vector<double>& psd_array, const double total_energy) {
+    double cutoff_percent = (total_energy * 99.0) / 100.0;
+    double current_level = 0;
+    uint64_t bin_idx = 0;
+    while (current_level < cutoff_percent && bin_idx < psd_array.size()) {
+        current_level += psd_array[bin_idx];
+        bin_idx++;
+    }
+    return std::make_tuple(bin_idx == psd_array.size(), bin_idx);
+};
 
 }// namespace NES

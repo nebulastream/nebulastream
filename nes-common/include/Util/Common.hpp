@@ -14,6 +14,14 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+
+#include <Common/Identifiers.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <algorithm>
+#include <any>
+#include <complex>
 #include <functional>
 #include <memory>
 #include <string>
@@ -242,7 +250,7 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
 * @brief Performs fft on a vector
 * @return true/false for now
 */
-bool fft();
+std::vector<std::complex<double>> fft(const std::vector<double>& lastWindowValues);
 
 /**
 * @brief Performs fftfreq on an FFT vector
@@ -250,6 +258,15 @@ bool fft();
 */
 bool fftfreq();
 
-}// namespace NES::Util
+/**
+ * @brief Check the PSD of a signal if it's aliased and its nyq. freq.
+ * @param psd_array
+ * @param total_energy sum of signal's energy levels
+ * @return 2-tuple of is_aliased and the proposed nyq. rate
+ */
+std::tuple<bool, uint64_t> is_aliased_and_nyq_freq(const std::vector<double>& psd_array, double total_energy);
+
+};// namespace Util
+}// namespace NES
 
 #endif// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
