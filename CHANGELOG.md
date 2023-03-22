@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.36](https://github.com/nebulastream/nebulastream/tree/v0.5.36) (2023-03-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.35...v0.5.36)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cannot use treshold window aggregation without specifying explicit output name [\#3595](https://github.com/nebulastream/nebulastream/issues/3595)
+
 ## [v0.5.35](https://github.com/nebulastream/nebulastream/tree/v0.5.35) (2023-03-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.34...v0.5.35)
