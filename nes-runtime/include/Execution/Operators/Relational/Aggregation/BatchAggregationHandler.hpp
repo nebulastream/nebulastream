@@ -27,9 +27,7 @@ namespace NES::Runtime::Execution::Operators {
  * This is decided by the current watermark timestamp.
  */
 class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                         public detail::virtual_enable_shared_from_this<BatchAggregationHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<BatchAggregationHandler, false>;
-    using inherited1 = Runtime::Reconfigurable;
+                                         public ::NES::detail::virtual_enable_shared_from_this<BatchAggregationHandler, false> {
     using State = int8_t*;
   public:
     /**
@@ -62,7 +60,7 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
      */
     State getThreadLocalState(uint64_t workerId);
 
-    ~BatchAggregationHandler();
+    ~BatchAggregationHandler() override;
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
   private:

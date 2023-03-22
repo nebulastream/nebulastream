@@ -26,7 +26,7 @@ class BatchAggregationScan : public Operator {
   private:
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::vector<std::string>& aggregationResultFields;
+    const std::vector<std::string> aggregationResultFields;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHAGGREGATION_HPP_

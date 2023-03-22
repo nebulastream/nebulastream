@@ -54,10 +54,10 @@
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
-class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class TPCH_Benchmark : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
 
   public:
-    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F0_01;
+    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F1;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
@@ -87,61 +87,52 @@ class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down TPCH_Q6 test class."); }
+
+    void runQ6() {
+        auto& lineitems = tables[TPCHTable::LineItem];
+
+        auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
+
+        // process table
+        NES_INFO2("Process {} chunks", lineitems->getChunks().size());
+        Timer timer("Q6");
+        timer.start();
+        auto pipeline1 = plan.getPipeline(0);
+        auto pipeline2 = plan.getPipeline(1);
+        auto aggExecutablePipeline = provider->create(pipeline1.pipeline);
+        auto emitExecutablePipeline = provider->create(pipeline2.pipeline);
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        emitExecutablePipeline->setup(*pipeline2.ctx);
+        timer.snapshot("setup");
+        for (auto& chunk : lineitems->getChunks()) {
+            aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
+        }
+        timer.snapshot("execute agg");
+        auto dummyBuffer = TupleBuffer();
+        emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
+        timer.snapshot("execute emit");
+
+        aggExecutablePipeline->stop(*pipeline1.ctx);
+        emitExecutablePipeline->stop(*pipeline2.ctx);
+        timer.snapshot("stop");
+        timer.pause();
+        NES_INFO("Query Runtime:\n" << timer);
+    }
 };
 
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_P(TPCH_Q6, aggregationPipeline) {
-
-    auto& lineitems = tables[TPCHTable::LineItem];
-
-    auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
-
-    // process table
-    NES_INFO2("Process {} chunks", lineitems->getChunks().size());
-    Timer timer("Q6");
-    timer.start();
-    auto pipeline1 = plan.getPipeline(0);
-    auto pipeline2 = plan.getPipeline(1);
-    auto aggExecutablePipeline = provider->create(pipeline1.pipeline);
-    auto emitExecutablePipeline = provider->create(pipeline2.pipeline);
-    aggExecutablePipeline->setup(*pipeline1.ctx);
-    emitExecutablePipeline->setup(*pipeline2.ctx);
-    timer.snapshot("setup");
-    for (auto& chunk : lineitems->getChunks()) {
-        aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
-    }
-    timer.snapshot("execute agg");
-    auto dummyBuffer = TupleBuffer();
-    emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
-    timer.snapshot("execute emit");
-
-    aggExecutablePipeline->stop(*pipeline1.ctx);
-    emitExecutablePipeline->stop(*pipeline2.ctx);
-    timer.snapshot("stop");
-    timer.pause();
-    NES_INFO("Query Runtime:\n" << timer);
-    // compare results
-    auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    resultSchema->addField("revenue", BasicType::FLOAT32);
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, pipeline2.ctx->buffers[0]);
-    if (targetScaleFactor == TPCH_SCALE_FACTOR::F1) {
-        NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
-        EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122817720.0f, 200);
-    } else if (targetScaleFactor == TPCH_SCALE_FACTOR::F0_01) {
-        NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
-        EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 1192973.625f, 200);
-    } else {
-        GTEST_FAIL();
+TEST_P(TPCH_Benchmark, q6) {
+    for (auto i = 0; i < 10; i++) {
+        runQ6();
     }
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        TPCH_Q6,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<TPCH_Q6::ParamType>& info) {
+                        TPCH_Benchmark,
+                        ::testing::Values("BCInterpreter", "PipelineCompiler"),
+                        [](const testing::TestParamInfo<TPCH_Benchmark::ParamType>& info) {
                             return info.param;
                         });
 

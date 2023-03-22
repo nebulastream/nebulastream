@@ -43,7 +43,7 @@ class BatchJoinProbe : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers;
+    const std::vector<Record::RecordFieldIdentifier> probeFieldIdentifiers;
     const std::vector<PhysicalTypePtr> valueDataTypes;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     uint64_t keySize;
