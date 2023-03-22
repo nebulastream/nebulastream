@@ -23,8 +23,8 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <z3++.h>
 
 namespace NES {
@@ -105,10 +105,10 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     }
 
     for (auto& agg : windowAggregation) {
-            NES_INFO("Add the following field to the output schema of the GlobalWindow"
-                     << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
-            outputSchema->addField(
-                AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
+        NES_INFO("Add the following field to the output schema of the GlobalWindow"
+                 << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
+        outputSchema->addField(
+            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }//end for
     NES_INFO("The final output schema is" << outputSchema->toString())
 
