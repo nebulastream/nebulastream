@@ -74,7 +74,6 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
 
     // Convert the `std::tm` object to a `std::time_t` object.
     std::time_t time = timegm(&tm);
-    NES_INFO(time)
     // Convert the `std::time_t` object to milliseconds since the Unix epoch.
     std::chrono::duration<int64_t, std::milli> dur(time);
     //has we current only except time formats with hour, minutes and seconds, we need to multiple by 1000 to represent milliseconds
@@ -127,19 +126,25 @@ TextValue* intervalproxy(int64_t milliseconds) {
     auto hour = time.tm_hour;
     auto minute = time.tm_min;
     auto seconds = time.tm_sec;
-    std::ostringstream interval{};
-    if (year > 0)
+    std::ostringstream interval;
+    if (year > 0) {
         interval << year << (year > 1 ? " years " : " year ");
-    if (month > 0)
+    }
+    if (month > 0) {
         interval << month << (month > 1 ? " months " : " month ");
-    if (day > 0)
+    }
+    if (day > 0) {
         interval << day << (day > 1 ? " days " : " day ");
-    if (hour > 0)
+    }
+    if (hour > 0) {
         interval << hour << (hour > 1 ? " hours " : " hour ");
-    if (minute > 0)
+    }
+    if (minute > 0) {
         interval << minute << (minute > 1 ? " minutes " : " minute ");
-    if (seconds > 0)
+    }
+    if (seconds > 0) {
         interval << seconds << (seconds > 1 ? " seconds" : " second");
+    }
     auto inti = interval.str();
     return NES::Nautilus::TextValue::create(inti);
 }
@@ -155,7 +160,7 @@ TextValue* weekdayNameproxy(int64_t milliseconds) {
     // Return the name of the day of the week
     auto weekdayName = weekdayNames[dayOfWeek];
     //Value<TextValue> valueweekdayname = (TextValue)weekdayName);
-    NES_DEBUG(weekdayName);
+    NES_TRACE("Find the weekday name " + weekdayName);
     NES::Nautilus::TextValue* t = NES::Nautilus::TextValue::create(weekdayName);
     return t;
 }
