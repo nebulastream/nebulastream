@@ -668,6 +668,8 @@ add_subdirectory(nes-runtime)
 add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
+# Add target for approximate stream processing
+add_subdirectory(nes-approx)
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
