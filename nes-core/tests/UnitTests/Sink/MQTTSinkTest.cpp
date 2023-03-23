@@ -75,7 +75,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-        testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+        testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
     }
 
     /* Will be called before a test is executed. */
@@ -285,7 +285,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     uint64_t msgDelay = 500;
     MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = false;
-    auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+    auto testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
     auto mqttSink = createMQTTSink(testSchema,
                                    0,
                                    0,

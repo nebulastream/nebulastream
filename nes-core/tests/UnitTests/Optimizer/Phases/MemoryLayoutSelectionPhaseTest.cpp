@@ -175,7 +175,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->setLayoutType(Schema::ROW_LAYOUT);
+    inputSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
 
     auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
                      .map(Attribute("f3") = Attribute("f1") * 42)
@@ -187,7 +187,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COLUMNAR_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
 }
@@ -198,7 +198,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
+    inputSchema->setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
@@ -216,7 +216,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::ROW_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
         }
     }
 }
@@ -248,7 +248,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COLUMNAR_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
 }
