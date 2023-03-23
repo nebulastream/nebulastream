@@ -13,7 +13,7 @@
 */
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
-#include <WorkQueues/StorageAccessHandles/SerialStorageAccessHandle.hpp>
+#include <WorkQueues/StorageHandles/SerialStorageHandle.hpp>
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -24,15 +24,15 @@
 #include <Topology/TopologyNode.hpp>
 
 namespace NES {
-class SerialAccessHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SerialStorageHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SerialAccessHandleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("SerialStorageHandleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO2("Setup SerialAccessHandle test class.");
     }
 };
 
-TEST_F(SerialAccessHandleTest, TestResourceAccess) {
+TEST_F(SerialStorageHandleTest, TestResourceAccess) {
     //create access handle
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
@@ -41,7 +41,7 @@ TEST_F(SerialAccessHandleTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto serialAccessHandle = SerialStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
+    auto serialAccessHandle = SerialStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                 globalQueryPlan, sourceCatalog, udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor

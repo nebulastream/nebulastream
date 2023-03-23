@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_SERIALSTORAGEACCESSHANDLE_HPP
-#define NES_SERIALSTORAGEACCESSHANDLE_HPP
+#ifndef NES_SERIALSTORAGEHANDLE_HPP
+#define NES_SERIALSTORAGEHANDLE_HPP
 
-#include <WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandle.hpp>
 
 namespace NES{
 
@@ -22,16 +22,16 @@ namespace NES{
  * This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
  */
-class SerialStorageAccessHandle : public StorageAccessHandle {
+class SerialStorageHandle : public StorageAccessHandle {
   public:
-    SerialStorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+    SerialStorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
                          TopologyPtr  topology,
                          QueryCatalogServicePtr  queryCatalogService,
                          GlobalQueryPlanPtr  globalQueryPlan,
                          Catalogs::Source::SourceCatalogPtr  sourceCatalog,
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
-    static std::shared_ptr<SerialStorageAccessHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
+    static std::shared_ptr<SerialStorageHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
                          const TopologyPtr&  topology,
                          const QueryCatalogServicePtr&  queryCatalogService,
                          const GlobalQueryPlanPtr&  globalQueryPlan,
@@ -75,4 +75,4 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
     UdfCatalogHandle getUdfCatalogHandle() override;
 };
 }
-#endif//NES_SERIALSTORAGEACCESSHANDLE_HPP
+#endif//NES_SERIALSTORAGEHANDLE_HPP

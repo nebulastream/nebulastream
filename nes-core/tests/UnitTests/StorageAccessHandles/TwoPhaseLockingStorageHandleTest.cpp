@@ -13,7 +13,7 @@
 */
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
-#include <WorkQueues/StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandle.hpp>
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -24,15 +24,15 @@
 #include <Topology/TopologyNode.hpp>
 
 namespace NES {
-class TwoPhaseLockingAccessHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class TwoPhaseLockingStorageHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TwoPhaseLockingAccessHandleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("TwoPhaseLockingStorageHandleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TwoPhaseLockingAccessHandle test class.");
     }
 };
 
-TEST_F(TwoPhaseLockingAccessHandleTest, TestResourceAccess) {
+TEST_F(TwoPhaseLockingStorageHandleTest, TestResourceAccess) {
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -40,7 +40,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
+    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                 globalQueryPlan, sourceCatalog, udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
@@ -48,7 +48,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestResourceAccess) {
     ASSERT_EQ(topology->getRoot(), twoPLAccessHandle->getTopologyHandle()->getRoot());
 }
 
-TEST_F(TwoPhaseLockingAccessHandleTest, TestLocking) {
+TEST_F(TwoPhaseLockingStorageHandleTest, TestLocking) {
     auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -56,7 +56,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
+    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                          globalQueryPlan, sourceCatalog, udfCatalog);
 
     //if thread 1 holds a handle to the topology, thread 2 should not be able t acquire a handle at the same time
@@ -75,7 +75,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestLocking) {
     thread->join();
 }
 
-TEST_F(TwoPhaseLockingAccessHandleTest, TestConcurrentAccess) {
+TEST_F(TwoPhaseLockingStorageHandleTest, TestConcurrentAccess) {
     size_t numThreads = 20;
     size_t acquiringMax = 10;
     size_t acquired = 0;
@@ -88,7 +88,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestConcurrentAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
+    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                          globalQueryPlan, sourceCatalog, udfCatalog);
 
     //test with multiple threads, that other threads will not be able to acquire a handle while another thread holds it

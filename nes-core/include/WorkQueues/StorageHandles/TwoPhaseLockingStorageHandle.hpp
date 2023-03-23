@@ -14,23 +14,23 @@
 #ifndef NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
 #define NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
 
-#include <WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandle.hpp>
 
 namespace NES {
 
 /**
  * Resource handles created by this class ensure that the resource is locked until the handle goes out of scope.
  */
-class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
+class TwoPhaseLockingStorageHandle : public StorageAccessHandle {
   public:
-    TwoPhaseLockingStorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+    TwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
                          TopologyPtr  topology,
                          QueryCatalogServicePtr  queryCatalogService,
                          GlobalQueryPlanPtr  globalQueryPlan,
                          Catalogs::Source::SourceCatalogPtr  sourceCatalog,
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
-    static std::shared_ptr<TwoPhaseLockingStorageAccessHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
+    static std::shared_ptr<TwoPhaseLockingStorageHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
                          const TopologyPtr&  topology,
                          const QueryCatalogServicePtr&  queryCatalogService,
                          const GlobalQueryPlanPtr&  globalQueryPlan,

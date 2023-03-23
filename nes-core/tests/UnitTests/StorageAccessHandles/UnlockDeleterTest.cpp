@@ -14,7 +14,7 @@
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <WorkQueues/StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandle.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

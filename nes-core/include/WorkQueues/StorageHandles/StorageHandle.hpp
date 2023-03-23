@@ -14,7 +14,7 @@
 #ifndef NES_STORAGEACCESSHANDLE_HPP
 #define NES_STORAGEACCESSHANDLE_HPP
 
-#include <WorkQueues/StorageAccessHandles/UnlockDeleter.hpp>
+#include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
 
 namespace NES {

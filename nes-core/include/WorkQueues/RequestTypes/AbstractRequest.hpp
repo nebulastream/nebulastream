@@ -17,6 +17,7 @@
 #include <exception>
 #include <memory>
 #include <vector>
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
 
 namespace NES {
 
@@ -26,8 +27,6 @@ class OptimizerConfiguration;
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
-class StorageAccessHandle;
-using StorageAccessHandlePtr = std::shared_ptr<StorageAccessHandle>;
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
@@ -51,13 +50,13 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
  */
 class AbstractRequest {
   public:
-    explicit AbstractRequest(size_t maxRetries);
+    explicit AbstractRequest(size_t maxRetries, std::vector<ResourceType> requiredResources);
     /**
-     * Executes the request logic. Throws an exception if a resource could not be acquired via the storageAccessHandle
-     * @param storageAccessHandle: a handle to access the coordinators data structures which might be needed for executing the
+     * Acquires locks on the need resources and executes the request logic
+     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
      */
-    virtual void execute(StorageAccessHandlePtr storageAccessHandle) = 0;
+    virtual void execute(const StorageAccessHandlePtr& storageHandle);
 
     /**
      * Roll back any changes made by a request that did not complete due to errors.
@@ -69,9 +68,9 @@ class AbstractRequest {
     /**
      * Calls rollBack and executes additional error handling based on the exception if necessary
      * @param ex: The exception thrown during request execution.
-     * @param storageAccessHandle: The storage access handle that was used by the request to modify the system state.
+     * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void handleError(std::exception ex, const StorageAccessHandlePtr& storageAccessHandle);
+    void handleError(std::exception ex, const StorageAccessHandlePtr& storageHandle);
 
     /**
      * Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -86,7 +85,7 @@ class AbstractRequest {
      * @param ex: The exception encountered
      * @param storageAccessHandle: The storage access handle used by the request
      */
-    virtual void preRollbackErrorHandling(std::exception ex, StorageAccessHandlePtr storageAccessHandle) = 0;
+    virtual void preRollbackHandle(std::exception ex, StorageAccessHandlePtr storageAccessHandle) = 0;
 
     /**
      * Performs request specific error handling to be done after changes to the storage are rolled back
@@ -94,11 +93,32 @@ class AbstractRequest {
      * @param storageAccessHandle: The storage access handle used by the request
      * @param workerRpcClient: the rpc client to communicate with the worker nodes
      */
-    virtual void afterRollbackErrorHandling(std::exception ex, StorageAccessHandlePtr storageAccessHandle) = 0;
+    virtual void postRollbackHandle(std::exception ex, StorageAccessHandlePtr storageAccessHandle) = 0;
+
+    /**
+     * Performs steps to be done before execution of the request logic, e.g. locking the required data structures
+     * @param requiredResources: The resources required during the execution phase
+     */
+    virtual void preExecution(StorageAccessHandlePtr storageAccessHandle, std::vector<ResourceType> requiredResources) = 0;
+
+    /**
+     * Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
+     * @param requiredResources: The resources required during the execution phase
+     */
+    virtual void postExecution(StorageAccessHandlePtr storageAccessHandle, std::vector<ResourceType> requiredResources) = 0;
+
+    /**
+     * Executes the request logic.
+     * @param storageAccessHandle: a handle to access the coordinators data structures which might be needed for executing the
+     * request
+     */
+    virtual void executeRequestLogic(StorageAccessHandlePtr storageAccessHandle) = 0;
+
 
   private:
     size_t maxRetries;
     size_t actualRetries;
+    std::vector<ResourceType> requiredResources;
 };
 }
 #endif//NES_ABSTRACTREQUEST_HPP
