@@ -116,33 +116,50 @@ sequenceDiagram
 sequenceDiagram
 
     Request Queue ->> Executor: Add Query Request
-    Executor ->> Query Catalog Service: Add Query, <br> set Status Registered
-    Query Catalog Service -->> Executor: Successfully registered query
-    Executor ->> Query Catalog Service: Set Status to Optimizing
-    Executor ->> Type Inference Phase:  call execute for current query Plan
-    Type Inference Phase -->> Executor: Query Plan
-    Executor ->> Memory Layout Phase: call execute for current query Plan
-    Memory Layout Phase -->> Executor: Query Plan
-    Executor ->> Rewrite Phase: call execute for current query Plan
-    Rewrite Phase -->> Executor: Query Plan
-    Executor ->> Query Catalog Service: Add updated query plan
-    Executor ->> Type Inference Phase: call execute for current query Plan
-    Type Inference Phase -->> Executor: Query Plan
-    Executor ->> Topology Specific Query Rewrite Phase: call execute for current query Plan
-    Topology Specific Query Rewrite Phase -->> Executor: Query Plan
-    Executor ->> Origin Id Inference Phase: call execute for current query Plan
-    Origin Id Inference Phase -->> Executor: Query Plan
-    Executor ->> Memory Layout Phase: call execute for current query Plan
-    Memory Layout Phase -->> Executor: Query Plan
-    Executor ->> Query Catalog Service: Update query plan
-    Executor ->> Global Query Plan: Add query plan
-    Executor ->> Query Merger Phase: call execute for current Global Query Plan
-    Executor ->> Query Placement Phase: call execute for current SQP and strategy
-    Query Placement Phase -->> Executor: boolean with success
-    Executor ->> Query Deployment Phase: call execute for current SQP
-    Executor ->> Shared Query Plan: Set status to Deployed
-    
+    Executor ->> Request Queue: Remove Add Request
+    alt
+        Executor ->> Query Catalog Service: Add Query, <br> set Status Registered
+        Query Catalog Service -->> Executor: Successfully registered query
+        Executor ->> Query Catalog Service: Set Status to Optimizing
+        Executor ->> Type Inference Phase: call execute for current query Plan
+        Type Inference Phase -->> Executor: Query Plan
+        Executor ->> Memory Layout Phase: call execute for current query Plan
+        Memory Layout Phase -->> Executor: Query Plan
+        Executor ->> Rewrite Phase: call execute for current query Plan
+        Rewrite Phase -->> Executor: Query Plan
+        Executor ->> Query Catalog Service: Add updated query plan
+        Executor ->> Type Inference Phase: call execute for current query Plan
+        Type Inference Phase -->> Executor: Query Plan
+        Executor ->> Topology Specific Query Rewrite Phase: call execute for current query Plan
+        Topology Specific Query Rewrite Phase -->> Executor: Query Plan
+        Executor ->> Origin Id Inference Phase: call execute for current query Plan
+        Origin Id Inference Phase -->> Executor: Query Plan
+        Executor ->> Memory Layout Phase: call execute for current query Plan
+        Memory Layout Phase -->> Executor: Query Plan
+        Executor ->> Query Catalog Service: Update query plan
+        Executor ->> Global Query Plan: Add query plan
+        Executor ->> Query Merger Phase: call execute for current Global Query Plan
+        Executor ->> Query Placement Phase: call execute for current SQP and strategy
+        Query Placement Phase -->> Executor: boolean with success
+        Executor ->> Query Deployment Phase: call execute for current SQP
+        Executor ->> Shared Query Plan: Set status to Deployed
+    else Query Placement Exception
+        Executor ->> Query Catalog Service: Set Status to Failed for all queries in SQP
+        Executor ->> Query Undeployment Phase: execute with Failure Flag
+    else QueryDeploymentException
+        Executor ->> Query Catalog Service: Set Status to Failed for all queries in SQP
+        Executor ->> Query Undeployment Phase: execute with Failure Flag
+    else TypeInferenceException
+        Executor ->> Query Catalog Service: Set Status to Failed
+    else InvalidQueryStatusException
+        Executor ->> Executor: Print Error Message
+    else QueryNotFoundException
+        Executor ->> Executor: Print Error Message
+    else QueryUndeploymentException
+        Executor ->> Executor: Print Error Message
+    else InvalidQueryException
+        Executor ->> Executor: Print Error Message
+    else general Exception
+        Executor ->> Executor: Print Error Message
+    end
 ```
-Not sure if deployed is right?
-Error handling still mostly missing
-todo: add error handling and find out when query status is set to running
