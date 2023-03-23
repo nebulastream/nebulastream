@@ -135,8 +135,7 @@ class SignatureContainmentUtil {
      * @param condition condition that will just be added to the solver as it is
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool containmentConditionsUnsatisfied( z3::expr_vector& negatedCondition,
-                               z3::expr_vector& condition);
+    bool containmentConditionsUnsatisfied(z3::expr_vector& negatedCondition, z3::expr_vector& condition);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions is unsatisfiable
@@ -145,10 +144,11 @@ class SignatureContainmentUtil {
      * @param rightConditions condition that will be negated
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions,
-                                          const z3::expr_vector& rightConditions);
+    bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions, const z3::expr_vector& rightConditions);
 
-    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& leftWindow) const;
+    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& leftWindow,
+                                        const QuerySignaturePtr& leftSignature,
+                                        const QuerySignaturePtr& rightSignature);
 
     void combineWindowAndProjectionConditions(const QuerySignaturePtr& leftSignature,
                                               const QuerySignaturePtr& rightSignature,
@@ -165,6 +165,7 @@ class SignatureContainmentUtil {
     uint64_t counter;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
+    ContainmentType checkColumnOrder(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature) const;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_
