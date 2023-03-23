@@ -42,10 +42,10 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     std::string timeString = t->c_str();
     if (timeString.find('T') != std::string::npos){
         std::sscanf(t->c_str(), "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second);
-        NES_INFO(" the year " << year << " the month " << month << " the day " << day << " the hour " << hour << " the minute " << minute << " and the second " << second);
+        NES_DEBUG(" the year " << year << " the month " << month << " the day " << day << " the hour " << hour << " the minute " << minute << " and the second " << second);
     }else{
         std::sscanf(t->c_str(), "%d-%d-%d", &year, &month, &day);
-        NES_INFO(" the year" << year << " the month" << month << " and the day" << day);
+        NES_DEBUG(" the year" << year << " the month" << month << " and the day" << day);
     }
     //TODO: Currently, we only support this format in a rather naive way, with issue #3616 we want to enhance the format, e.g., by
     // distinguishing Date and Time input strings or support user-defined formats.
