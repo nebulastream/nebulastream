@@ -21,7 +21,7 @@ namespace NES::Monitoring {
 
 LatestEntriesMetricStore::LatestEntriesMetricStore() { NES_DEBUG2("LatestEntriesMetricStore: Init NewestMetricStore"); }
 
-MetricStoreType LatestEntriesMetricStore::getType() const { return NewestEntry; }
+MetricStoreType LatestEntriesMetricStore::getType() const { return MetricStoreType::NewestEntry; }
 
 void LatestEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
     std::unique_lock lock(storeMutex);

@@ -42,7 +42,7 @@ TEST_F(SpatialExpressionNodeTest, testCircleExpressionNode) {
     auto circleExpressionNode = circleShapeExpressionNode->as<CircleExpressionNode>();
 
     // check shape type
-    EXPECT_EQ(circleShapeExpressionNode->getShapeType(), Circle);
+    EXPECT_EQ(circleShapeExpressionNode->getShapeType(), ShapeType::Circle);
 
     // check returned values by accessor methods
     EXPECT_EQ(circleExpressionNode->getLatitude(), 52.5153);
@@ -82,7 +82,7 @@ TEST_F(SpatialExpressionNodeTest, testPointExpressionNode) {
     auto pointExpressionNode = pointShapeExpressionNode->as<PointExpressionNode>();
 
     // check shape type
-    EXPECT_EQ(pointShapeExpressionNode->getShapeType(), Point);
+    EXPECT_EQ(pointShapeExpressionNode->getShapeType(), ShapeType::Point);
 
     // check returned values by accessor methods
     EXPECT_EQ(pointExpressionNode->getLatitude(), 52.5153);
@@ -122,7 +122,7 @@ TEST_F(SpatialExpressionNodeTest, testPolygonExpressionNode) {
     std::vector<double> coordinates{52.5155, 13.3262, 52.5145, 13.3264, 52.5138, 13.3267, 52.5148, 13.3274};
 
     // check shape type
-    EXPECT_EQ(polygonShapeExpressionNode->getShapeType(), Polygon);
+    EXPECT_EQ(polygonShapeExpressionNode->getShapeType(), ShapeType::Polygon);
 
     // check returned values by accessor methods
     EXPECT_EQ(polygonExpressionNode->getCoordinates(), coordinates);
@@ -186,7 +186,7 @@ TEST_F(SpatialExpressionNodeTest, testRectangleExpressionNode) {
     auto rectangleExpressionNode = rectangleShapeExpressionNode->as<RectangleExpressionNode>();
 
     // check shape type
-    EXPECT_EQ(rectangleShapeExpressionNode->getShapeType(), Rectangle);
+    EXPECT_EQ(rectangleShapeExpressionNode->getShapeType(), ShapeType::Rectangle);
 
     // check returned values by accessor methods
     EXPECT_EQ(rectangleExpressionNode->getLatitudeLow(), 52.5138);

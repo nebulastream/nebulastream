@@ -34,7 +34,7 @@ RuntimeMetrics::RuntimeMetrics()
 SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
-    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+    SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
                            ->addField(prefix + "wallTimeNs", BasicType::UINT64)
                            ->addField(prefix + "memoryUsageInBytes", BasicType::UINT64)

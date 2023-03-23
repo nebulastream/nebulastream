@@ -169,8 +169,8 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
                            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
                            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+                           ->addField("current_ms", BasicType::UINT64)
+                           ->addField("ip", BasicType::INT32);
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;
@@ -220,8 +220,8 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
                            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
                            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
                            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+                           ->addField("current_ms", BasicType::UINT64)
+                           ->addField("ip", BasicType::INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
@@ -287,7 +287,8 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
         R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::Value::NONE,
+                                                      LineageType::Value::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

@@ -30,7 +30,7 @@ CSVSourceTypePtr CSVSourceType::create(std::map<std::string, std::string> source
 }
 
 CSVSourceType::CSVSourceType()
-    : PhysicalSourceType(CSV_SOURCE),
+    : PhysicalSourceType(SourceType::CSV_SOURCE),
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
                                                                         "file path, needed for: CSVSource, BinarySource")),
@@ -55,7 +55,7 @@ CSVSourceType::CSVSourceType()
                                                                 "Gathering interval of the source.")),
       gatheringMode(
           Configurations::ConfigurationOption<GatheringMode::Value>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
-                                                                            GatheringMode::INTERVAL_MODE,
+                                                                            GatheringMode::Value::INTERVAL_MODE,
                                                                             "Gathering mode of the source.")) {
     NES_INFO2("CSVSourceTypeConfig: Init source config object with default values.");
 }

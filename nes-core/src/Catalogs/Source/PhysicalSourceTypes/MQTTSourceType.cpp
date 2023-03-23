@@ -112,7 +112,7 @@ MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
 }
 
 MQTTSourceType::MQTTSourceType()
-    : PhysicalSourceType(MQTT_SOURCE), url(Configurations::ConfigurationOption<std::string>::create(
+    : PhysicalSourceType(SourceType::MQTT_SOURCE), url(Configurations::ConfigurationOption<std::string>::create(
                                            Configurations::URL_CONFIG,
                                            "ws://127.0.0.1:9001",
                                            "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
@@ -155,7 +155,7 @@ std::string MQTTSourceType::toString() {
     ss << Configurations::QOS_CONFIG + ":" + qos->toStringNameCurrentValue();
     ss << Configurations::CLEAN_SESSION_CONFIG + ":" + cleanSession->toStringNameCurrentValue();
     ss << Configurations::FLUSH_INTERVAL_MS_CONFIG + ":" + flushIntervalMS->toStringNameCurrentValue();
-    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValue();
+    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValueEnum();
     ss << "\n}";
     return ss.str();
 }

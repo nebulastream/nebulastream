@@ -30,7 +30,7 @@ NetworkCollector::NetworkCollector()
     NES_INFO2("NetworkCollector: Init NetworkCollector with schema {}", schema->toString());
 }
 
-MetricCollectorType NetworkCollector::getType() { return NETWORK_COLLECTOR; }
+MetricCollectorType NetworkCollector::getType() { return MetricCollectorType::NETWORK_COLLECTOR; }
 
 bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {

@@ -106,7 +106,7 @@ void STKnnExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&
     auto shapeType = queryPoint->getShapeType();
     k->inferStamp(typeInferencePhaseContext, schema);
 
-    if (!point->getStamp()->isFloat() || shapeType != Point || !k->getStamp()->isNumeric()) {
+    if (!point->getStamp()->isFloat() || shapeType != ShapeType::Point || !k->getStamp()->isNumeric()) {
         throw std::logic_error("ST_KnnExpressionNode: Error during stamp inference. Types need to be Float for AttributeAccess,"
                                "ShapeType should be Point, and K should numeric but Point was: "
                                + point->getStamp()->toString() + ", QueryPoint was: " + queryPoint->toString()

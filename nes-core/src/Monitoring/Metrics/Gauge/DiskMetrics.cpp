@@ -27,7 +27,7 @@ namespace NES::Monitoring {
 DiskMetrics::DiskMetrics() : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
 SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
-    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+    SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
                            ->addField(prefix + "F_BSIZE", BasicType::UINT64)
                            ->addField(prefix + "F_FRSIZE", BasicType::UINT64)

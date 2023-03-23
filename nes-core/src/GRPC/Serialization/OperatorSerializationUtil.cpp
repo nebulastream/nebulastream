@@ -98,6 +98,8 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <fstream>
+#include <Util/magicenum/magic_enum.hpp>
+
 #endif
 
 namespace NES {
@@ -515,10 +517,10 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
-        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
             timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
-        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
         } else {
             NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
@@ -557,22 +559,22 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         ExpressionSerializationUtil::serializeExpression(aggregation->on(), windowAggregation->mutable_onfield());
 
         switch (aggregation->getType()) {
-            case Windowing::WindowAggregationDescriptor::Count:
+            case Windowing::WindowAggregationDescriptor::Type::Count:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
                 break;
-            case Windowing::WindowAggregationDescriptor::Max:
+            case Windowing::WindowAggregationDescriptor::Type::Max:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
                 break;
-            case Windowing::WindowAggregationDescriptor::Min:
+            case Windowing::WindowAggregationDescriptor::Type::Min:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
                 break;
-            case Windowing::WindowAggregationDescriptor::Sum:
+            case Windowing::WindowAggregationDescriptor::Type::Sum:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
                 break;
-            case Windowing::WindowAggregationDescriptor::Avg:
+            case Windowing::WindowAggregationDescriptor::Type::Avg:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
                 break;
-            case Windowing::WindowAggregationDescriptor::Median:
+            case Windowing::WindowAggregationDescriptor::Type::Median:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
                 break;
             default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
@@ -620,13 +622,13 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         }
     }
 
-    if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
+    if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Complete) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Complete);
-    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Combining) {
+    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Combining);
-    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
+    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Slicing) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Slicing);
-    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Merging) {
+    } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Merging) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Merging);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -750,15 +752,15 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Combining) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Combining);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Combining);
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Slicing) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Slicing);
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Merging) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Merging);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Merging);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -810,10 +812,10 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
     auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
-    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
         timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
-    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
@@ -872,13 +874,13 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
         }
     }
 
-    if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
+    if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Complete) {
         joinDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Complete);
-    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Combining) {
+    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
         joinDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Combining);
-    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
+    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Slicing) {
         joinDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Slicing);
-    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Merging) {
+    } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Merging) {
         joinDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Merging);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -920,10 +922,10 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
     auto serializedJoinType = joinDetails.jointype();
     // check which jointype is set
     // default: INNER_JOIN
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
     // with Cartesian Product is set, change join type
     if (serializedJoinType.jointype() == SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT) {
-        joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+        joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
     }
 
     Join::BaseJoinActionDescriptorPtr action;
@@ -1069,10 +1071,10 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         mqttSerializedSourceConfig.set_flushintervalms(
             mqttSourceDescriptor->getSourceConfigPtr()->getFlushIntervalMS()->getValue());
         switch (mqttSourceDescriptor->getSourceConfigPtr()->getInputFormat()->getValue()) {
-            case Configurations::JSON:
+            case Configurations::InputFormat::JSON:
                 mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_JSON);
                 break;
-            case Configurations::CSV:
+            case Configurations::InputFormat::CSV:
                 mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
                 break;
         }
@@ -1129,23 +1131,23 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         tcpSerializedSourceConfig.set_tupleseparator(tupleSeparator);
         tcpSerializedSourceConfig.set_flushintervalms(tcpSourceDescriptor->getSourceConfig()->getFlushIntervalMS()->getValue());
         switch (tcpSourceDescriptor->getSourceConfig()->getInputFormat()->getValue()) {
-            case Configurations::JSON:
+            case Configurations::InputFormat::JSON:
                 tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_JSON);
                 break;
-            case Configurations::CSV:
+            case Configurations::InputFormat::CSV:
                 tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
                 break;
         }
         switch (tcpSourceDescriptor->getSourceConfig()->getDecideMessageSize()->getValue()) {
-            case Configurations::TUPLE_SEPARATOR:
+            case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_TUPLE_SEPARATOR);
                 break;
-            case Configurations::USER_SPECIFIED_BUFFER_SIZE:
+            case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_USER_SPECIFIED_BUFFER_SIZE);
                 break;
-            case Configurations::BUFFER_SIZE_FROM_SOCKET:
+            case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_BUFFER_SIZE_FROM_SOCKET);
                 break;
@@ -1171,7 +1173,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         auto metricCollectorType = monitoringSourceDescriptor->getMetricCollectorType();
         auto waitTime = monitoringSourceDescriptor->getWaitTime();
         // serialize source schema
-        monitoringSerializedSourceDescriptor.set_metriccollectortype(metricCollectorType);
+        monitoringSerializedSourceDescriptor.set_metriccollectortype(magic_enum::enum_integer(metricCollectorType));
         monitoringSerializedSourceDescriptor.set_waittime(waitTime.count());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(monitoringSerializedSourceDescriptor);
     } else if (sourceDescriptor.instanceOf<const Network::NetworkSourceDescriptor>()) {
@@ -1501,7 +1503,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
                   "SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor");
         auto monitoringSinkDescriptor = sinkDescriptor.as<const MonitoringSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
-        serializedSinkDescriptor.set_collectortype(monitoringSinkDescriptor->getCollectorType());
+        serializedSinkDescriptor.set_collectortype(magic_enum::enum_integer(monitoringSinkDescriptor->getCollectorType()));
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(monitoringSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
@@ -1954,10 +1956,10 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
-        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
             timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
-        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
         } else {
             NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
@@ -1993,15 +1995,15 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
     }
 
     // Serializing the distributionCharacteristic
-    if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Complete) {
+    if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Complete) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(
             SerializableOperator_DistributionCharacteristic_Distribution_Complete);
-    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Combining) {
+    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(
             SerializableOperator_DistributionCharacteristic_Distribution_Combining);
-    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Slicing) {
+    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Slicing) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Slicing);
-    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Merging) {
+    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Merging) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Merging);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -2087,17 +2089,17 @@ LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWindowJavaUdfO
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Combining) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Combining);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Combining);
 
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Slicing) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Slicing);
 
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Merging) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Merging);
+        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Merging);
 
     } else {
         NES_NOT_IMPLEMENTED();

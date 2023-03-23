@@ -30,7 +30,7 @@ DiskCollector::DiskCollector()
     NES_INFO2("DiskCollector: Init DiskCollector with schema {}", schema->toString());
 }
 
-MetricCollectorType DiskCollector::getType() { return DISK_COLLECTOR; }
+MetricCollectorType DiskCollector::getType() { return MetricCollectorType::DISK_COLLECTOR; }
 
 bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {

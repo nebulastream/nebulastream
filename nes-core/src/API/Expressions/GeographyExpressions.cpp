@@ -64,13 +64,13 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
     auto geographyFieldsAccess = GeographyFieldsAccessExpressionNode::create(latitudeAccess, longitudeAccess);
 
     auto shapeType = shapeExpression->getShapeType();
-    if (shapeType != Circle && shapeType != Polygon && shapeType != Rectangle) {
+    if (shapeType != ShapeType::Circle && shapeType != ShapeType::Polygon && shapeType != ShapeType::Rectangle) {
         NES_ERROR2("Spatial Query(ST_WITHIN): Shape has to be a Circle, Polygon or a Rectangle but it was a {}",
                    shapeExpression->toString());
         throw InvalidArgumentException("shapeExpression", shapeExpression->toString());
     }
 
-    if (shapeType == Polygon || shapeType == Rectangle) {
+    if (shapeType == ShapeType::Polygon || shapeType == ShapeType::Rectangle) {
         return STWithinExpressionNode::create(std::move(geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>()),
                                               std::move(shapeExpression));
     }
@@ -105,7 +105,7 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitudeFieldName,
     auto geographyPointAccess = geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>();
 
     auto shapeType = shapeExpression->getShapeType();
-    if (shapeType != Circle) {
+    if (shapeType != ShapeType::Circle) {
         NES_ERROR2("Spatial Query(ST_DWITHIN): Shape has to be a CircleExpression but it was a {}", shapeExpression->toString());
         throw InvalidArgumentException("shapeExpression", shapeExpression->toString());
     }

@@ -225,7 +225,8 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
         // create new monitoring query
         NES_INFO2("MonitoringManager: Creating query for {}", monitoringStream);
         queryId =
-            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE,
+                                                          LineageType::Value::IN_MEMORY);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
             NES_INFO2("MonitoringManager: Successfully started query {}::{}", queryId, monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});
@@ -307,7 +308,7 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE2("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
+        if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Value::Stopped) {
             NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
@@ -334,7 +335,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::Running: {
+            case QueryStatus::Value::Running: {
                 NES_DEBUG2("MonitoringManager: Query is now running {}", queryId);
                 return true;
             }

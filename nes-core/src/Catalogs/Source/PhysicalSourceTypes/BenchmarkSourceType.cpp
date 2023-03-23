@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -32,7 +33,7 @@ BenchmarkSourceType::BenchmarkSourceType(uint8_t* memoryArea,
                                          SourceMode::Value sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId)
-    : PhysicalSourceType(BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
+    : PhysicalSourceType(SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
       numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
       sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
@@ -79,8 +80,8 @@ std::string BenchmarkSourceType::toString() {
     ss << "MemoryAreaSize :" << memoryAreaSize;
     ss << "NumberOfBuffersToProduce :" << numberOfBuffersToProduce;
     ss << "GatheringValue :" << gatheringValue;
-    ss << "GatheringMode :" << gatheringMode;
-    ss << "SourceMode :" << sourceMode;
+    ss << "GatheringMode :" << magic_enum::enum_name(gatheringMode);
+    ss << "SourceMode :" << magic_enum::enum_name(sourceMode);
     ss << "SourceAffinity :" << sourceAffinity;
     ss << "taskQueueId :" << taskQueueId;
     ss << "\n}";

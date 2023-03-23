@@ -234,12 +234,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Avg(Attribute("id", UINT64));
+    auto aggregation = Avg(Attribute("id", BasicType::UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
-        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {aggregation},
         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
@@ -250,10 +250,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", FLOAT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField("key", BasicType::UINT64)
+                                  ->addField("value", BasicType::FLOAT64);
 
     AVGPartialType<uint64_t> avgInit = AVGPartialType<uint64_t>();
 
@@ -330,12 +330,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", UINT64));
+    auto aggregation = Sum(Attribute("id", BasicType::UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
-        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {aggregation},
         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
@@ -346,10 +346,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
                                   ->addField("key", DataTypeFactory::createFixedChar(32))
-                                  ->addField("value", UINT32);
+                                  ->addField("value", BasicType::UINT32);
 
     auto windowHandler = createWindowHandler<NES::ExecutableTypes::Array<char, 32>,
                                              uint64_t,
@@ -428,12 +428,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", UINT64));
+    auto aggregation = Sum(Attribute("id", BasicType::UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
-        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {aggregation},
         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
@@ -444,10 +444,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", UINT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField("key", BasicType::UINT64)
+                                  ->addField("value", BasicType::UINT64);
 
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
@@ -516,12 +516,12 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", INT64));
+    auto aggregation = Sum(Attribute("id", BasicType::INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
-        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {aggregation},
         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createSlicingWindowType(),
@@ -532,10 +532,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", INT64)
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField("key", BasicType::INT64)
+                                  ->addField("value", BasicType::INT64);
     auto windowHandler =
         createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(windowDef,
                                                                                                               windowOutputSchema,
@@ -601,12 +601,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
-    auto aggregation = Sum(Attribute("id", INT64));
+    auto aggregation = Sum(Attribute("id", BasicType::INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef =
-        LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        LogicalWindowDefinition::create({Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
                                         {aggregation},
                                         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                         DistributionCharacteristic::createCombiningWindowType(),
@@ -618,10 +618,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", INT64)
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField("key", BasicType::INT64)
+                                  ->addField("value", BasicType::INT64);
 
     auto windowHandler =
         createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(windowDef,
@@ -692,12 +692,12 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", UINT64));
+    auto aggregation = Sum(Attribute("id", BasicType::UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
-        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {aggregation},
         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
@@ -709,10 +709,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", UINT64)
-                                  ->addField("value", UINT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField("key", BasicType::UINT64)
+                                  ->addField("value", BasicType::UINT64);
 
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
@@ -781,13 +781,13 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", INT64));
+    auto aggregation = Sum(Attribute("id", BasicType::INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowInputSchema = Schema::create();
 
     auto windowDef = Windowing::LogicalWindowDefinition::create(
-        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {aggregation},
         TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
         DistributionCharacteristic::createSlicingWindowType(),
@@ -797,10 +797,10 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     windowDef->setNumberOfInputEdges(1);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField("key", INT64)
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField("key", BasicType::INT64)
+                                  ->addField("value", BasicType::INT64);
 
     auto windowHandler =
         createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(windowDef,

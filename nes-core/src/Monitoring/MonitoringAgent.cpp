@@ -102,7 +102,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             // auto generate the specifics
             MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
+                MonitoringSourceType::create(magic_enum::enum_integer(MetricUtils::createCollectorTypeFromMetricType(metricType)));
             std::string metricTypeString = NES::Monitoring::toString(metricType);
 
             NES_INFO2("MonitoringAgent: Adding physical source to config {} _ph", metricTypeString);

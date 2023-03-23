@@ -22,6 +22,7 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -99,7 +100,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
 }
 
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
-    NES_DEBUG2("start checkAsyncResult for mode={} for {} queues", mode, queues.size());
+    NES_DEBUG2("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
     bool result = true;
     for (const auto& queue : queues) {
         //wait for all deploys to come back
@@ -110,19 +111,19 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
         while (cnt != queue.second && queue.first->Next(&got_tag, &ok)) {
             // The tag in this example is the memory location of the call object
             bool status = false;
-            if (mode == Register) {
+            if (mode == RpcClientModes::Register) {
                 auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
-            } else if (mode == Unregister) {
+            } else if (mode == RpcClientModes::Unregister) {
                 auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
-            } else if (mode == Start) {
+            } else if (mode == RpcClientModes::Start) {
                 auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
-            } else if (mode == Stop) {
+            } else if (mode == RpcClientModes::Stop) {
                 auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
                 status = call->status.ok();
                 if (!status) {
@@ -134,14 +135,15 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             }
 
             if (!status) {
-                NES_THROW_RUNTIME_ERROR("RPC failed, a scheduled async call for mode" << mode << " failed");
+                NES_THROW_RUNTIME_ERROR("RPC failed, a scheduled async call for mode" << magic_enum::enum_name(mode)
+                                        << " failed");
             }
 
             // Once we're complete, deallocate the call object.
             cnt++;
         }
     }
-    NES_DEBUG2("checkAsyncResult for mode={} succeed", mode);
+    NES_DEBUG2("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
     return result;
 }
 bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
@@ -314,7 +316,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
 
     MonitoringRegistrationRequest request;
     for (auto metric : plan->getMetricTypes()) {
-        request.mutable_metrictypes()->Add(metric);
+        request.mutable_metrictypes()->Add(magic_enum::enum_integer(metric));
     }
     ClientContext context;
     MonitoringRegistrationReply reply;

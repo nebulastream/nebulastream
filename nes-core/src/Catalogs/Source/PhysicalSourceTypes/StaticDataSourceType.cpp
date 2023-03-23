@@ -51,8 +51,8 @@ StaticDataSourceType::StaticDataSourceType(const std::string& pathTableFile,
                                            SourceMode::Value sourceMode,
                                            uint64_t taskQueueId,
                                            bool lateStart)
-    : PhysicalSourceType(STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)), numBuffersToProcess(numBuffersToProcess),
-      sourceMode(sourceMode), taskQueueId(taskQueueId), lateStart(lateStart) {}
+    : PhysicalSourceType(SourceType::STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)),
+      numBuffersToProcess(numBuffersToProcess), sourceMode(sourceMode), taskQueueId(taskQueueId), lateStart(lateStart) {}
 
 StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTableFile,
                                                      uint64_t numBuffersToProcess,

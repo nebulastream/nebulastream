@@ -14,6 +14,7 @@
 
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Monitoring {
 
@@ -25,7 +26,7 @@ std::string toString(MetricCollectorType type) {
         case MetricCollectorType::NETWORK_COLLECTOR: return "NETWORK_COLLECTOR";
         case MetricCollectorType::STATIC_SYSTEM_METRICS_COLLECTOR: return "STATIC_SYSTEM_METRICS_COLLECTOR";
         case MetricCollectorType::RUNTIME_METRICS_COLLECTOR: return "RUNTIME_METRICS_COLLECTOR";
-        default: NES_THROW_RUNTIME_ERROR("MetricCollectorType: Unknown type " << type);
+        default: NES_THROW_RUNTIME_ERROR("MetricCollectorType: Unknown type " << magic_enum::enum_name(type));
     }
 };
 

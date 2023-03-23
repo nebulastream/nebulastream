@@ -29,7 +29,7 @@ CpuCollector::CpuCollector()
     NES_INFO2("CpuCollector: Init CpuCollector with schema {}", schema->toString());
 }
 
-MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }
+MetricCollectorType CpuCollector::getType() { return MetricCollectorType::CPU_COLLECTOR; }
 
 bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {

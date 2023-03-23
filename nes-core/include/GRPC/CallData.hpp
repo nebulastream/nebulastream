@@ -15,6 +15,8 @@
 #ifndef NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
 #define NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
 
+#include <stdint.h>
+
 namespace grpc {
 class ServerCompletionQueue;
 }

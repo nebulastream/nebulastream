@@ -24,7 +24,7 @@ LambdaSourceType::LambdaSourceType(std::function<void(NES::Runtime::TupleBuffer&
                                    GatheringMode::Value gatheringMode,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
-    : PhysicalSourceType(LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
+    : PhysicalSourceType(SourceType::LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
       numBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(std::move(gatheringMode)),
       sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 

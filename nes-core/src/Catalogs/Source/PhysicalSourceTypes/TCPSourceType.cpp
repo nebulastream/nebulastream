@@ -29,7 +29,7 @@ TCPSourceTypePtr TCPSourceType::create(std::map<std::string, std::string> source
 TCPSourceTypePtr TCPSourceType::create() { return std::make_shared<TCPSourceType>(TCPSourceType()); }
 
 TCPSourceType::TCPSourceType()
-    : PhysicalSourceType(TCP_SOURCE),
+    : PhysicalSourceType(SourceType::TCP_SOURCE),
       socketHost(Configurations::ConfigurationOption<std::string>::create(Configurations::SOCKET_HOST_CONFIG,
                                                                           "127.0.0.1",
                                                                           "host to connect to")),
@@ -55,12 +55,12 @@ TCPSourceType::TCPSourceType()
                                                                          "tupleBuffer flush interval in milliseconds")),
       inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(
           Configurations::INPUT_FORMAT_CONFIG,
-          Configurations::CSV,
+          Configurations::InputFormat::CSV,
           "Input format defines how the data will arrive in NES. Current Option: CSV (comma separated list with separator "
           "between lines/tuples), JSON.")),
       decideMessageSize(Configurations::ConfigurationOption<Configurations::TCPDecideMessageSize>::create(
           Configurations::DECIDE_MESSAGE_SIZE_CONFIG,
-          Configurations::TUPLE_SEPARATOR,
+          Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR,
           "Decide how a message size is obtained: TUPLE_SEPARATOR: TCP messages are send with a char acting as tuple separator "
           "between them, tupleSeperator needs to be set USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, "
           "socketBufferSize needs to be set BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of "
@@ -111,15 +111,15 @@ TCPSourceType::TCPSourceType(std::map<std::string, std::string> sourceConfigMap)
         inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
     }
     switch (decideMessageSize->getValue()) {
-        case Configurations::TUPLE_SEPARATOR:
+        case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
             if (sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG) != sourceConfigMap.end()) {
-                tupleSeparator->setInputFormatEnum(sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG)->second);
+                tupleSeparator->setValue(sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG)->second[0]);
             } else {
                 NES_THROW_RUNTIME_ERROR("TCPSourceType: You want to use a tuple separator to obtain the size of a message, "
                                         "however, you have not defined a tuple separator. Please define tupleSeparator");
             }
             break;
-        case Configurations::USER_SPECIFIED_BUFFER_SIZE:
+        case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
             if (sourceConfigMap.find(Configurations::SOCKET_BUFFER_SIZE_CONFIG) != sourceConfigMap.end()) {
                 socketBufferSize->setValue(std::stoi(sourceConfigMap.find(Configurations::SOCKET_BUFFER_SIZE_CONFIG)->second));
             } else {
@@ -127,7 +127,7 @@ TCPSourceType::TCPSourceType(std::map<std::string, std::string> sourceConfigMap)
                                         "however, you have not defined a socket buffer size. Please define socketBufferSize");
             }
             break;
-        case Configurations::BUFFER_SIZE_FROM_SOCKET:
+        case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET:
             if (sourceConfigMap.find(Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG)
                 != sourceConfigMap.end()) {
                 bytesUsedForSocketBufferSizeTransfer->setValue(
@@ -181,16 +181,16 @@ TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
             "TCPSourceType: you have not decided how to obtain the size of a message! Please define decideMessageSize.");
     }
     switch (decideMessageSize->getValue()) {
-        case Configurations::TUPLE_SEPARATOR:
+        case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
             if (!yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>().empty()
                 && yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>() != "\n") {
-                tupleSeparator->setInputFormatEnum(yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>());
+                tupleSeparator->setValue(yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>()[0]);
             } else {
                 NES_THROW_RUNTIME_ERROR("TCPSourceType: You want to use a tuple separator to obtain the size of a message, "
                                         "however, you have not defined a tuple separator. Please define tupleSeparator");
             }
             break;
-        case Configurations::USER_SPECIFIED_BUFFER_SIZE:
+        case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
             if (!yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<std::string>().empty()
                 && yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<std::string>() != "\n") {
                 socketBufferSize->setValue(yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<uint32_t>());
@@ -199,7 +199,7 @@ TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
                                         "however, you have not defined a socket buffer size. Please define socketBufferSize");
             }
             break;
-        case Configurations::BUFFER_SIZE_FROM_SOCKET:
+        case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET:
             if (!yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG].As<std::string>().empty()
                 && yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG].As<std::string>() != "\n") {
                 bytesUsedForSocketBufferSizeTransfer->setValue(
@@ -222,8 +222,8 @@ std::string TCPSourceType::toString() {
     ss << socketDomain->toStringNameCurrentValue();
     ss << socketType->toStringNameCurrentValue();
     ss << flushIntervalMS->toStringNameCurrentValue();
-    ss << inputFormat->toStringNameCurrentValue();
-    ss << decideMessageSize->toStringNameCurrentValue();
+    ss << inputFormat->toStringNameCurrentValueEnum();
+    ss << decideMessageSize->toStringNameCurrentValueEnum();
     ss << tupleSeparator->toStringNameCurrentValue();
     ss << socketBufferSize->toStringNameCurrentValue();
     ss << bytesUsedForSocketBufferSizeTransfer->toStringNameCurrentValue();
