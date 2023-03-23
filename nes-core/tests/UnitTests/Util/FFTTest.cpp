@@ -102,6 +102,7 @@ TEST(FFTTest, pocketfftExample) {
 
 TEST(FFTTest, fft) {
     std::vector<double> testVector{1., 2., 3., 4.};
+    std::vector<std::complex<double>> resVector{1., 2., 3., 4.};
     auto res = Util::fft(testVector);
     FAIL();
 }

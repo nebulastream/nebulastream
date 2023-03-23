@@ -225,19 +225,25 @@ std::string Util::trim(const std::string& str) {
 
 std::vector<std::complex<double>> Util::fft(const std::vector<double>& lastWindowValues) {
     pocketfft::shape_t shape{lastWindowValues.size()};
-    pocketfft::stride_t stridef(1);  // always 1D shape
-    pocketfft::shape_t axes(1);
-    stridef[0] = sizeof(double);
-    axes[0] = 0;
-    std::vector<std::complex<double>> complexLastValues(lastWindowValues.size());
-    std::vector<std::complex<double>> complexLastValuesRes(lastWindowValues.size());
-    pocketfft::r2c(shape, stridef, stridef, axes, pocketfft::FORWARD,
-                   lastWindowValues.data(), complexLastValues.data(), 1.);
-//    std::transform(lastWindowValues.begin(), lastWindowValues.end(), complexLastValues.begin(),
-//               [](double real_part) { return std::complex<double>(real_part, 0.0); });
-//    pocketfft::c2c(shape, stridef, stridef, axes, pocketfft::FORWARD,
-//                   complexLastValues.data(), complexLastValuesRes.data(), 1.);
-    return complexLastValuesRes;
+    pocketfft::stride_t stride(1);  // always 1D shape
+    pocketfft::stride_t stride_out(1);  // always 1D shape
+    pocketfft::shape_t axes;
+    size_t axis = 0;
+    stride[0] = sizeof(double);
+    stride_out[0] = 2 * sizeof(double);
+    for (size_t i=0; i<shape.size(); ++i) {
+        axes.push_back(i);
+    }
+    std::vector<std::complex<double>> r2cRes(lastWindowValues.size());
+    pocketfft::r2c(shape, stride, stride_out, axis, pocketfft::FORWARD, lastWindowValues.data(), r2cRes.data(), 1.);
+    pocketfft::detail::ndarr<std::complex<double>> ares(r2cRes.data(), shape, stride_out);
+    pocketfft::detail::rev_iter iter(ares, axes);
+    while(iter.remaining()>0) {
+        auto v = ares[iter.ofs()];
+        ares[iter.rev_ofs()] = conj(v);
+        iter.advance();
+    }
+    return r2cRes;
 }
 
 bool Util::fftfreq() {
