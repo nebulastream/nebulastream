@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
-                         public detail::virtual_enable_shared_from_this<BatchJoinHandler, false> {
+                         public NES::detail::virtual_enable_shared_from_this<BatchJoinHandler, false> {
 
   public:
     /**
