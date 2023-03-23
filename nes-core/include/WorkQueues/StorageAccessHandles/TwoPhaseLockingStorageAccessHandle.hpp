@@ -30,18 +30,12 @@ class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
                          Catalogs::Source::SourceCatalogPtr  sourceCatalog,
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
-    static std::shared_ptr<TwoPhaseLockingStorageAccessHandle> create(GlobalExecutionPlanPtr  globalExecutionPlan,
-                         TopologyPtr  topology,
-                         QueryCatalogServicePtr  queryCatalogService,
-                         GlobalQueryPlanPtr  globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
-                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
-
-    /**
-     * Indicates that the storage handle requires a rollback in case of a failed operation because we perform operations on the actual resources.
-     * @return always true
-     */
-    bool requiresRollback() override;
+    static std::shared_ptr<TwoPhaseLockingStorageAccessHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
+                         const TopologyPtr&  topology,
+                         const QueryCatalogServicePtr&  queryCatalogService,
+                         const GlobalQueryPlanPtr&  globalQueryPlan,
+                         const Catalogs::Source::SourceCatalogPtr&  sourceCatalog,
+                         const Catalogs::UDF::UdfCatalogPtr&  udfCatalog);
 
     /**
      * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
