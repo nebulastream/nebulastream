@@ -30,7 +30,7 @@ tm convertToUTC_TM(int64_t milliseconds) {
     return *gmtime(&tt);
 }
 
-// Convert a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds since the year 0. //1970-01-07T14:23:27
+// Convert a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds since the year 0 (UTC (Universal Time Coordinated)). //1970-01-07T14:23:27
 uint64_t stringtomillisecondsproxy(TextValue* t) {
     // Parse the input string to extract the date and time.
     int year = 0;
@@ -42,7 +42,7 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     std::string timeString = t->c_str();
     if (timeString.find('T') != std::string::npos){
         std::sscanf(t->c_str(), "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second);
-        NES_INFO(" the year" << year << " the month" << month << " the day" << day << " the hour" << hour << " the minute" << minute << " and the second" << second);
+        NES_INFO(" the year " << year << " the month " << month << " the day " << day << " the hour " << hour << " the minute " << minute << " and the second " << second);
     }else{
         std::sscanf(t->c_str(), "%d-%d-%d", &year, &month, &day);
         NES_INFO(" the year" << year << " the month" << month << " and the day" << day);
@@ -51,7 +51,7 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     // distinguishing Date and Time input strings or support user-defined formats.
 
     // Create a `std::tm` object with the parsed date and time.
-    time_t tmp = {0};
+    //time_t tmp = {0};
     struct tm tm = convertToUTC_TM(0L);
     if (year >= 0) {
         tm.tm_year = year - 1900;
@@ -73,8 +73,8 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     }
 
     // Convert the `std::tm` object to a `std::time_t` object.
-    std::time_t time = std::mktime(&tm);
-
+    std::time_t time = timegm(&tm);
+    NES_INFO(time)
     // Convert the `std::time_t` object to milliseconds since the Unix epoch.
     std::chrono::duration<int64_t, std::milli> dur(time);
     //has we current only except time formats with hour, minutes and seconds, we need to multiple by 1000 to represent milliseconds

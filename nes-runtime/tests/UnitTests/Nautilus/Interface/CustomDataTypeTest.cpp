@@ -149,11 +149,11 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeConstructurTest) {
     //Test String Constructor
     auto textValue = Value<Text>("1970-01-07T14:23:27");
     auto c3 = Value<TimeStamp>(TimeStamp((Value<Text>) textValue));
-    EXPECT_EQ(c3->getMilliSeconds(), (uint64_t) 566607000L);
+    EXPECT_EQ(c3->getMilliSeconds(), (uint64_t) 570207000L);
     //
     auto textValue1 = Value<Text>("1970-01-07");
     auto c4 = Value<TimeStamp>(TimeStamp((Value<Text>) textValue1));
-    EXPECT_EQ(c4->getMilliSeconds(), (uint64_t) 514800000L);
+    EXPECT_EQ(c4->getMilliSeconds(), (uint64_t) 518400000L);
 }
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeIntervalTest) {
