@@ -132,7 +132,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                workerConfig->localWorkerIp.getValue(),
                localWorkerRpcPort,
                workerConfig->dataPort.getValue(),
-               workerConfig->queryCompiler.windowingStrategy);
+               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy));
 
     NES_DEBUG2("NesWorker::start: start Runtime");
     auto expected = false;

@@ -187,12 +187,12 @@ TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
     schema->addField("f1", DataTypeFactory::createDouble());
     schema->addField("f2", DataTypeFactory::createInt32());
     schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
-    schema->setLayoutType(NES::Schema::COLUMNAR_LAYOUT);
+    schema->setLayoutType(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(*serializedSchema);
     EXPECT_TRUE(deserializedSchema->equals(schema));
-    EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::COLUMNAR_LAYOUT);
+    EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 }
 
 TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {

@@ -92,11 +92,14 @@ MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollector
 
 MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(CpuMetricsWrapper{}, WrappedCpuMetrics);
-        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{}, DiskMetric);
-        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(MemoryMetrics{}, MemoryMetric);
+        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(CpuMetricsWrapper{},
+                                                                                 MetricType::WrappedCpuMetrics);
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{},
+                                                                                  MetricType::DiskMetric);
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(MemoryMetrics{},
+                                                                                    MetricType::MemoryMetric);
         case MetricCollectorType::NETWORK_COLLECTOR:
-            return std::make_shared<Metric>(NetworkMetricsWrapper{}, WrappedNetworkMetrics);
+            return std::make_shared<Metric>(NetworkMetricsWrapper{}, MetricType::WrappedNetworkMetrics);
         default: {
             NES_FATAL_ERROR2("MetricUtils: Collector type not supported {}", NES::Monitoring::toString(type));
         }

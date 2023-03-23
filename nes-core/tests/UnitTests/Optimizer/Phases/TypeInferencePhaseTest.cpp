@@ -1289,9 +1289,9 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("QnV1", inputSchema);
     streamCatalog->addLogicalSource("QnV2", inputSchema);
@@ -1329,9 +1329,9 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
@@ -1384,9 +1384,9 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
@@ -1439,9 +1439,9 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
@@ -1485,9 +1485,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource", inputSchema);
 
@@ -1525,9 +1525,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource1", inputSchema);
     streamCatalog->addLogicalSource("logicalSource2", inputSchema);
@@ -1574,9 +1574,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", UINT64))
-                           ->addField(createField("velocity", FLOAT32))
-                           ->addField(createField("quantity", UINT64));
+                           ->addField(createField("timestamp", BasicType::UINT64))
+                           ->addField(createField("velocity", BasicType::FLOAT32))
+                           ->addField(createField("quantity", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource1", inputSchema);
     streamCatalog->addLogicalSource("logicalSource2", inputSchema);

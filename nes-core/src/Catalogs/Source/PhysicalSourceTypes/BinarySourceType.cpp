@@ -52,7 +52,7 @@ BinarySourceType::BinarySourceType(std::map<std::string, std::string> sourceConf
 BinarySourceTypePtr BinarySourceType::create() { return std::make_shared<BinarySourceType>(BinarySourceType()); }
 
 BinarySourceType::BinarySourceType()
-    : PhysicalSourceType(BINARY_SOURCE), filePath(Configurations::ConfigurationOption<std::string>::create(
+    : PhysicalSourceType(SourceType::BINARY_SOURCE), filePath(Configurations::ConfigurationOption<std::string>::create(
                                              Configurations::FILE_PATH_CONFIG,
                                              "../tests/test_data/QnV_short.csv",//FIXME: What should we do about these things?
                                              "file path, needed for: CSVSource, BinarySource")) {

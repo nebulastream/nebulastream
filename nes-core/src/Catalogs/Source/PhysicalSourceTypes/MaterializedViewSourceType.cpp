@@ -39,7 +39,7 @@ MaterializedViewSourceType::MaterializedViewSourceType(std::map<std::string, std
 }
 
 MaterializedViewSourceType::MaterializedViewSourceType()
-    : PhysicalSourceType(MATERIALIZEDVIEW_SOURCE),
+    : PhysicalSourceType(SourceType::MATERIALIZEDVIEW_SOURCE),
       id(Configurations::ConfigurationOption<uint32_t>::create(MATERIALIZED_VIEW_ID_CONFIG,
                                                                1,
                                                                "id to identify the materialized view to read from")) {

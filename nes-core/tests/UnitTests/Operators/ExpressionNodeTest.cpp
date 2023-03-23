@@ -85,7 +85,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
 
 TEST_F(ExpressionNodeTest, attributeStampInference) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
-    auto schema = Schema::create()->addField("test$f1", INT8);
+    auto schema = Schema::create()->addField("test$f1", BasicType::INT8);
 
     auto attribute = Attribute("f1").getExpressionNode();
     // check if the attribute field is initially undefined
@@ -106,25 +106,25 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
-                      ->addField("test$f1", INT8)
-                      ->addField("test$f2", INT64)
-                      ->addField("test$f3", FLOAT64)
+                      ->addField("test$f1", BasicType::INT8)
+                      ->addField("test$f2", BasicType::INT64)
+                      ->addField("test$f3", BasicType::FLOAT64)
                       ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto addExpression = Attribute("f1") + 10;
     EXPECT_TRUE(addExpression->getStamp()->isUndefined());
     addExpression->inferStamp(typeInferencePhaseContext, schema);
-    EXPECT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
+    EXPECT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(BasicType::INT32)));
 
     auto mulExpression = Attribute("f2") * 10;
     EXPECT_TRUE(mulExpression->getStamp()->isUndefined());
     mulExpression->inferStamp(typeInferencePhaseContext, schema);
-    EXPECT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(INT64)));
+    EXPECT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(BasicType::INT64)));
 
     auto increment = Attribute("f3")++;
     EXPECT_TRUE(increment->getStamp()->isUndefined());
     increment->inferStamp(typeInferencePhaseContext, schema);
-    EXPECT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(FLOAT64)));
+    EXPECT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(BasicType::FLOAT64)));
 
     // We expect that you can't increment an array
     auto incrementArray = Attribute("f4")++;
@@ -135,9 +135,9 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
 TEST_F(ExpressionNodeTest, inferPredicateTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
-                      ->addField("test$f1", INT8)
-                      ->addField("test$f2", INT64)
-                      ->addField("test$f3", BOOLEAN)
+                      ->addField("test$f1", BasicType::INT8)
+                      ->addField("test$f2", BasicType::INT64)
+                      ->addField("test$f3", BasicType::BOOLEAN)
                       ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto equalsExpression = Attribute("f1") == 10;
@@ -171,19 +171,19 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
 TEST_F(ExpressionNodeTest, inferAssertionTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
-                      ->addField("test$f1", INT8)
-                      ->addField("test$f2", INT64)
-                      ->addField("test$f3", BOOLEAN)
+                      ->addField("test$f1", BasicType::INT8)
+                      ->addField("test$f2", BasicType::INT64)
+                      ->addField("test$f3", BasicType::BOOLEAN)
                       ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(typeInferencePhaseContext, schema);
-    EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT8)));
+    EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(BasicType::INT8)));
 }
 
 TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
-    auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", INT16);
+    auto schema = Schema::create()->addField("test$left", BasicType::UINT32)->addField("test$right", BasicType::INT16);
 
     auto multiplicationNode = Attribute("left") * Attribute("right");
     multiplicationNode->inferStamp(typeInferencePhaseContext, schema);
@@ -203,7 +203,7 @@ TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
  */
 TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
-    auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", INT16);
+    auto schema = Schema::create()->addField("test$left", BasicType::UINT32)->addField("test$right", BasicType::INT16);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
     moduloNode->inferStamp(typeInferencePhaseContext, schema);
@@ -228,7 +228,7 @@ TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
  */
 TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
-    auto schema = Schema::create()->addField("test$left", UINT32)->addField("test$right", FLOAT32);
+    auto schema = Schema::create()->addField("test$left", BasicType::UINT32)->addField("test$right", BasicType::FLOAT32);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
     moduloNode->inferStamp(typeInferencePhaseContext, schema);
@@ -249,7 +249,7 @@ TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
  */
 TEST_F(ExpressionNodeTest, whenInferStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
-    auto schema = Schema::create()->addField("test$bool", BOOLEAN)->addField("test$float", FLOAT32);
+    auto schema = Schema::create()->addField("test$bool", BasicType::BOOLEAN)->addField("test$float", BasicType::FLOAT32);
     auto whenNode = WHEN(Attribute("bool"), Attribute("float"));
     ASSERT_TRUE(whenNode->getStamp()->isUndefined());
     whenNode->inferStamp(typeInferencePhaseContext, schema);
@@ -262,12 +262,12 @@ TEST_F(ExpressionNodeTest, whenInferStampTest) {
 TEST_F(ExpressionNodeTest, caseInfereStampTest) {
     auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()
-                      ->addField("test$bool1", BOOLEAN)
-                      ->addField("test$bool2", BOOLEAN)
-                      ->addField("test$float1", FLOAT32)
-                      ->addField("test$float2", FLOAT32)
-                      ->addField("test$float3", FLOAT32)
-                      ->addField("test$integer", INT32);
+                      ->addField("test$bool1", BasicType::BOOLEAN)
+                      ->addField("test$bool2", BasicType::BOOLEAN)
+                      ->addField("test$float1", BasicType::FLOAT32)
+                      ->addField("test$float2", BasicType::FLOAT32)
+                      ->addField("test$float3", BasicType::FLOAT32)
+                      ->addField("test$integer", BasicType::INT32);
 
     auto whenNode1 = WHEN(Attribute("bool1"), Attribute("float1"));
     auto whenNode2 = WHEN(Attribute("bool2"), Attribute("float2"));

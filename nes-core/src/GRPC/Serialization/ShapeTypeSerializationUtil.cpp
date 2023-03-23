@@ -26,7 +26,7 @@ namespace NES {
 SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const ShapeExpressionNodePtr& shape,
                                                                       SerializableShapeType* serializedShape) {
     ShapeType shapeType = shape->getShapeType();
-    if (shapeType == Circle) {
+    if (shapeType == ShapeType::Circle) {
         auto circleExpressionNode = shape->as<CircleExpressionNode>();
         serializedShape->set_shapetype(SerializableShapeType_ShapeType_CIRCLE);
         auto serializedCircle = SerializableShapeType_SerializableCircle();
@@ -34,14 +34,14 @@ SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const Shap
         serializedCircle.set_longitude(circleExpressionNode->getLongitude());
         serializedCircle.set_radius(circleExpressionNode->getRadius());
         serializedShape->mutable_details()->PackFrom(serializedCircle);
-    } else if (shapeType == Point) {
+    } else if (shapeType == ShapeType::Point) {
         serializedShape->set_shapetype(SerializableShapeType_ShapeType_POINT);
         auto pointExpressionNode = shape->as<PointExpressionNode>();
         auto serializedPoint = SerializableShapeType_SerializablePoint();
         serializedPoint.set_latitude(pointExpressionNode->getLatitude());
         serializedPoint.set_longitude(pointExpressionNode->getLongitude());
         serializedShape->mutable_details()->PackFrom(serializedPoint);
-    } else if (shapeType == Polygon) {
+    } else if (shapeType == ShapeType::Polygon) {
         serializedShape->set_shapetype(SerializableShapeType_ShapeType_POLYGON);
         auto polygonExpressionNode = shape->as<PolygonExpressionNode>();
         auto serializedPolygon = SerializableShapeType_SerializablePolygon();
@@ -50,7 +50,7 @@ SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const Shap
             serializedPolygon.add_coords(coord);
         }
         serializedShape->mutable_details()->PackFrom(serializedPolygon);
-    } else if (shapeType == Rectangle) {
+    } else if (shapeType == ShapeType::Rectangle) {
         auto rectangleExpressionNode = shape->as<RectangleExpressionNode>();
         serializedShape->set_shapetype(SerializableShapeType_ShapeType_RECTANGLE);
         auto serializedRectangle = SerializableShapeType_SerializableRectangle();

@@ -18,7 +18,7 @@
 namespace NES {
 
 CallData::CallData(WorkerRPCServer& service, grpc::ServerCompletionQueue* cq)
-    : service(service), completionQueue(cq), status(CREATE) {
+    : service(service), completionQueue(cq), status(CallStatus::CREATE) {
     // Invoke the serving logic right away.
 }
 
@@ -32,17 +32,17 @@ void CallData::proceed() {
     ServerContext ctx;
     grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder(&ctx);
 
-    if (status == CREATE) {
+    if (status == CallStatus::CREATE) {
         NES_DEBUG2("RequestInSyncInCreate={}", request.DebugString());
         // Make this instance progress to the PROCESS state.
-        status = PROCESS;
+        status = CallStatus::PROCESS;
 
         // As part of the initial CREATE state, we *request* that the system
         // start processing requests. In this request, "this" acts are
         // the tag uniquely identifying the request (so that different CallData
         // instances can serve different requests concurrently), in this case
         // the memory address of this CallData instance.
-    } else if (status == PROCESS) {
+    } else if (status == CallStatus::PROCESS) {
         NES_DEBUG2("RequestInSyncInProcees={}", request.DebugString());
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
@@ -52,11 +52,11 @@ void CallData::proceed() {
         // And we are done! Let the gRPC Runtime know we've finished, using the
         // memory address of this instance as the uniquely identifying tag for
         // the event.
-        status = FINISH;
+        status = CallStatus::FINISH;
         responder.Finish(reply, Status::OK, this);
     } else {
         NES_DEBUG2("RequestInSyncInFinish={}", request.DebugString());
-        NES_ASSERT(status == FINISH, "RequestInSyncInFinish failed");
+        NES_ASSERT(status == CallStatus::FINISH, "RequestInSyncInFinish failed");
         // Once in the FINISH state, deallocate ourselves (CallData).
         delete this;
     }

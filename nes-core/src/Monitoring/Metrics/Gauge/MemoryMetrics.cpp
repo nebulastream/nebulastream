@@ -28,7 +28,7 @@ MemoryMetrics::MemoryMetrics()
       FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0) {}
 
 SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
-    auto schema = Schema::create(Schema::ROW_LAYOUT)
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                       ->addField(prefix + "node_id", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_RAM", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_SWAP", BasicType::UINT64)

@@ -483,7 +483,7 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
             NES_DEBUG2("failure end-of-stream Exec Op opId={} reconfType={} queryExecutionPlanId={} "
                        "threadPool->getNumberOfThreads()={} qep {}",
                        sourceId,
-                       ReconfigurationType::FailEndOfStream,
+                       magic_enum::enum_name(ReconfigurationType::FailEndOfStream),
                        executablePipeline->get()->getQuerySubPlanId(),
                        threadPool->getNumberOfThreads(),
                        executablePipeline->get()->getQueryId());
@@ -495,7 +495,7 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
             NES_DEBUG2("failure end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} "
                        "threadPool->getNumberOfThreads()={} qep {}",
                        sourceId,
-                       ReconfigurationType::FailEndOfStream,
+                       magic_enum::enum_name(ReconfigurationType::FailEndOfStream),
                        sink->get()->getParentPlanId(),
                        threadPool->getNumberOfThreads(),
                        sink->get()->getQueryId());

@@ -31,7 +31,7 @@ CpuMetrics::CpuMetrics()
       guestnice(0) {}
 
 SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
-    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+    SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
                            ->addField(prefix + "coreNum", BasicType::UINT64)
                            ->addField(prefix + "user", BasicType::UINT64)

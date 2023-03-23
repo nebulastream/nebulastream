@@ -74,7 +74,7 @@ OPCSourceType::OPCSourceType(Yaml::Node yamlConfig) : OPCSourceType() {
 }
 
 OPCSourceType::OPCSourceType()
-    : PhysicalSourceType(OPC_SOURCE),
+    : PhysicalSourceType(SourceType::OPC_SOURCE),
       namespaceIndex(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NAME_SPACE_INDEX_CONFIG,
                                                                            1,
                                                                            "namespaceIndex for node, needed for: OPCSource")),

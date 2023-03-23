@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
+#include <Util/magicenum/magic_enum.hpp>
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -73,6 +74,16 @@ class ConfigurationOption {
     std::string toStringNameCurrentValue() {
         std::stringstream ss;
         ss << name << ": " << value << "\n";
+        return ss.str();
+    }
+
+    /**
+     * @brief converts config object to human readable form, only prints name and current value
+     * @return Name: current Value of config object
+     */
+    std::string toStringNameCurrentValueEnum() {
+        std::stringstream ss;
+        ss << name << ": " << magic_enum::enum_name(value) << "\n";
         return ss.str();
     }
 

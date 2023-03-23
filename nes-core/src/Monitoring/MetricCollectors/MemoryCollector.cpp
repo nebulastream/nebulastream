@@ -29,7 +29,7 @@ MemoryCollector::MemoryCollector()
     NES_INFO2("MemoryCollector: Init MemoryCollector with schema {}", schema->toString());
 }
 
-MetricCollectorType MemoryCollector::getType() { return MEMORY_COLLECTOR; }
+MetricCollectorType MemoryCollector::getType() { return MetricCollectorType::MEMORY_COLLECTOR; }
 
 bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {

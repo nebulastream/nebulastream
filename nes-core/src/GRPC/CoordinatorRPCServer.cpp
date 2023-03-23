@@ -345,7 +345,8 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
               sharedQueryId)
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SoftStopTriggered);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId,
+                                                                 QueryStatus::Value::SoftStopTriggered);
 
     //update response
     response->set_success(success);
@@ -360,7 +361,8 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     auto querySubPlanId = request->querysubplanid();
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopCompleted);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId,
+                                                                 QueryStatus::Value::SoftStopCompleted);
 
     //update response
     response->set_success(success);

@@ -21,7 +21,7 @@
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
 namespace NES::Monitoring {
-AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(AbstractReader) {}
+AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(SystemResourcesReaderType::AbstractReader) {}
 
 RuntimeMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
     RuntimeMetrics output{};
