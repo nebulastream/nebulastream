@@ -80,12 +80,6 @@ class StorageAccessHandle {
     virtual ~StorageAccessHandle() = default;
 
     /**
-     * Indicates if the storage handle requires a rollback in case of an aborted operation.
-     * @return
-     */
-    virtual bool requiresRollback() = 0;
-
-    /**
      * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
      * @return a handle to the global execution plan.
      */

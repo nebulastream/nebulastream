@@ -34,17 +34,17 @@ class SerialAccessHandleTest : public Testing::TestWithErrorHandling<testing::Te
 
 TEST_F(SerialAccessHandleTest, TestResourceAccess) {
     //create access handle
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
-    Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-    GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+    auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
     auto serialAccessHandle = SerialStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                 globalQueryPlan, sourceCatalog, udfCatalog);
 
+    //test if we can obtain the resource we passed to the constructor
     ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle().get());
     ASSERT_EQ(topology->getRoot(), serialAccessHandle->getTopologyHandle()->getRoot());
 }

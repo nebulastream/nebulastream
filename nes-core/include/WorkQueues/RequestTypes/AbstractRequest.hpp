@@ -55,28 +55,23 @@ class AbstractRequest {
     /**
      * Executes the request logic. Throws an exception if a resource could not be acquired via the storageAccessHandle
      * @param storageAccessHandle: a handle to access the coordinators data structures which might be needed for executing the
-     * @param workerRpcClient: the rpc client to communicate with the worker nodes
      * request
      */
-    virtual void execute(StorageAccessHandlePtr storageAccessHandle,
-                         Configurations::OptimizerConfiguration optimizerConfiguration,
-                         WorkerRPCClientPtr workerRpcClient) = 0;
+    virtual void execute(StorageAccessHandlePtr storageAccessHandle) = 0;
 
     /**
      * Roll back any changes made by a request that did not complete due to errors.
      * @param ex: The exception thrown during request execution.
      * @param storageAccessHandle: The storage access handle that was used by the request to modify the system state.
-     * @param workerRpcClient: the rpc client to communicate with the worker nodes
      */
-    virtual void rollBack(std::exception& ex, StorageAccessHandlePtr storageAccessHandle, WorkerRPCClientPtr workerRpcClient);
+    virtual void rollBack(std::exception& ex, StorageAccessHandlePtr storageAccessHandle) = 0;
 
     /**
      * Calls rollBack and executes additional error handling based on the exception if necessary
      * @param ex: The exception thrown during request execution.
      * @param storageAccessHandle: The storage access handle that was used by the request to modify the system state.
-     * @param workerRpcClient: the rpc client to communicate with the worker nodes
      */
-    void handleError(std::exception ex, StorageAccessHandlePtr storageAccessHandle, WorkerRPCClientPtr workerRpcClient);
+    void handleError(std::exception ex, const StorageAccessHandlePtr& storageAccessHandle);
 
     /**
      * Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -90,9 +85,8 @@ class AbstractRequest {
      * Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageAccessHandle: The storage access handle used by the request
-     * @param workerRpcClient: the rpc client to communicate with the worker nodes
      */
-    virtual void preRollbackErrorHandling(std::exception ex, StorageAccessHandlePtr storageAccessHandle, WorkerRPCClientPtr workerRpcClient);
+    virtual void preRollbackErrorHandling(std::exception ex, StorageAccessHandlePtr storageAccessHandle) = 0;
 
     /**
      * Performs request specific error handling to be done after changes to the storage are rolled back
@@ -100,7 +94,7 @@ class AbstractRequest {
      * @param storageAccessHandle: The storage access handle used by the request
      * @param workerRpcClient: the rpc client to communicate with the worker nodes
      */
-    virtual void afterRollbackErrorHandling(std::exception ex, StorageAccessHandlePtr storageAccessHandle, WorkerRPCClientPtr workerRpcClient);
+    virtual void afterRollbackErrorHandling(std::exception ex, StorageAccessHandlePtr storageAccessHandle) = 0;
 
   private:
     size_t maxRetries;
