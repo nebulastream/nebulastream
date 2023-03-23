@@ -11,6 +11,7 @@
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -22,6 +23,9 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
+#include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
+#include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
+#include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>

@@ -14,8 +14,8 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BATCHKEYEDAGGREGATIONHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BATCHKEYEDAGGREGATIONHANDLER_HPP_
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
 
@@ -31,14 +31,8 @@ class State;
  * This is decided by the current watermark timestamp.
  */
 class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                     public detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false>;
-    using inherited1 = Runtime::Reconfigurable;
-
+                                     public NES::detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false> {
   public:
-    class KeyedState {
-
-    };
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
      * @param windowDefinition logical window definition
