@@ -197,7 +197,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
 
 TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     auto schema = Schema::create();
-    schema->addField("f1", INT32);
+    schema->addField("f1", BasicType::INT32);
 
     {
         auto source = ZmqSourceDescriptor::create(schema, "localhost", 42);
@@ -630,7 +630,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             triggerAction,
             1,
             1,
-            NES::Join::LogicalJoinDefinition::INNER_JOIN);
+            NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);

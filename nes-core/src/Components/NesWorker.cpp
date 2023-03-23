@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/magicenum/magic_enum.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -132,7 +133,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                workerConfig->localWorkerIp.getValue(),
                localWorkerRpcPort,
                workerConfig->dataPort.getValue(),
-               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy));
+               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
 
     NES_DEBUG2("NesWorker::start: start Runtime");
     auto expected = false;
