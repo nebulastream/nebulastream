@@ -51,8 +51,8 @@ sequenceDiagram
 
     Request Queue ->> Executor: Fail Query Request
     Executor ->> Request Queue: Remove Fail Request
-    Executor ->> Query Catalog Service: Set query status <br> to MarkedForFailure
-    Executor ->> Global Query Plan: Remove Query
+    Executor ->> Query Catalog Service: Mark all queries in SQP as <br> MarkedForFailure
+    Executor ->> Global Query Plan: Remove SQP
     Executor ->> Undeployment Phase: Trigger undeployment of involved <br> query operations (complete SQP) with Failure Flag
     alt ok
         Undeployment Phase -->> Executor: Succesfull undeployment
@@ -60,7 +60,7 @@ sequenceDiagram
         Undeployment Phase -->> Executor: Failed to undeploy query
         Executor ->> Executor: Retry Undeployment Phase
     end
-    Executor ->> Query Catalog Service: Set status Failed
+    Executor ->> Query Catalog Service: Set status Failed for all Queries in SQP
 ```
 
 <b>Update Request</b>
@@ -123,8 +123,6 @@ sequenceDiagram
         Executor ->> Query Catalog Service: Set Status to Optimizing
         Executor ->> Type Inference Phase: call execute for current query Plan
         Type Inference Phase -->> Executor: Query Plan
-        Executor ->> Memory Layout Phase: call execute for current query Plan
-        Memory Layout Phase -->> Executor: Query Plan
         Executor ->> Rewrite Phase: call execute for current query Plan
         Rewrite Phase -->> Executor: Query Plan
         Executor ->> Query Catalog Service: Add updated query plan
