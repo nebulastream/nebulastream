@@ -62,12 +62,12 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     remove(outputFilePath.c_str());
 
     // elegant project test schema
-    std::string testSchema = R"(Schema::create()->addField("camera_id", UINT64)
-                                                ->addField("timestamp", UINT64)
-                                                ->addField("rows", UINT64)
-                                                ->addField("cols", UINT64)
-                                                ->addField("type", UINT64)
-                                                ->addField("data", TEXT);)";// TEXT is the variable length field
+    std::string testSchema = R"(Schema::create()->addField("camera_id", BasicType::UINT64)
+                                                ->addField("timestamp", BasicType::UINT64)
+                                                ->addField("rows", BasicType::UINT64)
+                                                ->addField("cols", BasicType::UINT64)
+                                                ->addField("type", BasicType::UINT64)
+                                                ->addField("data", BasicType::TEXT);)";// TEXT is the variable length field
 
     // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -107,7 +107,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     std::string queryString = R"(Query::from("variable_length").sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
 

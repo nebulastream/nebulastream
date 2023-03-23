@@ -304,7 +304,7 @@ class BinarySourceProxy : public BinarySource {
                        operatorId,
                        0,
                        numSourceLocalBuffers,
-                       GatheringMode::INTERVAL_MODE,
+                       GatheringMode::Value::INTERVAL_MODE,
                        successors){};
 
   private:
@@ -332,7 +332,7 @@ class CSVSourceProxy : public CSVSource {
                     operatorId,
                     0,
                     numSourceLocalBuffers,
-                    GatheringMode::INTERVAL_MODE,
+                    GatheringMode::Value::INTERVAL_MODE,
                     successors){};
 
   private:
@@ -361,7 +361,7 @@ class TCPSourceProxy : public TCPSource {
                     operatorId,
                     0,
                     numSourceLocalBuffers,
-                    GatheringMode::INTERVAL_MODE,
+                    GatheringMode::Value::INTERVAL_MODE,
                     successors){};
 
   private:
@@ -520,24 +520,24 @@ class SourceTest : public Testing::NESBaseTest {
                            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
                            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
                            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+                           ->addField("current_ms", BasicType::UINT64)
+                           ->addField("ip", BasicType::INT32);
         this->lambdaSchema = Schema::create()
-                                 ->addField("user_id", UINT64)
-                                 ->addField("page_id", UINT64)
-                                 ->addField("campaign_id", UINT64)
-                                 ->addField("ad_type", UINT64)
-                                 ->addField("event_type", UINT64)
-                                 ->addField("current_ms", UINT64)
-                                 ->addField("ip", UINT64)
-                                 ->addField("d1", UINT64)
-                                 ->addField("d2", UINT64)
-                                 ->addField("d3", UINT32)
-                                 ->addField("d4", UINT16);
+                                 ->addField("user_id", BasicType::UINT64)
+                                 ->addField("page_id", BasicType::UINT64)
+                                 ->addField("campaign_id", BasicType::UINT64)
+                                 ->addField("ad_type", BasicType::UINT64)
+                                 ->addField("event_type", BasicType::UINT64)
+                                 ->addField("current_ms", BasicType::UINT64)
+                                 ->addField("ip", BasicType::UINT64)
+                                 ->addField("d1", BasicType::UINT64)
+                                 ->addField("d2", BasicType::UINT64)
+                                 ->addField("d3", BasicType::UINT32)
+                                 ->addField("d4", BasicType::UINT16);
         this->decimalsSchema = Schema::create()
-                                   ->addField("positive_with_decimal", FLOAT32)
-                                   ->addField("negative_with_decimal", FLOAT32)
-                                   ->addField("longer_precision_decimal", FLOAT32);
+                                   ->addField("positive_with_decimal", BasicType::FLOAT32)
+                                   ->addField("negative_with_decimal", BasicType::FLOAT32)
+                                   ->addField("longer_precision_decimal", BasicType::FLOAT32);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -655,7 +655,7 @@ TEST_F(SourceTest, testDataSourceRunningImmediately) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(mDataSource.isRunning());
 }
@@ -666,7 +666,7 @@ TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -680,7 +680,7 @@ TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -695,7 +695,7 @@ TEST_F(SourceTest, testDataSourceStopImmediately) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
 }
@@ -706,7 +706,7 @@ TEST_F(SourceTest, testDataSourceStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -721,7 +721,7 @@ TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -738,7 +738,7 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::INTERVAL_MODE,
+                                                 GatheringMode::Value::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -759,8 +759,8 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
                                                       0,
                                                       this->numSourceLocalBuffersDefault,
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::INTERVAL_MODE);
-    ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::INGESTION_RATE_MODE);
+    ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::Value::INTERVAL_MODE);
+    ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::Value::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));
 }
 
@@ -770,7 +770,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
                                               this->nodeEngine->getQueryManager(),
                                               this->operatorId,
                                               this->numSourceLocalBuffersDefault,
-                                              GatheringMode::INTERVAL_MODE,
+                                              GatheringMode::Value::INTERVAL_MODE,
                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(*mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(*mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
@@ -783,7 +783,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
                                this->nodeEngine->getQueryManager(),
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               GatheringMode::INGESTION_RATE_MODE,
+                               GatheringMode::Value::INGESTION_RATE_MODE,
                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(Exactly(1));
@@ -796,7 +796,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
                                this->nodeEngine->getQueryManager(),
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               GatheringMode::ADAPTIVE_MODE,
+                               GatheringMode::Value::ADAPTIVE_MODE,
                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).Times(Exactly(1));
@@ -817,7 +817,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::INTERVAL_MODE,
+                                                           GatheringMode::Value::INTERVAL_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -864,7 +864,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::INGESTION_RATE_MODE,
+                                                           GatheringMode::Value::INGESTION_RATE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -910,7 +910,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::ADAPTIVE_MODE,
+                                                           GatheringMode::Value::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -956,7 +956,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::ADAPTIVE_MODE,
+                                                           GatheringMode::Value::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -1004,7 +1004,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::ADAPTIVE_MODE,
+                                                           GatheringMode::Value::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -1044,7 +1044,7 @@ TEST_F(SourceTest, testDataSourceOpen) {
                                 this->nodeEngine->getQueryManager(),
                                 this->operatorId,
                                 this->numSourceLocalBuffersDefault,
-                                GatheringMode::INGESTION_RATE_MODE,
+                                GatheringMode::Value::INGESTION_RATE_MODE,
                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     // EXPECT_ANY_THROW(mDataSource.bufferManager->getAvailableBuffers()); currently not possible w/ Error: success :)
     mDataSource.open();
@@ -1521,14 +1521,14 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
 TEST_F(SourceTest, testCSVSourceIntTypes) {
     // use custom schema and file, read once
     SchemaPtr int_schema = Schema::create()
-                               ->addField("uint64", UINT64)
-                               ->addField("int64", INT64)
-                               ->addField("uint32", UINT32)
-                               ->addField("int32", INT32)
-                               ->addField("uint16", UINT16)
-                               ->addField("int16", INT16)
-                               ->addField("uint8", UINT8)
-                               ->addField("int8", INT8);
+                               ->addField("uint64", BasicType::UINT64)
+                               ->addField("int64", BasicType::INT64)
+                               ->addField("uint32", BasicType::UINT32)
+                               ->addField("int32", BasicType::INT32)
+                               ->addField("uint16", BasicType::UINT16)
+                               ->addField("int16", BasicType::INT16)
+                               ->addField("uint8", BasicType::UINT8)
+                               ->addField("int8", BasicType::INT8);
 
     std::string path_to_int_file = std::string(TEST_DATA_DIRECTORY) + "every-int.csv";
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
@@ -1589,7 +1589,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
-    SchemaPtr float_schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
+    SchemaPtr float_schema = Schema::create()->addField("float64", BasicType::FLOAT64)->addField("float32", BasicType::FLOAT32);
     std::string path_to_float_file = std::string(TEST_DATA_DIRECTORY) + "every-float.csv";
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(path_to_float_file);
@@ -1622,10 +1622,10 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     // use custom schema and file, read once
     SchemaPtr bool_schema = Schema::create()
-                                ->addField("false", BOOLEAN)
-                                ->addField("true", BOOLEAN)
-                                ->addField("falsey", BOOLEAN)
-                                ->addField("truthy", BOOLEAN);
+                                ->addField("false", BasicType::BOOLEAN)
+                                ->addField("true", BasicType::BOOLEAN)
+                                ->addField("falsey", BasicType::BOOLEAN)
+                                ->addField("truthy", BasicType::BOOLEAN);
 
     std::string path_to_bool_file = std::string(TEST_DATA_DIRECTORY) + "every-boolean.csv";
 
@@ -1770,7 +1770,7 @@ TEST_F(SourceTest, testGeneratorSourceGetType) {
                                        1,
                                        this->operatorId,
                                        this->numSourceLocalBuffersDefault,
-                                       GatheringMode::INGESTION_RATE_MODE,
+                                       GatheringMode::Value::INGESTION_RATE_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
@@ -1831,7 +1831,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeInterval) {
                                        func,
                                        this->operatorId,
                                        12,
-                                       GatheringMode::INTERVAL_MODE,
+                                       GatheringMode::Value::INTERVAL_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
@@ -1880,7 +1880,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        func,
                                        this->operatorId,
                                        12,
-                                       GatheringMode::INGESTION_RATE_MODE,
+                                       GatheringMode::Value::INGESTION_RATE_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
@@ -1911,7 +1911,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
-        R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
@@ -1937,7 +1937,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         calls++;
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::Value::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
     wrkConf->physicalSources.add(physicalSource);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
@@ -1952,7 +1952,8 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE,
+                                                      LineageType::Value::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -2046,7 +2047,8 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+        {Monitoring::MetricType::CpuMetric, Monitoring::MetricType::DiskMetric, Monitoring::MetricType::MemoryMetric,
+         Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -2064,7 +2066,8 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+        {Monitoring::MetricType::CpuMetric, Monitoring::MetricType::DiskMetric, Monitoring::MetricType::MemoryMetric,
+         Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -2093,7 +2096,8 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
     auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+        {Monitoring::MetricType::CpuMetric, Monitoring::MetricType::DiskMetric, Monitoring::MetricType::MemoryMetric,
+         Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 

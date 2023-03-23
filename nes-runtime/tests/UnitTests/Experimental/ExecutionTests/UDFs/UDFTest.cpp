@@ -132,17 +132,17 @@ class UDFTest : public Testing::NESBaseTest,
 
 SchemaPtr getSchema() {
     return Schema::create()
-        ->addField("user_id", INT64)
-        ->addField("page_id", INT64)
-        ->addField("campaign_id", INT64)
-        ->addField("ad_type", INT64)
-        ->addField("event_type", INT64)
-        ->addField("current_ms", INT64)
-        ->addField("ip", INT64)
-        ->addField("d1", INT64)
-        ->addField("d2", INT64)
-        ->addField("d3", INT32)
-        ->addField("d4", INT16);
+        ->addField("user_id", BasicType::INT64)
+        ->addField("page_id", BasicType::INT64)
+        ->addField("campaign_id", BasicType::INT64)
+        ->addField("ad_type", BasicType::INT64)
+        ->addField("event_type", BasicType::INT64)
+        ->addField("current_ms", BasicType::INT64)
+        ->addField("ip", BasicType::INT64)
+        ->addField("d1", BasicType::INT64)
+        ->addField("d2", BasicType::INT64)
+        ->addField("d3", BasicType::INT32)
+        ->addField("d4", BasicType::INT16);
 }
 
 std::vector<Runtime::TupleBuffer>
@@ -195,7 +195,7 @@ TEST_P(UDFTest, distanceUDF) {
     auto mapOperator = std::make_shared<Map>(writeExpression);
     scan.setChild(mapOperator);
 
-    auto resultSchema = Schema::create()->addField("user_id", INT64);
+    auto resultSchema = Schema::create()->addField("user_id", BasicType::INT64);
     auto resMem = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
     auto aggField = std::make_shared<ReadFieldExpression>(0);
     auto sumAggFunction = std::make_shared<SumFunction>(aggField, IR::Types::StampFactory::createInt64Stamp());
@@ -305,7 +305,7 @@ TEST_P(UDFTest, crimeIndexUDF) {
     auto mapOperator = std::make_shared<Map>(writeExpression);
     scan.setChild(mapOperator);
 
-    auto resultSchema = Schema::create()->addField("crimeIndex", INT64);
+    auto resultSchema = Schema::create()->addField("crimeIndex", BasicType::INT64);
     auto resMem = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
 
     auto emit = std::make_shared<Emit>(resMem);

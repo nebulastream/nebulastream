@@ -403,7 +403,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                        password,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::INTERVAL_MODE,
+                                       GatheringMode::Value::INTERVAL_MODE,
                                        successors);
 }
 #endif

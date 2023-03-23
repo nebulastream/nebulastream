@@ -61,34 +61,34 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
     Catalogs::Source::SourceCatalogPtr streamCatalog = nesCoordinator->getSourceCatalog();
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
-                                 ->addField("a", NES::UINT64)
-                                 ->addField("b", NES::UINT64)
-                                 ->addField("c", NES::UINT64)
-                                 ->addField("d", NES::UINT64)
-                                 ->addField("e", NES::UINT64)
-                                 ->addField("f", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("a", BasicType::UINT64)
+                                 ->addField("b", BasicType::UINT64)
+                                 ->addField("c", BasicType::UINT64)
+                                 ->addField("d", BasicType::UINT64)
+                                 ->addField("e", BasicType::UINT64)
+                                 ->addField("f", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     NES::SchemaPtr schema2 = NES::Schema::create()
-                                 ->addField("g", NES::UINT64)
-                                 ->addField("h", NES::UINT64)
-                                 ->addField("i", NES::UINT64)
-                                 ->addField("j", NES::UINT64)
-                                 ->addField("k", NES::UINT64)
-                                 ->addField("l", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("g", BasicType::UINT64)
+                                 ->addField("h", BasicType::UINT64)
+                                 ->addField("i", BasicType::UINT64)
+                                 ->addField("j", BasicType::UINT64)
+                                 ->addField("k", BasicType::UINT64)
+                                 ->addField("l", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     NES::SchemaPtr schema3 = NES::Schema::create()
-                                 ->addField("m", NES::UINT64)
-                                 ->addField("n", NES::UINT64)
-                                 ->addField("o", NES::UINT64)
-                                 ->addField("p", NES::UINT64)
-                                 ->addField("q", NES::UINT64)
-                                 ->addField("r", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("m", BasicType::UINT64)
+                                 ->addField("n", BasicType::UINT64)
+                                 ->addField("o", BasicType::UINT64)
+                                 ->addField("p", BasicType::UINT64)
+                                 ->addField("q", BasicType::UINT64)
+                                 ->addField("r", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     //Add the logical and physical stream to the stream catalog
     uint64_t counter = 1;
@@ -356,7 +356,7 @@ int main(int argc, const char* argv[]) {
                 //Fetch the last query for the query catalog
                 auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries);
                 //Wait till the status of the last query is set as running
-                while (lastQuery->getQueryStatus() != QueryStatus::Running) {
+                while (lastQuery->getQueryStatus() != QueryStatus::Value::Running) {
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

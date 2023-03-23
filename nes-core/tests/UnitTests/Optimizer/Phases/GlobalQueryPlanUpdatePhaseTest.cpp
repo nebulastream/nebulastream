@@ -103,7 +103,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                optimizerConfiguration,
                                                                udfCatalog);
     auto catalogEntry1 =
-        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Optimizing);
+        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Value::Optimizing);
     auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -225,7 +225,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
-    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, "Random reason");
+    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Failed, "Random reason");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
@@ -371,10 +371,10 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     //Setup source catalog
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
-                                ->addField("id", NES::UINT64)
-                                ->addField("val", NES::UINT64)
-                                ->addField("X", NES::UINT64)
-                                ->addField("Y", NES::UINT64);
+                                ->addField("id", BasicType::UINT64)
+                                ->addField("val", BasicType::UINT64)
+                                ->addField("X", BasicType::UINT64)
+                                ->addField("Y", BasicType::UINT64);
     sourceCatalog->addLogicalSource("example", schema);
     auto logicalSource = sourceCatalog->getLogicalSource("example");
 

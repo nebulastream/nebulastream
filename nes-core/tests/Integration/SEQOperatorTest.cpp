@@ -80,11 +80,11 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
 
     std::string window2 =
-        R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("Win2", window2);
 
     NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
@@ -130,7 +130,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
 
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -169,11 +169,11 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
@@ -219,7 +219,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -264,11 +264,11 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
@@ -316,7 +316,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -361,11 +361,11 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
@@ -410,7 +410,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -460,15 +460,15 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     //register logical source qnv
 
     std::string window1 =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", window1);
 
     std::string window2 =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", window2);
 
     std::string window3 =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window3);
 
     NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
@@ -532,7 +532,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

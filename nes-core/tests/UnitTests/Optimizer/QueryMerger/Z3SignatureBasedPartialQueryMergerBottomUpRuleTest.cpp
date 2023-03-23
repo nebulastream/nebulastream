@@ -387,7 +387,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
 
     auto updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     NES_INFO("Shared Plan After Merging with Query 2\n" << updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
-    updatedSharedQueryPlansDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+    updatedSharedQueryPlansDeploy[0]->setStatus(SharedQueryPlanStatus::Value::Deployed);
 
     // execute merging shared query plan 1 and 3
     globalQueryPlan->addQueryPlan(queryPlan3);
@@ -481,7 +481,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
     // stop query 1
-    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Stop);
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Value::Stop);
 
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
@@ -591,7 +591,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     }
 
     // stop query 1
-    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Stop);
+    globalQueryPlan->removeQuery(queryPlan1->getQueryId(), RequestType::Value::Stop);
 
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 

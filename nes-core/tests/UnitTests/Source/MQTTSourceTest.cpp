@@ -153,7 +153,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
  */
 TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
@@ -189,14 +189,14 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     //register logical source qnv
     std::string source =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", UINT64))
-                            ->addField(createField("stationId", UINT64))
-                            ->addField(createField("patientId", UINT64))
-                            ->addField(createField("time", UINT64))
-                            ->addField(createField("healthStatus", UINT8))
-                            ->addField(createField("healthStatusDuration", UINT32))
-                            ->addField(createField("recovered", BOOLEAN))
-                            ->addField(createField("dead", BOOLEAN));)";
+                            ->addField(createField("hospitalId", BasicType::UINT64))
+                            ->addField(createField("stationId", BasicType::UINT64))
+                            ->addField(createField("patientId", BasicType::UINT64))
+                            ->addField(createField("time", BasicType::UINT64))
+                            ->addField(createField("healthStatus", BasicType::UINT8))
+                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
+                            ->addField(createField("recovered", BasicType::BOOLEAN))
+                            ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -224,7 +224,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -255,13 +255,13 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical stream qnv
-    std::string stream = R"(Schema::create()->addField(createField("id", UINT64))
-                                   ->addField(createField("SepalLengthCm", FLOAT32))
-                                   ->addField(createField("SepalWidthCm", FLOAT32))
-                                   ->addField(createField("PetalLengthCm", FLOAT32))
-                                   ->addField(createField("PetalWidthCm", FLOAT32))
-                                   ->addField(createField("SpeciesCode", UINT64))
-                                   ->addField(createField("CreationTime", UINT64));)";
+    std::string stream = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
+                                   ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                                   ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                                   ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                                   ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                                   ->addField(createField("SpeciesCode", BasicType::UINT64))
+                                   ->addField(createField("CreationTime", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("iris", stream);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -291,14 +291,14 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
         .inferModel(")"
         + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
         .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||
                 (Attribute("iris1") > Attribute("iris0") && Attribute("iris1") > Attribute("iris2") && (Attribute("SpeciesCode") < 1 || Attribute("SpeciesCode") > 1)) ||
                 (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2), 0.1)
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(10);

@@ -799,7 +799,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
 TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 
     auto schema = Schema::create();
-    schema->addField("f1", INT32);
+    schema->addField("f1", BasicType::INT32);
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
     auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);

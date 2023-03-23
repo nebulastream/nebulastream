@@ -93,7 +93,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -139,7 +139,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input =
-        R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
+        R"(Schema::create()->addField("ysb$user_id", BasicType::UINT64)->addField("ysb$page_id", BasicType::UINT64)->addField("ysb$campaign_id", BasicType::UINT64)->addField("ysb$ad_type", BasicType::UINT64)->addField("ysb$event_type", BasicType::UINT64)->addField("ysb$current_ms", BasicType::UINT64)->addField("ysb$ip", BasicType::UINT64)->addField("ysb$d1", BasicType::UINT64)->addField("ysb$d2", BasicType::UINT64)->addField("ysb$d3", BasicType::UINT32)->addField("ysb$d4", BasicType::UINT16);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
     NES_DEBUG("ConcurrentWindowDeploymentTest: Coordinator started successfully");
 
@@ -149,17 +149,17 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     auto ysbSchema = Schema::create()
-                         ->addField("ysb$user_id", UINT64)
-                         ->addField("ysb$page_id", UINT64)
-                         ->addField("ysb$campaign_id", UINT64)
-                         ->addField("ysb$ad_type", UINT64)
-                         ->addField("ysb$event_type", UINT64)
-                         ->addField("ysb$current_ms", UINT64)
-                         ->addField("ysb$ip", UINT64)
-                         ->addField("ysb$d1", UINT64)
-                         ->addField("ysb$d2", UINT64)
-                         ->addField("ysb$d3", UINT32)
-                         ->addField("ysb$d4", UINT16);
+                         ->addField("ysb$user_id", BasicType::UINT64)
+                         ->addField("ysb$page_id", BasicType::UINT64)
+                         ->addField("ysb$campaign_id", BasicType::UINT64)
+                         ->addField("ysb$ad_type", BasicType::UINT64)
+                         ->addField("ysb$event_type", BasicType::UINT64)
+                         ->addField("ysb$current_ms", BasicType::UINT64)
+                         ->addField("ysb$ip", BasicType::UINT64)
+                         ->addField("ysb$d1", BasicType::UINT64)
+                         ->addField("ysb$d2", BasicType::UINT64)
+                         ->addField("ysb$d3", BasicType::UINT32)
+                         ->addField("ysb$d4", BasicType::UINT16);
 
     auto func = [](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
@@ -222,7 +222,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
         NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, GatheringMode::Value::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
     workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -241,7 +241,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -275,7 +275,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -307,7 +307,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -351,7 +351,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -383,7 +383,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -427,7 +427,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -460,7 +460,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -567,7 +567,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
@@ -666,7 +666,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
@@ -714,7 +714,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -764,7 +764,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -824,7 +824,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowE
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -857,7 +857,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowE
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -904,7 +904,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -937,7 +937,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -986,7 +986,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWin
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1036,7 +1036,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWin
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1088,7 +1088,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1139,7 +1139,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1186,7 +1186,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1218,7 +1218,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1253,7 +1253,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1285,7 +1285,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1322,7 +1322,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1355,7 +1355,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1392,7 +1392,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1442,7 +1442,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1582,7 +1582,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -1740,7 +1740,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -2147,7 +2147,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string input = R"(Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);)";
+    std::string input = R"(Schema::create()->addField("key", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("schema", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -2189,7 +2189,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
         return;
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(func, 100, 0, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType = LambdaSourceType::create(func, 100, 0, GatheringMode::Value::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("schema", "Source_phy", lambdaSourceType);
     workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -2202,7 +2202,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    auto schema = Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);
+    auto schema = Schema::create()->addField("key", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"schema\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -2211,7 +2211,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

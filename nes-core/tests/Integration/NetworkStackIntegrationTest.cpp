@@ -358,7 +358,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::Initialize, networkSink, std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
@@ -369,7 +369,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                     networkSink->writeData(buffer, workerContext);
                     usleep(rand() % 10000 + 1000);
                 }
-                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
+                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::SoftEndOfStream, networkSink);
                 networkSink->reconfigure(rt2, workerContext);
                 sinkShutdownBarrier->wait();
             });
@@ -530,7 +530,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::Initialize, networkSink, std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
@@ -543,7 +543,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                     usleep(rand() % 10000 + 1000);
                 }
                 waitBeforeBufferBarrier->wait();
-                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
+                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::SoftEndOfStream, networkSink);
                 networkSink->reconfigure(rt2, workerContext);
                 sinkShutdownBarrier->wait();
             });
@@ -558,7 +558,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
             }
         }
         auto bufferReconfigMsg =
-            Runtime::ReconfigurationMessage(0, 0, Runtime::StartBuffering, networkSink, std::make_any<uint32_t>(1));
+            Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::StartBuffering, networkSink, std::make_any<uint32_t>(1));
 
         sendEngine->bufferAllData();
         sleep(1);
@@ -1001,7 +1001,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                               operatorId,
                               0,
                               numSourceLocalBuffers,
-                              GatheringMode::INTERVAL_MODE,
+                              GatheringMode::Value::INTERVAL_MODE,
                               successors) {}
 
         std::optional<Runtime::TupleBuffer> receiveData() override {

@@ -104,7 +104,8 @@ class QueryCompilerTest : public Testing::NESBaseTest {
         });
 
         auto task =
-            Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(), NES::Runtime::SoftEndOfStream, plan);
+            Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(),
+                                            NES::Runtime::ReconfigurationType::SoftEndOfStream, plan);
         plan->postReconfigurationCallback(task);
 
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
@@ -119,7 +120,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
  */
 TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", INT32);
+    schema->addField("F1", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -167,7 +168,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
  */
 TEST_F(QueryCompilerTest, inferModelQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", INT32);
+    schema->addField("F1", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -193,7 +194,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto query = Query::from(logicalSourceName)
                      .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                  {Attribute("F1"), Attribute("F1"), Attribute("F1"), Attribute("F1")},
-                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                                 {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
     vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
@@ -222,7 +223,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
  */
 TEST_F(QueryCompilerTest, mapQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", INT32);
+    schema->addField("F1", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -269,7 +270,7 @@ TEST_F(QueryCompilerTest, mapQuery) {
  */
 TEST_F(QueryCompilerTest, filterQueryBitmask) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", INT32);
+    schema->addField("F1", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -314,8 +315,8 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
  */
 TEST_F(QueryCompilerTest, windowQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("key", INT32);
-    schema->addField("value", INT32);
+    schema->addField("key", BasicType::INT32);
+    schema->addField("value", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -365,9 +366,9 @@ TEST_F(QueryCompilerTest, windowQuery) {
  */
 TEST_F(QueryCompilerTest, windowQueryEventTime) {
     SchemaPtr schema = Schema::create();
-    schema->addField("key", INT32);
-    schema->addField("ts", INT64);
-    schema->addField("value", INT32);
+    schema->addField("key", BasicType::INT32);
+    schema->addField("ts", BasicType::INT64);
+    schema->addField("value", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -420,8 +421,8 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
  */
 TEST_F(QueryCompilerTest, unionQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("key", INT32);
-    schema->addField("value", INT32);
+    schema->addField("key", BasicType::INT32);
+    schema->addField("value", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
@@ -473,8 +474,8 @@ TEST_F(QueryCompilerTest, unionQuery) {
  */
 TEST_F(QueryCompilerTest, joinQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("key", INT32);
-    schema->addField("value", INT32);
+    schema->addField("key", BasicType::INT32);
+    schema->addField("value", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     const std::string leftSourceLogicalSourceName = "leftSource";
     const std::string rightSourceLogicalSourceName = "rightSource";
@@ -537,7 +538,7 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
  */
 TEST_F(QueryCompilerTest, externalOperatorTest) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", INT32);
+    schema->addField("F1", BasicType::INT32);
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";

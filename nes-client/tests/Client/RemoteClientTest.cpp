@@ -84,7 +84,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
             while (true) {
                 auto statusStr = client->getQueryStatus(queryId);
                 auto status = QueryStatus::getFromString(statusStr);
-                if (status == QueryStatus::Stopped) {
+                if (status == QueryStatus::Value::Stopped) {
                     break;
                 }
                 NES_DEBUG("Query " << queryId << " not stopped yet but " << statusStr);
@@ -101,7 +101,8 @@ class RemoteClientTest : public Testing::NESBaseTest {
         auto startTs = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < startTs + timeoutInSec) {
             auto status = QueryStatus::getFromString(client->getQueryStatus(queryId));
-            if (status == QueryStatus::Registered || status == QueryStatus::Optimizing || status == QueryStatus::Deployed) {
+            if (status == QueryStatus::Value::Registered || status == QueryStatus::Value::Optimizing ||
+                status == QueryStatus::Value::Deployed) {
                 NES_DEBUG("Query " << queryId << " not started yet");
                 sleep(1);
             } else {
@@ -224,7 +225,7 @@ TEST_F(RemoteClientTest, StopQueryTest) {
     checkForQueryStart(queryId);
     auto res = client->stopQuery(queryId);
     ASSERT_TRUE(!!res);
-    ASSERT_NE(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::Running);
+    ASSERT_NE(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::Value::Running);
 }
 
 /**

@@ -36,6 +36,7 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <z3++.h>
+#include <Util/magicenum/magic_enum.hpp>
 
 using namespace NES;
 
@@ -62,34 +63,34 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                       .filter(Attribute("id") < 45)
                                       .filter(Attribute("id") < 45)
                                       .sink(printSinkDescriptor)),
-         NES::Optimizer::EQUALITY},
+         Optimizer::ContainmentType::EQUALITY},
         //Sig2 contains Sig1
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
-         Optimizer::LEFT_SIG_CONTAINED},
+         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
         //Sig1 contains Sig2
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
-         Optimizer::RIGHT_SIG_CONTAINED},
+         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
         //Sig2 contains Sig1 but containment cannot be detected
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::NO_CONTAINMENT},
+         Optimizer::ContainmentType::NO_CONTAINMENT},
         //Sig2 contains Sig1
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::LEFT_SIG_CONTAINED},
+         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
         //No containment due to different transformations
         {std::tuple<Query, Query>(Query::from("car")
                                       .map(Attribute("value") = 40)
                                       .map(Attribute("value") = Attribute("value") + 10)
                                       .sink(printSinkDescriptor),
                                   Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::NO_CONTAINMENT}};
+         Optimizer::ContainmentType::NO_CONTAINMENT}};
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -144,7 +145,8 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         //Check if the host and target sink operator signatures have a containment relationship
         Optimizer::ContainmentType containment =
             signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
-        NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << containment);
+        NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: "
+                    << magic_enum::enum_name(containment));
         ASSERT_EQ(containment, get<1>(entry));
     }
 }

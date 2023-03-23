@@ -75,7 +75,7 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     auto [result2, info2] = maintenanceService->submitMaintenanceRequest(id, nonExistentType);
     EXPECT_FALSE(result2);
     EXPECT_EQ(info2,
-              "MigrationType: " + std::to_string(nonExistentType)
+              "MigrationType: " + std::string(magic_enum::enum_name(nonExistentType))
                   + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
                     "Buffering)");
     //test RESTART migration type behavior

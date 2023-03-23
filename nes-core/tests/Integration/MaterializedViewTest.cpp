@@ -54,7 +54,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     EXPECT_NE(port, 0UL);
     // register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
@@ -109,7 +109,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     EXPECT_NE(port, 0UL);
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
 
@@ -161,7 +161,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", source);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");

@@ -65,17 +65,17 @@ std::string YSBDataGenerator::toString() {
 
 SchemaPtr YSBDataGenerator::getSchema() {
     return Schema::create()
-        ->addField("user_id", UINT64)
-        ->addField("page_id", UINT64)
-        ->addField("campaign_id", UINT64)
-        ->addField("ad_type", UINT64)
-        ->addField("event_type", UINT64)
-        ->addField("current_ms", UINT64)
-        ->addField("ip", UINT64)
-        ->addField("d1", UINT64)
-        ->addField("d2", UINT64)
-        ->addField("d3", UINT32)
-        ->addField("d4", UINT16);
+        ->addField("user_id", BasicType::UINT64)
+        ->addField("page_id", BasicType::UINT64)
+        ->addField("campaign_id", BasicType::UINT64)
+        ->addField("ad_type", BasicType::UINT64)
+        ->addField("event_type", BasicType::UINT64)
+        ->addField("current_ms", BasicType::UINT64)
+        ->addField("ip", BasicType::UINT64)
+        ->addField("d1", BasicType::UINT64)
+        ->addField("d2", BasicType::UINT64)
+        ->addField("d3", BasicType::UINT32)
+        ->addField("d4", BasicType::UINT16);
 }
 
 }// namespace NES::Benchmark::DataGeneration

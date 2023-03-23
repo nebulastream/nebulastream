@@ -998,8 +998,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         "BottomUp",
-        FaultToleranceType::NONE,
-        LineageType::NONE);
+        FaultToleranceType::Value::NONE,
+        LineageType::Value::NONE);
 
     NES_INFO("Query ID: " << queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -1099,8 +1099,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         "BottomUp",
-        FaultToleranceType::NONE,
-        LineageType::NONE);
+        FaultToleranceType::Value::NONE,
+        LineageType::Value::NONE);
 
     NES_INFO("Query ID: " << queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -1298,8 +1298,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         "BottomUp",
-        FaultToleranceType::NONE,
-        LineageType::NONE);
+        FaultToleranceType::Value::NONE,
+        LineageType::Value::NONE);
 
     NES_INFO("Query ID: " << queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);

@@ -63,7 +63,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
-        test_schema = Schema::create()->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", BasicType::UINT32);
         kafkaSourceType = KafkaSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
@@ -259,7 +259,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
 
     //first call to connect
     auto tuple_bufferJ = kafkaSource->receiveData();
@@ -305,7 +305,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source
-    std::string source = R"(Schema::create()->addField(createField("var", UINT32));)";
+    std::string source = R"(Schema::create()->addField(createField("var", BasicType::UINT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
@@ -332,7 +332,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     string query =
         R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -380,14 +380,14 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     //register logical source qnv
     std::string source =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", UINT64))
-                            ->addField(createField("stationId", UINT64))
-                            ->addField(createField("patientId", UINT64))
-                            ->addField(createField("time", UINT64))
-                            ->addField(createField("healthStatus", UINT8))
-                            ->addField(createField("healthStatusDuration", UINT32))
-                            ->addField(createField("recovered", BOOLEAN))
-                            ->addField(createField("dead", BOOLEAN));)";
+                            ->addField(createField("hospitalId", BasicType::UINT64))
+                            ->addField(createField("stationId", BasicType::UINT64))
+                            ->addField(createField("patientId", BasicType::UINT64))
+                            ->addField(createField("time", BasicType::UINT64))
+                            ->addField(createField("healthStatus", BasicType::UINT8))
+                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
+                            ->addField(createField("recovered", BasicType::BOOLEAN))
+                            ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
@@ -414,7 +414,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
