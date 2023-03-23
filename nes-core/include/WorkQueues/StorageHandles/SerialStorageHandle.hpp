@@ -19,10 +19,10 @@
 namespace NES{
 
 /**
- * This class is intended for serial access and does not perform any locking before creating a resource handle.
+ * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
  */
-class SerialStorageHandle : public StorageAccessHandle {
+class SerialStorageHandle : public StorageHandle {
   public:
     SerialStorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
                          TopologyPtr  topology,
@@ -39,37 +39,37 @@ class SerialStorageHandle : public StorageAccessHandle {
                          const Catalogs::UDF::UdfCatalogPtr&  udfCatalog);
 
     /**
-     * Obtain a mutable topology handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable topology handle.
      * @return a handle to the topology
      */
     TopologyHandle getTopologyHandle() override;
 
     /**
-     * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable query catalog handle.
      * @return a handle to the query catalog.
      */
     QueryCatalogServiceHandle getQueryCatalogHandle() override;
 
     /**
-     * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable source catalog handle.
      * @return a handle to the source catalog.
      */
     SourceCatalogHandle getSourceCatalogHandle() override;
 
     /**
-     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable global execution plan handle.
      * @return a handle to the global execution plan.
      */
     GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
 
     /**
-     * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable global query plan handle.
      * @return a handle to the global query plan.
      */
     GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
 
     /**
-     * Obtain a mutable udf catalog handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
     UdfCatalogHandle getUdfCatalogHandle() override;

@@ -11,11 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RESOURCETYPE_HPP
-#define NES_RESOURCETYPE_HPP
+#ifndef NES_STORAGEHANDLERESOURCETYPE_HPP
+#define NES_STORAGEHANDLERESOURCETYPE_HPP
 
 namespace NES {
-enum ResourceType {
+
+/**
+ * @brief This class is used by coordinator side requests to indicate which data structures they need to access to
+ * perform an operation so they can acquire locks before starting to execute the request logic.
+ */
+enum class StorageHandleResourceType : char {
     Topology,
     QueryCatalogService,
     SourceCatalog,
@@ -25,4 +30,4 @@ enum ResourceType {
 };
 }
 
-#endif//NES_RESOURCETYPE_HPP
+#endif//NES_STORAGEHANDLERESOURCETYPE_HPP
