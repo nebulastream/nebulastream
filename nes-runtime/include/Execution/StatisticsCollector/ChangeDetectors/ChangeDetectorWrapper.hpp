@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 #include <memory>
+#include <mutex>
 
 namespace NES::Runtime::Execution {
 
@@ -36,10 +37,10 @@ class ChangeDetectorWrapper{
      * @return estimated mean
      */
     double getMeanEstimation();
+    std::mutex mutex;
 
   private:
     std::unique_ptr<ChangeDetector> changeDetector;
-
 };
 } // namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_CHANGEDETECTORWRAPPER_HPP_

@@ -22,6 +22,7 @@ Normalizer::Normalizer(uint64_t windowSize, std::unique_ptr<ChangeDetectorWrappe
         windowSize(windowSize), window(0), changeDetectorWrapper(std::move(changeDetectorWrapper)), max(0) {}
 
 void Normalizer::normalizeValue(uint64_t value){
+    std::lock_guard<std::mutex> lock(changeDetectorWrapper->mutex);
     if (window.size() < windowSize) {
         window.push_back(value);
         if (window.size() == windowSize) {

@@ -39,8 +39,10 @@ class Normalizer {
     void normalizeValue(uint64_t value);
 
   private:
+    /**
+    * @brief Normalize the values in the window and add them to the change detector.
+    */
     void addNormalizedValuesToChangeDetection();
-
 
     size_t windowSize;
     std::vector<uint64_t> window;

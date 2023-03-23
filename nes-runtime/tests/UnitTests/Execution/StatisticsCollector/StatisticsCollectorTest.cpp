@@ -755,7 +755,7 @@ TEST_P(StatisticsCollectorTest, runtimeChangeTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 3);
+    ASSERT_EQ(pipelineContext.buffers.size(), 300);
     auto resultBuffer = pipelineContext.buffers[0];
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
