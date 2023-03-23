@@ -65,11 +65,12 @@ std::string TumblingWindow::toString() {
 }
 
 bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
-    if (otherWindowType->isTumblingWindow()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType);
+    if (otherWindowType->isTimeBasedWindowType()) {
+        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(otherWindowType);
         return this->timeCharacteristic->getField()->getName()
             == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
-            && this->size.getTime() == timeBasedWindowType->getSize().getTime();
+            && this->size.getTime() == timeBasedWindowType->getSize().getTime()
+            && timeBasedWindowType->isTumblingWindow();
     } else {
         return false;
     }

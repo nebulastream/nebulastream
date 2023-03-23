@@ -678,9 +678,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     //Compute the expression for window time key
-    if (windowDefinition->getWindowType()->isSlidingWindow() || windowDefinition->getWindowType()->isTumblingWindow()) {
-        windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        auto timeCharacteristic = windowType->asTimeBasedWindowType(windowDefinition->getWindowType())->getTimeCharacteristic();
+    if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         z3::expr windowTimeKeyVal(*context);
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
             windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
@@ -696,12 +696,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
         uint64_t length = 0;
         uint64_t slide = 0;
-        if (windowType->isTumblingWindow()) {
-            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+        if (timeBasedWindowType->isTumblingWindow()) {
+            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindowType);
             length = tumblingWindow->getSize().getTime() * multiplier;
             slide = length;
-        } else if (windowType->isSlidingWindow()) {
-            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+        } else if (timeBasedWindowType->isSlidingWindow()) {
+            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(timeBasedWindowType);
             length = slidingWindow->getSize().getTime() * multiplier;
             slide = slidingWindow->getSlide().getTime() * multiplier;
         } else {

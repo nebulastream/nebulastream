@@ -282,14 +282,19 @@ class JoinHandler : public AbstractJoinHandler {
             // flush in-flight records
             auto windowType = joinDefinition->getWindowType();
             int64_t windowLenghtMs = 0;
-            if (windowType->isTumblingWindow()) {
-                auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
-                windowLenghtMs = window->getSize().getTime();
+            if (windowType->isTimeBasedWindowType()) {
+                auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+                if (timeBasedWindowType->isTumblingWindow()) {
+                    auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
+                    windowLenghtMs = window->getSize().getTime();
 
-            } else if (windowType->isSlidingWindow()) {
-                auto* window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
-                windowLenghtMs = window->getSlide().getTime();
-            } else {
+                } else if (timeBasedWindowType->isSlidingWindow()) {
+                    auto* window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
+                    windowLenghtMs = window->getSlide().getTime();
+                } else {
+                    NES_ASSERT(false, "Invalid window");
+                }
+            }else {
                 NES_ASSERT(false, "Invalid window");
             }
             //            NES_DEBUG2("Going to flush window {}", toString());

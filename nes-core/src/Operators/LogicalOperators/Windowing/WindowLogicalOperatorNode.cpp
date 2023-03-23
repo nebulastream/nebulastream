@@ -22,7 +22,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <sstream>
 namespace NES {
 
@@ -72,18 +74,29 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    if (!windowDefinition->getWindowType()->inferStamp(inputSchema)) {
-        return false;
-    }
 
     //Construct output schema
+    //First clear()
     outputSchema->clear();
-    if (windowDefinition->getWindowType()->isTumblingWindow() || windowDefinition->getWindowType()->isSlidingWindow()) {
-        outputSchema = outputSchema
-                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
-                                                  BasicType::UINT64))
-                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
-                                                  BasicType::UINT64));
+    // Distinguish process between different window types (curretnly time-based and content-based)
+    if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+        // typeInference
+        if (!windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType())->inferStamp(inputSchema)) {
+            return false;
+        }
+        outputSchema =
+            outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64));
+    }else if(windowDefinition->getWindowType()->isContentBasedWindowType()) {
+        // type Inference for Content-based Windows requires the typeInferencePhaseContext
+        auto contentBasedWindowType = windowDefinition->getWindowType()->asContentBasedWindowType(windowDefinition->getWindowType());
+        if(contentBasedWindowType->isThresholdWindow()){
+            auto thresholdWindow = contentBasedWindowType->asThresholdWindow(contentBasedWindowType);
+            if (!thresholdWindow->inferStamp(typeInferencePhaseContext, inputSchema)) {
+                return false;
+            }
+        }
     }
 
     if (windowDefinition->isKeyed()) {

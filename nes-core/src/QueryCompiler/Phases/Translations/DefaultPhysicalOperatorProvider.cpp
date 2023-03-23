@@ -500,7 +500,6 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
 
     if (windowDefinition->isKeyed()) {
         // handle keyed window
-
         PhysicalOperators::PhysicalKeyedSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
         PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
         if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
@@ -537,33 +536,36 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
                                                                                     windowDefinition);
         operatorNode->insertBetweenThisAndChildNodes(merging);
 
-        if (windowDefinition->getWindowType()->isTumblingWindow()) {
-            auto windowSink = PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
-                                                                                         windowOutputSchema,
-                                                                                         windowDefinition);
-            operatorNode->replace(windowSink);
-            return;
-        } else if (windowDefinition->getWindowType()->isSlidingWindow()) {
-            auto globalSliceStore =
-                std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::KeyedSlice>>();
-            auto slidingWindowSinkOperator =
-                std::make_shared<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>(windowDefinition,
-                                                                                                 globalSliceStore);
-            auto globalSliceStoreAppendOperator =
-                std::make_shared<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
-                                                                                                      globalSliceStore);
+        if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+            auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+            if (timeBasedWindowType->isTumblingWindow()) {
+                auto windowSink = PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
+                                                                                             windowOutputSchema,
+                                                                                             windowDefinition);
+                operatorNode->replace(windowSink);
+                return;
+            } else if (timeBasedWindowType->isSlidingWindow()) {
+                auto globalSliceStore =
+                    std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::KeyedSlice>>();
+                auto slidingWindowSinkOperator =
+                    std::make_shared<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>(windowDefinition,
+                                                                                                     globalSliceStore);
+                auto globalSliceStoreAppendOperator =
+                    std::make_shared<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
+                                                                                                          globalSliceStore);
 
-            auto globalSliceStoreAppend =
-                PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
-                                                                                       windowOutputSchema,
-                                                                                       globalSliceStoreAppendOperator);
-            operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
-            auto windowSink = PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
-                                                                                        windowOutputSchema,
-                                                                                        slidingWindowSinkOperator);
-            operatorNode->replace(windowSink);
-        } else {
-            throw QueryCompilationException("No support for this window type.");
+                auto globalSliceStoreAppend =
+                    PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
+                                                                                           windowOutputSchema,
+                                                                                           globalSliceStoreAppendOperator);
+                operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
+                auto windowSink = PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
+                                                                                            windowOutputSchema,
+                                                                                            slidingWindowSinkOperator);
+                operatorNode->replace(windowSink);
+            } else {
+                throw QueryCompilationException("No support for this window type.");
+            }
         }
     } else {
         // Create operator handlers for global windows
@@ -606,34 +608,37 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
                                                                                      sliceMergingOperatorHandler,
                                                                                      windowDefinition);
         operatorNode->insertBetweenThisAndChildNodes(merging);
+        if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+            auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+            if (timeBasedWindowType->isTumblingWindow()) {
+                auto windowSink = PhysicalOperators::PhysicalGlobalTumblingWindowSink::create(windowInputSchema,
+                                                                                              windowOutputSchema,
+                                                                                              windowDefinition);
+                operatorNode->replace(windowSink);
+                return;
+            } else if (timeBasedWindowType->isSlidingWindow()) {
+                auto globalSliceStore =
+                    std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::GlobalSlice>>();
+                auto slidingWindowSinkOperator =
+                    std::make_shared<Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandler>(windowDefinition,
+                                                                                                      globalSliceStore);
+                auto globalSliceStoreAppendOperator =
+                    std::make_shared<Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandler>(
+                        windowDefinition,
+                        globalSliceStore);
 
-        if (windowDefinition->getWindowType()->isTumblingWindow()) {
-            auto windowSink = PhysicalOperators::PhysicalGlobalTumblingWindowSink::create(windowInputSchema,
-                                                                                          windowOutputSchema,
-                                                                                          windowDefinition);
-            operatorNode->replace(windowSink);
-            return;
-        } else if (windowDefinition->getWindowType()->isSlidingWindow()) {
-            auto globalSliceStore =
-                std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::GlobalSlice>>();
-            auto slidingWindowSinkOperator =
-                std::make_shared<Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandler>(windowDefinition,
-                                                                                                  globalSliceStore);
-            auto globalSliceStoreAppendOperator =
-                std::make_shared<Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
-                                                                                                             globalSliceStore);
-
-            auto globalSliceStoreAppend =
-                PhysicalOperators::PhysicalGlobalWindowSliceStoreAppendOperator::create(windowInputSchema,
-                                                                                        windowOutputSchema,
-                                                                                        globalSliceStoreAppendOperator);
-            operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
-            auto windowSink = PhysicalOperators::PhysicalGlobalSlidingWindowSink::create(windowInputSchema,
-                                                                                         windowOutputSchema,
-                                                                                         slidingWindowSinkOperator);
-            operatorNode->replace(windowSink);
-        } else {
-            throw QueryCompilationException("No support for this window type.");
+                auto globalSliceStoreAppend =
+                    PhysicalOperators::PhysicalGlobalWindowSliceStoreAppendOperator::create(windowInputSchema,
+                                                                                            windowOutputSchema,
+                                                                                            globalSliceStoreAppendOperator);
+                operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
+                auto windowSink = PhysicalOperators::PhysicalGlobalSlidingWindowSink::create(windowInputSchema,
+                                                                                             windowOutputSchema,
+                                                                                             slidingWindowSinkOperator);
+                operatorNode->replace(windowSink);
+            } else {
+                throw QueryCompilationException("No support for this window type.");
+            }
         }
     }
 }
@@ -655,14 +660,20 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
-        if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isThresholdWindow()) {
-            NES_INFO("Lower ThresholdWindow");
+        if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
+            auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
+            // check different content-based window types
+            if (contentBasedWindowType->isThresholdWindow()) {
+                NES_INFO("Lower ThresholdWindow");
             auto thresholdWindowPhysicalOperator =
                 PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
                                                                            windowOutputSchema,
                                                                            windowOperatorHandler);
             operatorNode->replace(thresholdWindowPhysicalOperator);
             return;
+            }else {
+            throw QueryCompilationException("No support for this window type." + windowDefinition->getWindowType()->toString());
+            }
         }
         if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
