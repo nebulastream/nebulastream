@@ -287,7 +287,7 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
-                            if (layout == Schema::ROW_LAYOUT) {
+                            if (layout == Schema::MemoryLayoutType::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
                             } else {
                                 return std::get<0>(info.param) + "_COLUMNAR";
@@ -303,7 +303,7 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ6,
                         //  Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query6Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
-                            if (layout == Schema::ROW_LAYOUT) {
+                            if (layout == Schema::MemoryLayoutType::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
                             } else {
                                 return std::get<0>(info.param) + "_COLUMNAR";

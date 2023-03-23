@@ -46,7 +46,7 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
 
         /* This branch is solely for performance reasons.
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
-        if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
+        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
             auto rowLayoutBuffer = rowLayout->bind(bufferRef);
 

@@ -1077,7 +1077,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
 
     /* prepare objects for test */
     auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
+        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1085,7 +1085,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
 
     /* generate code for writing result tuples to output buffer */
-    auto outputSchema = Schema::create(Schema::COLUMNAR_LAYOUT)
+    auto outputSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
                             ->addField("id", DataTypeFactory::createInt32())
                             ->addField("valueSmall", DataTypeFactory::createInt16())
                             ->addField("valueFloat", DataTypeFactory::createFloat())
@@ -1154,7 +1154,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
 
     /* prepare objects for test */
     auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
+        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1162,7 +1162,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
 
     /* generate code for writing result tuples to output buffer */
-    auto outputSchema = Schema::create(Schema::ROW_LAYOUT)
+    auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                             ->addField("id", DataTypeFactory::createInt32())
                             ->addField("valueSmall", DataTypeFactory::createInt16())
                             ->addField("valueFloat", DataTypeFactory::createFloat())
@@ -1230,7 +1230,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
 
     /* prepare objects for test */
     auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::ROW_LAYOUT);
+        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::MemoryLayoutType::ROW_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1238,7 +1238,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
 
     /* generate code for writing result tuples to output buffer */
-    auto outputSchema = Schema::create(Schema::COLUMNAR_LAYOUT)
+    auto outputSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
                             ->addField("id", DataTypeFactory::createInt32())
                             ->addField("valueSmall", DataTypeFactory::createInt16())
                             ->addField("valueFloat", DataTypeFactory::createFloat())
@@ -1414,8 +1414,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     joinDef->updateSourceTypes(input_schema, input_schema);
 
     auto outputSchema = Schema::create()
-                            ->addField(createField("window$start", UINT64))
-                            ->addField(createField("window$end", UINT64))
+                            ->addField(createField("window$start", BasicType::UINT64))
+                            ->addField(createField("window$end", BasicType::UINT64))
                             ->addField(AttributeField::create("window$key", joinDef->getLeftJoinKey()->getStamp()));
     for (const auto& field : input_schema->fields) {
         outputSchema = outputSchema->addField(field->getName(), field->getDataType());
@@ -1427,7 +1427,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinDef, source->getSchema());
 
     pipelineContext1->registerOperatorHandler(joinOperatorHandler);
-    pipelineContext1->arity = QueryCompilation::PipelineContext::BinaryLeft;
+    pipelineContext1->arity = QueryCompilation::PipelineContext::PipelineContextArity::BinaryLeft;
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), pipelineContext1);
     auto index = codeGenerator->generateJoinSetup(joinDef, pipelineContext1, 1);
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
@@ -1443,7 +1443,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), joinOperatorHandler);
     auto context3 = QueryCompilation::PipelineContext::create();
     context3->registerOperatorHandler(joinOperatorHandler);
-    context3->arity = QueryCompilation::PipelineContext::BinaryRight;
+    context3->arity = QueryCompilation::PipelineContext::PipelineContextArity::BinaryRight;
     context3->pipelineName = "3";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
     codeGenerator->generateJoinSetup(joinDef, context3, 1);
@@ -1547,10 +1547,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
         auto windowOutputSchema = Schema::create()
-                                      ->addField(createField("_$start", UINT64))
-                                      ->addField(createField("_$end", UINT64))
-                                      ->addField("window$key", UINT64)
-                                      ->addField("window$value", UINT64);
+                                      ->addField(createField("_$start", BasicType::UINT64))
+                                      ->addField(createField("_$end", BasicType::UINT64))
+                                      ->addField("window$key", BasicType::UINT64)
+                                      ->addField("window$value", BasicType::UINT64);
         auto windowHandler =
             createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
                 windowDefinition,
@@ -1650,10 +1650,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField("window$key", UINT64)
-                                  ->addField("window$value", UINT64);
+                                  ->addField(createField("_$start", BasicType::UINT64))
+                                  ->addField(createField("_$end", BasicType::UINT64))
+                                  ->addField("window$key", BasicType::UINT64)
+                                  ->addField("window$value", BasicType::UINT64);
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition,
@@ -1740,10 +1740,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField("window$key", UINT64)
-                                  ->addField("window$value", UINT64);
+                                  ->addField(createField("_$start", BasicType::UINT64))
+                                  ->addField(createField("_$end", BasicType::UINT64))
+                                  ->addField("window$key", BasicType::UINT64)
+                                  ->addField("window$value", BasicType::UINT64);
 
     // init window handler
     auto windowHandler =

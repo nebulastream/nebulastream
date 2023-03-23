@@ -71,7 +71,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
@@ -120,7 +120,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
@@ -177,7 +177,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
@@ -234,7 +234,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
@@ -284,7 +284,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
@@ -334,7 +334,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
@@ -386,7 +386,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
                                  ->addField(createField("id", NES::UINT64))
                                  ->addField(createField("value", NES::UINT64))
                                  ->addField(createField("payload", NES::UINT64))
