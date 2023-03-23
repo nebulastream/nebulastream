@@ -75,9 +75,7 @@ class QuerySignature {
     static QuerySignaturePtr create(z3::ExprPtr&& conditions,
                                     std::vector<std::string>&& columns,
                                     std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions,
-                                    std::map<std::string, size_t>&& numberOfWindowAggregatesPerWindow,
-                                    std::map<std::string, SchemaPtr>&& sourceSchemas);
+                                    std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions);
 
     /**
      * @brief Get the conditions
@@ -97,24 +95,18 @@ class QuerySignature {
      */
     const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaFieldToExprMaps();
 
-    z3::expr_vector& getContainmentFOL();
-
     /**
      * @brief Get the window definitions
      * @return map of window definitions
      */
-    const std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
+    const std::vector<std::map<std::string, z3::ExprPtr>>& getWindowsExpressions();
 
-    const std::map<std::string, size_t>& getNumberOfWindowAggregatesPerWindow() const;
-    const std::map<std::string, SchemaPtr>& getSourceSchemas() const;
 
   private:
     QuerySignature(z3::ExprPtr&& conditions,
                    std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                   std::map<std::string, z3::ExprPtr>&& windowsExpressions,
-                   std::map<std::string, size_t>&& numberOfWindowAggregatesPerWindow,
-                   std::map<std::string, SchemaPtr>&& sourceSchemas);
+                   std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
@@ -127,9 +119,7 @@ class QuerySignature {
      * - A down stream Join operator to two distinct Union operator can experience maximum 2 X 2 distinct schemas.
      */
     std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldToExprMaps;
-    std::map<std::string, z3::ExprPtr> windowsExpressions;
-    std::map<std::string, size_t> numberOfWindowAggregatesPerWindow;
-    std::map<std::string, SchemaPtr> sourceSchemas;
+    std::vector<std::map<std::string, z3::ExprPtr>> windowsExpressions;
 };
 }// namespace NES::Optimizer
 

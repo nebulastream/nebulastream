@@ -84,14 +84,6 @@ class SignatureContainmentUtil {
     void createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL);
 
     /**
-     * @brief creates conditions for checking window containment:
-     * all FOL are added to the projectionCondition vector
-     * @param signature Query signature to extract conditions from
-     * @param windowFOL z3 expression vector to add conditions to
-     */
-    void createWindowCondition(const QuerySignaturePtr& signature, z3::expr_vector& windowFOL);
-
-    /**
      * @brief check for window containment as follows:
      * check if right sig ⊆ left sig for windows
      *      true: check if left sig ⊆ right sig
@@ -155,6 +147,13 @@ class SignatureContainmentUtil {
      */
     bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions,
                                           const z3::expr_vector& rightConditions);
+
+    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& leftWindow) const;
+
+    void combineWindowAndProjectionConditions(const QuerySignaturePtr& leftSignature,
+                                              const QuerySignaturePtr& rightSignature,
+                                              z3::expr_vector& leftQueryWindowConditions,
+                                              z3::expr_vector& rightQueryWindowConditions);
 
     /**
      * @brief Reset z3 solver

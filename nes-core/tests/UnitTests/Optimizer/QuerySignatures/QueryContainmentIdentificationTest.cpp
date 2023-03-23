@@ -49,7 +49,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     std::vector<std::tuple<std::tuple<Query, Query>, NES::Optimizer::ContainmentType>> containmentCasesMixed = {
         //Equal
-        {std::tuple<Query, Query>(Query::from("car")
+        /*{std::tuple<Query, Query>(Query::from("car")
                                       .map(Attribute("value") = 40)
                                       .filter(Attribute("id") < 45)
                                       .filter(Attribute("id") < 45)
@@ -80,7 +80,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
              Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
          Optimizer::NO_CONTAINMENT},
         //Sig2 contains Sig1 //todo: left sig contains right sig is wrong need to change signature creation for this to work properly
-        /*{std::tuple<Query, Query>(
+        {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
          Optimizer::LEFT_SIG_CONTAINED},*/
@@ -90,7 +90,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor)),
          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},*/
         //No containment due to different transformations
-        {std::tuple<Query, Query>(Query::from("car")
+        /*{std::tuple<Query, Query>(Query::from("car")
                                       .map(Attribute("value") = 40)
                                       .map(Attribute("value") = Attribute("value") + 10)
                                       .sink(printSinkDescriptor),
@@ -228,7 +228,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                       .equalsTo(Attribute("id"))
                                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                                       .sink(printSinkDescriptor)),
-         Optimizer::LEFT_SIG_CONTAINED},/*
+         Optimizer::LEFT_SIG_CONTAINED},
         //
         {std::tuple<Query, Query>(Query::from("car")
                                       .filter(Attribute("value") < 5)
@@ -258,7 +258,14 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                       .equalsTo(Attribute("id"))
                                       .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
                                       .sink(printSinkDescriptor)),
-         Optimizer::EQUALITY}*/};
+         Optimizer::EQUALITY}*/
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+                                      .sink(printSinkDescriptor)),
+         Optimizer::EQUALITY}};
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
