@@ -1684,4 +1684,265 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     int response2 = remove(outputFilePath2.c_str());
     EXPECT_EQ(response2, 0);
 }
+
+/**
+ * Test deploying join with different sources and different Speed
+ */
+TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
+    struct Window {
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+    };
+
+    struct Window2 {
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("win1", DataTypeFactory::createInt64())
+                            ->addField("id1", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+                             ->addField("win2", DataTypeFactory::createInt64())
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setGatheringInterval(0);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setGatheringInterval(1);
+    csvSourceType2->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && win1 == rhs.win1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && win1 == rhs.win1 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * Test deploying join with different three sources
+ */
+TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
+    struct Window {
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp;
+    };
+
+    struct Window2 {
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("win1", DataTypeFactory::createInt64())
+                            ->addField("id1", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+                             ->addField("win2", DataTypeFactory::createInt64())
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && win1 == rhs.win1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && win2 == rhs.win2 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * Test deploying join with four different sources
+ */
+TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
+    struct Window {
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp;
+    };
+
+    struct Window2 {
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("win1", DataTypeFactory::createInt64())
+                            ->addField("id1", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+                             ->addField("win2", DataTypeFactory::createInt64())
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && win1 == rhs.win1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && win2 == rhs.win2 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}, {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}, {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},    {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},    {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}, {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}, {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 }// namespace NES
