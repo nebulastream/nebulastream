@@ -19,7 +19,7 @@
 namespace NES {
 
 /**
- * This class holds a lock on the supplied mutex on only releases it when it is destructed. It can be supplied as a
+ * @brief This class holds a lock on the supplied mutex on only releases it when it is destructed. It can be supplied as a
  * custom deleter to a unique pointer to guarantee thread safe access to the resource held by the pointer without
  * freeing the resource when the pointer is destructed.
  * idea taken from:
@@ -28,18 +28,18 @@ namespace NES {
 class UnlockDeleter {
   public:
     /**
-     * In case of serial access to the resource no mutex is needed and the destructor of the class will have no effect
+     * @brief In case of serial access to the resource no mutex is needed and the destructor of the class will have no effect
      */
     explicit UnlockDeleter();
 
     /**
-     * Blocks until a lock on the mutex is acquired, then keeps the lock until the object is destructed
+     * @brief Blocks until a lock on the mutex is acquired, then keeps the lock until the object is destructed
      * @param mutex
      */
     explicit UnlockDeleter(std::mutex& mutex);
 
     /**
-     * Tries to acquire a lock on the mutex. On success, the lock lives until the object is destroyed.
+     * @brief Tries to acquire a lock on the mutex. On success, the lock lives until the object is destroyed.
      * Throws an exception if no lock could be acquired.
      * @param mutex
      * @param tryToLock
@@ -47,7 +47,7 @@ class UnlockDeleter {
     explicit UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock);
 
     /**
-     * The action called when the unique pointer is destroyed. We use a no op be cause we do NOT want to free the resource.
+     * @brief The action called when the unique pointer is destroyed. We use a no op be cause we do NOT want to free the resource.
      * @tparam T: The type of the resource
      */
     template <typename T>

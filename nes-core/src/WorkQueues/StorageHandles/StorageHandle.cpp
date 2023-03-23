@@ -16,7 +16,7 @@
 
 namespace NES {
 
-StorageAccessHandle::StorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+StorageHandle::StorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
                                          TopologyPtr  topology,
                                          QueryCatalogServicePtr  queryCatalogService,
                                          GlobalQueryPlanPtr  globalQueryPlan,

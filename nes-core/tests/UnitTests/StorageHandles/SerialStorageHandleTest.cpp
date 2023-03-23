@@ -45,8 +45,12 @@ TEST_F(SerialStorageHandleTest, TestResourceAccess) {
                                                                 globalQueryPlan, sourceCatalog, udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
+    ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle().get());
     ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle().get());
-    ASSERT_EQ(topology->getRoot(), serialAccessHandle->getTopologyHandle()->getRoot());
+    ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogHandle().get());
+    ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle().get());
+    ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle().get());
+    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUdfCatalogHandle().get());
 }
 
 }

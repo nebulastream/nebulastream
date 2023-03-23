@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_subdirectory(RequestTypes)
-add_subdirectory(StorageAccessHandles)
+add_subdirectory(StorageHandles)
 add_source_files(nes-core
         RequestQueue.cpp
 )

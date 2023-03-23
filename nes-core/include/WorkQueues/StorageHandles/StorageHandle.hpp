@@ -24,7 +24,7 @@ namespace NES {
 class UnlockDeleter;
 template<typename T>
 //on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
-using ResourceHandle = std::unique_ptr<T, UnlockDeleter>;
+using ResourceHandle = std::shared_ptr<T>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -55,21 +55,21 @@ using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 using UdfCatalogHandle = ResourceHandle<Catalogs::UDF::UdfCatalog>;
 
 
-class StorageAccessHandle;
-using StorageAccessHandlePtr = std::shared_ptr<StorageAccessHandle>;
+class StorageHandle;
+using StorageHandlePtr = std::shared_ptr<StorageHandle>;
 
 /*
- * This class provides handles to access the coordinator storage layer.
+ * @brief This class provides handles to access the coordinator storage layer.
  * This is an abstract class and its subclasses will have to provide the implementation to warrant safe concurrent
  * access the storage layer.
  */
-class StorageAccessHandle {
+class StorageHandle {
   public:
     /**
-     * Constructs a new storage access handle.
+     * @brief Constructs a new storage access handle.
      * @param topology
      */
-    StorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+    StorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
                          TopologyPtr  topology,
                          QueryCatalogServicePtr  queryCatalogService,
                          GlobalQueryPlanPtr  globalQueryPlan,
@@ -77,40 +77,40 @@ class StorageAccessHandle {
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog
         );
 
-    virtual ~StorageAccessHandle() = default;
+    virtual ~StorageHandle() = default;
 
     /**
-     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable global execution plan handle.
      * @return a handle to the global execution plan.
      */
     virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
 
     /**
-     * Obtain a mutable topology handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable topology handle.
      * @return a handle to the topology
      */
     virtual TopologyHandle getTopologyHandle() = 0;
 
     /**
-     * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable query catalog handle.
      * @return a handle to the query catalog.
      */
     virtual QueryCatalogServiceHandle getQueryCatalogHandle() = 0;
 
     /**
-     * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable global query plan handle.
      * @return a handle to the global query plan.
      */
     virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
 
     /**
-     * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable source catalog handle.
      * @return a handle to the source catalog.
      */
     virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
 
     /**
-     * Obtain a mutable udf catalog handle. Throws an exception if the lock could not be acquired
+     * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
     virtual UdfCatalogHandle getUdfCatalogHandle() = 0;

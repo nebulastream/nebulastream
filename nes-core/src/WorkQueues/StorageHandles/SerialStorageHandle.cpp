@@ -24,7 +24,7 @@ SerialStorageHandle::SerialStorageHandle(GlobalExecutionPlanPtr globalExecutionP
                                                      GlobalQueryPlanPtr globalQueryPlan,
                                                      Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                      Catalogs::UDF::UdfCatalogPtr udfCatalog)
-    : StorageAccessHandle(std::move(globalExecutionPlan), std::move(topology), std::move(queryCatalogService), std::move(globalQueryPlan), std::move(sourceCatalog), std::move(udfCatalog)) {}
+    : StorageHandle(std::move(globalExecutionPlan), std::move(topology), std::move(queryCatalogService), std::move(globalQueryPlan), std::move(sourceCatalog), std::move(udfCatalog)) {}
 
 std::shared_ptr<SerialStorageHandle> SerialStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                      const TopologyPtr& topology,
@@ -36,7 +36,7 @@ std::shared_ptr<SerialStorageHandle> SerialStorageHandle::create(const GlobalExe
 }
 
 GlobalExecutionPlanHandle SerialStorageHandle::getGlobalExecutionPlanHandle() {
-    return {};
+    return {&*globalExecutionPlan, UnlockDeleter()};
 }
 
 TopologyHandle SerialStorageHandle::getTopologyHandle() {

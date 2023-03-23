@@ -23,7 +23,7 @@ TwoPhaseLockingStorageHandle::TwoPhaseLockingStorageHandle(GlobalExecutionPlanPt
                                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                                        Catalogs::UDF::UdfCatalogPtr udfCatalog)
-    : StorageAccessHandle(std::move(globalExecutionPlan), std::move(topology), std::move(queryCatalogService), std::move(globalQueryPlan), std::move(sourceCatalog), std::move(udfCatalog)) {}
+    : StorageHandle(std::move(globalExecutionPlan), std::move(topology), std::move(queryCatalogService), std::move(globalQueryPlan), std::move(sourceCatalog), std::move(udfCatalog)) {}
 
 std::shared_ptr<TwoPhaseLockingStorageHandle>
 TwoPhaseLockingStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,

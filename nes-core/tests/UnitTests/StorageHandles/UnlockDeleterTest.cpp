@@ -26,8 +26,46 @@ class UnlockDeleterTest : public Testing::TestWithErrorHandling<testing::Test> {
     }
 };
 
+TEST_F(UnlockDeleterTest, TestNoLocking) {
+    UnlockDeleter unlockDeleter;
+    EXPECT_NO_THROW(unlockDeleter = UnlockDeleter());
+}
+
+TEST_F(UnlockDeleterTest, TestBlocking) {
+    std::mutex mtx;
+    std::shared_ptr<std::thread> thread;
+
+    //check that mutex gets locked by unlock deleter
+    {
+        //constructor acquires lock
+        std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
+        thread = std::make_shared<std::thread>([&mtx]() {
+            ASSERT_FALSE((mtx.try_lock()));
+        });
+        thread->join();
+        //destructor releases lock
+    }
+
+    //check that mutex gets unlocked on deletion of unlock deleter
+    ASSERT_TRUE(mtx.try_lock());
+    mtx.unlock();
+
+    //check that thread can acquire lock after blocking wait
+    {
+        //constructor acquires lock
+        std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
+        thread = std::make_shared<std::thread>([&mtx]() {
+          ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx))));
+        });
+        //destructor releases lock
+    }
+    thread->join();
+}
+
 TEST_F(UnlockDeleterTest, TestLocking) {
     std::mutex mtx;
+
+    //check that try lock will throw an exception if mutex is already locked
     {
         //constructor acquires lock
         std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
@@ -37,10 +75,11 @@ TEST_F(UnlockDeleterTest, TestLocking) {
         thread->join();
         //destructor releases lock
     }
+
+    //check that try lock will not throw an exception if mutex is not locked
     auto thread = std::make_shared<std::thread>([&mtx]() {
       ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))));
     });
     thread->join();
 }
-
 }
