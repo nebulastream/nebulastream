@@ -673,7 +673,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     }
     //Add the join window expression
     std::map<std::string, z3::ExprPtr> joinWindowExpression;
-    joinWindowExpression.insert({windowKey, std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)))});
+    joinWindowExpression.insert(
+        {windowKey, std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)))});
     joinWindowExpression.insert({"numberOfAggregates", std::make_shared<z3::expr>(context->int_val(0))});
     combinedWindowExpressions.push_back(joinWindowExpression);
 
@@ -713,6 +714,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
 
     std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    std::map<std::string, z3::ExprPtr> windowExpression;
     //Compute the expression for window time key
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -728,58 +730,45 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
         auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
-    z3::expr windowId = context->string_val(windowKey + "." + windowTimeKeyVal.to_string());
-    std::map<std::string, z3::ExprPtr> windowExpression = {{"window-id", std::make_shared<z3::expr>(windowId)}};
+        z3::expr windowId = context->string_val(windowKey + "." + windowTimeKeyVal.to_string());
+        windowExpression.insert({"window-id", std::make_shared<z3::expr>(windowId)});
 
-    //Compute the expression for window size and slide
-    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-    uint64_t length = 0;
-    uint64_t slide = 0;
-    if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
-        auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
-        length = tumblingWindow->getSize().getTime() * multiplier;
-        slide = length;
-    } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
-        auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
-        length = slidingWindow->getSize().getTime() * multiplier;
-        slide = slidingWindow->getSlide().getTime() * multiplier;
-    } else {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
-    }
-    auto windowTimeSizeVar = context->int_const("window-time-size");
-    z3::expr windowTimeSizeVal = context->int_val(length);
-    auto windowTimeSlideVar = context->int_const("window-time-slide");
-    z3::expr windowTimeSlideVal = context->int_val(slide);
-    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSizeVar, windowTimeSizeVal));
-    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSlideVar, windowTimeSlideVal));
+        //Compute the expression for window size and slide
+        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+        uint64_t length = 0;
+        uint64_t slide = 0;
+        if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+            length = tumblingWindow->getSize().getTime() * multiplier;
+            slide = length;
+        } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
+            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+            length = slidingWindow->getSize().getTime() * multiplier;
+            slide = slidingWindow->getSlide().getTime() * multiplier;
+        } else {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
+        }
+        auto windowTimeSizeVar = context->int_const("window-time-size");
+        z3::expr windowTimeSizeVal = context->int_val(length);
+        auto windowTimeSlideVar = context->int_const("window-time-slide");
+        z3::expr windowTimeSlideVal = context->int_val(slide);
+        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSizeVar, windowTimeSizeVal));
+        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSlideVar, windowTimeSlideVal));
 
         //FIXME: when count based window is implemented #1383
         //    auto windowCountSizeVar = context->int_const("window-count-size");
 
-    //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
-    Z3_ast expressionArray[] = {windowKeyExpression,
-                                windowTimeKeyExpression,
-                                windowTimeSlideExpression,
-                                windowTimeSizeExpression};
-    windowExpression.insert({"z3-window-expressions", std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)))});
-        auto windowExpressions = childQuerySignature->getWindowsExpressions();
-        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-            windowExpressions[windowKey] =
-                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
-        } else {
-            //TODO: as part of #1377
-            NES_NOT_IMPLEMENTED();
-        }
+        //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
+        Z3_ast expressionArray[] = {windowKeyExpression,
+                                    windowTimeKeyExpression,
+                                    windowTimeSlideExpression,
+                                    windowTimeSizeExpression};
+        windowExpression.insert({"z3-window-expressions",
+                                 std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)))});
     } else {// for Threshold Window
         Z3_ast expressionArray[] = {windowKeyExpression};
-
-        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-            windowExpressions[windowKey] =
-                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 1, expressionArray)));
-        } else {
-            //TODO: as part of #1377
-            NES_NOT_IMPLEMENTED();
-        }
+        windowExpression.insert({"z3-window-expressions",
+                                 std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 1, expressionArray)))});
     }
 
     std::vector<std::basic_string<char>> onFieldNames;
@@ -848,10 +837,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
                 //todo: find out if this works
-                auto fieldExpr = schemaFieldToExprMap[onFieldNames[std::distance(asFieldNames.begin(),
-                                                                                 std::find(asFieldNames.begin(),
-                                                                                           asFieldNames.end(),
-                                                                                           originalAttributeName))]];
+                auto fieldExpr = schemaFieldToExprMap[onFieldNames[std::distance(
+                    asFieldNames.begin(),
+                    std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))]];
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else {
