@@ -158,7 +158,7 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+                        {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
@@ -210,7 +210,7 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
     //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+                        {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)

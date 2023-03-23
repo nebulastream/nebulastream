@@ -51,7 +51,7 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
         NES_INFO("Setup AdaptiveKFTest class.");
         dataPort = Testing::NESBaseTest::getAvailablePort();
         sourceConf = PhysicalSource::create("x", "x1");
-        schema = Schema::create()->addField("temperature", UINT32);
+        schema = Schema::create()->addField("temperature", BasicType::UINT32);
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(sourceConf);

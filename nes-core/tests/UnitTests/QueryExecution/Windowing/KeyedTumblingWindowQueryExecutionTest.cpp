@@ -80,8 +80,8 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64))
-                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .byKey(Attribute("test$key", BasicType::INT64))
+                     .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
@@ -122,8 +122,8 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64))
-                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .byKey(Attribute("test$key", BasicType::INT64))
+                     .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -172,8 +172,8 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64), Attribute("test$key", INT64))
-                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .byKey(Attribute("test$key", BasicType::INT64), Attribute("test$key", BasicType::INT64))
+                     .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());

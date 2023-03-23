@@ -80,7 +80,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
-        auto schemaA = Schema::create()->addField("id", INT32)->addField("value", UINT32);
+        auto schemaA = Schema::create()->addField("id", BasicType::INT32)->addField("value", BasicType::UINT32);
         sourceCatalog->addLogicalSource("A", schemaA);
         LogicalSourcePtr logicalSourceA = sourceCatalog->getLogicalSource("A");
 
@@ -94,7 +94,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA2, logicalSourceA, physicalNode);
         sourceCatalog->addPhysicalSource("A", sceA2);
 
-        auto schemaB = Schema::create()->addField("id", INT32)->addField("value", UINT32);
+        auto schemaB = Schema::create()->addField("id", BasicType::INT32)->addField("value", BasicType::UINT32);
         sourceCatalog->addLogicalSource("B", schemaB);
         LogicalSourcePtr logicalSourceB = sourceCatalog->getLogicalSource("B");
 
@@ -446,9 +446,9 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     // Window aggregations
     auto aggregations = windowOps[0]->getWindowDefinition()->getWindowAggregation();
     ASSERT_EQ(aggregations.size(), 1);
-    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Sum) {
+    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Sum) {
         ASSERT_EQ(windowOps[0]->getInputOriginIds().size(), 3);
-    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Avg) {
+    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Avg) {
         ASSERT_EQ(windowOps[0]->getInputOriginIds().size(), 2);
     } else {
         FAIL();
@@ -458,9 +458,9 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     // Window aggregations
     aggregations = windowOps[1]->getWindowDefinition()->getWindowAggregation();
     ASSERT_EQ(aggregations.size(), 1);
-    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Sum) {
+    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Sum) {
         ASSERT_EQ(windowOps[1]->getInputOriginIds().size(), 3);
-    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Avg) {
+    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Avg) {
         ASSERT_EQ(windowOps[1]->getInputOriginIds().size(), 2);
     } else {
         FAIL();

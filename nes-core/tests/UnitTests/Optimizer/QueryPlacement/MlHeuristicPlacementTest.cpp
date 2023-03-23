@@ -103,22 +103,22 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
             }
         }
 
-        std::string irisSchema = R"(Schema::create()->addField(createField("id", UINT64))
-                           ->addField(createField("SepalLengthCm", FLOAT32))
-                           ->addField(createField("SepalWidthCm", FLOAT32))
-                           ->addField(createField("PetalLengthCm", FLOAT32))
-                           ->addField(createField("PetalWidthCm", FLOAT32))
-                           ->addField(createField("SpeciesCode", UINT64));)";
+        std::string irisSchema = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
+                           ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                           ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                           ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                           ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                           ->addField(createField("SpeciesCode", BasicType::UINT64));)";
 
         const std::string streamName = "iris";
         //        SchemaPtr irisSchema = Schema::create()
-        //                                   ->addField(createField("id", UINT64))
-        //                                   ->addField(createField("SepalLengthCm", FLOAT32))
-        //                                   ->addField(createField("SepalWidthCm", FLOAT32))
-        //                                   ->addField(createField("PetalLengthCm", FLOAT32))
-        //                                   ->addField(createField("PetalWidthCm", FLOAT32))
-        //                                   ->addField(createField("SpeciesCode", UINT64))
-        //                                   ->addField(createField("CreationTime", UINT64));
+        //                                   ->addField(createField("id", BasicType::UINT64))
+        //                                   ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("SpeciesCode", BasicType::UINT64))
+        //                                   ->addField(createField("CreationTime", BasicType::UINT64));
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(streamName, irisSchema);
@@ -149,7 +149,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
             .inferModel(
                 "../../../test_data/iris.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
             .filter(Attribute("iris0") < 3.0)
             .project(Attribute("iris1"), Attribute("iris2"))
             .sink(PrintSinkDescriptor::create());
@@ -168,7 +168,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::MlHeuristic, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::Value::MlHeuristic, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n" << topology->toString());

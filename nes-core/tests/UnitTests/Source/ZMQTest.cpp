@@ -62,7 +62,7 @@ class ZMQTest : public Testing::NESBaseTest {
         test_data_size = test_data.size() * sizeof(uint32_t);
         tupleCnt = 8;
         //    testDataSize = 4096;
-        test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+        test_schema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
     }
 
     /* Will be called before a test is executed. */
@@ -90,7 +90,7 @@ class ZMQTest : public Testing::NESBaseTest {
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
-    auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+    auto test_schema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
     auto zmq_source = createZmqSource(test_schema,
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
@@ -156,7 +156,7 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
     //FIXME: this test makes no sense, redo it
     /**
   // Create ZeroMQ Data Sink.
-  auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
+  auto testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE",
                                                                        UINT32);
   auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
   NES_DEBUG(zmq_sink->toString());

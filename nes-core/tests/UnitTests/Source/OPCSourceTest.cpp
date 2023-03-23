@@ -50,7 +50,7 @@ class OPCSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
     void SetUp() {
         NES_DEBUG("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
 
-        test_schema = Schema::create()->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", BasicType::UINT32);
 
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
@@ -193,7 +193,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
         startServer(p);
     });
     t1.detach();
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
     opcSource->open();
 

@@ -93,7 +93,7 @@ TEST_P(WindowAggregationFunctionTest, testSumAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -124,7 +124,7 @@ TEST_P(WindowAggregationFunctionTest, testAvgAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Avg(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Avg(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -155,7 +155,7 @@ TEST_P(WindowAggregationFunctionTest, testMinAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Min(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Min(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -186,7 +186,7 @@ TEST_P(WindowAggregationFunctionTest, testMaxAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Max(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Max(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -225,10 +225,10 @@ TEST_P(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
     auto query =
         TestQuery::from(testSourceDescriptor)
             .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-            .apply(Sum(Attribute("value", INT64))->as(Attribute("sum")),
-                   Min(Attribute("value", INT64))->as(Attribute("min")),
-                   Max(Attribute("value", INT64))->as(Attribute("max")),
-                   Avg(Attribute("value", INT64))->as(Attribute("avg")))
+            .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("sum")),
+                   Min(Attribute("value", BasicType::INT64))->as(Attribute("min")),
+                   Max(Attribute("value", BasicType::INT64))->as(Attribute("max")),
+                   Avg(Attribute("value", BasicType::INT64))->as(Attribute("avg")))
             .project(Attribute("start"), Attribute("end"), Attribute("sum"), Attribute("min"), Attribute("max"), Attribute("avg"))
             .sink(testSinkDescriptor);
 

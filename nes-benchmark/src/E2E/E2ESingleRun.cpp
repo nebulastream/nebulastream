@@ -54,7 +54,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::THREAD_LOCAL;
+    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -140,7 +140,7 @@ void E2ESingleRun::createSources() {
                     LambdaSourceType::create(dataProvidingFunc,
                                              configOverAllRuns.numberOfBuffersToProduce->getValue(),
                                              /* gatheringValue */ 0,
-                                             GatheringMode::INTERVAL_MODE,
+                                             GatheringMode::Value::INTERVAL_MODE,
                                              sourceAffinity,
                                              taskQueueId);
 
@@ -272,7 +272,7 @@ void E2ESingleRun::stopQuery() {
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
             NES_TRACE("checkStoppedOrTimeout: check query status for " << id);
-            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::Stopped) {
+            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::Value::Stopped) {
                 NES_TRACE("checkStoppedOrTimeout: status for " << id << " reached stopped");
                 break;
             }
@@ -404,15 +404,15 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MarkedForHardStop:
-            case QueryStatus::MarkedForSoftStop:
-            case QueryStatus::SoftStopCompleted:
-            case QueryStatus::SoftStopTriggered:
-            case QueryStatus::Stopped:
-            case QueryStatus::Running: {
+            case QueryStatus::Value::MarkedForHardStop:
+            case QueryStatus::Value::MarkedForSoftStop:
+            case QueryStatus::Value::SoftStopCompleted:
+            case QueryStatus::Value::SoftStopTriggered:
+            case QueryStatus::Value::Stopped:
+            case QueryStatus::Value::Running: {
                 return true;
             }
-            case QueryStatus::Failed: {
+            case QueryStatus::Value::Failed: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
                 return false;
             }

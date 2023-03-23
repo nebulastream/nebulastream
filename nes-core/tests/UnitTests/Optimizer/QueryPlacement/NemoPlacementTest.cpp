@@ -173,7 +173,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         sharedQueryPlan = SharedQueryPlan::create(queryPlan);
         auto queryPlacementPhase =
             Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
-        queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+        queryPlacementPhase->execute(NES::PlacementStrategy::Value::BottomUp, sharedQueryPlan);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {

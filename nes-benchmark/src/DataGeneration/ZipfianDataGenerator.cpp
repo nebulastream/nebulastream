@@ -27,10 +27,10 @@ ZipfianDataGenerator::ZipfianDataGenerator(double alpha, uint64_t minValue, uint
 
 NES::SchemaPtr ZipfianDataGenerator::getSchema() {
     return Schema::create()
-        ->addField(createField("id", NES::UINT64))
-        ->addField(createField("value", NES::UINT64))
-        ->addField(createField("payload", NES::UINT64))
-        ->addField(createField("timestamp", NES::UINT64));
+        ->addField(createField("id", BasicType::UINT64))
+        ->addField(createField("value", BasicType::UINT64))
+        ->addField(createField("payload", BasicType::UINT64))
+        ->addField(createField("timestamp", BasicType::UINT64));
 }
 
 std::string ZipfianDataGenerator::getName() { return "Zipfian"; }

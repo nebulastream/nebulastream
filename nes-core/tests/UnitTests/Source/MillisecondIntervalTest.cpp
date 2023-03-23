@@ -264,7 +264,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0u);
     //register logical source
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 

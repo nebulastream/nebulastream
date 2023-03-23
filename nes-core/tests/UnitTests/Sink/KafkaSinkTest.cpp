@@ -138,9 +138,9 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
  */
 TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::Value::NONE, 1);
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto inputBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());
     auto testBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());
     Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);

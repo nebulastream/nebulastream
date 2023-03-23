@@ -40,15 +40,15 @@ namespace NES {
 class MetricValidator {
   public:
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MetricPtr metric) {
-        if (metric->getMetricType() == Monitoring::DiskMetric) {
+        if (metric->getMetricType() == Monitoring::MetricType::DiskMetric) {
             return isValid(reader, metric->getValue<Monitoring::DiskMetrics>());
-        } else if (metric->getMetricType() == Monitoring::MemoryMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::MemoryMetric) {
             return isValid(reader, metric->getValue<Monitoring::MemoryMetrics>());
-        } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::RegistrationMetric) {
             return isValid(reader, metric->getValue<Monitoring::RegistrationMetrics>());
-        } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedCpuMetrics) {
             return isValid(reader, metric->getValue<Monitoring::CpuMetricsWrapper>());
-        } else if (metric->getMetricType() == Monitoring::WrappedNetworkMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedNetworkMetrics) {
             return isValid(reader, metric->getValue<Monitoring::NetworkMetricsWrapper>());
         } else {
             return false;
@@ -461,16 +461,16 @@ class MetricValidator {
     }
 
     static bool checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId) {
-        if (metric->getMetricType() == Monitoring::DiskMetric) {
+        if (metric->getMetricType() == Monitoring::MetricType::DiskMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::DiskMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == Monitoring::MemoryMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::MemoryMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::MemoryMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::RegistrationMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::RegistrationMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedCpuMetrics) {
             auto parsedMetrics = metric->getValue<Monitoring::CpuMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
                 if (parsedMetrics.getValue(i).nodeId != nodeId) {
@@ -478,7 +478,7 @@ class MetricValidator {
                 }
             }
             return parsedMetrics.getNodeId() == nodeId;
-        } else if (metric->getMetricType() == Monitoring::WrappedNetworkMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedNetworkMetrics) {
             auto parsedMetrics = metric->getValue<Monitoring::NetworkMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
                 if (parsedMetrics.getNetworkValue(i).nodeId != nodeId) {

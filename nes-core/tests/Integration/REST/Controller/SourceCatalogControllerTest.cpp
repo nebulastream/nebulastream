@@ -140,7 +140,7 @@ TEST_F(SourceCatalogControllerTest, testGetSchema) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     // create a schema
     SchemaPtr schema = Schema::create();
-    schema->addField("ID", UINT64);
+    schema->addField("ID", BasicType::UINT64);
     // and add it to the source catalog
     coordinator->getSourceCatalog()->addLogicalSource("test_stream", schema);
     // submitting a GET request for the above defined schema
@@ -220,7 +220,7 @@ TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     SchemaPtr schema = Schema::create();
-    schema->addField("ID", UINT64);
+    schema->addField("ID", BasicType::UINT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
     sourceCatalog->addLogicalSource("test_stream", schema);
     cpr::AsyncResponse future =
