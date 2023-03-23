@@ -879,7 +879,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") > 15.1)))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ECU_Oil_Temp_Sensor_Data\") > 15)))";
     ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;

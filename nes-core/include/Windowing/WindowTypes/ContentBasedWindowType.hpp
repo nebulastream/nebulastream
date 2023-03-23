@@ -27,11 +27,22 @@ class ContentBasedWindowType : public WindowType {
     virtual ~ContentBasedWindowType() = default;
 
     /**
-     * @brief Infer stamp of content-based window type
+    * @return true if this is a threshold window
+    */
+    virtual bool isThresholdWindow();
+
+    /**
+    * @return true if this is a content-based window
+    */
+    bool isContentBasedWindowType() override;
+
+    /**
+     * @brief Infer stamp of the window type
+     * @param typeInferencePhaseContext
      * @param schema : the schema of the window
      * @return true if success else false
      */
-    bool inferStamp(const SchemaPtr& schema) override;
+    virtual bool inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, const SchemaPtr& schema) = 0;
 
     /**
        * Cast the current window type as a threshold window type

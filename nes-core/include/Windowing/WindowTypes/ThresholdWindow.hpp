@@ -54,6 +54,8 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     uint64_t getMinimumCount();
 
+    bool inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, const SchemaPtr& schema) override;
+
   private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);
     ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);

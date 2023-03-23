@@ -75,12 +75,14 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
 
-    if (windowDefinition->getWindowType()->isThresholdWindow()) {
-        auto windowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
-        windowType->inferStamp(inputSchema);
+    if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
+        auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
+        if (contentBasedWindowType->isThresholdWindow()){
+            contentBasedWindowType->inferStamp(typeInferencePhaseContext, inputSchema);
+        }
     } else {
-        auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        windowType->inferStamp(inputSchema);
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        timeBasedWindowType->inferStamp(inputSchema);
     }
 
     //Construct output schema
@@ -89,12 +91,13 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
      * For the threshold window we cannot pre-calculate the window start and end, thus in the current version we ignores these output fields for
      * threshold windows
      */
-    if (!windowDefinition->getWindowType()->isThresholdWindow()) {
-        outputSchema = outputSchema
-                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
-                                                  BasicType::UINT64))
-                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
-                                                  BasicType::UINT64));
+    if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+        outputSchema =
+                outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
+                                       BasicType::UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
+                                       BasicType::UINT64));
     }
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

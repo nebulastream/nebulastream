@@ -15,12 +15,16 @@
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 
 namespace NES::Windowing {
 
 ContentBasedWindowType::ContentBasedWindowType() = default;
 
-bool ContentBasedWindowType::inferStamp(const SchemaPtr&) { return true; }
+bool ContentBasedWindowType::isThresholdWindow() { return false; }
+
+bool ContentBasedWindowType::isContentBasedWindowType() { return true; }
 
 ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType) {
     if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType)) {

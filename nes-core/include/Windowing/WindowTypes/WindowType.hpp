@@ -17,6 +17,11 @@
 
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
+
+namespace NES::Optimizer {
+class TypeInferencePhaseContext;
+}
+
 namespace NES::Windowing {
 
 class WindowType {
@@ -24,20 +29,16 @@ class WindowType {
     explicit WindowType();
 
     virtual ~WindowType() = default;
+
     /**
-     * @return true if this is a tumbling window
+     * @return true if this is a timebased window
      */
-    virtual bool isTumblingWindow();
+    virtual bool isTimeBasedWindowType();
 
     /**
-    * @return true if this is a sliding window
+    * @return true if this is a contentbased window
     */
-    virtual bool isSlidingWindow();
-
-    /**
-    * @return true if this is a threshold window
-    */
-    virtual bool isThresholdWindow();
+    virtual bool isContentBasedWindowType();
 
     virtual std::string toString() = 0;
 
@@ -60,12 +61,6 @@ class WindowType {
        */
     static ContentBasedWindowTypePtr asContentBasedWindowType(std::shared_ptr<WindowType> windowType);
 
-    /**
-     * @brief Infer stamp of the window type
-     * @param schema : the schema of the window
-     * @return true if success else false
-     */
-    virtual bool inferStamp(const SchemaPtr& schema) = 0;
 };
 
 }// namespace NES::Windowing

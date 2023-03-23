@@ -513,7 +513,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
     windowDetails.set_allowedlateness(windowDefinition->getAllowedLateness());
     auto windowType = windowDefinition->getWindowType();
 
-    if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
+    if (windowType->isTimeBasedWindowType()) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
@@ -527,13 +527,13 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         }
         timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
 
-        if (windowType->isTumblingWindow()) {
+        if (timeBasedWindowType->isTumblingWindow()) {
             auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
             auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
             tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
             tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
             windowDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
-        } else if (windowType->isSlidingWindow()) {
+        } else if (timeBasedWindowType->isSlidingWindow()) {
             auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
             auto slidingWindowDetails = SerializableOperator_SlidingWindow();
             slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
@@ -543,13 +543,18 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         } else {
             NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
         }
-    } else if (windowType->isThresholdWindow()) {
-        auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
-        auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
-        ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
-                                                         thresholdWindowDetails.mutable_predicate());
-        thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
-        windowDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
+    } else if (windowType->isContentBasedWindowType()) {
+        auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowType);
+        if (contentBasedWindowType->isThresholdWindow()) {
+            auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
+            auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
+            ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
+                                                             thresholdWindowDetails.mutable_predicate());
+            thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
+            windowDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
+        }else{
+            NES_ERROR("OperatorSerializationUtil: Cant serialize this content based window Type");
+        }
     }
 
     // serialize aggregation
@@ -821,13 +826,13 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
-    if (windowType->isTumblingWindow()) {
+    if (timeBasedWindowType->isTumblingWindow()) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
         joinDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
-    } else if (windowType->isSlidingWindow()) {
+    } else if (timeBasedWindowType->isSlidingWindow()) {
         auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
         auto slidingWindowDetails = SerializableOperator_SlidingWindow();
         slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
@@ -1952,7 +1957,7 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
 
     // Serializing the windowType
     auto windowType = windowJavaUdfOperatorNode.getWindowType();
-    if (windowType->isTumblingWindow() || windowType->isSlidingWindow()) {
+    if (windowType->isTimeBasedWindowType()) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
@@ -1966,14 +1971,14 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
         }
         timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
 
-        if (windowType->isTumblingWindow()) {
+        if (timeBasedWindowType->isTumblingWindow()) {
             auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
             auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
             tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
             tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
             windowJavaUdfDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
 
-        } else if (windowType->isSlidingWindow()) {
+        } else if (timeBasedWindowType->isSlidingWindow()) {
             auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
             auto slidingWindowDetails = SerializableOperator_SlidingWindow();
             slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
@@ -1985,13 +1990,18 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
             NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
         }
 
-    } else if (windowType->isThresholdWindow()) {
+    } else if (windowType->isContentBasedWindowType()) {
+        auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowType);
+        if (contentBasedWindowType->isThresholdWindow()) {
         auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
         auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
         ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
                                                          thresholdWindowDetails.mutable_predicate());
         thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
         windowJavaUdfDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
+        }else {
+        NES_ERROR("OperatorSerializationUtil: Cant serialize content based window Type");
+        }
     }
 
     // Serializing the distributionCharacteristic

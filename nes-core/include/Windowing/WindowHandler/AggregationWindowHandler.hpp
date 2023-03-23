@@ -166,14 +166,17 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         } else {
             watermark = getMinWatermark();
             uint64_t windowSize = 0;
-            if (windowDefinition->getWindowType()->isTumblingWindow()) {
-                TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
-                windowSize = window->getSize().getTime();
-            } else if (windowDefinition->getWindowType()->isSlidingWindow()) {
-                SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
-                windowSize = window->getSize().getTime();
-            } else {
-                NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
+            if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+                auto timeBasedWindowType = WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+                if (timeBasedWindowType->isTumblingWindow()) {
+                    TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
+                    windowSize = window->getSize().getTime();
+                } else if (timeBasedWindowType->isSlidingWindow()) {
+                    SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
+                    windowSize = window->getSize().getTime();
+                } else {
+                    NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
+                }
             }
 
             auto allowedLateness = windowManager->getAllowedLateness();

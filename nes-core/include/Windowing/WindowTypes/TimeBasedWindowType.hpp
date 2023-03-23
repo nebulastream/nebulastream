@@ -59,11 +59,26 @@ class TimeBasedWindowType : public WindowType {
     virtual TimeMeasure getSlide() = 0;
 
     /**
+     * @return true if this is a tumbling window
+     */
+    virtual bool isTumblingWindow();
+
+    /**
+    * @return true if this is a sliding window
+    */
+    virtual bool isSlidingWindow();
+
+    /**
+    * @return true if this is a sliding window
+    */
+    bool isTimeBasedWindowType() override;
+
+    /**
      * @brief Infer stamp of time based window type
      * @param schema : the schema of the window
      * @return true if success else false
      */
-    bool inferStamp(const SchemaPtr& schema) override;
+    bool inferStamp(const SchemaPtr& schema);
 
   protected:
     TimeCharacteristicPtr timeCharacteristic;
