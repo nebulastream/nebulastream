@@ -11,22 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandle.hpp>
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <utility>
 
 namespace NES {
 
-AbstractRequest::AbstractRequest(size_t maxRetries) : maxRetries(maxRetries), actualRetries(0) {}
+AbstractRequest::AbstractRequest(size_t maxRetries, std::vector<ResourceType> requiredResources) : maxRetries(maxRetries),
+                                                                                                   actualRetries(0),
+                                                                                                   requiredResources(std::move(requiredResources)) {}
 
-void AbstractRequest::handleError(std::exception ex, const StorageAccessHandlePtr& storageAccessHandle) {
-    preRollbackErrorHandling(ex, storageAccessHandle);
+void AbstractRequest::handleError(std::exception ex, const StorageAccessHandlePtr& storageHandle) {
+    //error handling to be performed before rolling back
+    preRollbackHandle(ex, storageHandle);
 
-    rollBack(ex, storageAccessHandle);
+    rollBack(ex, storageHandle);
 
-    afterRollbackErrorHandling(ex, storageAccessHandle);
+    postRollbackHandle(ex, storageHandle);
 }
 
 bool AbstractRequest::retry() {
     return actualRetries++ < maxRetries;
+}
+void AbstractRequest::execute(const StorageAccessHandlePtr& storageHandle) {
+    preExecution(storageHandle, requiredResources);
+
+    executeRequestLogic(storageHandle);
+
+    postExecution(storageHandle, requiredResources);
 }
 }

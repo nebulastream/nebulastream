@@ -11,17 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
+#ifndef NES_RESOURCETYPE_HPP
+#define NES_RESOURCETYPE_HPP
 
 namespace NES {
-UnlockDeleter::UnlockDeleter() = default;
-
-UnlockDeleter::UnlockDeleter(std::mutex& mutex) : lock(mutex) {}
-
-UnlockDeleter::UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock) : lock{mutex, tryToLock} {
-    if (!lock) {
-        //todo #3611: write custom exception for this case
-        throw std::exception();
-    }
+enum ResourceType {
+    Topology,
+    QueryCatalogService,
+    SourceCatalog,
+    GlobalExecutionPlan,
+    GlobalQueryPlan,
+    UdfCatalog,
+};
 }
-}
+
+#endif//NES_RESOURCETYPE_HPP
