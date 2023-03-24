@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_TENSORFLOWADAPTER_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_TENSORFLOWADAPTER_HPP_
 
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <memory>
 #include <vector>
 
@@ -37,7 +38,7 @@ class TensorflowAdapter {
      * @param n size of the first dimensional input tensor (vector)
      * @param ... values for the first dimensional input tensor (vector)
      */
-    void infer(uint8_t dataType, int n, ...);
+    void infer(BasicPhysicalType::NativeType dataType, int n, ...);
 
     /**
      * @brief accesses the ith field of the output

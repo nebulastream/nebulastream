@@ -972,12 +972,12 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
-    NES_INFO("coordinator started successfully")
+    NES_INFO("coordinator started successfully");
 
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1076,7 +1076,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1167,7 +1167,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1264,7 +1264,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     }
     ASSERT_TRUE(waitForNodes(5, 61, topology));
     string singleLocStart = "52.55227464714949, 13.351743136322877";
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
