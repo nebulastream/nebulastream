@@ -32,25 +32,25 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
                                                            const QuerySignaturePtr& rightSignature) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = NO_CONTAINMENT;
+    auto otherConditions = rightSignature->getConditions();
+    auto conditions = leftSignature->getConditions();
+    if (!conditions || !otherConditions) {
+        NES_WARNING("Can't obtain containment relationships for null signatures");
+        return NO_CONTAINMENT;
+    }
     try {
-        //create First Order Logic (FOL) for projection containment to check if right sig contained by left sig
-        //The rest of this method checks for containment as follows:
-        //  check if right sig ⊆ left sig for projections (including map conditions), i.e. if ((!cond2 && cond1) == unsat) <=> right sig ⊆ left sig,
-        // since we're checking for projection containment, the negation is on the side of the contained condition,
-        // e.g. right sig ⊆ left sig <=> ((!(attr1==true && attr2==45) && (attr1==true && attr2==45, attr3==true)) == unsat)
-        //      true: check left sig ⊆ right sig for projections (including map conditions) --> if true, we have equal projections,
-        //      i.e. can only check other containment relationships if sources, projections, and maps are equal
-        //          true: check filter containment --> see checkFilterContainment() for details
-        //          false: return SIG_TWO_CONTAINED
-        //      false: check left sig ⊆ right sig for projections (including map conditions)
-        //          true: return SIG_ONE_CONTAINED
-        //          false: return NO_CONTAINMENT
-        //check if right sig contained by left sig for projection
+        //In the following, we
+        // 1. check for WindowContainment
+        // In case of window equality, we continue to check for projection containment
+        // In case of projection equality, we finally check for filter containment
         containmentRelationship = checkWindowContainment(leftSignature, rightSignature);
+        NES_TRACE2("Check window containment returned: {}", containmentRelationship);
         if (containmentRelationship == EQUALITY) {
             containmentRelationship = checkProjectionContainment(leftSignature, rightSignature);
+            NES_TRACE2("Check projection containment returned: {}", containmentRelationship);
             if (containmentRelationship == EQUALITY) {
                 containmentRelationship = checkFilterContainment(leftSignature, rightSignature);
+                NES_TRACE2("Check filter containment returned: {}", containmentRelationship);
             }
         }
     } catch (...) {
@@ -68,32 +68,42 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
 
 ContainmentType SignatureContainmentUtil::checkProjectionContainment(const QuerySignaturePtr& leftSignature,
                                                                      const QuerySignaturePtr& rightSignature) {
-    auto otherConditions = rightSignature->getConditions();
-    auto conditions = leftSignature->getConditions();
-    if (!conditions || !otherConditions) {
-        NES_WARNING("Can't obtain containment relationships for null signatures");
-        return NO_CONTAINMENT;
-    }
     z3::expr_vector leftQueryProjectionFOL(*context);
     z3::expr_vector rightQueryProjectionFOL(*context);
+    //create the projection conditions for each signature
     createProjectionCondition(leftSignature, leftQueryProjectionFOL);
     createProjectionCondition(rightSignature, rightQueryProjectionFOL);
+    // We first check if the first order logic (FOL) is equal for projections, if not we move on to check for containment relationships.
+    // We added heuristic checks to prevent unnecessary calls to the SMT solver
+    // if (!leftProjectionFOL && !rightProjectionFOL) == unsat
+    //      true: return EQUALITY
+    //      false:
+    //          if (# of attr left sig > # of attr right sig)
+    //              && !rightFOL && leftFOL == unsat, aka leftFOL ⊆ rightFOL
+    //              && filters are equal
+    //              && the column order is still the same, despite the containment relationship
+    //                  true: return Right sig contained
+    //          else if (# of attr left sig < # of attr right sig)
+    //              && (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+    //              && filters are equal
+    //              && the column order is still the same, despite the containment relationship
+    //                  true: return Left sig contained
+    // else: No_Containment
     if (equalityConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)) {
-        NES_TRACE("Equal filters.");
+        NES_TRACE("Equal projection.");
         return EQUALITY;
     } else if (leftSignature->getSchemaFieldToExprMaps().size() == rightSignature->getSchemaFieldToExprMaps().size()) {
         for (size_t i = 0; i < leftSignature->getSchemaFieldToExprMaps().size(); ++i) {
-            if (leftSignature->getSchemaFieldToExprMaps()[i].size() > rightSignature->getSchemaFieldToExprMaps()[i].size()) {
-                if (containmentConditionsUnsatisfied(rightQueryProjectionFOL, leftQueryProjectionFOL)
-                    && checkFilterContainment(leftSignature, rightSignature) == EQUALITY) {
-                    return checkColumnOrder(leftSignature, rightSignature);
-                }
-            } else if (leftSignature->getSchemaFieldToExprMaps()[i].size()
-                       < rightSignature->getSchemaFieldToExprMaps()[i].size()) {
-                if (containmentConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)
-                    && checkFilterContainment(leftSignature, rightSignature) == EQUALITY) {
-                    return checkColumnOrder(rightSignature, leftSignature);
-                }
+            if (leftSignature->getSchemaFieldToExprMaps()[i].size() > rightSignature->getSchemaFieldToExprMaps()[i].size()
+                && containmentConditionsUnsatisfied(rightQueryProjectionFOL, leftQueryProjectionFOL)
+                && checkFilterContainment(leftSignature, rightSignature) == EQUALITY
+                && checkColumnOrder(leftSignature, rightSignature)) {
+                return RIGHT_SIG_CONTAINED;
+            } else if (leftSignature->getSchemaFieldToExprMaps()[i].size() < rightSignature->getSchemaFieldToExprMaps()[i].size()
+                       && containmentConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)
+                       && checkFilterContainment(leftSignature, rightSignature) == EQUALITY
+                       && checkColumnOrder(rightSignature, leftSignature)) {
+                return LEFT_SIG_CONTAINED;
             }
         }
     }
@@ -113,19 +123,28 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
         //checks if the window keys are equal, operator sharing can only happen for equal window-keys
         if (leftWindow.at("window-id")->to_string() == rightWindow.at("window-id")->to_string()) {
             NES_TRACE("Same window ids.");
+            for (auto entry : leftWindow) {
+                NES_TRACE2("Left window first entry {}", entry.first);
+                NES_TRACE2("Left window second entry {}", entry.second->to_string());
+            }
+            for (auto entry : rightWindow) {
+                NES_TRACE2("Left window first entry {}", entry.first);
+                NES_TRACE2("Left window second entry {}", entry.second->to_string());
+            }
             bool containmentRelationshipPossible = checkWindowContainmentPossible(leftWindow, leftSignature, rightSignature);
             //extract the z3-window-expressions
             z3::expr_vector leftQueryWindowConditions(*context);
             z3::expr_vector rightQueryWindowConditions(*context);
             leftQueryWindowConditions.push_back(to_expr(*context, *leftWindow.at("z3-window-expressions")));
             rightQueryWindowConditions.push_back(to_expr(*context, *rightWindow.at("z3-window-expressions")));
+            NES_TRACE2("Created window FOL.");
             //checks if the number of aggregates is equal, for equal number of aggregates we check for complete equality
             //and if the windows contain each other, e.g. z3 checks window-size <= window-size && window-slide <= window-slide
-            if (leftWindow.at("number-of-aggregates") == rightWindow.at("number-of-aggregates")) {
-                NES_TRACE("Same number of aggregates.");
-                if (containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions) == z3::unsat) {
-                    if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions) == z3::unsat) {
-                        NES_TRACE("Equal windows.");
+            if (leftWindow.at("number-of-aggregates")->char_to_int() == rightWindow.at("number-of-aggregates")->char_to_int()) {
+                NES_TRACE2("Same number of aggregates.");
+                if (containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
+                    if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
+                        NES_TRACE2("Equal windows.");
                         return EQUALITY;
                     }
                     //needs filter and projection equality
@@ -135,7 +154,7 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                         NES_TRACE("Right window contained.");
                         return RIGHT_SIG_CONTAINED;
                     }
-                } else if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions) == z3::unsat) {
+                } else if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
                     //needs filter and projection equality
                     //makes sure that no operations are included that cannot be contained, i.e.
                     //Joins, Avg, and Median windows cannot share operations unless they are equal
@@ -147,23 +166,25 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                     NES_TRACE("No containment.");
                     return NO_CONTAINMENT;
                 }
-            } else if (leftWindow.at("number-of-aggregates") > rightWindow.at("number-of-aggregates")) {
+            } else if (leftWindow.at("number-of-aggregates")->char_to_int()
+                       > rightWindow.at("number-of-aggregates")->char_to_int()) {
                 combineWindowAndProjectionConditions(leftSignature,
                                                      rightSignature,
                                                      leftQueryWindowConditions,
                                                      rightQueryWindowConditions);
                 if (containmentRelationshipPossible
-                    && containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions) == z3::unsat) {
+                    && containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
                     NES_TRACE("Right window contained.");
                     return RIGHT_SIG_CONTAINED;
                 }
-            } else if (leftWindow.at("number-of-aggregates") < rightWindow.at("number-of-aggregates")) {
+            } else if (leftWindow.at("number-of-aggregates")->char_to_int()
+                       < rightWindow.at("number-of-aggregates")->char_to_int()) {
                 combineWindowAndProjectionConditions(leftSignature,
                                                      rightSignature,
                                                      leftQueryWindowConditions,
                                                      rightQueryWindowConditions);
                 if (containmentRelationshipPossible
-                    && containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions) == z3::unsat) {
+                    && containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                     NES_TRACE("Left window contained.");
                     return LEFT_SIG_CONTAINED;
                 }
@@ -172,20 +193,20 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
     }
     return NO_CONTAINMENT;
 }
-ContainmentType SignatureContainmentUtil::checkColumnOrder(const QuerySignaturePtr& leftSignature,
-                                                           const QuerySignaturePtr& rightSignature) const {
-    size_t attributeFoundAt = 0; //index to track the position in the larger vector
+bool SignatureContainmentUtil::checkColumnOrder(const QuerySignaturePtr& leftSignature,
+                                                const QuerySignaturePtr& rightSignature) const {
+    size_t attributeFoundAt = 0;//index to track the position in the larger vector
     for (size_t j = 0; j < rightSignature->getColumns().size(); ++j) {
-        while (attributeFoundAt < leftSignature->getColumns().size() &&
-               leftSignature->getColumns()[attributeFoundAt] != rightSignature->getColumns()[j]) {
-            attributeFoundAt++; //keep moving forward in the larger vector until a match is found
+        while (attributeFoundAt < leftSignature->getColumns().size()
+               && leftSignature->getColumns()[attributeFoundAt] != rightSignature->getColumns()[j]) {
+            attributeFoundAt++;//keep moving forward in the larger vector until a match is found
         }
         if (attributeFoundAt == leftSignature->getColumns().size()) {
-            return NO_CONTAINMENT; // if no match is found, the smaller vector is not fully contained by the larger vector
+            return false;// if no match is found, the smaller vector is not fully contained by the larger vector
         }
-        attributeFoundAt++; // move to the next position in the larger vector, also makes sure that attributes are in the right order
+        attributeFoundAt++;// move to the next position in the larger vector, also makes sure that attributes are in the right order
     }
-    return RIGHT_SIG_CONTAINED;
+    return true;
 }
 void SignatureContainmentUtil::combineWindowAndProjectionConditions(const QuerySignaturePtr& leftSignature,
                                                                     const QuerySignaturePtr& rightSignature,
@@ -209,7 +230,7 @@ bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std
                                                               const QuerySignaturePtr& rightSignature) {
     const auto& median = Windowing::WindowAggregationDescriptor::Median;
     const auto& avg = Windowing::WindowAggregationDescriptor::Avg;
-    bool leftWindowContainsRightWindow = leftWindow.at("window-key")->to_string() != "JoinWindow"
+    bool leftWindowContainsRightWindow = leftWindow.at("window-id")->to_string() != "JoinWindow"
         && std::find(leftWindow.at("aggregate-types")->to_string().begin(),
                      leftWindow.at("aggregate-types")->to_string().end(),
                      median)
@@ -261,7 +282,6 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
 }
 
 void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
-    //todo: #3495 think about order for projection
     //check projection containment
     // if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
     // else we indicate that the attribute is involved in the projection as attributeStingName == true
