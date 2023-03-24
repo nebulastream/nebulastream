@@ -40,10 +40,11 @@ uint64_t stringtomillisecondsproxy(TextValue* t) {
     int minute = 0;
     int second = 0;
     std::string timeString = t->c_str();
-    if (timeString.find('T') != std::string::npos){
+    if (timeString.find('T') != std::string::npos) {
         std::sscanf(t->c_str(), "%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second);
-        NES_DEBUG(" the year " << year << " the month " << month << " the day " << day << " the hour " << hour << " the minute " << minute << " and the second " << second);
-    }else{
+        NES_DEBUG(" the year " << year << " the month " << month << " the day " << day << " the hour " << hour << " the minute "
+                               << minute << " and the second " << second);
+    } else {
         std::sscanf(t->c_str(), "%d-%d-%d", &year, &month, &day);
         NES_DEBUG(" the year" << year << " the month" << month << " and the day" << day);
     }
@@ -84,7 +85,8 @@ TimeStamp::TimeStamp(Value<> x) : Any(&type), milliseconds(x) {
     if (x->isType<UInt64>()) {
         this->milliseconds = x.as<UInt64>();
     } else if (x->isType<Text>()) {
-        this->milliseconds = FunctionCall<>("stringtomillisecondsproxy", stringtomillisecondsproxy, x.as<Text>().value->getReference());
+        this->milliseconds =
+            FunctionCall<>("stringtomillisecondsproxy", stringtomillisecondsproxy, x.as<Text>().value->getReference());
     } else {
         NES_THROW_RUNTIME_ERROR("Can not make a TimeStamp object out of" << x);
     }
@@ -187,9 +189,7 @@ Value<> TimeStamp::difference(Value<TimeStamp>& other) {
 
 Nautilus::IR::Types::StampPtr TimeStamp::getType() const { return Nautilus::IR::Types::StampFactory::createUInt64Stamp(); }
 
-Value<> TimeStamp::getMilliSeconds() {
-    return this->milliseconds;
-}
+Value<> TimeStamp::getMilliSeconds() { return this->milliseconds; }
 
 int64_t getSecondsChrono(int64_t milliseconds) {
     tm utc_t = convertToUTC_TM(milliseconds);
