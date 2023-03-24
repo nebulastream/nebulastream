@@ -113,8 +113,8 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         } else {
             for (const auto& windowExpression : windowsExpressions[0]) {
                 if (otherWindowExpressions[0].find(windowExpression.first) == otherWindowExpressions[0].end()) {
-                    NES_WARNING2("Window expression with key " << windowExpression.first
-                                                              << " doesn't exists in window expressions of other signature");
+                    NES_WARNING2("Window expression with key {}", windowExpression.first,
+                                                              " doesn't exists in window expressions of other signature");
                     return false;
                 }
                 //For each column expression of the column in other signature we try to create a DNF using

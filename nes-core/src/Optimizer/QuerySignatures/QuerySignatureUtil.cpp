@@ -674,8 +674,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     //Add the join window expression
     std::map<std::string, z3::ExprPtr> joinWindowExpression;
     joinWindowExpression.insert(
-        {windowKey, std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)))});
-    joinWindowExpression.insert({"numberOfAggregates", std::make_shared<z3::expr>(context->int_val(0))});
+        {"z3-window-expressions", std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)))});
+    joinWindowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(0))});
+    joinWindowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(""))});
+    joinWindowExpression.insert({"window-id", std::make_shared<z3::expr>(context->string_val(windowKey))});
     combinedWindowExpressions.push_back(joinWindowExpression);
 
     return QuerySignature::create(std::move(conditions),
@@ -715,6 +717,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     std::map<std::string, z3::ExprPtr> windowExpression;
+    NES_TRACE2("Create Window Signature");
     //Compute the expression for window time key
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -765,6 +768,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                                     windowTimeSizeExpression};
         windowExpression.insert({"z3-window-expressions",
                                  std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)))});
+        NES_TRACE2("Time based window signature created.");
     } else {// for Threshold Window
         Z3_ast expressionArray[] = {windowKeyExpression};
         windowExpression.insert({"z3-window-expressions",
