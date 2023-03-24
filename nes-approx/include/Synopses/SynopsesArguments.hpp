@@ -45,6 +45,10 @@ class SynopsesArguments {
     static SynopsesArguments createArguments(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
                                              std::string fieldName, Type type, size_t width, size_t height = 1, size_t windowSize = 1);
 
+    static std::vector<SynopsesArguments> parseArgumentsFromYamlFile(const std::string& fileName);
+
+
+
     size_t getWidth() const;
 
     size_t getHeight() const;
@@ -66,7 +70,8 @@ class SynopsesArguments {
     size_t width;
     size_t height;
     size_t windowSize;
-    std::string fieldName;
+    std::string fieldNameAggregation;
+    std::vector<std::string> fieldNameKeys; // TODO add here multiple keys for each synopsis
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
 };
 

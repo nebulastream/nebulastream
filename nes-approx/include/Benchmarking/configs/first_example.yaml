@@ -1,0 +1,5 @@
+synopsis:
+  - type: SRSWR
+    sampleSize: 1000, 2000, 5000, 10000, 20000, 50000
+
+aggregation: min, max, sum, average, sum
