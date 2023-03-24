@@ -150,41 +150,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::Co
     //Compute signature
     return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {});
 }
-/*void QuerySignatureUtil::createContainmentSchemaInformation(std::map<std::string, z3::ExprPtr>& fieldToZ3ExprMap,
-                                                            const z3::ContextPtr& context) {
-    uint index = 0;
-    for (auto [attributeName, z3Expression] : fieldToZ3ExprMap) {
-        NES_TRACE("AttributeName as string: " << attributeName);
-        NES_TRACE("Corresponding z3 expression: " << z3Expression->to_string());
-        z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const((attributeName.c_str())));
-        if (z3Expression->to_string() != attributeName) {
-            if (z3Expression->is_int()) {
-                expr = std::make_shared<z3::expr>(context->int_const(attributeName.c_str()));
-            } else if (z3Expression->is_fpa()) {
-                expr = std::make_shared<z3::expr>(context->fpa_const<64>(attributeName.c_str()));
-            } else if (z3Expression->is_string_value()) {
-                expr = std::make_shared<z3::expr>(context->string_const(attributeName.c_str()));
-            }
-            createSourceFOL.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *z3Expression)));
-        } else {
-            z3::ExprPtr columnIsUsed = std::make_shared<z3::expr>(context->bool_val(true));
-            createSourceFOL.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *columnIsUsed)));
-        }
-        auto orderIdentificationName = attributeName + "_";
-        expr = std::make_shared<z3::expr>(context->int_const(orderIdentificationName.c_str()));
-        std::string dataTypeAndIndex;
-        if (z3Expression->is_int()) {
-            dataTypeAndIndex = "1" + std::to_string(index);
-        } else if (z3Expression->is_fpa()) {
-            dataTypeAndIndex = "2" + std::to_string(index);
-        } else if (z3Expression->is_string_value()) {
-            dataTypeAndIndex = "3" + std::to_string(index);
-        }
-        index++;
-        z3::ExprPtr dataTypeAndIndexExpression = std::make_shared<z3::expr>(context->int_val(dataTypeAndIndex.c_str()));
-        createSourceFOL.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *dataTypeAndIndexExpression)));
-    }
-}*/
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const ProjectionLogicalOperatorNodePtr& projectOperator) {
 
@@ -529,7 +494,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
     }
 
     //Merge the window definitions together
-    //todo: Double check that this doesn't affect the union window
     std::vector<std::map<std::string, z3::ExprPtr>> combinedWindowExpressions;
     for (auto leftWindow : leftSignature->getWindowsExpressions()) {
         combinedWindowExpressions.push_back(leftWindow);
@@ -538,7 +502,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
         combinedWindowExpressions.push_back(rightWindow);
     }
 
-    //todo: source conditions might be a problem
     //Add condition to the array
     z3::expr_vector allConditions(*context);
     allConditions.push_back(*leftSignature->getConditions());

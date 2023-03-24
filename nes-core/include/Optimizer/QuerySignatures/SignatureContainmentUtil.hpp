@@ -60,12 +60,9 @@ class SignatureContainmentUtil {
     /**
      * @brief Check containment relationships for the given signatures as follows
      * check if right sig ⊆ left sig for projections (including map conditions)
-     *      true: check left sig ⊆ right sig for projections (including map conditions) --> if true, we have equal projections, i.e. can only check other containment relationships if sources, projections, and maps are equal
-     *          true: check filter containment --> see checkFilterContainment() for details
-     *          false: return RIGHT_SIG_CONTAINED
-     *      false: check left sig ⊆ right sig for projections (including map conditions)
-     *          true: return LEFT_SIG_CONTAINED
-     *          false: return NO_CONTAINMENT
+     *      First check for WindowContainment
+     *      In case of window equality, we continue to check for projection containment
+     *      In case of projection equality, we finally check for filter containment
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships
@@ -74,24 +71,21 @@ class SignatureContainmentUtil {
 
   private:
     /**
-     * @brief creates conditions for checking projection containment:
-     * if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
-     * else we indicate that the attribute is involved in the projection as attributeStingName == true
-     * all FOL are added to the projectionCondition vector
-     * @param signature Query signature to extract conditions from
-     * @param projectionFOL z3 expression vector to add conditions to
-     */
-    void createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL);
-
-    /**
-     * @brief check for window containment as follows:
-     * check if right sig ⊆ left sig for windows
-     *      true: check if left sig ⊆ right sig
-     *          true: return EQUALITY
-     *          false: return RIGHT_SIG_CONTAINED
-     *      false: check if left sig ⊆ right sig
-     *          true: return LEFT_SIG_CONTAINED
-     *          false: return NO_CONTAINMENT
+     * @brief check for projection containment as follows:
+     * check if (!leftProjectionFOL && !rightProjectionFOL) == unsat
+     *      true: return EQUALITY
+     *      false:
+     *          if (# of attr left sig > # of attr right sig)
+     *          && !rightFOL && leftFOL == unsat, aka leftFOL ⊆ rightFOL
+     *          && filters are equal
+     *          && the column order is still the same, despite the containment relationship
+     *              true: return Right sig contained
+     *      else if (# of attr left sig < # of attr right sig)
+     *          && (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+     *          && filters are equal
+     *          && the column order is still the same, despite the containment relationship
+     *              true: return Left sig contained
+     *      else: No_Containment
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships
@@ -115,6 +109,7 @@ class SignatureContainmentUtil {
 
     /**
      * @brief check for window containment as follows:
+     * //todo: change documentation
      * check if right sig ⊆ left sig for windows
      *      true: check if left sig ⊆ right sig
      *          true: return EQUALITY
@@ -127,6 +122,16 @@ class SignatureContainmentUtil {
      * @return enum with containment relationships
      */
     ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+
+    /**
+     * @brief creates conditions for checking projection containment:
+     * if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
+     * else we indicate that the attribute is involved in the projection as attributeStingName == true
+     * all FOL are added to the projectionCondition vector
+     * @param signature Query signature to extract conditions from
+     * @param projectionFOL z3 expression vector to add conditions to
+     */
+    void createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions and non negated conditions is unsatisfiable
@@ -146,14 +151,36 @@ class SignatureContainmentUtil {
      */
     bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions, const z3::expr_vector& rightConditions);
 
-    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& leftWindow,
+    /**
+     * @brief checks if window containment is possible, i.e. no join window, no avg or median aggregation, and filter conditions are equal
+     * @param currentWindow current window to be checked for join or aggregation
+     * @param leftSignature left query signature for filter check
+     * @param rightSignature right query signature for filter check
+     * @return true if all conditions for window containment are met, false otherwise
+     */
+    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& currentWindow,
                                         const QuerySignaturePtr& leftSignature,
                                         const QuerySignaturePtr& rightSignature);
 
-    void combineWindowAndProjectionConditions(const QuerySignaturePtr& leftSignature,
+    /**
+     * @brief combines window and projection FOLs
+     * @param leftSignature left query signature
+     * @param rightSignature right query signature
+     * @param leftQueryWindowFOL expression vector for left query
+     * @param rightQueryWindowFOL expression vector for right query
+     */
+    void combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
                                               const QuerySignaturePtr& rightSignature,
-                                              z3::expr_vector& leftQueryWindowConditions,
-                                              z3::expr_vector& rightQueryWindowConditions);
+                                              z3::expr_vector& leftQueryWindowFOL,
+                                              z3::expr_vector& rightQueryWindowFOL);
+
+    /**
+     * @brief checks if a smaller attribute list is contained in a larger attribute
+     * @param containerCandidateSignature signature of the container candidate
+     * @param containeeCandidateSignature signature of the containee candidate
+     * @return true if order is retained, false otherwise
+     */
+    bool checkAttributeOrder(const QuerySignaturePtr& containerCandidateSignature, const QuerySignaturePtr& containeeCandidateSignature) const;
 
     /**
      * @brief Reset z3 solver
@@ -165,7 +192,6 @@ class SignatureContainmentUtil {
     uint64_t counter;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
-    bool checkColumnOrder(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature) const;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_
