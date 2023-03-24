@@ -15,17 +15,48 @@
 #ifndef NES_ABSTRACTSYNOPSES_HPP
 #define NES_ABSTRACTSYNOPSES_HPP
 
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Synopses/SynopsesArguments.hpp>
+
 namespace NES::ASP {
+
+class AbstractSynopses;
+using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopses>;
+
+constexpr auto GENERATOR_SEED_DEFAULT = 42;
 
 class AbstractSynopses {
 
   public:
+    /**
+     * @brief This is the first step of receiving an approximation. This method adds the record to the underlying synopsis
+     * @param record
+     */
+    virtual void addToSynopsis(Nautilus::Record record) = 0;
 
+    /**
+     * @brief Once all records have been inserted, we can ask for an approximation
+     * @return Record that stores the approximation
+     */
+    virtual Nautilus::Record getApproximate() = 0;
 
-  private:
+    static AbstractSynopsesPtr create(SynopsesArguments arguments);
+
+    /**
+     * @brief virtual deconstructor
+     */
+    virtual ~AbstractSynopses() = default;
+
+  protected:
+    explicit AbstractSynopses(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
+
+    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
+    std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> aggregationValue;
+    std::string fieldName;
 
 };
-
 } // namespace NES::ASP
 
 #endif//NES_ABSTRACTSYNOPSES_HPP

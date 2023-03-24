@@ -13,8 +13,33 @@
 */
 
 
-int main(int argc, const char* argv[]) {
+#include <Synopses/AbstractSynopses.hpp>
+#include <Synopses/Samples/SampleRandomWithReplacement.hpp>
+#include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+
+int main(int, const char*[]) {
+    using namespace NES;
 
 
+    /**
+     * 1. Parse yaml file into SynopsisArguments
+     * 2. Create synopsis from SynopsisArguments
+     * 3. Create input data (maybe read it from a csv file)
+     * 4. Run addToSynopsis() and getApproximate()
+     * 5. Calculate throughput and write this into a csv file together with the rest of the params
+     */
+
+
+
+    size_t sampleSize = 1000;
+    auto fieldName = "f1";
+
+    PhysicalTypePtr dataType = DefaultPhysicalTypeFactory().getPhysicalType(DataTypeFactory::createInt8());
+    auto averageAggregationFunction = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(dataType, dataType);
+
+    auto sampleArguments = ASP::SRSWR(sampleSize, fieldName, averageAggregationFunction);
+    auto synopsis = ASP::AbstractSynopses::create(sampleArguments);
 
 }

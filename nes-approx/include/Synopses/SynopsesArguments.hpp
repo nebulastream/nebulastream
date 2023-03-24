@@ -15,21 +15,59 @@
 #ifndef NES_SYNOPSESARGUMENTS_HPP
 #define NES_SYNOPSESARGUMENTS_HPP
 
+#include <cstddef>
 #include <stdint.h>
+#include <Execution/Aggregation/AggregationFunction.hpp>
 
 namespace NES::ASP {
 
 class SynopsesArguments {
 
+  public:
     enum class Type : uint8_t {
-        SRSWR,
+        SRSWR,  // Simple Random Sampling With Replacement
+        SRSWoR, // Simple Random Sampling Without Replacement
+        Poisson, // Poisson sampling
+        Stratified, // Stratified Sampling
+        ResSamp,    // Reservoir Sampling
 
+        EqWdHist, // Equi-Width Histogram,
+        EqDpHist, // Equi-Depth Histogram,
+        vOptHist, // v-Optimal Histograms
+
+        HaarWave, // Haar Wavelet
+
+        CM,         // Count-Min Sketch
+        ECM,        // Exponential Count-Min Sketch
+        HLL,        // HyperLogLog
     };
 
+    static SynopsesArguments createArguments(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
+                                             std::string fieldName, Type type, size_t width, size_t height = 1, size_t windowSize = 1);
+
+    size_t getWidth() const;
+
+    size_t getHeight() const;
+
+    size_t getWindowSize() const;
+
+    Type getType() const;
+
+    const std::string& getFieldName() const;
+
+    Runtime::Execution::Aggregation::AggregationFunctionPtr getAggregationFunction() const;
+
   private:
+    SynopsesArguments(Type type, size_t width, size_t height, size_t windowSize, std::string fieldName,
+                      Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction);
+
+  private:
+    Type type;
     size_t width;
     size_t height;
-    size_t numberOf
+    size_t windowSize;
+    std::string fieldName;
+    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
 };
 
 } // namespace NES::ASP

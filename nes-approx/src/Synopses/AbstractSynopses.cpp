@@ -13,9 +13,22 @@
 */
 
 #include <Synopses/AbstractSynopses.hpp>
+#include <Synopses/Samples/SampleRandomWithReplacement.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
 
+AbstractSynopses::AbstractSynopses(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction)
+    : aggregationFunction(aggregationFunction) {}
 
+AbstractSynopsesPtr AbstractSynopses::create(SynopsesArguments arguments) {
+
+    if (arguments.getType() == SynopsesArguments::Type::SRSWR) {
+        return std::make_shared<SampleRandomWithReplacement>(arguments.getAggregationFunction(), arguments.getWidth());
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+
+}
 
 } // namespace NES::ASP
