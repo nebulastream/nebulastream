@@ -439,25 +439,30 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     if (commonStamp->isInteger()) {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
             DataTypeFactory::createBasicValue(BasicType::UINT8,
+                                              "BasicPhysicalType::NativeType::" +
                                               std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::INT_64))))));
     } else if (commonStamp->isFloat()) {
         std::shared_ptr<Float> floatStamp = commonStamp->as<Float>(commonStamp);
         if (floatStamp->getBits() == 32) {
             generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
                 DataTypeFactory::createBasicValue(BasicType::UINT8,
+                                                  "BasicPhysicalType::NativeType::" +
                                                   std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::FLOAT))))));
         } else {
             generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
                 DataTypeFactory::createBasicValue(BasicType::UINT8,
+                                                  "BasicPhysicalType::NativeType::" +
                                                   std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::DOUBLE))))));
         }
     } else if (commonStamp->isBoolean()) {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
             DataTypeFactory::createBasicValue(BasicType::UINT8,
+                                              "BasicPhysicalType::NativeType::" +
                                               std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::BOOLEAN))))));
     } else {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
             DataTypeFactory::createBasicValue(BasicType::UINT8,
+                                              "BasicPhysicalType::NativeType::" +
                                               std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::UNDEFINED))))));
     }
     generateTensorFlowInferCall->addParameter(
@@ -4410,17 +4415,17 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     switch (context->arity) {
         case PipelineContext::PipelineContextArity::Unary: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "Unary")));
+                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::Unary")));
             break;
         }
         case PipelineContext::PipelineContextArity::BinaryLeft: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "BinaryLeft")));
+                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryLeft")));
             break;
         }
         case PipelineContext::PipelineContextArity::BinaryRight: {
             arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "BinaryRight")));
+                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryRight")));
             break;
         }
     }

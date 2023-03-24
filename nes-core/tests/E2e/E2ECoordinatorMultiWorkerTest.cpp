@@ -48,8 +48,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
+              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", BasicType::UINT64))"
+              "->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
+              "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -117,7 +118,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
               "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
+              "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
+              "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -196,7 +198,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
               "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
+              "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
+              "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -292,8 +295,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
 
     NES_INFO("schema submit=" << schema.str());

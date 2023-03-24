@@ -1722,7 +1722,7 @@ TEST_F(SourceTest, TCPSourcePrint) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: 1\ndecideMessageSize: 0\ntupleSeparator: \n\nsocketBufferSize: "
+        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: \n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
@@ -1757,7 +1757,7 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: 1\ndecideMessageSize: 0\ntupleSeparator: \n\nsocketBufferSize: "
+        "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: \n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);

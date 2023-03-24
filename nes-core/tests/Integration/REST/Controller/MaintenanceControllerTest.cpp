@@ -113,7 +113,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string message =
-        "MigrationType: 0"
+        "MigrationType: INVALID"
         " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
         "Buffering)";
     EXPECT_EQ(res["message"], message);

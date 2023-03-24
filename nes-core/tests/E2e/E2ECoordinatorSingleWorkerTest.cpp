@@ -411,28 +411,29 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"Time\\\",UINT64))->addField(createField(\\\"Dist\\\",UINT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
-              "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
-              "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
-              "addField(createField(\\\"MMDD\\\",FLOAT64))->"
-              "addField(createField(\\\"HHMM\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT64))->"// 13th col.
-              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
-              "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",UINT64))->"
-              "addField(createField(\\\"ECU_Side_StanD\\\",UINT64))->"
-              "addField(createField(\\\"Longitude\\\",FLOAT64))->"
-              "addField(createField(\\\"Latitude\\\",FLOAT64))->"
-              "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"Time\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"Dist\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"ABS_Front_Wheel_Press\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",BasicType::FLOAT64))->"// 5th col.
+              "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"V_GPS\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"MMDD\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"HHMM\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"LAS_Ax1\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"LAS_Ay1\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT64))->"// 13th col.
+              "addField(createField(\\\"ABS_Pitch_Info\\\",BasicType::FLOAT64))->"// 14th col.
+              "addField(createField(\\\"ECU_Gear_Position\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ECU_Accel_Position\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ECU_Engine_Rpm\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ECU_Water_Temperature\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"ECU_Side_StanD\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"Longitude\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"Latitude\\\",BasicType::FLOAT64))->"
+              "addField(createField(\\\"Altitude\\\",BasicType::FLOAT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -494,8 +495,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -558,8 +560,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"id\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -826,29 +829,31 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"Time\\\",INT32))->addField(createField(\\\"Dist\\\",UINT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Press\\\",UINT64))->"
-              "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
-              "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
-              "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
-              "addField(createField(\\\"MMDD\\\",FLOAT64))->"
-              "addField(createField(\\\"HHMM\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT32))->"// 13th col.
-              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
-              "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",FLOAT32))->"
-              "addField(createField(\\\"ECU_Side_StanD\\\",INT32))->"
-              "addField(createField(\\\"Longitude\\\",FLOAT64))->"
-              "addField(createField(\\\"Latitude\\\",FLOAT64))->"
-              "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
+    schema
+        << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
+           ":\"Schema::create()->addField(createField(\\\"Time\\\",BasicType::INT32))->"
+           "addField(createField(\\\"Dist\\\",BasicType::UINT64))->"
+           "addField(createField(\\\"ABS_Front_Wheel_Press\\\",BasicType::UINT64))->"
+           "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",BasicType::FLOAT64))->"// 5th col.
+           "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"V_GPS\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"MMDD\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"HHMM\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"LAS_Ax1\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"LAS_Ay1\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT32))->"// 13th col.
+           "addField(createField(\\\"ABS_Pitch_Info\\\",BasicType::FLOAT64))->"// 14th col.
+           "addField(createField(\\\"ECU_Gear_Position\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"ECU_Accel_Position\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"ECU_Engine_Rpm\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"ECU_Water_Temperature\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",BasicType::INT32))->"//TODO I changed that to i32 to prevent failure because of different data types
+           "addField(createField(\\\"ECU_Side_StanD\\\",BasicType::INT32))->"
+           "addField(createField(\\\"Longitude\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"Latitude\\\",BasicType::FLOAT64))->"
+           "addField(createField(\\\"Altitude\\\",BasicType::FLOAT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));

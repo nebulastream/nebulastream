@@ -14,6 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
+
+#include <Util/magicenum/magic_enum.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -115,7 +117,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                               lastWatermark,
                                                               workerContext);
                     } else {
-                        NES_ERROR2("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType {}", joinDefinition->getJoinType());
+                        NES_ERROR2("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType {}",
+                                   magic_enum::enum_name(joinDefinition->getJoinType()));
                     }
                 }
             }

@@ -1330,28 +1330,29 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
 
     //register logical source qnv
     std::string ktmSchema =
-        R"(Schema::create()->addField(createField("Time",UINT64))->addField(createField("Dist",UINT64))->
-            addField(createField("ABS_Front_Wheel_Press",FLOAT64))->
-            addField(createField("ABS_Rear_Wheel_Press",FLOAT64))->
-            addField(createField("ABS_Front_Wheel_Speed",FLOAT64))->
-            addField(createField("ABS_Rear_Wheel_Speed",FLOAT64))->
-            addField(createField("V_GPS",FLOAT64))->
-            addField(createField("MMDD",FLOAT64))->
-            addField(createField("HHMM",FLOAT64))->
-            addField(createField("LAS_Ax1",FLOAT64))->
-            addField(createField("LAS_Ay1",FLOAT64))->
-            addField(createField("LAS_Az_Vertical_Acc",FLOAT64))->
-            addField(createField("ABS_Lean_Angle",FLOAT64))->
-            addField(createField("ABS_Pitch_Info",FLOAT64))->
-            addField(createField("ECU_Gear_Position",FLOAT64))->
-            addField(createField("ECU_Accel_Position",FLOAT64))->
-            addField(createField("ECU_Engine_Rpm",FLOAT64))->
-            addField(createField("ECU_Water_Temperature",FLOAT64))->
-            addField(createField("ECU_Oil_Temp_Sensor_Data",UINT64))->
-            addField(createField("ECU_Side_StanD",UINT64))->
-            addField(createField("Longitude",FLOAT64))->
-            addField(createField("Latitude",FLOAT64))->
-            addField(createField("Altitude",FLOAT64)))";
+        R"(Schema::create()->addField(createField("Time",BasicType::UINT64))->
+            addField(createField("Dist",BasicType::UINT64))->
+            addField(createField("ABS_Front_Wheel_Press",BasicType::FLOAT64))->
+            addField(createField("ABS_Rear_Wheel_Press",BasicType::FLOAT64))->
+            addField(createField("ABS_Front_Wheel_Speed",BasicType::FLOAT64))->
+            addField(createField("ABS_Rear_Wheel_Speed",BasicType::FLOAT64))->
+            addField(createField("V_GPS",BasicType::FLOAT64))->
+            addField(createField("MMDD",BasicType::FLOAT64))->
+            addField(createField("HHMM",BasicType::FLOAT64))->
+            addField(createField("LAS_Ax1",BasicType::FLOAT64))->
+            addField(createField("LAS_Ay1",BasicType::FLOAT64))->
+            addField(createField("LAS_Az_Vertical_Acc",BasicType::FLOAT64))->
+            addField(createField("ABS_Lean_Angle",BasicType::FLOAT64))->
+            addField(createField("ABS_Pitch_Info",BasicType::FLOAT64))->
+            addField(createField("ECU_Gear_Position",BasicType::FLOAT64))->
+            addField(createField("ECU_Accel_Position",BasicType::FLOAT64))->
+            addField(createField("ECU_Engine_Rpm",BasicType::FLOAT64))->
+            addField(createField("ECU_Water_Temperature",BasicType::FLOAT64))->
+            addField(createField("ECU_Oil_Temp_Sensor_Data",BasicType::UINT64))->
+            addField(createField("ECU_Side_StanD",BasicType::UINT64))->
+            addField(createField("Longitude",BasicType::FLOAT64))->
+            addField(createField("Latitude",BasicType::FLOAT64))->
+            addField(createField("Altitude",BasicType::FLOAT64)))";
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
