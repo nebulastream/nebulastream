@@ -71,8 +71,8 @@ std::string clazz, inputClass, outputClass;
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
-    input = Schema::create()->addField("id", NES::INT32);
-    output = Schema::create()->addField("id", NES::INT32);
+    input = Schema::create()->addField("id", BasicType::INT32);
+    output = Schema::create()->addField("id", BasicType::INT32);
     clazz = "IntegerMapFunction";
     inputClass = "java/lang/Integer";
     outputClass = "java/lang/Integer";
@@ -102,8 +102,8 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
-    input = Schema::create()->addField("id", NES::INT16);
-    output = Schema::create()->addField("id", NES::INT16);
+    input = Schema::create()->addField("id", BasicType::INT16);
+    output = Schema::create()->addField("id", BasicType::INT16);
     clazz = "ShortMapFunction";
     inputClass = "java/lang/Short";
     outputClass = "java/lang/Short";
@@ -133,8 +133,8 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
-    input = Schema::create()->addField("id", NES::INT8);
-    output = Schema::create()->addField("id", NES::INT8);
+    input = Schema::create()->addField("id", BasicType::INT8);
+    output = Schema::create()->addField("id", BasicType::INT8);
     clazz = "ByteMapFunction";
     inputClass = "java/lang/Byte";
     outputClass = "java/lang/Byte";
@@ -164,8 +164,8 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
-    input = Schema::create()->addField("id", NES::INT64);
-    output = Schema::create()->addField("id", NES::INT64);
+    input = Schema::create()->addField("id", BasicType::INT64);
+    output = Schema::create()->addField("id", BasicType::INT64);
     clazz = "LongMapFunction";
     inputClass = "java/lang/Long";
     outputClass = "java/lang/Long";
@@ -195,8 +195,8 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
-    input = Schema::create()->addField("id", NES::FLOAT64);
-    output = Schema::create()->addField("id", NES::FLOAT64);
+    input = Schema::create()->addField("id", BasicType::FLOAT64);
+    output = Schema::create()->addField("id", BasicType::FLOAT64);
     clazz = "DoubleMapFunction";
     inputClass = "java/lang/Double";
     outputClass = "java/lang/Double";
@@ -226,8 +226,8 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
-    input = Schema::create()->addField("id", NES::FLOAT32);
-    output = Schema::create()->addField("id", NES::FLOAT32);
+    input = Schema::create()->addField("id", BasicType::FLOAT32);
+    output = Schema::create()->addField("id", BasicType::FLOAT32);
     clazz = "FloatMapFunction";
     inputClass = "java/lang/Float";
     outputClass = "java/lang/Float";
@@ -257,8 +257,8 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
  * The UDF sets incoming tuples to false.
 */
 TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
-    input = Schema::create()->addField("id", NES::BOOLEAN);
-    output = Schema::create()->addField("id", NES::BOOLEAN);
+    input = Schema::create()->addField("id", BasicType::BOOLEAN);
+    output = Schema::create()->addField("id", BasicType::BOOLEAN);
     clazz = "BooleanMapFunction";
     inputClass = "java/lang/Boolean";
     outputClass = "java/lang/Boolean";
@@ -291,8 +291,8 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
 TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
-    input = Schema::create()->addField("id", NES::TEXT);
-    output = Schema::create()->addField("id", NES::TEXT);
+    input = Schema::create()->addField("id", BasicType::TEXT);
+    output = Schema::create()->addField("id", BasicType::TEXT);
     clazz = "StringMapFunction";
     inputClass = "java/lang/String";
     outputClass = "java/lang/String";
@@ -324,23 +324,23 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     input = Schema::create()
-                ->addField("byteVariable", NES::INT8)
-                ->addField("shortVariable", NES::INT16)
-                ->addField("intVariable", NES::INT32)
-                ->addField("longVariable", NES::INT64)
-                ->addField("floatVariable", NES::FLOAT32)
-                ->addField("doubleVariable", NES::FLOAT64)
-                ->addField("stringVariable", NES::TEXT)
-                ->addField("booleanVariable", NES::BOOLEAN);
+                ->addField("byteVariable", BasicType::INT8)
+                ->addField("shortVariable", BasicType::INT16)
+                ->addField("intVariable", BasicType::INT32)
+                ->addField("longVariable", BasicType::INT64)
+                ->addField("floatVariable", BasicType::FLOAT32)
+                ->addField("doubleVariable", BasicType::FLOAT64)
+                ->addField("stringVariable", BasicType::TEXT)
+                ->addField("booleanVariable", BasicType::BOOLEAN);
     output = Schema::create()
-                 ->addField("byteVariable", NES::INT8)
-                 ->addField("shortVariable", NES::INT16)
-                 ->addField("intVariable", NES::INT32)
-                 ->addField("longVariable", NES::INT64)
-                 ->addField("floatVariable", NES::FLOAT32)
-                 ->addField("doubleVariable", NES::FLOAT64)
-                 ->addField("stringVariable", NES::TEXT)
-                 ->addField("booleanVariable", NES::BOOLEAN);
+                 ->addField("byteVariable", BasicType::INT8)
+                 ->addField("shortVariable", BasicType::INT16)
+                 ->addField("intVariable", BasicType::INT32)
+                 ->addField("longVariable", BasicType::INT64)
+                 ->addField("floatVariable", BasicType::FLOAT32)
+                 ->addField("doubleVariable", BasicType::FLOAT64)
+                 ->addField("stringVariable", BasicType::TEXT)
+                 ->addField("booleanVariable", BasicType::BOOLEAN);
     clazz = "ComplexPojoMapFunction";
     inputClass = "ComplexPojo";
     outputClass = "ComplexPojo";
@@ -391,8 +391,8 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
 * @brief Test UDF with multiple internal dependencies (DummyRichMapFunction<Integer, Integer>)
 */
 TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
-    input = Schema::create()->addField("id", NES::INT32);
-    output = Schema::create()->addField("id", NES::INT32);
+    input = Schema::create()->addField("id", BasicType::INT32);
+    output = Schema::create()->addField("id", BasicType::INT32);
     clazz = "DummyRichMapFunction";
     inputClass = "java/lang/Integer";
     outputClass = "java/lang/Integer";
