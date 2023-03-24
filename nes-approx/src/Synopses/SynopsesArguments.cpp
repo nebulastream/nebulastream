@@ -18,7 +18,7 @@ namespace NES::ASP {
 
 SynopsesArguments::SynopsesArguments(Type type, size_t width, size_t height, size_t windowSize, std::string fieldName,
                                      Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction)
-    : type(type), width(width), height(height), windowSize(windowSize), fieldName(fieldName),
+    : type(type), width(width), height(height), windowSize(windowSize), fieldNameAggregation(fieldName),
       aggregationFunction(std::move(aggregationFunction)) {}
 
 SynopsesArguments SynopsesArguments::createArguments(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
@@ -39,6 +39,12 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsesArguments::getAg
 
 SynopsesArguments::Type SynopsesArguments::getType() const { return type; }
 
-const std::string& SynopsesArguments::getFieldName() const { return fieldName; }
+const std::string& SynopsesArguments::getFieldName() const { return fieldNameAggregation; }
+
+std::vector<SynopsesArguments> SynopsesArguments::parseArgumentsFromYamlFile(const std::string& fileName) {
+
+
+
+}
 
 } // namespace NES::ASP
