@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Synopses)
-
-add_executable(micro-benchmarks-approx "MicroBenchmarksASP.cpp")
-target_link_libraries(micro-benchmarks-approx nes-approx nes-runtime)
+add_source_files(nes-approx
+        SampleRandomWithReplacement.cpp
+        )
