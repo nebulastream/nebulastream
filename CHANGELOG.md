@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.37](https://github.com/nebulastream/nebulastream/tree/v0.5.37) (2023-03-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.36...v0.5.37)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Extend TimeStamp Data Typ  [\#3130](https://github.com/nebulastream/nebulastream/issues/3130)
+
 ## [v0.5.36](https://github.com/nebulastream/nebulastream/tree/v0.5.36) (2023-03-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.35...v0.5.36)
