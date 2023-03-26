@@ -36,8 +36,6 @@
 #include <vector>
 #include <tuple>
 
-#include <fftw3.h>
-
 namespace NES {
 
 uint64_t Util::numberOfUniqueValues(std::vector<uint64_t>& values) {
