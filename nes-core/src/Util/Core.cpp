@@ -39,8 +39,6 @@
 #include <vector>
 #include <tuple>
 
-#include <fftw3.h>
-
 namespace NES {
 
 std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
