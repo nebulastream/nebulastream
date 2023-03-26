@@ -25,10 +25,10 @@ class PipelinePlan {
   public:
     struct Pipeline {
         std::shared_ptr<PhysicalOperatorPipeline> pipeline;
-        std::shared_ptr<NES::Runtime::Execution::Operators::MockedPipelineExecutionContext> ctx;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
     };
     void appendPipeline(std::shared_ptr<PhysicalOperatorPipeline> pipeline,
-                        std::shared_ptr<NES::Runtime::Execution::Operators::MockedPipelineExecutionContext> ctx) {
+                        std::shared_ptr<MockedPipelineExecutionContext> ctx) {
         Pipeline pipe = {std::move(pipeline), std::move(ctx)};
         pipelines.emplace_back(pipe);
     }

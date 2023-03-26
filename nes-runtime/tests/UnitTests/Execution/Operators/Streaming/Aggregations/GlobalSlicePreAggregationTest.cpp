@@ -99,7 +99,7 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto handler = std::make_shared<GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     auto buffer = bm->getBufferBlocking();
@@ -150,7 +150,7 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto handler = std::make_shared<GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     auto buffer = bm->getBufferBlocking();

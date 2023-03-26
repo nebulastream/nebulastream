@@ -98,7 +98,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
     auto sliceStaging = std::make_shared<KeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     auto buffer = bm->getBufferBlocking();

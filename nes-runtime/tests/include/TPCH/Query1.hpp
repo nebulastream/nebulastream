@@ -165,7 +165,7 @@ class TPCH_Query1 {
         // create aggregation pipeline
         auto aggregationPipeline = std::make_shared<PhysicalOperatorPipeline>();
         aggregationPipeline->setRootOperator(scan);
-        auto aggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
+        std::vector<OperatorHandlerPtr> aggregationHandler = {std::make_shared<Operators::BatchKeyedAggregationHandler>()};
         auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(aggregationHandler);
         plan.appendPipeline(aggregationPipeline, pipeline1Context);
         return plan;
