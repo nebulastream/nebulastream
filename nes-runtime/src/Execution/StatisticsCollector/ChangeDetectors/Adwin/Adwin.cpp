@@ -197,7 +197,20 @@ double Adwin::getMeanEstimation(){
     } else {
         return 0;
     }
-}    
+}
+
+void Adwin::reset() {
+    bucketList.resetList();
+    mintTime = 0;
+    mintClock = MINTCLOCK;
+    mdblError = 0;
+    mdblWidth = 0;
+    lastBucketIndex = 0;
+    sum = 0;
+    variance = 0;
+    windowSize = 0;
+    numberOfBuckets = 0;
+}
 
 void Adwin::print() const{
     ListNode* it;

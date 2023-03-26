@@ -33,7 +33,13 @@ void Normalizer::normalizeValue(uint64_t value){
     }
 
     double normalizedValue = (double) value /(double) max;
-    if (changeDetectorWrapper->insertValue(normalizedValue)){
+    if (normalizedValue >= 1){
+        changeDetectorWrapper->reset();
+        max = value;
+        normalizedValue = (double) value /(double) max;
+    }
+
+    if (changeDetectorWrapper->insertValue(normalizedValue)) {
         std::cout << "Change detected" << std::endl;
     }
 }

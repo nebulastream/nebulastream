@@ -34,7 +34,7 @@ ListNode::ListNode(int maxSize):
     prev(nullptr)
 {}
 
-void ListNode::addBack(const double &value, const double &var) {
+void ListNode::addBack(const double& value, const double& var) {
     sum[size] = value;
     variance[size] = var;
     size++;

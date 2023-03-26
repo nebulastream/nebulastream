@@ -19,12 +19,15 @@ namespace NES::Runtime::Execution {
 ChangeDetectorWrapper::ChangeDetectorWrapper(std::unique_ptr<ChangeDetector> changeDetector) : changeDetector(std::move(changeDetector)) {}
 
 bool ChangeDetectorWrapper::insertValue(double &value) {
-    //std::lock_guard<std::mutex> lock(mutex);
     return changeDetector->insertValue(value);
 }
 
 double ChangeDetectorWrapper::getMeanEstimation() {
     return changeDetector->getMeanEstimation();
+}
+
+void ChangeDetectorWrapper::reset() {
+    return changeDetector->reset();
 }
 
 }// namespace NES::Runtime::Execution

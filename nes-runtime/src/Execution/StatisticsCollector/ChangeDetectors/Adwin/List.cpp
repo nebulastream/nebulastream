@@ -21,7 +21,6 @@
  */
 
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/List.hpp>
-#include <stdio.h>
 
 namespace NES::Runtime::Execution {
 
@@ -82,5 +81,13 @@ void List::removeFromTail(){
         tail->next = nullptr;
     count--;
     delete temp;
+}
+
+void List::resetList() {
+    while (head != nullptr) removeFromHead();
+    head = nullptr;
+    tail = nullptr;
+    count = 0;
+    addToHead();
 }
 } // namespace NES::Runtime::Execution

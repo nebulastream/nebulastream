@@ -20,7 +20,6 @@ namespace NES::Runtime::Execution {
 
 Reservoir::Reservoir(int sampleSize, int blockSize) : size(0),
       total(0),
-      //blockSize(blockSize),
       instanceCount(0),
       sampleSize(sampleSize),
       repository(blockSize){}
@@ -31,16 +30,13 @@ void Reservoir::addElement(double value) { // reservoir sampling from the reposi
         total = total + value;
         size++;
     } else {
-        srand(time(NULL));
-        auto position = rand() % (instanceCount + 1);
         std::random_device rd;
         std::mt19937 rng(rd());
-        auto dist = std::uniform_int_distribution<int64_t>(0, (instanceCount + 1));
-        auto pos = dist(rng);
-        std::cout << "position: " << position << " pos: " << pos << std::endl;
+        auto dist = std::uniform_int_distribution<int32_t>(0, (instanceCount + 1));
+        auto position = dist(rng);
         if(position < sampleSize) {
             total = total - repository.get(position);
-            repository.addAt(value, position);
+            repository.addAt(position, value);
             total = total + value;
         }
     }
@@ -63,14 +59,15 @@ double Reservoir::getTotal() const {
     return total;
 }
 
-void Reservoir::setSampleSize(int sampleSize) {
-    Reservoir::sampleSize = sampleSize;
+void Reservoir::setSampleSize(int newSampleSize) {
+    sampleSize = newSampleSize;
 }
 
 void Reservoir::clear() {
     repository.removeAll();
     total = 0;
     size = 0;
+    instanceCount = 0;
 }
 
 void Reservoir::copy(Reservoir& source) {

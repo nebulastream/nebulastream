@@ -43,6 +43,8 @@ class SeqDrift2 : public ChangeDetector {
      */
     double getMeanEstimation() override;
 
+    void reset() override;
+
   private:
 
     /**
@@ -100,7 +102,7 @@ class SeqDrift2 : public ChangeDetector {
     int leftReservoirSize;
     const int blockSize;
     const double significanceLevel;
-    const double k;
+    double k;
 
     int instanceCount;
     double rightRepositoryMean;

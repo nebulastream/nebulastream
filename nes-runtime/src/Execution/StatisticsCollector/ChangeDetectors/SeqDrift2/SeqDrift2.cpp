@@ -177,4 +177,14 @@ double SeqDrift2::getMeanEstimation() {
     }
 }
 
+void SeqDrift2::reset() {
+    left.clear();
+    right.clear();
+    k = 0.5;
+    instanceCount = 0;
+    variance = 0.0;
+    total= 0.0;
+    epsilon = 0.0;
+}
+
 } // namespace NES::Runtime::Execution

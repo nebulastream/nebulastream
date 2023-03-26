@@ -47,6 +47,8 @@ class List {
      */
     void removeFromTail();
 
+    void resetList();
+
     const int maxBucketSize;
     int count;
     ListNode* head;
@@ -65,4 +67,4 @@ class List {
 
 };
 } // namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_LISTNODE_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_LIST_HPP_

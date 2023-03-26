@@ -37,6 +37,7 @@ class ChangeDetectorWrapper{
      * @return estimated mean
      */
     double getMeanEstimation();
+    void reset();
     std::mutex mutex;
 
   private:

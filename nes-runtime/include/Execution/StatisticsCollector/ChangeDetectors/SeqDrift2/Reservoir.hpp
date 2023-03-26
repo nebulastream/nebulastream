@@ -28,7 +28,7 @@ class Reservoir{
     double getSampleMean() const;
     int getSize() const;
     double getTotal() const;
-    void setSampleSize(int sampleSize);
+    void setSampleSize(int newSampleSize);
     void clear();
     void copy(Reservoir& source);
 

@@ -33,6 +33,7 @@ class ChangeDetector{
      */
     virtual double getMeanEstimation() = 0;
     virtual ~ChangeDetector() = default;
+    virtual void reset() = 0;
 
 };
 } // namespace NES::Runtime::Execution

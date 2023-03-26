@@ -50,6 +50,8 @@ class Adwin : public ChangeDetector {
      */
     double getMeanEstimation() override;
 
+    void reset() override;
+
     void print() const;
     int length() const { return windowSize; }
 
