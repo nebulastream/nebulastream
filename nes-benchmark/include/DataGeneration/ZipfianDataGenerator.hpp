@@ -16,6 +16,7 @@
 #define NES_ZIPFIANDATAGENERATOR_HPP
 
 #include <DataGeneration/DataGenerator.hpp>
+#include <vector>
 
 namespace NES::Benchmark::DataGeneration {
 auto constexpr GENERATOR_SEED_ZIPFIAN = 848566;

@@ -117,4 +117,28 @@ TEST(FFTTest, fftfreq) {
     EXPECT_EQ(expected, res);
 }
 
+TEST(FFTTest, fftPSD) {
+    std::vector<double> expected{36., 3., 3.}; // from numpy
+    std::vector<double> fftInput{1., 2., 3.};
+    auto fftRes = Util::fft(fftInput);
+    EXPECT_EQ(expected, Util::psd(fftRes));
+}
+
+TEST(FFTTest, fftEnergy) {
+    double expected = 14.; // from numpy
+    std::vector<double> fftInput{1., 2., 3.};
+    auto fftRes = Util::fft(fftInput);
+    EXPECT_EQ(expected, Util::totalEnergy(fftRes));
+}
+
+TEST(FFTTest, fftNyquist) {
+    std::tuple<bool, double> expectedFalseBinIdx1(false, 1.);
+    std::vector<double> fftInput{1., 2., 3., 4.};
+    auto fftRes = Util::fft(fftInput);
+    auto psd = Util::psd(fftRes);
+    auto energy = Util::totalEnergy(fftRes);
+    auto res = Util::is_aliased_and_nyq_freq(psd, energy);
+    EXPECT_EQ(expectedFalseBinIdx1, res);
+}
+
 }// namespace NES

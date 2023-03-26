@@ -259,12 +259,24 @@ std::vector<std::complex<double>> fft(const std::vector<double>& lastWindowValue
 std::vector<double> fftfreq(const int n, const double d=1.);
 
 /**
+* @brief Calculates the PSD from an FFT.
+* @return the fft squared
+*/
+std::vector<double> psd(const std::vector<std::complex<double>>& fftValues);
+
+/**
+* @brief Calculates the total energy from an FFT.
+* @return the sum of energies across all frequencies
+*/
+double totalEnergy(const std::vector<std::complex<double>>& fftValues);
+
+/**
  * @brief Check the PSD of a signal if it's aliased and its nyq. freq.
  * @param psd_array
  * @param total_energy sum of signal's energy levels
  * @return 2-tuple of is_aliased and the proposed nyq. rate
  */
-std::tuple<bool, uint64_t> is_aliased_and_nyq_freq(const std::vector<double>& psd_array, double total_energy);
+std::tuple<bool, int> is_aliased_and_nyq_freq(const std::vector<double>& psd_array, double total_energy);
 
 };// namespace Util
 }// namespace NES

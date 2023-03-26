@@ -264,7 +264,22 @@ std::vector<double> Util::fftfreq(const int n, const double d) {
     return results;
 }
 
-std::tuple<bool, uint64_t> Util::is_aliased_and_nyq_freq(const std::vector<double>& psd_array, const double total_energy) {
+std::vector<double> Util::psd(const std::vector<std::complex<double>>& fftValues) {
+    std::vector<double> psdVec(fftValues.size());
+    std::transform(fftValues.begin(), fftValues.end(), psdVec.begin(),
+                   [](std::complex<double> z) { return std::norm(z); });
+    return psdVec;
+}
+
+double Util::totalEnergy(const std::vector<std::complex<double>>& fftValues) {
+    double fftSum = std::accumulate(fftValues.begin(), fftValues.end(), 0.0,
+                                    [](double acc, std::complex<double> z) {
+                                        return acc + std::norm(z);}
+                                    );
+    return fftSum / fftValues.size();
+}
+
+std::tuple<bool, int> Util::is_aliased_and_nyq_freq(const std::vector<double>& psd_array, const double total_energy) {
     double cutoff_percent = (total_energy * 99.0) / 100.0;
     double current_level = 0;
     uint64_t bin_idx = 0;
