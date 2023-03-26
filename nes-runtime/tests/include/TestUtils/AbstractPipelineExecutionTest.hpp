@@ -22,6 +22,7 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 #include <utility>
@@ -32,27 +33,6 @@ namespace NES::Runtime {
  * @brief This is an abstract test class for pipeline execution tests.
  */
 class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::string> {};
-
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    explicit MockedPipelineExecutionContext(std::vector<Execution::OperatorHandlerPtr> handlers = {})
-        : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
-            nullptr,
-            1,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            [this](TupleBuffer& buffer) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            handlers){
-            // nop
-        };
-
-    std::vector<TupleBuffer> buffers;
-};
 }// namespace NES::Runtime
 
 #endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_

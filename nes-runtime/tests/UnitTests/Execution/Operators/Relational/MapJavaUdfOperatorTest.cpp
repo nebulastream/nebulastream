@@ -38,27 +38,6 @@ class MapJavaUdfOperatorTest : public testing::Test {
     }
 };
 
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    explicit MockedPipelineExecutionContext(OperatorHandlerPtr handler)
-        : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
-            nullptr,
-            1,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            [this](TupleBuffer& buffer) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            {std::move(handler)}){
-            // nop
-        };
-
-    std::vector<TupleBuffer> buffers;
-};
-
 std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 std::string method = "map";
 std::unordered_map<std::string, std::vector<char>> byteCodeList;
@@ -90,7 +69,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
@@ -121,7 +100,7 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
@@ -152,7 +131,7 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
@@ -183,7 +162,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
@@ -214,7 +193,7 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
@@ -245,7 +224,7 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<Float>(initialValue)}});
     map.execute(ctx, record);
@@ -276,7 +255,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
@@ -309,7 +288,7 @@ TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) &wc), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<Text>("testValue")}});
     map.execute(ctx, record);
@@ -364,7 +343,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"byteVariable", Value<>(initialByte)},
                           {"shortVariable", Value<>(initialShort)},
@@ -410,7 +389,7 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<>(initalValue)}});
     map.execute(ctx, record);

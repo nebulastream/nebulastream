@@ -85,7 +85,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -138,7 +138,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -193,7 +193,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -241,7 +241,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(minAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -295,7 +295,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(maxAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -349,7 +349,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -403,7 +403,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<uint64_t>>();
     aggValues.emplace_back(std::move(countAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
@@ -489,7 +489,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     aggValues.emplace_back(std::move(avgAggregationValue));
     aggValues.emplace_back(std::move(countAggregationValue));
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
