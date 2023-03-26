@@ -35,9 +35,8 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
-#include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
-#include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
+#include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -63,7 +62,7 @@ class TPCH_Query3 {
         return plan;
     }
 
-    static std::shared_ptr<BatchJoinHandler>
+    static Runtime::Execution::OperatorHandlerPtr
     createPipeline1(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
@@ -96,15 +95,16 @@ class TPCH_Query3 {
         // create customerJoinBuildPipeline pipeline
         auto customerJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
         customerJoinBuildPipeline->setRootOperator(customersScan);
-        auto joinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
         auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(joinHandler);
         plan.appendPipeline(customerJoinBuildPipeline, pipeline1Context);
-        return joinHandler;
+        return joinHandler[0];
     }
 
-    static std::shared_ptr<BatchJoinHandler> createPipeline2(PipelinePlan& plan,
-                                std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                                const std::shared_ptr<BatchJoinHandler>& joinHandler) {
+    static std::shared_ptr<BatchJoinHandler>
+    createPipeline2(PipelinePlan& plan,
+                    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                    const Runtime::Execution::OperatorHandlerPtr& joinHandler) {
         auto& orders = tables[TPCHTable::Orders];
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
 
