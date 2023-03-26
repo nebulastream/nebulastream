@@ -102,13 +102,19 @@ TEST(FFTTest, pocketfftExample) {
 
 TEST(FFTTest, fft) {
     std::vector<double> testVector{1., 2., 3., 4.};
-    std::vector<std::complex<double>> resVector{1., 2., 3., 4.};
+    std::vector<std::complex<double>> expected;
+    expected.emplace_back(std::complex<double>(10, 0));
+    expected.emplace_back(std::complex<double>(-2, 2));
+    expected.emplace_back(std::complex<double>(-2, 0));
+    expected.emplace_back(std::complex<double>(-2, -2));
     auto res = Util::fft(testVector);
-    FAIL();
+    EXPECT_EQ(expected, res);
 }
 
 TEST(FFTTest, fftfreq) {
-    EXPECT_TRUE(Util::fftfreq());
+    std::vector<double> expected{0., 0.25, -0.5, -0.25};
+    auto res = Util::fftfreq(4);
+    EXPECT_EQ(expected, res);
 }
 
 }// namespace NES

@@ -253,10 +253,10 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
 std::vector<std::complex<double>> fft(const std::vector<double>& lastWindowValues);
 
 /**
-* @brief Performs fftfreq on an FFT vector
-* @return true/false for now
+* @brief Performs fftfreq given a size and a step in freq.
+* @return the set of FFT bins
 */
-bool fftfreq();
+std::vector<double> fftfreq(const int n, const double d=1.);
 
 /**
  * @brief Check the PSD of a signal if it's aliased and its nyq. freq.

@@ -39,6 +39,8 @@
 #include <vector>
 #include <tuple>
 
+#include <fftw3.h>
+
 namespace NES {
 
 std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
@@ -246,8 +248,20 @@ std::vector<std::complex<double>> Util::fft(const std::vector<double>& lastWindo
     return r2cRes;
 }
 
-bool Util::fftfreq() {
-    return false;
+std::vector<double> Util::fftfreq(const int n, const double d) {
+    double val = 1.0 / (n * d);
+    std::vector<double> results(n);
+    int N = (n - 1) / 2 + 1;
+    std::vector<int> p1(N);
+    std::iota(p1.begin(), p1.end(), 0);
+    std::vector<int> p2(n - N);
+    std::iota(p2.begin(), p2.end(), -(n / 2));
+    std::copy(p1.begin(), p1.end(), results.begin());
+    std::copy(p2.begin(), p2.end(), results.begin() + N);
+    std::transform(results.begin(), results.end(), results.begin(), [val](double x) {
+        return x * val;
+    });
+    return results;
 }
 
 std::tuple<bool, uint64_t> Util::is_aliased_and_nyq_freq(const std::vector<double>& psd_array, const double total_energy) {
