@@ -124,6 +124,12 @@ class KalmanFilter {
     void setGatheringIntervalRange(std::chrono::milliseconds gatheringIntervalRange);
     void setGatheringIntervalWithRange(std::chrono::milliseconds gatheringIntervalInMillis,
                                        std::chrono::milliseconds gatheringIntervalRange);
+    /**
+     * set nyquist and maximum phys gathering intervals in millis (external to edge node)
+     * @param gatheringIntervalInMillis
+     */
+    void setSlowestInterval(std::chrono::milliseconds gatheringIntervalInMillis);
+    void setFastestInterval(std::chrono::milliseconds gatheringIntervalInMillis);
 
     /**
      * Get current gathering interval.
@@ -237,6 +243,9 @@ class KalmanFilter {
     std::chrono::milliseconds gatheringIntervalRange{8000};   // allowed to change by +4s/-4s
     std::chrono::milliseconds gatheringInterval{1000};        // currently in use
     std::chrono::milliseconds gatheringIntervalReceived{1000};// from coordinator
+    std::chrono::milliseconds initialInterval{1000};          // original start
+    std::chrono::milliseconds slowestInterval{1500};     // nyquist rate
+    std::chrono::milliseconds fastestInterval{500};    // max limit
 
     /**
      * @brief control units for changing the new
@@ -266,8 +275,15 @@ class KalmanFilter {
     /**
      * @brief Exponentially decrease/increase the freq.
      */
-    double exponentialDecay();
-    double exponentialGrowth();
+    double frequencyExponentialDecay();
+    double frequencyExponentialGrowth();
+
+    /**
+     * @brief counters to keep track of exp. decay/growth
+     */
+    uint64_t decreaseCounter = 1;
+    uint64_t increaseCounter = 1;
+    const uint64_t maxValue = std::numeric_limits<uint64_t>::max();
 
 };// class KalmanFilter
 
