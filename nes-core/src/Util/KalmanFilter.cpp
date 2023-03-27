@@ -173,14 +173,21 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringIntervalBaseline() {
 }
 
 std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
-    this->initialTimestamp; // TODO: fix to interval, not ms
-    auto currentEstimationError = getEstimationErrorDifference();
+    auto currentEstimationError = this->getEstimationErrorDifference();
     if (currentEstimationError > 0.6) {  // indicates immediate change
-        // TODO: exponential decay
-        // TODO: stay in the lower limit
+        auto frequencyCandidate = this->frequencyExponentialDecay();
+        if (frequencyCandidate < this->fastestInterval.count()) {
+            this->gatheringInterval = this->fastestInterval;
+        } else {
+            this->gatheringInterval = std::chrono::milliseconds((int) trunc(frequencyCandidate));
+        }
     } else if (currentEstimationError < .24) {  // indicates consecutive similarity
-        // TODO: exponential growth
-        // TODO: stay below upper limit
+        auto frequencyCandidate = this->frequencyExponentialGrowth();
+        if (frequencyCandidate > this->slowestInterval.count()) {
+            this->gatheringInterval = this->slowestInterval;
+        } else {
+            this->gatheringInterval = std::chrono::milliseconds((int) trunc(frequencyCandidate));
+        }
     }
     return this->gatheringInterval;
 }
@@ -212,14 +219,51 @@ void KalmanFilter::setLambda(float newLambda) { this->lambda = newLambda; }
 void KalmanFilter::setGatheringInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
     this->gatheringInterval = gatheringIntervalInMillis;
     this->gatheringIntervalReceived = gatheringIntervalInMillis;
+    this->initialInterval = gatheringIntervalInMillis;
+    this->slowestInterval = std::chrono::milliseconds((int) trunc(gatheringIntervalInMillis.count() * 1.5));
+    this->fastestInterval = std::chrono::milliseconds((int) trunc(gatheringIntervalInMillis.count() * 0.5));
 }
+
 void KalmanFilter::setGatheringIntervalRange(std::chrono::milliseconds gatheringIntervalRange) {
     this->gatheringIntervalRange = gatheringIntervalRange;
 }
+
 void KalmanFilter::setGatheringIntervalWithRange(std::chrono::milliseconds gatheringIntervalInMillis,
                                                  std::chrono::milliseconds gatheringIntervalRange) {
     this->setGatheringInterval(gatheringIntervalInMillis);
     this->setGatheringIntervalRange(gatheringIntervalRange);
+}
+
+void KalmanFilter::setSlowestInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
+    this->slowestInterval = gatheringIntervalInMillis;
+}
+
+void KalmanFilter::setFastestInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
+    this->fastestInterval = gatheringIntervalInMillis;
+}
+
+double KalmanFilter::frequencyExponentialDecay() {
+    auto newCandidate = this->gatheringInterval.count() * std::pow((1 - .25), this->decreaseCounter);
+    if (std::isinf(newCandidate)) {
+        return this->gatheringInterval.count();
+    }
+    if (decreaseCounter < this->maxValue) {
+        ++this->decreaseCounter;
+    }
+    this->increaseCounter = 1;
+    return newCandidate;
+}
+
+double KalmanFilter::frequencyExponentialGrowth() {
+    auto newCandidate = this->gatheringInterval.count() * std::pow((1 + .25), this->increaseCounter);
+    if (std::isinf(newCandidate)) {
+        return this->gatheringInterval.count();
+    }
+    if (increaseCounter < this->maxValue) {
+        ++this->increaseCounter;
+    }
+    this->decreaseCounter = 1;
+    return newCandidate;
 }
 
 std::chrono::milliseconds KalmanFilter::getCurrentGatheringInterval() { return this->gatheringInterval; }
