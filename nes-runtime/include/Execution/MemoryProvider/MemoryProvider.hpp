@@ -19,6 +19,9 @@
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
+class MemoryProvider;
+using MemoryProviderPtr = std::unique_ptr<MemoryProvider>;
+
 /**
  * @brief Abstract parent class for providing memory.
  */

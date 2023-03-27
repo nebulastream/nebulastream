@@ -1,5 +1,35 @@
 synopsis:
   - type: SRSWR
-    sampleSize: 1000, 2000, 5000, 10000, 20000, 50000
+    sampleSize: 1000, 2000, 5000
 
-aggregation: min, max, sum, average, sum
+  - type: SRSWR
+    sampleSize: 10000, 20000, 50000
+
+aggregation:
+  - type: min
+    accuracyFile: "data/some_min_acc_file.csv"
+    inputFile: "data/some_input_file.csv"
+    schema: "schema1"
+    fieldNameAgg: "value"
+
+  - type: max
+    accuracyFile: "data/some_max_acc_file.csv"
+    inputFile: "data/some_input_file.csv"
+    schema: "schema1"
+    fieldNameAgg: "value"
+
+  - type: sum
+    accuracyFile: "data/some_sum_acc_file.csv"
+    inputFile: "data/some_other_input_file.csv"
+    schema: "schema2"
+    fieldNameAgg: "value"
+
+  - type: average
+    accuracyFile: "data/some_average_acc_file.csv"
+    inputFile: "data/some_input_file.csv"
+    schema: "schema1"
+    fieldNameAgg: "value"
+
+windowSize: 1000, 5000, 10000, 50000, 100000
+csvFilename: "output_csvfile.csv"
+reps: 10

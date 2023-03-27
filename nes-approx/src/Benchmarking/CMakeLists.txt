@@ -12,4 +12,8 @@
 
 add_source_files(nes-approx
         MicroBenchmarkASPUtil.cpp
+        MicroBenchmarkResult.cpp
+        MicroBenchmarkRun.cpp
+        Parsing/YamlAggregation.cpp
+        Parsing/SynopsisArguments.cpp
         )

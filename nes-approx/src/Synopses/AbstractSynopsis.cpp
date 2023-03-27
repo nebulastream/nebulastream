@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <Synopses/AbstractSynopses.hpp>
+#include <Synopses/AbstractSynopsis.hpp>
 #include <Synopses/Samples/SampleRandomWithReplacement.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
 
-AbstractSynopses::AbstractSynopses(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction)
+AbstractSynopsis::AbstractSynopsis(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction)
     : aggregationFunction(aggregationFunction) {}
 
-AbstractSynopsesPtr AbstractSynopses::create(SynopsesArguments arguments) {
+AbstractSynopsesPtr AbstractSynopsis::create(SynopsisArguments arguments) {
 
-    if (arguments.getType() == SynopsesArguments::Type::SRSWR) {
+    if (arguments.getType() == SynopsisArguments::Type::SRSWR) {
         return std::make_shared<SampleRandomWithReplacement>(arguments.getAggregationFunction(), arguments.getWidth());
     } else {
         NES_NOT_IMPLEMENTED();

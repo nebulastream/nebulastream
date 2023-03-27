@@ -15,23 +15,23 @@
 #ifndef NES_SAMPLERANDOMWITHREPLACEMENT_HPP
 #define NES_SAMPLERANDOMWITHREPLACEMENT_HPP
 
-#include <Synopses/AbstractSynopses.hpp>
-#include <Synopses/SynopsesArguments.hpp>
+#include <Synopses/AbstractSynopsis.hpp>
+#include <Synopses/SynopsisArguments.hpp>
 
 namespace NES::ASP{
 
-class SampleRandomWithReplacement : public AbstractSynopses {
+class SampleRandomWithReplacement : public AbstractSynopsis {
 
   public:
     void addToSynopsis(Nautilus::Record record) override;
 
-    Nautilus::Record getApproximate() override;
+    std::vector<Nautilus::Record> getApproximate() override;
 
     virtual ~SampleRandomWithReplacement() = default;
 
     SampleRandomWithReplacement(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
                                 size_t sampleSize)
-        : AbstractSynopses(aggregationFunction), sampleSize(sampleSize) {}
+        : AbstractSynopsis(aggregationFunction), sampleSize(sampleSize) {}
 
 
   private:
@@ -40,7 +40,8 @@ class SampleRandomWithReplacement : public AbstractSynopses {
 
 };
 
-SynopsesArguments SRSWR(size_t sampleSize, std::string fieldName,
+SynopsisArguments
+SRSWR(size_t sampleSize, std::string fieldName,
                         Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction);
 
 } // namespace NES::ASP
