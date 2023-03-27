@@ -77,7 +77,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
     inputClass = "java/lang/Integer";
     outputClass = "java/lang/Integer";
 
-    auto initialValue = 42;
+    int32_t initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
                                                                method,
                                                                inputClass,
@@ -108,7 +108,7 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
     inputClass = "java/lang/Short";
     outputClass = "java/lang/Short";
 
-    auto initialValue = 42;
+    int16_t initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
                                                                method,
                                                                inputClass,
@@ -139,7 +139,7 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
     inputClass = "java/lang/Byte";
     outputClass = "java/lang/Byte";
 
-    auto initialValue = 42;
+    int8_t initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
                                                                method,
                                                                inputClass,
@@ -170,7 +170,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     inputClass = "java/lang/Long";
     outputClass = "java/lang/Long";
 
-    auto initialValue = 42;
+    int64_t initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
                                                                method,
                                                                inputClass,
