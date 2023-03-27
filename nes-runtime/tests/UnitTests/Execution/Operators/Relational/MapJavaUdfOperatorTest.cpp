@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
-
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -24,6 +22,7 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -397,4 +396,3 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
 }
 
 }// namespace NES::Runtime::Execution::Operators
-#endif// ENABLE_JNI
