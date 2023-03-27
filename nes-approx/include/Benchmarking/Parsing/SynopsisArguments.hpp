@@ -43,24 +43,81 @@ class SynopsisArguments {
         HLL,        // HyperLogLog
     };
 
+    /**
+     * @brief Default constructor
+     */
+    SynopsisArguments() = default;
+
+    /**
+     * @brief Factory method for creating a synopsis argument
+     * @param type
+     * @param width
+     * @param height
+     * @param windowSize
+     * @return SynopsisArguments
+     */
     static SynopsisArguments createArguments(Type type, size_t width, size_t height = 1,
                                              size_t windowSize = 1);
 
-    static SynopsisArguments createArgumentsFromYamlNode(const Yaml::Node& synopsisArgumentsNode);
+    /**
+     * @brief Factory method for creating a synopsis argument from a yaml node
+     * @param synopsisArgumentsNode
+     * @return SynopsisArguments
+     */
+    static SynopsisArguments createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode);
 
+    /**
+     * @brief Creates a header for the output csv file from this SynopsisArguments
+     * @return Header as a string with comma separated values
+     */
+    std::string getHeaderAsCsv();
 
+    /**
+     * @brief Creates a csv string for all values from this SynopsisArguments
+     * @return Header as a string with comma separated values
+     */
+    std::string getValuesAsCsv();
+
+    /**
+     * @brief Getter for the width of a synopsis
+     * @return Synopsis width
+     */
     size_t getWidth() const;
 
+    /**
+     * @brief Getter for the height of a synopsis
+     * @return Synopsis height
+     */
     size_t getHeight() const;
 
+    /**
+     * @brief Getter for the window size of a synopsis
+     * @return Synopsis window size
+     */
     size_t getWindowSize() const;
 
+    /**
+     * @brief Getter for the type of a synopsis
+     * @return Synopsis type
+     */
     Type getType() const;
 
-  private:
-    SynopsisArguments(Type type, size_t width, size_t height, size_t windowSize);
+    /**
+     * @brief Creates a string representation
+     * @return String representation
+     */
+    std::string toString();
 
   private:
+    /**
+     * @brief Private constructor for a SynopsisArguments object. For creating an object, the factory method should be used
+     * @param type
+     * @param width
+     * @param height
+     * @param windowSize
+     */
+    SynopsisArguments(Type type, size_t width, size_t height, size_t windowSize);
+
     Type type;
     size_t width;
     size_t height;

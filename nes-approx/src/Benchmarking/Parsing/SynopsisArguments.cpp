@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Util/yaml/Yaml.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Benchmarking/Parsing/SynopsisArguments.hpp>
 
 namespace NES::ASP {
@@ -32,10 +34,38 @@ size_t SynopsisArguments::getWindowSize() const { return windowSize; }
 
 SynopsisArguments::Type SynopsisArguments::getType() const { return type; }
 
-SynopsisArguments SynopsisArguments::createArgumentsFromYamlNode(const Yaml::Node& synopsisArgumentsNode) {
+SynopsisArguments SynopsisArguments::createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode) {
 
+    auto type = magic_enum::enum_cast<Type>(synopsisArgumentsNode["type"].As<std::string>()).value();
+    auto width = synopsisArgumentsNode["width"].IsNone() ? 1 : synopsisArgumentsNode["width"].As<size_t>();
+    auto height = synopsisArgumentsNode["height"].IsNone() ? 1 : synopsisArgumentsNode["height"].As<size_t>();
+    auto windowSize = synopsisArgumentsNode["windowSize"].IsNone() ? 1 : synopsisArgumentsNode["windowSize"].As<size_t>();
 
+    return SynopsisArguments::createArguments(type, width, height, windowSize);
 }
 
+std::string SynopsisArguments::getHeaderAsCsv() {
+    return "type,width,height,windowSize";
+}
+
+std::string SynopsisArguments::getValuesAsCsv() {
+    std::stringstream stringStream;
+    stringStream << "," << magic_enum::enum_name(type)
+                 << "," << width
+                 << "," << height
+                 << "," << windowSize;
+
+    return stringStream.str();
+}
+
+std::string SynopsisArguments::toString() {
+    std::stringstream stringStream;
+    stringStream << "type (" << magic_enum::enum_name(type) << ") "
+                 << "width (" << width << ") "
+                 << "height (" << height << ") "
+                 << "windowSize (" << windowSize << ")";
+
+    return stringStream.str();
+}
 
 } // namespace NES::ASP

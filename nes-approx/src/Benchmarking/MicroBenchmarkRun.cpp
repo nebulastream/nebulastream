@@ -92,14 +92,17 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     auto parsedNumberOfBuffers = ASP::Util::parseNumberOfBuffers(configFile["numberOfBuffers"]);
 
 
-
+    retVector.reserve(parsedSynopsisArguments.size() * parsedAggregations.size() *
+                      parsedWindowSizes.size() * parsedBufferSizes.size() *
+                      parsedNumberOfBuffers.size());
+    auto cnt = 0UL;
     for (auto& synopsisArgument : parsedSynopsisArguments) {
         for (auto& aggregation : parsedAggregations) {
             for (auto& windowSize : parsedWindowSizes) {
                 for (auto& bufferSize : parsedBufferSizes) {
                     for (auto& numberOfBuffers : parsedNumberOfBuffers) {
-                        retVector.emplace_back(synopsisArgument, aggregation.schema, bufferSize, numberOfBuffers,
-                                               windowSize, reps, aggregation.inputFile, aggregation.accuracyFile);
+                        retVector[++cnt] = MicroBenchmarkRun(synopsisArgument, aggregation.schema, bufferSize, numberOfBuffers,
+                                                             windowSize, parsedReps, aggregation.inputFile, aggregation.accuracyFile);
                     }
                 }
             }
@@ -108,6 +111,7 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
 
     return retVector;
 }
+
 MicroBenchmarkRun::MicroBenchmarkRun(const SynopsisArguments& synopsesArguments,
                                      const SchemaPtr& schema,
                                      const uint32_t bufferSize,
@@ -118,5 +122,74 @@ MicroBenchmarkRun::MicroBenchmarkRun(const SynopsisArguments& synopsesArguments,
                                      const std::string& accuracyFile)
     : synopsesArguments(synopsesArguments), schema(schema), bufferSize(bufferSize), numberOfBuffers(numberOfBuffers),
       windowSize(windowSize), reps(reps), inputFile(inputFile), accuracyFile(accuracyFile) {}
+
+MicroBenchmarkRun& MicroBenchmarkRun::operator=(const MicroBenchmarkRun& other) {
+    // If this is the same object, then return it
+    if (this == &other) {
+        return *this;
+    }
+
+    // Otherwise create a new object
+    synopsesArguments = other.synopsesArguments;
+    schema = other.schema;
+    bufferSize = other.bufferSize;
+    numberOfBuffers = other.numberOfBuffers;
+    windowSize = other.windowSize;
+    reps = other.reps;
+    inputFile = other.inputFile;
+    accuracyFile = other.accuracyFile;
+    microBenchmarkResult = std::vector(other.microBenchmarkResult);
+
+    return *this;
+}
+
+std::string MicroBenchmarkRun::getHeaderAsCsv() {
+    std::stringstream stringStream;
+    stringStream << synopsesArguments.getHeaderAsCsv()
+                 << ",schema"
+                 << ",bufferSize"
+                 << ",numberOfBuffers"
+                 << ",windowSize"
+                 << ",reps"
+                 << ",inputFile"
+                 << ",accuracyFile"
+                 << "," << microBenchmarkResult[0].getHeaderAsCsv();
+
+
+    return stringStream.str();
+}
+
+std::string MicroBenchmarkRun::getRowsAsCsv() {
+    std::stringstream stringStream;
+
+    for (auto& benchmarkResult : microBenchmarkResult) {
+        stringStream << synopsesArguments.getHeaderAsCsv()
+                     << "," << schema->toString()
+                     << "," << bufferSize
+                     << "," << numberOfBuffers
+                     << "," << windowSize
+                     << "," << reps
+                     << "," << inputFile
+                     << "," << accuracyFile
+                     << "," << benchmarkResult.getRowAsCsv()
+                     << std::endl;
+    }
+    return stringStream.str();
+}
+
+std::string MicroBenchmarkRun::toString() {
+    std::stringstream stringStream;
+    stringStream << std::endl << " - synopsis arguments: " << synopsesArguments.toString()
+                 << std::endl << " - schema:" << schema
+                 << std::endl << " - bufferSize:" << bufferSize
+                 << std::endl << " - numberOfBuffers:" << numberOfBuffers
+                 << std::endl << " - windowSize:" << windowSize
+                 << std::endl << " - reps:" << reps
+                 << std::endl << " - inputFile:" << inputFile
+                 << std::endl << " - accuracyFile:" << accuracyFile;
+
+
+    return stringStream.str();
+}
 
 } // namespace NES::ASP::Benchmarking
