@@ -32,7 +32,7 @@ static constexpr auto NANO_TO_SECONDS_MULTIPLIER = 1 * 1000 * 1000 * 1000UL;
  */
 class MicroBenchmarkRun {
 
-  public:
+  private:
     /**
      * @brief Constructor for a MicroBenchmarkRun
      * @param synopsesArguments
@@ -53,6 +53,10 @@ class MicroBenchmarkRun {
                       const std::string& inputFile,
                       const std::string& accuracyFile);
 
+  public:
+    MicroBenchmarkRun() = default;
+
+    MicroBenchmarkRun& operator=(const MicroBenchmarkRun& other);
 
     /**
      * @brief Parses all micro-benchmarks from the yaml file
@@ -79,7 +83,7 @@ class MicroBenchmarkRun {
     std::string getHeaderAsCsv();
 
     /**
-     * @brief Creates rows for the output csv file from this MicroBenchmarkRun
+     * @brief Creates one or more rows for the output csv file from this MicroBenchmarkRun
      * @return Rows as a string with comma separated values
      */
     std::string getRowsAsCsv();
@@ -107,14 +111,14 @@ class MicroBenchmarkRun {
                            std::vector<Runtime::Execution::RecordBuffer> allApproximateRecords);
 
   private:
-    const SynopsisArguments synopsesArguments;
-    const SchemaPtr schema;
-    const uint32_t bufferSize;
-    const uint32_t numberOfBuffers;
-    const size_t windowSize;
-    const uint64_t reps;
-    const std::string inputFile;
-    const std::string accuracyFile;
+    SynopsisArguments synopsesArguments;
+    SchemaPtr schema;
+    uint32_t bufferSize;
+    uint32_t numberOfBuffers;
+    size_t windowSize;
+    uint64_t reps;
+    std::string inputFile;
+    std::string accuracyFile;
     std::vector<MicroBenchmarkResult> microBenchmarkResult;
 };
 

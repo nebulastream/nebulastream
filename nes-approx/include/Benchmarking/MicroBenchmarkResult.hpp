@@ -16,18 +16,36 @@
 #define NES_MICROBENCHMARKRESULT_HPP
 
 #include <string>
-#include <unordered_map>
+#include <map>
 
 namespace NES::ASP::Benchmarking {
 
 class MicroBenchmarkResult {
   public:
+    /**
+     * @brief Constructor of a MicroBenchmarkResult object
+     * @param throughput
+     * @param accuracy
+     */
     explicit MicroBenchmarkResult(double throughput, double accuracy);
 
+    /**
+     * @brief Adds the parameter and the value to this result, e.g., numberOfRetries = 2 --> addToParams("numberOfRetries", "2")
+     * @param paramKey
+     * @param paramValue
+     */
     void addToParams(const std::string& paramKey, const std::string& paramValue);
 
+    /**
+     * @brief Sets the throughput of the result
+     * @param throughput
+     */
     void setThroughput(double throughput);
 
+    /**
+     * @brief Sets the accuracy of the result
+     * @param accuracy
+     */
     void setAccuracy(double accuracy);
 
     /**
@@ -45,7 +63,7 @@ class MicroBenchmarkResult {
   private:
     const std::string THROUGHPUT = "throughput";
     const std::string ACCURACY = "accuracy";
-    std::unordered_map<std::string, std::string> params;
+    std::map<std::string, std::string> params;
 };
 
 } // namespace NES::ASP::Benchmarking

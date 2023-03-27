@@ -13,12 +13,13 @@
 */
 
 #include <Benchmarking/MicroBenchmarkResult.hpp>
+#include <sstream>
 
 namespace NES::ASP::Benchmarking {
 
-void MicroBenchmarkResult::setThroughput(double throughput) { params[THROUGHPUT] = std::to_string(throughput); }
+void MicroBenchmarkResult::setThroughput(double throughput) { addToParams(THROUGHPUT, std::to_string(throughput)); }
 
-void MicroBenchmarkResult::setAccuracy(double accuracy) {  params[ACCURACY] = std::to_string(accuracy); }
+void MicroBenchmarkResult::setAccuracy(double accuracy) {  addToParams(ACCURACY, std::to_string(accuracy)); }
 
 void MicroBenchmarkResult::addToParams(const std::string& paramKey, const std::string& paramValue) {
     params[paramKey] = paramValue;
@@ -27,6 +28,28 @@ void MicroBenchmarkResult::addToParams(const std::string& paramKey, const std::s
 MicroBenchmarkResult::MicroBenchmarkResult(double throughput, double accuracy)  {
     this->setAccuracy(accuracy);
     this->setThroughput(throughput);
+}
+std::string MicroBenchmarkResult::getHeaderAsCsv() {
+    std::stringstream stringStream;
+    for (auto& pair : params) {
+        stringStream << pair.first << ",";
+    }
+
+    auto string = stringStream.str();
+    string.pop_back();
+
+    return string;
+}
+std::string MicroBenchmarkResult::getRowAsCsv() {
+    std::stringstream stringStream;
+    for (auto& pair : params) {
+        stringStream << pair.second << ",";
+    }
+
+    auto string = stringStream.str();
+    string.pop_back();
+
+    return string;
 }
 
 } // namespace NES::ASP::Benchmarking
