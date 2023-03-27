@@ -78,6 +78,7 @@ class KalmanFilter {
      * as well as an initialTimestamp.
      */
     void init();// all zeroes
+    void init(double initialTimestamp);// all zeroes
     void init(const Eigen::VectorXd& initialState);
     void init(const Eigen::VectorXd& initialState, double initialTimestamp);
 
@@ -136,7 +137,15 @@ class KalmanFilter {
      * has to stay inside the original gathering interval range.
      * @return a new gathering interval that we can sleep on
      */
-    std::chrono::milliseconds getNewGatheringInterval();// eq. 7 and 10
+    std::chrono::milliseconds getNewGatheringIntervalBaseline();// eq. 7 and 10
+
+    /**
+     * @brief calculate new gathering interval using Chameleon.
+     * The new proposed gathering interval has to stay inside the
+     * original gathering interval range.
+     * @return a new gathering interval that we can sleep on
+     */
+    std::chrono::milliseconds getNewGatheringInterval();
 
     /**
      * @return the total estimation error, calculated
@@ -192,7 +201,7 @@ class KalmanFilter {
     *   iniitalEstimateCovariance - P0
 	*/
     Eigen::MatrixXd stateTransitionModel, observationModel, processNoiseCovariance, measurementNoiseCovariance,
-        estimateCovariance, kalmanGain, initialEstimateCovariance;
+        estimateCovariance, kalmanGain;
     Eigen::MatrixXd identityMatrix;// identity matrix identityMatrix, on size n
 
     /**
@@ -247,7 +256,18 @@ class KalmanFilter {
     /**
      * @brief buffer of residual error from KF
      */
-    CircularBuffer<float> kfErrorWindow;
+    CircularBuffer<double> kfErrorWindow;
+
+    /**
+     * @brief Return the diff of the last 2 estimation errors
+     */
+    double getEstimationErrorDifference();
+
+    /**
+     * @brief Exponentially decrease/increase the freq.
+     */
+    double exponentialDecay();
+    double exponentialGrowth();
 
 };// class KalmanFilter
 

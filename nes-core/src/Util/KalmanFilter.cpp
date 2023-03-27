@@ -33,7 +33,7 @@ KalmanFilter::KalmanFilter(double timeStep,
                            const Eigen::MatrixXd P,
                            const uint64_t errorWindowSize)
     : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q),
-      measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
+      measurementNoiseCovariance(R), estimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
       valueVector(1), timeStep(timeStep), kfErrorWindow(errorWindowSize) {
     this->calculateTotalEstimationErrorDivider(errorWindowSize);
     identityMatrix.setIdentity();
@@ -42,6 +42,12 @@ KalmanFilter::KalmanFilter(double timeStep,
 void KalmanFilter::init() {
     this->setDefaultValues();
     this->xHat.setZero();
+}
+
+void KalmanFilter::init(double initialTimestamp) {
+    this->setDefaultValues();
+    this->xHat.setZero();
+    this->currentTime = initialTimestamp;
 }
 
 void KalmanFilter::init(const Eigen::VectorXd& initialState) {
@@ -70,7 +76,7 @@ void KalmanFilter::setDefaultValues() {
     this->observationModel = Eigen::MatrixXd(this->m, this->n);
     this->processNoiseCovariance = Eigen::MatrixXd(this->n, this->n);
     this->measurementNoiseCovariance = Eigen::MatrixXd(this->m, this->m);
-    this->initialEstimateCovariance = Eigen::MatrixXd(this->n, this->n);
+    this->estimateCovariance = Eigen::MatrixXd(this->n, this->n);
 
     // Discrete LTI projectile motion, measuring position only
     this->stateTransitionModel << 1, this->timeStep, 0, 0, 1, this->timeStep, 0, 0, 1;
@@ -79,10 +85,9 @@ void KalmanFilter::setDefaultValues() {
     // Reasonable covariance matrices
     this->processNoiseCovariance << .05, .05, .0, .05, .05, .0, .0, .0, .0;
     this->measurementNoiseCovariance << 5;
-    this->initialEstimateCovariance << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
+    this->estimateCovariance << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
 
     // rest of initializations
-    this->estimateCovariance = this->initialEstimateCovariance;
     this->identityMatrix = Eigen::MatrixXd(this->n, this->n);
     this->identityMatrix.setIdentity();
     this->xHat = Eigen::VectorXd(this->n);
@@ -153,7 +158,7 @@ void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
     }
 }
 
-std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
+std::chrono::milliseconds KalmanFilter::getNewGatheringIntervalBaseline() {
     // eq. 10
     auto totalEstimationError = this->calculateTotalEstimationError();
     auto powerOfEuler = (totalEstimationError + lambda) / lambda;
@@ -163,6 +168,19 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
         && newGatheringIntervalCandidate <= gatheringIntervalReceived.count() + (gatheringIntervalRange.count() / 2)) {// eq. 7
         // remove fractional part from double
         this->gatheringInterval = std::chrono::milliseconds((int) trunc(newGatheringIntervalCandidate));
+    }
+    return this->gatheringInterval;
+}
+
+std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
+    this->initialTimestamp; // TODO: fix to interval, not ms
+    auto currentEstimationError = getEstimationErrorDifference();
+    if (currentEstimationError > 0.6) {  // indicates immediate change
+        // TODO: exponential decay
+        // TODO: stay in the lower limit
+    } else if (currentEstimationError < .24) {  // indicates consecutive similarity
+        // TODO: exponential growth
+        // TODO: stay below upper limit
     }
     return this->gatheringInterval;
 }
@@ -185,6 +203,7 @@ Eigen::VectorXd KalmanFilter::getState() { return xHat; }
 Eigen::MatrixXd KalmanFilter::getError() { return estimateCovariance; }
 Eigen::MatrixXd KalmanFilter::getInnovationError() { return innovationError; }
 double KalmanFilter::getEstimationError() { return estimationError; }
+double KalmanFilter::getEstimationErrorDifference() { return kfErrorWindow[0] - kfErrorWindow[1]; }
 uint64_t KalmanFilter::getTheta() { return theta; }
 float KalmanFilter::getLambda() { return lambda; }
 
