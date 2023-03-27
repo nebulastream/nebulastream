@@ -92,7 +92,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Int32>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
 }
@@ -123,7 +123,7 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Int16>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
 }
@@ -154,7 +154,7 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Int8>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
 }
@@ -185,7 +185,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Int64>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
 }
@@ -216,7 +216,7 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Double>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10.0);
 }
@@ -278,7 +278,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Boolean>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), false);
 }
@@ -366,14 +366,14 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"byteVariable", Value<>(initialByte)},
-                          {"shortVariable", Value<>(initialShort)},
-                          {"intVariable", Value<>(initialInt)},
-                          {"longVariable", Value<>(initialLong)},
-                          {"floatVariable", Value<>(initialFloat)},
-                          {"doubleVariable", Value<>(initialDouble)},
+    auto record = Record({{"byteVariable", Value<Int8>(initialByte)},
+                          {"shortVariable", Value<Int16>(initialShort)},
+                          {"intVariable", Value<Int32>(initialInt)},
+                          {"longVariable", Value<Int64>(initialLong)},
+                          {"floatVariable", Value<Float>(initialFloat)},
+                          {"doubleVariable", Value<Double>(initialDouble)},
                           {"stringVariable", Value<Text>("testValue")},
-                          {"booleanVariable", Value<>(initialBool)}});
+                          {"booleanVariable", Value<Boolean>(initialBool)}});
     map.execute(ctx, record);
 
     EXPECT_EQ(record.read("byteVariable"), initialByte + 10);
@@ -412,7 +412,7 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initalValue)}});
+    auto record = Record({{"id", Value<Int32>(initalValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initalValue + 10);
 }
