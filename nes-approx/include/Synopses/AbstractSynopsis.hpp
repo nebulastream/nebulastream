@@ -12,22 +12,27 @@
     limitations under the License.
 */
 
-#ifndef NES_ABSTRACTSYNOPSES_HPP
-#define NES_ABSTRACTSYNOPSES_HPP
+#ifndef NES_ABSTRACTSYNOPSIS_HPP
+#define NES_ABSTRACTSYNOPSIS_HPP
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Synopses/SynopsesArguments.hpp>
+#include <Benchmarking/Parsing/SynopsisArguments.hpp>
 
 namespace NES::ASP {
 
-class AbstractSynopses;
-using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopses>;
+class AbstractSynopsis;
+using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopsis>;
 
 constexpr auto GENERATOR_SEED_DEFAULT = 42;
 
-class AbstractSynopses {
+/**
+ * @brief The synopsis does not take care of any window semantics. This is done in the AbstractSynopsesWindow class, which will be
+ * added in issue #3628
+ */
+class AbstractSynopsis {
 
   public:
     /**
@@ -40,23 +45,39 @@ class AbstractSynopses {
      * @brief Once all records have been inserted, we can ask for an approximation
      * @return Record that stores the approximation
      */
-    virtual Nautilus::Record getApproximate() = 0;
+    virtual std::vector<Runtime::Execution::RecordBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) = 0;
 
-    static AbstractSynopsesPtr create(SynopsesArguments arguments);
+    /**
+     * @brief Initializes the synopsis. This means that the synopsis should create a state in which a new approximation
+     * can be done. Couple examples are:
+     *  - removing all drawn samples for a sampling algorithm
+     *  - resetting and writing zeros to the 2D array for a Count-min sketch
+     */
+    virtual void initialize() = 0;
+
+    /**
+     * @brief Creates the synopsis from the SynopsisArguments
+     * @param arguments
+     * @return AbstractSynopsesPtr
+     */
+    static AbstractSynopsesPtr create(SynopsisArguments arguments);
+
+
 
     /**
      * @brief virtual deconstructor
      */
-    virtual ~AbstractSynopses() = default;
+    virtual ~AbstractSynopsis() = default;
 
   protected:
-    explicit AbstractSynopses(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
+    explicit AbstractSynopsis(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
 
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> aggregationValue;
-    std::string fieldName;
+    std::string fieldNameAggregation;
+
 
 };
 } // namespace NES::ASP
 
-#endif//NES_ABSTRACTSYNOPSES_HPP
+#endif//NES_ABSTRACTSYNOPSIS_HPP

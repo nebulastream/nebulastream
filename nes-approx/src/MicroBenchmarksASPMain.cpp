@@ -12,21 +12,18 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Benchmarking/MicroBenchmarkRun.hpp>
+#include <Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Synopses/AbstractSynopses.hpp>
-#include <Synopses/Samples/SampleRandomWithReplacement.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Benchmarking/Util.hpp>
 #include <iostream>
 
 const std::string logo = "/********************************************************\n"
                          " *     _   _   ______    _____\n"
                          " *    | \\ | | |  ____|  / ____|\n"
                          " *    |  \\| | | |__    | (___\n"
-                         " *    |     | |  __|    \\___ \\     Microbenchmark ASP \n"
+                         " *    |     | |  __|    \\___ \\     Micro-benchmark ASP \n"
                          " *    | |\\  | | |____   ____) |\n"
                          " *    |_| \\_| |______| |_____/\n"
                          " *\n"
@@ -63,47 +60,32 @@ int main(int argc, const char* argv[]) {
     auto runner = std::make_shared<MicroBenchmarkRunner>();
     Exceptions::installGlobalErrorListener(runner);
 
-    if (argc != 0) {
+    std::string yamlFileName;
+    auto pathArg = std::string(argv[1]);
+    if (argc == 2 && pathArg.find("--configPath") != std::string::npos) {
+        yamlFileName = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+    } else {
         std::cerr << "Error: Only --configPath= is allowed as a command line argument!\nExiting now..." << std::endl;
         return -1;
     }
-    auto yamlFileName = std::string(argv[1]);
 
-    // Parsing the yaml file
-    auto allSynopsisArguments = ASP::SynopsesArguments::parseArgumentsFromYamlFile(yamlFileName);
+    NES_INFO("Parsing all micro-benchmarks...");
     auto csvFileName = ASP::Util::parseCsvFileFromYaml(yamlFileName);
+    auto allMicroBenchmarks = ASP::Benchmarking::MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFileName);
 
-    // Iterating over all synopsis argument and running the micro benchmarks
-    for (auto& synopsisArguments : allSynopsisArguments) {
-        hier weiter machen
+    NES_INFO("Running all micro-benchmarks...");
+    for (auto& microBenchmark : allMicroBenchmarks) {
+        NES_INFO("Running current micro-benchmark: " << microBenchmark.toString());
+        microBenchmark.run();
     }
 
+    NES_INFO("Writing the header to the csv file: " << csvFileName);
+    ASP::Util::writeHeaderToCsvFile(csvFileName, allMicroBenchmarks[0].getHeaderAsCsv());
 
+    NES_INFO("Writing all micro-benchmarks results to csv file: " << csvFileName);
+    for (auto& microBenchmark : allMicroBenchmarks) {
+        ASP::Util::writeRowToCsvFile(csvFileName, microBenchmark.getRowsAsCsv());
+    }
 
-
-    /**
-     * 1. Parse yaml file into SynopsisArguments
-     * 2. Create synopsis from SynopsisArguments
-     * 3. Create input data (maybe read it from a csv file)
-     * 4. Run addToSynopsis() and getApproximate()
-     * 5. Calculate throughput and write this into a csv file together with the rest of the params
-     *
-     * Once this is done, create a key version for synopsis
-     */
-
-    // Parsing the yaml file from the command line
-
-
-
-
-
-    size_t sampleSize = 1000;
-    auto fieldName = "f1";
-
-    PhysicalTypePtr dataType = DefaultPhysicalTypeFactory().getPhysicalType(DataTypeFactory::createInt8());
-    auto averageAggregationFunction = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(dataType, dataType);
-
-    auto sampleArguments = ASP::SRSWR(sampleSize, fieldName, averageAggregationFunction);
-    auto synopsis = ASP::AbstractSynopses::create(sampleArguments);
-
+    NES_INFO("Done running micro-benchmarks!");
 }

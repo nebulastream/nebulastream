@@ -22,7 +22,7 @@ void SampleRandomWithReplacement::addToSynopsis(Nautilus::Record record) {
     storedRecords.emplace_back(record);
 }
 
-Nautilus::Record SampleRandomWithReplacement::getApproximate() {
+std::vector<Nautilus::Record> SampleRandomWithReplacement::getApproximate() {
     // First, we have to pick our sample
     std::vector<Nautilus::Record> sample;
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
@@ -37,18 +37,19 @@ Nautilus::Record SampleRandomWithReplacement::getApproximate() {
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& item : sample) {
-        aggregationFunction->lift(aggregationValueMemRef, item.read(fieldName));
+        aggregationFunction->lift(aggregationValueMemRef, item.read(fieldNameAggregation));
     }
 
     auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
-    record.write(fieldName, approximatedValue);
+    record.write(fieldNameAggregation, approximatedValue);
 
-    return record;
+    return {{record}};
 }
 
-SynopsesArguments SRSWR(size_t sampleSize, std::string fieldName,
+SynopsisArguments
+SRSWR(size_t sampleSize, std::string fieldName,
                         Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction) {
-    return SynopsesArguments::createArguments(aggregationFunction, fieldName, SynopsesArguments::Type::SRSWR, sampleSize);
+    return SynopsisArguments::createArguments(aggregationFunction, fieldName, SynopsisArguments::Type::SRSWR, sampleSize);
 }
 
 } // namespace NES::ASP

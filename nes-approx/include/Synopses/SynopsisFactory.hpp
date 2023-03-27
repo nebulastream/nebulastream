@@ -19,8 +19,8 @@
 
 namespace NES::ASP {
 
-class AbstractSynopses;
-using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopses>;
+class AbstractSynopsis;
+using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopsis>;
 
 class SynopsisFactory {
   public:

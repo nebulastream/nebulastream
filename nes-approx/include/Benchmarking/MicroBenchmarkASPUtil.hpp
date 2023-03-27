@@ -12,19 +12,92 @@
     limitations under the License.
 */
 
-#ifndef NES_UTIL_HPP
+#ifndef NES_MICROBENCHMARKASPUTIL_HPP
 #define NES_MICROBENCHMARKASPUTIL_HPP
 
+#include <Benchmarking/MicroBenchmarkResult.hpp>
+#include <Benchmarking/Parsing/YamlAggregation.hpp>
+#include <Benchmarking/Parsing/SynopsisArguments.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <string>
 
 namespace NES::ASP::Util {
 
-void writeHeaderToCsvFile(const std::string& csvFileName);
+/**
+ * @brief Truncates the file and then writes the header string as is to the file
+ * @param csvFileName
+ * @param header
+ */
+void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header);
 
-void writeResultsToCsvFile(const std::string& csvFileName, std::vector<double> throughput, std::vector<double> accuracy);
+/**
+ * @brief Appends the row as is to the csv file
+ * @param csvFileName
+ * @param row
+ */
+void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
 
+/**
+ * @brief Parses the csv file from the yamlFile
+ * @param yamlFileName
+ * @return Csv file name
+ */
 std::string parseCsvFileFromYaml(const std::string& yamlFileName);
+
+/**
+ * @brief Parses the yaml node and creates synopsis arguments to later on create synopsis from them
+ * @param synopsesNode
+ * @return Vector of synopsis arguments
+ */
+std::vector<SynopsisArguments> parseSynopsisArguments(const Yaml::Node& synopsesNode);
+
+/**
+ * @brief Parses the yaml node and creates YamlAggregation (wrapper for the aggregation, e.g., input and accuracy file)
+ * @param aggregationsNode
+ * @return Vector of YamlAggregation objects
+ */
+std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode);
+
+/**
+ * @brief Parses the window size
+ * @param windowSizesNode
+ * @return Vector of different window sizes
+ */
+std::vector<size_t> parseWindowSizes(const Yaml::Node& windowSizesNode);
+
+/**
+ * @brief Parses the number of Buffers for the buffer manager
+ * @param numberOfBuffersNode
+ * @param defaultValue
+ * @return Either the parsed value or the default value
+ */
+std::vector<uint32_t> parseNumberOfBuffers(const Yaml::Node& numberOfBuffersNode, const uint32_t defaultValue = 1024);
+
+/**
+ * @brief Parses the buffer size for the buffer manager
+ * @param bufferSizesNode
+ * @return Vector of different buffer sizes
+ */
+std::vector<uint32_t> parseBufferSizes(const Yaml::Node& bufferSizesNode);
+
+/**
+ * @brief Parses the number of repetitions for each micro-benchmark run
+ * @param repsNode
+ * @return Reps
+ */
+uint64_t parseReps(const Yaml::Node& repsNode);
+
+/**
+ * @brief Helper function for creating a memory provider from the buffer size and the schema
+ * @param bufferSize
+ * @param schema
+ * @return MemoryProvider
+ */
+Runtime::Execution::MemoryProvider::MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
+
+
 
 } // namespace NES::ASP
 
-#endif//NES_UTIL_HPP
+#endif//NES_MICROBENCHMARKASPUTIL_HPP

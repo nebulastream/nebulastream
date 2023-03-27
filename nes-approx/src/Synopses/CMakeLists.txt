@@ -14,7 +14,7 @@
 add_subdirectory(Samples)
 
 add_source_files(nes-approx
-        AbstractSynopses.cpp
-        SynopsesArguments.cpp
+        AbstractSynopsis.cpp
+        SynopsisArguments.cpp
         SynopsisFactory.cpp
         )

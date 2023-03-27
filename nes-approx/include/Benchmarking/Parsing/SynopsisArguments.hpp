@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
-#ifndef NES_SYNOPSESARGUMENTS_HPP
-#define NES_SYNOPSESARGUMENTS_HPP
+#ifndef NES_SYNOPSISARGUMENTS_HPP
+#define NES_SYNOPSISARGUMENTS_HPP
 
 #include <cstddef>
 #include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::ASP {
 
-class SynopsesArguments {
+class SynopsisArguments {
 
   public:
     enum class Type : uint8_t {
@@ -42,11 +43,10 @@ class SynopsesArguments {
         HLL,        // HyperLogLog
     };
 
-    static SynopsesArguments createArguments(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
-                                             std::string fieldName, Type type, size_t width, size_t height = 1, size_t windowSize = 1);
+    static SynopsisArguments createArguments(Type type, size_t width, size_t height = 1,
+                                             size_t windowSize = 1);
 
-    static std::vector<SynopsesArguments> parseArgumentsFromYamlFile(const std::string& fileName);
-
+    static SynopsisArguments createArgumentsFromYamlNode(const Yaml::Node& synopsisArgumentsNode);
 
 
     size_t getWidth() const;
@@ -57,24 +57,17 @@ class SynopsesArguments {
 
     Type getType() const;
 
-    const std::string& getFieldName() const;
-
-    Runtime::Execution::Aggregation::AggregationFunctionPtr getAggregationFunction() const;
-
   private:
-    SynopsesArguments(Type type, size_t width, size_t height, size_t windowSize, std::string fieldName,
-                      Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction);
+    SynopsisArguments(Type type, size_t width, size_t height, size_t windowSize);
 
   private:
     Type type;
     size_t width;
     size_t height;
     size_t windowSize;
-    std::string fieldNameAggregation;
-    std::vector<std::string> fieldNameKeys; // TODO add here multiple keys for each synopsis
-    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
+
 };
 
 } // namespace NES::ASP
 
-#endif//NES_SYNOPSESARGUMENTS_HPP
+#endif//NES_SYNOPSISARGUMENTS_HPP
