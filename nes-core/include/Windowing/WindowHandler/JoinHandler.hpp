@@ -284,11 +284,11 @@ class JoinHandler : public AbstractJoinHandler {
             int64_t windowLenghtMs = 0;
             if (windowType->isTimeBasedWindowType()) {
                 auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
-                if (timeBasedWindowType->isTumblingWindow()) {
+                if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
                     auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
                     windowLenghtMs = window->getSize().getTime();
 
-                } else if (timeBasedWindowType->isSlidingWindow()) {
+                } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
                     auto* window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
                     windowLenghtMs = window->getSlide().getTime();
                 } else {

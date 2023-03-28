@@ -595,11 +595,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
     uint64_t length = 0;
     uint64_t slide = 0;
-    if (windowType->isTumblingWindow()) {
+    if (windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
         length = tumblingWindow->getSize().getTime() * multiplier;
         slide = length;
-    } else if (windowType->isSlidingWindow()) {
+    } else if (windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
         auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
         length = slidingWindow->getSize().getTime() * multiplier;
         slide = slidingWindow->getSlide().getTime() * multiplier;
@@ -696,11 +696,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
         uint64_t length = 0;
         uint64_t slide = 0;
-        if (timeBasedWindowType->isTumblingWindow()) {
+        if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
             auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindowType);
             length = tumblingWindow->getSize().getTime() * multiplier;
             slide = length;
-        } else if (timeBasedWindowType->isSlidingWindow()) {
+        } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
             auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(timeBasedWindowType);
             length = slidingWindow->getSize().getTime() * multiplier;
             slide = slidingWindow->getSlide().getTime() * multiplier;

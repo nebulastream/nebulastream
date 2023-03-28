@@ -50,7 +50,7 @@ void TumblingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t 
     NES_TRACE2("TumblingWindow::triggerWindows windows after={}", windows.size());
 }
 
-bool TumblingWindow::isTumblingWindow() { return true; }
+TimeBasedWindowType::TimeBasedSubWindowType TumblingWindow::getTimeBasedSubWindowType() { return TUMBLINGWINDOW; }
 
 TimeMeasure TumblingWindow::getSize() { return size; }
 
@@ -70,7 +70,7 @@ bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
         return this->timeCharacteristic->getField()->getName()
             == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
             && this->size.getTime() == timeBasedWindowType->getSize().getTime()
-            && timeBasedWindowType->isTumblingWindow();
+            && timeBasedWindowType->getTimeBasedSubWindowType() == TUMBLINGWINDOW && this->getTimeBasedSubWindowType() == TUMBLINGWINDOW;
     } else {
         return false;
     }

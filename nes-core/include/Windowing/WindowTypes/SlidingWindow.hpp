@@ -40,10 +40,10 @@ class SlidingWindow : public TimeBasedWindowType {
     void triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
 
     /**
-     * @brief Returns true, because this a a sliding window
-     * @return true
+     * @brief return the time-based Subwindow Type, i.e., SLIDINGWINDOW
+     * @return enum content-based Subwindow Type
      */
-    bool isSlidingWindow() override;
+    TimeBasedSubWindowType getTimeBasedSubWindowType() override;
 
     /**
     * @brief return size of the window

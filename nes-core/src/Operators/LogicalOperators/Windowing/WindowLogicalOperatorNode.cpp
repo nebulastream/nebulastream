@@ -91,12 +91,14 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     }else if(windowDefinition->getWindowType()->isContentBasedWindowType()) {
         // type Inference for Content-based Windows requires the typeInferencePhaseContext
         auto contentBasedWindowType = windowDefinition->getWindowType()->asContentBasedWindowType(windowDefinition->getWindowType());
-        if(contentBasedWindowType->isThresholdWindow()){
+        if(contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW){
             auto thresholdWindow = contentBasedWindowType->asThresholdWindow(contentBasedWindowType);
             if (!thresholdWindow->inferStamp(typeInferencePhaseContext, inputSchema)) {
                 return false;
             }
         }
+    }else{
+        NES_THROW_RUNTIME_ERROR("Unsupported window type" << windowDefinition->getWindowType()->toString());
     }
 
     if (windowDefinition->isKeyed()) {

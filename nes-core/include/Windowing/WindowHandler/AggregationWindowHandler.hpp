@@ -168,10 +168,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             uint64_t windowSize = 0;
             if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
                 auto timeBasedWindowType = WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-                if (timeBasedWindowType->isTumblingWindow()) {
+                if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::TUMBLINGWINDOW) {
                     TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
                     windowSize = window->getSize().getTime();
-                } else if (timeBasedWindowType->isSlidingWindow()) {
+                } else if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::SLIDINGWINDOW) {
                     SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
                     windowSize = window->getSize().getTime();
                 } else {

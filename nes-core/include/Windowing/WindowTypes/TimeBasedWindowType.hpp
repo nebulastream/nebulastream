@@ -21,10 +21,20 @@
 namespace NES::Windowing {
 
 class TimeBasedWindowType : public WindowType {
+
   public:
+    enum TimeBasedSubWindowType { SLIDINGWINDOW, TUMBLINGWINDOW };
+
     explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
     virtual ~TimeBasedWindowType() = default;
+
+    /**
+     * @brief getter for the SubWindowType, i.e., SlidingWindow, TumblingWindow
+     * @return the SubWindowType
+    */
+    virtual TimeBasedSubWindowType getTimeBasedSubWindowType() = 0;
+
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs
@@ -57,16 +67,6 @@ class TimeBasedWindowType : public WindowType {
      * @return slide of the window
      */
     virtual TimeMeasure getSlide() = 0;
-
-    /**
-     * @return true if this is a tumbling window
-     */
-    virtual bool isTumblingWindow();
-
-    /**
-    * @return true if this is a sliding window
-    */
-    virtual bool isSlidingWindow();
 
     /**
     * @return true if this is a sliding window
