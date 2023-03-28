@@ -110,7 +110,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //If window key from one signature doesn't exist in other signature then they are not equal.
         if (windowsExpressions.size() > 1 && otherWindowExpressions.size() > 1) {
             NES_NOT_IMPLEMENTED();
-        } else {
+        } else if (windowsExpressions.size() != 0){
             for (const auto& windowExpression : windowsExpressions[0]) {
                 if (otherWindowExpressions[0].find(windowExpression.first) == otherWindowExpressions[0].end()) {
                     NES_WARNING2("Window expression with key {}", windowExpression.first,
