@@ -75,35 +75,36 @@ void BatchKeyedAggregation::setup(ExecutionContext& executionCtx) const {
 
 void BatchKeyedAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
+    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local slice store according to the worker id.
-    auto state = Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerId());
 
-    auto chainedHM = Interface::ChainedHashMapRef(state, keyDataTypes, keySize, valueSize);
-    // 3. store the reference to the slice store in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalKeyedStoreState>(chainedHM);
-    ctx.setLocalOperatorState(this, std::move(sliceStoreState));
+    // 2. load the thread local hash map according to the worker id.
+    auto hashMap = Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto hashMapRef = Interface::ChainedHashMapRef(hashMap, keyDataTypes, keySize, valueSize);
+
+    // 3. store the reference to the hash map in the local operator state.
+    auto state = std::make_unique<LocalKeyedStoreState>(hashMapRef);
+    ctx.setLocalOperatorState(this, std::move(state));
 }
 
 void BatchKeyedAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
 
-    // 2. derive key values
+    // 1. derive key values
     std::vector<Value<>> keyValues;
     for (const auto& exp : keyExpressions) {
         keyValues.emplace_back(exp->execute(record));
     }
 
-    // 3. load the reference to the slice store and find the correct slice.
-    auto sliceStore = reinterpret_cast<LocalKeyedStoreState*>(ctx.getLocalState(this));
-    auto sliceState = sliceStore->hm;
+    // 2. load the reference to the slice store and find the correct slice.
+    auto state = reinterpret_cast<LocalKeyedStoreState*>(ctx.getLocalState(this));
+    auto hashMap = state->hm;
 
     // 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
-    auto entry = sliceState.findOrCreate(hash, keyValues, [this](auto& entry) {
+    // 5. create entry in the hash map. If the entry is new set default values for aggregations.
+    auto entry = hashMap.findOrCreate(hash, keyValues, [this](auto& entry) {
         // set aggregation values if a new entry was created
         auto valuePtr = entry.getValuePtr();
         for (const auto& aggFunction : aggregationFunctions) {

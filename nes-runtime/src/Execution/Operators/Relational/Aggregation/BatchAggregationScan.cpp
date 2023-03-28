@@ -35,13 +35,14 @@ BatchAggregationScan::BatchAggregationScan(
 
 void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     Operators::Operator::open(ctx, rb);
-
-    // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local slice store according to the worker id.
+    // 2. load the thread local state.
+
+    // TODO merge all thread local states to support concurrent aggregations with multiple thread local states.
     auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerId());
+
+    // 3. perform final aggregation.
     Record result;
     for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
         auto finalAggregationValue = aggregationFunctions[aggIndex]->lower(state);

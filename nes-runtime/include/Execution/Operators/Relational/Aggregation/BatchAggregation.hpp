@@ -27,11 +27,13 @@ class BatchAggregation : public ExecutableOperator {
   public:
     /**
      * @brief Creates a batch aggregation operator with a expression.
+     * @param operatorHandlerIndex index of the operator handler.
+     * @param aggregationExpressions expression to derive the aggregation values.
+     * @param aggregationFunctions functions for the aggregations.
      */
     BatchAggregation(uint64_t operatorHandlerIndex,
                      const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
-                     const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions,
-                     const std::vector<std::string>& aggregationResultFields);
+                     const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -42,7 +44,6 @@ class BatchAggregation : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> aggregationExpressions;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    [[maybe_unused]] const std::vector<std::string>& aggregationResultFields;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHAGGREGATION_HPP_

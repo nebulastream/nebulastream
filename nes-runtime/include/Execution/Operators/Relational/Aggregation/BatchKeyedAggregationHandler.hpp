@@ -31,17 +31,15 @@ class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
                                      public NES::detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false> {
   public:
     /**
-     * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
-     * @param windowDefinition logical window definition
-     * @param origins the set of origins, which can produce data for the window operator
-     * @param weakSliceStagingPtr access to the slice staging.
+     * @brief Creates the operator handler.
      */
     BatchKeyedAggregationHandler();
 
     /**
      * @brief Initializes the thread local state for the window operator
      * @param ctx PipelineExecutionContext
-     * @param entrySize Size of the aggregated values in memory
+     * @param keySize size of the key values in memory
+     * @param valueSize size of the aggregated values in memory
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
 
