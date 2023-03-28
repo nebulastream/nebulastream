@@ -109,14 +109,30 @@ class SignatureContainmentUtil {
 
     /**
      * @brief check for window containment as follows:
-     * //todo: change documentation
-     * check if right sig ⊆ left sig for windows
-     *      true: check if left sig ⊆ right sig
-     *          true: return EQUALITY
-     *          false: return RIGHT_SIG_CONTAINED
-     *      false: check if left sig ⊆ right sig
-     *          true: return LEFT_SIG_CONTAINED
-     *          false: return NO_CONTAINMENT
+     * check if window conditions are present, if not, return EQUALITY
+     * for the size of the smaller window:
+     *      check if window ids are equal
+     *          true: check if # of aggregates equal
+     *              true: check if right sig ⊆ left sig
+     *                  true: check if left sig ⊆ right sig
+     *                      true: return EQUALITY
+     *                      false: check if window containment possible
+     *                      && equal projections
+     *                         true: RIGHT_SIG_CONTAINED
+     *                         false: NO_CONTAINMENT
+     *              false: check if left sig ⊆ right sig
+     *                  && check if window containment possible
+*                       && equal projections
+     *                      true: LEFT_SIG_CONTAINED
+     *                      false: NO_CONTAINMENT
+     *          false: check if leftWindow has more aggregates
+     *              true: check if left sig ⊆ right sig
+     *                  true: RIGHT_SIG_CONTAINED
+     *                  false: NO_CONTAINMENT
+     *              false: check if right sig ⊆ left sig
+     *                  true: LEFT_SIG_CONTAINED
+     *                  false: NO_CONTAINMENT
+     *       if containmentRelationship != EQUALITY: break loop
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships

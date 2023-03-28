@@ -39,7 +39,7 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
         return NO_CONTAINMENT;
     }
     try {
-        //In the following, we
+        // In the following, we
         // First check for WindowContainment
         // In case of window equality, we continue to check for projection containment
         // In case of projection equality, we finally check for filter containment
