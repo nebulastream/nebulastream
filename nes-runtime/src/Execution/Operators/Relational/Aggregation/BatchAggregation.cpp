@@ -31,11 +31,6 @@ void* getThreadLocalState(void* op, uint64_t workerId) {
     return handler->getThreadLocalState(workerId);
 }
 
-//void* getDefaultState(void* ss) {
-//    auto handler = static_cast<BatchAggregationHandler*>(ss);
-//    return handler->getDefaultState()->ptr;
-//}
-
 class ThreadLocalAggregationState : public OperatorState {
   public:
     explicit ThreadLocalAggregationState(const Value<MemRef>& stateReference) : stateReference(stateReference) {}
@@ -45,10 +40,9 @@ class ThreadLocalAggregationState : public OperatorState {
 BatchAggregation::BatchAggregation(
     uint64_t operatorHandlerIndex,
     const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
-    const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions,
-    const std::vector<std::string>& aggregationResultFields)
+    const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
     : operatorHandlerIndex(operatorHandlerIndex), aggregationExpressions(aggregationExpressions),
-      aggregationFunctions(aggregationFunctions), aggregationResultFields(aggregationResultFields) {}
+      aggregationFunctions(aggregationFunctions){}
 
 void BatchAggregation::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -57,19 +51,14 @@ void BatchAggregation::setup(ExecutionContext& ctx) const {
         entrySize = entrySize + function->getSize();
     }
     Nautilus::FunctionCall("setupHandler", setupHandler, globalOperatorHandler, ctx.getPipelineContext(), entrySize);
-    //auto defaultState = Nautilus::FunctionCall("getDefaultState", getDefaultState, globalOperatorHandler);
-    //for (const auto& function : aggregationFunctions) {
-    //    function->reset(defaultState);
-    //    defaultState = defaultState + function->getSize();
-    //}
 }
 
 void BatchAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
+    // We use this here, to load the thread local state and stores the pointer/memref to it in the execution context.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local slice store according to the worker id.
+    // 2. load the thread local state according to the worker id.
     auto defaultState =
         Nautilus::FunctionCall("getThreadLocalState", getThreadLocalState, globalOperatorHandler, ctx.getWorkerId());
     auto threadLocalState = std::make_unique<ThreadLocalAggregationState>(defaultState);
@@ -78,7 +67,9 @@ void BatchAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
 }
 
 void BatchAggregation::execute(ExecutionContext& ctx, Record& record) const {
+    // 1. get local state
     auto aggregationState = (ThreadLocalAggregationState*) ctx.getLocalState(this);
+    // 2. update aggregates
     for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
         auto inputValue = aggregationExpressions[aggIndex]->execute(record);
         aggregationFunctions[aggIndex]->lift(aggregationState->stateReference, inputValue);

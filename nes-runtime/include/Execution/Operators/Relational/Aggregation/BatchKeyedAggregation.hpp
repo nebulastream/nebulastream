@@ -26,8 +26,15 @@ namespace NES::Runtime::Execution::Operators {
  */
 class BatchKeyedAggregation : public ExecutableOperator {
   public:
+
     /**
-     * @brief Creates a batch aggregation operator with a expression.
+     * @brief Creates a keyed batch aggregation operator.
+     * @param operatorHandlerIndex operator handler index.
+     * @param keyExpressions expressions to derive the key values.
+     * @param keyDataTypes types of the key values.
+     * @param aggregationExpressions expressions to derive the aggregation values.
+     * @param aggregationFunctions aggregation functions
+     * @param hashFunction hash function
      */
     BatchKeyedAggregation(uint64_t operatorHandlerIndex,
                           const std::vector<Expressions::ExpressionPtr>& keyExpressions,
