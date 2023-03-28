@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief The BatchAggregationHandler provides an operator handler to perform aggregations.
- * This operator handler, maintains an aggregate as a State.
+ * This operator handler, maintains an aggregate as a state.
  */
 class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
                                 public ::NES::detail::virtual_enable_shared_from_this<BatchAggregationHandler, false> {
