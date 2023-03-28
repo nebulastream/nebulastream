@@ -387,15 +387,16 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaSimple,
         [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            OriginId origin,
+            SourceDescriptorPtr,
+            Runtime::NodeEnginePtr,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaSimple,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
+                                                                 origin,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -463,15 +464,16 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaMultipleFields,
         [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            OriginId origin,
+            SourceDescriptorPtr,
+            Runtime::NodeEnginePtr,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaMultipleFields,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
+                                                                 origin,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -543,15 +545,16 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaColumnLayout,
         [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
+            OriginId origin,
+            SourceDescriptorPtr,
+            Runtime::NodeEnginePtr,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaColumnLayout,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
+                                                                 origin,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
