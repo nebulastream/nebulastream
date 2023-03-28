@@ -24,11 +24,8 @@ class KeyedSliceStaging;
 class KeyedThreadLocalSliceStore;
 class State;
 /**
- * @brief The KeyedSlicePreAggregationHandler provides an operator handler to perform slice-based pre-aggregation of keyed tumbling windows.
- * @note sliding windows will be added later.
- * This operator handler, maintains a slice store for each worker thread and provides them for the aggregation.
- * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
- * This is decided by the current watermark timestamp.
+ * @brief The BatchKeyedAggregationHandler provides an operator handler to perform keyed aggregations.
+ * This operator handler, maintains a hash-map for each worker thread and provides them for the aggregation.
  */
 class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
                                      public NES::detail::virtual_enable_shared_from_this<BatchKeyedAggregationHandler, false> {
