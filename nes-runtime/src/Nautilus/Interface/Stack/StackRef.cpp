@@ -21,15 +21,17 @@ namespace NES::Nautilus::Interface {
 StackRef::StackRef(const Value<MemRef>& stackRef, uint64_t entrySize)
     : stackRef(stackRef), entrySize(entrySize), entriesPerPage(Stack::PAGE_SIZE / entrySize) {}
 
-void allocateNewChunkProxy(void* stackPtr) {
+void allocateNewPageProxy(void* stackPtr) {
     auto* stack = (Stack*) stackPtr;
-    stack->createChunk();
+    stack->appendPage();
 }
 
 Value<MemRef> StackRef::allocateEntry() {
+    // check if we should allocate a new page
     if (getNumberOfEntries() >= entriesPerPage) {
-        FunctionCall("allocateNewChunkProxy", allocateNewChunkProxy, stackRef);
+        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, stackRef);
     }
+    // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
     auto entry = page + (getNumberOfEntries() * entrySize);
     setNumberOfEntries(getNumberOfEntries() + (uint64_t) 1);
@@ -39,6 +41,6 @@ Value<MemRef> StackRef::allocateEntry() {
 Value<MemRef> StackRef::getCurrentPage() { return getMember(stackRef, Stack, currentPage).load<MemRef>(); }
 
 Value<UInt64> StackRef::getNumberOfEntries() { return getMember(stackRef, Stack, numberOfEntries).load<UInt64>(); }
-void StackRef::setNumberOfEntries(Value<> val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
+void StackRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
 
 }// namespace NES::Nautilus::Interface

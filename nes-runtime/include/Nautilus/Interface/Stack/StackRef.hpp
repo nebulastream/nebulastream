@@ -16,12 +16,37 @@
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACKREF_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Nautilus::Interface {
+
+/**
+ * @brief This is a nautilus wrapper for the stack data structure.
+ * It wraps a memref to the underling stack and provides access methods.
+ */
 class StackRef {
   public:
+    /**
+     * @brief Constructs the wrapper.
+     * @param stackRef memref to the stack
+     * @param entrySize size of entries.
+     */
     StackRef(const Value<MemRef>& stackRef, uint64_t entrySize);
+
+    /**
+     * @brief Allocates an new entry end returns a reference to it.
+     * @return Value<MemRef>
+     */
     Value<MemRef> allocateEntry();
+
+    /**
+     * @brief Returns the number of entries in the current page.
+     * @return Value<UInt64>
+     */
     Value<UInt64> getNumberOfEntries();
-    void setNumberOfEntries(Value<> val);
+
+    /**
+     * @brief Modifies the number of entries in the current page.
+     * @param entries
+     */
+    void setNumberOfEntries(const Value<>& entries);
   private:
     Value<MemRef> getCurrentPage();
     Value<MemRef> stackRef;
