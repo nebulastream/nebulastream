@@ -23,11 +23,19 @@ namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief Batch join probe operator.
+ * The operator receives input records and uses their key to probe a global hash table.
  */
 class BatchJoinProbe : public ExecutableOperator {
   public:
+
     /**
      * @brief Creates a batch join probe operator.
+     * @param operatorHandlerIndex index of the operator handler.
+     * @param keyExpressions expressions that extract the key fields from the input record.
+     * @param keyDataTypes data types of the key fields.
+     * @param probeFieldIdentifiers record identifier of the value field in the probe table
+     * @param valueDataTypes data types of the value fields
+     * @param hashFunction hash function
      */
     BatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
@@ -48,9 +56,6 @@ class BatchJoinProbe : public ExecutableOperator {
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     uint64_t keySize;
     uint64_t valueSize;
-
-    void storeKeys(std::vector<Value<>> keys, Value<MemRef> keyPtr) const;
-    void storeValues(std::vector<Value<>> keys, Value<MemRef> valuePtr) const;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_
