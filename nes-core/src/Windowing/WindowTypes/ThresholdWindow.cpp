@@ -35,13 +35,13 @@ WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate, uint64_t minimumC
 bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
     if (otherWindowType->isContentBasedWindowType()) {
         auto contentBasedWindowType = std::dynamic_pointer_cast<ContentBasedWindowType>(otherWindowType);
-        return contentBasedWindowType->isThresholdWindow() && std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType)->getPredicate()->equal(this->getPredicate());
+        return contentBasedWindowType->getContentBasedSubWindowType()==THRESHOLDWINDOW && this->getContentBasedSubWindowType() == THRESHOLDWINDOW && std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType)->getPredicate()->equal(this->getPredicate());
     } else {
         return false;
     }
 }
 
-bool ThresholdWindow::isThresholdWindow() { return true; }
+ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBasedSubWindowType() { return THRESHOLDWINDOW; }
 
 const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicate; }
 

@@ -45,10 +45,10 @@ class TumblingWindow : public TimeBasedWindowType {
     [[nodiscard]] uint64_t calculateNextWindowEnd(uint64_t currentTs) const override;
 
     /**
-    * @brief Returns true, because this a tumbling window
-    * @return true
-    */
-    bool isTumblingWindow() override;
+     * @brief return the time-based Subwindow Type, i.e., TumblingWindow
+     * @return enum content-based Subwindow Type
+     */
+    TimeBasedSubWindowType getTimeBasedSubWindowType() override;
 
     /**
     * @brief Generates and adds all windows between which ended size the last watermark till the current watermark.

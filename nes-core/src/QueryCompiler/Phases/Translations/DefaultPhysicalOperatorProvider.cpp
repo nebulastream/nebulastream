@@ -330,7 +330,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
         auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
         //FIXME Once #3353 is merged, sliding window can be added
-        NES_ASSERT(windowType->isTumblingWindow(), "Only a tumbling window is currently supported for StreamJoin");
+        NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW, "Only a tumbling window is currently supported for StreamJoin");
 
         // FIXME Once #3407 is done, we can change this to get the left and right fieldname
         auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
@@ -538,13 +538,13 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
 
         if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
             auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-            if (timeBasedWindowType->isTumblingWindow()) {
+            if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
                 auto windowSink = PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
                                                                                              windowOutputSchema,
                                                                                              windowDefinition);
                 operatorNode->replace(windowSink);
                 return;
-            } else if (timeBasedWindowType->isSlidingWindow()) {
+            } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
                 auto globalSliceStore =
                     std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::KeyedSlice>>();
                 auto slidingWindowSinkOperator =
@@ -610,13 +610,13 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         operatorNode->insertBetweenThisAndChildNodes(merging);
         if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
             auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-            if (timeBasedWindowType->isTumblingWindow()) {
+            if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
                 auto windowSink = PhysicalOperators::PhysicalGlobalTumblingWindowSink::create(windowInputSchema,
                                                                                               windowOutputSchema,
                                                                                               windowDefinition);
                 operatorNode->replace(windowSink);
                 return;
-            } else if (timeBasedWindowType->isSlidingWindow()) {
+            } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
                 auto globalSliceStore =
                     std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::GlobalSlice>>();
                 auto slidingWindowSinkOperator =
@@ -663,7 +663,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
         if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
             auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
             // check different content-based window types
-            if (contentBasedWindowType->isThresholdWindow()) {
+            if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
                 NES_INFO("Lower ThresholdWindow");
             auto thresholdWindowPhysicalOperator =
                 PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,

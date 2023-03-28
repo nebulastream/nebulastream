@@ -21,15 +21,19 @@
 
 namespace NES::Windowing {
 class ContentBasedWindowType : public WindowType {
+
   public:
+    enum ContentBasedSubWindowType { THRESHOLDWINDOW };
+
     explicit ContentBasedWindowType();
 
     virtual ~ContentBasedWindowType() = default;
 
     /**
-    * @return true if this is a threshold window
+     * @brief getter for the SubWindowType, i.e., Thresholdwindow
+     * @return the SubWindowType
     */
-    virtual bool isThresholdWindow();
+    virtual ContentBasedSubWindowType getContentBasedSubWindowType() = 0;
 
     /**
     * @return true if this is a content-based window
@@ -49,6 +53,7 @@ class ContentBasedWindowType : public WindowType {
        * @return a shared pointer of ThresholdWindow
        */
     static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
+
 };
 }// namespace NES::Windowing
 
