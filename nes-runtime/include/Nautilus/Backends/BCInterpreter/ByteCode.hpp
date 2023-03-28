@@ -149,6 +149,7 @@ enum class ByteCode : short {
     CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64,
     // functions with ui64 return
     CALL_ui64_ptr,
+    CALL_ui64_ui64_i64,
     // functions with i64 return
     CALL_i64,
     CALL_i64_i64,
