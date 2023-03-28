@@ -29,6 +29,7 @@ namespace NES::Runtime::Execution::Operators {
  * The build phase, consumes input records from the build side and materializes hash-entries in a thread local stack.
  * If all records, are consumed, we build a global hash-map on top of all materialized values (see mergeState).
  * The final probe phase, consumes the probe side and performs key lookups in the global hash-map.
+ * TODO: Add support for concurrent merges
  */
 class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
                          public NES::detail::virtual_enable_shared_from_this<BatchJoinHandler, false> {
