@@ -19,19 +19,68 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 class StackRef;
+
+/**
+ * @brief This class provides an dynamically growing stack/list data structure of entries.
+ * All data is stored in a list of pages.
+ * Entries consume a fixed size, which has to be smaller then the page size.
+ * Each page can contain page_size/entry_size entries.
+ * TODO check if we should use FixedPage.cpp or introduce specific page class
+ */
 class Stack {
   public:
     static const uint64_t PAGE_SIZE = 4096;
-    Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
-    int8_t* createChunk();
-    size_t getNumberOfPages();
-    const std::vector<int8_t*> getPages();
-    void clear();
-    size_t getNumberOfEntries();
-    size_t capacityPerPage();
-    size_t getNumberOfEntriesOnCurrentPage();
-    ~Stack();
 
+    /**
+     * @brief Creates a new stack with a specific entry size
+     * @param allocator the allocator
+     * @param entrySize the size of an entry.
+     * TODO pass page size dynamically and adjust StackRef if needed.
+     */
+    Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
+
+    /**
+     * @brief Return the number of pages in the stack
+     * @return size_t
+     */
+    size_t getNumberOfPages();
+
+    /**
+     * @brief Returns the set of pages
+     * @return std::vector<int8_t*>
+     */
+    const std::vector<int8_t*> getPages();
+
+    /**
+     * @brief Clear the list of pages
+     */
+    void clear();
+
+    /**
+     * @brief Return the total number of entries across all pages.
+     * @return size_t
+     */
+    size_t getNumberOfEntries();
+
+    /**
+     * @brief Returns the capacity per page
+     * @return size_t
+     */
+    size_t capacityPerPage();
+
+    /**
+     * @brief Returns the number of entries on the current page
+     * @return size_t
+     */
+    size_t getNumberOfEntriesOnCurrentPage();
+    
+    /**
+     * @brief Appends a new page and updates the current page and number of enties.
+     * @return int8_t* page
+     */
+    int8_t* appendPage();
+
+    ~Stack();
   private:
     friend StackRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
@@ -39,6 +88,8 @@ class Stack {
     std::vector<int8_t*> pages;
     int8_t* currentPage;
     uint64_t numberOfEntries;
+
+
 };
 
 }// namespace NES::Nautilus::Interface

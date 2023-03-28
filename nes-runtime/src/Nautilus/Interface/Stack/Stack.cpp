@@ -17,10 +17,10 @@ namespace NES::Nautilus::Interface {
 
 Stack::Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
     : allocator(std::move(allocator)), entrySize(entrySize) {
-    createChunk();
+    appendPage();
 }
 
-int8_t* Stack::createChunk() {
+int8_t* Stack::appendPage() {
     auto page = reinterpret_cast<int8_t*>(allocator->allocate(PAGE_SIZE));
     pages.emplace_back(page);
     currentPage = page;
