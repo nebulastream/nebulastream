@@ -112,70 +112,87 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
 //todo: add documentation
 ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
+    // if no window signature is present, return equality
     if (leftSignature->getWindowsExpressions().empty() && rightSignature->getWindowsExpressions().empty()) {
         return EQUALITY;
     }
-    for (size_t i = 0; i < leftSignature->getWindowsExpressions().size(); ++i) {
+    // obtain the number of window operations. Use the number of window operations from the signature that has les window operations
+    size_t numberOfWindows = rightSignature->getWindowsExpressions().size();
+    if (numberOfWindows > leftSignature->getWindowsExpressions().size()) {
+        numberOfWindows = leftSignature->getWindowsExpressions().size();
+    }
+    // each vector entry in the windowExpressions vector represents the signature of one window
+    // we assume a bottom up approach for our containment algorithm, hence a window operation can only be partially shared if
+    // the previous operations are completely sharable. As soon as there is no equality in window operations, we return the
+    // obtained relationship
+    ContainmentType containmentRelationship = NO_CONTAINMENT;
+    for (size_t i = 0; i < numberOfWindows; ++i) {
+        // obtain each window signature in bottom up fashion
         const auto& leftWindow = leftSignature->getWindowsExpressions()[i];
         const auto& rightWindow = rightSignature->getWindowsExpressions()[i];
         NES_TRACE2("Starting with left window: {}", leftWindow.at("z3-window-expressions")->to_string());
         NES_TRACE2("Starting with right window: {}", rightWindow.at("z3-window-expressions")->to_string());
-        //checks if the window keys are equal, operator sharing can only happen for equal window-keys
+        // checks if the window ids are equal, operator sharing can only happen for equal window ids
+        // the window id consists of the involved window-keys, and the time stamp attribute
         if (leftWindow.at("window-id")->to_string() == rightWindow.at("window-id")->to_string()) {
             NES_TRACE("Same window ids.");
-            for (auto entry : leftWindow) {
-                NES_TRACE2("Left window first entry {}", entry.first);
-                NES_TRACE2("Left window second entry {}", entry.second->to_string());
-            }
-            for (auto entry : rightWindow) {
-                NES_TRACE2("Left window first entry {}", entry.first);
-                NES_TRACE2("Left window second entry {}", entry.second->to_string());
-            }
-            bool containmentRelationshipPossible = checkWindowContainmentPossible(leftWindow, leftSignature, rightSignature);
             //extract the z3-window-expressions
             z3::expr_vector leftQueryWindowConditions(*context);
             z3::expr_vector rightQueryWindowConditions(*context);
             leftQueryWindowConditions.push_back(to_expr(*context, *leftWindow.at("z3-window-expressions")));
             rightQueryWindowConditions.push_back(to_expr(*context, *rightWindow.at("z3-window-expressions")));
             NES_TRACE2("Created window FOL.");
-            //checks if the number of aggregates is equal, for equal number of aggregates we check for complete equality
-            //and if the windows contain each other, e.g. z3 checks window-size <= window-size && window-slide <= window-slide
+            //checks if the number of aggregates is equal, for equal number of aggregates we
+            // 1. check for complete equality
+            // 2. check if a containment relationship exists,
+            // e.g. z3 checks leftWindow-size <= rightWindow-size && leftWindow-slide <= rightWindow-slide
             if (leftWindow.at("number-of-aggregates")->char_to_int() == rightWindow.at("number-of-aggregates")->char_to_int()) {
                 NES_TRACE2("Same number of aggregates.");
                 if (containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                     if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
                         NES_TRACE2("Equal windows.");
-                        return EQUALITY;
+                        containmentRelationship = EQUALITY;
                     }
-                    //needs filter and projection equality
-                    //makes sure that no operations are included that cannot be contained, i.e.
-                    //Joins, Avg, and Median windows cannot share operations unless they are equal
-                    if (containmentRelationshipPossible) {
+                    // checkWindowContainmentPossible makes sure that filters are equal and no operations are included that cannot
+                    // be contained, i.e. Joins, Avg, and Median windows cannot share operations unless they are equal
+                    // additionally, we also check for projection equality
+                    else if (checkWindowContainmentPossible(leftWindow, leftSignature, rightSignature)
+                             && (checkProjectionContainment(leftSignature, rightSignature) == EQUALITY)) {
                         NES_TRACE2("Right window contained.");
-                        return RIGHT_SIG_CONTAINED;
+                        containmentRelationship = RIGHT_SIG_CONTAINED;
+                    } else {
+                        containmentRelationship = NO_CONTAINMENT;
                     }
-                } else if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
-                    //needs filter and projection equality
-                    //makes sure that no operations are included that cannot be contained, i.e.
-                    //Joins, Avg, and Median windows cannot share operations unless they are equal
-                    if (containmentRelationshipPossible) {
-                        NES_TRACE2("Left window contained.");
-                        return LEFT_SIG_CONTAINED;
-                    }
+                    // first, we check that there is a window containment relationship then
+                    // checkWindowContainmentPossible makes sure that filters are equal and no operations are included that cannot
+                    // be contained, i.e. Joins, Avg, and Median windows cannot share operations unless they are equal
+                    // additionally, we also check for projection equality
+                } else if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)
+                           && checkWindowContainmentPossible(leftWindow, leftSignature, rightSignature)
+                           && (checkProjectionContainment(leftSignature, rightSignature) == EQUALITY)) {
+                    NES_TRACE2("Left window contained.");
+                    containmentRelationship = LEFT_SIG_CONTAINED;
                 } else {
-                    NES_TRACE2("No containment.");
-                    return NO_CONTAINMENT;
+                    containmentRelationship = NO_CONTAINMENT;
                 }
+                // checks if the number of aggregates for the left signature is larger than the number of aggregates for the right
+                // signature
             } else if (leftWindow.at("number-of-aggregates")->char_to_int()
                        > rightWindow.at("number-of-aggregates")->char_to_int()) {
+                // combines window and projection FOL to find out containment relationships
                 combineWindowAndProjectionFOL(leftSignature,
                                               rightSignature,
                                               leftQueryWindowConditions,
                                               rightQueryWindowConditions);
-                if (containmentRelationshipPossible
+                // checkWindowContainmentPossible makes sure that filters are equal and no operations are included that cannot
+                // be contained, i.e. Joins, Avg, and Median windows cannot share operations unless they are equal
+                // then check if the right window is contained
+                if (checkWindowContainmentPossible(leftWindow, leftSignature, rightSignature)
                     && containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
                     NES_TRACE2("Right window contained.");
-                    return RIGHT_SIG_CONTAINED;
+                    containmentRelationship = RIGHT_SIG_CONTAINED;
+                } else {
+                    containmentRelationship = NO_CONTAINMENT;
                 }
             } else if (leftWindow.at("number-of-aggregates")->char_to_int()
                        < rightWindow.at("number-of-aggregates")->char_to_int()) {
@@ -183,15 +200,24 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                                               rightSignature,
                                               leftQueryWindowConditions,
                                               rightQueryWindowConditions);
-                if (containmentRelationshipPossible
+                // checkWindowContainmentPossible makes sure that filters are equal and no operations are included that cannot
+                // be contained, i.e. Joins, Avg, and Median windows cannot share operations unless they are equal
+                // then check if the left window is contained
+                if (checkWindowContainmentPossible(leftWindow, leftSignature, rightSignature)
                     && containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                     NES_TRACE2("Left window contained.");
-                    return LEFT_SIG_CONTAINED;
+                    containmentRelationship = LEFT_SIG_CONTAINED;
+                } else {
+                    containmentRelationship = NO_CONTAINMENT;
                 }
             }
         }
+        // stop the loop as soon as there is no equality relationship
+        if (containmentRelationship != EQUALITY) {
+            return containmentRelationship;
+        }
     }
-    return NO_CONTAINMENT;
+    return containmentRelationship;
 }
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,

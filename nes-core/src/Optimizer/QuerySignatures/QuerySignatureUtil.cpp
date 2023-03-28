@@ -638,6 +638,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     std::map<std::string, z3::ExprPtr> joinWindowExpression;
     joinWindowExpression.insert(
         {"z3-window-expressions", std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)))});
+    // Need number of aggregates, aggregate type, and window id for heuristic checks for query containment identification
     joinWindowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(0))});
     joinWindowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(""))});
     joinWindowExpression.insert({"window-id", std::make_shared<z3::expr>(context->string_val(windowKey))});
@@ -697,6 +698,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
         z3::expr windowId = context->string_val(windowKey + "." + windowTimeKeyVal.to_string());
+        // window id for heuristic checks for query containment identification
         windowExpression.insert({"window-id", std::make_shared<z3::expr>(windowId)});
 
         //Compute the expression for window size and slide
@@ -784,6 +786,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     }
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
     auto outputSchema = windowOperator->getOutputSchema();
+    // number of aggregates, and aggregate type for heuristic checks for query containment identification
     windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(numberOfAggregates))});
     windowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(aggregateTypes))});
 
@@ -803,7 +806,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate()));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
-                //todo: find out if this works
                 auto fieldExpr = schemaFieldToExprMap[onFieldNames[std::distance(
                     asFieldNames.begin(),
                     std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))]];
