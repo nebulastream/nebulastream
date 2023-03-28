@@ -744,7 +744,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Compute expression for aggregation method
     z3::func_decl aggregate(*context);
     z3::sort sort = context->int_sort();
-    size_t numberOfAggregates = 0;
+    uint64_t numberOfAggregates = 0;
     std::string aggregateTypes = "";
     for (auto windowAggregation : windowDefinition->getWindowAggregation()) {
         switch (windowAggregation->getType()) {
