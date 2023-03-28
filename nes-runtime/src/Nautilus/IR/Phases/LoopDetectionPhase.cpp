@@ -199,10 +199,10 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                     // and check whether it's second to last operation is a valid
                     // candidate for the loop-count-operation (the operation that increments the induction variable).
                     auto countOp = priorBlock->getOperations().at(priorBlock->getOperations().size() - 2);
-                    if (compareOp->getComparator() != Operations::CompareOperation::Comparator::IEQ
-                        && (countOp->getOperationType() == Operations::Operation::OperationType::AddOp)
-                        && compareOp->getComparator() < Operations::CompareOperation::Comparator::FOLT
-                        && priorBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::BranchOp
+                    if (compareOp->getComparator() != Operations::CompareOperation::EQ
+                        && (countOp->getOperationType() == Operations::Operation::AddOp)
+                        && compareOp->getComparator() < Operations::CompareOperation::Comparator::LT
+                        && priorBlock->getTerminatorOp()->getOperationType() == Operations::Operation::BranchOp
                         && std::static_pointer_cast<Operations::BranchOperation>(priorBlock->getTerminatorOp())
                                 ->getNextBlockInvocation()
                                 .getOperationArgIndex(countOp)

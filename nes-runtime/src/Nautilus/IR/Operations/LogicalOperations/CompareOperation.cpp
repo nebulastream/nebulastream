@@ -29,11 +29,11 @@ OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
-bool CompareOperation::isLessThan() { return (comparator == Comparator::ISLT || comparator == Comparator::IULT); }
-bool CompareOperation::isLessEqual() { return (comparator == Comparator::ISLE || comparator == Comparator::IULE); }
-bool CompareOperation::isGreaterThan() { return (comparator == Comparator::ISGT || comparator == Comparator::IUGT); }
-bool CompareOperation::isGreaterEqual() { return (comparator == Comparator::ISGE || comparator == Comparator::IUGE); }
-bool CompareOperation::isEquals() { return (comparator == Comparator::IEQ); }
+bool CompareOperation::isLessThan() { return (comparator == LT); }
+bool CompareOperation::isLessEqual() { return (comparator == LE); }
+bool CompareOperation::isGreaterThan() { return (comparator == GT); }
+bool CompareOperation::isGreaterEqual() { return (comparator == GE); }
+bool CompareOperation::isEquals() { return (comparator == EQ); }
 bool CompareOperation::isLessThanOrGreaterThan() { return isLessThan() || isGreaterThan(); }
 bool CompareOperation::isLess() { return isLessThan() || isLessEqual(); }
 bool CompareOperation::isGreater() { return isGreaterThan() || isGreaterEqual(); }
@@ -41,22 +41,12 @@ bool CompareOperation::isGreater() { return isGreaterThan() || isGreaterEqual();
 std::string CompareOperation::toString() {
     std::string comperator;
     switch (comparator) {
-        case Comparator::IEQ: comperator = "=="; break;
-        case Comparator::INE: comperator = "!="; break;
-        case Comparator::ISLT: comperator = "<"; break;
-        case Comparator::ISLE: comperator = "<="; break;
-        case Comparator::ISGT: comperator = ">"; break;
-        case Comparator::ISGE: comperator = ">="; break;
-        case Comparator::IULT: comperator = "<"; break;
-        case Comparator::IULE: comperator = "<="; break;
-        case Comparator::IUGT: comperator = ">"; break;
-        case Comparator::IUGE: comperator = ">="; break;
-        case Comparator::FOLT: comperator = "<"; break;
-        case Comparator::FOLE: comperator = "<="; break;
-        case Comparator::FOGT: comperator = ">"; break;
-        case Comparator::FOGE: comperator = ">="; break;
-        case Comparator::FOEQ: comperator = "=="; break;
-        case Comparator::FONE: comperator = "!="; break;
+        case EQ: comperator = "=="; break;
+        case NE: comperator = "!="; break;
+        case LT: comperator = "<"; break;
+        case LE: comperator = "<="; break;
+        case GT: comperator = ">"; break;
+        case GE: comperator = ">="; break;
     }
 
     return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();
