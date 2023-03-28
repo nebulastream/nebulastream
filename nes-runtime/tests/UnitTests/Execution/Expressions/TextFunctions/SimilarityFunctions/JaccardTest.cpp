@@ -51,28 +51,28 @@ TEST_F(JaccardTest, BaseTest) {
     auto textValue = Value<Text>("duck");
     auto textValue0 = Value<Text>("pluck");
     auto dist1 = expression.eval(textValue, textValue0);
-    ASSERT_EQ(dist1, (double) 0.5);
+    EXPECT_EQ(dist1, (double) 0.5);
 
     auto textValue1 = Value<Text>("du");
     auto textValue2 = Value<Text>("testcase");
     auto dist2 = expression.eval(textValue1, textValue2);
-    ASSERT_EQ(dist2, (double) 0.0);
+    EXPECT_EQ(dist2, (double) 0.0);
 
     auto textValue3 = Value<Text>("da");
     auto dist3 = expression.eval(textValue3, textValue2);
-    //ASSERT_EQ(dist3, (double) 0.1);
+    //EXPECT_EQ(dist3, (double) 0.1);
     //TODO ASSERT_NEAR does not work out of the box, dist3 is identified as boolean
 
    auto textValue4 = Value<Text>("duck");
    auto dist4 = expression.eval(textValue, textValue4);
-   ASSERT_EQ(dist4, (double) 1.0);
+   EXPECT_EQ(dist4, (double) 1.0);
 }
 
 TEST_F(JaccardTest, FailTest) {
     auto expression = BinaryExpressionWrapper<JaccardDistance>();
     auto textValue0 = Value<Float>((float) 17.5);
     auto textValue1 = Value<Text>("duck");
-    ASSERT_ANY_THROW(expression.eval(textValue0, textValue1));
+    EXPECT_ANY_THROW(expression.eval(textValue0, textValue1));
 }
 
 }// namespace NES::Runtime::Execution::Expressions

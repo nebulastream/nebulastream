@@ -55,7 +55,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex1) {
         auto r = Value<Text>("X");
         auto resultValue = expression.eval(l, m, r);
         NES_DEBUG(resultValue.as<Text>()->toString());
-        ASSERT_EQ(resultValue, Value<Text>("aXX"));
+        EXPECT_EQ(resultValue, Value<Text>("aXX"));
     }
 }
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex2) {
@@ -66,7 +66,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex2) {
         auto m = Value<Text>("[b]");
         auto r = Value<Text>("X");
         auto resultValue = expression.eval(l, m, r);
-        ASSERT_EQ(resultValue, Value<Text>("aXc"));
+        EXPECT_EQ(resultValue, Value<Text>("aXc"));
     }
 }
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex3) {
@@ -77,7 +77,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex3) {
         auto m = Value<Text>("\\b(sub)([^ ]*)");
         auto r = Value<Text>("sub-$2");
         auto resultValue = expression.eval(l, m, r);
-        ASSERT_EQ(resultValue, Value<Text>("there is a sub-sequence in the string"));
+        EXPECT_EQ(resultValue, Value<Text>("there is a sub-sequence in the string"));
     }
 }
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex4) {
@@ -88,7 +88,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex4) {
         auto m = Value<Text>("b{2,}");
         auto r = Value<Text>("X");
         auto resultValue = expression.eval(l, m, r);
-        ASSERT_EQ(resultValue, Value<Text>("aXc"));
+        EXPECT_EQ(resultValue, Value<Text>("aXc"));
     }
 }
 

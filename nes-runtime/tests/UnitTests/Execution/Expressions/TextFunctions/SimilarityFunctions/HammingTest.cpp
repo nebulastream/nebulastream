@@ -51,26 +51,26 @@ TEST_F(HammingTest, BaseTest) {
     auto textValue0 = Value<Text>("lurk");
     auto textValue1 = Value<Text>("duck");
     auto dist1 = expression.eval(textValue0, textValue1);
-    ASSERT_EQ(dist1, (uint64_t) 2);
+    EXPECT_EQ(dist1, (uint64_t) 2);
 
     auto textValue2 = Value<Text>("duk");
     auto textValue3 = Value<Text>("duk");
     auto dist2 = expression.eval(textValue2, textValue3);
-    ASSERT_EQ(dist2, (uint64_t) 0);
+    EXPECT_EQ(dist2, (uint64_t) 0);
 }
 
 TEST_F(HammingTest, FailTestInputType) {
     auto expression = BinaryExpressionWrapper<HammingDistance>();
     auto textValue0 = Value<Float>((float) 17.5);
     auto textValue1 = Value<Text>("duck");
-    ASSERT_ANY_THROW(expression.eval(textValue0, textValue1));
+    EXPECT_ANY_THROW(expression.eval(textValue0, textValue1));
 }
 
 TEST_F(HammingTest, FailTestInputLength) {
     auto expression = BinaryExpressionWrapper<HammingDistance>();
     auto textValue1 = Value<Text>("duck");
     auto textValue2 = Value<Text>("duk");
-    ASSERT_ANY_THROW(expression.eval(textValue2, textValue1));
+    EXPECT_ANY_THROW(expression.eval(textValue2, textValue1));
 }
 
 }// namespace NES::Runtime::Execution::Expressions

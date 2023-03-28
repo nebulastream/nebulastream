@@ -54,7 +54,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex1) {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("This is a Test");
         auto resultValue = expression.eval(l, r);
-        ASSERT_TRUE((Boolean) resultValue);
+        EXPECT_TRUE((Boolean) resultValue);
     }
 }
 TEST_F(SearchingRegexTest, evaluateSearchingRegex2) {
@@ -64,7 +64,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex2) {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("This is a Test!");
         auto resultValue = expression.eval(l, r);
-        ASSERT_FALSE((Boolean) resultValue);
+        EXPECT_FALSE((Boolean) resultValue);
     }
 }
 TEST_F(SearchingRegexTest, evaluateSearchingRegex3) {
@@ -74,7 +74,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex3) {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("Test");
         auto resultValue = expression.eval(l, r);
-        ASSERT_TRUE((Boolean) resultValue);
+        EXPECT_TRUE((Boolean) resultValue);
     }
 }
 TEST_F(SearchingRegexTest, evaluateSearchingRegex4) {
@@ -84,7 +84,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex4) {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("bbbb");
         auto resultValue = expression.eval(l, r);
-        ASSERT_FALSE((Boolean) resultValue);
+        EXPECT_FALSE((Boolean) resultValue);
     }
 }
 
