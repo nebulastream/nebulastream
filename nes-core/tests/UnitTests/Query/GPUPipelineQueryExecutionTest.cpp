@@ -85,7 +85,11 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
+    void TearDown() override {
+        NES_DEBUG("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
+        ASSERT_TRUE(nodeEngine->stop());
+        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {}
