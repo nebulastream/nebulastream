@@ -143,9 +143,11 @@ TEST(FFTTest, fftNyquist) {
 
 TEST(FFTTest, completeFftAnalysis) {
     std::vector<double> signalInput{1., 2., 3., 4., 1., -1., 0.};
+    bool expectedFalseIsAliased{false};
+    double expectedNewNyquist{0.046052631578947366};
     auto res = Util::computeNyquistAndEnergy(signalInput, 38.);
-    EXPECT_EQ(false, std::get<0>(res));
-    EXPECT_NEAR(0.046052631578947366, std::get<1>(res), .01);
+    EXPECT_EQ(expectedFalseIsAliased, std::get<0>(res));
+    EXPECT_NEAR(expectedNewNyquist, std::get<1>(res), .01);
 }
 
 }// namespace NES
