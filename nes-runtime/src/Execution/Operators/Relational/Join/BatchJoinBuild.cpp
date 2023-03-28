@@ -75,14 +75,14 @@ void BatchJoinBuild::setup(ExecutionContext& executionCtx) const {
 
 void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
+    // We use this here, to load the thread local stack and store it in the local state.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local slice store according to the worker id.
+    // 2. load the thread local stack according to the worker id.
     auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler, ctx.getWorkerId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
     auto stack = Interface::StackRef(state, entrySize);
-    // 3. store the reference to the slice store in the local operator state.
+    // 3. store the reference to the stack in the local operator state.
     auto sliceStoreState = std::make_unique<LocalJoinBuildState>(stack);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
@@ -94,23 +94,26 @@ void BatchJoinBuild::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
         keyValues.emplace_back(exp->execute(record));
     }
 
-    // 3. load the reference to the slice store and find the correct slice.
+    // 3. load the reference to the stack.
     auto state = reinterpret_cast<LocalJoinBuildState*>(ctx.getLocalState(this));
     auto& stack = state->stack;
-    // 4. calculate hash
+
+    // 4. store entry in the stack
+
+    // 4.1 calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 5. create entry and store it in stack
+    // 4.2 create entry and store it in stack
     auto entry = stack.allocateEntry();
-    // 5a. store hash value at next offset
+    // 4.3a store hash value at next offset
     auto hashPtr = (entry + sizeof(int64_t)).as<MemRef>();
     hashPtr.store(hash);
 
-    // 5b. store key values
+    // 4.3b store key values
     auto keyPtr = (hashPtr + sizeof(int64_t)).as<MemRef>();
     storeKeys(keyValues, keyPtr);
 
-    // 5c. store value values
+    // 4.3c store value values
     std::vector<Value<>> values;
     for (const auto& exp : valueExpressions) {
         values.emplace_back(exp->execute(record));
