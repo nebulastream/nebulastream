@@ -105,8 +105,7 @@ class TPCH_Query6 {
             std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
         auto aggregation = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/,
                                                                          aggregationFields,
-                                                                         aggregationFunctions,
-                                                                         resultFields);
+                                                                         aggregationFunctions);
         selection2->setChild(aggregation);
 
         // create aggregation pipeline
