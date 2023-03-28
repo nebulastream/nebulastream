@@ -22,7 +22,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Batch Aggregation operator.
+ * @brief Batch operator for keyed aggregations.
  */
 class BatchKeyedAggregation : public ExecutableOperator {
   public:

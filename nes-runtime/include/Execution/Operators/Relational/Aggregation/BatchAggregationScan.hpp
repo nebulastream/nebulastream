@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Batch Aggregation operator.
+ * @brief Batch Aggregation scan operator, it accesses multiple thread local states and performs the final aggregation.
  */
 class BatchAggregationScan : public Operator {
   public:
