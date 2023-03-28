@@ -479,7 +479,15 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     std::vector<Runtime::Execution::Aggregation::AggregationFunctionPtr> aggregationFunctions;
+
     std::vector<std::string> aggregationResultFieldNames;
+    std::transform(aggregations.cbegin(),
+                   aggregations.cend(),
+                   std::back_inserter(aggregationResultFieldNames),
+                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
+                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
+                   });
+
     std::vector<std::shared_ptr<Runtime::Execution::Expressions::Expression>> aggregatedFieldAccesses;
     // iterate over all aggregation function and lower them
     for (int64_t i = 0; i < (int64_t) aggregations.size(); ++i) {
@@ -487,12 +495,6 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         NES_INFO("lowerThresholdWindow Aggregations: " << aggregation->toString());
         auto aggregationFunction = lowerAggregations(aggregations)[i];
         aggregationFunctions.emplace_back(aggregationFunction);
-        // Obtain the field name used to store the aggregation result
-        auto thresholdWindowResultSchema =
-            operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
-        NES_INFO("lowerThresholdWindow threshold window result schema: " << thresholdWindowResultSchema->toString());
-        auto aggregationResultFieldName = thresholdWindowResultSchema->get(i)->getName();
-        aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
         /** check if the aggregation is not of type Count
           *  count is treated different as does not agg onField but onTuple thus the onField for count should not be set to anything
           *  and we want that all vectors, i.e., aggregationFunctions, aggregationResultFieldNames, and aggregatedFieldAccesses
