@@ -27,6 +27,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -98,8 +99,6 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
         std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions);
     scanOperator->setChild(aggregationOp);
 
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    aggregationOp->setChild(emitOperator);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
@@ -120,14 +119,30 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto preAggExecutablePipeline = provider->create(pipeline);
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+
+
+
+
+
+    auto aggScan = std::make_shared<Operators::BatchAggregationScan>(0 /*handler index*/, aggregationFunctions, resultFields);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    aggScan->setChild(emitOperator);
+    auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline2->setRootOperator(aggScan);
+    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto aggExecutablePipeline = provider->create(pipeline2);
+
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
+    aggExecutablePipeline->setup(pipeline2Context);
+    aggExecutablePipeline->execute(buffer, pipeline2Context, *wc);
     preAggExecutablePipeline->stop(pipeline1Context);
+    aggExecutablePipeline->stop(pipeline2Context);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("f1", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline1Context.buffers[0]);
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 70);
 }
 
