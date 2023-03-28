@@ -52,8 +52,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch1) {
         auto l = Value<Text>("test");
         auto r = Value<Text>("test");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) true);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch2) {

@@ -53,7 +53,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex1) {
         auto idx = 0;
         auto resultValue = expression.eval(l, m, idx);
         NES_DEBUG(resultValue.as<Text>()->toString());
-        ASSERT_EQ(resultValue, Value<Text>("abc"));
+        EXPECT_EQ(resultValue, Value<Text>("abc"));
     }
 }
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex2) {
@@ -64,7 +64,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex2) {
         auto m = Value<Text>(".b.");
         auto idx = 1;
         auto resultValue = expression.eval(l, m, idx);
-        ASSERT_EQ(resultValue, Value<Text>(""));
+        EXPECT_EQ(resultValue, Value<Text>(""));
     }
 }
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex3) {
@@ -75,7 +75,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex3) {
         auto m = Value<Text>("([a-z])(b)");
         auto idx = 1;
         auto resultValue = expression.eval(l, m, idx);
-        ASSERT_EQ(resultValue, Value<Text>("a"));
+        EXPECT_EQ(resultValue, Value<Text>("a"));
     }
 }
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex4) {
@@ -86,7 +86,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex4) {
         auto m = Value<Text>("([a-z])(b)");
         auto idx = 2;
         auto resultValue = expression.eval(l, m, idx);
-        ASSERT_EQ(resultValue, Value<Text>("b"));
+        EXPECT_EQ(resultValue, Value<Text>("b"));
     }
 }
 }// namespace NES::Runtime::Execution::Expressions

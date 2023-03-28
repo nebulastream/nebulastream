@@ -51,36 +51,36 @@ TEST_F(LevenshteinTest, BaseTest) {
     auto textValue0 = Value<Text>("db");
     auto textValue1 = Value<Text>("duck");
     auto dist1 = expression.eval(textValue0, textValue1);
-    ASSERT_EQ(dist1, (uint64_t) 3);
+    EXPECT_EQ(dist1, (uint64_t) 3);
 
     auto textValue2 = Value<Text>("aro");
     auto dist2 = expression.eval(textValue2, Value<Text>("roa"));
-    ASSERT_EQ(dist2, (uint64_t) 2);
+    EXPECT_EQ(dist2, (uint64_t) 2);
 
     auto dist3 = expression.eval(textValue2, Value<Text>("oar"));
-    ASSERT_EQ(dist3, (uint64_t) 2);
+    EXPECT_EQ(dist3, (uint64_t) 2);
 
     auto dist4 = expression.eval(textValue2, Value<Text>("daro"));
-    ASSERT_EQ(dist4, (uint64_t) 1);
+    EXPECT_EQ(dist4, (uint64_t) 1);
 
     auto dist5 = expression.eval(textValue2, Value<Text>("ao"));
-    ASSERT_EQ(dist5, (uint64_t) 1);
+    EXPECT_EQ(dist5, (uint64_t) 1);
 
     auto textValue3 = Value<Text>("duck");
     auto dist6 = expression.eval(textValue1, textValue3);
-    ASSERT_EQ(dist6, (uint64_t) 0);
+    EXPECT_EQ(dist6, (uint64_t) 0);
 
     auto textValue4 = Value<Text>("d");
     auto textValue5 = Value<Text>("z");
     auto dist7 = expression.eval(textValue4, textValue5);
-    ASSERT_EQ(dist7, (uint64_t) 1);
+    EXPECT_EQ(dist7, (uint64_t) 1);
 }
 
 TEST_F(LevenshteinTest, FailTest) {
     auto expression = BinaryExpressionWrapper<LevenshteinDistance>();
     auto textValue0 = Value<Float>((float) 17.5);
     auto textValue1 = Value<Text>("duck");
-    ASSERT_ANY_THROW(expression.eval(textValue0, textValue1));
+    EXPECT_ANY_THROW(expression.eval(textValue0, textValue1));
 }
 
 }// namespace NES::Runtime::Execution::Expressions
