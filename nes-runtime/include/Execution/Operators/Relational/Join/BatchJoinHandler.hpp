@@ -25,14 +25,16 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
 
   public:
     /**
-     * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
+     * @brief Creates the operator handler for the join operator.
      */
     BatchJoinHandler();
 
     /**
-     * @brief Initializes the thread local state for the window operator
+     * @brief Initializes the thread local state for the join operator
      * @param ctx PipelineExecutionContext
      * @param entrySize Size of the aggregated values in memory
+     * @param keySize Size of the key values in memory
+     * @param valueSize Size of the value values in memory
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize, uint64_t keySize, uint64_t valueSize);
 
@@ -41,16 +43,16 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
                uint32_t localStateVariableId) override;
 
     /**
-     * @brief Stops the operator handler and triggers all in flight slices.
+     * @brief Stops the operator handler
      * @param pipelineExecutionContext pipeline execution context
      */
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
-     * @brief Returns the thread local slice store by a specific worker thread id
+     * @brief Returns the thread local state for a  specific worker thread id
      * @param workerId
-     * @return GlobalThreadLocalSliceStore
+     * @return  Nautilus::Interface::Stack*
      */
     Nautilus::Interface::Stack* getThreadLocalState(uint64_t workerId);
     Nautilus::Interface::ChainedHashMap* mergeState();

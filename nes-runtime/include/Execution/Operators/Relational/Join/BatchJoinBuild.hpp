@@ -22,12 +22,12 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Batch Aggregation operator.
+ * @brief Batch Join operator.
  */
 class BatchJoinBuild : public ExecutableOperator {
   public:
     /**
-     * @brief Creates a batch aggregation operator with a expression.
+     * @brief Creates a batch join operator.
      */
     BatchJoinBuild(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
