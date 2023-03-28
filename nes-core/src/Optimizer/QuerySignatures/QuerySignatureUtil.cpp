@@ -267,13 +267,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
 
     auto windowsExpressions = childQuerySignature->getWindowsExpressions();
-    auto numberOfAggregatesPerWindow = childQuerySignature->getNumberOfAggregatesPerWindow();
     //Compute signature
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowsExpressions),
-                                  std::move(numberOfAggregatesPerWindow));
+                                  std::move(windowsExpressions));
 }
 #endif// TFDEF
 
