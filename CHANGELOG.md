@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.38](https://github.com/nebulastream/nebulastream/tree/v0.5.38) (2023-03-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.37...v0.5.38)
+
+### Bug Fixes 🐛
+
+- \[BUG\] The predicate in the threshold window does not work with float objects [\#3607](https://github.com/nebulastream/nebulastream/issues/3607)
+
 ## [v0.5.37](https://github.com/nebulastream/nebulastream/tree/v0.5.37) (2023-03-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.36...v0.5.37)
