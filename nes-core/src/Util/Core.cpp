@@ -289,16 +289,15 @@ std::tuple<bool, int> Util::is_aliased_and_nyq_freq(const std::vector<double>& p
 };
 
 
-std::tuple<bool, double> Util::computeNyquistAndEnergy(const std::vector<double>& inputSignal, double interval) {
+std::tuple<bool, double> Util::computeNyquistAndEnergy(const std::vector<double>& inputSignal, double intervalInSeconds) {
     // Copy the vals
     std::vector<double> currentSignal = inputSignal;
-    double frequency = 1./interval;
-    double currentNyq = 1./interval;
+    double frequency = 1./intervalInSeconds;
+    double currentNyq = 1./intervalInSeconds;
 
-    // Calculate the mean of non-NaN elements
-    auto mean_it = std::find_if(currentSignal.begin(), currentSignal.end(), [](double x){ return !std::isnan(x); });
-    double mean = std::accumulate(mean_it, currentSignal.end(), 0.0) / std::distance(mean_it, currentSignal.end());
-    // Subtract the mean from each element
+    // Calculate the mean of the elements
+    double mean = std::accumulate(currentSignal.begin(), currentSignal.end(), 0.0) / inputSignal.size();
+    // Detrend the mean from all elements
     std::transform(currentSignal.begin(), currentSignal.end(), currentSignal.begin(), [mean](double x){ return x - mean; });
 
     // Perform 1D FFT on the detrended values

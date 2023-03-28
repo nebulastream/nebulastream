@@ -13,13 +13,13 @@
 */
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sensors/Values/SingleSensor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/ZmqSource.hpp>
@@ -27,6 +27,7 @@
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <filesystem>
 #include <functional>
@@ -69,8 +70,8 @@ DataSource::DataSource(SchemaPtr pSchema,
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName),
-      kFilter(std::make_unique<KalmanFilter>()), lastValues(10) {
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName), kFilter(std::make_unique<KalmanFilter>()),
+      lastValuesBuf(lastValuesSize), lastValuesVec(lastValuesSize), lastIntervalBuf(lastValuesSize) {
     this->kFilter->init();
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
@@ -507,7 +508,32 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
+<<<<<<< HEAD
                     NES_TRACE("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
+=======
+                    // TODO: fix performance here?
+                    // TODO: perform a single run for correctness
+                    auto numOfTuples = buf.getNumberOfTuples();
+                    auto records = buf.getBuffer<Sensors::SingleSensor>();
+                    double currentIntervalInSeconds = this->gatheringInterval.count() / 1000.;
+                    for (uint64_t i = 0; i < numOfTuples; ++i) {
+                        this->lastValuesBuf.emplace(records[i].value);
+                        this->lastIntervalBuf.emplace(currentIntervalInSeconds);
+                    }
+                    // use a vector, find mean interval at the same time
+                    double totalIntervalInseconds = 0;
+                    for (uint64_t idx=0; idx < this->lastValuesBuf.size(); ++idx) {
+                        this->lastValuesVec.emplace_back(this->lastValuesBuf.at(idx));
+                        totalIntervalInseconds += this->lastIntervalBuf.at(idx);
+                    }
+                    totalIntervalInseconds /= this->lastValuesBuf.size();
+                    double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
+                    std::tuple<bool, double> res = Util::computeNyquistAndEnergy(lastValuesVec, skewedIntervalInseconds);
+                    if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
+                        this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
+                    }
+                    NES_TRACE2("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
+>>>>>>> 7d4de80f03 (Add Chameleon in datasource)
                     this->kFilter->updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter->getNewGatheringInterval();
                     NES_TRACE("DataSource new sourceGatheringInterval = {}ms", this->gatheringInterval.count());

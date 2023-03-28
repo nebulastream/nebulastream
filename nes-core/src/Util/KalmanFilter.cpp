@@ -236,6 +236,9 @@ void KalmanFilter::setGatheringIntervalWithRange(std::chrono::milliseconds gathe
 
 void KalmanFilter::setSlowestInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
     this->slowestInterval = gatheringIntervalInMillis;
+    if (this->slowestInterval < this->fastestInterval) {
+        this->fastestInterval = 3 * this->slowestInterval;
+    }
 }
 
 void KalmanFilter::setFastestInterval(std::chrono::milliseconds gatheringIntervalInMillis) {

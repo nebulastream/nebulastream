@@ -284,7 +284,7 @@ std::tuple<bool, int> is_aliased_and_nyq_freq(const std::vector<double>& psd_arr
  * @param interval the current avg. of the interval in the window
  * @return 2-tuple of (true/false if oversampled), proposed nyquist in s)
  */
-std::tuple<bool, double> computeNyquistAndEnergy(const std::vector<double>& inputSignal, double interval);
+std::tuple<bool, double> computeNyquistAndEnergy(const std::vector<double>& inputSignal, double intervalInSeconds);
 
 };// namespace Util
 }// namespace NES

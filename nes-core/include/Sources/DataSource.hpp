@@ -22,6 +22,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/CircularBuffer.hpp>
 #include <Util/GatheringMode.hpp>
 #include <atomic>
 #include <chrono>
@@ -345,7 +346,15 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     /**
      * @brief window of W last seen values.
      */
-    std::vector<double> lastValues;
+    const static uint64_t lastValuesSize{20};
+    CircularBuffer<double> lastValuesBuf;
+    std::vector<double> lastValuesVec;
+
+
+    /**
+     * @brief window of W last used intervals
+     */
+    CircularBuffer<double> lastIntervalBuf;
 
     bool endOfStreamSent{false};// protected by startStopMutex
 };
