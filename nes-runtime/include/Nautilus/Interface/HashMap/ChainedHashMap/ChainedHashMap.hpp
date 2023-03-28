@@ -111,7 +111,13 @@ class ChainedHashMap {
      */
     int8_t* getPage(uint64_t pageIndex);
 
-
+    /**
+     * @brief Inserts a page of entries to the hash table.
+     * This assumes that entries have the same shape and size as the the entries of this hash map
+     * This avoids any allocations, and inserts the page directly to the map, thus the ownership of the page also moves.
+     * @param page
+     * @param numberOfEntries
+     */
     void insertPage(int8_t* page, uint64_t numberOfEntries);
 
     /**
