@@ -16,6 +16,7 @@
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Nautilus::Backends::BC {
@@ -599,6 +600,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         } else if (arguments.size() == 2) {
             if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
                 NES_NOT_IMPLEMENTED();
+            } if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i64) {
+                bc = ByteCode::CALL_ui64_ui64_i64;
             } else {
                 NES_NOT_IMPLEMENTED();
             }
