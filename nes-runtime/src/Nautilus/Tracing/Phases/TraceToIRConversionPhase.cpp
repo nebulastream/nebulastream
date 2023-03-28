@@ -340,11 +340,8 @@ void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
     }
 
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
-        resultIdentifier,
-        leftInput,
-        rightInput,
-        comparator);
+    auto compareOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier, leftInput, rightInput, comparator);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -363,11 +360,8 @@ void TraceToIRConversionPhase::IRConversionContext::processGreaterThan(int32_t,
     }
 
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
-        resultIdentifier,
-        leftInput,
-        rightInput,
-        comparator);
+    auto compareOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier, leftInput, rightInput, comparator);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }

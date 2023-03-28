@@ -626,7 +626,6 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
 }
 
-
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
