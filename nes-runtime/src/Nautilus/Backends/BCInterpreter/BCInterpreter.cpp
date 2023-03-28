@@ -126,6 +126,7 @@ static Operation* OpTable[] = {
     (Operation*) call<void, void*, void*, void*, uint64_t, uint64_t, uint64_t, uint64_t>,
     // Return uint64_t
     (Operation*) call<uint64_t, void*>,
+    (Operation*) call<uint64_t, uint64_t, int64_t>,
     // Return int64_t
     (Operation*) call<int64_t>,
     (Operation*) call<int64_t, int64_t>,

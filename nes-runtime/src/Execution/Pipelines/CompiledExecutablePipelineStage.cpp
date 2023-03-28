@@ -79,7 +79,7 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     NES_DEBUG(ir->toString());
     //Nautilus::IR::RemoveBrOnlyBlocksPhase().apply(ir);
     timer.snapshot("NESIR Generation");
-    NES_DEBUG(ir->toString());
+    NES_INFO(ir->toString());
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
     auto executable = compiler->compile(ir);
     timer.snapshot("Compilation");
