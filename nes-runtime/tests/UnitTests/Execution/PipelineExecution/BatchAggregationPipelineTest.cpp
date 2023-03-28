@@ -95,7 +95,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
     auto aggregationOp =
-        std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions, resultFields);
+        std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions);
     scanOperator->setChild(aggregationOp);
 
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
