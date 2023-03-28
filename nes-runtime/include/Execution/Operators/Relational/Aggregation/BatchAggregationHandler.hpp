@@ -18,25 +18,22 @@
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
 
-
 /**
- * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
- * of global non-keyed tumbling and sliding windows.
- * This operator handler, maintains a slice store for each worker thread and provides them for the aggregation.
- * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
- * This is decided by the current watermark timestamp.
+ * @brief The BatchAggregationHandler provides an operator handler to perform aggregations.
+ * This operator handler, maintains an aggregate as a State.
  */
 class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                         public ::NES::detail::virtual_enable_shared_from_this<BatchAggregationHandler, false> {
+                                public ::NES::detail::virtual_enable_shared_from_this<BatchAggregationHandler, false> {
     using State = int8_t*;
+
   public:
     /**
-     * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
+     * @brief Creates the operator handler.
      */
     BatchAggregationHandler();
 
     /**
-     * @brief Initializes the thread local state for the window operator
+     * @brief Initializes the thread local state for the aggregation operator
      * @param ctx PipelineExecutionContext
      * @param entrySize Size of the aggregated values in memory
      */
@@ -46,23 +43,20 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    /**
-     * @brief Stops the operator handler and triggers all in flight slices.
-     * @param pipelineExecutionContext pipeline execution context
-     */
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-     /**
-     * @brief Returns the thread local slice store by a specific worker thread id
+    /**
+     * @brief Returns the thread local state by a specific worker thread id
      * @param workerId
-     * @return GlobalThreadLocalSliceStore
+     * @return State
      */
     State getThreadLocalState(uint64_t workerId);
 
     ~BatchAggregationHandler() override;
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
   private:
     std::vector<State> threadLocalStateStores;
 };
