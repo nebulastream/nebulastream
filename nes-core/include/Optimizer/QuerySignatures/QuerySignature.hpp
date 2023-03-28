@@ -69,7 +69,7 @@ class QuerySignature {
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
      * @param schemaFieldToExprMaps: map of tuple schemas expected at the operator
-     * @param windowsExpressions: the map containing window expressions
+     * @param windowsExpressions: vector with maps containing window expressions
      * @return Shared instance of the query plan signature.
      */
     static QuerySignaturePtr create(z3::ExprPtr&& conditions,
@@ -103,6 +103,13 @@ class QuerySignature {
 
 
   private:
+    /**
+     * @brief a query signature instance
+     * @param conditions First order logic for the involved predicates
+     * @param columns attributes present for the current operator
+     * @param schemaFieldToExprMaps map of tuple schemas expected at the operator
+     * @param windowsExpressions vector containing multiple maps representing the window operations for this query
+     */
     QuerySignature(z3::ExprPtr&& conditions,
                    std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
