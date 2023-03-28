@@ -22,12 +22,21 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief Batch Join operator.
+ * @brief Batch JoinBuild operator.
+ * The join build operator, consumes input tuples and materializes them in an thread local stack.
+ * If all input records are processed, we build an hash table on the thread local stacks.
  */
 class BatchJoinBuild : public ExecutableOperator {
   public:
+
     /**
      * @brief Creates a batch join operator.
+     * @param operatorHandlerIndex index of the operator handler.
+     * @param keyExpressions expressions that extract the key fields from the input record.
+     * @param keyDataTypes data types of the key fields.
+     * @param valueExpressions expression that extracts the value fields from the input record.
+     * @param valueDataTypes data types of the value fields.
+     * @param hashFunction hash function.
      */
     BatchJoinBuild(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
