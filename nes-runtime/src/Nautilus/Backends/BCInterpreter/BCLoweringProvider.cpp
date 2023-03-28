@@ -16,6 +16,7 @@
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Nautilus::Backends::BC {
