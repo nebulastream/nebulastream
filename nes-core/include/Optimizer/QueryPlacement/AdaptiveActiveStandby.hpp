@@ -108,13 +108,14 @@ class AdaptiveActiveStandby {
      */
     static int getOperatorCost(const OperatorNodePtr& operatorNode);
 
+    const static int newTopologyNodeIdStart = 1000;      // Assumption: IDs above this reserved for new nodes
+    const static int newOperatorNodeIdStart = 1000;
+
   private:
     PlacementStrategy::ValueAAS placementStrategy;
     std::map<TopologyNodeId, std::map<TopologyNodeId, double>> distances;
     // new topology node properties
     int nNewTopologyNodes = 0;
-    int newTopologyNodeIdStart = 1000;      // Assumption: IDs above this reserved for new nodes
-    int newOperatorNodeIdStart = 1000;
     std::string ipAddress = "localhost";
     uint32_t grpcPort = 123;
     uint32_t dataPort = 124;
