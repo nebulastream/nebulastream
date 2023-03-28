@@ -14,6 +14,7 @@
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Nautilus/Interface/Stack/Stack.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -47,7 +48,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
     // 2. allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     globalMap =
-        std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), Nautilus::Interface::Stack::PAGE_SIZE);
+        std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), 4096);
 
     // 3. iterate over stacks and insert the whole page to the hash table
     // Note. This dose not perform any memory and only results in a seqential scan over all entries  plus a random lookup in the hash table.
