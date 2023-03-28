@@ -141,4 +141,11 @@ TEST(FFTTest, fftNyquist) {
     EXPECT_EQ(expectedFalseBinIdx1, res);
 }
 
+TEST(FFTTest, completeFftAnalysis) {
+    std::vector<double> signalInput{1., 2., 3., 4., 1., -1., 0.};
+    auto res = Util::computeNyquistAndEnergy(signalInput, 38.);
+    EXPECT_EQ(false, std::get<0>(res));
+    EXPECT_NEAR(0.046052631578947366, std::get<1>(res), .01);
+}
+
 }// namespace NES

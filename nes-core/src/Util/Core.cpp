@@ -288,4 +288,37 @@ std::tuple<bool, int> Util::is_aliased_and_nyq_freq(const std::vector<double>& p
     return std::make_tuple(bin_idx == psd_array.size(), bin_idx);
 };
 
+
+std::tuple<bool, double> Util::computeNyquistAndEnergy(const std::vector<double>& inputSignal, double interval) {
+    // Copy the vals
+    std::vector<double> currentSignal = inputSignal;
+    double frequency = 1./interval;
+    double currentNyq = 1./interval;
+
+    // Calculate the mean of non-NaN elements
+    auto mean_it = std::find_if(currentSignal.begin(), currentSignal.end(), [](double x){ return !std::isnan(x); });
+    double mean = std::accumulate(mean_it, currentSignal.end(), 0.0) / std::distance(mean_it, currentSignal.end());
+    // Subtract the mean from each element
+    std::transform(currentSignal.begin(), currentSignal.end(), currentSignal.begin(), [mean](double x){ return x - mean; });
+
+    // Perform 1D FFT on the detrended values
+    auto sensorFft = Util::fft(currentSignal);
+    // Compute corresponding frequencies
+    auto sensorFftFreq = Util::fftfreq(inputSignal.size(), frequency);
+    // Get the psd of the FFT
+    auto psd = Util::psd(sensorFft);
+    // Get energy of incoming signal
+    auto E_fft = Util::totalEnergy(sensorFft);
+    // Get isAliased, proposed new rated idx in psd
+    auto aliasingResult = Util::is_aliased_and_nyq_freq(psd, E_fft);
+    auto isAliased = std::get<0>(aliasingResult);
+    auto nyqIdx = std::get<1>(aliasingResult);
+    if (!isAliased && E_fft > 0.) {
+        // Use 2x the proposed nyquist rate
+        currentNyq = 2 * sensorFftFreq[nyqIdx];
+    }
+
+    return std::make_tuple(currentNyq < frequency, 1./currentNyq);
+};
+
 }// namespace NES

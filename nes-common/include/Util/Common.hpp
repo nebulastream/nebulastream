@@ -278,6 +278,14 @@ double totalEnergy(const std::vector<std::complex<double>>& fftValues);
  */
 std::tuple<bool, int> is_aliased_and_nyq_freq(const std::vector<double>& psd_array, double total_energy);
 
+/**
+ * @brief Check a window of a signal, infer its nyq. and decide if it's aliased/non-aliased.
+ * @param inputSignal the input signal of the window
+ * @param interval the current avg. of the interval in the window
+ * @return 2-tuple of (true/false if oversampled), proposed nyquist in s)
+ */
+std::tuple<bool, double> computeNyquistAndEnergy(const std::vector<double>& inputSignal, double interval);
+
 };// namespace Util
 }// namespace NES
 
