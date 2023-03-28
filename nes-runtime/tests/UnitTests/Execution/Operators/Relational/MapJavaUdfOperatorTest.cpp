@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -397,3 +399,4 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
 }
 
 }// namespace NES::Runtime::Execution::Operators
+#endif// ENABLE_JNI
