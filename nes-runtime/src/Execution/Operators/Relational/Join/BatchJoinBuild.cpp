@@ -106,11 +106,11 @@ void BatchJoinBuild::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
     // 4.2 create entry and store it in stack
     auto entry = stack.allocateEntry();
     // 4.3a store hash value at next offset
-    auto hashPtr = (entry + sizeof(int64_t)).as<MemRef>();
+    auto hashPtr = (entry + (uint64_t) sizeof(int64_t)).as<MemRef>();
     hashPtr.store(hash);
 
     // 4.3b store key values
-    auto keyPtr = (hashPtr + sizeof(int64_t)).as<MemRef>();
+    auto keyPtr = (hashPtr + (uint64_t) sizeof(int64_t)).as<MemRef>();
     storeKeys(keyValues, keyPtr);
 
     // 4.3c store value values

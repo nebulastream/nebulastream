@@ -23,6 +23,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
