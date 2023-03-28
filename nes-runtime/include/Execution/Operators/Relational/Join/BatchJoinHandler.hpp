@@ -20,6 +20,16 @@
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief The batch join handler maintains the join state that is used by the join build and the join probe operator.
+ * To this end, we use a two-phase algorithm proposed by Leis et al.
+ * Morsel-Driven Parallelism: A NUMA-Aware Query Evaluation Framework for the Many-Core Age
+ * https://db.in.tum.de/~leis/papers/morsels.pdf
+ *
+ * The build phase, consumes input records from the build side and materializes hash-entries in a thread local stack.
+ * If all records, are consumed, we build a global hash-map on top of all materialized values (see mergeState).
+ * The final probe phase, consumes the probe side and performs key lookups in the global hash-map.
+ */
 class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
                          public NES::detail::virtual_enable_shared_from_this<BatchJoinHandler, false> {
 
