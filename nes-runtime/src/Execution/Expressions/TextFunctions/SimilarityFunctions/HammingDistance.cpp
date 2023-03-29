@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/HammingDistance.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <regex>
 #include <string>
@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 HammingDistance::HammingDistance(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                               const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
+                                 const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
 /**
@@ -37,14 +37,13 @@ uint64_t textHamming(const TextValue* leftText, const TextValue* rightText) {
         throw std::invalid_argument("Hamming Distance is only defined for inputs of equal length: the left string length is "
                                     + std::to_string(leftText->length()) + "and the right string length is  "
                                     + std::to_string(rightText->length()));
-    } else { /** ...or iterate over strings and count differences */
-        for (uint64_t i = 0; i < (uint64_t) leftText->length(); i++) {
-            if (leftText->c_str()[i] != rightText->c_str()[i]) {
-                distance++;
-            }
-        }
-        return distance;
     }
+    for (uint64_t i = 0; i < (uint64_t) leftText->length(); i++) {
+        if (leftText->c_str()[i] != rightText->c_str()[i]) {
+            distance++;
+        }
+    }
+    return distance;
 }
 
 Value<> HammingDistance::execute(NES::Nautilus::Record& record) const {
@@ -56,12 +55,14 @@ Value<> HammingDistance::execute(NES::Nautilus::Record& record) const {
     Value<> rightValue = rightSubExpression->execute(record);
 
     if (leftValue->isType<Text>() && rightValue->isType<Text>()) {
-        return FunctionCall<>("textHamming", textHamming, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
+        return FunctionCall<>("textHamming",
+                              textHamming,
+                              leftValue.as<Text>()->getReference(),
+                              rightValue.as<Text>()->getReference());
     } else {
         // If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text.");
     }
-
 }
 
 }// namespace NES::Runtime::Execution::Expressions

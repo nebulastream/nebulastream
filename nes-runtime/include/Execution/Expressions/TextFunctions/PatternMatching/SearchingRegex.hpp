@@ -23,17 +23,17 @@ namespace NES::Runtime::Execution::Expressions {
 
 /**
 * @brief This Method returns whether some sub-sequence in the target sequence matches the regular expression rgx .
-* @param left String Target Sequence
-* @param right String Regex Pattern
+* @param textValue as TextValue the text (string) to extract the regexpPattern from
+* @param regexpPattern as TextValue the pattern to match
 */
 class SearchingRegex : public Expression {
   public:
-    SearchingRegex(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
+    SearchingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern);
     Value<> execute(Record& record) const override;
 
   private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+    const ExpressionPtr textValue;
+    const ExpressionPtr regexpPattern;
 };
 
 }// namespace NES::Runtime::Execution::Expressions

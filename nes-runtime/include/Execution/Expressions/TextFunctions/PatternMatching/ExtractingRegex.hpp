@@ -22,23 +22,21 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This Method returns a text sequence from the target text, which is matching the given regex pattern.
+* @brief This method returns a text sequence from the target text, which is matching the given regex pattern.
 * If multiple text sequences, would match the given regex pattern the idx parameter can be used to select a match.
-* @param left String Target Sequence
-* @param mid String Regex pattern
-* @param right Int idx
+* @param textValue as TextValue the text (string) to extract the regexpPattern from
+* @param regexpPattern as TextValue the pattern to extract
+* @param idx as Integer defines at what position in the textValue matching starts (only the first match is returned), use 0 for the first
 */
 class ExtractingRegex : public Expression {
   public:
-    ExtractingRegex(const ExpressionPtr& leftSubExpression,
-                    const ExpressionPtr& midSubExpression,
-                    const ExpressionPtr& rightSubExpression);
+    ExtractingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& idx);
     Value<> execute(Record& record) const override;
 
   private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr midSubExpression;
-    const ExpressionPtr rightSubExpression;
+    const ExpressionPtr textValue;
+    const ExpressionPtr regexpPattern;
+    const ExpressionPtr idx;
 };
 
 }// namespace NES::Runtime::Execution::Expressions

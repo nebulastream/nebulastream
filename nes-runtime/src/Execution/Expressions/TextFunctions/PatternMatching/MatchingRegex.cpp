@@ -21,51 +21,52 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-MatchingRegex::MatchingRegex(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                             const NES::Runtime::Execution::Expressions::ExpressionPtr& midSubExpression,
-                             const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), midSubExpression(midSubExpression), rightSubExpression(rightSubExpression) {}
+MatchingRegex::MatchingRegex(const NES::Runtime::Execution::Expressions::ExpressionPtr& textValue,
+                             const NES::Runtime::Execution::Expressions::ExpressionPtr& regexpPattern,
+                             const NES::Runtime::Execution::Expressions::ExpressionPtr& caseSensitive)
+    : textValue(textValue), regexpPattern(regexpPattern), caseSensitive(caseSensitive) {}
 
 /**
 * @brief This method matches a given Regular Expression pattern in a given String. This Function only does full matches.
-* @param txt TextValue
-* @param regex TextValue
-* @param iCase Boolean
-* @return Boolean
+* @param txt TextValue the string
+* @param regex TextValue the pattern to match
+* @param caseSensitive Boolean to indicate case sensitive pattern matching
+* @return Boolean if txt merely contains the pattern
 */
-bool regex_match(TextValue* txt, TextValue* regex, const Boolean& iCase) {
+bool regexMatch(TextValue* txt, TextValue* regex, const Boolean& caseSensetive) {
     std::string target = std::string(txt->str(), txt->length());
-    NES_DEBUG("Received the following source string " <<  target );
+    NES_DEBUG("Received the following source string " << target);
     std::string strPattern = std::string(regex->str(), regex->length());
-    NES_DEBUG("Received the following source string " <<  strPattern );
+    NES_DEBUG("Received the following source string " << strPattern);
     // LIKE and GLOB adoption requires syntax conversion functions
     // would make regex case in sensitive for ILIKE
-    if (iCase) {
+    if (caseSensetive) {
         std::regex regexPattern(strPattern, std::regex::icase);
-        return std::regex_match(target,  regexPattern);
+        return std::regex_match(target, regexPattern);
     } else {
         std::regex regexPattern(strPattern);
-        return std::regex_match(target,  regexPattern);
+        return std::regex_match(target, regexPattern);
     }
 }
 
 Value<> MatchingRegex::execute(NES::Nautilus::Record& record) const {
 
-    Value<> leftValue = leftSubExpression->execute(record);
-    Value<> midValue = midSubExpression->execute(record);
-    Value<> rightValue = rightSubExpression->execute(record);
+    Value<> text = textValue->execute(record);
+    Value<> pattern = regexpPattern->execute(record);
+    Value<> caseSensitiveFlag = caseSensitive->execute(record);
 
-    if (leftValue->isType<Text>() && midValue->isType<Text>() && rightValue->isType<Boolean>()) {
-        return FunctionCall<>("regex_match",
-                              regex_match,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<Boolean>());
-    }else{
-        NES_DEBUG(leftValue->getType()->toString())
-        NES_DEBUG(midValue->getType())
-        NES_DEBUG(rightValue->getType())
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for case sensitive pattern matching.");
+    if (text->isType<Text>() && pattern->isType<Text>() && caseSensitiveFlag->isType<Boolean>()) {
+        return FunctionCall<>("regexMatch",
+                              regexMatch,
+                              text.as<Text>()->getReference(),
+                              pattern.as<Text>()->getReference(),
+                              caseSensitiveFlag.as<Boolean>());
+    } else {
+        NES_DEBUG(text->getType()->toString())
+        NES_DEBUG(pattern->getType())
+        NES_DEBUG(caseSensitiveFlag->getType())
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for case "
+                                "sensitive pattern matching.");
     }
 }
 

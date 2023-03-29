@@ -373,7 +373,7 @@ const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
     return FunctionCall<>("textSimilarTo", textSimilarTo, rawReference, pattern.value->rawReference);
 }
 
-bool textLike(const TextValue* text, TextValue* pattern, Boolean iCase) {
+bool textLike(const TextValue* text, TextValue* pattern, Boolean caseSensitive) {
     NES_DEBUG("Checking in textLike if " << text->c_str() << " and" << pattern << " are a match." );
     auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
     auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
@@ -386,7 +386,7 @@ bool textLike(const TextValue* text, TextValue* pattern, Boolean iCase) {
     NES_DEBUG("Received the following source string " <<  strPattern);
     // LIKE and GLOB adoption requires syntax conversion functions
     // would make regex case in sensitive for ILIKE
-    if (iCase.getValue()) {
+    if (caseSensitive.getValue()) {
         std::regex regexPattern(strPattern, std::regex::icase);
         return std::regex_match(target,  regexPattern);
     } else {
@@ -395,12 +395,8 @@ bool textLike(const TextValue* text, TextValue* pattern, Boolean iCase) {
     }
 }
 
-const Value<Boolean> Text::like(Value<Text>& pattern) const {
-    return FunctionCall<>("textLike", textLike, rawReference, pattern.value->rawReference, Value<Boolean>(false));
-}
-
-const Value<Boolean> Text::iLike(Value<Text>& pattern) const {
-    return FunctionCall<>("textLike", textLike, rawReference, pattern.value->rawReference, Value<Boolean>(true));
+const Value<Boolean> Text::like(Value<Text>& pattern, Value<Boolean> caseSensitive) const {
+    return FunctionCall<>("textLike", textLike, rawReference, pattern.value->rawReference, caseSensitive);
 }
 
 const Value<Text> Text::trim() const { return FunctionCall<>("lrTrim", lrTrim, rawReference); }

@@ -15,29 +15,27 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_PATTERNMATCHING_REPLACINGREGEX_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_PATTERNMATCHING_REPLACINGREGEX_HPP_
 
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
 
 /**
 * @brief This method replaces the first occurrence of midSubExpression in leftSubExpression with the replacement rightSubExpression
-* @param left String Target Sequence
-* @param mid String Regex pattern
-* @param right String Replacement
+* @param textValue as TextValue the text (string) to extract the regexpPattern from
+* @param regexpPattern as TextValue the pattern to match
+* @param textReplacement as TextValue the text (string) to replacement a pattern match
 */
 class ReplacingRegex : public Expression {
   public:
-    ReplacingRegex(const ExpressionPtr& leftSubExpression,
-                   const ExpressionPtr& midSubExpression,
-                   const ExpressionPtr& rightSubExpression);
+    ReplacingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& textReplacement);
     Value<> execute(Record& record) const override;
 
   private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr midSubExpression;
-    const ExpressionPtr rightSubExpression;
+    const ExpressionPtr textValue;
+    const ExpressionPtr regexpPattern;
+    const ExpressionPtr textReplacement;
 };
 
 }// namespace NES::Runtime::Execution::Expressions

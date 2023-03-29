@@ -211,16 +211,18 @@ TEST_F(TextTypeTest, similarToTestFail) {
 TEST_F(TextTypeTest, DISABLED_likeTest) {
     auto likeTest1 = Value<Text>("abcde");
     auto likeTest2 = Value<Text>("%bcd%");
-    auto likeResult = likeTest1->like(likeTest2);
+    auto caseSensitiveFlag = Value<Boolean>(false);
+    auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
     EXPECT_EQ(likeResult, (Boolean) true);
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
     //TODO: Test passes but in the Shut Down process Fatal Error occurs : NES Fatal Error on false message: Deletion of unpooled buffer invoked on used memory segment
 }
 
-TEST_F(TextTypeTest, DISABLED_likeTestFail) {
+TEST_F(TextTypeTest, DISABLED_likeTestFalse) {
     auto likeTest1 = Value<Text>("abcde");
     auto likeTest2 = Value<Text>("_bc_");
-    auto likeResult = likeTest1->like(likeTest2);
+    auto caseSensitiveFlag = Value<Boolean>(false);
+    auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
     EXPECT_EQ(likeResult, (Boolean) false);
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
     //TODO: Test passes but in the Shut Down process Fatal Error occurs : NES Fatal Error on false message: Deletion of unpooled buffer invoked on used memory segment
