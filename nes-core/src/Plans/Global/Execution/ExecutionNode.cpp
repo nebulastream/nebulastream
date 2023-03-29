@@ -86,13 +86,15 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
                 }
                 // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.
                 if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
-                    auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
-                    if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
-                        // increase the resource count
-                        occupiedResources++;
-                        // add operator id to the already visited operator id collection
-                        visitedOpIds.insert(visitingOp->getId());
-                    }
+                    // AAS: source nodes can only host the source operator and nothing else
+                    // -> we do not keep track of its resources (set to 0)
+//                    auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
+//                    if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
+//                        // increase the resource count
+//                        occupiedResources++;
+//                        // add operator id to the already visited operator id collection
+//                        visitedOpIds.insert(visitingOp->getId());
+//                    }
                 } else if (visitingOp->instanceOf<SinkLogicalOperatorNode>()) {
                     auto sinkOperator = visitingOp->as<SinkLogicalOperatorNode>();
                     if (!sinkOperator->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {

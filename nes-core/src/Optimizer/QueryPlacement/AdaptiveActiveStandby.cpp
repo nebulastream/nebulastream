@@ -12,18 +12,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/AdaptiveActiveStandby.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -450,7 +452,11 @@ int AdaptiveActiveStandby::getOperatorCost(const OperatorNodePtr& operatorNode) 
     }
 
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        return 0;
+        // network sinks considered to have no cost
+        if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>())
+            return 0;
+        else
+            return 1;
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         return 1;
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
@@ -459,6 +465,12 @@ int AdaptiveActiveStandby::getOperatorCost(const OperatorNodePtr& operatorNode) 
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         return 1;
     } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        // AAS: source topology nodes can only host the source operator and nothing else
+        // -> we do not keep track of its resources (set to 0)
+//        if (operatorNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>())
+//            return 0;
+//        else
+//            return 1;
         return 0;
     }
     return 2;
