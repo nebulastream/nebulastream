@@ -48,7 +48,7 @@ class QueryCatalogEntry {
                                std::string queryString,
                                std::string queryPlacementStrategy,
                                QueryPlanPtr inputQueryPlan,
-                               QueryStatus::Value queryStatus);
+                               QueryStatus queryStatus);
 
     /**
      * @brief method to get the id of the query
@@ -84,7 +84,7 @@ class QueryCatalogEntry {
      * @brief method to get the status of the query
      * @return query status
      */
-    [[nodiscard]] QueryStatus::Value getQueryStatus() const;
+    [[nodiscard]] QueryStatus getQueryStatus() const;
 
     /**
      * @brief method to get the status of the query as string
@@ -96,7 +96,7 @@ class QueryCatalogEntry {
      * @brief method to set the status of the query
      * @param query status
      */
-    void setQueryStatus(QueryStatus::Value queryStatus);
+    void setQueryStatus(QueryStatus queryStatus);
 
     /**
      * @brief Get name of the query placement strategy
@@ -155,7 +155,7 @@ class QueryCatalogEntry {
     std::string queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
-    QueryStatus::Value queryStatus;
+    QueryStatus queryStatus;
     std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
     std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;

@@ -44,34 +44,6 @@ enum class SourceType : int8_t {
     TCP_SOURCE
 };
 
-/**
- * enum string mapping for source type
- */
-static std::map<std::string, SourceType> stringToSourceType{
-    {Configurations::SENSE_SOURCE_CONFIG, SourceType::SENSE_SOURCE},
-    {Configurations::CSV_SOURCE_CONFIG, SourceType::CSV_SOURCE},
-    {Configurations::TCP_SOURCE_CONFIG, SourceType::TCP_SOURCE},
-    {Configurations::BINARY_SOURCE_CONFIG, SourceType::BINARY_SOURCE},
-    {Configurations::MQTT_SOURCE_CONFIG, SourceType::MQTT_SOURCE},
-    {Configurations::KAFKA_SOURCE_CONFIG, SourceType::KAFKA_SOURCE},
-    {Configurations::OPC_SOURCE_CONFIG, SourceType::OPC_SOURCE},
-    {Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG, SourceType::MATERIALIZEDVIEW_SOURCE},
-    {Configurations::DEFAULT_SOURCE_CONFIG, SourceType::DEFAULT_SOURCE}};
-
-/**
- * enum source type to string
- */
-static std::map<SourceType, std::string> sourceTypeToString{
-    {SourceType::SENSE_SOURCE, Configurations::SENSE_SOURCE_CONFIG},
-    {SourceType::CSV_SOURCE, Configurations::CSV_SOURCE_CONFIG},
-    {SourceType::TCP_SOURCE, Configurations::TCP_SOURCE_CONFIG},
-    {SourceType::BINARY_SOURCE, Configurations::BINARY_SOURCE_CONFIG},
-    {SourceType::MQTT_SOURCE, Configurations::MQTT_SOURCE_CONFIG},
-    {SourceType::KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
-    {SourceType::OPC_SOURCE, Configurations::OPC_SOURCE_CONFIG},
-    {SourceType::MATERIALIZEDVIEW_SOURCE, Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG},
-    {SourceType::DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG}};
-
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 

@@ -128,7 +128,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
     nlohmann::json request;
     //non-existent id
     request["id"] = 69;
-    request["migrationType"] = Experimental::MigrationType::toString(Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING);
+    request["migrationType"] = std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{request.dump()});
@@ -149,7 +149,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
 
     nlohmann::json request;
     request["id"] = nodeId;
-    request["migrationType"] = Experimental::MigrationType::toString(Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING);
+    request["migrationType"] = std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{request.dump()});
@@ -161,7 +161,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     EXPECT_EQ(res["Info"], "Successfully submitted Maintenance Request");
     EXPECT_EQ(res["Node Id"], nodeId);
     EXPECT_EQ(res["Migration Type"],
-              Experimental::MigrationType::toString(Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING));
+              std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING)));
     stopCoordinator();
 }
 }// namespace NES

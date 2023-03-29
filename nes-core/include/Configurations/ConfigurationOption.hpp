@@ -283,16 +283,6 @@ const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
 const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
 const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimulatedStartTime";
 
-//Different Source Types supported in NES
-const std::string SENSE_SOURCE_CONFIG = "SenseSource";
-const std::string CSV_SOURCE_CONFIG = "CSVSource";
-const std::string BINARY_SOURCE_CONFIG = "BinarySource";
-const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
-const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
-const std::string OPC_SOURCE_CONFIG = "OPCSource";
-const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
-const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
-const std::string TCP_SOURCE_CONFIG = "TCPSource";
 
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
