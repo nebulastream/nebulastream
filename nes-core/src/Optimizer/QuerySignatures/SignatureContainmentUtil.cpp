@@ -125,6 +125,7 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
     // we assume a bottom up approach for our containment algorithm, hence a window operation can only be partially shared if
     // the previous operations are completely sharable. As soon as there is no equality in window operations, we return the
     // obtained relationship
+    //todo: #3503 introduce a mechanism to identify which window is contained in the presence of multiple windows
     ContainmentType containmentRelationship = NO_CONTAINMENT;
     for (size_t i = 0; i < numberOfWindows; ++i) {
         // obtain each window signature in bottom up fashion
@@ -146,7 +147,9 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
             // 1. check for complete equality
             // 2. check if a containment relationship exists,
             // e.g. z3 checks leftWindow-size <= rightWindow-size && leftWindow-slide <= rightWindow-slide
-            if (leftWindow.at("number-of-aggregates")->char_to_int() == rightWindow.at("number-of-aggregates")->char_to_int()) {
+            NES_TRACE2("Number of Aggregates left window: {}", leftWindow.at("number-of-aggregates")->to_string());
+            NES_TRACE2("Number of Aggregates right window: {}", rightWindow.at("number-of-aggregates")->to_string());
+            if (leftWindow.at("number-of-aggregates")->get_numeral_int() == rightWindow.at("number-of-aggregates")->get_numeral_int()) {
                 NES_TRACE2("Same number of aggregates.");
                 if (containmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                     if (containmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
@@ -177,8 +180,9 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                 }
                 // checks if the number of aggregates for the left signature is larger than the number of aggregates for the right
                 // signature
-            } else if (leftWindow.at("number-of-aggregates")->char_to_int()
-                       > rightWindow.at("number-of-aggregates")->char_to_int()) {
+            } else if (leftWindow.at("number-of-aggregates")->get_numeral_int()
+                       > rightWindow.at("number-of-aggregates")->get_numeral_int()) {
+                NES_TRACE2("Left Window has more Aggregates than right Window.");
                 // combines window and projection FOL to find out containment relationships
                 combineWindowAndProjectionFOL(leftSignature,
                                               rightSignature,
@@ -194,8 +198,9 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                 } else {
                     containmentRelationship = NO_CONTAINMENT;
                 }
-            } else if (leftWindow.at("number-of-aggregates")->char_to_int()
-                       < rightWindow.at("number-of-aggregates")->char_to_int()) {
+            } else if (leftWindow.at("number-of-aggregates")->get_numeral_int()
+                       < rightWindow.at("number-of-aggregates")->get_numeral_int()) {
+                NES_TRACE2("Rith Window has more Aggregates than left Window.");
                 combineWindowAndProjectionFOL(leftSignature,
                                               rightSignature,
                                               leftQueryWindowConditions,
