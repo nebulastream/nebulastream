@@ -46,6 +46,7 @@ inline void jniErrorCheck(jint rc) {
 void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs& args) {
     std::lock_guard<std::mutex> lock(mutex);
     if (!created) {
+        jvm = nullptr;
         jint rc = JNI_CreateJavaVM(&jvm, (void**) env, &args);
         jniErrorCheck(rc);
         created = true;

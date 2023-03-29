@@ -1004,7 +1004,10 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
  * Terminate operator
  * @param ctx execution context
  */
-void MapJavaUdf::terminate(ExecutionContext&) const { FunctionCall<>("destroyVM", destroyVM); }
+void MapJavaUdf::terminate(ExecutionContext&) const {
+    // TODO fix usage of jvm
+    //FunctionCall<>("destroyVM", destroyVM);
+}
 
 }// namespace NES::Runtime::Execution::Operators
 #endif// ENABLE_JIN
