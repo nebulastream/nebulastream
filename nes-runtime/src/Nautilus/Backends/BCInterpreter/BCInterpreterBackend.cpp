@@ -31,6 +31,9 @@ std::unique_ptr<Executable> BCInterpreterBackend::compile(std::shared_ptr<IR::IR
     auto result = BCLoweringProvider().lower(ir);
 
     timer.snapshot("ByteCodeGeneration");
+
+    auto code = std::get<0>(result);
+    NES_INFO(code);
     return std::make_unique<BCInterpreter>(std::get<0>(result), std::get<1>(result));
 }
 

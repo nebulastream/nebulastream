@@ -90,6 +90,7 @@ class BCLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::OrOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::AndOperation>& opt, short block, RegisterFrame& frame);
+        void process(const std::shared_ptr<IR::Operations::NegateOperation>& opt, short block, RegisterFrame& frame);
     };
 };
 }// namespace NES::Nautilus::Backends::BC
