@@ -1967,7 +1967,7 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
         } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
         } else {
-            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
         }
         timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
 
@@ -1987,7 +1987,7 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
             windowJavaUdfDetails.mutable_windowtype()->PackFrom(slidingWindowDetails);
 
         } else {
-            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
         }
 
     } else if (windowType->isContentBasedWindowType()) {
@@ -2000,7 +2000,7 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
         thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
         windowJavaUdfDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
         }else {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize content based window Type");
+            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: Cant serialize content based window Type");
         }
     }
 
