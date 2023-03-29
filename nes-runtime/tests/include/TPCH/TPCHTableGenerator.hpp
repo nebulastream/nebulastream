@@ -146,6 +146,8 @@ class TPCHTableGenerator {
     // ->addField("n_comment", BasicType::INT32);
 
     const SchemaPtr regionSchema = Schema::create()->addField("r_regionkey", BasicType::INT32);
+        // ->addField("r_name", BasicType::INT32)
+        //->addField("r_comment", BasicType::INT32);
 
     const std::unordered_map<TPCHTable, SchemaPtr> tableSchemas = {{TPCHTable::Part, partSchema},
                                                                    {TPCHTable::PartSupp, partsuppSchema},
@@ -163,9 +165,6 @@ class TPCHTableGenerator {
             layouts[table] = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         }
     }
-
-    // ->addField("r_name", BasicType::INT32)
-    //->addField("r_comment", BasicType::INT32);
 
     auto getLocalScaleFactor() {
         switch (scaleFactor) {
@@ -197,13 +196,13 @@ class TPCHTableGenerator {
         const auto nation_count = static_cast<ChunkOffset>(tdefs[NATION].base);
         const auto region_count = static_cast<ChunkOffset>(tdefs[REGION].base);
 
-        NES_DEBUG("Generate lineitem with size " << order_count * 4);
-
         // The `* 4` part is defined in the TPC-H specification.
         // TableBuilder lineitem_builder{_benchmark_config->chunk_size,
         //                             lineitem_column_types,
         //                            lineitem_column_names,
         //                           ChunkOffset{order_count * 4}};
+        
+        NES_DEBUG("Generate lineitem with size " << order_count * 4);
 
         Runtime::TableBuilder customerBuilder(bufferManager, layouts[TPCHTable::Customer]);
         Runtime::TableBuilder lineitemBuilder(bufferManager, layouts[TPCHTable::LineItem]);

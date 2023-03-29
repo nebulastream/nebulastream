@@ -31,8 +31,8 @@ Nautilus::Interface::ChainedHashMap* BatchKeyedAggregationHandler::getThreadLoca
 void BatchKeyedAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                          uint64_t keySize,
                                          uint64_t valueSize) {
+    // TODO: provide a way to indicate the number of keys from the outside.
     auto numberOfKeys = 1000;
-
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
         auto hashMap =
@@ -51,8 +51,6 @@ void BatchKeyedAggregationHandler::stop(Runtime::QueryTerminationType queryTermi
 }
 BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
 
-void BatchKeyedAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
-    // this->threadLocalSliceStores.clear();
-}
+void BatchKeyedAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
 
 }// namespace NES::Runtime::Execution::Operators

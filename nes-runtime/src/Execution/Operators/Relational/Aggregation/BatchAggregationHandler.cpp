@@ -25,7 +25,6 @@ BatchAggregationHandler::State BatchAggregationHandler::getThreadLocalState(uint
 }
 
 void BatchAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {
-
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto* ptr = (State) std::aligned_alloc(STATE_ALIGNMENT, entrySize);
         std::memset(ptr, 0, entrySize);
@@ -49,8 +48,6 @@ BatchAggregationHandler::~BatchAggregationHandler() {
     }
 }
 
-void BatchAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
-    // this->threadLocalSliceStores.clear();
-}
+void BatchAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
 
 }// namespace NES::Runtime::Execution::Operators

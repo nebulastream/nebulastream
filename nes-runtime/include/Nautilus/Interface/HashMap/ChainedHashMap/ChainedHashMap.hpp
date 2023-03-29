@@ -159,7 +159,7 @@ class ChainedHashMap {
 
 
   private:
-    // ChainedHashMapRef is a fiend to access private members and functions
+    // ChainedHashMapRef is a friend to access private members and functions
     friend ChainedHashMapRef;
     const std::unique_ptr<std::pmr::memory_resource> allocator;
     const uint64_t pageSize;
