@@ -285,17 +285,17 @@ class JoinHandler : public AbstractJoinHandler {
             if (windowType->isTimeBasedWindowType()) {
                 auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
                 if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
-                    auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
+                    auto* window = std::shared_ptr<Windowing::TumblingWindow*>(windowType.get());
                     windowLenghtMs = window->getSize().getTime();
 
                 } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
-                    auto* window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
+                    auto* window = std::shared_ptr<Windowing::SlidingWindow*>(windowType.get());
                     windowLenghtMs = window->getSlide().getTime();
                 } else {
-                    NES_ASSERT(false, "Invalid window");
+                    NES_THROW_RUNTIME_ERROR("JoinHandler: Undefined Time-Based Window Type");
                 }
             }else {
-                NES_ASSERT(false, "Invalid window");
+                NES_THROW_RUNTIME_ERROR("JoinHandler: Joins only work for Time-Based Window Type");
             }
             //            NES_DEBUG2("Going to flush window {}", toString());
             //            trigger(true);
