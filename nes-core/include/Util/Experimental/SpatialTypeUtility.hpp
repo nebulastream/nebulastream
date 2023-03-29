@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPEUTILITIES_HPP_
 
 #include <Util/Experimental/SpatialType.hpp>
+#include <WorkerLocation.grpc.pb.h>
 
 namespace NES::Spatial::Util {
 

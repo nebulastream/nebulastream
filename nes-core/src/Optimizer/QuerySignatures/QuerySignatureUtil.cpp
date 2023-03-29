@@ -34,13 +34,16 @@
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <z3++.h>
@@ -51,7 +54,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                                                                       const OperatorNodePtr& operatorNode) {
 
     try {
-        NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
+        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator {}", operatorNode->toString());
         auto children = operatorNode->getChildren();
         if (operatorNode->isUnaryOperator()) {
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
@@ -70,45 +73,45 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         }
 
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Source operator");
             SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
             return createQuerySignatureForSource(context, sourceOperator);
         }
         if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Sink operator");
             NES_ASSERT(!children.empty(), "Sink operator should have atleast one children.");
             return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
         } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for filter operator");
             auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
             return createQuerySignatureForFilter(context, filterOperator);
         } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Merge operator");
             auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
             return createQuerySignatureForUnion(context, unionOperator);
         } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Map operator");
             auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
             return createQuerySignatureForMap(context, mapOperator);
         } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for window operator");
             auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
             return createQuerySignatureForWindow(context, windowOperator);
         } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Project operator");
             auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
             return createQuerySignatureForProject(projectOperator);
         } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for watermark operator");
             auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
             return createQuerySignatureForWatermark(context, watermarkAssignerOperator);
         } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for join operator");
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
         } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
 #ifdef TFDEF
-            NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
 #else
@@ -342,8 +345,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     auto filterFieldMap = filterExprAndFieldMap->getFieldMap();
     auto filterExpr = filterExprAndFieldMap->getExpr();
 
-    NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
-              "children signatures");
+    NES_TRACE2("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
+               "children signatures");
     //Fetch the signature of only children and get the column values
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
 
@@ -373,6 +376,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
         filterExpressions.push_back(*updatedExpr);
     }
 
+    //disjunction needed in some cases, e.g. when two different maps are before a union and a filter is applied later
     auto filterConditions = z3::mk_or(filterExpressions);
 
     //Compute a CNF condition using the children and filter conditions
@@ -450,7 +454,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::ContextPtr& context,
                                                                    const UnionLogicalOperatorNodePtr& unionOperator) {
 
-    NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
+    NES_DEBUG2("QuerySignatureUtil: Computing Signature from children signatures");
     auto children = unionOperator->getChildren();
     auto leftSchema = unionOperator->getLeftInputSchema();
 
@@ -600,7 +604,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
         length = slidingWindow->getSize().getTime() * multiplier;
         slide = slidingWindow->getSlide().getTime() * multiplier;
     } else {
-        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
+        NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Type");
     }
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
@@ -651,7 +655,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
 
-    NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
+    NES_DEBUG2("QuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);
 
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -671,56 +675,71 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     z3::expr windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
-    //Compute the expression for window time key
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    auto timeCharacteristic = windowType->getTimeCharacteristic();
-    z3::expr windowTimeKeyVal(*context);
-    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-    } else {
-        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
-    }
-    auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
-    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
-
-    //Compute the expression for window size and slide
-    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-    uint64_t length = 0;
-    uint64_t slide = 0;
-    if (windowType->isTumblingWindow()) {
-        auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
-        length = tumblingWindow->getSize().getTime() * multiplier;
-        slide = length;
-    } else if (windowType->isSlidingWindow()) {
-        auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
-        length = slidingWindow->getSize().getTime() * multiplier;
-        slide = slidingWindow->getSlide().getTime() * multiplier;
-    } else {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
-    }
-    auto windowTimeSizeVar = context->int_const("window-time-size");
-    z3::expr windowTimeSizeVal = context->int_val(length);
-    auto windowTimeSlideVar = context->int_const("window-time-slide");
-    z3::expr windowTimeSlideVal = context->int_val(slide);
-    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
-
-    //FIXME: when count based window is implemented #1383
-    //    auto windowCountSizeVar = context->int_const("window-count-size");
-
-    //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
-    Z3_ast expressionArray[] = {windowKeyExpression,
-                                windowTimeKeyExpression,
-                                windowTimeSlideExpression,
-                                windowTimeSizeExpression};
+    std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
-    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
-    } else {
-        //TODO: as part of #1377
-        NES_NOT_IMPLEMENTED();
+    //Compute the expression for window time key
+    if (windowDefinition->getWindowType()->isSlidingWindow() || windowDefinition->getWindowType()->isTumblingWindow()) {
+        windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        auto timeCharacteristic = windowType->asTimeBasedWindowType(windowDefinition->getWindowType())->getTimeCharacteristic();
+        z3::expr windowTimeKeyVal(*context);
+        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
+        } else {
+            NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Characteristic");
+        }
+        auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
+        auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
+
+        //Compute the expression for window size and slide
+        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+        uint64_t length = 0;
+        uint64_t slide = 0;
+        if (windowType->isTumblingWindow()) {
+            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+            length = tumblingWindow->getSize().getTime() * multiplier;
+            slide = length;
+        } else if (windowType->isSlidingWindow()) {
+            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+            length = slidingWindow->getSize().getTime() * multiplier;
+            slide = slidingWindow->getSlide().getTime() * multiplier;
+        } else {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
+        }
+        auto windowTimeSizeVar = context->int_const("window-time-size");
+        z3::expr windowTimeSizeVal = context->int_val(length);
+        auto windowTimeSlideVar = context->int_const("window-time-slide");
+        z3::expr windowTimeSlideVal = context->int_val(slide);
+        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
+        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+
+        //FIXME: when count based window is implemented #1383
+        //    auto windowCountSizeVar = context->int_const("window-count-size");
+
+        //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
+        Z3_ast expressionArray[] = {windowKeyExpression,
+                                    windowTimeKeyExpression,
+                                    windowTimeSlideExpression,
+                                    windowTimeSizeExpression};
+
+        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+            windowExpressions[windowKey] =
+                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+        } else {
+            //TODO: as part of #1377
+            NES_NOT_IMPLEMENTED();
+        }
+    } else {// for Threshold Window
+        Z3_ast expressionArray[] = {windowKeyExpression};
+
+        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+            windowExpressions[windowKey] =
+                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 1, expressionArray)));
+        } else {
+            //TODO: as part of #1377
+            NES_NOT_IMPLEMENTED();
+        }
     }
 
     //FIXME: change the logic here as part of #1377
@@ -750,7 +769,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
             aggregate = z3::function("Avg", sort, sort);
             break;
         }
-        default: NES_FATAL_ERROR("QuerySignatureUtil: could not cast aggregation type");
+        default: NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
     }
 
     // Get the expression for on field and update the column values

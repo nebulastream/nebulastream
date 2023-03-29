@@ -23,12 +23,12 @@ QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExe
 }
 
 QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan) {
-    NES_DEBUG("QueryPlacementRefinementPhase()");
+    NES_DEBUG2("QueryPlacementRefinementPhase()");
     globalExecutionPlan = std::move(globalPlan);
 }
 
 bool QueryPlacementRefinementPhase::execute(QueryId queryId) {
-    NES_DEBUG("QueryPlacementRefinementPhase() execute for query " << queryId);
+    NES_DEBUG2("QueryPlacementRefinementPhase() execute for query  {}", queryId);
     return true;
 }
 

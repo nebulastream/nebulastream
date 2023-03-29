@@ -45,6 +45,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 #ifdef TFDEF
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
@@ -93,8 +94,8 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
     structDeclarationTuple.makeStructCompact();
 
-    NES_DEBUG("Converting Schema: " << schema->toString());
-    NES_DEBUG("Define Struct : " << structName);
+    NES_DEBUG2("Converting Schema: {}", schema->toString());
+    NES_DEBUG2("Define Struct : {}", structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
@@ -105,9 +106,9 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
             auto valuePointerDeclaration = VariableDeclaration::create(valuePointer, schema->get(i)->getName());
             structDeclarationTuple.addField(valuePointerDeclaration);
         } else {
-            NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+            NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
-        NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->getName());
+        NES_DEBUG2("Field {}: {} {}", i, schema->get(i)->getDataType()->toString(), schema->get(i)->getName());
     }
     return structDeclarationTuple;
 }
@@ -134,7 +135,7 @@ bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
 }
 
 bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
-    NES_DEBUG("CCodeGenerator: Generating code for scan with inputSchema " << inputSchema->toString());
+    NES_DEBUG2("CCodeGenerator: Generating code for scan with inputSchema {}", inputSchema->toString());
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
     switch (context->arity) {
@@ -144,20 +145,21 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             // todo remove this assumption
             code->structDeclarationInputTuples.insert(code->structDeclarationInputTuples.begin(),
                                                       getStructDeclarationFromSchema("InputTuple", inputSchema));
-            NES_DEBUG("arity unary generate scan for input=" << inputSchema->toString()
-                                                             << " output=" << outputSchema->toString());
+            NES_DEBUG2("arity unary generate scan for input={} output={}", inputSchema->toString(), outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryLeft: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
-            NES_DEBUG("arity binaryleft generate scan for input=" << inputSchema->toString()
-                                                                  << " output=" << outputSchema->toString());
+            NES_DEBUG2("arity binaryleft generate scan for input={} output={}",
+                       inputSchema->toString(),
+                       outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryRight: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
-            NES_DEBUG("arity binaryright generate scan for input=" << inputSchema->toString()
-                                                                   << " output=" << outputSchema->toString());
+            NES_DEBUG2("arity binaryright generate scan for input={} output={}",
+                       inputSchema->toString(),
+                       outputSchema->toString());
             break;
         }
     }
@@ -192,19 +194,19 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     /*  declaration of num of records */
 
     if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
-        NES_DEBUG("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                         "inputTuples");
     } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-        NES_DEBUG("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
         auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);
-        NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclInputTupleStmt.getCode()->code_);
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is {}", varDeclInputTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclInputTupleStmt.copy());
     } else {
-        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
     /* ExecutionResult ret = Ok; */
     // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
@@ -247,7 +249,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
     if (context->arity != PipelineContext::Unary) {
-        NES_DEBUG("adding in scan for schema=" << inputSchema->toString() << " context=" << context->inputSchema->toString());
+        NES_DEBUG2("adding in scan for schema={} context={}", inputSchema->toString(), context->inputSchema->toString());
     }
 
     auto recordHandler = context->getRecordHandler();
@@ -267,7 +269,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
         }
     } else {
-        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
@@ -321,8 +323,9 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
             auto originalAttribute = fieldRenameExpression->getOriginalField();
             if (!recordHandler->hasAttribute(originalAttribute->getFieldName())) {
-                NES_FATAL_ERROR("CCodeGenerator: projection: the original attribute"
-                                << originalAttribute->getFieldName() << " is not registered so we can not access it.");
+                NES_FATAL_ERROR2(
+                    "CCodeGenerator: projection: the original attribute {} is not registered so we can not access it.",
+                    originalAttribute->getFieldName());
             }
             // register the attribute with the new name in the record handler
             auto referenceToOriginalValue = recordHandler->getAttribute(originalAttribute->getFieldName());
@@ -331,8 +334,8 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             // it is a field access expression, so we just check if the record exists.
             auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
             if (!recordHandler->hasAttribute(fieldAccessExpression->getFieldName())) {
-                NES_FATAL_ERROR("CCodeGenerator: projection: the attribute" << fieldAccessExpression->getFieldName()
-                                                                            << " is not registered so we can not access it.");
+                NES_FATAL_ERROR2("CCodeGenerator: projection: the attribute {} is not registered so we can not access it.",
+                                 fieldAccessExpression->getFieldName());
             }
         }
     }
@@ -423,8 +426,8 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
-            NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: "
-                      << field->getStamp()->toString());
+            NES_ERROR2("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: {}",
+                       field->getStamp()->toString());
         }
         if (!firstIter) {
             commonStamp = field->getStamp();
@@ -432,7 +435,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
             commonStamp = commonStamp->join(field->getStamp());
         }
     }
-    NES_DEBUG("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: " << commonStamp->toString());
+    NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: {}", commonStamp->toString());
     if (commonStamp->isInteger()) {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
             DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
@@ -474,7 +477,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
                 VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                     VarRef(variableDeclaration)));
         } else {
-            NES_ERROR("CCodeGenerator: common data type for tensorflow model not supported: " << commonStamp->toString());
+            NES_ERROR2("CCodeGenerator: common data type for tensorflow model not supported: {}", commonStamp->toString());
         }
     }
 
@@ -535,7 +538,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                                          PipelineContextPtr context) {
 
     auto tf = getTypeFactory();
-    NES_DEBUG("CCodeGenerator: Generate code for Sink.");
+    NES_DEBUG2("CCodeGenerator: Generate code for Sink.");
     auto code = context->code;
     // set result schema to context
     context->resultSchema = sinkSchema;
@@ -586,9 +589,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     if (context->getInputSchema()->hasFieldName(field->getName())) {
                         // check if record handler has current field
                         if (!recordHandler->hasAttribute(field->getName())) {
-                            NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                            + " is part of the output schema, "
-                                              "but not registered in the record handler.");
+                            NES_FATAL_ERROR2("CCodeGenerator: field: {} is part of the output schema, but not registered in the "
+                                             "record handler.",
+                                             field->toString());
                         }
 
                         std::string tmpVarName = "tmp_" + field->getName();
@@ -617,16 +620,17 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     auto resultRecordFieldVariableDeclaration =
                         getVariableDeclarationForField(structDeclarationResultTuple, field);
                     if (!resultRecordFieldVariableDeclaration) {
-                        NES_FATAL_ERROR("CCodeGenerator: Could not extract field " << field->toString()
-                                                                                   << " from result record struct "
-                                                                                   << structDeclarationResultTuple.getTypeName());
+                        NES_FATAL_ERROR2("CCodeGenerator: Could not extract field {} from result record struct {}",
+                                         field->toString(),
+                                         structDeclarationResultTuple.getTypeName());
                     }
 
                     // check if record handler has current field
                     if (!recordHandler->hasAttribute(field->getName())) {
-                        NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                        + " is part of the output schema, "
-                                          "but not registered in the record handler.");
+                        NES_FATAL_ERROR2("CCodeGenerator: field: {}"
+                                         " is part of the output schema, "
+                                         "but not registered in the record handler.",
+                                         field->toString());
                     }
 
                     // Get current field from record handler.
@@ -677,7 +681,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
 
         auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
-        NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclResultTupleStmt.getCode()->code_);
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is {}", varDeclResultTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 
         // Setting the start of all fields for col layout
@@ -694,15 +698,17 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
             auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
             if (!resultRecordFieldVariableDeclaration) {
-                NES_FATAL_ERROR("CodeGenerator: Could not extract field " << field->toString() << " from result record struct "
-                                                                          << structDeclarationResultTuple.getTypeName());
+                NES_FATAL_ERROR2("CodeGenerator: Could not extract field {} from result record struct {}",
+                                 field->toString(),
+                                 structDeclarationResultTuple.getTypeName());
             }
 
             // check if record handler has current field
             if (!recordHandler->hasAttribute(field->getName())) {
-                NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                + " is part of the output schema, "
-                                  "but not registered in the record handler.");
+                NES_FATAL_ERROR2("CCodeGenerator: field: {}"
+                                 " is part of the output schema, "
+                                 "but not registered in the record handler.",
+                                 field->toString());
             }
 
             // Get current field from record handler.
@@ -725,7 +731,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
-        NES_ERROR("CCodeGenerator: inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR2("CCodeGenerator: inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     // Generate final logic to emit the last buffer to the Runtime
@@ -839,7 +845,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         context->code->currentCodeInsertionPoint->addStatement(setWatermarkStatement.createCopy());
     } else {
-        NES_ERROR("CCodeGenerator: cannot generate code for watermark strategy " << watermarkStrategy);
+        NES_ERROR2("CCodeGenerator: cannot generate code for watermark strategy");
     }
 
     return true;
@@ -884,7 +890,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
                                                    const VariableDeclaration& varDeclResultTuple,
                                                    const StructDeclaration& structDeclarationResultTuple,
                                                    SchemaPtr schema) {
-    NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check");
+    NES_DEBUG2("CCodeGenerator: Generate code for tuple buffer check");
 
     auto code = context->code;
     auto tf = getTypeFactory();
@@ -2410,7 +2416,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             break;
         }
         default: {
-            NES_FATAL_ERROR("CCodeGenerator: Window Handler - could not cast aggregation type");
+            NES_FATAL_ERROR2("CCodeGenerator: Window Handler - could not cast aggregation type");
         }
     }
 
@@ -2539,18 +2545,18 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration,
                                                          uint64_t maxIteration,
                                                          PipelineContextPtr context) {
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: start generating code for CEPITerations");
+    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: start generating code for CEPITerations");
     auto tf = getTypeFactory();
     auto handler = CEP::CEPOperatorHandler::create();
     auto index = context->registerOperatorHandler(handler);
     auto recordHandler = context->getRecordHandler();
 
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: call getCEPOperatorHandler using" << context << "and " << index);
+    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: call getCEPOperatorHandler using index: {}", index);
     auto CEPOperatorHandlerDeclaration =
         getCEPIterationOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
     // creates the following line of code
     // auto CEPOperatorHandler = pipelineExecutionContext.getOperatorHandler<CEP::CEPOperatorHandler>(0);
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHandler");
+    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHandler");
 
     // for each tuple: call addTuple on CEPOperatorCounter to count occurrences of events
     auto updateCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("incrementCounter"));
@@ -2565,13 +2571,13 @@ bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration,
     // creates the following line of code: if (CEPOperatorHandler.getCounter() <= 4 && CEPOperatorHandler.getCounter() >= 2)
     // if-state is the condition that needs to be fulfilled to consider the tuple
 
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: created IF CounterStatement");
+    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: created IF CounterStatement");
     // first, add the head and brackets of the if-Counter statement
     context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
     // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
     context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
 
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: Last Step clearCounter if condition is fulfilled");
+    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: Last Step clearCounter if condition is fulfilled");
     //TODO: this is not 100% correct, (1) we ignore the maxIteration condition with his solution, that would require a time condition that states when the counter needs to be reset
     auto resetCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("clearCounter"));
     context->code->currentCodeInsertionPoint->addStatement(resetCounter.copy());
@@ -2585,7 +2591,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(
     QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
     PipelineContextPtr context,
     uint64_t windowOperatorId) {
-    NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
+    NES_DEBUG2("CCodeGenerator::generateCodeForSlicingWindow with {} pipeline {}", window->toString(), context->pipelineName);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId);
@@ -2653,14 +2659,14 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
-        NES_WARNING("This mode is not supported anymore");
+        NES_WARNING2("This mode is not supported anymore");
     } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", policy->getPolicyType());
     }
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2674,7 +2680,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -2771,14 +2777,14 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
-        NES_WARNING("This mode is not supported anymore");
+        NES_WARNING2("This mode is not supported anymore");
     } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented.", policy->getPolicyType());
     }
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2792,7 +2798,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -2927,8 +2933,10 @@ CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental::Logical
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                                          PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
-    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << context->arity
-                            << " out=" << joinDef->getOutputSchema()->toString());
+    NES_DEBUG2("join input={} aritiy={} out={}",
+               context->inputSchema->toString(),
+               context->arity,
+               joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
@@ -2974,12 +2982,12 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
     if (context->arity == PipelineContext::BinaryLeft) {
-        NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side left");
+        NES_DEBUG2("CCodeGenerator::generateCodeForJoin generate code for side left");
         auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
     } else if (context->arity == PipelineContext::BinaryRight) {
-        NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side right");
+        NES_DEBUG2("CCodeGenerator::generateCodeForJoin generate code for side right");
         auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
@@ -3051,7 +3059,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
         if (context->arity == PipelineContext::BinaryRight) {
-            NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin right= {}", windowTimeStampFieldName);
 
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightSourceType();
@@ -3070,7 +3078,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             }
             NES_ASSERT(found, " right schema does not contain a timestamp attribute");
         } else {
-            NES_DEBUG("windowTimeStampFieldName bin left=" << windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin left= {}", windowTimeStampFieldName);
         }
 
         auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);
@@ -3131,8 +3139,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         }
     }
 
-    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
-                                                  << " with code=" << context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for : {}", context->pipelineName);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
@@ -3143,8 +3150,10 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                               PipelineContextPtr context,
                                               Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                               QueryCompilation::JoinBuildSideType buildSide) {
-    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << magic_enum::enum_name(buildSide)
-                            << " out=" << joinDef->getOutputSchema()->toString());
+    NES_DEBUG2("join input={} aritiy={} out={}",
+               context->inputSchema->toString(),
+               magic_enum::enum_name(buildSide),
+               joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
@@ -3198,12 +3207,12 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
     if (buildSide == QueryCompilation::JoinBuildSideType::Left) {
-        NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side left");
+        NES_DEBUG2("CCodeGenerator::generateCodeForJoin generate code for side left");
         auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
     } else if (buildSide == QueryCompilation::JoinBuildSideType::Right) {
-        NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side right");
+        NES_DEBUG2("CCodeGenerator::generateCodeForJoin generate code for side right");
         auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
@@ -3275,7 +3284,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
         if (buildSide == QueryCompilation::JoinBuildSideType::Right) {
-            NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin right={}", windowTimeStampFieldName);
 
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightSourceType();
@@ -3294,7 +3303,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
             }
             NES_ASSERT(found, " right schema does not contain a timestamp attribute");
         } else {
-            NES_DEBUG("windowTimeStampFieldName bin left=" << windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin left= {}", windowTimeStampFieldName);
         }
 
         auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);
@@ -3355,8 +3364,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         }
     }
 
-    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
-                                                  << " with code=" << context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}:", context->pipelineName);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterJoin(context,
@@ -3368,7 +3376,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                    PipelineContextPtr context,
                                                    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
-    NES_DEBUG("batch join input=" << context->inputSchema->toString() << " out=" << batchJoinDef->getOutputSchema()->toString());
+    NES_DEBUG2("batch join input={} out={}", context->inputSchema->toString(), batchJoinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
     const std::string structNameBuildTuple = "InputTuple";// we reuse the struct defined by generateCodeForScan
@@ -3432,8 +3440,7 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     insertCall->addParameter(currentTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(VarRef(hashTableVarDeclaration).accessPtr(insertCall).copy());
 
-    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
-                                                  << " with code=" << context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}", context->pipelineName);
 
     return true;
 }
@@ -3441,7 +3448,7 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
 bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                    PipelineContextPtr context,
                                                    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
-    NES_DEBUG("batch join input=" << context->inputSchema->toString() << " out=" << batchJoinDef->getOutputSchema()->toString());
+    NES_DEBUG2("batch join input={} out={}", context->inputSchema->toString(), batchJoinDef->getOutputSchema()->toString());
 
     NES_ASSERT(batchJoinDef, "invalid join definition");
     NES_ASSERT(!batchJoinDef->getBuildJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
@@ -3519,8 +3526,7 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBa
         recordHandler->registerAttribute(field->getName(), joinPartnerAccessStatement.copy());
     }
 
-    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
-                                                  << " with code=" << context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}:", context->pipelineName);
 
     return true;
 }
@@ -3531,7 +3537,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     PipelineContextPtr context,
     uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
-    NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
+    NES_DEBUG2("CCodeGenerator: Generate code for combine window.");
     auto code = context->code;
 
     if (window->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
@@ -3738,8 +3744,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         }
     }
 
-    NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
-                                                  << " with code=" << context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}", context->pipelineName);
 
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
@@ -3812,7 +3817,7 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
             createAggregateCall =
                 call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else {
-            NES_FATAL_ERROR("Aggregation Handler: aggregation=" << aggregation->getType() << " not implemented");
+            NES_FATAL_ERROR2("Aggregation Handler: aggregation={} not implemented", aggregation->getType());
         }
         // add the partial aggregation initialization to the code
         setupScope->addStatement(partialAggregateInitStatement.copy());
@@ -4255,14 +4260,14 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
-        NES_WARNING("This mode is not supported anymore");
+        NES_WARNING2("This mode is not supported anymore");
     } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", policy->getPolicyType());
     }
 
     auto action = window->getTriggerAction();
@@ -4289,7 +4294,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -4459,7 +4464,7 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                 case PipelineContext::Unary: return Unary;
                 case PipelineContext::BinaryLeft: return BinaryLeft;
                 case PipelineContext::BinaryRight: return BinaryRight;
-                default: NES_FATAL_ERROR("Unknown PipelineContext. Terminate.");
+                default: NES_FATAL_ERROR2("Unknown PipelineContext. Terminate.");
             }
         }();
         return CompiledExecutablePipelineStage::create(compiledCode, arity, src);

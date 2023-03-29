@@ -24,6 +24,9 @@ namespace NES::Benchmark::DataProvision {
  */
 auto constexpr workingTimeDeltaInMillSeconds = 10;
 
+class ExternalProvider;
+using ExternalProviderPtr = std::shared_ptr<ExternalProvider>;
+
 /**
  * @brief This class inherits from DataProvider. It enables the use of dynamic ingestion rates.
  */
@@ -35,11 +38,14 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
       * @param providerMode
       * @param preAllocatedBuffers
       * @param ingestionRateGenerator
+      * @param throwException: If this is set to true, then exceptions are thrown instead of warnings. There is one exception thrown
+      * if the buffer can not be written to the queue. Another one is thrown, if the data could not been generated fast enough
       */
     ExternalProvider(uint64_t id,
-                     DataProviderMode providerMode,
-                     std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator);
+                     const DataProviderMode providerMode,
+                     const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+                     bool throwException = true);
 
     /**
      * @brief destructor
@@ -75,6 +81,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     void stop() override;
 
     /**
+     * @brief getter for checking if the external provider has started
+     * @return true, if the external provider is up and running
+     */
+    bool isStarted() const;
+
+    /**
      * @brief overrides readNextBuffer by providing the next buffer to be added to the caller
      * @param sourceId
      * @return either the next buffer in the queue or std::nullopt
@@ -93,6 +105,17 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
+    /**
+     * @brief waits until the external provider has started
+     */
+    void waitUntilStarted();
+
+    /**
+     * @brief sets new value for throwException
+     * @param throwException
+     */
+    void setThrowException(bool throwException);
+
   private:
     /**
      * @brief generates data based on predefinedIngestionRates
@@ -102,9 +125,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator;
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
-    bool started = false;
+    std::atomic<bool> started = false;
+    std::mutex mutexStartProvider;
+    std::condition_variable cvStartProvider;
     std::thread generatorThread;
     std::vector<uint64_t> predefinedIngestionRates;
+    bool throwException;
 };
 }// namespace NES::Benchmark::DataProvision
 

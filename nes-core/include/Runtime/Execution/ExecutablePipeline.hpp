@@ -15,15 +15,17 @@
 #ifndef NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #include <Common/Identifiers.hpp>
-#include <Runtime/Events.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <atomic>
 #include <memory>
 #include <variant>
 #include <vector>
+
 namespace NES::Runtime::Execution {
 
 /**

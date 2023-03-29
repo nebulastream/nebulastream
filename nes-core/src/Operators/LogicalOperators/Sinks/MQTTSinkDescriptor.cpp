@@ -77,15 +77,14 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                                 numberOfOrigins);
 }
 
-std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }
+std::string MQTTSinkDescriptor::toString() const { return "MQTTSinkDescriptor()"; }
 
 bool MQTTSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<MQTTSinkDescriptor>()) {
         return false;
     }
     auto otherSinkDescriptor = other->as<MQTTSinkDescriptor>();
-    NES_TRACE("MQTTSinkDescriptor::equal: this: " << this->toString()
-                                                  << "otherSinkDescriptor: " << otherSinkDescriptor->toString());
+    NES_TRACE2("MQTTSinkDescriptor::equal: this: {} otherSinkDescriptor: {}", this->toString(), otherSinkDescriptor->toString());
     return address == otherSinkDescriptor->address && clientId == otherSinkDescriptor->clientId
         && topic == otherSinkDescriptor->topic && user == otherSinkDescriptor->user
         && maxBufferedMSGs == otherSinkDescriptor->maxBufferedMSGs && timeUnit == otherSinkDescriptor->timeUnit

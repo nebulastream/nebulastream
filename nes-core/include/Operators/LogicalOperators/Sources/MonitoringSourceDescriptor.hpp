@@ -34,16 +34,16 @@ class MonitoringSourceDescriptor : public SourceDescriptor {
      * @brief Return the wait time between sampling periods.
      * @return the wait time
      */
-    std::chrono::milliseconds getWaitTime();
+    std::chrono::milliseconds getWaitTime() const;
 
     /**
      * @brief Return the type of metric collector used for the monitoring source
      * @return the metric collector
      */
-    Monitoring::MetricCollectorType getMetricCollectorType();
+    Monitoring::MetricCollectorType getMetricCollectorType() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
-    std::string toString() override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
   private:

@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
 
+#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {
@@ -32,6 +33,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
                                       std::string offsetMode,
+                                      const KafkaSourceTypePtr& kafkaSourceType,
                                       uint64_t numbersOfBufferToProduce,
                                       uint64_t batchSize);
     static SourceDescriptorPtr create(SchemaPtr schema,
@@ -42,8 +44,11 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
                                       std::string offsetMode,
+                                      const KafkaSourceTypePtr& kafkaSourceType,
                                       uint64_t numbersOfBufferToProduce,
                                       uint64_t batchSize);
+
+    static SourceDescriptorPtr create(SchemaPtr schema, KafkaSourceTypePtr sourceConfig);
 
     /**
      * @brief Get the list of kafka brokers
@@ -76,6 +81,11 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     const std::string& getGroupId() const;
 
     /**
+     * @brief Get the input type for the source
+     */
+    KafkaSourceTypePtr getSourceConfigPtr() const;
+
+    /**
      * @brief Is kafka topic offset to be auto committed
      */
     bool isAutoCommit() const;
@@ -86,8 +96,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @return
      */
     uint64_t getKafkaConnectTimeout() const;
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
-    std::string toString() override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    std::string toString() const override;
 
     SourceDescriptorPtr copy() override;
 
@@ -99,6 +109,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
                                    std::string offsetMode,
+                                   const KafkaSourceTypePtr& kafkaSourceType,
                                    uint64_t numbersOfBufferToProduce,
                                    uint64_t batchSize);
     explicit KafkaSourceDescriptor(SchemaPtr schema,
@@ -109,11 +120,16 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
                                    std::string offsetMode,
+                                   const KafkaSourceTypePtr& kafkaSourceType,
                                    uint64_t numbersOfBufferToProduce,
                                    uint64_t batchSize);
+
+    explicit KafkaSourceDescriptor(SchemaPtr schema, KafkaSourceTypePtr kafkaSourceType);
+
     std::string brokers;
     std::string topic;
     std::string groupId;
+    KafkaSourceTypePtr kafkaSourceType;
     bool autoCommit;
     uint64_t kafkaConnectTimeout;
     std::string offsetMode;

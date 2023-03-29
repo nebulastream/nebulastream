@@ -12,12 +12,9 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/DataTypes/Integer/Int.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
 
@@ -71,11 +68,14 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
 
 Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
     // load memrefs
-    auto count = AggregationFunction::loadFromMemref(memref, inputType);// load the count as an inputType to allow Division
+    auto count = AggregationFunction::loadFromMemref(memref, countType);
     auto sumMemref = loadSumMemRef(memref);
     auto sum = AggregationFunction::loadFromMemref(sumMemref, inputType);
     // calc the average
-    auto finalVal = DivOp(sum, count);
+    // TODO #3602: If inputType is an integer then the result is also an integer
+    // (specifically UINT64 because that is the count type).
+    // However, it should be a float.
+    auto finalVal = sum / count;
     sumMemref.store(finalVal);
 
     // return the average

@@ -29,21 +29,22 @@ namespace NES::Monitoring {
 RegistrationMetrics::RegistrationMetrics()
     : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false),
       hasBattery(false) {
-    NES_DEBUG("RegistrationMetrics: Default ctor");
+    NES_DEBUG2("RegistrationMetrics: Default ctor");
 }
 
 RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
     : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
       hasBattery(hasBattery) {
-    NES_DEBUG("RegistrationMetrics: Init with flag moving:" + std::to_string(isMoving)
-              + ", hasBattery:" + std::to_string(hasBattery));
+    NES_DEBUG2("RegistrationMetrics: Init with flag moving:{}, hasBattery:{}",
+               std::to_string(isMoving),
+               std::to_string(hasBattery));
 }
 
 RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)
     : nodeId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()),
       totalCPUJiffies(metrics.totalcpujiffies()), cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()),
       isMoving(metrics.ismoving()), hasBattery(metrics.hasbattery()) {
-    NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
+    NES_DEBUG2("RegistrationMetrics: Creating from serializable object.");
 }
 
 NES::SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {

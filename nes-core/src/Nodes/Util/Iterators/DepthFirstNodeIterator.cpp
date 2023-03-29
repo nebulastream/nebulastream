@@ -14,8 +14,8 @@
 
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 
 DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)){};
@@ -40,7 +40,7 @@ NodePtr DepthFirstNodeIterator::iterator::operator*() { return workStack.top(); 
 
 DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++() {
     if (workStack.empty()) {
-        NES_DEBUG("DF Iterator: we reached the end of this iterator and will not do anything.");
+        NES_DEBUG2("DF Iterator: we reached the end of this iterator and will not do anything.");
     } else {
         auto current = workStack.top();
         workStack.pop();

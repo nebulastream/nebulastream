@@ -62,8 +62,10 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
 
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
-    NES_DEBUG("StaticDataSource: id " + std::to_string(operatorId) + " Initialize source with schema: |"
-              + this->schema->toString() + "| size: " + std::to_string(tupleSizeInBytes));
+    NES_DEBUG2("StaticDataSource: id {} Initialize source with schema: |{}| size: {}",
+               std::to_string(operatorId),
+               this->schema->toString(),
+               std::to_string(tupleSizeInBytes));
 
     this->sourceAffinity = sourceAffinity;
     bufferSize = localBufferManager->getBufferSize();
@@ -93,11 +95,13 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     std::string delimiter = "|";
     inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
 
-    NES_DEBUG("StaticDataSource() operatorId: " << operatorId
-                                                << ":\n"
-                                                   "eagerLoading="
-                                                << eagerLoading << " numTuplesToProcess=" << numTuples << " numBuffersToProcess="
-                                                << numBuffersToProcess << " numTuplesPerBuffer=" << numTuplesPerBuffer);
+    NES_DEBUG2(
+        "StaticDataSource() operatorId: {}: eagerLoading={} numTuplesToProcess={} numBuffersToProcess={} numTuplesPerBuffer={}",
+        operatorId,
+        eagerLoading,
+        numTuples,
+        numBuffersToProcess,
+        numTuplesPerBuffer);
 
     if (eagerLoading) {
         this->numSourceLocalBuffers = this->numBuffersToProcess;
@@ -106,7 +110,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                    .count();
 
-    NES_DEBUG("StaticDataSource created. Timestamp: " << now);
+    NES_DEBUG2("StaticDataSource created. Timestamp: {}", now);
 }
 
 bool StaticDataSource::start() {
@@ -114,13 +118,13 @@ bool StaticDataSource::start() {
 
     startCalled = true;
     if (lateStart) {
-        NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: "
-                  << this->operatorId);
+        NES_DEBUG2("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: {}",
+                   this->operatorId);
         return true;// we didn't start but still signal a success
     }
 
     lock.unlock();
-    NES_DEBUG("StaticDataSource::start called; lateStart==false. Starting now. operatorId: " << this->operatorId);
+    NES_DEBUG2("StaticDataSource::start called; lateStart==false. Starting now. operatorId: {}", this->operatorId);
     return startStaticDataSourceManually();
 }
 
@@ -129,20 +133,20 @@ bool StaticDataSource::startStaticDataSourceManually() { return DataSource::star
 void StaticDataSource::onEvent(Runtime::BaseEvent& event) {
     std::unique_lock lock(startConfigMutex);
 
-    NES_DEBUG("StaticDataSource::onEvent(event) called. operatorId: " << this->operatorId);
+    NES_DEBUG2("StaticDataSource::onEvent(event) called. operatorId: {}", this->operatorId);
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
-        NES_DEBUG("StaticDataSource: received startSourceEvent. operatorId: " << this->operatorId);
+        NES_DEBUG2("StaticDataSource: received startSourceEvent. operatorId: {}", this->operatorId);
         if (startCalled) {
             lock.unlock();
-            NES_DEBUG("StaticDataSource::onEvent: start() method was previously called but delayed. Starting source now.");
+            NES_DEBUG2("StaticDataSource::onEvent: start() method was previously called but delayed. Starting source now.");
             startStaticDataSourceManually();
         } else {
-            NES_DEBUG(
+            NES_DEBUG2(
                 "StaticDataSource::onEvent: Received start event. As soon as DataSource::start is called the source will start.");
             lateStart = false;
         }
     } else {
-        NES_DEBUG("StaticDataSource received an unknown event.");
+        NES_DEBUG2("StaticDataSource received an unknown event.");
     }
 }
 
@@ -175,31 +179,31 @@ void StaticDataSource::preloadBuffers() {
 }
 
 std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
-    NES_DEBUG("StaticDataSource::receiveData called on " << operatorId);
+    NES_DEBUG2("StaticDataSource::receiveData called on {}", operatorId);
     if (numBuffersToProcess == numBuffersEmitted || numTuples == numTuplesEmitted) {
-        NES_DEBUG("StaticDataSource::receiveData: All data emitted, return nullopt");
+        NES_DEBUG2("StaticDataSource::receiveData: All data emitted, return nullopt");
         return std::nullopt;
     }
 
     if (eagerLoading) {
         // todo alternatively we could keep buffers and not recycle them
-        NES_DEBUG("StaticDataSource::receiveData: Emit preloaded buffer.");
+        NES_DEBUG2("StaticDataSource::receiveData: Emit preloaded buffer.");
         NES_ASSERT2_FMT(!filledBuffers.empty(), "StaticDataSource buffers should be preloaded.");
         auto buffer = filledBuffers.front();
         filledBuffers.erase(filledBuffers.begin());
         return buffer;
     }
 
-    NES_DEBUG("StaticDataSource::receiveData: Read and emit new buffer from " << pathTableFile);
+    NES_DEBUG2("StaticDataSource::receiveData: Read and emit new buffer from {}", pathTableFile);
     auto dynamicBuffer = DataSource::allocateBuffer();
     fillBuffer(dynamicBuffer);
     return dynamicBuffer.getBuffer();
 }
 
 void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    NES_DEBUG("StaticDataSource::fillBuffer: start at pos=" << currentPositionInFile);
+    NES_DEBUG2("StaticDataSource::fillBuffer: start at pos={}", currentPositionInFile);
     if (this->fileEnded) {
-        NES_WARNING("StaticDataSource::fillBuffer: but file has already ended");
+        NES_WARNING2("StaticDataSource::fillBuffer: but file has already ended");
         buffer.setNumberOfTuples(0);
         return;
     }
@@ -208,7 +212,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
     uint64_t generatedTuplesThisPass = 0;
     //fill buffer maximally
     NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSizeInBytes < buffer.getBuffer().getBufferSize(), "Wrong parameters");
-    NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples=" << numTuplesPerBuffer << " of size=" << tupleSizeInBytes);
+    NES_DEBUG2("StaticDataSource::fillBuffer: fill buffer with #tuples= {}  of size= {}", numTuplesPerBuffer, tupleSizeInBytes);
 
     std::string line;
     uint64_t tupleCount = 0;
@@ -219,7 +223,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
             break;
         }
         std::getline(input, line);
-        NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
+        NES_TRACE2("StaticDataSource line={}, val={}", tupleCount, line);
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         ++tupleCount;
         ++generatedTuples;
@@ -228,9 +232,10 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
     currentPositionInFile = input.tellg();
     buffer.setNumberOfTuples(tupleCount);
     generatedBuffers++;
-    NES_DEBUG("StaticDataSource::fillBuffer: reading finished read " << tupleCount
-                                                                     << " tuples at posInFile=" << currentPositionInFile);
-    NES_TRACE("StaticDataSource::fillBuffer: read filled buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_DEBUG2("StaticDataSource::fillBuffer: reading finished read {} tuples at posInFile={}",
+               tupleCount,
+               currentPositionInFile);
+    NES_TRACE2("StaticDataSource::fillBuffer: read filled buffer={} ", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 std::string StaticDataSource::toString() const {

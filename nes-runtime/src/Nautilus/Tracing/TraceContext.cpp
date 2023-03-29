@@ -25,6 +25,7 @@ namespace NES::Nautilus::Tracing {
  * The trace context can always be thread local, as tracable code can never span multiple threads.
  */
 static thread_local TraceContext* traceContext;
+
 TraceContext* TraceContext::get() { return traceContext; }
 
 TraceContext* TraceContext::initialize(TagRecorder& tagRecorder) {

@@ -17,6 +17,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cmath>
 
 namespace NES {
@@ -37,7 +38,7 @@ void RoundExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("RoundExpressionNode: converted stamp to float: " << toString());
+    NES_TRACE2("RoundExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool RoundExpressionNode::equal(NodePtr const& rhs) const {

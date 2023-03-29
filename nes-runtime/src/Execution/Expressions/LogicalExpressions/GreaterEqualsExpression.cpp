@@ -11,11 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+
+#include <Execution/Expressions/LogicalExpressions/GreaterEqualsExpression.hpp>
+#include <utility>
+
 namespace NES::Runtime::Execution::Expressions {
 
-ConstantIntegerExpression::ConstantIntegerExpression(int64_t integerValue) : integerValue(integerValue) {}
+GreaterEqualsExpression::GreaterEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
-Value<> ConstantIntegerExpression::execute(Record&) const { return Value<>(integerValue); }
+Value<> GreaterEqualsExpression::execute(Record& record) const {
+    Value<> leftValue = leftSubExpression->execute(record);
+    Value<> rightValue = rightSubExpression->execute(record);
+    return leftValue >= rightValue;
+}
 
 }// namespace NES::Runtime::Execution::Expressions

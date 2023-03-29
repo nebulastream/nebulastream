@@ -19,6 +19,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -352,6 +353,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout,
                                       std::string offsetMode,
+                                      const KafkaSourceTypePtr& kafkaSourceType,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,

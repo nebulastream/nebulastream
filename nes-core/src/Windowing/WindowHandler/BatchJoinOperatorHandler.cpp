@@ -11,12 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sources/StaticDataSource.hpp>
-#include <State/StateManager.hpp>
-#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <utility>
 #include <variant>
@@ -36,7 +34,7 @@ BatchJoinOperatorHandlerPtr BatchJoinOperatorHandler::create(const LogicalBatchJ
 
 BatchJoinOperatorHandler::BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema)
     : batchJoinDefinition(std::move(batchJoinDefinition)), resultSchema(std::move(resultSchema)) {
-    NES_DEBUG("BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema)");
+    NES_DEBUG2("BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema)");
 }
 
 BatchJoinOperatorHandler::BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition,
@@ -44,9 +42,9 @@ BatchJoinOperatorHandler::BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr
                                                    AbstractBatchJoinHandlerPtr batchJoinHandler)
     : batchJoinDefinition(std::move(batchJoinDefinition)), batchJoinHandler(std::move(batchJoinHandler)),
       resultSchema(std::move(resultSchema)) {
-    NES_DEBUG("BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema, "
-              "AbstractBatchJoinHandlerPtr "
-              "batchJoinHandler)");
+    NES_DEBUG2("BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema, "
+               "AbstractBatchJoinHandlerPtr "
+               "batchJoinHandler)");
 }
 
 LogicalBatchJoinDefinitionPtr BatchJoinOperatorHandler::getBatchJoinDefinition() { return batchJoinDefinition; }
@@ -63,10 +61,10 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
     NES_ASSERT(this->buildPipelineID != 0, "BatchJoinOperatorHandler: The Build Pipeline is not registered at start().");
     NES_ASSERT(this->probePipelineID != 0, "BatchJoinOperatorHandler: The Probe Pipeline is not registered at start().");
 
-    NES_DEBUG(
-        "BatchJoinOperatorHandler::start: Analyzing pipeline. # predecessors of pipeline: " << context->getPredecessors().size());
+    NES_DEBUG2("BatchJoinOperatorHandler::start: Analyzing pipeline. # predecessors of pipeline: {}",
+               context->getPredecessors().size());
     if (context->getPipelineID() == this->buildPipelineID) {
-        NES_DEBUG("BatchJoinOperatorHandler: Identified build pipeline by ID.");
+        NES_DEBUG2("BatchJoinOperatorHandler: Identified build pipeline by ID.");
         NES_ASSERT(context->getPredecessors().size() >= 1,
                    "BatchJoinOperatorHandler: The Build Pipeline should have at least one predecessor.");
 
@@ -84,13 +82,13 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
 
         for (auto buildPredecessor : this->buildPredecessors) {
             if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&(buildPredecessor))) {
-                NES_DEBUG("BatchJoinOperatorHandler: Found Build Source in predecessors of Build pipeline. "
-                          "Starting it now.");
+                NES_DEBUG2("BatchJoinOperatorHandler: Found Build Source in predecessors of Build pipeline. "
+                           "Starting it now.");
                 sourcePredecessor->lock()->onEvent(event);
             } else if (const auto* pipelinePredecessor =
                            std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&(buildPredecessor))) {
-                NES_DEBUG("BatchJoinOperatorHandler: Found Pipeline in predecessors of Build pipeline. "
-                          "Forwarding the start source event now.");
+                NES_DEBUG2("BatchJoinOperatorHandler: Found Pipeline in predecessors of Build pipeline. "
+                           "Forwarding the start source event now.");
                 pipelinePredecessor->lock()->onEvent(event);
             }
         }
@@ -102,7 +100,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
         return;
     }
     if (context->getPipelineID() == this->probePipelineID) {
-        NES_DEBUG("BatchJoinOperatorHandler: Identified probe pipeline by ID.");
+        NES_DEBUG2("BatchJoinOperatorHandler: Identified probe pipeline by ID.");
         NES_ASSERT(
             context->getPredecessors().size() >= 2,
             "BatchJoinOperatorHandler: The Probe Pipeline should have the Build Pipeline and at least one other predecessor.");
@@ -113,7 +111,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
         bool encounteredBuildPipeline = false;// (within the probe pipelines predecessors)
         for (auto probePredecessor : context->getPredecessors()) {
             if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&probePredecessor)) {
-                NES_DEBUG("BatchJoinOperatorHandler: Found Probe Source in predecessors of Probe pipeline.");
+                NES_DEBUG2("BatchJoinOperatorHandler: Found Probe Source in predecessors of Probe pipeline.");
                 this->probePredecessors.push_back(probePredecessor);
             } else if (const auto* pipelinePredecessor =
                            std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&probePredecessor)) {
@@ -125,7 +123,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
                     continue;// we do not save the Build Pipeline as a probe predecessor
                 }
 
-                NES_DEBUG("BatchJoinOperatorHandler: Found Pipeline in predecessors of Probe pipeline.");
+                NES_DEBUG2("BatchJoinOperatorHandler: Found Pipeline in predecessors of Probe pipeline.");
                 this->probePredecessors.push_back(probePredecessor);
             }
         }
@@ -135,7 +133,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
         return;
     }
 
-    NES_FATAL_ERROR("BatchJoinOperatorHandler::start() called with pipeline that didn't have one or two successors!");
+    NES_FATAL_ERROR2("BatchJoinOperatorHandler::start() called with pipeline that didn't have one or two successors!");
     return;
 }
 
@@ -151,16 +149,16 @@ void BatchJoinOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task
 }
 
 void BatchJoinOperatorHandler::startProbeSide(Runtime::WorkerContext& context) {
-    NES_DEBUG("BatchJoinOperatorHandler: Starting Probe Predecessors.");
+    NES_DEBUG2("BatchJoinOperatorHandler: Starting Probe Predecessors.");
     NES::Runtime::StartSourceEvent event;
 
     for (auto probePredecessor : this->probePredecessors) {
         if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&probePredecessor)) {
-            NES_DEBUG("BatchJoinOperatorHandler: Starting Probe Source predecessor.");
+            NES_DEBUG2("BatchJoinOperatorHandler: Starting Probe Source predecessor.");
             sourcePredecessor->lock()->onEvent(event, context);
         } else if (const auto* pipelinePredecessor =
                        std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&probePredecessor)) {
-            NES_DEBUG("BatchJoinOperatorHandler: Send Start Source event to Pipeline (a Probe Side Predecessor).");
+            NES_DEBUG2("BatchJoinOperatorHandler: Send Start Source event to Pipeline (a Probe Side Predecessor).");
             pipelinePredecessor->lock()->onEvent(event, context);
         }
     }

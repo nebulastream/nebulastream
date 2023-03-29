@@ -129,6 +129,18 @@ class FloatInvocationPlugin : public InvocationPlugin {
         });
     }
 
+    template<class T>
+    std::optional<Value<>> castIntToValue(const Value<>& left, const TypeIdentifier* toType) const {
+        auto typedValue = left.as<T>();
+        if (toType->isType<Float>()) {
+            auto value = typedValue.getValue().getRawInt();
+            return Value<>(std::make_unique<Float>(value));
+        } else {
+            auto value = typedValue.getValue().getRawInt();
+            return Value<>(std::make_unique<Double>(value));
+        }
+    }
+
     std::optional<Value<>> CastTo(const Value<>& left, const TypeIdentifier* toType) const override {
         // this method only performs float to double casts.
         if (isa<Float>(left.value) && toType->isType<Double>()) {
@@ -138,11 +150,41 @@ class FloatInvocationPlugin : public InvocationPlugin {
             auto value = sourceValue.getValue();
             return Value<>(std::make_unique<Double>(value));
         }
+
+        if (isa<UInt8>(left.value)) {
+            return castIntToValue<UInt8>(left, toType);
+        } else if (isa<UInt16>(left.value)) {
+            return castIntToValue<UInt16>(left, toType);
+        } else if (isa<UInt16>(left.value)) {
+            return castIntToValue<UInt16>(left, toType);
+        } else if (isa<UInt32>(left.value)) {
+            return castIntToValue<UInt32>(left, toType);
+        } else if (isa<UInt64>(left.value)) {
+            return castIntToValue<UInt64>(left, toType);
+        } else if (isa<Int8>(left.value)) {
+            return castIntToValue<Int8>(left, toType);
+        } else if (isa<Int16>(left.value)) {
+            return castIntToValue<Int16>(left, toType);
+        } else if (isa<Int16>(left.value)) {
+            return castIntToValue<Int16>(left, toType);
+        } else if (isa<Int32>(left.value)) {
+            return castIntToValue<Int32>(left, toType);
+        } else if (isa<Int64>(left.value)) {
+            return castIntToValue<Int64>(left, toType);
+        }
         return std::nullopt;
     }
 
     bool IsCastable(const Value<>& value, const TypeIdentifier* toType) const override {
-        return isa<Float>(value.getValue()) && toType->isType<Double>();
+        // cast from float to double
+        if (isa<Float>(value.getValue()) && toType->isType<Double>()) {
+            return true;
+        }
+        // cast from int to float or double
+        return (isa<UInt8>(value.getValue()) || isa<UInt16>(value.getValue()) || isa<UInt32>(value.getValue())
+                || isa<UInt64>(value.getValue()) || isa<Int8>(value.getValue()) || isa<Int16>(value.getValue())
+                || isa<Int32>(value.getValue()) || isa<Int64>(value.getValue()))
+            && (toType->isType<Float>() || toType->isType<Double>());
     }
 };
 

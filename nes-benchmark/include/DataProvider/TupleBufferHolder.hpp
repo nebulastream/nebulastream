@@ -23,40 +23,36 @@ class TupleBufferHolder {
   public:
     /**
          * @brief default constructor
-         */
+    */
     TupleBufferHolder() = default;
 
     /**
          * @brief constructor via an reference to the buffer to be hold
          * @param ref
-         */
+    */
     TupleBufferHolder(const Runtime::TupleBuffer& ref) : bufferToHold(ref) {}
 
     /**
-         * @brief constructor via the lvalue of a buffer to hold
-         * @param ref
-         */
-    TupleBufferHolder(Runtime::TupleBuffer&& ref) : bufferToHold(std::move(ref)) {}
-
-    TupleBufferHolder(const TupleBufferHolder& rhs) : bufferToHold(rhs.bufferToHold) {}
-
+     * @brief constructor via && reference to the buffer to be hold
+     * @param ref
+     */
     TupleBufferHolder(TupleBufferHolder&& rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) {}
 
     /**
-         * @brief equal sign operator via a reference
-         * @param other
-         * @return
-         */
+     * @brief equal sign operator via a reference
+     * @param other
+     * @return
+     */
     TupleBufferHolder& operator=(const TupleBufferHolder& other) {
         bufferToHold = other.bufferToHold;
         return *this;
     }
 
     /**
-         * @brief
-         * @param other
-         * @return
-         */
+     * @brief equal sign operator via a reference/reference
+     * @param other
+     * @return
+     */
     TupleBufferHolder& operator=(TupleBufferHolder&& other) {
         bufferToHold = std::move(other.bufferToHold);
         return *this;

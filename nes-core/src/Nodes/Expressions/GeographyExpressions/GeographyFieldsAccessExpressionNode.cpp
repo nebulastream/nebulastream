@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <memory>
-
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <memory>
 
 namespace NES {
 GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(DataTypePtr stamp)
@@ -55,7 +55,7 @@ bool GeographyFieldsAccessExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string GeographyFieldsAccessExpressionNode::toString() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
+        NES_FATAL_ERROR2("A geography access expression should always access two fields, but it had: {}", children.size());
         throw InvalidArgumentException(
             "Invalid field access in GeographyFieldsAccessExpressionNode::toString(): children.size() = ",
             std::to_string(children.size()));
@@ -72,7 +72,7 @@ void GeographyFieldsAccessExpressionNode::setChildren(ExpressionNodePtr const& l
 
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLatitude() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
+        NES_FATAL_ERROR2("A geography access expression should always access two fields, but it had: {}", children.size());
         throw InvalidArgumentException(
             "Invalid field access in GeographyFieldsAccessExpressionNode::getLatitude(): children.size() = ",
             std::to_string(children.size()));
@@ -82,7 +82,7 @@ ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLatitude() const {
 
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::getLongitude() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("A geography access expression should always access two fields, but it had: " << children.size());
+        NES_FATAL_ERROR2("A geography access expression should always access two fields, but it had: {}", children.size());
         throw InvalidArgumentException(
             "Invalid field access in GeographyFieldsAccessExpressionNode::getLongitude(): children.size() = ",
             std::to_string(children.size()));
@@ -106,7 +106,7 @@ void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInfere
     }
 
     stamp = DataTypeFactory::createFloat();
-    NES_TRACE("GeographyFieldsAccessExpressionNode: The following stamp was assigned: " << toString());
+    NES_TRACE2("GeographyFieldsAccessExpressionNode: The following stamp was assigned: {}", toString());
 }
 
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::copy() {

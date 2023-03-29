@@ -23,11 +23,13 @@ fi
 if [ $# -eq 0 ]
 then
     # Build NES
-    mkdir -p /nebulastream/build
-    cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-    make -j4
+    ccache --set-config=cache_dir=/cache_dir/
+    ccache -M 10G
+    cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_ENABLES_TESTS=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 /nebulastream/
+    cmake --build /build_dir -j12
+    cd /build_dir
+    rm *deb
     cpack
 else
     exec $@

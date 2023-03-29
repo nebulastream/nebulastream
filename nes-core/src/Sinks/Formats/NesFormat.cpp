@@ -33,8 +33,7 @@ std::optional<Runtime::TupleBuffer> NesFormat::getSchema() {
     SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
     bool const success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSizeLong());
     NES_ASSERT2_FMT(success, "cannot serialize");
-    NES_DEBUG("NesFormat::getSchema: write schema"
-              << " success=" << success);
+    NES_DEBUG2("NesFormat::getSchema: write schema success={}", success);
     buf.setNumberOfTuples(protoBuff->ByteSizeLong());
     return buf;
 }
@@ -43,7 +42,7 @@ std::vector<Runtime::TupleBuffer> NesFormat::getData(Runtime::TupleBuffer& input
     std::vector<Runtime::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("NesFormat::getData: write watermark-only buffer");
+        NES_WARNING2("NesFormat::getData: write watermark-only buffer");
         buffers.push_back(inputBuffer);
         return buffers;
     }

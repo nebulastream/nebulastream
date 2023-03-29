@@ -22,6 +22,7 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <utility>
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
 /// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.

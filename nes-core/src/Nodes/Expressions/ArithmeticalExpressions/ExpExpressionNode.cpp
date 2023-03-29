@@ -14,9 +14,8 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cmath>
 
 namespace NES {
@@ -37,7 +36,7 @@ void ExpExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& t
 
     // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
     stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
-    NES_TRACE("ExpExpressionNode: change stamp to float with bounds [0, DOUBLE_MAX]: " << toString());
+    NES_TRACE2("ExpExpressionNode: change stamp to float with bounds [0, DOUBLE_MAX]: {}", toString());
 }
 
 bool ExpExpressionNode::equal(NodePtr const& rhs) const {

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 #ifdef ENABLE_MQTT_BUILD
-#include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -29,6 +29,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <gtest/gtest.h>
 #include <memory>
 #include <random>
 using namespace NES;

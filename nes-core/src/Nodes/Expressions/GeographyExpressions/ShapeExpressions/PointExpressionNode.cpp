@@ -15,6 +15,7 @@
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Node.hpp>
+#include <sstream>
 
 namespace NES {
 PointExpressionNode::PointExpressionNode(PointExpressionNode* other) : ShapeExpressionNode(other->type) {

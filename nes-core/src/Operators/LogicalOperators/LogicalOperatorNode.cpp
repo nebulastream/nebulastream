@@ -15,8 +15,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 
 LogicalOperatorNode::LogicalOperatorNode(uint64_t id)
@@ -29,7 +29,7 @@ void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
         return;
     }
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
+    NES_TRACE2("Inferring Z3 expressions for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
     for (auto& child : children) {

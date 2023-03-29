@@ -331,12 +331,17 @@ void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
                                                                     TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+
+    NES::Nautilus::IR::Operations::CompareOperation::Comparator comparator;
+    if (leftInput->getStamp()->isInteger() && rightInput->getStamp()->isInteger()) {
+        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISLT;
+    } else if (leftInput->getStamp()->isFloat() && rightInput->getStamp()->isFloat()) {
+        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::FOLT;
+    }
+
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
-        resultIdentifier,
-        leftInput,
-        rightInput,
-        NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISLT);
+    auto compareOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier, leftInput, rightInput, comparator);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -346,12 +351,17 @@ void TraceToIRConversionPhase::IRConversionContext::processGreaterThan(int32_t,
                                                                        TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+
+    NES::Nautilus::IR::Operations::CompareOperation::Comparator comparator;
+    if (leftInput->getStamp()->isInteger() && rightInput->getStamp()->isInteger()) {
+        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISGT;
+    } else if (leftInput->getStamp()->isFloat() && rightInput->getStamp()->isFloat()) {
+        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::FOGT;
+    }
+
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
-        resultIdentifier,
-        leftInput,
-        rightInput,
-        NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISGT);
+    auto compareOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier, leftInput, rightInput, comparator);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }

@@ -27,7 +27,7 @@ namespace NES {
 ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), expressions(std::move(expressions)) {}
 
-std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
+std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() const { return expressions; }
 
 bool ProjectionLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<ProjectionLogicalOperatorNode>()->getId() == id;
@@ -51,8 +51,7 @@ bool ProjectionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
         return false;
     }
-    NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
-                            << " this proj=" << toString());
+    NES_DEBUG2("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
     outputSchema->clear();
     for (auto& expression : expressions) {
 
@@ -67,9 +66,9 @@ bool ProjectionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
             auto fieldAccess = expression->as<FieldAccessExpressionNode>();
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         } else {
-            NES_ERROR("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
-                      "but it was a "
-                      + expression->toString());
+            NES_ERROR2("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
+                       "but it was a {}",
+                       expression->toString());
             throw TypeInferenceException("ProjectionLogicalOperatorNode: Expression has to be an FieldAccessExpression or a "
                                          "FieldRenameExpression but it was a "
                                          + expression->toString());
@@ -91,7 +90,7 @@ OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
 
 void ProjectionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("ProjectionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("ProjectionLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "ProjectionLogicalOperatorNode: Project should have children.");
     //Infer query signatures for child operators
     for (auto& child : children) {

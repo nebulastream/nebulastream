@@ -14,6 +14,7 @@
 #include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 LogicalBinaryOperatorNode::LogicalBinaryOperatorNode(OperatorId id)
@@ -24,14 +25,14 @@ bool LogicalBinaryOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     distinctSchemas.clear();
     //Check the number of child operators
     if (children.size() < 2) {
-        NES_ERROR("BinaryOperatorNode: this operator should have at least two child operators");
+        NES_ERROR2("BinaryOperatorNode: this operator should have at least two child operators");
         throw TypeInferenceException("BinaryOperatorNode: this node should have at least two child operators");
     }
 
     // Infer schema of all child operators
     for (const auto& child : children) {
         if (!child->as<LogicalOperatorNode>()->inferSchema(typeInferencePhaseContext)) {
-            NES_ERROR("BinaryOperatorNode: failed inferring the schema of the child operator");
+            NES_ERROR2("BinaryOperatorNode: failed inferring the schema of the child operator");
             throw TypeInferenceException("BinaryOperatorNode: failed inferring the schema of the child operator");
         }
     }

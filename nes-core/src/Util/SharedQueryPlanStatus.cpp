@@ -40,7 +40,7 @@ SharedQueryPlanStatus::Value SharedQueryPlanStatus::getFromString(const std::str
     } else if (queryStatus == "FAILED") {
         return Failed;
     } else {
-        NES_ERROR("No valid query status to parse");
+        NES_ERROR2("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);
     }
 }

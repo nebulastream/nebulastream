@@ -14,9 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -29,15 +27,13 @@
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
-#include <Util/Experimental/LocationProviderType.hpp>
-#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -65,7 +61,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
           workerConfig->mobilityConfiguration)) {
     setThreadName("NesWorker");
-    NES_DEBUG("NesWorker: constructed");
+    NES_DEBUG2("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
 }
@@ -87,7 +83,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
         // The return value of Next should always be checked. This return value
         // tells us whether there is any kind of event or completionQueue is shutting down.
         bool ret = completionQueue->Next(&tag, &ok);
-        NES_DEBUG("handleRpcs got item from queue with ret=" << ret);
+        NES_DEBUG2("handleRpcs got item from queue with ret={}", ret);
         if (!ret) {
             //we are going to shut down
             return;
@@ -117,30 +113,35 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
 
     rpcServer = builder.BuildAndStart();
     portPromise->set_value(actualRpcPort);
-    NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress << ":" << actualRpcPort);
+    NES_DEBUG2("NesWorker: buildAndStartGRPCServer Server listening on address {}: {}", rpcAddress, actualRpcPort);
     //this call is already blocking
     handleRpcs(service);
 
     rpcServer->Wait();
-    NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
+    NES_DEBUG2("NesWorker: buildAndStartGRPCServer end listening");
 }
 
 uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG("NesWorker: start with blocking "
-              << blocking << " coordinatorIp=" << workerConfig->coordinatorIp.getValue() << " coordinatorPort="
-              << workerConfig->coordinatorPort.getValue() << " localWorkerIp=" << workerConfig->localWorkerIp.getValue()
-              << " localWorkerRpcPort=" << localWorkerRpcPort << " localWorkerZmqPort=" << workerConfig->dataPort.getValue()
-              << " windowStrategy=" << workerConfig->queryCompiler.windowingStrategy);
-    NES_DEBUG("NesWorker::start: start Runtime");
+    NES_DEBUG2("NesWorker: start with blocking {} coordinatorIp={} coordinatorPort={} localWorkerIp={} localWorkerRpcPort={} "
+               "localWorkerZmqPort={} windowStrategy={}",
+               blocking,
+               workerConfig->coordinatorIp.getValue(),
+               workerConfig->coordinatorPort.getValue(),
+               workerConfig->localWorkerIp.getValue(),
+               localWorkerRpcPort,
+               workerConfig->dataPort.getValue(),
+               workerConfig->queryCompiler.windowingStrategy);
+
+    NES_DEBUG2("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
     try {
-        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring.getValue());
+        NES_DEBUG2("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());
         monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
         monitoringAgent->addMonitoringStreams(workerConfig);
 
@@ -149,51 +150,64 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
         }
-        NES_DEBUG("NesWorker: Node engine started successfully");
+        NES_DEBUG2("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
-        NES_ERROR("NesWorker: node engine could not be started");
+        NES_ERROR2("NesWorker: node engine could not be started");
         throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
-    NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":"
-                                                                                            << localWorkerRpcPort.load());
+    NES_DEBUG2("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
+               rpcAddress,
+               localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
         if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            trajectoryPredictor =
-                std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(mobilityConfig);
+            //is s2 is activated, create a reconnect schedule predictor
+            trajectoryPredictor = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create(mobilityConfig);
         }
     }
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
-        NES_DEBUG("NesWorker: buildAndStartGRPCServer");
+        NES_DEBUG2("NesWorker: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
-        NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
+        NES_DEBUG2("NesWorker: buildAndStartGRPCServer: end listening");
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
-    NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
-                                                                                          << localWorkerRpcPort.load());
+    NES_DEBUG2("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
+               rpcAddress,
+               localWorkerRpcPort.load());
 
     if (withConnect) {
-        NES_DEBUG("NesWorker: start with connect");
+        NES_DEBUG2("NesWorker: start with connect");
         bool con = connect();
 
         NES_ASSERT(con, "cannot connect");
     }
 
     if (parentId > NesCoordinator::NES_COORDINATOR_ID) {
-        NES_DEBUG("NesWorker: add parent id=" << parentId);
+        NES_DEBUG2("NesWorker: add parent id={}", parentId);
         bool success = replaceParent(NesCoordinator::NES_COORDINATOR_ID, parentId);
-        NES_DEBUG("parent add= " << success);
+        NES_DEBUG2("parent add= {}", success);
         NES_ASSERT(success, "cannot addParent");
+    }
+
+    if (withConnect && locationProvider
+        && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+        workerMobilityHandler =
+            std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
+                                                                                          coordinatorRpcClient,
+                                                                                          nodeEngine,
+                                                                                          mobilityConfig);
+        //FIXME: currently the worker mobility handler will only work with exactly one parent
+        workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
     }
 
     if (workerConfig->enableStatisticOuput) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
-            NES_DEBUG("NesWorker: start statistic collection");
+            NES_DEBUG2("NesWorker: start statistic collection");
             while (isRunning) {
                 auto ts = std::chrono::system_clock::now();
                 auto timeNow = std::chrono::system_clock::to_time_t(ts);
@@ -204,15 +218,15 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                 }
                 sleep(1);
             }
-            NES_DEBUG("NesWorker: statistic collection end");
+            NES_DEBUG2("NesWorker: statistic collection end");
         }));
     }
     if (blocking) {
-        NES_DEBUG("NesWorker: started, join now and waiting for work");
+        NES_DEBUG2("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);
         while (true) {
             if (flag) {
-                NES_DEBUG("NesWorker: caught signal terminating worker");
+                NES_DEBUG2("NesWorker: caught signal terminating worker");
                 flag = 0;
                 break;
             }
@@ -221,7 +235,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         }
     }
 
-    NES_DEBUG("NesWorker: started, return");
+    NES_DEBUG2("NesWorker: started, return");
     return true;
 }
 
@@ -230,59 +244,57 @@ Runtime::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 bool NesWorker::isWorkerRunning() const noexcept { return isRunning; }
 
 bool NesWorker::stop(bool) {
-    NES_DEBUG("NesWorker: stop");
+    NES_DEBUG2("NesWorker: stop");
 
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
-        NES_DEBUG("NesWorker::stopping health check");
+        NES_DEBUG2("NesWorker::stopping health check");
         if (healthCheckService) {
             healthCheckService->stopHealthCheck();
         } else {
-            NES_WARNING("No health check service was created");
+            NES_WARNING2("No health check service was created");
         }
 
-        if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            if (workerMobilityHandler) {
-                workerMobilityHandler->stop();
-                NES_TRACE("triggered stopping of location update push thread");
-            }
+        if (workerMobilityHandler) {
+            workerMobilityHandler->stop();
+            NES_TRACE("triggered stopping of location update push thread");
         }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
-            NES_ERROR("NesWorker::stop node engine stop not successful");
+            NES_ERROR2("NesWorker::stop node engine stop not successful");
             NES_THROW_RUNTIME_ERROR("NesWorker::stop  error while stopping node engine");
         }
-        NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
+        NES_DEBUG2("NesWorker::stop : Node engine stopped successfully");
         nodeEngine.reset();
 
-        NES_DEBUG("NesWorker: stopping rpc server");
+        NES_DEBUG2("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
         //shut down the async queue
         completionQueue->Shutdown();
 
         if (rpcThread->joinable()) {
-            NES_DEBUG("NesWorker: join rpcThread");
+            NES_DEBUG2("NesWorker: join rpcThread");
             rpcThread->join();
         }
 
         rpcServer.reset();
         rpcThread.reset();
         if (statisticOutputThread && statisticOutputThread->joinable()) {
-            NES_DEBUG("NesWorker: statistic collection thread join");
+            NES_DEBUG2("NesWorker: statistic collection thread join");
             statisticOutputThread->join();
         }
         statisticOutputThread.reset();
 
         return successShutdownNodeEngine;
     }
-    NES_WARNING("NesWorker::stop: already stopped");
+    NES_WARNING2("NesWorker::stop: already stopped");
     return true;
 }
 
 bool NesWorker::connect() {
 
     std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
-    NES_DEBUG("NesWorker::connect() Registering worker with coordinator at " << coordinatorAddress);
+    NES_DEBUG2("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
@@ -309,28 +321,18 @@ bool NesWorker::connect() {
 
     bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
 
-    NES_DEBUG("NesWorker::connect() Worker registered successfully and got id=" << coordinatorRpcClient->getId());
+    NES_DEBUG2("NesWorker::connect() Worker registered successfully and got id={}", coordinatorRpcClient->getId());
     workerId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
-        NES_DEBUG("NesWorker::registerWorker rpc register success with id " << workerId);
+        NES_DEBUG2("NesWorker::registerWorker rpc register success with id {}", workerId);
         connected = true;
         nodeEngine->setNodeId(workerId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
-        NES_DEBUG("NesWorker start health check");
+        NES_DEBUG2("NesWorker start health check");
         healthCheckService->startHealthCheck();
-
-        if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            workerMobilityHandler =
-                std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
-                                                                                              coordinatorRpcClient,
-                                                                                              nodeEngine,
-                                                                                              mobilityConfig);
-            //FIXME: currently the worker mobility handler will only work with exactly one parent
-            workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
-        }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
         if (!configPhysicalSources.empty()) {
@@ -338,36 +340,36 @@ bool NesWorker::connect() {
             for (auto& physicalSource : configPhysicalSources) {
                 physicalSources.push_back(physicalSource);
             }
-            NES_DEBUG("NesWorker: start with register source");
+            NES_DEBUG2("NesWorker: start with register source");
             bool success = registerPhysicalSources(physicalSources);
-            NES_DEBUG("registered= " << success);
+            NES_DEBUG2("registered= {}", success);
             NES_ASSERT(success, "cannot register");
         }
         return true;
     }
-    NES_DEBUG("NesWorker::registerWorker rpc register failed");
+    NES_DEBUG2("NesWorker::registerWorker rpc register failed");
     connected = false;
     return false;
 }
 
 bool NesWorker::disconnect() {
-    NES_DEBUG("NesWorker::disconnect()");
+    NES_DEBUG2("NesWorker::disconnect()");
     bool successPRCRegister = coordinatorRpcClient->unregisterNode();
     if (successPRCRegister) {
-        NES_DEBUG("NesWorker::registerWorker rpc unregister success");
+        NES_DEBUG2("NesWorker::registerWorker rpc unregister success");
         connected = false;
-        NES_DEBUG("NesWorker::stop health check");
+        NES_DEBUG2("NesWorker::stop health check");
         healthCheckService->stopHealthCheck();
-        NES_DEBUG("NesWorker::stop health check successful");
+        NES_DEBUG2("NesWorker::stop health check successful");
         return true;
     }
-    NES_DEBUG("NesWorker::registerWorker rpc unregister failed");
+    NES_DEBUG2("NesWorker::registerWorker rpc unregister failed");
     return false;
 }
 
 bool NesWorker::unregisterPhysicalSource(std::string logicalName, std::string physicalName) {
     bool success = coordinatorRpcClient->unregisterPhysicalSource(std::move(logicalName), std::move(physicalName));
-    NES_DEBUG("NesWorker::unregisterPhysicalSource success=" << success);
+    NES_DEBUG2("NesWorker::unregisterPhysicalSource success={}", success);
     return success;
 }
 
@@ -380,7 +382,7 @@ bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& ph
     NES_ASSERT(con, "cannot connect");
     bool success = coordinatorRpcClient->registerPhysicalSources(physicalSources);
     NES_ASSERT(success, "failed to register source");
-    NES_DEBUG("NesWorker::registerPhysicalSources success=" << success);
+    NES_DEBUG2("NesWorker::registerPhysicalSources success={}", success);
     return success;
 }
 
@@ -389,7 +391,7 @@ bool NesWorker::addParent(uint64_t parentId) {
 
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->addParent(parentId);
-    NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
+    NES_DEBUG2("NesWorker::addNewLink(parent only) success={}", success);
     return success;
 }
 
@@ -399,10 +401,9 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
     if (!success) {
-        NES_WARNING("NesWorker::replaceParent() failed to replace oldParent=" << oldParentId
-                                                                              << " with newParentId=" << newParentId);
+        NES_WARNING2("NesWorker::replaceParent() failed to replace oldParent={} with newParentId={}", oldParentId, newParentId);
     }
-    NES_DEBUG("NesWorker::replaceParent() success=" << success);
+    NES_DEBUG2("NesWorker::replaceParent() success={}", success);
     return success;
 }
 
@@ -411,7 +412,7 @@ bool NesWorker::removeParent(uint64_t parentId) {
 
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->removeParent(parentId);
-    NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
+    NES_DEBUG2("NesWorker::removeLink(parent only) success={}", success);
     return success;
 }
 
@@ -420,20 +421,20 @@ std::vector<Runtime::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId q
 }
 
 bool NesWorker::waitForConnect() const {
-    NES_DEBUG("NesWorker::waitForConnect()");
+    NES_DEBUG2("NesWorker::waitForConnect()");
     auto timeoutInSec = std::chrono::seconds(3);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG("waitForConnect: check connect");
+        NES_DEBUG2("waitForConnect: check connect");
         if (!connected) {
-            NES_DEBUG("waitForConnect: not connected, sleep");
+            NES_DEBUG2("waitForConnect: not connected, sleep");
             sleep(1);
         } else {
-            NES_DEBUG("waitForConnect: connected");
+            NES_DEBUG2("waitForConnect: connected");
             return true;
         }
     }
-    NES_DEBUG("waitForConnect: not connected after timeout");
+    NES_DEBUG2("waitForConnect: not connected after timeout");
     return false;
 }
 
@@ -445,8 +446,10 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
                     "Hard Stop called for query=" << queryId << " subQueryId=" << subQueryId
                                                   << " should not call notifyQueryStatusChange");
     if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
-        NES_DEBUG("NesWorker " << getWorkerId() << " about to notify soft stop completion for query " << queryId << " subPlan "
-                               << subQueryId);
+        NES_DEBUG2("NesWorker {} about to notify soft stop completion for query {} subPlan {}",
+                   getWorkerId(),
+                   queryId,
+                   subQueryId);
         return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
     } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
         return true;// rpc to coordinator executed from async runner
@@ -475,7 +478,7 @@ bool NesWorker::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, std::s
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, getWorkerId(), 0, errorMsg);
-    NES_DEBUG("NesWorker::notifyQueryFailure success=" << success);
+    NES_DEBUG2("NesWorker::notifyQueryFailure success={}", success);
     return success;
 }
 
@@ -483,21 +486,21 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, queryId);
-    NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
+    NES_DEBUG2("NesWorker::propagatePunctuation success={}", success);
     return success;
 }
 
 bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
-    NES_DEBUG("NesWorker::sendErrors worker " << workerId << " going to send error=" << errorMsg);
+    NES_DEBUG2("NesWorker::sendErrors worker {} going to send error={}", workerId, errorMsg);
     bool success = coordinatorRpcClient->sendErrors(workerId, errorMsg);
-    NES_DEBUG("NesWorker::sendErrors success=" << success);
+    NES_DEBUG2("NesWorker::sendErrors success={}", success);
     return success;
 }
 
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack {} ", signalNumber, strerror(errno), callstack);
     std::string errorMsg;
     std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
     std::cerr << "Error: " << strerror(errno) << std::endl;
@@ -514,7 +517,7 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[" << ptr->what() << "] callstack=\n" << callstack);
+    NES_ERROR2("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
     std::string errorMsg;
     std::cerr << "NesWorker failed fatally" << std::endl;
     std::cerr << "Error: " << strerror(errno) << std::endl;

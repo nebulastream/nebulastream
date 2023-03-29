@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/RandomExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <utility>
-
 namespace NES::Runtime::Execution::Expressions {
 
 RandomExpression::RandomExpression(NES::Runtime::Execution::Expressions::ExpressionPtr subExpression)
@@ -54,8 +55,9 @@ Value<> RandomExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("random", random, subValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<RandomExpression>> randomFunction("random");
 }// namespace NES::Runtime::Execution::Expressions

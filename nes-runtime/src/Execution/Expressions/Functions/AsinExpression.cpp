@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
 
@@ -37,8 +39,11 @@ Value<> AsinExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateAsin", calculateAsin, subValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
+
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AsinExpression>> asinFunction("asin");
 
 }// namespace NES::Runtime::Execution::Expressions

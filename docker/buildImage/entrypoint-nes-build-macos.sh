@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
 #quit if command returns non-zero code
 #set -e
 
+build_dir=$1
+
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
 if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${RequireBuild}; fi
@@ -24,50 +26,23 @@ if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${Requi
 if [ -z "${RequireTest}" ]; then RequireTest="false"; else RequireTest=${RequireTest}; fi
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
-if [ $# -eq 0 ]
-then
-    # Build NES
-    mkdir -p build
-    cd build
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-    make -j4
-    # Check if build was successful
-    errorCode=$?
-    if [ $errorCode -ne 0 ];
-    then
-      rm -rf ./*
-      if [ "$RequireBuild" = "true" ];
-      then
-        echo "Required Build Failed"     
-        exit $errorCode
-      else
-        echo "Optional Build Failed"
-        exit 0
-      fi
-#    else
-#      cd ./tests
-#      ln -s ../nesCoordinator .
-#      ln -s ../nesWorker .
-#      # If build was successful we execute the tests
-#      # timeout after 70 minutes
-#      # We don't want to rely on the github-action timeout, because
-#      # this would fail the job in any case.
-#      timeout 70m make test_debug
-#      errorCode=$?
-#      if [ $errorCode -ne 0 ];
-#      then
-#        cd ..
-#        rm -rf ./build
-#        if [ "$RequireTest" == "true" ];
-#        then
-#          echo "Required Tests Failed"
-#          exit $errorCode
-#        else
-#          echo "Optional Tests Failed"
-#          exit 0
-#        fi
-#      fi
-    fi
-else
-    exec $@
+echo "Build dir=$build_dir"
+
+# Build NES
+# We use ccache to reuse intermediate build files across ci runs.
+ccache -s
+cmake --fresh -B "$build_dir/" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_USE_CCACHE=1 -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 .
+cmake --build "$build_dir/" -j8
+# Check if build was successful
+errorCode=$?
+ccache -s
+if [ $errorCode -ne 0 ]; then
+  if [ "$RequireBuild" = "true" ]; then
+    echo "Required Build Failed"
+    exit $errorCode
+  else
+    echo "Optional Build Failed"
+    exit 0
+  fi
+
 fi

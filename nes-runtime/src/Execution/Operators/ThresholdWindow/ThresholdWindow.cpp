@@ -20,55 +20,79 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 extern "C" void incrementCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called incrementCount: recordCount = " << handler->recordCount + 1);
     handler->recordCount++;
 }
 
 extern "C" void setIsWindowOpen(void* state, bool isWindowOpen) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called setIsWindowOpen: " << isWindowOpen);
     handler->isWindowOpen = isWindowOpen;
 }
 
 extern "C" bool getIsWindowOpen(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->isWindowOpen);
     return handler->isWindowOpen;
 }
 
 extern "C" uint64_t getRecordCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getRecordCount: recordCount = " << handler->recordCount);
     return handler->recordCount;
 }
 
 extern "C" void resetCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called resetCount");
     handler->recordCount = 0;
 }
 
 extern "C" void lockWindowHandler(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called lockWindowHandler");
     handler->mutex.lock();
 }
 
 extern "C" void unlockWindowHandler(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called unlockWindowHandler");
     handler->mutex.unlock();
 }
 
 extern "C" void* getAggregationValue(void* state, uint64_t i) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getAggregationValue: i = " << i);
     return (void*) handler->AggregationValues[i].get();
 }
 
-void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
+ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+                                 uint64_t minCount,
+                                 const std::vector<Expressions::ExpressionPtr>& aggregatedFieldAccessExpressions,
+                                 const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
+                                 const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                                 uint64_t operatorHandlerIndex)
+    : predicateExpression(std::move(predicateExpression)), aggregatedFieldAccessExpressions(aggregatedFieldAccessExpressions),
+      aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers), minCount(minCount),
+      operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {
+    NES_ASSERT(this->aggregationFunctions.size() == this->aggregationResultFieldIdentifiers.size(),
+               "The number of aggregation expression and aggregation functions need to be equals");
+}
+
+void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
+    NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
+        NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
             auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
@@ -78,6 +102,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
             if (!isCountAggregation) {
                 aggregatedValue = aggregatedFieldAccessExpressions[i]->execute(record);
             }
+            NES_TRACE("lift the following value to agg" << aggregatedValue);
             aggregationFunctions[i]->lift(aggregationValueMemref, aggregatedValue);
         }
         FunctionCall("incrementCount", incrementCount, handler);
@@ -93,6 +118,8 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
+                    NES_TRACE("Write back result for" << aggregationResultFieldIdentifiers[i].c_str()
+                                                      << "result: " << aggregationResult)
                     resultRecord.write(aggregationResultFieldIdentifiers[i], aggregationResult);
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }

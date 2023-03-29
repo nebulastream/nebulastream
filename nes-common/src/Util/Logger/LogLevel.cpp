@@ -11,11 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ConstantInteger32Expression.hpp>
-namespace NES::Runtime::Execution::Expressions {
 
-ConstantInteger32Expression::ConstantInteger32Expression(int32_t integerValue) : integerValue(integerValue) {}
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
-Value<> ConstantInteger32Expression::execute(Record&) const { return Value<>(integerValue); }
-
-}// namespace NES::Runtime::Execution::Expressions
+namespace NES {
+/**
+ * @brief getLogName returns the string representation LogLevel value for a specific LogLevel value.
+ * @param value LogLevel
+ * @return string of value
+ */
+std::basic_string_view<char> getLogName(LogLevel value) { return magic_enum::enum_name(value); }
+}// namespace NES

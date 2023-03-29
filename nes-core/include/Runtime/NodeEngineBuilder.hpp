@@ -14,13 +14,26 @@
 
 #ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
-#include <Compiler/LanguageCompiler.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES {
+namespace Compiler {
+class LanguageCompiler;
+
+class JITCompiler;
+using JITCompilerPtr = std::shared_ptr<JITCompiler>;
+}// namespace Compiler
+namespace Configurations {
+class QueryCompilerConfiguration;
+}
+namespace Experimental::MaterializedView {
+class MaterializedViewManager;
+using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
+}// namespace Experimental::MaterializedView
+
+}// namespace NES
 namespace NES::Runtime {
 /**
  * This class is used to create instances of NodeEngine using the builder pattern.
@@ -144,7 +157,7 @@ class NodeEngineBuilder {
      * @return QueryCompilerOptionsPtr
      */
     static QueryCompilation::QueryCompilerOptionsPtr
-    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration);
+    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration);
 
     /**
      * @brief Returns the next free node id

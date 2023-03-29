@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
-#include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cstring>
@@ -28,17 +27,18 @@ Value<Text> transformReturnValues(TextValue* value) {
 
 Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
-int64_t textEquals(const TextValue* leftText, const TextValue* rightText) {
+bool textEquals(const TextValue* leftText, const TextValue* rightText) {
+    NES_DEBUG("Check if " << leftText->c_str() << "and " << rightText->c_str() << " are equal")
     if (leftText->length() != rightText->length()) {
         return false;
+    } else if (std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0) {
+        return true;
     }
-    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length());
+    return false;
 }
 
 Value<Boolean> Text::equals(const Value<Text>& other) const {
-    Value<Int64> result = FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
-    auto boolResult = result == Value<Int64>((int64_t) 0);
-    return boolResult.as<Boolean>();
+    return FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
 }
 
 TextValue* textSubstring(const TextValue* text, uint32_t index, uint32_t len) {
@@ -318,7 +318,7 @@ TextValue* rightTrim(const TextValue* text, const TextValue* target) {
     }
     auto position = uint32_t(textPosition(text, target));
 
-    auto resultText = TextValue::create(text->length() + position);
+    auto resultText = TextValue::create(target->length());
     std::memcpy(resultText->str(), text->c_str(), text->length() + position);
 
     return resultText;
@@ -344,7 +344,7 @@ TextValue* lrTrim(const TextValue* text) {
 
     for (uint32_t p = 0; p < text->length(); p++) {
         auto temp = text->c_str()[p];
-        if (!(temp == space)) {
+        if (temp != space) {
             resultText->str()[count] = text->c_str()[p];
             count++;
         }

@@ -14,6 +14,8 @@
 
 #include <Nautilus/Exceptions/InterpreterException.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <algorithm>
+#include <sstream>
 
 namespace NES::Nautilus {
 
@@ -24,7 +26,12 @@ Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::
 Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
     auto fieldValue = fields.find(fieldIdentifier);
     if (fieldValue == fields.end()) {
-        throw InterpreterException("Field " + fieldIdentifier + " does not exists");
+        std::stringstream ss;
+        std::for_each(fields.begin(), fields.end(), [&ss](const auto& entry) {
+            ss << entry.first;
+            ss << ", ";
+        });
+        throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
     }
     return fieldValue->second;
 }

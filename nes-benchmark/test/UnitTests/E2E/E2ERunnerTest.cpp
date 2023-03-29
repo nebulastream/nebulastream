@@ -39,6 +39,9 @@ namespace NES::Benchmark {
         }
     };
 
+    /**
+     * @brief Testing if a simple yaml file can be run without any error
+     */
     TEST_F(E2ERunnerTest, filterOneSource) {
         std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/filter_one_source.yaml";
         std::string logPath = "E2ERunnerTest_filterOneSource.log";
@@ -52,6 +55,9 @@ namespace NES::Benchmark {
         }
     }
 
+    /**
+     * @brief Testing if a yaml file with multiple sources can be run without any error
+     */
     TEST_F(E2ERunnerTest, multipleSources) {
         std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) +"/join_multiple_sources.yaml";
         std::string logPath = "E2ERunnerTest_multipleSources.log";
@@ -65,6 +71,9 @@ namespace NES::Benchmark {
         }
     }
 
+    /**
+     * @brief Testing if a yaml file with multiple physical and logical sources can be run without any error
+     */
     TEST_F(E2ERunnerTest, multiplePhysicalLogicalSources) {
         std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/join_multiple_phys_and_logical_sources.yaml";
         std::string logPath = "E2ERunnerTest_multiplePhysicalLogicalSources.log";
@@ -77,5 +86,4 @@ namespace NES::Benchmark {
                                              *rpcCoordinatorPort, *restPort);
         }
     }
-
 }

@@ -44,8 +44,11 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>

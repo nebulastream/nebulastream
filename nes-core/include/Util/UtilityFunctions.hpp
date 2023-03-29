@@ -18,6 +18,7 @@
 #include <Common/Identifiers.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <any>
 #include <functional>

@@ -21,7 +21,6 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <REST/ServerTypes.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <map>
 #include <string>

@@ -55,7 +55,7 @@ Code StructDeclaration::getCode() const {
 }
 
 uint32_t StructDeclaration::getTypeSizeInBytes() {
-    NES_ERROR("Called unimplemented function!");
+    NES_ERROR2("Called unimplemented function!");
     return 0;
 }
 
@@ -101,8 +101,7 @@ StructDeclaration::StructDeclaration(std::string type_name, std::string variable
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);
     if (!decl) {
-        NES_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '" << getTypeName()
-                                                          << "'");
+        NES_ERROR2("Error during Code Generation: Field '{}' does not exist in struct '{}'", field_name, getTypeName());
         NES_THROW_RUNTIME_ERROR("Error during Code Generation");
     }
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());

@@ -15,8 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
-#include <Util/Logger/Logger.hpp>
-#include <iostream>
+#include <Exceptions/RuntimeException.hpp>
 #include <memory>
 namespace NES {
 
@@ -33,7 +32,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Creates a new source descriptor with a logicalSourceName.
      * @param schema the source schema
      */
-    SourceDescriptor(SchemaPtr schema);
+    explicit SourceDescriptor(SchemaPtr schema);
 
     /**
      * @brief Creates a new source descriptor with a logicalSourceName.
@@ -54,7 +53,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Returns the schema, which is produced by this source descriptor
      * @return SchemaPtr
      */
-    SchemaPtr getSchema();
+    SchemaPtr getSchema() const;
 
     /**
     * @brief Checks if the source descriptor is of type SourceType
@@ -62,8 +61,8 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     * @return bool true if source descriptor is of SourceType
     */
     template<class SourceType>
-    bool instanceOf() {
-        if (dynamic_cast<SourceType*>(this)) {
+    bool instanceOf() const {
+        if (dynamic_cast<const SourceType*>(this)) {
             return true;
         };
         return false;
@@ -75,25 +74,28 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     * @return returns a shared pointer of the SourceType
     */
     template<class SourceType>
-    std::shared_ptr<SourceType> as() {
+    std::shared_ptr<SourceType> as() const {
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         }
-        NES_FATAL_ERROR2("SourceDescriptor: We performed an invalid cast");
-        throw std::bad_cast();
+        throw Exceptions::RuntimeException("SourceDescriptor: We performed an invalid cast");
+    }
+    template<class SourceType>
+    std::shared_ptr<SourceType> as() {
+        return std::const_pointer_cast<SourceType>(const_cast<const SourceDescriptor*>(this)->as<const SourceType>());
     }
 
     /**
      * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
      * @return logicalSourceName
      */
-    std::string getLogicalSourceName();
+    std::string getLogicalSourceName() const;
 
     /**
      * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
      * @return logicalSourceName
      */
-    std::string getPhysicalSourceName();
+    std::string getPhysicalSourceName() const;
 
     /**
      * @brief Set physical source name
@@ -111,14 +113,14 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Returns the string representation of the source descriptor.
      * @return string
      */
-    virtual std::string toString() = 0;
+    virtual std::string toString() const = 0;
 
     /**
      * @brief Checks if two source descriptors are the same.
      * @param other source descriptor.
      * @return true if both are the same.
      */
-    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) = 0;
+    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) const = 0;
 
     virtual SourceDescriptorPtr copy() = 0;
 

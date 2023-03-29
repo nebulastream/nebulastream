@@ -45,13 +45,13 @@ void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->process
 
 void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false) {
     if (!noOverwrite || this->timestampQueryStart == 0) {
-        NES_DEBUG("QueryStatistics::setTimestampQueryStart called with " << timestampQueryStart);
+        NES_DEBUG2("QueryStatistics::setTimestampQueryStart called with  {}", timestampQueryStart);
         this->timestampQueryStart = timestampQueryStart;
     }
 }
 void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false) {
     if (!noOverwrite || this->timestampFirstProcessedTask == 0) {
-        NES_DEBUG("QueryStatistics::setTimestampFirstProcessedTask called with " << timestampFirstProcessedTask);
+        NES_DEBUG2("QueryStatistics::setTimestampFirstProcessedTask called with  {}", timestampFirstProcessedTask);
         this->timestampFirstProcessedTask = timestampFirstProcessedTask;
     }
 }

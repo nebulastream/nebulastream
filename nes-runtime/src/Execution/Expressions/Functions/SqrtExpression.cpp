@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/SqrtExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
 namespace NES::Runtime::Execution::Expressions {
 
 SqrtExpression::SqrtExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
@@ -52,8 +53,9 @@ Value<> SqrtExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateSqrt", calculateSqrt, value.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SqrtExpression>> sqrtFunction("sqrt");
 }// namespace NES::Runtime::Execution::Expressions

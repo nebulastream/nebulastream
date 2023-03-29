@@ -31,7 +31,7 @@ KafkaSourceTypePtr KafkaSourceType::create(std::map<std::string, std::string> so
 KafkaSourceTypePtr KafkaSourceType::create() { return std::make_shared<KafkaSourceType>(KafkaSourceType()); }
 
 KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfigMap) : KafkaSourceType() {
-    NES_INFO("KafkaSourceType: Init default Kafka source config object with values from command line args.");
+    NES_INFO2("KafkaSourceType: Init default Kafka source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
         brokers->setValue(sourceConfigMap.find(Configurations::BROKERS_CONFIG)->second);
@@ -65,10 +65,13 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
     if (sourceConfigMap.find(Configurations::BATCH_SIZE) != sourceConfigMap.end()) {
         batchSize->setValue(std::stoi(sourceConfigMap.find(Configurations::BATCH_SIZE)->second));
     }
+    if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
+        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
+    }
 }
 
 KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
-    NES_INFO("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
+    NES_INFO2("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
 
     if (!yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>() != "\n") {
@@ -110,6 +113,10 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
         && yamlConfig[Configurations::BATCH_SIZE].As<std::string>() != "\n") {
         batchSize->setValue(yamlConfig[Configurations::BATCH_SIZE].As<uint32_t>());
     }
+    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
+        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
+    }
 }
 
 KafkaSourceType::KafkaSourceType()
@@ -141,12 +148,14 @@ KafkaSourceType::KafkaSourceType()
                                                                 1,
                                                                 "Numbers of events pulled from the queue overall")),
 
-      batchSize(Configurations::ConfigurationOption<uint32_t>::create(Configurations::BATCH_SIZE,
-                                                                      1,
-                                                                      "Numbers of events pulled from the queue per pull request"))
-
-{
-    NES_INFO("KafkaSourceType: Init source config object with default values.");
+      batchSize(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::BATCH_SIZE,
+                                                                1,
+                                                                "Numbers of events pulled from the queue per pull request")),
+      inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
+                                                                                           Configurations::InputFormat::JSON,
+                                                                                           "input data format")) {
+    NES_INFO2("KafkaSourceType: Init source config object with default values.");
 }
 
 std::string KafkaSourceType::toString() {
@@ -160,6 +169,7 @@ std::string KafkaSourceType::toString() {
     ss << Configurations::CONNECTION_TIMEOUT_CONFIG + ":" + connectionTimeout->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_BUFFER_TO_PRODUCE + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::BATCH_SIZE + ":" + batchSize->toStringNameCurrentValue();
+    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValue();
     ss << "\n}";
     return ss.str();
 }
@@ -176,7 +186,8 @@ bool KafkaSourceType::equal(const PhysicalSourceTypePtr& other) {
         && offsetMode->getValue() == otherSourceConfig->offsetMode->getValue()
         && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue()
         && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
-        && batchSize->getValue() == otherSourceConfig->batchSize->getValue();
+        && batchSize->getValue() == otherSourceConfig->batchSize->getValue()
+        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue();
 }
 
 Configurations::StringConfigOption KafkaSourceType::getBrokers() const { return brokers; }
@@ -188,6 +199,8 @@ Configurations::StringConfigOption KafkaSourceType::getGroupId() const { return 
 Configurations::StringConfigOption KafkaSourceType::getTopic() const { return topic; }
 
 Configurations::StringConfigOption KafkaSourceType::getOffsetMode() const { return offsetMode; }
+
+Configurations::InputFormatConfigOption KafkaSourceType::getInputFormat() const { return inputFormat; }
 
 Configurations::IntConfigOption KafkaSourceType::getConnectionTimeout() const { return connectionTimeout; }
 
@@ -215,6 +228,14 @@ void KafkaSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProd
 
 void KafkaSourceType::setBatchSize(uint32_t batchSizeValue) { batchSize->setValue(batchSizeValue); }
 
+void KafkaSourceType::setInputFormat(std::string inputFormatValue) {
+    inputFormat->setInputFormatEnum(std::move(inputFormatValue));
+}
+
+void KafkaSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) {
+    inputFormat->setValue(std::move(inputFormatValue));
+}
+
 uint64_t getBatchSize();
 
 void KafkaSourceType::reset() {
@@ -226,5 +247,6 @@ void KafkaSourceType::reset() {
     setConnectionTimeout(connectionTimeout->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setBatchSize(batchSize->getDefaultValue());
+    setInputFormat(inputFormat->getDefaultValue());
 }
 }// namespace NES

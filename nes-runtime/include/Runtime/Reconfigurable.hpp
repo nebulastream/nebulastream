@@ -15,14 +15,12 @@
 #ifndef NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 
-#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES {
-namespace Runtime {
-
+namespace NES::Runtime {
+class ReconfigurationMessage;
 /**
 * @brief Nes components that require to be reconfigured at Runtime need to
 * inherit from this class. It provides a reconfigure callback that will be called
@@ -49,7 +47,6 @@ class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Recon
     }
 };
 
-}// namespace Runtime
-}// namespace NES
+}// namespace NES::Runtime
 
 #endif// NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_

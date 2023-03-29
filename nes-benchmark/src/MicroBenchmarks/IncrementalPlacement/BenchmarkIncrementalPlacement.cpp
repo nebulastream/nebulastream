@@ -380,8 +380,7 @@ int main(int argc, const char* argv[]) {
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
-
-            sleep(startupSleepInterval);
+            std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
 
             //Setup topology and source catalog
             setUp(26, 1);

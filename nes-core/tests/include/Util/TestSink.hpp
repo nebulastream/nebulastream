@@ -14,6 +14,7 @@
 
 #ifndef NES_TESTS_UTIL_TEST_SINK_HPP_
 #define NES_TESTS_UTIL_TEST_SINK_HPP_
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -55,7 +56,7 @@ class TestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-        //        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
+        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::printTupleBufferAsCSV(inputBuffer, getSchemaPtr()));
 
         resultBuffers.emplace_back(std::move(inputBuffer));
         if (resultBuffers.size() == expectedBuffer) {

@@ -37,7 +37,7 @@ class OriginIdAssignmentOperator : public virtual OperatorNode {
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    virtual std::vector<OriginId> getOutputOriginIds() override;
+    virtual const std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
      * @brief Sets the origin id, which is used from this operator as an output
@@ -49,7 +49,7 @@ class OriginIdAssignmentOperator : public virtual OperatorNode {
      * @brief Get the origin id
      * @return OriginId
      */
-    OriginId getOriginId();
+    OriginId getOriginId() const;
 
   protected:
     OriginId originId;

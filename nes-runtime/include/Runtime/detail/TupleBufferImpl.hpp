@@ -15,10 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
-#include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
 #include <Runtime/TaggedPointer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
 

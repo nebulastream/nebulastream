@@ -17,8 +17,10 @@
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <sstream>
 #include <utility>
 
 namespace NES::Windowing {
@@ -36,9 +38,9 @@ EventTimeWatermarkStrategyDescriptor::create(const ExpressionItem& onField, Time
                                                         std::move(unit)));
 }
 
-ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() { return onField; }
+ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() const { return onField; }
 
-TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() { return allowedLateness; }
+TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() const { return allowedLateness; }
 
 bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other) {
     auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
@@ -46,14 +48,14 @@ bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr 
         && eventTimeWatermarkStrategyDescriptor->allowedLateness.getTime() == allowedLateness.getTime();
 }
 
-TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() { return unit; }
+TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() const { return unit; }
 
 std::string EventTimeWatermarkStrategyDescriptor::toString() {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
-    ss << "FIELD =" << onField << ",";
+    ss << "FIELD =" << onField->toString() << ",";
     ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
-    return std::string();
+    return ss.str();
 }
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr schema) {
@@ -67,7 +69,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(const Optimizer::TypeInfer
     } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
         return true;
     }
-    NES_ERROR("EventTimeWaterMark is using a non existing field " + fieldName);
+    NES_ERROR2("EventTimeWaterMark is using a non existing field  {}", fieldName);
     throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
 }
 

@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
 
@@ -28,7 +29,7 @@ ProjectBeforeUnionOperatorRulePtr ProjectBeforeUnionOperatorRule::create() {
 
 QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
 
-    NES_INFO("Apply ProjectBeforeUnionOperatorRule");
+    NES_INFO2("Apply ProjectBeforeUnionOperatorRule");
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
     for (auto& unionOperator : unionOperators) {
         auto rightInputSchema = unionOperator->getRightInputSchema();
@@ -53,8 +54,9 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
 
 LogicalOperatorNodePtr ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& sourceSchema,
                                                                                 const SchemaPtr& destinationSchema) {
-    NES_TRACE("Computing Projection operator for Source Schema " << sourceSchema->toString() << " and Destination schema "
-                                                                 << destinationSchema->toString());
+    NES_TRACE2("Computing Projection operator for Source Schema{} and Destination schema {}",
+               sourceSchema->toString(),
+               destinationSchema->toString());
     //Fetch source and destination schema fields
     auto sourceFields = sourceSchema->fields;
     auto destinationFields = destinationSchema->fields;

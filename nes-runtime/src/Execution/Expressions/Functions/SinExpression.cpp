@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/SinExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
 namespace NES::Runtime::Execution::Expressions {
 
 SinExpression::SinExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
@@ -55,8 +56,9 @@ Value<> SinExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SinExpression>> sinFunction("sin");
 }// namespace NES::Runtime::Execution::Expressions

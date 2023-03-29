@@ -23,10 +23,10 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <memory>
 #include <type_traits>
+#include <utility>
 namespace NES::Nautilus {
 
 Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
@@ -44,7 +44,7 @@ concept IsNotValueType = !
 std::is_base_of<BaseValue, T>::value;
 
 /**
- * @brief The Value class provides the elementary wrapper for any data value that inherents from Any.
+ * @brief The Value class provides the elementary wrapper for any data value that inherits from Any.
  * Value provides operator overloading and integrates with the tracing framework to track individual operations, e.g. ==, +, -.
  * @tparam ValueType
  */

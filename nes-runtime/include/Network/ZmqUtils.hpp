@@ -17,10 +17,10 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <zmq.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 #if CPPZMQ_VERSION_MAJOR >= 4 && CPPZMQ_VERSION_MINOR >= 3
 static constexpr zmq::send_flags kZmqSendMore = zmq::send_flags::sndmore;
@@ -97,7 +97,6 @@ void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdenti
     NES_ASSERT2_FMT(ret.has_value(), "send failed");
 }
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_

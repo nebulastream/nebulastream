@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/LnExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
@@ -21,11 +23,11 @@ LnExpression::LnExpression(const NES::Runtime::Execution::Expressions::Expressio
     : subExpression(subExpression) {}
 
 /**
-    * @brief This method calculates the ln of x.
-    * This function is basically a wrapper for std::log and enables us to use it in our execution engine framework.
-    * @param x double
-    * @return double
-    */
+* @brief This method calculates the ln of x.
+* This function is basically a wrapper for std::log and enables us to use it in our execution engine framework.
+* @param x double
+* @return double
+*/
 double calculateLn(double x) { return std::log(x); }
 
 Value<> LnExpression::execute(NES::Nautilus::Record& record) const {
@@ -54,7 +56,11 @@ Value<> LnExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateLn", calculateLn, subValue.as<Double>());
     } else {
         // If no type is applicable, throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
+
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LnExpression>> lnFunction("ln");
+
 }// namespace NES::Runtime::Execution::Expressions

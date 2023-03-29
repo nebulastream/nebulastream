@@ -11,19 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Compiler/LanguageCompiler.hpp>
+#include <Components/NesWorker.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
@@ -31,7 +30,6 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/DecoratedLoRaWANNodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
@@ -130,7 +128,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         }
 
         if (bufferManagers.empty()) {
-            NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
+            NES_ERROR2("Runtime: error while building NodeEngine: no NesWorker provided");
             throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided",
                                                NES::collectAndPrintStacktrace());
         }
@@ -178,22 +176,22 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             ? std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>()
             : this->materializedViewManager;
         if (!partitionManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating PartitionManager");
+            NES_ERROR2("Runtime: error while building NodeEngine: error while creating PartitionManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating PartitionManager",
                                                NES::collectAndPrintStacktrace());
         }
         if (!queryManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating QueryManager");
+            NES_ERROR2("Runtime: error while building NodeEngine: error while creating QueryManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating QueryManager",
                                                NES::collectAndPrintStacktrace());
         }
         if (!stateManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating StateManager");
+            NES_ERROR2("Runtime: error while building NodeEngine: error while creating StateManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating StateManager",
                                                NES::collectAndPrintStacktrace());
         }
         if (!materializedViewManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating MaterializedViewManager");
+            NES_ERROR2("Runtime: error while building NodeEngine: error while creating MaterializedViewManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : error while creating MaterializedViewManager",
                                                NES::collectAndPrintStacktrace());
         }
@@ -223,7 +221,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                        workerConfiguration->enableSourceSharing.getValue());
         }
         if (!compiler) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
+            NES_ERROR2("Runtime: error while building NodeEngine: error while creating compiler");
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",
                                                NES::collectAndPrintStacktrace());
         }
@@ -292,13 +290,13 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 
         return engine;
     } catch (std::exception& err) {
-        NES_ERROR("Cannot start node engine " << err.what());
+        NES_ERROR2("Cannot start node engine {}", err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
 }
 
 QueryCompilation::QueryCompilerOptionsPtr
-NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration) {
+NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration) {
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
     // set compilation mode

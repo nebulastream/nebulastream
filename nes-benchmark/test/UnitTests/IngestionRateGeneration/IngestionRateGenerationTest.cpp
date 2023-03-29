@@ -15,6 +15,7 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
@@ -53,6 +54,10 @@ namespace NES::Benchmark {
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
+    /**
+     * @brief Testing if IngestionRateGenerator::createIngestionRateGenerator() is correct by making sure that as a default
+     * the UniformIngestionRateGenerator is created
+     */
     TEST_F(IngestionRateGenerationTest, createIngestionRateGeneratorTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -62,6 +67,10 @@ namespace NES::Benchmark {
         ASSERT_TRUE(expectedIngestionRateGenerator != nullptr);
     }
 
+    /**
+     * @brief Testing if IngestionRateGenerator::createIngestionRateGenerator() throws an exception if the user does not provide a
+     * valid ingestionRateDistribution
+     */
     TEST_F(IngestionRateGenerationTest, undefinedIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -70,6 +79,10 @@ namespace NES::Benchmark {
         ASSERT_THROW({IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);}, Exceptions::RuntimeException);
     }
 
+    /**
+     * @brief Testing if IngestionRateGenerator::generateIngestionRates() is correct for UniformIngestionRateGenerator by
+     * creating ingestion rates and then checking versus a hardcoded truth
+     */
     TEST_F(IngestionRateGenerationTest, uniformIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -87,6 +100,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultPredefinedIngestionRates, expectedPredefinedIngestionRates);
     }
 
+    /**
+     * @brief Testing if IngestionRateGenerator::generateIngestionRates() is correct for TrigonometricIngestionRateGenerator by
+     * creating predefinedIngestionRates and then checking versus a hardcoded truth
+     */
     TEST_F(IngestionRateGenerationTest, trigonometricIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -107,6 +124,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultPredefinedIngestionRates, expectedPredefinedIngestionRates);
     }
 
+    /**
+     * @brief Testing if IngestionRateGenerator::generateIngestionRates() is correct for CustomIngestionRateGenerator by
+     * creating predefinedIngestionRates and then checking versus a hardcoded truth
+     */
     TEST_F(IngestionRateGenerationTest, customIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");

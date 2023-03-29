@@ -16,12 +16,12 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <random>
 #include <utility>
 
@@ -69,7 +69,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
             bestCost = currentCost;
         }
 
-        NES_TRACE("IFCOP: currentCost: " << currentCost);
+        NES_TRACE2("IFCOP: currentCost: {}", currentCost);
     }
 
     // 5. assign the PlacementMatrix of the current candidate to the actual execution plan
@@ -280,7 +280,7 @@ void IFCOPStrategy::initiateTopologyNodeIdToIndexMap() {
     auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
     uint32_t topoIdx = 0;
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
-        NES_DEBUG("IFCOP::DEBUG:: topoid=" << (*topoItr)->as<TopologyNode>()->getId());
+        NES_DEBUG2("IFCOP::DEBUG:: topoid= {}", (*topoItr)->as<TopologyNode>()->getId());
         topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
         topoIdx++;
     }

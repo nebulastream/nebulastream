@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES {
 
@@ -43,7 +44,7 @@ void ArithmeticalUnaryExpressionNode::inferStamp(const Optimizer::TypeInferenceP
     }
 
     this->stamp = child_stamp;
-    NES_TRACE("ArithmeticalUnaryExpressionNode: we assigned the following stamp: " << toString());
+    NES_TRACE2("ArithmeticalUnaryExpressionNode: we assigned the following stamp: {}", toString());
 }
 
 bool ArithmeticalUnaryExpressionNode::equal(NodePtr const& rhs) const {

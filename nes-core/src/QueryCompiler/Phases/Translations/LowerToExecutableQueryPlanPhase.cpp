@@ -41,9 +41,7 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -51,18 +49,14 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
-#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 #include <utility>
 #include <variant>
@@ -140,8 +134,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
-        NES_ERROR("This is not a source pipeline.");
-        NES_ERROR(pipeline->getQueryPlan()->toString());
+        NES_ERROR2("This is not a source pipeline.");
+        NES_ERROR2("{}", pipeline->getQueryPlan()->toString());
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
@@ -192,8 +186,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current source operator: " << source->getOperatorId() << " as a predecessor to its child pipeline: "
-                                                         << (*nextExecutablePipeline)->getPipelineId());
+            NES_DEBUG2("Adding current source operator: {} as a predecessor to its child pipeline: {}",
+                       source->getOperatorId(),
+                       (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
         // note: we do not register predecessors for DataSinks.
@@ -251,11 +246,11 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
-                NES_TRACE("Emit Buffer to data sink " << (*sink)->toString());
+                NES_TRACE2("Emit Buffer to data sink {}", (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
             } else if (const auto* nextExecutablePipeline =
                            std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-                NES_TRACE("Emit Buffer to pipeline" << (*nextExecutablePipeline)->getPipelineId());
+                NES_TRACE2("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);
             }
         }
@@ -263,7 +258,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
-            NES_DEBUG("Emit buffer to query manager");
+            NES_DEBUG2("Emit buffer to query manager");
             queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
@@ -290,9 +285,9 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current pipeline: " << executablePipeline->getPipelineId()
-                                                  << " as a predecessor to its child pipeline: "
-                                                  << (*nextExecutablePipeline)->getPipelineId());
+            NES_DEBUG2("Adding current pipeline: {} as a predecessor to its child pipeline: {}",
+                       executablePipeline->getPipelineId(),
+                       (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
         // note: we do not register predecessors for DataSinks.
@@ -307,8 +302,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
     auto physicalSourceType = physicalSource->getPhysicalSourceType();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: " << physicalSource->toString() << " "
-                                                                                             << sourceType);
+    NES_DEBUG2("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
+               physicalSource->toString(),
+               sourceType);
 
     switch (sourceType) {
         case DEFAULT_SOURCE: {
@@ -404,6 +400,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                  kafkaSourceType->getAutoCommit()->getValue(),
                                                  kafkaSourceType->getConnectionTimeout()->getValue(),
                                                  kafkaSourceType->getOffsetMode()->getValue(),
+                                                 kafkaSourceType,
                                                  kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
                                                  kafkaSourceType->getBatchSize()->getValue());
         }

@@ -40,7 +40,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @brief returns the string representation of the network sink
      * @return the string representation
      */
-    std::string toString() override;
+    std::string toString() const override;
 
     /**
      * @brief equal method for the NetworkSinkDescriptor
@@ -53,7 +53,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @brief getter for the view id
      * @return the used view id
      */
-    uint64_t getViewId();
+    uint64_t getViewId() const;
 
     /**
      * @brief getter for fault-tolerance type

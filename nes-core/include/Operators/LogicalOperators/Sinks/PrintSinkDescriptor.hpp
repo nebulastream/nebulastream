@@ -34,7 +34,7 @@ class PrintSinkDescriptor : public SinkDescriptor {
      */
     static SinkDescriptorPtr create(FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
-    std::string toString() override;
+    std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
     /**

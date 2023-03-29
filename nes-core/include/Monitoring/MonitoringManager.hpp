@@ -20,6 +20,7 @@
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -224,5 +225,4 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 }// namespace Monitoring
 }// namespace NES
-
 #endif// NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_

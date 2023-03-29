@@ -32,7 +32,7 @@
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
@@ -141,7 +141,7 @@ TEST_P(Query3Test, tpchQ3) {
     Scan customersScan = Scan(customersBuffer.first);
 
     // c_mksegment = 'BUILDING' -> currently modeled as 1
-    auto BUILDING = std::make_shared<ConstantIntegerExpression>(1);
+    auto BUILDING = std::make_shared<ConstantValueExpression>(1);
     auto readC_mktsegment = std::make_shared<ReadFieldExpression>("c_mksegment");
     auto equalsExpression = std::make_shared<EqualsExpression>(readC_mktsegment, BUILDING);
     auto selection = std::make_shared<Selection>(equalsExpression);
@@ -171,7 +171,7 @@ TEST_P(Query3Test, tpchQ3) {
     Scan orderScan = Scan(ordersBuffer.first);
 
     //  o_orderdate < date '1995-03-15'
-    auto const_1995_03_15 = std::make_shared<ConstantIntegerExpression>(19950315);
+    auto const_1995_03_15 = std::make_shared<ConstantValueExpression>(19950315);
     auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
     auto orderDateSelection =
         std::make_shared<Selection>(std::make_shared<LessThanExpression>(readO_orderdate, const_1995_03_15));
@@ -248,7 +248,7 @@ TEST_P(Query3Test, tpchQ3) {
 
     auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
     auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-    auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
+    auto oneConst = std::make_shared<ConstantValueExpression>(1);
     auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
     auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
     auto sumAggFunction = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());

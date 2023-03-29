@@ -60,7 +60,7 @@ OperatorNodePtr IterationLogicalOperatorNode::copy() {
 
 void IterationLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("IterationLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("IterationLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "IterationLogicalOperatorNode: Iteration should have children.");
     //Infer query signatures for child operators
     for (auto& child : children) {

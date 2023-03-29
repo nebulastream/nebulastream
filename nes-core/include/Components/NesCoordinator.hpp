@@ -145,15 +145,19 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief catalog method for debug use only
      * @return sourceCatalog
      */
-    Catalogs::Source::SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
+    Catalogs::Source::SourceCatalogPtr getSourceCatalog() const;
 
     /**
      * @brief getter of replication service
      * @return replication service
      */
-    ReplicationServicePtr getReplicationService() const { return replicationService; }
+    ReplicationServicePtr getReplicationService() const;
 
-    TopologyPtr getTopology() const { return topology; }
+    /**
+     * @brief get topology of coordinator
+     * @return topology
+     */
+    TopologyPtr getTopology() const;
 
     /**
      * @brief Get the instance of query service

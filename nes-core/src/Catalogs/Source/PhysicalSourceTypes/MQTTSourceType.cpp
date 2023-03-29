@@ -30,7 +30,7 @@ MQTTSourceTypePtr MQTTSourceType::create(std::map<std::string, std::string> sour
 MQTTSourceTypePtr MQTTSourceType::create() { return std::make_shared<MQTTSourceType>(MQTTSourceType()); }
 
 MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMap) : MQTTSourceType() {
-    NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
+    NES_INFO2("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::URL_CONFIG) != sourceConfigMap.end()) {
         url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
@@ -62,12 +62,12 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
         flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
     }
     if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
-        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second);
+        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
     }
 }
 
 MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
-    NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
+    NES_INFO2("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
 
     if (!yamlConfig[Configurations::URL_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::URL_CONFIG].As<std::string>() != "\n") {
@@ -142,7 +142,7 @@ MQTTSourceType::MQTTSourceType()
       inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
                                                                                            Configurations::InputFormat::JSON,
                                                                                            "input data format")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
+    NES_INFO2("NesSourceConfig: Init source config object with default values.");
 }
 
 std::string MQTTSourceType::toString() {

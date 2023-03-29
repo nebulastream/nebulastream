@@ -14,9 +14,8 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cmath>
 
 namespace NES {
@@ -37,7 +36,7 @@ void FloorExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("FloorExpressionNode: converted stamp to float: " << toString());
+    NES_TRACE2("FloorExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool FloorExpressionNode::equal(NodePtr const& rhs) const {

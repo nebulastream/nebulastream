@@ -16,17 +16,15 @@
 #define NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
-#include <Common/Identifiers.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
+#include <map>
+#include <mutex>
 #include <pthread.h>
 #include <string>
 #include <unistd.h>
@@ -34,6 +32,10 @@
 #include <vector>
 
 namespace NES {
+namespace Experimental::MaterializedView {
+class MaterializedViewManager;
+using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
+}// namespace Experimental::MaterializedView
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;

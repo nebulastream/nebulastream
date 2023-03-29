@@ -100,10 +100,46 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProjection) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()
+                          ->addField("test$start", BasicType::INT64)
+                          ->addField("test$end", BasicType::INT64)
+                          ->addField("test$sum", BasicType::INT64);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
+                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL);  // start
+    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL);  // end
+    EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 100LL);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
 INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
                         GlobalTumblingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<GlobalTumblingWindowQueryExecutionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });

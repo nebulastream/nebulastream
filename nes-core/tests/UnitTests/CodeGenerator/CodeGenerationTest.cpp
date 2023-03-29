@@ -17,9 +17,11 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/JITCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <NesBaseTest.hpp>
@@ -29,6 +31,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/NamespaceDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
@@ -40,6 +43,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -47,22 +51,16 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <utility>
-
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 
 namespace NES {
 using namespace QueryCompilation;

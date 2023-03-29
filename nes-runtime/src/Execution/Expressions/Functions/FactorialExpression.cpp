@@ -11,11 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
 #include <stdio.h>
-
 namespace NES::Runtime::Execution::Expressions {
 
 FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
@@ -54,8 +55,9 @@ Value<> FactorialExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateFactorial", calculateFactorial, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<FactorialExpression>> factorialFunction("factorial");
 }// namespace NES::Runtime::Execution::Expressions

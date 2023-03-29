@@ -18,12 +18,12 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <utility>
 
@@ -39,7 +39,7 @@ PipeliningPhasePtr DefaultPipeliningPhase::create(const OperatorFusionPolicyPtr&
 PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
 
     // splits the query plan of physical operators in pipelines
-    NES_DEBUG("Pipeline: query id: " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
+    NES_DEBUG2("Pipeline: query id: {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
     std::map<OperatorNodePtr, OperatorPipelinePtr> pipelineOperatorMap;
     auto pipelinePlan = PipelineQueryPlan::create(queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
     for (const auto& sinkOperators : queryPlan->getRootOperators()) {

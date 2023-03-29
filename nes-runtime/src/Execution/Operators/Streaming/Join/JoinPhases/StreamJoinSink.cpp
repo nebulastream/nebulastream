@@ -23,6 +23,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <cstring>
@@ -228,9 +229,14 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
 
     if (opHandler->getWindow(lastTupleTimeStamp).fetchSubSink(1) == 1) {
         // If in the current buffer are any tuples, we have to emit then before returning
-        auto currentTupleBuffer = currentWindow.getMapEmittableBuffers()[workerCtx->getId()];
-        if (currentTupleBuffer.getNumberOfTuples() > 0) {
-            pipelineCtx->emitBuffer(currentTupleBuffer, *workerCtx);
+        auto& mapEmittableBuffers = currentWindow.getMapEmittableBuffers();
+        auto currentTupleBufferIt = mapEmittableBuffers.find(workerCtx->getId());
+
+        if (currentTupleBufferIt != mapEmittableBuffers.end()) {
+            auto currentTupleBuffer = currentTupleBufferIt->second;
+            if (currentTupleBuffer.getNumberOfTuples() > 0) {
+                pipelineCtx->emitBuffer(currentTupleBuffer, *workerCtx);
+            }
         }
 
         // delete the current hash table

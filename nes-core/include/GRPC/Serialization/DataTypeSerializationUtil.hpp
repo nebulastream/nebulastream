@@ -49,10 +49,10 @@ class DataTypeSerializationUtil {
     * @param serializedDataType the serialized data type.
     * @return DataTypePtr
     */
-    static DataTypePtr deserializeDataType(SerializableDataType* serializedDataType);
+    static DataTypePtr deserializeDataType(const SerializableDataType& serializedDataType);
 
     /// @brief: Typed deserialization of what is known to be an array.
-    static std::shared_ptr<ArrayType> deserializeArrayType(SerializableDataType* serializedDataType);
+    static std::shared_ptr<ArrayType> deserializeArrayType(const SerializableDataType& serializedDataType);
 
     /**
      * @brief Serializes a value type and all its children to a SerializableDataValue object.
@@ -67,7 +67,7 @@ class DataTypeSerializationUtil {
     * @param serializedDataValue the serialized data value type.
     * @return ValueTypePtr
     */
-    static ValueTypePtr deserializeDataValue(SerializableDataValue* serializedDataValue);
+    static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
 }// namespace NES
 

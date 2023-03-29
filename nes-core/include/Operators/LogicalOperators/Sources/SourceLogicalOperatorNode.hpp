@@ -32,7 +32,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
      * @brief Returns the source descriptor of the source operators.
      * @return SourceDescriptorPtr
      */
-    SourceDescriptorPtr getSourceDescriptor();
+    SourceDescriptorPtr getSourceDescriptor() const;
 
     /**
      * @brief Sets a new source descriptor for this operator.
@@ -55,7 +55,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
     OperatorNodePtr copy() override;
     void setProjectSchema(SchemaPtr schema);
     void inferInputOrigins() override;
-    std::vector<OriginId> getOutputOriginIds() override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

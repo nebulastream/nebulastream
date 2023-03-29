@@ -13,8 +13,8 @@
 */
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Mediums/MaterializedViewSink.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Views/MaterializedView.hpp>
-
 namespace NES::Experimental::MaterializedView {
 
 MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
@@ -38,8 +38,10 @@ MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
 // It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management
 void MaterializedViewSink::shutdown() { view->clear(); }
 
+void MaterializedViewSink::setup(){};
+
 bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_INFO("MaterializedViewSink::writeData");
+    NES_INFO2("MaterializedViewSink::writeData");
     bool ret = view->writeData(inputBuffer);
     ++sentBuffer;
     updateWatermarkCallback(inputBuffer);

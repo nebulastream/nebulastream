@@ -44,18 +44,18 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string, std::map<
     }
 
     if (logicalSourceName.empty()) {
-        NES_WARNING("No logical source name is not supplied for creating the physical source. Please supply "
-                    "logical source name using --"
-                    << LOGICAL_SOURCE_NAME_CONFIG);
+        NES_WARNING2("No logical source name is not supplied for creating the physical source. Please supply "
+                     "logical source name using --{}",
+                     LOGICAL_SOURCE_NAME_CONFIG);
         return nullptr;
     } else if (physicalSourceName.empty()) {
-        NES_WARNING(
-            "No physical source name supplied for creating the physical source. Please supply physical source name using --"
-            << PHYSICAL_SOURCE_NAME_CONFIG);
+        NES_WARNING2(
+            "No physical source name supplied for creating the physical source. Please supply physical source name using --{}",
+            PHYSICAL_SOURCE_NAME_CONFIG);
         return nullptr;
     } else if (sourceType.empty()) {
-        NES_WARNING("No source type supplied for creating the physical source. Please supply source type using --"
-                    << SOURCE_TYPE_CONFIG);
+        NES_WARNING2("No source type supplied for creating the physical source. Please supply source type using --{}",
+                     SOURCE_TYPE_CONFIG);
         return nullptr;
     }
 

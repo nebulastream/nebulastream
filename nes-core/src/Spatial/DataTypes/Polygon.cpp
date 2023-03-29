@@ -51,12 +51,12 @@ Polygon::Polygon(std::vector<double> coords) {
     boundingRectangle = Rectangle(minLat, minLng, maxLat, maxLng);
 }
 
-Point Polygon::getVertex(int i) {
+Point Polygon::getVertex(int32_t i) {
     size_t idx = i;
-    if (idx > 0 && idx < coordinates.size()) {
+    if (idx >= 0 && idx < coordinates.size()) {
         return coordinates[idx];
     } else {
-        NES_ERROR("Polygon::getVertex(): Invalid index access in coordinates: " + std::to_string(idx));
+        NES_ERROR2("Polygon::getVertex(): Invalid index access in coordinates: {}", std::to_string(idx));
         throw InvalidArgumentException("coordinates[idx]", std::to_string(idx));
     }
 }

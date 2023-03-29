@@ -26,8 +26,7 @@
 #include <thread>
 #include <utility>
 
-namespace NES {
-namespace Configurations {
+namespace NES::Configurations {
 
 /**
  * @brief Configuration for the query compiler
@@ -97,7 +96,6 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     }
 };
 
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations
 
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_

@@ -24,7 +24,6 @@
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/MonitoringSource.hpp>
-#include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/StaticDataSource.hpp>
@@ -361,6 +360,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout,
                                       std::string offsetMode,
+                                      const KafkaSourceTypePtr& kafkaSourceType,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
@@ -376,6 +376,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                          autoCommit,
                                          kafkaConsumerTimeout,
                                          offsetMode,
+                                         kafkaSourceType,
                                          operatorId,
                                          originId,
                                          numSourceLocalBuffers,

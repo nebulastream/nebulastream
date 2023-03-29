@@ -35,7 +35,7 @@
 namespace NES {
 
 std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNode) {
-    NES_INFO("Util: getting the type of the operator");
+    NES_INFO2("Util: getting the type of the operator");
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
@@ -73,7 +73,7 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
     } else {
         operatorType = "UNDEFINED";
     }
-    NES_DEBUG("UtilityFunctions: operatorType = " << operatorType);
+    NES_DEBUG2("UtilityFunctions: operatorType =  {}", operatorType);
     return operatorType;
 }
 
@@ -85,11 +85,11 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 
     std::vector<NodePtr> children = root->getChildren();
     if (children.empty()) {
-        NES_DEBUG("UtilityFunctions::getChildren : children is empty()");
+        NES_DEBUG2("UtilityFunctions::getChildren : children is empty()");
         return;
     }
 
-    NES_DEBUG("UtilityFunctions::getChildren : children size = " << children.size());
+    NES_DEBUG2("UtilityFunctions::getChildren : children size =  {}", children.size());
     for (const NodePtr& child : children) {
         // Create a node JSON object for the current operator
         nlohmann::json node;
@@ -102,7 +102,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
             node["name"] = childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString();
-            NES_DEBUG(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
+            NES_DEBUG2("{}", childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
         } else {
             // use concatenation of <operator type>(OP-<operator id>) to fill name field
             // e.g. FILTER(OP-1)
@@ -137,7 +137,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 }
 
 nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
-    NES_INFO("UtilityFunctions: getting execution plan as JSON");
+    NES_INFO2("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
@@ -194,7 +194,7 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPl
 
 nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
 
-    NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+    NES_DEBUG2("UtilityFunctions: Getting the json representation of the query plan");
 
     nlohmann::json result{};
     std::vector<nlohmann::json> nodes{};
@@ -203,13 +203,13 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
     OperatorNodePtr root = queryPlan->getRootOperators()[0];
 
     if (!root) {
-        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
+        NES_DEBUG2("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
         nlohmann::json node;
         node["id"] = "NONE";
         node["name"] = "NONE";
         nodes.push_back(node);
     } else {
-        NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
+        NES_DEBUG2("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
         std::string rootOperatorType = getOperatorType(root);
 
         // Create a node JSON object for the root operator

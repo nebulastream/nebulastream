@@ -11,14 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/GammaExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
 namespace NES::Runtime::Execution::Expressions {
 
-GammaExpression::GammaExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
-    : SubExpression(SubExpression) {}
+GammaExpression::GammaExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+    : SubExpression(subExpression) {}
 
 /**
  * @brief This method calculates gamma(x).
@@ -53,7 +54,9 @@ Value<> GammaExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateGamma", calculateGamma, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<GammaExpression>> gammaFunction("gamma");
 }// namespace NES::Runtime::Execution::Expressions

@@ -28,14 +28,14 @@
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
 void NES::TensorflowAdapter::initializeModel(std::string model) {
-    NES_DEBUG("INITIALIZING MODEL: " << model);
+    NES_DEBUG2("INITIALIZING MODEL:  {}", model);
 
     std::ifstream input(model, std::ios::in | std::ios::binary);
 
     std::string bytes((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
 
     input.close();
-    NES_INFO("MODEL SIZE: " + std::to_string(bytes.size()));
+    NES_INFO2("MODEL SIZE: {}", std::to_string(bytes.size()));
     TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
     interpreter = TfLiteInterpreterCreate(TfLiteModelCreateFromFile(model.c_str()), options);
     TfLiteInterpreterAllocateTensors(interpreter);

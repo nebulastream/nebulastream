@@ -20,8 +20,6 @@ add_source_files(nes-core
         DivExpressionNode.cpp
         ExpExpressionNode.cpp
         FloorExpressionNode.cpp
-        Log10ExpressionNode.cpp
-        LogExpressionNode.cpp
         ModExpressionNode.cpp
         MulExpressionNode.cpp
         PowExpressionNode.cpp

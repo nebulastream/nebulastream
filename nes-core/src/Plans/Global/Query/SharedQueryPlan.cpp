@@ -19,9 +19,9 @@
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
-
 namespace NES {
 
 SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
@@ -50,18 +50,18 @@ SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
 }
 
 bool SharedQueryPlan::removeQuery(QueryId queryId) {
-    NES_DEBUG("SharedQueryPlan: Remove the Query Id " << queryId << " and associated Global Query Nodes with sink operators.");
+    NES_DEBUG2("SharedQueryPlan: Remove the Query Id {} and associated Global Query Nodes with sink operators.", queryId);
     if (queryIdToSinkOperatorMap.find(queryId) == queryIdToSinkOperatorMap.end()) {
-        NES_ERROR("SharedQueryPlan: query id " << queryId << " is not present in metadata information.");
+        NES_ERROR2("SharedQueryPlan: query id {} is not present in metadata information.", queryId);
         return false;
     }
-    NES_TRACE("SharedQueryPlan: Remove the Global Query Nodes with sink operators for query " << queryId);
+    NES_TRACE2("SharedQueryPlan: Remove the Global Query Nodes with sink operators for query  {}", queryId);
     std::vector<OperatorNodePtr> sinkOperatorsToRemove = queryIdToSinkOperatorMap[queryId];
     // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
     for (const auto& sinkOperator : sinkOperatorsToRemove) {
         //Remove sink operator and associated operators from query plan
         if (!removeOperator(sinkOperator)) {
-            NES_ERROR("SharedQueryPlan: unable to remove Root operator from the shared query plan " << sharedQueryId);
+            NES_ERROR2("SharedQueryPlan: unable to remove Root operator from the shared query plan {}", sharedQueryId);
             return false;
         }
         queryPlan->removeAsRootOperator(sinkOperator);
@@ -75,12 +75,12 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
 }
 
 bool SharedQueryPlan::isEmpty() {
-    NES_TRACE("SharedQueryPlan: Check if Global Query Metadata is empty. Found : " << queryIdToSinkOperatorMap.empty());
+    NES_TRACE2("SharedQueryPlan: Check if Global Query Metadata is empty. Found :  {}", queryIdToSinkOperatorMap.empty());
     return queryIdToSinkOperatorMap.empty();
 }
 
 std::vector<OperatorNodePtr> SharedQueryPlan::getSinkOperators() {
-    NES_TRACE("SharedQueryPlan: Get all Global Query Nodes with sink operators for the current Metadata");
+    NES_TRACE2("SharedQueryPlan: Get all Global Query Nodes with sink operators for the current Metadata");
     return sinkOperators;
 }
 
@@ -91,7 +91,7 @@ std::map<QueryId, std::vector<OperatorNodePtr>> SharedQueryPlan::getQueryIdToSin
 SharedQueryId SharedQueryPlan::getSharedQueryId() const { return sharedQueryId; }
 
 void SharedQueryPlan::clear() {
-    NES_DEBUG("SharedQueryPlan: clearing all metadata information.");
+    NES_DEBUG2("SharedQueryPlan: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
     sinkOperators.clear();
     queryIds.clear();
@@ -136,8 +136,9 @@ bool SharedQueryPlan::removeOperator(const OperatorNodePtr& operatorToRemove) {
             childOperator->removeParent(operatorToRemove);
         } else {
             if (!removeOperator(childOperator)) {
-                NES_ERROR("QueryPlan: unable to remove operator " << childOperator->toString() << " from shared query plan "
-                                                                  << sharedQueryId);
+                NES_ERROR2("QueryPlan: unable to remove operator {} from shared query plan {}",
+                           childOperator->toString(),
+                           sharedQueryId);
                 return false;
             }
         }

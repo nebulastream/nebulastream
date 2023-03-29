@@ -30,16 +30,16 @@ namespace NES::Experimental {
 
 MaintenanceService::MaintenanceService(TopologyPtr topology, RequestQueuePtr queryRequestQueue)
     : topology{topology}, queryRequestQueue{queryRequestQueue} {
-    NES_DEBUG("MaintenanceService: Initializing");
+    NES_DEBUG2("MaintenanceService: Initializing");
 };
 
-MaintenanceService::~MaintenanceService() { NES_DEBUG("Destroying MaintenanceService"); }
+MaintenanceService::~MaintenanceService() { NES_DEBUG2("Destroying MaintenanceService"); }
 
 std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type) {
     std::pair<bool, std::string> result;
     //check if topology node exists
     if (!topology->findNodeWithId(nodeId)) {
-        NES_DEBUG("MaintenanceService: TopologyNode with ID: " << nodeId << " does not exist");
+        NES_DEBUG2("MaintenanceService: TopologyNode with ID:  {}  does not exist", nodeId);
         result.first = false;
         result.second = "No Topology Node with ID " + std::to_string(nodeId);
         return result;
@@ -47,10 +47,9 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
 
     //check if valid Migration Type
     if (!MigrationType::isValidMigrationType(type)) {
-        NES_DEBUG(
-            "MaintenanceService: MigrationType: "
-            << type
-            << " is not a valid type. Type must be 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
+        NES_DEBUG2("MaintenanceService: MigrationType: {} is not a valid type. Type must be 1 (Restart), 2 (Migration with "
+                   "Buffering) or 3 (Migration without Buffering)",
+                   type);
         result.first = false;
         result.second = "MigrationType: " + std::to_string(type)
             + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "

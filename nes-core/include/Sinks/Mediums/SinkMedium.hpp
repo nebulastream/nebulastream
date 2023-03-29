@@ -162,7 +162,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @brief
      * @return
      */
-    OperatorId getOperatorId() const { return 0; }
+    OperatorId getOperatorId() const;
 
     /**
      * @brief returns current smallest timestamp stored in multi origin watermark processor

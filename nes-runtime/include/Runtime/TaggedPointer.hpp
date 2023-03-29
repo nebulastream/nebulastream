@@ -14,11 +14,7 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
-
-#include <Util/Logger/Logger.hpp>
-#include <folly/DiscriminatedPtr.h>
-#include <folly/Portability.h>
-
+#include <cstdint>
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
 #error "TaggedPointer is x64, arm64 and ppc64 specific code."
 #endif
@@ -36,23 +32,20 @@ class TaggedPointer {
      * @param ptr
      * @param tag
      */
-    explicit TaggedPointer(T* ptr, uint16_t tag = 0) { reset(ptr, tag); }
+    explicit TaggedPointer(T* ptr, uint16_t tag = 0);
 
     /**
      * @brief Assign operators from a pointer of type T
      * @param ptr the new pointer
      * @return self
      */
-    TaggedPointer& operator=(T* ptr) {
-        reset(ptr);
-        return *this;
-    }
+    TaggedPointer& operator=(T* ptr);
 
     /**
      * @brief Bool converted, true if pointer is valid
      * @return
      */
-    explicit operator bool() const { return get() != nullptr; }
+    explicit operator bool() const;
 
     /**
      * @brief negate operator, true if pointer is not valid
@@ -112,12 +105,7 @@ class TaggedPointer {
      * @brief reset by mutating the internal pointer and the tag
      * @return
      */
-    inline void reset(T* ptr = nullptr, uint16_t tag = 0) {
-        uintptr_t pointer = reinterpret_cast<uintptr_t>(ptr);
-        NES_ASSERT(!(pointer >> 48), "invalid pointer");
-        pointer |= static_cast<uintptr_t>(tag) << 48;
-        data = pointer;
-    }
+    void reset(T* ptr = nullptr, uint16_t tag = 0);
 
   private:
     uintptr_t data = 0;

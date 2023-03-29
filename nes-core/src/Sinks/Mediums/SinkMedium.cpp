@@ -48,6 +48,8 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     }
 }
 
+OperatorId SinkMedium::getOperatorId() const { return 0; }
+
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;
@@ -127,13 +129,13 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
-        NES_DEBUG("Got EoS on Sink " << toString());
+        NES_DEBUG2("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
             nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
-            NES_DEBUG("Sink [" << toString() << "] is completed with " << terminationType);
+            NES_DEBUG2("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }
 }

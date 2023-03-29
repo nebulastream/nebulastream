@@ -17,6 +17,7 @@
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <mlir/AsmParser/AsmParser.h>
 #include <mlir/Parser/Parser.h>
 

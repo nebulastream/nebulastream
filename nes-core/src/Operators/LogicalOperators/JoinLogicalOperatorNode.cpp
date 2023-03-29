@@ -40,7 +40,7 @@ std::string JoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
+Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() const { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
 
@@ -80,7 +80,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     }
 
     if (!fieldExistsInSchema) {
-        NES_ERROR("JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
+        NES_ERROR2("JoinLogicalOperatorNode: Unable to find left join key {} in schemas.", leftJoinKeyName);
         throw TypeInferenceException("JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
     }
 
@@ -100,39 +100,40 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     distinctSchemas.clear();
 
     if (!fieldExistsInSchema) {
-        NES_ERROR("JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName + " in schemas.");
+        NES_ERROR2("JoinLogicalOperatorNode: Unable to find right join key {} in schemas.", rightJoinKeyName);
         throw TypeInferenceException("JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName
                                      + " in schemas.");
     }
 
     //Check if left input schema was identified
     if (!leftInputSchema) {
-        NES_ERROR("JoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : "
-                  + leftJoinKeyName);
+        NES_ERROR2("JoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : {}",
+                   leftJoinKeyName);
         throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");
     }
 
     //Check if right input schema was identified
     if (!rightInputSchema) {
-        NES_ERROR("JoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : "
-                  + rightJoinKeyName);
+        NES_ERROR2(
+            "JoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : {}",
+            rightJoinKeyName);
         throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
-    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
+    NES_DEBUG2("Binary infer \nleft schema={}\nright schema={}", leftInputSchema->toString(), rightInputSchema->toString());
     if (leftInputSchema->getSchemaSizeInBytes() == 0) {
-        NES_ERROR("JoinLogicalOperatorNode: left schema is emtpy");
+        NES_ERROR2("JoinLogicalOperatorNode: left schema is emtpy");
         throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");
     }
 
     if (rightInputSchema->getSchemaSizeInBytes() == 0) {
-        NES_ERROR("JoinLogicalOperatorNode: right schema is emtpy");
+        NES_ERROR2("JoinLogicalOperatorNode: right schema is emtpy");
         throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
     //Check that both left and right schema should be different
     if (rightInputSchema->equals(leftInputSchema, false)) {
-        NES_ERROR("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
+        NES_ERROR2("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
         throw TypeInferenceException("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
     }
 
@@ -158,7 +159,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    NES_DEBUG("Outputschema for join=" << outputSchema->toString());
+    NES_DEBUG2("Outputschema for join={}", outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);
     return true;
@@ -183,7 +184,7 @@ bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->inst
 
 void JoinLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("JoinLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("JoinLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "JoinLogicalOperatorNode: Join should have 2 children.");
     //Infer query signatures for child operators
     for (auto& child : children) {
@@ -205,6 +206,8 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+const std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
+    return OriginIdAssignmentOperator::getOutputOriginIds();
+}
 
 }// namespace NES

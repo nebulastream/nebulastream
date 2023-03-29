@@ -49,7 +49,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {
-        NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
+        NES_DEBUG2("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
@@ -73,9 +73,9 @@ void TopDownStrategy::pinOperators(QueryId queryId,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_TRACE("TopDownStrategy: Place all sink operators.");
+    NES_TRACE2("TopDownStrategy: Place all sink operators.");
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
-        NES_TRACE("TopDownStrategy: Get the topology node for the sink operator.");
+        NES_TRACE2("TopDownStrategy: Get the topology node for the sink operator.");
         auto nodeId = std::any_cast<uint64_t>(pinnedDownStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
 
@@ -93,14 +93,14 @@ void TopDownStrategy::pinOperators(QueryId queryId,
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedDownStreamOperator->getId())) {
-                NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+                NES_ERROR2("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
                 throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             identifyPinningLocation(queryId, pinnedDownStreamOperator, candidateTopologyNode, pinnedUpStreamOperators);
         }
     }
-    NES_DEBUG("TopDownStrategy: Finished placing query operators into the global execution plan");
+    NES_DEBUG2("TopDownStrategy: Finished placing query operators into the global execution plan");
 }
 
 void TopDownStrategy::identifyPinningLocation(QueryId queryId,
@@ -109,56 +109,57 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
                                               const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
-        NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
+        NES_DEBUG2("Operator is already placed and thus skipping placement of this and its down stream operators.");
         auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
         operatorToExecutionNodeMap[operatorNode->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
         return;
     }
 
     if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) {
-        NES_DEBUG("TopDownStrategy: Place " << operatorNode);
+        NES_DEBUG2("TopDownStrategy: Place {}", operatorNode->toString());
         if ((operatorNode->hasMultipleChildrenOrParents() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
             && !operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
 
-            NES_TRACE("TopDownStrategy: Received an NAry operator for placement.");
-            NES_TRACE("TopDownStrategy: Get the topology nodes where parent operators are placed.");
+            NES_TRACE2("TopDownStrategy: Received an NAry operator for placement.");
+            NES_TRACE2("TopDownStrategy: Get the topology nodes where parent operators are placed.");
             std::vector<TopologyNodePtr> parentTopologyNodes = getTopologyNodesForDownStreamOperators(operatorNode);
             if (parentTopologyNodes.empty()) {
-                NES_WARNING("TopDownStrategy: No topology node found where parent operators are placed.");
+                NES_WARNING2("TopDownStrategy: No topology node found where parent operators are placed.");
                 return;
             }
 
-            NES_TRACE("TopDownStrategy: Get the topology nodes where children source operators are to be placed.");
+            NES_TRACE2("TopDownStrategy: Get the topology nodes where children source operators are to be placed.");
             std::vector<TopologyNodePtr> childNodes = getTopologyNodesForUpStreamOperators(operatorNode);
 
-            NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
+            NES_TRACE2("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
             candidateTopologyNode = topology->findCommonNodeBetween(childNodes, parentTopologyNodes);
 
             if (!candidateTopologyNode) {
-                NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
-                          << operatorNode->toString());
+                NES_ERROR2("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator {}",
+                           operatorNode->toString());
                 throw Exceptions::RuntimeException(
                     "TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                     + operatorNode->toString());
             }
 
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-                NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
+                NES_DEBUG2("TopDownStrategy: Received Source operator for placement.");
                 auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
                 auto pinnedSourceOperatorLocation = getTopologyNode(nodeId);
                 if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSourceOperatorLocation;
                 } else {
-                    NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
-                              "placed.");
+                    NES_ERROR2(
+                        "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
+                        "placed.");
                     throw Exceptions::RuntimeException(
                         "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
                         "to be placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
-                    NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
+                    NES_ERROR2("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                     throw Exceptions::RuntimeException(
                         "TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                 }
@@ -166,23 +167,23 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
         }
 
         if (candidateTopologyNode->getAvailableResources() == 0) {
-            NES_DEBUG("TopDownStrategy: Find the next Topology node where operator can be placed");
+            NES_DEBUG2("TopDownStrategy: Find the next Topology node where operator can be placed");
             std::vector<TopologyNodePtr> childNodes = getTopologyNodesForUpStreamOperators(operatorNode);
-            NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
+            NES_TRACE2("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
             //FIXME: we are considering only one root topology node currently
             auto candidateTopologyNodes = topology->findNodesBetween(childNodes, {candidateTopologyNode});
             for (const auto& topologyNodes : candidateTopologyNodes) {
                 if (topologyNodes && topologyNodes->getAvailableResources() > 0) {
                     candidateTopologyNode = topologyNodes;
-                    NES_DEBUG(
-                        "TopDownStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
+                    NES_DEBUG2("TopDownStrategy: Found NES node for placing the operators with id : {}",
+                               candidateTopologyNode->getId());
                     break;
                 }
             }
         }
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
-            NES_ERROR("TopDownStrategy: No node available for further placement of operators");
+            NES_ERROR2("TopDownStrategy: No node available for further placement of operators");
             throw Exceptions::RuntimeException("TopDownStrategy: No node available for further placement of operators");
         }
 
@@ -200,11 +201,11 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
                                                           });
 
     if (isOperatorAPinnedUpStreamOperator != pinnedUpStreamOperators.end()) {
-        NES_DEBUG("BottomUpStrategy: Found pinned downstream operator. Skipping placement of further operators.");
+        NES_DEBUG2("BottomUpStrategy: Found pinned downstream operator. Skipping placement of further operators.");
         return;
     }
 
-    NES_TRACE("TopDownStrategy: Place the children operators.");
+    NES_TRACE2("TopDownStrategy: Place the children operators.");
     for (const auto& upstreamOperator : operatorNode->getChildren()) {
         identifyPinningLocation(queryId, upstreamOperator->as<OperatorNode>(), candidateTopologyNode, pinnedUpStreamOperators);
     }
@@ -213,12 +214,12 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
 std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForDownStreamOperators(const OperatorNodePtr& candidateOperator) {
 
     std::vector<TopologyNodePtr> parentTopologyNodes;
-    NES_DEBUG("TopDownStrategy: Get topology nodes with parent operators");
+    NES_DEBUG2("TopDownStrategy: Get topology nodes with parent operators");
     std::vector<NodePtr> downstreamOperators = candidateOperator->getParents();
     //iterate over parent operators and get the physical location where operator is placed
     for (auto& downstreamOperator : downstreamOperators) {
         if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
-            NES_WARNING("TopDownStrategy: unable to find topology for downstreamOperator operator.");
+            NES_WARNING2("TopDownStrategy: unable to find topology for downstreamOperator operator.");
             return {};
         }
 
@@ -226,14 +227,14 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForDownStreamOpera
             topologyMap[std::any_cast<uint64_t>(downstreamOperator->as_if<OperatorNode>()->getProperty(PINNED_NODE_ID))];
         parentTopologyNodes.push_back(parentTopologyNode);
     }
-    NES_DEBUG("TopDownStrategy: returning list of topology nodes where parent operators are placed");
+    NES_DEBUG2("TopDownStrategy: returning list of topology nodes where parent operators are placed");
     return parentTopologyNodes;
 }
 
 std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForUpStreamOperators(const OperatorNodePtr& candidateOperator) {
     std::vector<TopologyNodePtr> upStreamTopologyNodes;
 
-    NES_TRACE(
+    NES_TRACE2(
         "TopDownStrategy::getTopologyNodesForUpStreamOperators: Get the pinned or closest placed upStreamOperators nodes for "
         "the the input operator.");
     std::vector<NodePtr> upStreamOperators = {candidateOperator};
@@ -252,8 +253,8 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForUpStreamOperato
                                  upStreamOperator->getChildren().end());
     }
     if (upStreamTopologyNodes.empty()) {
-        NES_ERROR("TopDownStrategy::getTopologyNodesForUpStreamOperators: Unable to find the upStreamOperators operators to the "
-                  "candidate operator");
+        NES_ERROR2("TopDownStrategy::getTopologyNodesForUpStreamOperators: Unable to find the upStreamOperators operators to the "
+                   "candidate operator");
         throw Exceptions::RuntimeException(
             "TopDownStrategy::getTopologyNodesForUpStreamOperators: Unable to find the upStreamOperators operators to the "
             "candidate operator");

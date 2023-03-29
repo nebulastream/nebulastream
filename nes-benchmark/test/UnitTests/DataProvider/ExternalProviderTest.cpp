@@ -14,8 +14,11 @@
 
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <NesBaseTest.hpp>
+#include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -47,7 +50,19 @@ namespace NES::Benchmark::DataProvision {
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
-    TEST_F(ExternalProviderTest, uniformIngestionRateTest) {
+    /**
+     * @brief busy waiting until the ExternalProvider has started
+     */
+    void waitForExternalProviderStartup(ExternalProvider& externalProvider) {
+        NES_DEBUG("Waiting until ExternalProvider has started...");
+        externalProvider.waitUntilStarted();
+    }
+
+    /**
+     * @brief This test should not be run on the CI, as here we use a sleep to generate x amount of buffers and then
+     * compare to an expected. This might fail randomly as the CI is not fast enough to produce large amounts of buffers
+     */
+    TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
         size_t sourceId = 0;
@@ -92,6 +107,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(50000 <= queueSize && queueSize <= 50500);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
+     * accessed by readNextBuffer() for a row layout
+     */
     TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -126,16 +145,17 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        sleep(1);
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
         auto& bufferQueue = externalProviderDefault->getBufferQueue();
-        TupleBufferHolder bufferHolder;
-        bufferQueue.read(bufferHolder);
-        auto expectedNextBuffer = bufferHolder.bufferToHold;
+        auto expectedNextBuffer = createdBuffers[0];
 
         ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
 
@@ -144,6 +164,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(memcmp(defaultBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
+     * accessed by readNextBuffer() for a column layout
+     */
     TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -178,16 +202,17 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        sleep(1);
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
         auto& bufferQueue = externalProviderDefault->getBufferQueue();
-        TupleBufferHolder bufferHolder;
-        bufferQueue.read(bufferHolder);
-        auto expectedNextBuffer = bufferHolder.bufferToHold;
+        auto expectedNextBuffer = createdBuffers[0];
 
         ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
 
@@ -196,6 +221,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(memcmp(defaultBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::start() works by creating tupleBuffers and then checks if the thread can be joined
+     * for row layout
+     */
     TEST_F(ExternalProviderTest, startRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -228,9 +257,12 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        sleep(1);
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
@@ -239,6 +271,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(preAllocatedBuffers.empty());
     }
 
+    /**
+     * @brief Testing if ExternalProvider::start() works by creating tupleBuffers and then checks if the thread can be joined
+     * for column layout
+     */
     TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -271,9 +307,12 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        sleep(1);
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
@@ -282,6 +321,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(preAllocatedBuffers.empty());
     }
 
+    /**
+     * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
+     *  row layout
+     */
     TEST_F(ExternalProviderTest, stopRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -314,6 +357,13 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
+        externalProviderDefault->setThrowException(/* throwException */ false);
+        externalProviderDefault->start();
+        waitForExternalProviderStartup(*externalProviderDefault);
+
         externalProviderDefault->stop();
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
@@ -323,6 +373,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(preAllocatedBuffers.empty());
     }
 
+    /**
+     * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
+     * column layout
+     */
     TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -355,6 +409,10 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->stop();
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();

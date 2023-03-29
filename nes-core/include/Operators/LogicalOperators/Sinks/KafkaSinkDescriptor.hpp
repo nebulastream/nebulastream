@@ -48,7 +48,7 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      */
     uint64_t getTimeout() const;
 
-    std::string toString() override;
+    std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
     std::string getSinkFormatAsString();
 

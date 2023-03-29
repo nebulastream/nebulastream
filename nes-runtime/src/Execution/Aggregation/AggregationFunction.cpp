@@ -14,6 +14,7 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Aggregation {

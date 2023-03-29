@@ -16,6 +16,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 namespace NES::Nautilus::MemRefUtils {
 

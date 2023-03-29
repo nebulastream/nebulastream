@@ -45,7 +45,7 @@ bool ZmqSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     return host == otherSinkDescriptor->host && port == otherSinkDescriptor->port;
 }
 
-std::string ZmqSinkDescriptor::toString() { return "ZmqSinkDescriptor()"; }
+std::string ZmqSinkDescriptor::toString() const { return "ZmqSinkDescriptor()"; }
 
 void ZmqSinkDescriptor::setPort(uint16_t newPort) { this->port = newPort; }
 

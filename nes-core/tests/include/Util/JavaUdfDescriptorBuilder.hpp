@@ -45,6 +45,7 @@ class JavaUdfDescriptorBuilder {
                                          methodName,
                                          instance,
                                          byteCodeList,
+                                         inputSchema,
                                          outputSchema,
                                          inputClassName,
                                          outputClassName);
@@ -91,6 +92,16 @@ class JavaUdfDescriptorBuilder {
     }
 
     /**
+     * Set the input schema of the Java UDF descriptor.
+     * @param newInputSchema The input schema of the Java UDF descriptor.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setInputSchema(const SchemaPtr& newInputSchema) {
+        this->inputSchema = newInputSchema;
+        return *this;
+    }
+
+    /**
      * Set the output schema of the Java UDF descriptor.
      * @param newOutputSchema The output schema of the Java UDF descriptor.
      * @return The JavaUdfDescriptorBuilder instance.
@@ -131,7 +142,8 @@ class JavaUdfDescriptorBuilder {
     std::string methodName = "udf_method";
     JavaSerializedInstance instance = JavaSerializedInstance{1};// byte-array containing 1 byte
     JavaUdfByteCodeList byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
-    SchemaPtr outputSchema = std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64());
+    SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
+    SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
     std::string inputClassName = "some_package.my_input_type";
     std::string outputClassName = "some_package.my_output_type";
 };

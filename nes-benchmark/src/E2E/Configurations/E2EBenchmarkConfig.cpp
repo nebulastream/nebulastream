@@ -13,6 +13,7 @@
 */
 
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 

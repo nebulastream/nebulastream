@@ -45,8 +45,9 @@ class DefaultSourceDescriptor : public SourceDescriptor {
      */
     uint64_t getSourceGatheringIntervalCount() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
-    std::string toString() override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+
+    std::string toString() const override;
 
     SourceDescriptorPtr copy() override;
 

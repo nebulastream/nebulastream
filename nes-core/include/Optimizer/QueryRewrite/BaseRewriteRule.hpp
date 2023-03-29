@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
 
-#include <Util/Logger/Logger.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <memory>
 
 namespace NES {
@@ -58,8 +58,7 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
         if (instanceOf<RefinementType>()) {
             return std::dynamic_pointer_cast<RefinementType>(this->shared_from_this());
         }
-        NES_FATAL_ERROR2("We performed an invalid cast");
-        throw std::bad_cast();
+        throw Exceptions::RuntimeException("We performed an invalid cast");
     }
 };
 }// namespace NES::Optimizer

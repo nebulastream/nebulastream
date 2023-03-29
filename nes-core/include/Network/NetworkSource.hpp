@@ -17,12 +17,14 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Network/NodeLocation.hpp>
-#include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
+namespace NES::Runtime {
+class BaseEvent;
+}
 namespace NES::Network {
 
 /**

@@ -68,23 +68,23 @@ int main(int argc, char** argv) {
 
         Logger::getInstance()->changeLogLevel(workerConfiguration->logLevel.getValue());
 
-        NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+        NES_INFO2("NesWorkerStarter: Start with {}", workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
-        NES_INFO("Starting worker");
+        NES_INFO2("Starting worker");
         nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//This is a blocking call
-        NES_INFO("Stopping worker");
+        NES_INFO2("Stopping worker");
         nesWorker->stop(/**force*/ true);
     } catch (std::exception& exp) {
-        NES_ERROR("Problem with worker: " << exp.what());
+        NES_ERROR2("Problem with worker: {}", exp.what());
         return 1;
     } catch (...) {
-        NES_ERROR("Unknown exception was thrown");
+        NES_ERROR2("Unknown exception was thrown");
         try {
             std::rethrow_exception(std::current_exception());
         } catch (std::exception& ex) {
-            NES_ERROR(ex.what());
+            NES_ERROR2("{}", ex.what());
         }
         return 1;
     }

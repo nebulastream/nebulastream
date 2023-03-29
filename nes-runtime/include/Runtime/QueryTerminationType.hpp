@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 
+#include <Util/Logger/Logger.hpp>
 #include <ostream>
 #include <stdint.h>
 
@@ -33,5 +34,19 @@ static O& operator<<(O& os, const QueryTerminationType& type) {
 }
 
 }// namespace NES::Runtime
+
+namespace fmt {
+template<>
+struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string> {
+    auto format(const NES::Runtime::QueryTerminationType& termination_type, format_context& ctx) -> decltype(ctx.out()) {
+        switch (termination_type) {
+            case NES::Runtime::QueryTerminationType::Graceful: return format_to(ctx.out(), "Graceful");
+            case NES::Runtime::QueryTerminationType::HardStop: return format_to(ctx.out(), "HardStop");
+            case NES::Runtime::QueryTerminationType::Failure: return format_to(ctx.out(), "Failure");
+            default: return format_to(ctx.out(), "Invalid");
+        }
+    }
+};
+}//namespace fmt
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

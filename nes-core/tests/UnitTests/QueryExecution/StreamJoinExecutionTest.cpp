@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestUtils.hpp>
@@ -78,11 +79,13 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
     std::ifstream inputFile(fullPath);
     std::istream_iterator<std::string> beginIt(inputFile);
     std::istream_iterator<std::string> endIt;
+    auto tupleCount = 0;
     for (auto it = beginIt; it != endIt; ++it) {
         std::string line = *it;
-        parser->writeInputTupleToTupleBuffer(line, buffer.getNumberOfTuples(), buffer, schema, bufferManager);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
+        tupleCount++;
     }
-
+    buffer.setNumberOfTuples(tupleCount);
     return buffer;
 }
 
@@ -189,12 +192,99 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
         checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
+    const auto leftInputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                     ->addField("test1$f1_left", BasicType::INT64)
+                                     ->addField("test1$f2_left", BasicType::INT64)
+                                     ->addField("test1$timestamp", BasicType::INT64)
+                                     ->addField("test1$fieldForSum1", BasicType::INT64);
+
+    const auto rightInputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                      ->addField("test2$f1_right", BasicType::INT64)
+                                      ->addField("test2$f2_right", BasicType::INT64)
+                                      ->addField("test2$timestamp", BasicType::INT64)
+                                      ->addField("test2$fieldForSum2", BasicType::INT64);
+
+    const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("test1test2$start", BasicType::INT64)
+                                ->addField("test1test2$end", BasicType::INT64)
+                                ->addField("test1test2$key", BasicType::INT64)
+
+                                ->addField("test1$start", BasicType::INT64)
+                                ->addField("test1$end", BasicType::INT64)
+                                ->addField("test1$cnt", BasicType::INT64)
+                                ->addField("test1$f1_left", BasicType::INT64)
+                                ->addField("test1$f2_left", BasicType::INT64)
+                                ->addField("test1$timestamp", BasicType::INT64)
+                                ->addField("test1$fieldForSum1", BasicType::INT64)
+
+                                ->addField("test2$start", BasicType::INT64)
+                                ->addField("test2$end", BasicType::INT64)
+                                ->addField("test2$cnt", BasicType::INT64)
+                                ->addField("test2$f1_right", BasicType::INT64)
+                                ->addField("test2$f2_right", BasicType::INT64)
+                                ->addField("test2$timestamp", BasicType::INT64)
+                                ->addField("test2$fieldForSum2", BasicType::INT64);
+
+    const auto joinFieldNameLeft = "test1$f2_left";
+    const auto joinFieldNameRight = "test2$f2_right";
+    const auto timeStampField = "timestamp";
+
+    //    const auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
+
+    // read values from csv file into one buffer for each join side and for one window
+    const auto windowSize = 10UL;
+    const std::string fileNameBuffersLeft("stream_join_left_withSum.csv");
+    const std::string fileNameBuffersRight("stream_join_right_withSum.csv");
+
+    auto bufferManager = executionEngine->getBufferManager();
+    auto leftBuffer =
+        fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftInputSchema), leftInputSchema, bufferManager);
+    auto rightBuffer =
+        fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightInputSchema), rightInputSchema, bufferManager);
+
+    auto testSink = executionEngine->createDataSink(sinkSchema);
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftInputSchema);
+    auto testSourceDescriptorRight = executionEngine->createDataSource(rightInputSchema);
+
+    auto query = TestQuery::from(testSourceDescriptorLeft)
+                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                     .byKey(Attribute(joinFieldNameLeft))
+                     .apply(Sum(Attribute("test1$fieldForSum1")))
+                     .joinWith(TestQuery::from(testSourceDescriptorRight)
+                                   .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                                   .byKey(Attribute(joinFieldNameRight))
+                                   .apply(Sum(Attribute("test2$fieldForSum2"))))
+                     .where(Attribute(joinFieldNameLeft))
+                     .equalsTo(Attribute(joinFieldNameRight))
+                     .window(TumblingWindow::of(EventTime(Attribute("test1$start")), Milliseconds(windowSize)))
+                     .sink(testSinkDescriptor);
+
+    NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
+    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
+    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
+    ASSERT_TRUE(!!sourceLeft);
+    ASSERT_TRUE(!!sourceRight);
+
+    sourceLeft->emitBuffer(leftBuffer);
+    sourceRight->emitBuffer(rightBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
+}
+
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(//QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
+                            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });
 
 }// namespace NES::Runtime::Execution

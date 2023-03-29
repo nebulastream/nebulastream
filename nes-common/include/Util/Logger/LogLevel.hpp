@@ -15,6 +15,8 @@
 #ifndef NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
 #define NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
 #include <cstdint>
+#include <string_view>
+#include <type_traits>
 namespace NES {
 /**
  * @brief Indicators for a log level following the priority of log messages.
@@ -37,6 +39,21 @@ enum class LogLevel : uint8_t {
     // Indicates that all available information will be logged (can result in massive output).
     LOG_TRACE = 7
 };
+
+/**
+ * @brief getLogName returns the string representation LogLevel value for a specific LogLevel value.
+ * @param value LogLevel
+ * @return string of value
+ */
+std::basic_string_view<char> getLogName(LogLevel value);
+
+/**
+ * @brief GetLogLevel returns the integer LogLevel value for an specific LogLevel value.
+ * @param value LogLevel
+ * @return integer between 1 and 7 to identify the log level.
+ */
+constexpr uint64_t getLogLevel(const LogLevel value) { return static_cast<std::underlying_type_t<LogLevel>>(value); }
+
 }// namespace NES
 
 #endif//NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_

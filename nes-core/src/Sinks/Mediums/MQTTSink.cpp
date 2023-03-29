@@ -13,6 +13,7 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -69,14 +70,14 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                                            | (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
 
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
-    NES_TRACE("MQTTSink::MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
+    NES_TRACE2("MQTTSink::MQTTSink {}: Init MQTT Sink to {}", this->toString(), address);
 }
 
 MQTTSink::~MQTTSink() NES_NOEXCEPT(false) {
-    NES_TRACE("MQTTSink::~MQTTSink: destructor called");
+    NES_TRACE2("MQTTSink::~MQTTSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_TRACE("MQTTSink::~MQTTSink " << this << ": MQTT Sink Destroyed");
+        NES_TRACE2("MQTTSink::~MQTTSink: MQTT Sink Destroyed");
     } else {
         NES_ASSERT2_FMT(false, "MQTTSink::~MQTTSink " << this << ": Destroy MQTT Sink failed cause it could not be disconnected");
     }
@@ -87,23 +88,23 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     NES_ASSERT(connected, "MQTTSink::writeData: cannot write buffer because client is not connected");
 
     if (!inputBuffer) {
-        NES_ERROR("MQTTSink::writeData input buffer invalid");
+        NES_ERROR2("MQTTSink::writeData input buffer invalid");
         return false;
     }
     // Print received Tuple Buffer for debugging purposes.
     auto layout = Runtime::MemoryLayouts::RowLayout::create(sinkFormat->getSchemaPtr(), inputBuffer.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, inputBuffer);
-    NES_TRACE("MQTTSink::writeData" << buffer.toString(sinkFormat->getSchemaPtr()));
+    NES_TRACE2("MQTTSink::writeData {}", buffer.toString(sinkFormat->getSchemaPtr()));
 
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
             if (formattedTuple == "") {
-                NES_ERROR("MQTTSink:: Error during tuple creation from tuple buffer: " << formattedTuple);
+                NES_ERROR2("MQTTSink:: Error during tuple creation from tuple buffer:  {}", formattedTuple);
                 continue;
             }
-            NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
+            NES_TRACE2("MQTTSink::writeData Sending Payload:  {}", formattedTuple);
             client->sendPayload(formattedTuple);
             std::this_thread::sleep_for(minDelayBetweenSends);
         }
@@ -111,11 +112,11 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
         // that were not successfully sent to an MQTT broker.
         if ((asynchronousClient && client->getNumberOfUnsentMessages() > 0)) {
-            NES_ERROR("MQTTSink::writeData: " << client->getNumberOfUnsentMessages() << " messages could not be sent");
+            NES_ERROR2("MQTTSink::writeData: {} messages could not be sent", client->getNumberOfUnsentMessages());
             return false;
         }
     } catch (const mqtt::exception& ex) {
-        NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
+        NES_ERROR2("MQTTSink::writeData: Error during writeData in MQTT sink: {}", ex.what());
         return false;
     }
     updateWatermarkCallback(inputBuffer);
@@ -151,17 +152,17 @@ bool MQTTSink::connect() {
                                 .automatic_reconnect(true)
                                 .finalize();
             // Connect to the MQTT broker
-            NES_DEBUG("MQTTSink::connect: connect to address=" << address);
+            NES_DEBUG2("MQTTSink::connect: connect to address= {}", address);
             client->connect(connOpts);
             connected = true;
         } catch (const mqtt::exception& ex) {
-            NES_ERROR("MQTTSink::connect:  " << ex.what());
+            NES_ERROR2("MQTTSink::connect:   {}", ex.what());
         }
     }
     if (connected) {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": connected address=" << address);
+        NES_DEBUG2("MQTTSink::disconnect: connected address= {}", address);
     } else {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected=" << address);
+        NES_DEBUG2("MQTTSink::disconnect: NOT connected= {}", address);
     }
     return connected;
 }
@@ -172,9 +173,9 @@ bool MQTTSink::disconnect() {
         client->disconnect();
         connected = false;
     } else {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected");
+        NES_DEBUG2("MQTTSink::disconnect NOT connected");
     }
-    NES_TRACE("MQTTSink::disconnect: connected value is" << connected);
+    NES_TRACE2("MQTTSink::disconnect: connected value is {}", connected);
     return !connected;
 }
 

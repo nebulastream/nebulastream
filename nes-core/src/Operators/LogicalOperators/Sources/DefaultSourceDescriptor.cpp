@@ -44,7 +44,7 @@ DefaultSourceDescriptor::create(SchemaPtr schema, std::string sourceName, uint64
     return std::make_shared<DefaultSourceDescriptor>(
         DefaultSourceDescriptor(std::move(schema), std::move(sourceName), numbersOfBufferToProduce, frequency));
 }
-bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<DefaultSourceDescriptor>()) {
         return false;
     }
@@ -53,7 +53,7 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         && sourceGatheringInterval == otherSource->getSourceGatheringInterval() && getSchema()->equals(otherSource->getSchema());
 }
 
-std::string DefaultSourceDescriptor::toString() {
+std::string DefaultSourceDescriptor::toString() const {
     return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", "
         + std::to_string(sourceGatheringInterval.count()) + "ms)";
 }

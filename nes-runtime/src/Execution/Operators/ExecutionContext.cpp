@@ -17,6 +17,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution {
 

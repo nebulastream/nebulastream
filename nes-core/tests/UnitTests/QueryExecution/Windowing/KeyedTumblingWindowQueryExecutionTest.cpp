@@ -99,27 +99,31 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
     EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL);// sum
+    EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 40LL);// sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
+TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjection) {
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
                             ->addField("test$value", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
-    auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
+    auto sinkSchema = Schema::create()
+                          ->addField("test$start", BasicType::INT64)
+                          ->addField("test$end", BasicType::INT64)
+                          ->addField("test$key", BasicType::INT64)
+                          ->addField("test$sum", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64), Attribute("test$key", INT64))
+                     .byKey(Attribute("test$key", INT64))
                      .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
-                     .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -135,7 +139,67 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
-    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL);// sum
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL); // start
+    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL); // end
+    EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL); // key
+    EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 60LL);// sum
+
+    EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 0LL); // start
+    EXPECT_EQ(resultBuffer[1][1].read<int64_t>(), 5LL); // end
+    EXPECT_EQ(resultBuffer[1][2].read<int64_t>(), 1LL); // key
+    EXPECT_EQ(resultBuffer[1][3].read<int64_t>(), 40LL);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
+    auto sourceSchema = Schema::create()
+                            ->addField("test$ts", BasicType::UINT64)
+                            ->addField("test$key", BasicType::INT64)
+                            ->addField("test$value", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()
+                          ->addField("test$start", BasicType::INT64)
+                          ->addField("test$end", BasicType::INT64)
+                          ->addField("test$key", BasicType::INT64)
+                          ->addField("test$key", BasicType::INT64)
+                          ->addField("test$sum", BasicType::INT64);
+
+    auto testSink = executionEngine->createDataSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
+                     .byKey(Attribute("test$key", INT64), Attribute("test$key", INT64))
+                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL); // start
+    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL); // end
+    EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL); // key
+    EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 0LL); // key
+    EXPECT_EQ(resultBuffer[0][4].read<int64_t>(), 60LL);// sum
+
+    EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 0LL); // start
+    EXPECT_EQ(resultBuffer[1][1].read<int64_t>(), 5LL); // end
+    EXPECT_EQ(resultBuffer[1][2].read<int64_t>(), 1LL); // key
+    EXPECT_EQ(resultBuffer[1][3].read<int64_t>(), 1LL); // key
+    EXPECT_EQ(resultBuffer[1][4].read<int64_t>(), 40LL);// sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
@@ -145,5 +209,5 @@ INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
                         KeyedTumblingWindowQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<KeyedTumblingWindowQueryExecutionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });

@@ -17,13 +17,14 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-
 #include <z3++.h>
 
 namespace NES {
@@ -64,24 +65,35 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema "
-              << inputSchema->toString());
+    NES_DEBUG2("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
+               inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    windowType->inferStamp(inputSchema);
+
+    if (windowDefinition->getWindowType()->isThresholdWindow()) {
+        auto windowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
+        windowType->inferStamp(inputSchema);
+    } else {
+        auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        windowType->inferStamp(inputSchema);
+    }
 
     //Construct output schema
     outputSchema->clear();
-
-    outputSchema =
-        outputSchema
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
+    /**
+     * For the threshold window we cannot pre-calculate the window start and end, thus in the current version we ignores these output fields for
+     * threshold windows
+     */
+    if (!windowDefinition->getWindowType()->isThresholdWindow()) {
+        outputSchema =
+            outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
+    }
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
@@ -91,10 +103,15 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
+
     for (auto& agg : windowAggregation) {
+        NES_INFO("Add the following field to the output schema of the GlobalWindow"
+                 << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
         outputSchema->addField(
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
-    }
+    }//end for
+    NES_INFO("The final output schema is" << outputSchema->toString())
+
     return true;
 }
 

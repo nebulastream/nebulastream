@@ -14,6 +14,7 @@
 
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
 
@@ -32,7 +33,7 @@ GlobalQueryNodePtr GlobalQueryNode::create(uint64_t id, OperatorNodePtr operator
 uint64_t GlobalQueryNode::getId() const { return id; }
 
 OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
-    NES_DEBUG("GlobalQueryNode: Check if a similar logical operator present in the global query node " << id);
+    NES_DEBUG2("GlobalQueryNode: Check if a similar logical operator present in the global query node  {}", id);
     if (this->operatorNode && this->operatorNode->equal(operatorNode)) {
         return operatorNode;
     }

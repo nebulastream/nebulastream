@@ -34,7 +34,7 @@ SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string 
     return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(udfs)));
 }
 
-bool SenseSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool SenseSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<SenseSourceDescriptor>()) {
         return false;
     }
@@ -42,7 +42,7 @@ bool SenseSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return udfs == otherSource->getUdfs() && getSchema()->equals(otherSource->getSchema());
 }
 
-std::string SenseSourceDescriptor::toString() { return "SenseSourceDescriptor()"; }
+std::string SenseSourceDescriptor::toString() const { return "SenseSourceDescriptor()"; }
 
 SourceDescriptorPtr SenseSourceDescriptor::copy() {
     auto copy = SenseSourceDescriptor::create(schema->copy(), logicalSourceName, udfs);

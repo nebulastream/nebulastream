@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CeilExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
 namespace NES::Runtime::Execution::Expressions {
 
 CeilExpression::CeilExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
@@ -44,8 +45,8 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Float.");
+        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CeilExpression>> ceilFunction("ceil");
 }// namespace NES::Runtime::Execution::Expressions

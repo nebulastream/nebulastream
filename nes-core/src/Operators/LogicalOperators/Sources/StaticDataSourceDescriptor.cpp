@@ -26,11 +26,11 @@ StaticDataSourceDescriptor::create(const SchemaPtr& schema, std::string pathTabl
     NES_ASSERT(schema, "StaticDataSourceDescriptor: Invalid schema passed.");
     return std::make_shared<StaticDataSourceDescriptor>(schema, pathTableFile, lateStart);
 }
-std::string StaticDataSourceDescriptor::toString() {
+std::string StaticDataSourceDescriptor::toString() const {
     return "StaticDataSourceDescriptor. pathTableFile: " + pathTableFile + " lateStart: " + (lateStart ? "On" : "Off");
 }
 
-bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<StaticDataSourceDescriptor>()) {
         return false;
     }

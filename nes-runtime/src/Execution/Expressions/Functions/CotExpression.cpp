@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CotExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
 namespace NES::Runtime::Execution::Expressions {
 
 CotExpression::CotExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& radians) : radians(radians) {}
@@ -52,8 +53,9 @@ Value<> CotExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateCot", calculateCot, subValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CotExpression>> cotFunction("cot");
 }// namespace NES::Runtime::Execution::Expressions

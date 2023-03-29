@@ -31,17 +31,17 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
 #ifdef S2DEF
     nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
     if (configuration->defaultCoverageRadius.getValue() > configuration->nodeIndexUpdateThreshold.getValue()) {
-        NES_FATAL_ERROR("Default Coverage Radius: "
-                        << configuration->defaultCoverageRadius.getValue() << "is bigger than the node index update threshold: "
-                        << configuration->nodeIndexUpdateThreshold.getValue()
-                        << ". this would lead to nodes not being not discoverable although they are in range. Exiting");
+        NES_FATAL_ERROR2("Default Coverage Radius: {} is bigger than the node index update threshold: {}. this would lead to "
+                         "nodes not being not discoverable although they are in range. Exiting",
+                         configuration->defaultCoverageRadius.getValue(),
+                         configuration->nodeIndexUpdateThreshold.getValue());
         exit(EXIT_FAILURE);
     }
     if (configuration->nodeIndexUpdateThreshold.getValue() > nodeInfoDownloadRadius) {
-        NES_FATAL_ERROR("Node info download radius: "
-                        << nodeInfoDownloadRadius << "is smaller than the node index update threshold: "
-                        << configuration->nodeIndexUpdateThreshold.getValue()
-                        << ". this would lead to downloading node info after every location update. Exiting");
+        NES_FATAL_ERROR2("Node info download radius: {} is smaller than the node index update threshold: {}. this would lead to "
+                         "downloading node info after every location update. Exiting",
+                         nodeInfoDownloadRadius,
+                         configuration->nodeIndexUpdateThreshold.getValue());
         exit(EXIT_FAILURE);
     }
 
@@ -55,8 +55,18 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
     stepsSinceLastLocationSave = 0;
 #else
     (void) configuration;
-    NES_FATAL_ERROR("cannot construct trajectory predictor without s2 library");
+    NES_FATAL_ERROR2("cannot construct trajectory predictor without s2 library");
     exit(EXIT_FAILURE);
+#endif
+}
+
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create(
+    [[maybe_unused]] const NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
+#ifdef S2DEF
+    return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(configuration);
+#else
+    return nullptr;
 #endif
 }
 
@@ -69,7 +79,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
     bool isIndexUpdated) {
     //if the device location has not changed, there are no new calculations to be made
     if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
-        NES_DEBUG("Location has not changed, do not recalculate schedule")
+        NES_DEBUG2("Location has not changed, do not recalculate schedule");
         return std::nullopt;
     }
 
@@ -78,7 +88,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
         if (stepsSinceLastLocationSave == locationBufferSaveRate) {
             locationBuffer.push_back(currentOwnLocation);
             stepsSinceLastLocationSave = 0;
-            NES_DEBUG("Location buffer is not filled yet, do not recalculate schedule")
+            NES_DEBUG2("Location buffer is not filled yet, do not recalculate schedule");
         } else {
             ++stepsSinceLastLocationSave;
         }
@@ -103,7 +113,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
     //if any of the input data for the reconnect prediction has changed, the scheduled reconnects need to be recalculated
 
     if (isIndexUpdated || isPathUpdated || isSpeedChanged) {
-        NES_INFO("reconnect prediction data has changed")
+        NES_INFO2("reconnect prediction data has changed");
         //todo #2815: instead of updating right away, look at if the new trajectory stabilizes itself after a turn
         scheduleReconnects(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(parentLocation), fieldNodeIndex);
         return ReconnectSchedule(reconnectPoints);
@@ -124,13 +134,13 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updateAve
     //if this is the case, update the value
     if (abs(meanDegreesPerNanosec - bufferAverageMovementSpeed) > bufferAverageMovementSpeed * speedDifferenceThresholdFactor) {
         bufferAverageMovementSpeed = meanDegreesPerNanosec;
-        NES_TRACE("average movement speed was updated to " << bufferAverageMovementSpeed)
-        NES_TRACE("threshhold is " << bufferAverageMovementSpeed * speedDifferenceThresholdFactor)
+        NES_TRACE2("average movement speed was updated to {}", bufferAverageMovementSpeed);
+        NES_TRACE2("threshhold is {}", bufferAverageMovementSpeed * speedDifferenceThresholdFactor);
         return true;
     }
     return false;
 #else
-    NES_WARNING("s2 library is needed to update average movement speed")
+    NES_WARNING2("s2 library is needed to update average movement speed");
     return false;
 #endif
 }
@@ -159,7 +169,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updatePre
     //todo 2815: instead of just using points, calculate central points
     if ((trajectoryLine && distAngle > pathDistanceDeltaAngle)
         || (!trajectoryLine && locationBuffer.size() == locationBufferSize)) {
-        NES_DEBUG("updating trajectory");
+        NES_DEBUG2("updating trajectory");
         S2Point oldPoint = Util::S2Utilities::geoLocationToS2Point(newPathStart);
         auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, predictedPathLengthAngle);
         //we need to extrapolate backwards as well to make sure, that triangulation still works even if covering nodes lie behind the device
@@ -173,7 +183,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updatePre
 #else
     (void) newPathStart;
     (void) currentLocation;
-    NES_WARNING("s2 library is needed to update predicted path")
+    NES_WARNING2("s2 library is needed to update predicted path");
     return false;
 #endif
 }
@@ -186,21 +196,21 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCovera
     int vertexIndex = 0;
     auto projectedPoint = path.Project(coveringNode, &vertexIndex);
     auto distanceAngle = S1Angle(coveringNode, projectedPoint);
-    NES_TRACE("distance from path in meters: " << S2Earth::ToMeters(distanceAngle))
+    NES_TRACE2("distance from path in meters: {}", S2Earth::ToMeters(distanceAngle));
 
     //if the distance is more than the coverage, it is not possible to cover the line
     if (distanceAngle > coverage) {
-        NES_WARNING("no coverage possible with this node")
+        NES_WARNING2("no coverage possible with this node");
         return {S2Point(), S1Angle::Degrees(0)};
     }
 
     double divisor = cos(distanceAngle);
     if (std::isnan(divisor)) {
-        NES_WARNING("divisor is NaN")
+        NES_WARNING2("divisor is NaN");
         return {S2Point(), S1Angle::Degrees(0)};
     }
     if (divisor == 0) {
-        NES_WARNING("divisor is zero")
+        NES_WARNING2("divisor is zero");
         return {S2Point(), S1Angle::Degrees(0)};
     }
 
@@ -285,11 +295,11 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
                 std::make_shared<DataTypes::Experimental::GeoLocation>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
             reconnectPoints.emplace_back(
                 NES::Spatial::Mobility::Experimental::ReconnectPoint{*currLoc, reconnectParentId, estimatedReconnectTime});
-            NES_DEBUG("scheduled reconnect to worker with id" << reconnectParentId)
+            NES_DEBUG2("scheduled reconnect to worker with id{}", reconnectParentId);
             reconnectLocationOnPath = nextReconnectLocationOnPath;
             estimatedReconnectTime = nextEstimatedReconnectTime;
         } else {
-            NES_DEBUG("no nodes available to cover rest of path")
+            NES_DEBUG2("no nodes available to cover rest of path");
             break;
         }
     }

@@ -61,7 +61,7 @@ class OPCSinkDescriptor : public SinkDescriptor {
      */
     const std::string getPassword() const;
 
-    std::string toString() override;
+    std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
   private:

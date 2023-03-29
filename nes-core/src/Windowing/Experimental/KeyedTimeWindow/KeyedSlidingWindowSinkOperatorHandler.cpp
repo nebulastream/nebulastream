@@ -43,26 +43,26 @@ void KeyedSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineEx
 void KeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                   Runtime::StateManagerPtr,
                                                   uint32_t) {
-    NES_DEBUG("start KeyedSlidingWindowSinkOperatorHandler");
+    NES_DEBUG2("start KeyedSlidingWindowSinkOperatorHandler");
 }
 
 void KeyedSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                  Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop KeyedSlidingWindowSinkOperatorHandler: " << queryTerminationType);
+    NES_DEBUG2("stop KeyedSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 
 KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTriggerTask* windowTriggerTask) {
     return std::make_unique<KeyedSlice>(factory, windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
 std::vector<KeyedSliceSharedPtr> KeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
-    NES_DEBUG("getSlicesForWindow " << windowTriggerTask->windowStart << " - " << windowTriggerTask->windowEnd);
+    NES_DEBUG2("getSlicesForWindow {} - {}", windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
     return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
 Windowing::LogicalWindowDefinitionPtr KeyedSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
 
 GlobalSliceStore<KeyedSlice>& KeyedSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
 KeyedSlidingWindowSinkOperatorHandler::~KeyedSlidingWindowSinkOperatorHandler() {
-    NES_DEBUG("Destruct KeyedEventTimeWindowHandler");
+    NES_DEBUG2("Destruct KeyedEventTimeWindowHandler");
 }
 
 void KeyedSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {

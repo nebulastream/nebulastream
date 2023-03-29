@@ -20,6 +20,7 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {
 class ExpressionItem;
@@ -212,6 +213,26 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr
     createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                     OperatorId id = Util::getNextOperatorId());
+
+    /**
+     * @brief Create a new WindowJavaUdfLogicalOperatorNode.
+     * @param javaUdfDescriptor
+     * @param windowType
+     * @param distributionType
+     * @param onKey
+     * @param allowedLateness
+     * @param originId
+     * @param id
+     * @return A logical operator node which encapsulates the Java UDF for a window UDF.
+     */
+    static LogicalUnaryOperatorNodePtr
+    createWindowJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                       Windowing::WindowTypePtr windowType,
+                                       Windowing::DistributionCharacteristicPtr distributionType,
+                                       std::vector<FieldAccessExpressionNodePtr> onKey,
+                                       uint64_t allowedLateness,
+                                       OriginId originId,
+                                       OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES

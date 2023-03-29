@@ -37,7 +37,8 @@ enum class QueryMergerRule {
     ImprovedHashSignatureBasedPartialQueryMergerRule,
     HashSignatureBasedPartialQueryMergerRule,
     DefaultQueryMergerRule,
-    HybridCompleteQueryMergerRule
+    HybridCompleteQueryMergerRule,
+    Z3SignatureBasedQueryContainmentRule
 };
 
 class QueryMergerPhase;

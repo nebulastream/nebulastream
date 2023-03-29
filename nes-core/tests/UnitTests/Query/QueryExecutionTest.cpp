@@ -39,6 +39,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -932,7 +933,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                      .map(Attribute("result_exp") = EXP(Attribute("result_ceil")))
                      .map(Attribute("result_batch_test") =// batch test of many arithmetic operators, should always be 1/TRUE:
                           // test functionality of many functions at once through combination with their inverse function:
-                          Attribute("result_ceil") == LOGN(EXP(Attribute("result_ceil")))
+                          Attribute("result_ceil") == LN(EXP(Attribute("result_ceil")))
                               && Attribute("result_ceil") == SQRT(POWER(Attribute("result_ceil"), 2))
                               && Attribute("result_ceil") == LOG10(POWER(10, Attribute("result_ceil")))
                               // test FLOOR, ROUND, CEIL, ABS

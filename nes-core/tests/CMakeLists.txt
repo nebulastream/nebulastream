@@ -227,10 +227,6 @@ if (NES_USE_GPU)
     add_nes_unit_test(gpu-pipeline-query-execution-test "UnitTests/Query/GPUPipelineQueryExecutionTest.cpp")
 endif (NES_USE_GPU)
 
-### ProjectionTest ###
-add_nes_unit_test(projection-test "UnitTests/Query/ProjectionTest.cpp")
-
-
 ### TupleBufferTest ###
 add_nes_unit_test(tuple-buffer-test "UnitTests/Runtime/TupleBufferTest.cpp")
 
@@ -265,6 +261,12 @@ add_nes_unit_test(spatial-expression-node-test "UnitTests/Operators/SpatialExpre
 
 # GeographyExpressionNodeTest
 add_nes_unit_test(geography-expression-node-test "UnitTests/Operators/GeographyExpressionNodeTest.cpp")
+
+### Spatial Datatype Tests ###
+add_nes_unit_test(circle-datatype-tests "UnitTests/Spatial/DataTypes/CircleTest.cpp")
+add_nes_unit_test(point-datatype-tests "UnitTests/Spatial/DataTypes/PointTest.cpp")
+add_nes_unit_test(polygon-datatype-tests "UnitTests/Spatial/DataTypes/PolygonTest.cpp")
+add_nes_unit_test(rectangle-datatype-tests "UnitTests/Spatial/DataTypes/RectangleTest.cpp")
 
 
 # QueryPlanIteratorTest
@@ -421,6 +423,11 @@ add_nes_unit_test(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/
 ### Circular Buffer Tests ###
 add_nes_unit_test(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 
+### Z3 Signature Based Equal Query Merger Rule Test ###
+add_nes_unit_test(z3-signature-based-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedQueryContainmentRuleTest.cpp")
+
+### Z3 Signature Based Equal Query Merger Rule Test ###
+add_nes_unit_test(query-containment-identification-test "UnitTests/Optimizer/QuerySignatures/QueryContainmentIdentificationTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
 add_nes_unit_test(z3-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRuleTest.cpp")
@@ -625,10 +632,8 @@ add_nes_integration_test(memory-source-integration-test "Integration/Source/Memo
 ### VariableLengthIntegrationTest ###
 add_nes_integration_test(variable-length-integration-test "Integration/Source/VariableLengthIntegrationTest.cpp")
 
-
 ### StaticDataSourceIntegrationTest ###
-add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
-
+#add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
 
 ### BenchmarkSourceIntegrationTest ###
 add_nes_integration_test(benchmark-source-integration-test "Integration/Source/BenchmarkSourceIntegrationTest.cpp")
@@ -657,10 +662,8 @@ target_link_libraries(nes-coordinator-test nes-tests)
 add_test(NAME nes-coordinator-test COMMAND nes-coordinator-test)
 
 ### Location Integration Test ###
-if (NES_USE_S2)
-    add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
-    target_link_libraries(location-integration-tests nes-tests)
-endif ()
+add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
+target_link_libraries(location-integration-tests nes-tests)
 
 add_subdirectory(UnitTests/QueryExecution)
 

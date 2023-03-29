@@ -67,8 +67,11 @@ template<class EnumType>
 void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
 
     if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
-        auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
-        throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + name);
+        std::stringstream ss;
+        for (const auto& name : magic_enum::enum_names<EnumType>()) {
+            ss << name;
+        }
+        throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + ss.str());
     }
     this->value = magic_enum::enum_cast<EnumType>(node.As<std::string>()).value();
 }
@@ -79,8 +82,11 @@ void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std:
     auto value = inputParams[identifier];
     // Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<EnumType>(value)) {
-        auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
-        throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + name);
+        std::stringstream ss;
+        for (const auto& name : magic_enum::enum_names<EnumType>()) {
+            ss << name;
+        }
+        throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());
     }
     this->value = magic_enum::enum_cast<EnumType>(value).value();
 }

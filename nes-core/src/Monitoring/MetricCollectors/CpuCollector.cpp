@@ -26,7 +26,7 @@ namespace NES::Monitoring {
 CpuCollector::CpuCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(CpuMetrics::getSchema("")) {
-    NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
+    NES_INFO2("CpuCollector: Init CpuCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }
@@ -36,9 +36,9 @@ bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
         measuredVal.setNodeId(getNodeId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
-        NES_TRACE("CpuCollector: Written metrics for " << getNodeId() << ": " << asJson(measuredVal));
+        NES_TRACE2("CpuCollector: Written metrics for {}: {}", getNodeId(), asJson(measuredVal));
     } catch (const std::exception& ex) {
-        NES_ERROR("CpuCollector: Error while collecting metrics " << ex.what());
+        NES_ERROR2("CpuCollector: Error while collecting metrics {}", ex.what());
         return false;
     }
     return true;

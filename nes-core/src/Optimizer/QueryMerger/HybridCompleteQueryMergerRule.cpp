@@ -35,15 +35,15 @@ HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::Conte
 }
 
 bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO2("HybridCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
-                    " Skipping the Signature Based Equal Query Merger Rule.");
+        NES_WARNING2("HybridCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
+                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("HybridCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG2("HybridCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
@@ -95,7 +95,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (foundMatch) {
-                NES_TRACE("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE2("HybridCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 //Iterate over all matched pairs of sink operators and merge the query plan
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
@@ -108,7 +108,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
                         for (auto& hostChild : hostSinkChildren) {
                             bool addedNewParent = hostChild->addParent(targetSinkOperator);
                             if (!addedNewParent) {
-                                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                                NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                             hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                         }
@@ -128,7 +128,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
         }
 
         if (!matched) {
-            NES_DEBUG("HybridCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG2("HybridCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }

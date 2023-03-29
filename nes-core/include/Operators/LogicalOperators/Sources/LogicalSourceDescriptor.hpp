@@ -32,9 +32,9 @@ class LogicalSourceDescriptor : public SourceDescriptor {
      */
     static SourceDescriptorPtr create(std::string logicalSourceName);
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-    std::string toString() override;
+    std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
   private:

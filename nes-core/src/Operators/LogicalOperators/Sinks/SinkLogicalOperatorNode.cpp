@@ -14,14 +14,14 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 #include <z3++.h>
-
 namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr& sinkDescriptor, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), sinkDescriptor(sinkDescriptor) {}
 
-SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() { return sinkDescriptor; }
+SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() const { return sinkDescriptor; }
 
 void SinkLogicalOperatorNode::setSinkDescriptor(SinkDescriptorPtr sd) { this->sinkDescriptor = std::move(sd); }
 
@@ -62,7 +62,7 @@ OperatorNodePtr SinkLogicalOperatorNode::copy() {
 
 void SinkLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
     for (auto& child : children) {

@@ -52,9 +52,9 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
                                                     logicalSourceName,
                                                     physicalSourceName);
 }
-std::string LambdaSourceDescriptor::toString() { return "LambdaSourceDescriptor"; }
+std::string LambdaSourceDescriptor::toString() const { return "LambdaSourceDescriptor"; }
 
-bool LambdaSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool LambdaSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<LambdaSourceDescriptor>()) {
         return false;
     }

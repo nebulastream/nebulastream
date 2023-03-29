@@ -22,6 +22,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/Topology.hpp>
@@ -173,6 +174,8 @@ template<typename T>
                         std::string{"THREAD_LOCAL"},
                         prefix);
 }
+
+std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
 
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags

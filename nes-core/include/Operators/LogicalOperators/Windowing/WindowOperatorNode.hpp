@@ -42,7 +42,7 @@ class WindowOperatorNode : public LogicalUnaryOperatorNode, public OriginIdAssig
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    std::vector<OriginId> getOutputOriginIds() override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   protected:
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;

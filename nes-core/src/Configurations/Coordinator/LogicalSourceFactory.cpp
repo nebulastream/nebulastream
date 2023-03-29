@@ -36,9 +36,9 @@ LogicalSourcePtr LogicalSourceFactory::createFromString(std::string, std::map<st
     }
 
     if (logicalSourceName.empty()) {
-        NES_WARNING("No logical source name is supplied for creating the logical source. Please supply "
-                    "logical source name using --"
-                    << LOGICAL_SOURCE_NAME_CONFIG);
+        NES_WARNING2("No logical source name is supplied for creating the logical source. Please supply "
+                     "logical source name using --{}",
+                     LOGICAL_SOURCE_NAME_CONFIG);
         return nullptr;
     }
 

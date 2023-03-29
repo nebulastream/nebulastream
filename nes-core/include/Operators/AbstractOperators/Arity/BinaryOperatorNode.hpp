@@ -108,7 +108,7 @@ class BinaryOperatorNode : public virtual OperatorNode {
      * @brief Gets the output origin ids for the result stream
      * @return std::vector<OriginId> originids
      */
-    std::vector<OriginId> getOutputOriginIds() override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   protected:
     SchemaPtr leftInputSchema;

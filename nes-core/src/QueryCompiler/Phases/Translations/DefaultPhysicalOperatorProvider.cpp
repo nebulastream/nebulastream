@@ -340,32 +340,36 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto timeStampFieldNameWithoutSourceName =
             timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
-        // Extracting here the left timestamp field name
-        auto leftSchema = joinOperator->getLeftInputSchema();
-        auto leftSourceNameQualifier = leftSchema->getSourceNameQualifier();
-        for (auto& field : leftSchema->fields) {
-            auto fieldName = field->getName();
-            auto fieldNameWithoutSourceName = fieldName.substr(leftSourceNameQualifier.size());
-            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
-                timeStampFieldNameLeft = fieldName;
-                break;
-            }
-        }
-
-        // Extracting here the right timestamp field name
+        // Extract the schema of the right side
         auto rightSchema = joinOperator->getRightInputSchema();
-        auto rightSourceNameQualifier = rightSchema->getSourceNameQualifier();
+        //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+        bool found = false;
         for (auto& field : rightSchema->fields) {
-            auto fieldName = field->getName();
-            auto fieldNameWithoutSourceName = fieldName.substr(rightSourceNameQualifier.size());
-            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
-                timeStampFieldNameRight = fieldName;
-                break;
+            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                timeStampFieldNameRight = field->getName();
+                found = true;
             }
         }
+        NES_ASSERT(found, " right schema does not contain a timestamp attribute");
+
+        //Extract the schema of the right side
+        auto leftSchema = joinOperator->getLeftInputSchema();
+        //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+        found = false;
+        for (auto& field : leftSchema->fields) {
+            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                timeStampFieldNameLeft = field->getName();
+                found = true;
+            }
+        }
+        NES_ASSERT(found, " left schema does not contain a timestamp attribute");
 
         NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
                    "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+
+        NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft
+                                             << " timeStampFieldNameRight: " << timeStampFieldNameRight);
+        NES_DEBUG("leftSchema: " << leftSchema->toString() << " rightSchema: " << rightSchema->toString());
 
         auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
@@ -483,7 +487,7 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const Que
 
 void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const QueryPlanPtr&,
                                                                      const LogicalOperatorNodePtr& operatorNode) {
-    NES_DEBUG("Create Thread local window aggregation");
+    NES_DEBUG2("Create Thread local window aggregation");
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
@@ -639,7 +643,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before \n" << plan->toString());
+    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
     if (windowOperator->getInputOriginIds().empty()) {
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
     }
@@ -650,15 +654,15 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
-        if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-            if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isThresholdWindow()) {
-                auto thresholdWindowPhysicalOperator =
-                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
-                                                                               windowOutputSchema,
-                                                                               windowOperatorHandler);
-                operatorNode->replace(thresholdWindowPhysicalOperator);
-                return;
-            }
+        //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
+        if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isThresholdWindow()) {
+            NES_INFO("Lower ThresholdWindow");
+            auto thresholdWindowPhysicalOperator =
+                PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
+                                                                           windowOutputSchema,
+                                                                           windowOperatorHandler);
+            operatorNode->replace(thresholdWindowPhysicalOperator);
+            return;
         }
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
@@ -701,7 +705,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
-    NES_DEBUG("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after \n" << plan->toString());
+    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after\n{}", plan->toString());
 }
 
 }// namespace NES::QueryCompilation

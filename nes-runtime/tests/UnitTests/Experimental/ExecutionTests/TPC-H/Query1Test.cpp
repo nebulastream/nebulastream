@@ -32,7 +32,7 @@
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
@@ -141,7 +141,7 @@ TEST_P(Query1Test, tpchQ1) {
      *
      *   1998-09-02
      */
-    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
+    auto const_1998_09_02 = std::make_shared<ConstantValueExpression>(19980831);
     auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
     auto selection = std::make_shared<Selection>(lessThanExpression1);
@@ -175,7 +175,7 @@ TEST_P(Query1Test, tpchQ1) {
 
     // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
     auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-    auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
+    auto oneConst = std::make_shared<ConstantValueExpression>(1);
     auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
     auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
     auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());

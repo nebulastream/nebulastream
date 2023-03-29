@@ -11,14 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -27,19 +24,19 @@
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
 Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const ExpressionNodePtr& expression,
                                                                  const z3::ContextPtr& context) {
-    NES_DEBUG("Creating Z3 expression for input expression " << expression->toString());
+    NES_DEBUG2("Creating Z3 expression for input expression {}", expression->toString());
     if (expression->instanceOf<LogicalExpressionNode>()) {
         return createForLogicalExpressions(expression, context);
     }
@@ -64,7 +61,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const Expressio
 
 Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(const ExpressionNodePtr& expression,
                                                                               const z3::ContextPtr& context) {
-    NES_DEBUG("Create Z3 expression for arithmetical expression " << expression->toString());
+    NES_DEBUG2("Create Z3 expression for arithmetical expression {}", expression->toString());
     if (expression->instanceOf<AddExpressionNode>()) {
         auto addExpressionNode = expression->as<AddExpressionNode>();
         auto left = createForExpression(addExpressionNode->getLeft(), context);
@@ -121,7 +118,7 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForArithmeticalExpressions(co
 
 Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const ExpressionNodePtr& expression,
                                                                          const z3::ContextPtr& context) {
-    NES_DEBUG("Create Z3 expression node for logical expression " << expression->toString());
+    NES_DEBUG2("Create Z3 expression node for logical expression {}", expression->toString());
     if (expression->instanceOf<AndExpressionNode>()) {
         auto andExpressionNode = expression->as<AndExpressionNode>();
         auto left = createForExpression(andExpressionNode->getLeft(), context);

@@ -104,8 +104,8 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
 
             // handle variable-length field
             if (dataType->isText()) {
-                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
-                          "from the tuple buffer");
+                NES_DEBUG2("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
+                           "from the tuple buffer");
 
                 // read the child buffer index from the tuple buffer
                 Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
@@ -124,8 +124,8 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
                 }
 
                 else {
-                    NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
-                                "variable-length TEXT field. Returning an empty string.")
+                    NES_WARNING2("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
+                                 "variable-length TEXT field. Returning an empty string.")
                 }
             }
 
@@ -335,9 +335,9 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {
-        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
-                  "operators. The query plan is:\n"
-                  << queryPlan->toString());
+        NES_ERROR2("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
+                   "operators. The query plan is: {}",
+                   queryPlan->toString());
         return false;
     }
 

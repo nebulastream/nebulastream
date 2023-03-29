@@ -58,7 +58,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
+    NES_INFO2("ILPStrategy: Performing placement of the input query plan with id {}", queryId);
 
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -88,7 +88,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
             //Skip further processing if encountered pinned downstream operator
             if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
-                NES_DEBUG("ILPStrategy: Found pinned downstream operator. Skipping further downstream operators.");
+                NES_DEBUG2("ILPStrategy: Found pinned downstream operator. Skipping further downstream operators.");
                 break;
             }
 
@@ -96,7 +96,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             auto downstreamOperators = operatorToProcess->getParents();
 
             if (downstreamOperators.empty()) {
-                NES_ERROR("ILPStrategy: Unable to find pinned downstream operator.");
+                NES_ERROR2("ILPStrategy: Unable to find pinned downstream operator.");
                 return false;
             }
 
@@ -106,7 +106,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent. However, a query can have
                 //  multiple sinks or parents.
                 if (unplacedDownStreamOperatorCount > 1) {
-                    NES_ERROR("ILPStrategy: Current implementation can not place plan with multiple downstream operators.");
+                    NES_ERROR2("ILPStrategy: Current implementation can not place plan with multiple downstream operators.");
                     return false;
                 }
 
@@ -131,7 +131,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         while (!topologyPath.back()->getParents().empty()) {
             //FIXME #2290: path with multiple parents not supported
             if (topologyPath[0]->getParents().size() > 1) {
-                NES_ERROR("ILPStrategy: Current implementation can not place operators on topology with multiple paths.");
+                NES_ERROR2("ILPStrategy: Current implementation can not place operators on topology with multiple paths.");
                 return false;
             }
             topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
@@ -163,8 +163,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
 
                 auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
-                NES_DEBUG("distance: " << operatorID << " " << distance);
-
+                NES_DEBUG2("distance: {} {}", operatorID, distance.to_string());
                 double output;
                 if (!operatorNode->hasProperty("output")) {
                     output = getDefaultOperatorOutput(operatorNode);
@@ -176,7 +175,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             }
         }
     }
-    NES_DEBUG("cost_net: " << cost_net);
+    NES_DEBUG2("cost_net: {}", cost_net.to_string());
 
     // 4. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
@@ -204,15 +203,15 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     // 6. Check if we have solution, return false if that is not the case
     if (z3::sat != opt.check()) {
-        NES_ERROR("ILPStrategy: Solver failed.");
+        NES_ERROR2("ILPStrategy: Solver failed.");
         return false;
     }
 
     // At this point, we already get the solution.
     // 7. Get the model to retrieve the optimization solution.
     auto z3Model = opt.get_model();
-    NES_DEBUG("ILPStrategy:model: \n" << z3Model);
-    NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
+    NES_DEBUG2("ILPStrategy:model: {}", z3Model.to_string());
+    NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
@@ -228,9 +227,9 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         }
     }
 
-    NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
+    NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
     for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
-        NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
+        NES_INFO2("Operator {} is executed on Topology Node {}", operatorNode->toString(), topologyNode->toString());
     }
 
     // 8. Pin the operators based on ILP solution.

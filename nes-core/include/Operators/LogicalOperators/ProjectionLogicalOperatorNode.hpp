@@ -32,7 +32,7 @@ class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @brief returns the list of fields that remain in the output schema.
      * @return  std::vector<ExpressionNodePtr>
      */
-    std::vector<ExpressionNodePtr> getExpressions();
+    std::vector<ExpressionNodePtr> getExpressions() const;
 
     /**
      * @brief check if two operators have the same output schema

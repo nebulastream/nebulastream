@@ -35,7 +35,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessEx
     : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
       triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(keys)),
       distributionType(std::move(distChar)), allowedLateness(allowedLateness) {
-    NES_TRACE("LogicalWindowDefinition: create new window definition");
+    NES_TRACE2("LogicalWindowDefinition: create new window definition");
 }
 
 bool LogicalWindowDefinition::isKeyed() { return !onKey.empty(); }

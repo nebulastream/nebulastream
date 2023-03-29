@@ -17,7 +17,7 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 STWithinExpressionNode::STWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()), GeographyExpressionNode() {}
@@ -44,7 +44,7 @@ bool STWithinExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string STWithinExpressionNode::toString() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
+        NES_FATAL_ERROR2("An STWithin Expression should always have two children, but it has: {}", children.size());
         throw InvalidArgumentException("Invalid number of children in STWithinExpressionNode::toString(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -66,7 +66,7 @@ void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeEx
 
 ExpressionNodePtr STWithinExpressionNode::getPoint() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
+        NES_FATAL_ERROR2("An STWithin Expression should always have two children, but it has: {}", children.size());
         throw InvalidArgumentException("Invalid number of children in STWithinExpressionNode::getPoint(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -75,7 +75,7 @@ ExpressionNodePtr STWithinExpressionNode::getPoint() const {
 
 ShapeExpressionNodePtr STWithinExpressionNode::getShape() const {
     if (children.size() != 2) {
-        NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
+        NES_FATAL_ERROR2("An STWithin Expression should always have two children, but it has: {}", children.size());
         throw InvalidArgumentException("Invalid number of children in STWithinExpressionNode::getShape(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -99,7 +99,7 @@ void STWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseConte
     }
 
     stamp = DataTypeFactory::createBoolean();
-    NES_TRACE("STWithinExpressionNode: The following stamp was assigned: " << toString());
+    NES_TRACE2("STWithinExpressionNode: The following stamp was assigned: {}", toString());
 }
 
 ExpressionNodePtr STWithinExpressionNode::copy() {

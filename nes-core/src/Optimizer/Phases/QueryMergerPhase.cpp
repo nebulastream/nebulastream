@@ -22,6 +22,7 @@
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedQueryContainmentRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -50,6 +51,9 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule:
             queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(std::move(context));
             break;
+        case QueryMergerRule::Z3SignatureBasedQueryContainmentRule:
+            queryMergerRule = Z3SignatureBasedQueryContainmentRule::create(std::move(context));
+            break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
             break;
@@ -65,7 +69,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
 }
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
+    NES_DEBUG2("QueryMergerPhase: Executing query merger phase.");
     return queryMergerRule->apply(std::move(globalQueryPlan));
 }
 

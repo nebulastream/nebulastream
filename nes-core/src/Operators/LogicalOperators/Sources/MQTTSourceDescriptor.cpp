@@ -30,9 +30,9 @@ MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, MQTTSourceTypePtr m
 
 MQTTSourceTypePtr MQTTSourceDescriptor::getSourceConfigPtr() const { return mqttSourceType; }
 
-std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor(" + mqttSourceType->toString() + ")"; }
+std::string MQTTSourceDescriptor::toString() const { return "MQTTSourceDescriptor(" + mqttSourceType->toString() + ")"; }
 
-bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 
     if (!other->instanceOf<MQTTSourceDescriptor>()) {
         return false;

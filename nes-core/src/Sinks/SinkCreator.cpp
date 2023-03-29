@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Network/NetworkSink.hpp>
-
 #include <Common/Identifiers.hpp>
+#include <Network/NetworkSink.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
@@ -32,7 +32,6 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/FaultToleranceType.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -350,7 +349,7 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
                           UA_NodeId nodeId,
                           std::string user,
                           std::string password) {
-    NES_DEBUG("plz fix me" << querySubPlanId);
+    NES_DEBUG2("plz fix me {}", querySubPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, nodeEngine->getQueryManager(), url, nodeId, user, password, queryId, querySubPlanId);
 }

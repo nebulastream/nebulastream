@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_GRPC_SERIALIZATION_EXPRESSIONSERIALIZATIONUTIL_HPP_
 #define NES_CORE_INCLUDE_GRPC_SERIALIZATION_EXPRESSIONSERIALIZATIONUTIL_HPP_
 
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <memory>
 
 namespace NES {
@@ -24,6 +25,13 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class SerializableExpression;
 class SerializableExpression_GeographyFieldsAccessExpression;
+class SerializableExpression_ConstantValueExpression;
+class SerializableExpression_FieldAccessExpression;
+class SerializableExpression_FieldRenameExpression;
+class SerializableExpression_FieldAssignmentExpression;
+class SerializableExpression_WhenExpression;
+class SerializableExpression_CaseExpression;
+class SerializableExpression_FunctionExpression;
 
 /**
  * @brief The ExpressionSerializationUtil offers functionality to serialize and de-serialize expression nodes to the
@@ -45,7 +53,7 @@ class ExpressionSerializationUtil {
      * @param serializedExpression the serialized expression.
      * @return ExpressionNodePtr
      */
-    static ExpressionNodePtr deserializeExpression(SerializableExpression* serializedExpression);
+    static ExpressionNodePtr deserializeExpression(const SerializableExpression& serializedExpression);
 
   private:
     static void serializeLogicalExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
@@ -56,12 +64,12 @@ class ExpressionSerializationUtil {
     serializeGeographyFieldAccessExpressions(const ExpressionNodePtr& expression,
                                              SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
     static void serializeUdfCallExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
-    static ExpressionNodePtr deserializeLogicalExpressions(SerializableExpression* serializedExpression);
-    static ExpressionNodePtr deserializeArithmeticalExpressions(SerializableExpression* serializedExpression);
-    static ExpressionNodePtr deserializeGeographyExpressions(SerializableExpression* serializedExpression);
-    static ExpressionNodePtr
-    deserializeGeographyFieldAccessExpressions(SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
-    static ExpressionNodePtr deserializeUdfCallExpressions(SerializableExpression* serializedExpression);
+    static ExpressionNodePtr deserializeLogicalExpressions(const SerializableExpression& serializedExpression);
+    static ExpressionNodePtr deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression);
+    static ExpressionNodePtr deserializeGeographyExpressions(const SerializableExpression& serializedExpression);
+    static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(
+        const SerializableExpression_GeographyFieldsAccessExpression& serializedExpression);
+    static ExpressionNodePtr deserializeUdfCallExpressions(const SerializableExpression& serializedExpression);
 };
 }// namespace NES
 

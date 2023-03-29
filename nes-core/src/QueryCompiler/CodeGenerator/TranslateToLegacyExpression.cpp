@@ -12,15 +12,13 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
@@ -30,6 +28,7 @@
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -39,14 +38,11 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
-#include <utility>
 namespace NES::QueryCompilation {
 TranslateToLegacyExpressionPtr TranslateToLegacyExpression::create() { return std::make_shared<TranslateToLegacyExpression>(); }
 
@@ -74,13 +70,13 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto stamp = fieldReadExpression->getStamp();
-        NES_DEBUG("TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate FieldAccessExpressionNode:  {}", expression->toString());
         return Field(AttributeField::create(fieldName, stamp)).copy();
     } else if (expression->instanceOf<WhenExpressionNode>()) {
         auto whenExpression = expression->as<WhenExpressionNode>();
         auto legacyLeft = transformExpression(whenExpression->getLeft());
         auto legacyRight = transformExpression(whenExpression->getRight());
-        NES_DEBUG("TranslateToLegacyPhase: Translate WhenExpressionNode: " << whenExpression->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate WhenExpressionNode:  {}", whenExpression->toString());
         return WhenPredicate(legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<CaseExpressionNode>()) {
         auto caseExpressionNode = expression->as<CaseExpressionNode>();
@@ -89,10 +85,23 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
             whenExprs.push_back(transformExpression(elem));
         }
         auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
-        NES_DEBUG("TranslateToLegacyPhase: Translate CaseExpressionNode: " << caseExpressionNode->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate CaseExpressionNode:  {}", caseExpressionNode->toString());
         return CasePredicate(whenExprs, legacyDefault).copy();
+    } else if (expression->instanceOf<FunctionExpression>()) {
+        // Translate function expressions to legacy expressions in old query compiler.
+        auto function = expression->as<FunctionExpression>();
+        if (function->getFunctionName() == "log10") {
+            // Translate LOG10 expression node.
+            auto legacyChild = transformExpression(function->getArguments()[0]);
+            return UnaryPredicate(UnaryOperatorType::LOG10_OP, legacyChild).copy();
+        } else if (function->getFunctionName() == "ln") {
+            // Translate LOG expression node.
+            auto legacyChild = transformExpression(function->getArguments()[0]);
+            return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
+        }
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
+    NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this expression node: {}",
+                     expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }
@@ -155,16 +164,6 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto floorExpressionNode = expression->as<FloorExpressionNode>();
         auto legacyChild = transformExpression(floorExpressionNode->child());
         return UnaryPredicate(UnaryOperatorType::FLOOR_OP, legacyChild).copy();
-    } else if (expression->instanceOf<Log10ExpressionNode>()) {
-        // Translate LOG10 expression node.
-        auto log10ExpressionNode = expression->as<Log10ExpressionNode>();
-        auto legacyChild = transformExpression(log10ExpressionNode->child());
-        return UnaryPredicate(UnaryOperatorType::LOG10_OP, legacyChild).copy();
-    } else if (expression->instanceOf<LogExpressionNode>()) {
-        // Translate LOG expression node.
-        auto logExpressionNode = expression->as<LogExpressionNode>();
-        auto legacyChild = transformExpression(logExpressionNode->child());
-        return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
     } else if (expression->instanceOf<RoundExpressionNode>()) {
         // Translate ROUND expression node.
         auto roundExpressionNode = expression->as<RoundExpressionNode>();
@@ -176,8 +175,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto legacyChild = transformExpression(sqrtExpressionNode->child());
         return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
-                    << expression->toString());
+    NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: {}",
+                     expression->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -228,14 +227,14 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(con
     } else if (expression->instanceOf<NegateExpressionNode>()) {
         auto const negateExpressionNode = expression->as<NegateExpressionNode>();
         (void) negateExpressionNode;
-        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
-                        "legacy expressions: "
-                        << expression->toString());
+        NES_FATAL_ERROR2("TranslateToLegacyPhase: Unary expressions not supported in "
+                         "legacy expressions: {}",
+                         expression->toString());
         NES_NOT_IMPLEMENTED();
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this "
-                    "logical expression node: "
-                    << expression->toString());
+    NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this "
+                     "logical expression node: {}",
+                     expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }

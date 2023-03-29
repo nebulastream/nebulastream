@@ -13,8 +13,8 @@
 */
 
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
-
 namespace NES {
 
 std::string Iterator::dataJson() {
@@ -33,7 +33,7 @@ std::string Iterator::dataJson() {
             jsonObject[fieldName] = fieldValue;
         }
     } catch (nlohmann::json::exception& jsonException) {
-        NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values" << jsonException.what());
+        NES_ERROR2("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values {}", jsonException.what());
         return "";
     }
     return jsonObject.dump();

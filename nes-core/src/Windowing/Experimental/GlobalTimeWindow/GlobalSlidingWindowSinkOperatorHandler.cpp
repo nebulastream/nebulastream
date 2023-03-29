@@ -39,12 +39,12 @@ void GlobalSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineE
 void GlobalSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                    Runtime::StateManagerPtr,
                                                    uint32_t) {
-    NES_DEBUG("start GlobalSlidingWindowSinkOperatorHandler");
+    NES_DEBUG2("start GlobalSlidingWindowSinkOperatorHandler");
 }
 
 void GlobalSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                   Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop GlobalSlidingWindowSinkOperatorHandler: " << queryTerminationType);
+    NES_DEBUG2("stop GlobalSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 
 GlobalSlicePtr GlobalSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowTriggerTask* windowTriggerTask) {
@@ -52,13 +52,13 @@ GlobalSlicePtr GlobalSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowT
 }
 std::vector<GlobalSliceSharedPtr>
 GlobalSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
-    NES_DEBUG("getSlicesForWindow " << windowTriggerTask->windowStart << " - " << windowTriggerTask->windowEnd);
+    NES_DEBUG2("getSlicesForWindow {} - {}", windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
     return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
 Windowing::LogicalWindowDefinitionPtr GlobalSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
 GlobalSliceStore<GlobalSlice>& GlobalSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
 GlobalSlidingWindowSinkOperatorHandler::~GlobalSlidingWindowSinkOperatorHandler() {
-    NES_DEBUG("Destruct GlobalSlidingWindowSinkOperatorHandler");
+    NES_DEBUG2("Destruct GlobalSlidingWindowSinkOperatorHandler");
 }
 
 void GlobalSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {

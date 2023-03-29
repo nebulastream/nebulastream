@@ -30,18 +30,18 @@ NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) 
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
-    NES_TRACE("NetworkMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
+    NES_TRACE2("NetworkMetricsWrapper: Allocating memory for {} metrics.", std::to_string(arr.size()));
 }
 
 void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto schema = NetworkMetrics::getSchema("");
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     if (schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
-        NES_ERROR("NetworkMetricsWrapper: At least one tuple of NetworkMetrics has to fit into buffer");
+        NES_ERROR2("NetworkMetricsWrapper: At least one tuple of NetworkMetrics has to fit into buffer");
     } else if (totalSize > buf.getBufferSize()) {
-        NES_WARNING("NetworkMetricsWrapper: Content does not fit in TupleBuffer totalSize:" << totalSize << " > "
-                                                                                            << " getBufferSize:"
-                                                                                            << buf.getBufferSize());
+        NES_WARNING2("NetworkMetricsWrapper: Content does not fit in TupleBuffer totalSize: {} > getBufferSize: {}",
+                     totalSize,
+                     buf.getBufferSize());
     }
 
     for (unsigned int i = 0; i < size(); i++) {
@@ -54,7 +54,7 @@ void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tu
 void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     auto schema = NetworkMetrics::getSchema("");
     auto interfaceList = std::vector<NetworkMetrics>();
-    NES_TRACE("NetworkMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
+    NES_TRACE2("NetworkMetricsWrapper: Parsing buffer with number of tuples {}", buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics

@@ -15,7 +15,7 @@
 #quit if command returns non-zero code
 #set -e
 
-if ! [  -f "/nebulastream/CMakeLists.txt" ]; then
+if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
   echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]"
   exit 1
 fi
@@ -23,57 +23,33 @@ fi
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
 if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${RequireBuild}; fi
-# RequireTest indicates if the build should succeed if we fail during tests.
-# This is important to check the log to identify test errors on new platforms.
-if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
 # parallel test
 if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else NesTestParallelism=${NesTestParallelism}; fi
 if [ -z "${NesBuildParallelism}" ]; then NesBuildParallelism="8"; else NesBuildParallelism=${NesBuildParallelism}; fi
 echo "Required Build Failed=$RequireBuild"
-echo "Required Test Failed=$RequireTest"
-echo "Test Parallelism=$NesTestParallelism"
-if [ $# -eq 0 ]
-then
-    # Build NES
-    mkdir -p /nebulastream/build
-    cd /nebulastream/build
-    python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-    make -j$NesBuildParallelism
-
-    # Check if build was successful
-    errorCode=$?
-    if [ $errorCode -ne 0 ];
-    then
-      rm -rf /nebulastream/build
-      if [ "$RequireBuild" = "true" ];
-      then
-        echo "Required Build Failed"     
-        exit $errorCode
-      else
-        echo "Optional Build Failed"
-        exit 0
-      fi
+if [ $# -eq 0 ]; then
+  # Build NES
+  python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
+  # We use ccache to reuse intermediate build files across ci runs.
+  # All cached data is stored at /tmp/$os_$arch
+  ccache --set-config=cache_dir=/cache_dir/
+  ccache -M 10G
+  ccache -s
+  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_CCACHE=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_TF=1 -DNES_USE_S2=1 /nebulastream/
+  cmake --build /build_dir -j$NesBuildParallelism
+  # Check if build was successful
+  errorCode=$?
+  ccache -s
+  if [ $errorCode -ne 0 ]; then
+    if [ "$RequireBuild" = "true" ]; then
+      echo "Required Build Failed"
+      exit $errorCode
     else
-      # If build was successful we execute the tests
-      # timeout after 240 minutes
-      # We don't want to rely on the github-action timeout, because
-      # this would fail the job in any case.
-      timeout 60m make test_debug
-      errorCode=$?
-      if [ $errorCode -ne 0 ];
-      then
-        rm -rf /nebulastream/build
-        if [ "$RequireTest" = "true" ];
-        then
-          echo "Required Tests Failed"
-          exit $errorCode
-        else
-          echo "Optional Tests Failed"
-          exit 0
-        fi
-      fi
+      echo "Optional Build Failed"
+      exit 0
     fi
+  fi
+  exit 0
 else
-    exec $@
+  exec $@
 fi

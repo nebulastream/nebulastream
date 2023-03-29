@@ -14,6 +14,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -21,7 +22,7 @@ namespace NES {
 ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNodePtr> functionArguments) {
     auto udfNameExpression = udfName.getExpressionNode();
     if (!udfNameExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
-        NES_ERROR("UDF name has to be a ConstantValueExpression but it was a " + udfNameExpression->toString());
+        NES_ERROR2("UDF name has to be a ConstantValueExpression but it was a {}", udfNameExpression->toString());
     }
     auto udfNameConstantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
     return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArguments));

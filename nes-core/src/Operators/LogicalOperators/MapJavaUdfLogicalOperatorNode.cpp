@@ -15,75 +15,14 @@
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
-#include <numeric>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 
 namespace NES {
 
 MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                              OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), javaUdfDescriptor(javaUdfDescriptor) {}
-
-Catalogs::UDF::JavaUdfDescriptorPtr MapJavaUdfLogicalOperatorNode::getJavaUdfDescriptor() const { return javaUdfDescriptor; }
-
-bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    // Set the input schema.
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
-        return false;
-    }
-    // The output schema of this operation is determined by the Java UDF.
-    outputSchema = javaUdfDescriptor->getOutputSchema();
-    //Update output schema by changing the qualifier and corresponding attribute names
-    auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (auto& field : outputSchema->fields) {
-        //Extract field name without qualifier
-        auto fieldName = field->getName();
-        //Add new qualifier name to the field and update the field name
-        field->setName(newQualifierName + fieldName);
-    }
-    // set the derived input schema
-    // TODO: check if this corresponds to the schema of the parent operator
-    javaUdfDescriptor->setInputSchema(inputSchema);
-    return true;
-}
-
-void MapJavaUdfLogicalOperatorNode::inferStringSignature() {
-    NES_ASSERT(children.size() == 1, "MapUdfLogicalOperatorNode should have exactly 1 child.");
-    // Infer query signatures for child operator.
-    auto child = children[0]->as<LogicalOperatorNode>();
-    child->inferStringSignature();
-    // Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
-    // and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
-    auto elementHash = std::hash<Catalogs::UDF::JavaSerializedInstance::value_type>{};
-    // Hash the contents of a byte array (i.e., the serialized instance and the byte code of a class)
-    // based on the hashes of the individual elements.
-    auto charArrayHashHelper = [&elementHash](std::size_t h, char v) {
-        return h = h * 31 + elementHash(v);
-    };
-    // Compute hashed value of the UDF instance.
-    auto& instance = javaUdfDescriptor->getSerializedInstance();
-    auto instanceHash = std::accumulate(instance.begin(), instance.end(), instance.size(), charArrayHashHelper);
-    // Compute hashed value of the UDF byte code list.
-    auto stringHash = std::hash<std::string>{};
-    auto& byteCodeList = javaUdfDescriptor->getByteCodeList();
-    auto byteCodeListHash =
-        std::accumulate(byteCodeList.begin(),
-                        byteCodeList.end(),
-                        byteCodeList.size(),
-                        [&stringHash, &charArrayHashHelper](std::size_t h, Catalogs::UDF::JavaUdfByteCodeList::value_type v) {
-                            auto& className = v.first;
-                            h = h * 31 + stringHash(className);
-                            auto& byteCode = v.second;
-                            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
-                            return h;
-                        });
-    auto signatureStream = std::stringstream{};
-    signatureStream << "MAP_JAVA_UDF(" << javaUdfDescriptor->getClassName() << "." << javaUdfDescriptor->getMethodName()
-                    << ", instance=" << instanceHash << ", byteCode=" << byteCodeListHash << ")"
-                    << "." << *child->getHashBasedSignature().begin()->second.begin();
-    auto signature = signatureStream.str();
-    hashBasedSignature[stringHash(signature)] = {signature};
-}
+    : OperatorNode(id), JavaUdfLogicalOperator(javaUdfDescriptor, id) {}
 
 std::string MapJavaUdfLogicalOperatorNode::toString() const {
     std::stringstream ss;
@@ -92,7 +31,7 @@ std::string MapJavaUdfLogicalOperatorNode::toString() const {
 }
 
 OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
+    auto copy = std::make_shared<MapJavaUdfLogicalOperatorNode>(this->getJavaUdfDescriptor(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -105,11 +44,7 @@ OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() {
 }
 
 bool MapJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
-    // Explicit check here, so the cast using as throws no exception.
-    if (!other->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
-        return false;
-    }
-    return *javaUdfDescriptor == *other->as<MapJavaUdfLogicalOperatorNode>()->javaUdfDescriptor;
+    return other->instanceOf<MapJavaUdfLogicalOperatorNode>() && JavaUdfLogicalOperator::equal(other);
 }
 
 bool MapJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {

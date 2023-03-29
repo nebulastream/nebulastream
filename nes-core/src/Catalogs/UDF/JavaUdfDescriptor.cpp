@@ -21,11 +21,12 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
                                      const std::string& methodName,
                                      const JavaSerializedInstance& serializedInstance,
                                      const JavaUdfByteCodeList& byteCodeList,
+                                     const SchemaPtr inputSchema,
                                      const SchemaPtr outputSchema,
                                      const std::string& inputClassName,
                                      const std::string& outputClassName)
     : UdfDescriptor(methodName), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList),
-      outputSchema(outputSchema), inputClassName(inputClassName), outputClassName(outputClassName) {
+      inputSchema(inputSchema), outputSchema(outputSchema), inputClassName(inputClassName), outputClassName(outputClassName) {
     if (className.empty()) {
         throw UdfException("The class name of a Java UDF must not be empty");
     }
@@ -61,10 +62,13 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
     if (outputSchema->empty()) {
         throw UdfException("The output schema of a Java UDF must not be empty");
     }
+    // We allow the input schema to be empty for now so that we don't have to serialize it in the Java client. A possible
+    // improvement would be to serialize it in the Java client and compare it to the output schema of the parent operator.
 }
 
 bool JavaUdfDescriptor::operator==(const JavaUdfDescriptor& other) const {
     return className == other.className && getMethodName() == other.getMethodName()
+        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true)
         && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList
         && inputClassName == other.inputClassName && outputClassName == other.outputClassName;
 }

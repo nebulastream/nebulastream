@@ -21,8 +21,6 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
@@ -30,6 +28,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <utility>
 namespace NES {
 
@@ -67,9 +66,17 @@ ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode
 
 ExpressionNodePtr EXP(const ExpressionNodePtr& exp) { return ExpExpressionNode::create(exp); }
 
-ExpressionNodePtr LOGN(const ExpressionNodePtr& exp) { return LogExpressionNode::create(exp); }
+ExpressionNodePtr LN(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "ln", {exp});
+}
 
-ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) { return Log10ExpressionNode::create(exp); }
+ExpressionNodePtr LOG2(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "log2", {exp});
+}
+
+ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "log10", {exp});
+}
 
 ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) { return RoundExpressionNode::create(exp); }
 
@@ -192,7 +199,9 @@ ExpressionNodePtr SQRT(ExpressionItem exp) { return SQRT(exp.getExpressionNode()
 
 ExpressionNodePtr EXP(ExpressionItem exp) { return EXP(exp.getExpressionNode()); }
 
-ExpressionNodePtr LOGN(ExpressionItem exp) { return LOGN(exp.getExpressionNode()); }
+ExpressionNodePtr LN(ExpressionItem exp) { return LN(exp.getExpressionNode()); }
+
+ExpressionNodePtr LOG2(ExpressionItem exp) { return LOG2(exp.getExpressionNode()); }
 
 ExpressionNodePtr LOG10(ExpressionItem exp) { return LOG10(exp.getExpressionNode()); }
 

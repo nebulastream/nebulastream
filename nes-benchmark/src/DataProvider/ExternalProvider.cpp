@@ -16,11 +16,12 @@
 
 namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
-                                   DataProviderMode providerMode,
-                                   std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator)
+                                   const DataProviderMode providerMode,
+                                   const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+                                   bool throwException)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers),
-      ingestionRateGenerator(std::move(ingestionRateGenerator)) {
+      ingestionRateGenerator(std::move(ingestionRateGenerator)), throwException(throwException) {
     predefinedIngestionRates = this->ingestionRateGenerator->generateIngestionRates();
 
     uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
@@ -51,6 +52,9 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
+
+    std::unique_lock lock(mutexStartProvider);
+
     // calculate the number of buffers to produce per working time delta and append to the queue
     // note that the predefined ingestion rates represent the number of buffers to be produced per second,
     // so we multiply them with the working time delta and ingest the resulting number of buffers as quickly as possible into the system,
@@ -64,6 +68,11 @@ void ExternalProvider::generateData() {
     auto ingestionRateIndex = 0L;
 
     started = true;
+
+    // Manual unlocking is done before notifying, to avoid waking up the waiting thread only to block again
+    // (see notify_one for details). Taken from https://en.cppreference.com/w/cpp/thread/condition_variable
+    lock.unlock();
+    cvStartProvider.notify_one();
 
     // continue producing buffers as long as the generator is running
     while (started) {
@@ -93,16 +102,13 @@ void ExternalProvider::generateData() {
             bufferHolder.bufferToHold = wrapBuffer;
 
             if (!bufferQueue.write(std::move(bufferHolder))) {
-                NES_THROW_RUNTIME_ERROR("The queue is too small! This should not happen!");
+                NES_ERROR_OR_THROW_RUNTIME(throwException, "The queue is too small! This should not happen!");
             }
 
             // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
             if (lastSecond != currentSecond) {
-                if ((buffersToProducePerWorkingTimeDelta =
-                         predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] * workingTimeDeltaInSec)
-                    == 0) {
-                    buffersToProducePerWorkingTimeDelta = 1;
-                }
+                auto nextIndex = ingestionRateIndex % predefinedIngestionRates.size();
+                buffersToProducePerWorkingTimeDelta = std::max(1.0, predefinedIngestionRates[nextIndex] * workingTimeDeltaInSec);
 
                 lastSecond = currentSecond;
                 ingestionRateIndex++;
@@ -117,7 +123,7 @@ void ExternalProvider::generateData() {
         auto nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
 
         if (nextPeriodStartTime < currentTime) {
-            NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
+            NES_ERROR_OR_THROW_RUNTIME(throwException, "The generator cannot produce data fast enough!");
         }
 
         while (currentTime < nextPeriodStartTime) {
@@ -142,6 +148,7 @@ std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t so
     if (res) {
         return bufferHolder.bufferToHold;
     } else if (!started) {
+        NES_WARNING("Buffer expected but not ready for now!");
         return std::nullopt;
     } else {
         NES_THROW_RUNTIME_ERROR("This should not happen! An empty buffer was returned while provider is started!");
@@ -159,4 +166,15 @@ ExternalProvider::~ExternalProvider() {
 
     preAllocatedBuffers.clear();
 }
+
+bool ExternalProvider::isStarted() const { return started; }
+
+void ExternalProvider::waitUntilStarted() {
+    std::unique_lock lock(mutexStartProvider);
+    cvStartProvider.wait(lock, [this] {
+        return this->isStarted();
+    });
+}
+void ExternalProvider::setThrowException(bool throwException) { this->throwException = throwException; }
+
 }// namespace NES::Benchmark::DataProvision

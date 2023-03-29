@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES {
 
@@ -55,7 +56,7 @@ void ArithmeticalBinaryExpressionNode::inferStamp(const Optimizer::TypeInference
     }
 
     stamp = commonStamp;
-    NES_TRACE("ArithmeticalBinaryExpressionNode: we assigned the following stamp: " << toString());
+    NES_TRACE2("ArithmeticalBinaryExpressionNode: we assigned the following stamp: {}", toString());
 }
 
 bool ArithmeticalBinaryExpressionNode::equal(NodePtr const& rhs) const {

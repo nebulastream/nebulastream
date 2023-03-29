@@ -24,6 +24,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
@@ -42,7 +43,7 @@ CodeGenerationPhasePtr CodeGenerationPhase::create(CodeGeneratorPtr codeGenerato
 }
 
 PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
-    NES_DEBUG("Generate code for query plan " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
+    NES_DEBUG2("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
     for (const auto& pipeline : queryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
@@ -52,7 +53,7 @@ PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) 
 }
 
 OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
-    NES_DEBUG("Generate code for pipeline " << pipeline->getPipelineId());
+    NES_DEBUG2("Generate code for pipeline  {}", pipeline->getPipelineId());
     auto context = PipelineContext::create();
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");

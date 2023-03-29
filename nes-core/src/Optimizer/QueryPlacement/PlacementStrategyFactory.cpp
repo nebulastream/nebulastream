@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/RuntimeException.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>

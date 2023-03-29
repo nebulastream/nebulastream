@@ -87,7 +87,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
         }
     }
 
-    NES_DEBUG("BenchmarkSource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
+    NES_DEBUG2("BenchmarkSource() numBuffersToProcess={} memoryAreaSize={}", numBuffersToProcess, memoryAreaSize);
 }
 
 BenchmarkSource::~BenchmarkSource() { numaLocalMemoryArea.release(); }
@@ -116,7 +116,7 @@ void BenchmarkSource::runningRoutine() {
     try {
         open();
 
-        NES_INFO("Going to produce " << numberOfTuplesToProduce);
+        NES_INFO2("Going to produce {}", numberOfTuplesToProduce);
 
         for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
             Runtime::TupleBuffer buffer;
@@ -174,7 +174,7 @@ void BenchmarkSource::runningRoutine() {
 
         close();
         completedPromise.set_value(true);
-        NES_DEBUG("DataSource " << operatorId << " end running");
+        NES_DEBUG2("DataSource {} end running", operatorId);
     } catch (std::exception const& error) {
         queryManager->notifySourceFailure(shared_from_base<DataSource>(), error.what());
         completedPromise.set_exception(std::make_exception_ptr(error));

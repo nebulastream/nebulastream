@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <sstream>
 #include <utility>
 namespace NES {
 

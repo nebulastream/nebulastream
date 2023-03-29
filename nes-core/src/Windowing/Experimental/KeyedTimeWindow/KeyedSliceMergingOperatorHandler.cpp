@@ -41,19 +41,19 @@ void KeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecuti
 void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                              Runtime::StateManagerPtr,
                                              uint32_t) {
-    NES_DEBUG("start KeyedSliceMergingOperatorHandler");
+    NES_DEBUG2("start KeyedSliceMergingOperatorHandler");
     activeCounter++;
 }
 
 void KeyedSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                             Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop KeyedSliceMergingOperatorHandler: " << queryTerminationType);
+    NES_DEBUG2("stop KeyedSliceMergingOperatorHandler: {}", queryTerminationType);
 }
 
 KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {
     return std::make_unique<KeyedSlice>(factory, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
-KeyedSliceMergingOperatorHandler::~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
+KeyedSliceMergingOperatorHandler::~KeyedSliceMergingOperatorHandler() { NES_DEBUG2("Destruct SliceStagingWindowHandler"); }
 Windowing::LogicalWindowDefinitionPtr KeyedSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
 std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
 

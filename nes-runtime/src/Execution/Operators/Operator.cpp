@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Operator.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 void Operator::setup(ExecutionContext& executionCtx) const {

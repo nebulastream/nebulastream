@@ -40,6 +40,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

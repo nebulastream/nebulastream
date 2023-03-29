@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <iterator>
-
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Node.hpp>
+#include <iterator>
+#include <sstream>
 
 namespace NES {
 PolygonExpressionNode::PolygonExpressionNode(PolygonExpressionNode* other) : ShapeExpressionNode(other->type) {

@@ -62,10 +62,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [X64, arm64]
-        osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-22_04]
-        exclude:
-          - arch: arm64
-            osversion: ubuntu-18_04
+        osversion: [ubuntu-20_04, ubuntu-22_04]
     steps:
       - uses: AutoModality/action-clean@v1
       - name: "Checkout NebulaStream Repository"
@@ -84,15 +81,23 @@ jobs:
       - name: Build Docker
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: "Build Multi Arch Packages"
+      - name: "Build Debian Packages"
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh nes_package_${{ matrix.osversion }}
+          cache_dir="/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "cache_dir=$cache_dir"
+          mkdir -p $cache_dir
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "build_dir=$build_dir"
+          echo "build_dir=$build_dir" >> $GITHUB_ENV     
+          mkdir -p $build_dir
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $cache_dir:/cache_dir -v $build_dir:/build_dir -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh nes_package_${{ matrix.osversion }}
       - name: "Fetch Debian Files"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
           DEB_NAME=NebulaStream-$nes_version-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
-          mv $GITHUB_WORKSPACE/build/*deb $GITHUB_WORKSPACE/build/$DEB_NAME.deb
-          echo "DEB_FILE=$GITHUB_WORKSPACE/build/$DEB_NAME.deb" >> $GITHUB_ENV
+          mv ${{ env.build_dir }}/*deb ${{ env.build_dir }}/$DEB_NAME.deb
+          echo "DEB_FILE=${{ env.build_dir }}/$DEB_NAME.deb" >> $GITHUB_ENV
       - name: "Perform Release for nebulastream-dev-builds Repository"
         uses: softprops/action-gh-release@v0.1.14
         with:

@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 NegateExpressionNode::NegateExpressionNode() {}

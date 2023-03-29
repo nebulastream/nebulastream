@@ -15,6 +15,7 @@
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Util/ZipfianGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <NesBaseTest.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -47,7 +48,9 @@ namespace NES::Benchmark::DataGeneration {
         static void TearDownTestCase() { NES_INFO("Tear down ZipfianDataGeneratorTest test class."); }
     };
 
-    /* The following test block tests the member functions of the ZipfianDataGenerator */
+    /**
+     * @brief Testing if ZipfianDataGenerator::getSchema() works by comparing versus a hardcoded truth
+     */
     TEST_F(ZipfianDataGeneratorTest, getSchemaTest) {
         auto alpha = 0.9;
         auto minValue = 0;
@@ -65,6 +68,9 @@ namespace NES::Benchmark::DataGeneration {
         ASSERT_TRUE(expectedSchema->equals(schemaDefault, true));
     }
 
+    /**
+     * @brief Testing if ZipfianDataGenerator::getName() works by comparing versus a hardcoded truth
+     */
     TEST_F(ZipfianDataGeneratorTest, getNameTest) {
         auto alpha = 0.9;
         auto minValue = 0;
@@ -77,6 +83,9 @@ namespace NES::Benchmark::DataGeneration {
         ASSERT_EQ(nameDefault, expectedName);
     }
 
+    /**
+     * @brief Testing if ZipfianDataGenerator::toString() works by comparing versus a hardcoded truth
+     */
     TEST_F(ZipfianDataGeneratorTest, toStringTest) {
         auto alpha = 0.9;
         auto minValue = 0;
@@ -92,6 +101,10 @@ namespace NES::Benchmark::DataGeneration {
         ASSERT_EQ(stringDefault, expectedString);
     }
 
+    /**
+     * @brief Testing if ZipfianDataGenerator::createData() works by creating tuples and then comparing the expected tupleBuffers
+     * with the created one's from the ZipfianDataGenerator
+     */
     TEST_F(ZipfianDataGeneratorTest, createDataTest) {
         auto alpha = 0.9;
         auto minValue = 0;

@@ -35,7 +35,7 @@ SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
         NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes));
 }
 
-bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<NetworkSourceDescriptor>()) {
         return false;
     }
@@ -43,7 +43,7 @@ bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return schema->equals(otherNetworkSource->schema) && nesPartition == otherNetworkSource->nesPartition;
 }
 
-std::string NetworkSourceDescriptor::toString() {
+std::string NetworkSourceDescriptor::toString() const {
     return "NetworkSourceDescriptor{" + nodeLocation.createZmqURI() + " " + nesPartition.toString() + "}";
 }
 

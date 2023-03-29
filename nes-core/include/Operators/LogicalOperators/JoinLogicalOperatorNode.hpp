@@ -37,7 +37,7 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
     * @brief get join definition.
     * @return LogicalJoinDefinition
     */
-    Join::LogicalJoinDefinitionPtr getJoinDefinition();
+    Join::LogicalJoinDefinitionPtr getJoinDefinition() const;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
@@ -46,7 +46,7 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
-    std::vector<OriginId> getOutputOriginIds() override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;

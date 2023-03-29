@@ -17,6 +17,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <memory>
+#include <sstream>
 #include <utility>
 
 namespace NES {

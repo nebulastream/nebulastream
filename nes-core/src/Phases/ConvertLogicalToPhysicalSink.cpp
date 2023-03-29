@@ -28,6 +28,7 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -39,11 +40,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                                          const Runtime::NodeEnginePtr& nodeEngine,
                                                          const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
                                                          size_t numOfProducers) {
-    NES_DEBUG("Convert sink " << operatorId);
+    NES_DEBUG2("Convert sink  {}", operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
-        NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
+        NES_DEBUG2("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
         return createTextPrintSink(schema,
                                    querySubPlan->getQueryId(),
@@ -56,7 +57,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
-        NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
+        NES_DEBUG2("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}", schema->toString());
         return createNullOutputSink(querySubPlan->getQueryId(),
                                     querySubPlan->getQuerySubPlanId(),
                                     nodeEngine,
@@ -64,7 +65,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     nullOutputSinkDescriptor->getFaultToleranceType(),
                                     nullOutputSinkDescriptor->getNumberOfOrigins());
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         return createBinaryZmqSink(schema,
                                    querySubPlan->getQueryId(),
@@ -77,7 +78,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    zmqSinkDescriptor->getFaultToleranceType(),
                                    zmqSinkDescriptor->getNumberOfOrigins());
     } else if (sinkDescriptor->instanceOf<MonitoringSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating Monitoring sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating Monitoring sink");
         const MonitoringSinkDescriptorPtr monitoringSinkDescriptor = sinkDescriptor->as<MonitoringSinkDescriptor>();
         return createMonitoringSink(nodeEngine->getMetricStore(),
                                     monitoringSinkDescriptor->getCollectorType(),
@@ -91,7 +92,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
 
         if (kafkaSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
@@ -113,7 +114,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
 #endif
 #ifdef ENABLE_OPC_BUILD
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema,
                              querySubPlan->getQueryId(),
@@ -127,7 +128,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
 #endif
 #ifdef ENABLE_MQTT_BUILD
     else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating MQTT sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating MQTT sink");
         const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
         // Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
         // If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
@@ -153,8 +154,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        NES_INFO(
-            "ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating Binary file sink for format={}",
+                  fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
                                      querySubPlan->getQueryId(),
@@ -186,11 +187,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       fileSinkDescriptor->getFaultToleranceType(),
                                       fileSinkDescriptor->getNumberOfOrigins());
         } else {
-            NES_ERROR("createDataSink: unsupported format");
+            NES_ERROR2("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");
         }
     } else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating network sink");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
                                  networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
@@ -205,7 +206,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes());
     } else if (sinkDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating materialized view sink");
         auto materializedViewSinkDescriptor =
             sinkDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         return NES::Experimental::MaterializedView::createMaterializedViewSink(
@@ -218,7 +219,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             materializedViewSinkDescriptor->getFaultToleranceType(),
             materializedViewSinkDescriptor->getNumberOfOrigins());
     } else {
-        NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
+        NES_ERROR2("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
 }

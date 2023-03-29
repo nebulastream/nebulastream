@@ -21,7 +21,7 @@ CEPOperatorHandlerPtr CEPOperatorHandler::create() { return std::make_shared<NES
 void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr context,
                                Runtime::StateManagerPtr,
                                uint32_t localStateVariableId) {
-    NES_DEBUG("CEPOperatorHandler::start() with localStateVariableId" << localStateVariableId << context);
+    NES_DEBUG2("CEPOperatorHandler::start() with localStateVariableId {} {}", localStateVariableId, fmt::ptr(context));
     this->clearCounter();
 }
 

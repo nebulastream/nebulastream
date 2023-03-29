@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
 #define NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
 
-#include <Util/Logger/Logger.hpp>
 #include <mqtt/callback.h>
 #include <mqtt/client.h>
 

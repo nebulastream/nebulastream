@@ -65,7 +65,7 @@ TCPSource::TCPSource(SchemaPtr schema,
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
         fieldName = field->getName();
-        NES_TRACE("TCPSOURCE:: Schema keys are: " << fieldName);
+        NES_TRACE2("TCPSOURCE:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
 
@@ -78,7 +78,7 @@ TCPSource::TCPSource(SchemaPtr schema,
             break;
     }
 
-    NES_TRACE("TCPSource::TCPSource " << this << ": Init TCPSource.");
+    NES_TRACE2("TCPSource::TCPSource: Init TCPSource.");
 }
 
 std::string TCPSource::toString() const {
@@ -91,17 +91,17 @@ std::string TCPSource::toString() const {
 
 void TCPSource::open() {
     DataSource::open();
-    NES_TRACE("TCPSource::connected: Trying to create socket.");
+    NES_TRACE2("TCPSource::connected: Trying to create socket.");
     if (sockfd < 0) {
         sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
-        NES_TRACE("Socket created with " << sockfd);
+        NES_TRACE2("Socket created with  {}", sockfd);
     }
     if (sockfd < 0) {
-        NES_ERROR("TCPSource::connected: Failed to create socket. Error: " << strerror(errno));
+        NES_ERROR2("TCPSource::connected: Failed to create socket. Error: {}", strerror(errno));
         connection = -1;
         return;
     }
-    NES_TRACE("Created socket");
+    NES_TRACE2("Created socket");
 
     struct sockaddr_in servaddr;
     servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
@@ -110,21 +110,22 @@ void TCPSource::open() {
         htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
 
     if (connection < 0) {
-        NES_TRACE("Try connecting to server: " << sourceConfig->getSocketHost()->getValue() << ":"
-                                               << sourceConfig->getSocketPort()->getValue());
+        NES_TRACE2("Try connecting to server: {}:{}",
+                   sourceConfig->getSocketHost()->getValue(),
+                   sourceConfig->getSocketPort()->getValue());
         connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
     }
     if (connection < 0) {
         connection = -1;
         NES_THROW_RUNTIME_ERROR("TCPSource::connected: Connection with server failed. Error: " << strerror(errno));
     }
-    NES_TRACE("TCPSource::connected: Connected to server.");
+    NES_TRACE2("TCPSource::connected: Connected to server.");
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
-    NES_DEBUG("TCPSource  " << this << ": receiveData ");
+    NES_DEBUG2("TCPSource  {}: receiveData ", this->toString());
     auto tupleBuffer = allocateBuffer();
-    NES_DEBUG("TCPSource buffer allocated ");
+    NES_DEBUG2("TCPSource buffer allocated ");
     try {
         do {
             if (!running) {
@@ -133,7 +134,8 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
-        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: " << e.what());
+        delete[] messageBuffer;
+        NES_ERROR2("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();
@@ -143,7 +145,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
+    NES_DEBUG2("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
 
     //init tuple count for buffer
     uint64_t tupleCount = 0;
@@ -154,7 +156,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
     //need this to indicate that the whole tuple was successfully received from the circular buffer
     bool popped = true;
     //init tuple size
-    uint64_t tupleSize = 0;
+    uint64_t inputTupleSize = 0;
     //init size of received data from socket with 0
     int64_t bufferSizeReceived = 0;
     //receive data until tupleBuffer capacity reached or flushIntervalPassed
@@ -169,13 +171,14 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             bufferSizeReceived = read(sockfd, messageBuffer, circularBuffer.capacity() - circularBuffer.size());
             //if read method returned -1 an error occurred during read.
             if (bufferSizeReceived == -1) {
-                NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: " << strerror(errno));
+                delete[] messageBuffer;
+                NES_ERROR2("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
                 return false;
             }
-            //if size of received data is not 0 (no data received), push received data to crucular buffer
+            //if size of received data is not 0 (no data received), push received data to circular buffer
             else if (bufferSizeReceived != 0) {
-                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: " << bufferSizeReceived << ".");
-                NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: " << messageBuffer << ".");
+                NES_DEBUG2("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
+                NES_DEBUG2("TCPSOURCE::fillBuffer: print current buffer: {}.", messageBuffer);
                 //push the received data into the circularBuffer
                 circularBuffer.push(messageBuffer, bufferSizeReceived);
             }
@@ -189,27 +192,37 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 // The user inputted a tuple separator that indicates the end of a tuple. We're going to search for that
                 // tuple seperator and assume that all data until then belongs to the current tuple
                 case Configurations::TUPLE_SEPARATOR:
-                    // search the circularBuffer until Tuple seperator is found to obtain size of tuple
-                    tupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
-                    // allocate buffer with size of tuple
-                    messageBuffer = new char[tupleSize];
-                    NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << tupleSize
-                                                                                                                 << "'");
-                    NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
-                    //copy and delete tuple from circularBuffer, delete tuple separator
-                    popped = popGivenNumberOfValues(tupleSize, true);
-                    break;
+                    try {
+                        // search the circularBuffer until Tuple seperator is found to obtain size of tuple
+                        inputTupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
+                        // allocate buffer with size of tuple
+                        messageBuffer = new char[inputTupleSize];
+                        NES_DEBUG2("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
+                                   inputTupleSize);
+                        NES_DEBUG2("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
+                        //copy and delete tuple from circularBuffer, delete tuple separator
+                        popped = popGivenNumberOfValues(inputTupleSize, true);
+                        break;
+                    } catch (const std::exception& e) {
+                        NES_ERROR("Failed to obtain tupleSize searching for separator token. Error: " << e.what());
+                        throw e;
+                    }
                 // The user inputted a fixed buffer size.
                 case Configurations::USER_SPECIFIED_BUFFER_SIZE:
-                    //set tupleSize to user specified tuple size
-                    tupleSize = sourceConfig->getSocketBufferSize()->getValue();
-                    //allocate buffer with tupleSize
-                    messageBuffer = new char[tupleSize];
-                    NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << tupleSize
-                                                                                                                 << "'");
-                    NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
-                    //copy and delete tuple from circularBuffer
-                    popped = popGivenNumberOfValues(tupleSize, false);
+                    try {
+                        //set tupleSize to user specified tuple size
+                        inputTupleSize = sourceConfig->getSocketBufferSize()->getValue();
+                        //allocate buffer with tupleSize
+                        messageBuffer = new char[inputTupleSize];
+                        NES_DEBUG2("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
+                                   inputTupleSize);
+                        NES_DEBUG2("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
+                        //copy and delete tuple from circularBuffer
+                        popped = popGivenNumberOfValues(inputTupleSize, false);
+                    } catch (const std::exception& e) {
+                        NES_ERROR("Failed to obtain tupleSize with user inputted size. Error: " << e.what());
+                        throw e;
+                    }
                     break;
                 // Before each message, the server uses a fixed number of bytes (bytesUsedForSocketBufferSizeTransfer)
                 // to indicate the size of the next tuple.
@@ -219,37 +232,42 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     //This might happen if the size of the tuple was sent and popped, but we only received half of the tuple
                     //then we won't overwrite the tupleSize but try again to pop the next message.
                     if (popped) {
-                        NES_TRACE("TCPSOURCE::fillBuffer: obtain socket buffer size");
-                        //create buffer to save buffer size from socket in aka the number of bytes indicating the size of the next tuple
-                        messageBuffer = new char[sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue()];
-                        //copy and delete the size of the next tuple from the circular buffer
-                        popped =
-                            popGivenNumberOfValues(sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue(), false);
-                        NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << messageBuffer);
-                        //if we successfully obtained the tuple size from the buffer convert bufferSizeFromSocket to an integer and delete the char*
-                        if (popped) {
-                            tupleSize = std::stoi(messageBuffer);
-                            NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << tupleSize);
+                        try {
+                            NES_DEBUG2("TCPSOURCE::fillBuffer: obtain socket buffer size");
+                            //create buffer to save buffer size from socket in aka the number of bytes indicating the size of the next tuple
+                            messageBuffer = new char[sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue() + 1];
+                            //copy and delete the size of the next tuple from the circular buffer
+                            popped = popGivenNumberOfValues(sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue(),
+                                                            false);
+                            NES_DEBUG2("TCPSOURCE::fillBuffer: socket buffer size is: {}.", messageBuffer);
+                            //if we successfully obtained the tuple size from the buffer convert bufferSizeFromSocket to an integer and delete the char*
+                            if (popped) {
+                                inputTupleSize = std::stoi(messageBuffer);
+                                NES_DEBUG2("TCPSOURCE::fillBuffer: socket buffer size is: {}.", inputTupleSize);
+                            }
+                            delete[] messageBuffer;
+                        } catch (const std::exception& e) {
+                            NES_ERROR2("TCPSource::fillBuffer: Failed to retrieve the tupleSize from Message Buffer. Error: {}",
+                                       e.what());
+                            throw e;
                         }
-                        delete[] messageBuffer;
                     }
                     //allocate the messageBuffer for one tuple with the new tupleSize
-                    messageBuffer = new char[tupleSize];
-                    NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << tupleSize
-                                                                                                                 << "'");
-                    NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
+                    messageBuffer = new char[inputTupleSize + 1];
+                    NES_TRACE2("Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.", inputTupleSize);
+                    NES_TRACE2("current circular buffer size: '{}'.", circularBuffer.size());
                     //obtain the tuple from the circular buffer
-                    popped = popGivenNumberOfValues(tupleSize, false);
+                    popped = popGivenNumberOfValues(inputTupleSize, false);
                     break;
             }
 
-            NES_TRACE("TCPSOURCE::fillBuffer: Successfully prepared tuples? '" << popped << "'");
+            NES_TRACE2("TCPSOURCE::fillBuffer: Successfully prepared tuples? '{}'", popped);
             //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
-            if (tupleSize != 0 && popped) {
-                std::string buf(messageBuffer, tupleSize);
-                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
+            if (inputTupleSize != 0 && popped) {
+                std::string buf(messageBuffer, inputTupleSize);
+                NES_TRACE2("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
-                    NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
+                    NES_TRACE2("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
                     inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
                 } else {
                     inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
@@ -265,7 +283,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= sourceConfig->getFlushIntervalMS()->getValue())) {
-            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG2("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }
@@ -292,6 +310,7 @@ bool TCPSource::popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTex
             char popped = circularBuffer.pop();
             messageBuffer[i] = popped;
         }
+        messageBuffer[numberOfValuesToPop] = '\0';
         if (popTextDivider) {
             circularBuffer.pop();
         }
@@ -301,12 +320,12 @@ bool TCPSource::popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTex
 }
 
 void TCPSource::close() {
-    NES_TRACE("TCPSource::close: trying to close connection.");
+    NES_TRACE2("TCPSource::close: trying to close connection.");
     DataSource::close();
     if (connection >= 0) {
         ::close(connection);
         ::close(sockfd);
-        NES_TRACE("TCPSource::close: connection closed.");
+        NES_TRACE2("TCPSource::close: connection closed.");
     }
 }
 

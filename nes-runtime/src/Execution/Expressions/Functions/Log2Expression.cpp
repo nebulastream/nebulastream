@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log2Expression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
@@ -53,7 +55,11 @@ Value<> Log2Expression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Double>());
     } else {
         // Throw an exception if no type is applicable
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
+
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log2Expression>> log2Expression("log2");
+
 }// namespace NES::Runtime::Execution::Expressions

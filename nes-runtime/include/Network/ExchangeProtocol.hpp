@@ -16,11 +16,12 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 
 #include <Network/NetworkMessage.hpp>
-#include <Runtime/Events.hpp>
 #include <variant>
 
-namespace NES {
-namespace Network {
+namespace NES::Runtime {
+class BaseEvent;
+}
+namespace NES::Network {
 class PartitionManager;
 class ExchangeProtocolListener;
 /**
@@ -87,7 +88,6 @@ class ExchangeProtocol {
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
 };
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_

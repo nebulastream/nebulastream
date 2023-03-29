@@ -46,6 +46,7 @@ SchemaPtr ExchangeOperatorNode::getInputSchema() const { return inputSchema; }
 SchemaPtr ExchangeOperatorNode::getOutputSchema() const { return outputSchema; }
 
 void ExchangeOperatorNode::setInputOriginIds(std::vector<OriginId> originIds) { this->inputOriginIds = originIds; }
-std::vector<OriginId> ExchangeOperatorNode::getOutputOriginIds() { return inputOriginIds; }
+
+const std::vector<OriginId> ExchangeOperatorNode::getOutputOriginIds() const { return inputOriginIds; }
 
 }// namespace NES

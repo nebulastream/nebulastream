@@ -43,32 +43,32 @@ HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,
     const string sourceName = queryPlan->getSourceName();
 
     if (!sourceOperator) {
-        NES_ERROR("HighThroughput: Unable to find the source operator.");
+        NES_ERROR2("HighThroughput: Unable to find the source operator.");
         throw std::runtime_error("No source operator found in the query plan");
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodes.empty()) {
-        NES_ERROR("HighThroughput: Unable to find the target source: " << sourceName);
+        NES_ERROR2("HighThroughput: Unable to find the target source: {}", sourceName);
         throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("HighThroughput: Placing operators on the nes topology.");
+    NES_INFO2("HighThroughput: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
 
-    NES_DEBUG("HighThroughput: Find the path used for performing the placement based on the strategy type");
+    NES_DEBUG2("HighThroughput: Find the path used for performing the placement based on the strategy type");
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
-    NES_INFO("HighThroughput: Adding forward operators.");
+    NES_INFO2("HighThroughput: Adding forward operators.");
     addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
-    NES_INFO("HighThroughput: Generating complete execution Graph.");
+    NES_INFO2("HighThroughput: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
@@ -111,11 +111,11 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                     node = sinkNode;
                 }
 
-                NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
+                NES_DEBUG2("TopDown: Transforming New Operator into legacy operator");
                 OperatorPtr legacyOperator = translator->transform(targetOperator);
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
-                    NES_DEBUG("HighThroughput: Create new execution node.");
+                    NES_DEBUG2("HighThroughput: Create new execution node.");
                     stringstream operatorName;
                     operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
                     const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
@@ -131,12 +131,12 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
                     if (exists != residentOperatorIds.end()) {
                         //skip adding rest of the operator chains as they already exists.
-                        NES_DEBUG("HighThroughput: skip adding rest of the operator chains as they already exists.");
+                        NES_DEBUG2("HighThroughput: skip adding rest of the operator chains as they already exists.");
                         targetOperator = nullptr;
                         break;
                     } else {
 
-                        NES_DEBUG("HighThroughput: adding target operator to already existing operator chain.");
+                        NES_DEBUG2("HighThroughput: adding target operator to already existing operator chain.");
                         stringstream operatorName;
                         operatorName << existingExecutionNode->getOperatorName() << "=>" << targetOperator->toString() << "(OP-"
                                      << std::to_string(targetOperator->getId()) << ")";

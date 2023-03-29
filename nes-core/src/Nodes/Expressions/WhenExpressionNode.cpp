@@ -14,7 +14,9 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
+
 namespace NES {
 WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
 
@@ -41,7 +43,7 @@ void WhenExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     //set stamp to right stamp, as only the left expression will be returned
     stamp = right->getStamp();
-    NES_TRACE("WhenExpressionNode: we assigned the following stamp: " << stamp->toString())
+    NES_TRACE2("WhenExpressionNode: we assigned the following stamp: {}", stamp->toString())
 }
 
 bool WhenExpressionNode::equal(NodePtr const& rhs) const {

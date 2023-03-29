@@ -30,6 +30,7 @@
 namespace NES {
 namespace Windowing {}// namespace Windowing
 namespace QueryCompilation {
+class ExpressionProvider;
 
 /**
  * @brief This phase lowers a pipeline plan of physical operators into a pipeline plan of nautilus operators.
@@ -60,6 +61,8 @@ class LowerPhysicalToNautilusOperators {
      * @return OperatorPipelinePtr
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
+
+    ~LowerPhysicalToNautilusOperators();
 
   private:
     /**
@@ -118,7 +121,7 @@ class LowerPhysicalToNautilusOperators {
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                          uint64_t handlerIndex);
-    std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(const ExpressionNodePtr& expressionNode);
+
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
 
@@ -136,6 +139,9 @@ class LowerPhysicalToNautilusOperators {
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
 #endif// ENABLE_JIN
+
+  private:
+    std::unique_ptr<ExpressionProvider> expressionProvider;
 };
 }// namespace QueryCompilation
 }// namespace NES

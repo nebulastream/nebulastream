@@ -19,11 +19,12 @@
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
 
 QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
-    NES_DEBUG("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
+    NES_DEBUG2("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
     //Iterate over all rename source operators and convert them to project operator
     for (auto& renameSourceOperator : renameSourceOperators) {

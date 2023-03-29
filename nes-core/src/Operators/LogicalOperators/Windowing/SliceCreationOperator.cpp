@@ -19,9 +19,11 @@
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -63,8 +65,8 @@ bool SliceCreationOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema "
-              << inputSchema->toString());
+    NES_DEBUG2("SliceCreationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
+               inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();

@@ -14,8 +14,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 CaseExpressionNode::CaseExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 
@@ -65,7 +65,7 @@ void CaseExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
     }
 
     stamp = defaultExp->getStamp();
-    NES_TRACE("CaseExpressionNode: we assigned the following stamp: " << stamp->toString());
+    NES_TRACE2("CaseExpressionNode: we assigned the following stamp: {}", stamp->toString());
 }
 
 void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp) {
@@ -77,7 +77,7 @@ void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& whenE
 
 std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const {
     if (children.size() < 2) {
-        NES_FATAL_ERROR("A case expression always should have at least two children, but it had: " << children.size());
+        NES_FATAL_ERROR2("A case expression always should have at least two children, but it had: {}", children.size());
     }
     std::vector<ExpressionNodePtr> whenChildren;
     for (auto whenIter = children.begin(); whenIter != children.end() - 1; ++whenIter) {
@@ -89,7 +89,7 @@ std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const {
 
 ExpressionNodePtr CaseExpressionNode::getDefaultExp() const {
     if (children.size() <= 1) {
-        NES_FATAL_ERROR("A case expression always should have at least two children, but it had: " << children.size());
+        NES_FATAL_ERROR2("A case expression always should have at least two children, but it had: {}", children.size());
     }
     return (*(children.end() - 1))->as<ExpressionNode>();
 }

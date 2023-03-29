@@ -115,19 +115,6 @@ class ExecutableCompleteAggregationTriggerAction
             tupleBuffer.setWatermark(currentWatermark);
             tupleBuffer.setOriginId(windowDefinition->getOriginId());
             //write remaining buffer
-            if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
-                auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
-                auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
-                NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): Dispatch last buffer output buffer with {} records, "
-                           "content={} originId={} windowAction={} currentWatermark={} lastWatermark={}",
-                           this->windowDefinition->getDistributionType()->toString(),
-                           tupleBuffer.getNumberOfTuples(),
-                           dynamicTupleBuffer,
-                           tupleBuffer.getOriginId(),
-                           toString(),
-                           currentWatermark,
-                           lastWatermark);
-            }
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
         } else {
@@ -275,19 +262,6 @@ class ExecutableCompleteAggregationTriggerAction
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
-                        auto rowLayout =
-                            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
-                        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
-                        NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): Dispatch intermediate output buffer "
-                                   "with {} records, content={} originId={} windowAction={}",
-                                   id,
-                                   this->windowDefinition->getDistributionType()->toString(),
-                                   currentNumberOfTuples,
-                                   dynamicTupleBuffer,
-                                   tupleBuffer.getOriginId(),
-                                   toString());
-                    }
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
 

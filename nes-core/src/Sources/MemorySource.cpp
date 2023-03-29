@@ -85,19 +85,19 @@ MemorySource::MemorySource(SchemaPtr schema,
         }
     }
 
-    NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
+    NES_DEBUG2("MemorySource() numBuffersToProcess= {}  memoryAreaSize= {}", numBuffersToProcess, memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
-    NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
+    NES_DEBUG2("MemorySource::receiveData called on operatorId={}", operatorId);
     if (memoryAreaSize > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
             if (numBuffersToProcess != 0) {
-                NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
+                NES_DEBUG2("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
             } else {
-                NES_DEBUG("MemorySource::receiveData: return as mem sry is empty");
+                NES_DEBUG2("MemorySource::receiveData: return as mem sry is empty");
                 return std::nullopt;
             }
         }
@@ -109,7 +109,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
 
     if (memoryAreaSize > bufferSize) {
-        NES_TRACE("MemorySource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);
+        NES_TRACE2("MemorySource::receiveData: add offset={} to currentpos={}", bufferSize, currentPositionInBytes);
         currentPositionInBytes += bufferSize;
     }
 
@@ -118,7 +118,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    NES_TRACE2("MemorySource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }

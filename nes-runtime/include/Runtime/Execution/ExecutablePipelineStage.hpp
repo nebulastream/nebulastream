@@ -17,6 +17,7 @@
 
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -101,5 +102,15 @@ class ExecutablePipelineStage {
 };
 
 }// namespace NES::Runtime::Execution
+
+namespace fmt {
+template<>
+struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<std::string> {
+    auto format(const NES::Runtime::Execution::ExecutablePipelineStage& ex_pipeline_stage, format_context& ctx)
+        -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", ex_pipeline_stage.getArity());
+    }
+};
+}//namespace fmt
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_

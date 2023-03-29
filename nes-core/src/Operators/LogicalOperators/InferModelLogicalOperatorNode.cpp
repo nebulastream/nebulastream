@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <filesystem>
-
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <filesystem>
 #include <utility>
 
 namespace NES::InferModel {
@@ -30,7 +30,7 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
                                                              OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), model(std::move(model)), inputFields(std::move(inputFields)),
       outputFields(std::move(outputFields)) {
-    NES_DEBUG("InferModelLogicalOperatorNode: reading from model " << this->model);
+    NES_DEBUG2("InferModelLogicalOperatorNode: reading from model {}", this->model);
 }
 
 std::string InferModelLogicalOperatorNode::toString() const {
@@ -53,7 +53,7 @@ OperatorNodePtr InferModelLogicalOperatorNode::copy() {
 bool InferModelLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<InferModelLogicalOperatorNode>()) {
         auto inferModelOperator = rhs->as<InferModelLogicalOperatorNode>();
-        return model == inferModelOperator->model;
+        return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
     }
     return false;
 }
@@ -101,13 +101,12 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         if (outputSchema->hasFieldName(fieldName)) {
             // The assigned field is part of the current schema.
             // Thus we check if it has the correct type.
-            NES_TRACE("Infer Model Logical Operator: the field " << fieldName
-                                                                 << " is already in the schema, so we updated its type.");
+            NES_TRACE2("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
             outputSchema->replaceField(fieldName, outputExpression->getStamp());
         } else {
             // The assigned field is not part of the current schema.
             // Thus we extend the schema by the new attribute.
-            NES_TRACE("Infer Model Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
+            NES_TRACE2("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
             outputSchema->addField(fieldName, outputExpression->getStamp());
         }
     }
@@ -117,7 +116,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
 
 void InferModelLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("InferModelOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("InferModelOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "InferModelLogicalOperatorNode: InferModel should have children (?)");
     //Infer query signatures for child operators
     for (auto& child : children) {
@@ -135,14 +134,20 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
 const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
 
 const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
-    int idx = model.find_last_of('/');
-    std::string path = model.substr(idx);
+    auto idx = model.find_last_of('/');
+    auto path = model;
+
+    // If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
+    if (idx != std::string::npos) {
+        path = model.substr(idx + 1);
+    }
+
     path = std::filesystem::temp_directory_path().string() + "/" + path;
     return path;
 }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFields() { return inputFields; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFields() { return outputFields; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
 
 }// namespace NES::InferModel

@@ -11,27 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTINTEGEREXPRESSION_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTINTEGEREXPRESSION_HPP_
+
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/Record.hpp>
-
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression returns a specific constant integer value.
- * TODO #3062 add support for constant of different integer ranges.
+ * @brief This expression returns true if leftSubExpression is less or equals then rightSubExpression.
  */
-class ConstantIntegerExpression : public Expression {
+class LessEqualsExpression : public Expression {
   public:
-    ConstantIntegerExpression(int64_t integerValue);
+    LessEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
     Value<> execute(Record& record) const override;
 
   private:
-    const int64_t integerValue;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTINTEGEREXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_

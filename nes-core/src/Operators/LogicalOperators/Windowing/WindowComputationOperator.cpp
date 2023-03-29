@@ -16,9 +16,11 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -62,8 +64,8 @@ bool WindowComputationOperator::inferSchema(Optimizer::TypeInferencePhaseContext
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema "
-              << inputSchema->toString());
+    NES_DEBUG2("WindowComputationOperator: TypeInferencePhase: infer types for window operator with input schema {}",
+               inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();

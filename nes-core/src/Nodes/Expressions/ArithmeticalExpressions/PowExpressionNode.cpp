@@ -14,9 +14,8 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES {
 
@@ -37,11 +36,11 @@ void PowExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& t
     // Extend range for POW operation:
     if (stamp->isInteger()) {
         stamp = DataTypeFactory::createInt64();
-        NES_TRACE("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
+        NES_TRACE2("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalBinaryExpressionNode) to Int64.");
     } else if (stamp->isFloat()) {
         stamp = DataTypeFactory::createDouble();
-        NES_TRACE(
-            "PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: " << toString());
+        NES_TRACE2("PowExpressionNode: Update Float stamp (assigned in ArithmeticalBinaryExpressionNode) to Double: {}",
+                   toString());
     }
 }
 

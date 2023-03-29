@@ -61,7 +61,7 @@ RestServer::RestServer(std::string host,
       monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)) {}
 
 bool RestServer::start() {
-    NES_INFO("Starting Oatpp Server on " << host << ":" << std::to_string(port));
+    NES_INFO2("Starting Oatpp Server on {}:{}", host, std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     try {
         // Initialize Oatpp Environment
@@ -71,10 +71,10 @@ bool RestServer::start() {
         // Destroy Oatpp Environment
         oatpp::base::Environment::destroy();
     } catch (const std::exception& e) {
-        NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
+        NES_ERROR2("RestServer: Unable to start REST server [{}:{}] {}", host, std::to_string(port), e.what());
         return false;
     } catch (...) {
-        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+        NES_FATAL_ERROR2("RestServer: Unable to start REST server unknown exception.");
         return false;
     }
     return true;
@@ -159,11 +159,11 @@ void RestServer::run() {
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
     /* Print info about server port */
-    NES_INFO("NebulaStream REST Server listening on port " << port);
+    NES_INFO2("NebulaStream REST Server listening on port {}", port);
 
     /* Run server */
     server.run([this]() -> bool {
-        NES_DEBUG("checking if stop request has arrived for rest server listening on port " << port);
+        NES_DEBUG2("checking if stop request has arrived for rest server listening on port {}.", port);
         std::unique_lock lock(mutex);
         return !stopRequested;
     });

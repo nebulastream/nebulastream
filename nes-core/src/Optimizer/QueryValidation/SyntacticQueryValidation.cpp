@@ -16,10 +16,9 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
-
 namespace NES::Optimizer {
 
 SyntacticQueryValidation::SyntacticQueryValidation(QueryParsingServicePtr queryParsingService)
@@ -35,10 +34,10 @@ NES::QueryPlanPtr SyntacticQueryValidation::validate(const std::string& inputQue
         // Compiling the query string to an object
         //first check which ParsingService (C++,PSL,SQL) is required, than try to create object
         if (inputQuery.starts_with("PATTERN")) {
-            NES_DEBUG("SyntacticQueryValidation: parse pattern query from declarative PSL.");
+            NES_DEBUG2("SyntacticQueryValidation: parse pattern query from declarative PSL.");
             queryPlan = queryParsingService->createPatternFromCodeString(inputQuery);
         } else {
-            NES_DEBUG("SyntacticQueryValidation: parse C++ query from query string.");
+            NES_DEBUG2("SyntacticQueryValidation: parse C++ query from query string.");
             queryPlan = queryParsingService->createQueryFromCodeString(inputQuery);
         }
         // If it's unsuccessful, the validity check fails

@@ -17,7 +17,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -34,7 +34,7 @@ QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();
     for (const auto& node : nodes) {
         if (node->instanceOf<PhysicalOperators::PhysicalOperator>()) {
-            NES_DEBUG("Skipped node: " << node->toString() << " as it is already a physical operator.");
+            NES_DEBUG2("Skipped node: {} as it is already a physical operator.", node->toString());
             continue;
         }
         provider->lower(queryPlan, node->as<LogicalOperatorNode>());

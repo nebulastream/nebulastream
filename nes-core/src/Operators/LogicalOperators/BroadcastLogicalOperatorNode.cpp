@@ -17,7 +17,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id)
@@ -60,7 +60,7 @@ bool BroadcastLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCont
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("ExchangeOperatorNode: infer schema failed. The schema has to be the same across all child operators.");
+            NES_ERROR2("ExchangeOperatorNode: infer schema failed. The schema has to be the same across all child operators.");
             return false;
         }
     }

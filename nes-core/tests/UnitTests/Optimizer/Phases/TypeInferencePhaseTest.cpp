@@ -21,6 +21,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -126,7 +127,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
     // we just access the old references
-    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5UL);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 4UL);
 }
 
 /**
@@ -946,28 +947,25 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     auto windows = resultPlan->getOperatorByType<WindowOperatorNode>();
 
     NES_DEBUG("win1=" << windows[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(windows[0]->getOutputSchema()->fields.size() == 5);
+    EXPECT_TRUE(windows[0]->getOutputSchema()->fields.size() == 4);
     EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$start"));
     EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$end"));
-    EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$cnt"));
     EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$value"));
     EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$id"));
 
     NES_DEBUG("win2=" << windows[1]->getOutputSchema()->toString());
-    EXPECT_TRUE(windows[1]->getOutputSchema()->fields.size() == 5);
+    EXPECT_TRUE(windows[1]->getOutputSchema()->fields.size() == 4);
     EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$start"));
     EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$end"));
-    EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$cnt"));
     EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$value"));
     EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$id"));
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$start"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$end"));
-    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$cnt"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$value"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$id"));
 }
@@ -1005,15 +1003,14 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
     // we just access the old references
-    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 5U);
+    ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 4U);
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
-    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$cnt"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
 }

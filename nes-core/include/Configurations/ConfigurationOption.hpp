@@ -18,7 +18,6 @@
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
-
 #include <any>
 #include <memory>
 #include <sstream>
@@ -26,9 +25,7 @@
 #include <typeinfo>
 #include <utility>
 
-namespace NES {
-
-namespace Configurations {
+namespace NES::Configurations {
 
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
@@ -358,7 +355,6 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations
 
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

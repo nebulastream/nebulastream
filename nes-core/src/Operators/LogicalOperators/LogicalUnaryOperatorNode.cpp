@@ -14,6 +14,7 @@
 #include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 LogicalUnaryOperatorNode::LogicalUnaryOperatorNode(OperatorId id)
@@ -35,9 +36,10 @@ bool LogicalUnaryOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext&
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
     for (const auto& child : children) {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("UnaryOperatorNode: infer schema failed. The schema has to be the same across all child operators."
-                      " this op schema="
-                      << child->as<OperatorNode>()->getOutputSchema()->toString() << " child schema=" << childSchema->toString());
+            NES_ERROR2("UnaryOperatorNode: infer schema failed. The schema has to be the same across all child operators."
+                       "this op schema= {} child schema={}",
+                       child->as<OperatorNode>()->getOutputSchema()->toString(),
+                       childSchema->toString());
             return false;
         }
     }

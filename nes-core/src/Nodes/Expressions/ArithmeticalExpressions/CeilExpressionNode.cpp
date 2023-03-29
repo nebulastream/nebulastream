@@ -15,7 +15,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 CeilExpressionNode::CeilExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
@@ -34,7 +34,7 @@ void CeilExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("CeilExpressionNode: converted stamp to float: " << toString());
+    NES_TRACE2("CeilExpressionNode: converted stamp to float: {}", toString());
 }
 
 bool CeilExpressionNode::equal(NodePtr const& rhs) const {
