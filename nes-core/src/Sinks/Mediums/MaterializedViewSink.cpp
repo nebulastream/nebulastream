@@ -23,7 +23,7 @@ MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
                                            uint32_t numOfProducers,
                                            QueryId queryId,
                                            QuerySubPlanId parentPlanId,
-                                           FaultToleranceType::Value faultToleranceType,
+                                           FaultToleranceType faultToleranceType,
                                            uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),

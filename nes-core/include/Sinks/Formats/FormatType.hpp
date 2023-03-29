@@ -19,7 +19,7 @@ namespace NES {
 /**
  * @brief Format types supported by NES
  */
-enum class FormatTypes : int8_t { CSV_FORMAT, JSON_FORMAT, NES_FORMAT, TEXT_FORMAT };
+enum class FormatTypes : uint8_t { CSV_FORMAT, JSON_FORMAT, NES_FORMAT, TEXT_FORMAT };
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_

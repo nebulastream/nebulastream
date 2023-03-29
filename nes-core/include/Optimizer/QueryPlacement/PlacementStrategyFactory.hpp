@@ -61,7 +61,7 @@ class PlacementStrategyFactory {
      * @param z3Context : context from the z3 library used for optimization
      * @return instance of type BaseOptimizer
      */
-    static BasePlacementStrategyPtr getStrategy(PlacementStrategy::Value placementStrategy,
+    static BasePlacementStrategyPtr getStrategy(PlacementStrategy placementStrategy,
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
                                                 const TypeInferencePhasePtr& typeInferencePhase);

@@ -15,9 +15,11 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_
 
+#include <cstdint>
+
 namespace NES {
 
-enum class ExecutionResult : unsigned char {
+enum class ExecutionResult : uint8_t {
     /// Execution completed successfully
     Ok = 0,
     /// Execution completed unsuccessfully -> Must handle error

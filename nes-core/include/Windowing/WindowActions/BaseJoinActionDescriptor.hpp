@@ -18,7 +18,7 @@
 
 namespace NES::Join {
 
-enum class JoinActionType : int8_t { LazyNestedLoopJoin };
+enum class JoinActionType : uint8_t { LazyNestedLoopJoin };
 
 class BaseJoinActionDescriptor {
   public:

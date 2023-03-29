@@ -55,8 +55,8 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              OperatorId operatorId,
                              OriginId originId,
                              size_t numSourceLocalBuffers,
-                             GatheringMode::Value gatheringMode,
-                             SourceMode::Value sourceMode,
+                             GatheringMode gatheringMode,
+                             SourceMode sourceMode,
                              uint64_t sourceAffinity,
                              uint64_t taskQueueId,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
@@ -107,7 +107,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
     const size_t memoryAreaSize;
     Runtime::TupleBuffer numaLocalMemoryArea;
     uint64_t currentPositionInBytes;
-    SourceMode::Value sourceMode;
+    SourceMode sourceMode;
     uint64_t schemaSize;
     uint64_t bufferSize;
     std::atomic<uint64_t> memoryAreaRefCnt{0};

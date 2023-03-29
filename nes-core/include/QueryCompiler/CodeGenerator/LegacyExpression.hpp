@@ -23,7 +23,7 @@
 namespace NES {
 namespace QueryCompilation {
 
-enum class PredicateItemMutation : int8_t { ATTRIBUTE, VALUE };
+enum class PredicateItemMutation : uint8_t { ATTRIBUTE, VALUE };
 
 class LegacyExpression {
   public:

@@ -52,7 +52,7 @@ class CallData {
     [[maybe_unused]] grpc::ServerCompletionQueue* completionQueue;
 
     // Let's implement a tiny state machine with the following states.
-    enum class CallStatus : int8_t { CREATE, PROCESS, FINISH };
+    enum class CallStatus : uint8_t { CREATE, PROCESS, FINISH };
     CallStatus status;// The current serving state.
 };
 

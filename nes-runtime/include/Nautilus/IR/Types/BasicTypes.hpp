@@ -18,7 +18,7 @@
 
 namespace NES::Nautilus::IR::Operations {
 
-enum class PrimitiveStamp : int8_t {
+enum class PrimitiveStamp : uint8_t {
     //BasicTypes
     // Type < 5 is INT
     INT1 = 0,

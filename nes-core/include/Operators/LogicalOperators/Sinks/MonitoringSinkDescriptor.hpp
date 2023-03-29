@@ -27,13 +27,13 @@ namespace NES {
 class MonitoringSinkDescriptor : public SinkDescriptor {
   public:
     /**
-     * @brief Factory method to create a new prink sink descriptor
+     * @brief Factory method to create a new sink descriptor
      * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for Monitoring sink
      */
     static SinkDescriptorPtr create(Monitoring::MetricCollectorType collectorType,
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
@@ -43,7 +43,7 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
 
   private:
     explicit MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType,
-                                      FaultToleranceType::Value faultToleranceType,
+                                      FaultToleranceType faultToleranceType,
                                       uint64_t numberOfOrigins);
 
   private:

@@ -860,7 +860,7 @@ class ReaderLine {
                         const unsigned char flags = 0)
         : Data(std::move(data)), No(no), Offset(offset), Type(type), Flags(flags) {}
 
-    enum class eFlag : int8_t {
+    enum class eFlag : uint8_t {
         LiteralScalarFlag,///< Literal scalar type, defined as "|".
         FoldedScalarFlag, ///< Folded scalar type, defined as "<".
         ScalarNewlineFlag ///< Scalar ends with a newline.

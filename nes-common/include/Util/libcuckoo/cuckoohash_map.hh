@@ -1126,7 +1126,7 @@ private:
 
     // Status codes for internal functions
 
-    enum class cuckoo_status : int8_t {
+    enum class cuckoo_status : uint8_t {
         ok,
         failure,
         failure_key_not_found,

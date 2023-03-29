@@ -17,6 +17,6 @@
 
 #include <stdint.h>
 
-enum class SystemResourcesReaderType : int8_t { AbstractReader, LinuxReader };
+enum class SystemResourcesReaderType : uint8_t { AbstractReader, LinuxReader };
 
 #endif// NES_CORE_INCLUDE_MONITORING_RESOURCESREADER_SYSTEMRESOURCESREADERTYPE_HPP_

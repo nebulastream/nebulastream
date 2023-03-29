@@ -60,7 +60,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        OperatorId operatorId,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode::Value gatheringMode,
+                       GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
                        uint64_t taskQueueId)
@@ -285,11 +285,11 @@ void DataSource::close() {
 
 void DataSource::runningRoutine() {
     try {
-        if (gatheringMode == GatheringMode::Value::INTERVAL_MODE) {
+        if (gatheringMode == GatheringMode::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();
-        } else if (gatheringMode == GatheringMode::Value::INGESTION_RATE_MODE) {
+        } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
             runningRoutineWithIngestionRate();
-        } else if (gatheringMode == GatheringMode::Value::ADAPTIVE_MODE) {
+        } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
             runningRoutineAdaptiveGatheringInterval();
         }
         completedPromise.set_value(true);

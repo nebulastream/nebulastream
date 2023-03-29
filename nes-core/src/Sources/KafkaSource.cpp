@@ -51,7 +51,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::Value::INTERVAL_MODE,
+                 GatheringMode::INTERVAL_MODE,
                  std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode), batchSize(batchSize) {

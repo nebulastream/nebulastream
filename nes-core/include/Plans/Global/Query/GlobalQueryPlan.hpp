@@ -72,7 +72,7 @@ class GlobalQueryPlan {
      * @param queryId: the id of the query whose operators need to be removed
      * @param requestType: request type for query removal
      */
-    void removeQuery(QueryId queryId, RequestType::Value requestType);
+    void removeQuery(QueryId queryId, RequestType requestType);
 
     /**
      * @brief This method will remove all empty shared query plans that are deployed

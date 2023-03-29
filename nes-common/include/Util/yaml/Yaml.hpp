@@ -123,7 +123,7 @@ class Exception : public std::runtime_error {
         * @brief Enumeration of exception types.
         *
         */
-    enum class eType : int8_t {
+    enum class eType : uint8_t {
         InternalError,///< Internal error.
         ParsingError, ///< Invalid parsing data.
         OperationError///< User operation error.

@@ -28,7 +28,7 @@ class MaterializedViewManager;
 using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
 
 /// @brief enum of supported view types
-enum class ViewType : int8_t { TUPLE_VIEW };
+enum class ViewType : uint8_t { TUPLE_VIEW };
 
 /**
  * @brief the materialized view manager creates and manages materialized views.

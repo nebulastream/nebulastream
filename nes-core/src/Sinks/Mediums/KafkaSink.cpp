@@ -32,7 +32,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                      QueryId queryId,
                      QuerySubPlanId querySubPlanId,
                      const uint64_t kafkaProducerTimeout,
-                     FaultToleranceType::Value faultToleranceType,
+                     FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(format,
                  std::move(nodeEngine),

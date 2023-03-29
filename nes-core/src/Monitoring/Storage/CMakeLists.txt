@@ -14,6 +14,5 @@
 
 add_source_files(nes-core
         AllEntriesMetricStore.cpp
-        MetricStoreType.cpp
         LatestEntriesMetricStore.cpp
         )

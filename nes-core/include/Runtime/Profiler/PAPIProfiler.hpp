@@ -28,7 +28,7 @@ namespace Profiler {
  */
 class PapiCpuProfiler : public BaseProfiler {
   public:
-    enum class Presets : int8_t {
+    enum class Presets : uint8_t {
         /// frontend, backend (core and memory), branch mispredicition stalls
         Multiplexing = 0,
         /// frontend, backend (core and memory), branch mispredicition stalls (extended)

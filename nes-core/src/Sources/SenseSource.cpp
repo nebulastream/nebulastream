@@ -39,7 +39,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::Value::INTERVAL_MODE,
+                 GatheringMode::INTERVAL_MODE,
                  std::move(successors)),
       udfs(std::move(udfs)) {}
 

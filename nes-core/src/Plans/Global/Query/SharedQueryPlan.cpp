@@ -25,7 +25,7 @@
 namespace NES {
 
 SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
-    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), sharedQueryPlanStatus(SharedQueryPlanStatus::Value::Created),
+    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), sharedQueryPlanStatus(SharedQueryPlanStatus::Created),
       hashBasedSignatures() {
     auto queryId = queryPlan->getQueryId();
     //Create a new query plan
@@ -162,9 +162,9 @@ void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::stri
     }
 }
 
-SharedQueryPlanStatus::Value SharedQueryPlan::getStatus() const { return sharedQueryPlanStatus; }
+SharedQueryPlanStatus SharedQueryPlan::getStatus() const { return sharedQueryPlanStatus; }
 
-void SharedQueryPlan::setStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+void SharedQueryPlan::setStatus(SharedQueryPlanStatus sharedQueryPlanStatus) {
     this->sharedQueryPlanStatus = sharedQueryPlanStatus;
 }
 

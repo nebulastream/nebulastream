@@ -28,7 +28,7 @@ namespace NES::Nautilus::IR::Operations {
  */
 class LoopOperation : public Operation {
   public:
-    enum class LoopType : int8_t { DefaultLoop, CountedLoop };
+    enum class LoopType : uint8_t { DefaultLoop, CountedLoop };
     LoopOperation(LoopType loopType);
     ~LoopOperation() override = default;
 

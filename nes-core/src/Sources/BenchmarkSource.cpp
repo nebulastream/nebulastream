@@ -44,7 +44,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  OperatorId operatorId,
                                  OriginId originId,
                                  size_t numSourceLocalBuffers,
-                                 GatheringMode::Value gatheringMode,
+                                 GatheringMode gatheringMode,
                                  SourceMode::Value sourceMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
@@ -61,9 +61,9 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");
     this->numBuffersToProcess = numBuffersToProcess;
-    if (gatheringMode == GatheringMode::Value::INTERVAL_MODE) {
+    if (gatheringMode == GatheringMode::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
-    } else if (gatheringMode == GatheringMode::Value::INGESTION_RATE_MODE) {
+    } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));

@@ -108,7 +108,7 @@ class QueryCatalogEntry {
      * @brief Return placement strategy used for the query
      * @return queryPlacement strategy
      */
-    PlacementStrategy::Value getQueryPlacementStrategy();
+    PlacementStrategy getQueryPlacementStrategy();
 
     void setMetaInformation(std::string metaInformation);
 

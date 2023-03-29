@@ -41,7 +41,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::Value::INTERVAL_MODE,
+                 GatheringMode::INTERVAL_MODE,
                  successors),
       metricCollector(metricCollector), waitTime(waitTime) {
     schema = metricCollector->getSchema();

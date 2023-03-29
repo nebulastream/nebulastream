@@ -18,7 +18,7 @@
 
 namespace NES::Windowing {
 
-enum class TriggerType : int8_t { triggerOnTime, triggerOnRecord, triggerOnBuffer, triggerOnWatermarkChange };
+enum class TriggerType : uint8_t { triggerOnTime, triggerOnRecord, triggerOnBuffer, triggerOnWatermarkChange };
 
 class BaseWindowTriggerPolicyDescriptor {
   public:

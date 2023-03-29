@@ -64,7 +64,7 @@ class SymbolicExecutionContext {
      * @brief Symbolic execution mode.
      * That identifies if, we follow a previously recorded execution or if we record a new one.
      */
-    enum class MODE : const int8_t { FOLLOW, RECORD };
+    enum class MODE : const uint8_t { FOLLOW, RECORD };
     /**
      * @brief Tag state
      * This indicates if we visited a specific tag one or two times.
