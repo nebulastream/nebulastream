@@ -21,8 +21,9 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
+//TODO: update to handle new form of functionexpressions. see https://github.com/nebulastream/nebulastream/issues/3501
+//#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
+//#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>

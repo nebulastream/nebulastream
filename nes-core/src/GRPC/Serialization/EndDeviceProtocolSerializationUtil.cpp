@@ -18,8 +18,8 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
+//#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
+//#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
@@ -92,7 +92,7 @@ void EndDeviceProtocolSerializationUtil::serializeConstantValue(ExpressionNodePt
         case BasicPhysicalType::UINT_64: data->set__uint64(stoul(basicValue->value)); break;
         case BasicPhysicalType::INT_8: data->set__int8(stoul(basicValue->value)); break;
         case BasicPhysicalType::INT_16: data->set__int16(stoul(basicValue->value)); break;
-        case BasicPhysicalType::INT_32: data->set__int8(stoi(basicValue->value)); break;
+        case BasicPhysicalType::INT_32: data->set__int32(stoi(basicValue->value)); break;
         case BasicPhysicalType::INT_64: data->set__int64(stol(basicValue->value)); break;
         case BasicPhysicalType::FLOAT: data->set__float(std::stof(basicValue->value)); break;
         case BasicPhysicalType::DOUBLE: data->set__double(std::stod(basicValue->value)); break;

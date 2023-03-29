@@ -31,10 +31,10 @@ SourceDescriptorPtr LoRaWANProxySourceDescriptor::create(SchemaPtr schema,
     return std::make_shared<LoRaWANProxySourceDescriptor>(
         LoRaWANProxySourceDescriptor(std::move(schema), std::move(sourceConfig), std::move(logicalSourceName), std::move(physicalSourceName)));
 }
-std::string LoRaWANProxySourceDescriptor::toString() {
+std::string LoRaWANProxySourceDescriptor::toString() const {
     return "LoRaWANProxySourceDescriptor(" + loRaWanProxySourceType->toString() + ")";
 }
-bool LoRaWANProxySourceDescriptor::equal(const NES::SourceDescriptorPtr& other) {
+bool LoRaWANProxySourceDescriptor::equal(const NES::SourceDescriptorPtr& other) const {
     if (!other->instanceOf<LoRaWANProxySourceDescriptor>()) {
         return false;
     }

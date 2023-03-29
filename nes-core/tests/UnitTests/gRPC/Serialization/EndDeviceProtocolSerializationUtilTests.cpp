@@ -54,6 +54,8 @@ limitations under the License.
 
 #include <GRPC/Serialization/EndDeviceProtocolSerializationUtil.hpp>
 
+#include <sstream>
+
 namespace NES {
 using namespace EndDeviceProtocol;
 class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
@@ -79,19 +81,157 @@ class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValue) {
-    // Test constant Value serialisation. Right now we only support 8bit numbers, so we only test those.
-    // This should be changed in later versions
-    auto int8 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT8, std::to_string(0)));
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt8) {
+    // Test constant Value serialisation.
+    constexpr int8_t number = (1 << 7) - 1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(number)));
 
     MapOperation actual;
-    EndDeviceProtocolSerializationUtil::serializeConstantValue(int8, actual.mutable_function());
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
 
     MapOperation expected;
     expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
-    expected.mutable_function()->Add()->set__uint8(0);
-    EXPECT_EQ(expected.function(0).instruction(), ExpressionInstructions::CONST);
-    EXPECT_EQ(expected.function(1)._uint8(), 0);
+    expected.mutable_function()->Add()->set__int8(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt16) {
+    // Test constant Value serialisation.
+    constexpr int16_t number = (1 << 15) - 1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT16, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__int16(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt32) {
+    // Test constant Value serialisation.
+    constexpr int32_t number = (1u << 31) - 1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT32, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__int32(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt64) {
+    // Test constant Value serialisation.
+    constexpr int64_t number = (1ul << 63) - 1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__int64(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint8) {
+    // Test constant Value serialisation.
+    constexpr uint8_t number = (1 << 8)-1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT8, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__uint8(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint16) {
+    // Test constant Value serialisation.
+    constexpr uint16_t number = (1 << 16)-1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT16, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__uint16(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint32) {
+    // Test constant Value serialisation.
+    constexpr uint32_t number = (1l << 32)-1;
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT32, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__uint32(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint64) {
+    // Test constant Value serialisation.
+    constexpr uint64_t number = (1UL << 63);
+    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__uint64(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueFloat) {
+    // Test constant Value serialisation.
+    constexpr float number = 1.0;
+    auto floatNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT32, std::to_string(number)));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(floatNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__float(number);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueDouble) {
+    // Test constant Value serialisation.
+    constexpr double number = 1.12345678912345678;
+    std::stringstream ss;
+    ss << std::fixed;
+    ss << std::setprecision(17);
+    ss << number;
+    auto floatNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT64,  ss.str()));
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(floatNode, actual.mutable_function());
+
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__double(number);
+
     EXPECT_EQ(expected.DebugString(), actual.DebugString());
 }
 

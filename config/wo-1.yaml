@@ -37,7 +37,7 @@ physicalSources:
       ## Set password for LoRaWANProxySource
       password: admin
       ## Set appId for the configured application for the LoRaWANProxySource
-      appId: 125b0092-3243-46b7-937e-bc55486e6788
+      appId: 8ca540c3-0e8b-4786-8504-683afc86e855
       ## Files needed for secure mqtt connection
       ## Path to folder containing ca file
       CAPath: /Users/flapkap/Desktop/

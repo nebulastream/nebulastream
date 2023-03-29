@@ -28,8 +28,8 @@ class LoRaWANProxySourceDescriptor: public SourceDescriptor {
      */
     LoRaWANProxySourceTypePtr getSourceConfig() const;
 
-    std::string toString() override;
-    bool equal(const SourceDescriptorPtr& other) override;
+    std::string toString() const override;
+    bool equal(const SourceDescriptorPtr& other) const override;
     SourceDescriptorPtr copy() override;
 
   private:

@@ -1258,11 +1258,11 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         SchemaSerializationUtil::serializeSchema(senseSourceDescriptor->getSchema(),
                                                  senseSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(senseSerializedSourceDescriptor);
-    } else if (sourceDescriptor->instanceOf<LoRaWANProxySourceDescriptor>()){
+    } else if (sourceDescriptor.instanceOf<LoRaWANProxySourceDescriptor>()){
         // serialize LoRaWANProxySourceDescriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableLoRaWANProxySourceDescriptor");
-        auto loraDesc = sourceDescriptor->as<LoRaWANProxySourceDescriptor>();
+        auto loraDesc = sourceDescriptor.as<const LoRaWANProxySourceDescriptor>();
         auto loraSourceConfig = loraDesc->getSourceConfig();
 
         auto sourceConf_ser = SerializablePhysicalSourceType_SerializableLoRaWANProxySourceType();
@@ -1296,7 +1296,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         auto schema = loraDesc->getSchema();
 
         SchemaSerializationUtil::serializeSchema(schema, loraDesc_ser.mutable_sourceschema());
-        sourceDetails->mutable_sourcedescriptor()->PackFrom(loraDesc_ser);
+        sourceDetails.mutable_sourcedescriptor()->PackFrom(loraDesc_ser);
 
     } if (sourceDescriptor.instanceOf<const LogicalSourceDescriptor>()) {
         // serialize logical source descriptor
