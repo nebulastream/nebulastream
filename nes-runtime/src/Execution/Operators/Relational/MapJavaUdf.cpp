@@ -115,12 +115,13 @@ extern "C" void startOrAttachVMWithJarFile(void* state) {
     options[2].optionString = (char*) "-verbose:class";
     vmArgs.nOptions = 3;
     vmArgs.options = options;
-    vmArgs.version = JNI_VERSION_1_2;
+    vmArgs.version = JNI_VERSION_1_8;
     vmArgs.ignoreUnrecognized = false;// invalid options make the JVM init fail
 
     auto env = handler->getEnvironment();
     JVMContext::instance().createOrAttachToJVM(&env, vmArgs);
     handler->setEnvironment(env);
+    delete [] options;
 }
 
 /**
@@ -132,7 +133,7 @@ extern "C" void startOrAttachVMWithByteList(void* state) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     JavaVMInitArgs vmArgs;
-    vmArgs.version = JNI_VERSION_1_2;
+    vmArgs.version = JNI_VERSION_1_8;
     vmArgs.ignoreUnrecognized = false;// invalid options make the JVM init fail
 
     JVMContext& context = JVMContext::instance();
@@ -228,7 +229,7 @@ extern "C" void* allocateObject(void* state, void* classPtr) {
  * @return jobject instance of the given class
  */
 template<typename T>
-void* createObjectType(void* state, T value, std::string className, std::string constructorSignature) {
+void* createObjectType(void* state, T value, const std::string& className, const std::string& constructorSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -319,7 +320,7 @@ extern "C" void* createStringObject(void* state, TextValue* value) {
  * @return T value of the field
  */
 template<typename T>
-T getObjectTypeValue(void* state, void* object, std::string className, std::string getterName, std::string getterSignature) {
+T getObjectTypeValue(void* state, void* object, const std::string& className, const std::string& getterName, const std::string& getterSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -416,7 +417,7 @@ extern "C" int16_t getShortObjectValue(void* state, void* object) {
  * @return byte value of the field
  */
 extern "C" int8_t getByteObjectValue(void* state, void* object) {
-    return getObjectTypeValue<int16_t>(state, object, "java/lang/Byte", "byteValue", "()B");
+    return getObjectTypeValue<int8_t>(state, object, "java/lang/Byte", "byteValue", "()B");
 }
 
 /**
@@ -448,7 +449,7 @@ extern "C" TextValue* getStringObjectValue(void* state, void* object) {
  * @return T value of the field
  */
 template<typename T>
-T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::string signature) {
+T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const std::string& signature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
@@ -594,7 +595,7 @@ extern "C" TextValue* getStringField(void* state, void* classPtr, void* objectPt
  * @param signature signature of the field
  */
 template<typename T>
-void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, std::string signature) {
+void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, const std::string& signature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
