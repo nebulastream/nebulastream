@@ -190,17 +190,10 @@ class Text final : public Nautilus::Any {
     /**
      * @brief Returns true or false whether the string matches the supplied pattern
      * @param compareText as Value<Text>
-     * @return Value<Boolean>
+     * @param caseSensitive as Value<Boolean> true for case sensitive and false for insensitive pattern matching
+     * @return Value<Boolean> returns true if the string matches the supplied pattern
      */
-    const Value<Boolean> like(Value<Text>& compareText) const;
-
-    /**
-     * @brief Returns true or false whether the string matches the supplied pattern (case insenstive)
-     * @param compareText as Value<Text>
-     * @return Value<Boolean>
-     */
-    const Value<Boolean> iLike(Value<Text>& compareText) const;
-
+    const Value<Boolean> like(Value<Text>& compareText, Value<Boolean> caseSensitive) const;
 
     /**
      * @brief Returns the stamp of this type

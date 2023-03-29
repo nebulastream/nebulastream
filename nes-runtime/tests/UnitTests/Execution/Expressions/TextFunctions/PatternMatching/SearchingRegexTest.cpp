@@ -44,8 +44,9 @@ class SearchingRegexTest : public Testing::NESBaseTest {
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
-// @brief The SearchingRegex Class provides functionality that checks whether some sub-sequence in the target
-// sequence (the subject) matches the regular expression rgx (the pattern).
+/** @brief The SearchingRegex Class provides functionality that checks whether some sub-sequence in the target
+ * sequence (the subject) matches the regular expression rgx (the pattern).
+ */
 
 TEST_F(SearchingRegexTest, evaluateSearchingRegex1) {
     auto expression = BinaryExpressionWrapper<SearchingRegex>();

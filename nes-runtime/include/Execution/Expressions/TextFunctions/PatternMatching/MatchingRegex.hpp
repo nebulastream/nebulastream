@@ -22,21 +22,21 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This expression matches a given pattern in a given String. Only full match. For partial matches please use SearchingRegex.
- * Set iCase to true for case insensitive matching
-* @param left String Target Sequence
-* @param mid String Regex pattern
-* @param right Boolean iCase
+* @brief This expression matches a given pattern in a given String and returns true in case of a full match. For partial matches please use SearchingRegex.
+ * Set caseSensitive to true for case insensitive matching
+* @param textValue as TextValue the text (string) to extract the regexpPattern from
+* @param regexpPattern as TextValue the pattern to extract
+* @param caseSensitive as Boolean indicates if matching should be done case sensitive
 */
 class MatchingRegex : public Expression {
   public:
-    MatchingRegex(const ExpressionPtr& leftSubExpression,const ExpressionPtr& midSubExpression, const ExpressionPtr& rightSubExpression);
+    MatchingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& caseSensitive);
     Value<> execute(Record& record) const override;
 
   private:
-    const ExpressionPtr leftSubExpression; // String with target sequence
-    const ExpressionPtr midSubExpression;  // regex pattern to match against
-    const ExpressionPtr rightSubExpression;// Icase flag
+    const ExpressionPtr textValue;
+    const ExpressionPtr regexpPattern;
+    const ExpressionPtr caseSensitive;
 };
 }// namespace NES::Runtime::Execution::Expressions
 

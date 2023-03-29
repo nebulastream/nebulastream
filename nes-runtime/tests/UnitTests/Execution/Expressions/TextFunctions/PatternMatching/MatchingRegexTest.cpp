@@ -63,8 +63,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch2) {
         auto l = Value<Text>("test");
         auto r = Value<Text>("t");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) false);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch3) {
@@ -74,8 +74,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch3) {
         auto l = Value<Text>("test");
         auto r = Value<Text>("^t$");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) false);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch4) {
@@ -85,8 +85,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch4) {
         auto l = Value<Text>("test");
         auto r = Value<Text>(".*(e|s).*");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) true);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch5) {
@@ -96,8 +96,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch5) {
         auto l = Value<Text>("test");
         auto r = Value<Text>("(e|s).*");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) false);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch6) {
@@ -107,8 +107,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch6) {
         auto l = Value<Text>("test");
         auto r = Value<Text>("^(e|s).*");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) false);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch7) {
@@ -118,8 +118,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch7) {
         auto l = Value<Text>("tESt");
         auto r = Value<Text>(".*(e|s).*");
         auto resultValue = expression.eval(l, r, (Boolean) false);
-        ASSERT_EQ(resultValue, (Boolean) false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) false);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 TEST_F(MatchingRegexTest, evaluateRegexMatch8) {
@@ -129,8 +129,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch8) {
         auto l = Value<Text>("tESt");
         auto r = Value<Text>(".*(e|s).*");
         auto resultValue = expression.eval(l, r, (Boolean) true);
-        ASSERT_EQ(resultValue, (Boolean) true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
+        EXPECT_EQ(resultValue, (Boolean) true);
+        EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
 
