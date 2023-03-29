@@ -432,10 +432,9 @@ extern "C" TextValue* getStringObjectValue(void* state, void* object) {
     NES_ASSERT2_FMT(object != nullptr, "object should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
-    auto size = handler->getEnvironment()->GetStringUTFLength((jstring) object);
-    auto resultText = TextValue::create(size);
-    auto sourceText = handler->getEnvironment()->GetStringUTFChars((jstring) object, nullptr);
-    std::memcpy(resultText->str(), sourceText, size);
+    auto utfString = handler->getEnvironment()->GetStringUTFChars((jstring) object, nullptr);
+    auto resultText = TextValue::create(std::string(utfString));
+    handler->getEnvironment()->ReleaseStringUTFChars((jstring) object, utfString);
     return resultText;
 }
 
@@ -478,10 +477,9 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const s
         value = (T) handler->getEnvironment()->GetByteField(pojo, id);
     } else if constexpr (std::is_same<T, TextValue*>::value) {
         auto jstr = (jstring) handler->getEnvironment()->GetObjectField(pojo, id);
-        auto size = handler->getEnvironment()->GetStringUTFLength((jstring) jstr);
-        value = TextValue::create(size);
-        auto resultText = handler->getEnvironment()->GetStringUTFChars(jstr, 0);
-        std::memcpy(value->str(), resultText, size);
+        auto utfString = handler->getEnvironment()->GetStringUTFChars((jstring) jstr, nullptr);
+        value = TextValue::create(std::string(utfString));
+        handler->getEnvironment()->ReleaseStringUTFChars((jstring) jstr, utfString);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
