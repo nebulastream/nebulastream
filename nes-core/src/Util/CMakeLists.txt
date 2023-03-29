@@ -21,7 +21,6 @@ add_source_files(nes-core
         GatheringMode.cpp
         SourceMode.cpp
         KalmanFilter.cpp
-        QueryStatus.cpp
         RequestType.cpp
         SharedQueryPlanStatus.cpp
         SpatialUtils.cpp

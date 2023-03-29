@@ -70,14 +70,14 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_400, "Field 'migrationType' must be provided");
         }
         uint64_t id = requestJson["id"];
-        Experimental::MigrationType::Value migrationType =
-            Experimental::MigrationType::getFromString(requestJson["migrationType"]);
+        Experimental::MigrationType migrationType =
+                magic_enum::enum_cast<Experimental::MigrationType>(requestJson["migrationType"]).value();
         auto info = maintenanceService->submitMaintenanceRequest(id, migrationType);
         if (info.first == true) {
             nlohmann::json result{};
             result["Info"] = "Successfully submitted Maintenance Request";
             result["Node Id"] = id;
-            result["Migration Type"] = Experimental::MigrationType::toString(migrationType);
+            result["Migration Type"] = std::string(magic_enum::enum_name(migrationType));
             return createResponse(Status::CODE_200, result.dump());
         } else {
             std::string errorMessage = info.second;

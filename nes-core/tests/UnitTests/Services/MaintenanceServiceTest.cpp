@@ -65,7 +65,7 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
 TEST_F(MaintenanceServiceTest, testMaintenanceService) {
 
     //Prepare
-    auto nonExistentType = NES::Experimental::MigrationType::Value(4);
+    auto nonExistentType = NES::Experimental::MigrationType(4);
     //test no such Topology Node ID
     uint64_t nonExistentId = 0;
     auto [result1, info1] = maintenanceService->submitMaintenanceRequest(nonExistentId, nonExistentType);
@@ -79,12 +79,12 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
                   + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
                     "Buffering)");
     //test RESTART migration type behavior
-    auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::RESTART);
+    auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::RESTART);
     EXPECT_FALSE(result3);
     EXPECT_EQ(info3, "RESTART currently not supported. Will be added in future");
     //test pass valid MigrationType and topology node
     auto [result4, info4] =
-        maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::MIGRATION_WITH_BUFFERING);
+        maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::MIGRATION_WITH_BUFFERING);
     EXPECT_TRUE(result4);
     EXPECT_EQ(info4, "Successfully submitted Query Migration Requests for Topology Node with ID: " + std::to_string(id));
 }

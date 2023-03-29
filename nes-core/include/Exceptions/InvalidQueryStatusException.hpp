@@ -25,7 +25,7 @@ namespace NES {
  */
 class InvalidQueryStatusException : public std::exception {
   public:
-    explicit InvalidQueryStatusException(const std::vector<QueryStatus::Value>& expectedStatus, QueryStatus::Value actualStatus);
+    explicit InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatus, QueryStatus actualStatus);
     [[nodiscard]] const char* what() const noexcept override;
 
   private:

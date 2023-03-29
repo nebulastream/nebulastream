@@ -73,7 +73,7 @@ class QueryCatalog {
      * @param requestedStatus : desired query status
      * @return this will return a COPY of the queryIdAndCatalogEntryMapping in the catalog that are running
      */
-    std::map<uint64_t, QueryCatalogEntryPtr> getQueryCatalogEntries(QueryStatus::Value requestedStatus);
+    std::map<uint64_t, QueryCatalogEntryPtr> getQueryCatalogEntries(QueryStatus requestedStatus);
 
     /**
      * @brief method to reset the catalog
@@ -92,7 +92,7 @@ class QueryCatalog {
     * @return returns map of query Id and query string
     * @throws exception in case of invalid status
     */
-    std::map<uint64_t, std::string> getQueriesWithStatus(QueryStatus::Value status);
+    std::map<uint64_t, std::string> getQueriesWithStatus(QueryStatus status);
 
     /**
      * @brief Get all queryIdAndCatalogEntryMapping registered in the system

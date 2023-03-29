@@ -16,17 +16,19 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 NES::Experimental::MigrateQueryRequestPtr
-NES::Experimental::MigrateQueryRequest::create(NES::QueryId queryId, NES::Experimental::MigrationType::Value migrationType) {
+NES::Experimental::MigrateQueryRequest::create(NES::QueryId queryId, NES::Experimental::MigrationType migrationType) {
     return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(queryId, migrationType));
 }
 
 NES::Experimental::MigrateQueryRequest::MigrateQueryRequest(NES::QueryId queryId,
-                                                            NES::Experimental::MigrationType::Value migrationType)
+                                                            NES::Experimental::MigrationType migrationType)
     : queryId(queryId), migrationType(migrationType) {}
 
 std::string NES::Experimental::MigrateQueryRequest::toString() {
     return "QueryMigrationRequest { Query Id: " + std::to_string(queryId) + ", withBuffer: " +
             std::string(magic_enum::enum_name(migrationType)) + "}";
 }
-NES::Experimental::MigrationType::Value NES::Experimental::MigrateQueryRequest::getMigrationType() { return migrationType; }
+
+NES::Experimental::MigrationType NES::Experimental::MigrateQueryRequest::getMigrationType() { return migrationType; }
+
 NES::QueryId NES::Experimental::MigrateQueryRequest::getQueryId() { return queryId; }

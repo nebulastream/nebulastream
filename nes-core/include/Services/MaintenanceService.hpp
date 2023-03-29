@@ -56,7 +56,7 @@ class MaintenanceService {
      * @param nodeId
      * @param MigrationType
      */
-    std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type);
+    std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType type);
 
   private:
     TopologyPtr topology;

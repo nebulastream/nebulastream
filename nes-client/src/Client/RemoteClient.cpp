@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 using namespace std::string_literals;
 
@@ -190,8 +191,8 @@ std::string RemoteClient::getQueries() {
     return result.dump();
 }
 
-std::string RemoteClient::getQueries(QueryStatus::Value status) {
-    std::string queryStatus = QueryStatus::toString(status);
+std::string RemoteClient::getQueries(QueryStatus status) {
+    std::string queryStatus = std::string(magic_enum::enum_name(status));
 
     cpr::AsyncResponse future =
         cpr::GetAsync(cpr::Url{getHostName() + "queryCatalog/queries"}, cpr::Parameters{{"status", queryStatus}});

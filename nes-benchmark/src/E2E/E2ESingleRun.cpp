@@ -272,7 +272,7 @@ void E2ESingleRun::stopQuery() {
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
             NES_TRACE("checkStoppedOrTimeout: check query status for " << id);
-            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::Value::Stopped) {
+            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::Stopped) {
                 NES_TRACE("checkStoppedOrTimeout: status for " << id << " reached stopped");
                 break;
             }
@@ -401,23 +401,24 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
             return false;
         }
         NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
+        QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::Value::MarkedForHardStop:
-            case QueryStatus::Value::MarkedForSoftStop:
-            case QueryStatus::Value::SoftStopCompleted:
-            case QueryStatus::Value::SoftStopTriggered:
-            case QueryStatus::Value::Stopped:
-            case QueryStatus::Value::Running: {
+            case QueryStatus::MarkedForHardStop:
+            case QueryStatus::MarkedForSoftStop:
+            case QueryStatus::SoftStopCompleted:
+            case QueryStatus::SoftStopTriggered:
+            case QueryStatus::Stopped:
+            case QueryStatus::Running: {
                 return true;
             }
-            case QueryStatus::Value::Failed: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
+            case QueryStatus::Failed: {
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " +
+                            std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                NES_WARNING("Expected: Running or Scheduling but found " + std::string(magic_enum::enum_name(status)));
                 break;
             }
         }

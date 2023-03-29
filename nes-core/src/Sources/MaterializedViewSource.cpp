@@ -39,7 +39,7 @@ MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> MaterializedViewSource::receiveData() { return view->receiveData(); };
 
-std::string MaterializedViewSource::toString() const { return Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG; };
+std::string MaterializedViewSource::toString() const { return std::string(magic_enum::enum_name(SourceType::MATERIALIZEDVIEW_SOURCE)); };
 
 SourceType MaterializedViewSource::getType() const { return SourceType::MATERIALIZEDVIEW_SOURCE; };
 

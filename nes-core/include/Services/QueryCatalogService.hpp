@@ -75,7 +75,7 @@ class QueryCatalogService {
      * @param querySubPlanId : the query sub plan id
      * @param subQueryStatus : the new sub query status
      */
-    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -111,7 +111,7 @@ class QueryCatalogService {
      * @param metaInformation : additional meta information
      * @return true if updated successfully
      */
-    bool updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation);
+    bool updateQueryStatus(QueryId queryId, QueryStatus queryStatus, const std::string& metaInformation);
 
     /**
      * check and mark the query for soft stop
@@ -176,7 +176,7 @@ class QueryCatalogService {
      * @param subQueryStatus : the new status
      * @return true if successful else false
      */
-    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus);
 
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;

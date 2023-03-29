@@ -207,7 +207,7 @@ void RequestProcessorService::start() {
 
                                 //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
                                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Stopped, "Hard Stopped");
+                                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
                                 }
                             }
 
@@ -230,14 +230,14 @@ void RequestProcessorService::start() {
                         if (queryRequest->instanceOf<StopQueryRequest>()) {
                             auto stopQueryRequest = queryRequest->as<StopQueryRequest>();
                             auto queryId = stopQueryRequest->getQueryId();
-                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Stopped, "Hard Stopped");
+                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
                         } else if (queryRequest->instanceOf<FailQueryRequest>()) {
                             auto failQueryRequest = queryRequest->as<FailQueryRequest>();
                             auto sharedQueryPlanId = failQueryRequest->getQueryId();
                             auto failureReason = failQueryRequest->getFailureReason();
                             auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
                             for (const auto& queryId : queryIds) {
-                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Failed, failureReason);
+                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, failureReason);
                             }
                         }
                     }
@@ -249,7 +249,7 @@ void RequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Value::Failed);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Failed, ex.what());
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
                 }
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR2("QueryRequestProcessingService: QueryDeploymentException: {}", ex.what());
@@ -257,12 +257,12 @@ void RequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Value::Failed);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Failed, ex.what());
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR2("QueryRequestProcessingService: TypeInferenceException: {}", ex.what());
                 auto queryId = ex.getQueryId();
-                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Failed, ex.what());
+                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
             } catch (InvalidQueryStatusException& ex) {
                 NES_ERROR2("QueryRequestProcessingService: InvalidQueryStatusException: {}", ex.what());
             } catch (QueryNotFoundException& ex) {

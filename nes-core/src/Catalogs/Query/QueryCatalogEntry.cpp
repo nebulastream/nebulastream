@@ -16,6 +16,7 @@
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Catalogs::Query {
 
@@ -23,7 +24,7 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
                                      std::string queryPlacementStrategy,
                                      QueryPlanPtr inputQueryPlan,
-                                     QueryStatus::Value queryStatus)
+                                     QueryStatus queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
       inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
 
@@ -40,17 +41,17 @@ void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
     this->executedQueryPlan = executedQueryPlan;
 }
 
-QueryStatus::Value QueryCatalogEntry::getQueryStatus() const {
+QueryStatus QueryCatalogEntry::getQueryStatus() const {
     std::unique_lock lock(mutex);
     return queryStatus;
 }
 
 std::string QueryCatalogEntry::getQueryStatusAsString() const {
     std::unique_lock lock(mutex);
-    return QueryStatus::toString(queryStatus);
+    return std::string(magic_enum::enum_name(queryStatus));
 }
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) {
+void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) {
     std::unique_lock lock(mutex);
     this->queryStatus = queryStatus;
 }
@@ -82,7 +83,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Value::Running, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Running, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 
