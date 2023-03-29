@@ -181,13 +181,13 @@ class SharedQueryPlan {
      * Get the status of the shared query plan
      * @return Current status of the query plan
      */
-    SharedQueryPlanStatus::Value getStatus() const;
+    SharedQueryPlanStatus getStatus() const;
 
     /**
      * Set the status of the shared query plan
      * @param sharedQueryPlanStatus : the status of the shared query plan
      */
-    void setStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus);
+    void setStatus(SharedQueryPlanStatus sharedQueryPlanStatus);
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
@@ -200,7 +200,7 @@ class SharedQueryPlan {
     bool removeOperator(const OperatorNodePtr& operatorToRemove);
 
     SharedQueryId sharedQueryId;
-    SharedQueryPlanStatus::Value sharedQueryPlanStatus;
+    SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
     std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> queryIds;

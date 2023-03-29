@@ -19,6 +19,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -39,15 +40,15 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     return true;
 }
 
-void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestType) {
+void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
     NES_DEBUG2("GlobalQueryPlan: Removing query information from the meta data");
 
-    if (RequestType::Value::Fail == requestType) {
+    if (RequestType::Fail == requestType) {
         //For failure request query id is nothing but id of the shared query plan
         auto sharedQueryPlan = sharedQueryIdToPlanMap[queryId];
         //Instead of removing query we mark the status of the shared query plan to failed
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Value::Failed);
-    } else if (RequestType::Value::Stop == requestType) {
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Failed);
+    } else if (RequestType::Stop == requestType) {
         //Check if the query id present in the Global query Plan
         if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
             //Fetch the shared query plan id and remove the query and associated operators
@@ -60,10 +61,10 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
 
             if (sharedQueryPlan->isEmpty()) {
                 // Mark SQP as stopped if all queries are removed post stop
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Value::Stopped);
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Stopped);
             } else {
                 // Mark SQP as updated if after stop more queries are remaining
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Value::Updated);
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
             }
 
             //Remove from the queryId to shared query id map
@@ -76,7 +77,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
                 }));
         }
     } else {
-        NES_ERROR2("Unknown request type {}", RequestType::toString(requestType));
+        NES_ERROR2("Unknown request type {}", std::string(magic_enum::enum_name(requestType)));
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -86,7 +87,7 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
     std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE2("GlobalQueryPlan: Iterate over the Map with global query metadata.");
     for (auto& [sharedQueryId, sharedQueryPlan] : sharedQueryIdToPlanMap) {
-        if (SharedQueryPlanStatus::Value::Deployed == sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::Deployed == sharedQueryPlan->getStatus()) {
             NES_TRACE2("GlobalQueryPlan: Skipping! found already deployed query meta data.");
             continue;
         }
@@ -109,7 +110,7 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
     NES_INFO2("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
     //Mark the shared query plan as updated post merging new queries
-    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Value::Updated);
+    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
     NES_TRACE2("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
     for (auto queryId : sharedQueryPlan->getQueryIds()) {
@@ -124,8 +125,8 @@ void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
     for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {
         auto sharedQueryPlan = itr->second;
         //Remove all plans that are stopped or Failed
-        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Value::Failed
-            || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Value::Stopped) {
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed
+            || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped) {
             NES_TRACE2("GlobalQueryPlan: Removing! found an empty query meta data.");
             sharedQueryIdToPlanMap.erase(itr++);
             continue;

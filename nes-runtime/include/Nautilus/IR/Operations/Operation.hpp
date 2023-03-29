@@ -29,8 +29,8 @@ namespace NES::Nautilus::IR::Operations {
 using OperationIdentifier = std::string;
 class Operation {
   public:
-    enum class ProxyCallType : int8_t { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
-    enum class OperationType : int8_t {
+    enum class ProxyCallType : uint8_t { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
+    enum class OperationType : uint8_t {
         AddOp,
         AddressOp,
         AndOp,

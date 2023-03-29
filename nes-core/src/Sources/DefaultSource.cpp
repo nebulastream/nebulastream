@@ -47,7 +47,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                       operatorId,
                       originId,
                       numSourceLocalBuffers,
-                      GatheringMode::Value ::INTERVAL_MODE,
+                      GatheringMode ::INTERVAL_MODE,
                       std::move(successors)) {
     this->gatheringInterval = std::chrono::milliseconds(gatheringInterval);
 }

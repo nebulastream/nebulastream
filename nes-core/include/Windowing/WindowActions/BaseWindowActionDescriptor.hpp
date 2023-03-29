@@ -18,7 +18,7 @@
 
 namespace NES::Windowing {
 
-enum class ActionType : int8_t { WindowAggregationTriggerAction, SliceAggregationTriggerAction, SliceCombinerTriggerAction };
+enum class ActionType : uint8_t { WindowAggregationTriggerAction, SliceAggregationTriggerAction, SliceCombinerTriggerAction };
 
 class BaseWindowActionDescriptor {
   public:

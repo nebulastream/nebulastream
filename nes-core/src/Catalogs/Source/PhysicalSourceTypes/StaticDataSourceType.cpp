@@ -36,7 +36,7 @@ static StaticDataSourceTypePtr create(const std::string& sourceType,
 
 GatheringMode::Value getGatheringMode() const;
 
-SourceMode::Value getSourceMode() const;
+SourceMode getSourceMode() const;
 
 uint64_t getTaskQueueId() const;
 
@@ -48,7 +48,7 @@ bool equal(const PhysicalSourceTypePtr& other) override;
 
 StaticDataSourceType::StaticDataSourceType(const std::string& pathTableFile,
                                            uint64_t numBuffersToProcess,
-                                           SourceMode::Value sourceMode,
+                                           SourceMode sourceMode,
                                            uint64_t taskQueueId,
                                            bool lateStart)
     : PhysicalSourceType(SourceType::STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)),
@@ -60,11 +60,11 @@ StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTabl
                                                      uint64_t taskQueueId,
                                                      bool lateStart) {
     // todo check validity of path
-    SourceMode::Value sourceModeEnum = SourceMode::getFromString(sourceMode);
+    SourceMode sourceModeEnum = SourceMode::getFromString(sourceMode);
     return std::make_shared<StaticDataSourceType>(pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId, lateStart);
 }
 
-SourceMode::Value StaticDataSourceType::getSourceMode() const { return sourceMode; }
+SourceMode StaticDataSourceType::getSourceMode() const { return sourceMode; }
 
 void StaticDataSourceType::reset() {
     //nothing

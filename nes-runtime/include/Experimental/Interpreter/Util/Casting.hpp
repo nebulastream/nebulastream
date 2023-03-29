@@ -23,7 +23,7 @@ concept convertible_to = std::is_convertible_v<_From, _To> && requires { static_
 
 class TypeCastable {
   public:
-    enum class Kind : int8_t {
+    enum class Kind : uint8_t {
         IntegerValue,
         FloatValue,
         BooleanValue,

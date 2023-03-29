@@ -25,7 +25,7 @@ namespace QueryCompilation {
  */
 class PipelineContext {
   public:
-    enum class PipelineContextArity : int8_t { Unary, BinaryLeft, BinaryRight };
+    enum class PipelineContextArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
     explicit PipelineContext(PipelineContextArity arity = PipelineContextArity::Unary);
     static PipelineContextPtr create();

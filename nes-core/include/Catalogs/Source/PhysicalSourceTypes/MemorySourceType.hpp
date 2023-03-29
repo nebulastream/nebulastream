@@ -55,7 +55,7 @@ class MemorySourceType : public PhysicalSourceType {
 
     uint64_t getGatheringValue() const;
 
-    GatheringMode::Value getGatheringMode() const;
+    GatheringMode getGatheringMode() const;
 
     uint64_t getTaskQueueId() const;
 
@@ -86,7 +86,7 @@ class MemorySourceType : public PhysicalSourceType {
                               size_t memoryAreaSize,
                               uint64_t numBuffersToProduce,
                               uint64_t gatheringValue,
-                              GatheringMode::Value gatheringMode,
+                              GatheringMode gatheringMode,
                               uint64_t sourceAffinity,
                               uint64_t taskQueueId);
 
@@ -94,7 +94,7 @@ class MemorySourceType : public PhysicalSourceType {
     size_t memoryAreaSize;
     uint64_t numberOfBufferToProduce;
     uint64_t gatheringValue;
-    GatheringMode::Value gatheringMode;
+    GatheringMode gatheringMode;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };

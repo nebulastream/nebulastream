@@ -28,7 +28,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
-                       FaultToleranceType::Value faultToleranceType,
+                       FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
@@ -38,7 +38,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
-    if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };

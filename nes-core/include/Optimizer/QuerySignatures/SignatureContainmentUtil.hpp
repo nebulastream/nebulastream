@@ -36,7 +36,7 @@ using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
 /**
  * @brief enum describing the given containment relationship
  */
-enum class ContainmentType : int8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
+enum class ContainmentType : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
 
 /**
  * @brief This is a utility to compare two signatures

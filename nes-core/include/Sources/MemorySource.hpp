@@ -52,7 +52,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           OperatorId operatorId,
                           OriginId originId,
                           size_t numSourceLocalBuffers,
-                          GatheringMode::Value gatheringMode,
+                          GatheringMode gatheringMode,
                           uint64_t sourceAffinity,
                           uint64_t taskQueueId,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

@@ -7,6 +7,7 @@
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
+
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
@@ -17,10 +18,10 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins)
+PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins) {}
 
-SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins) {
+SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins) {
     return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(faultToleranceType, numberOfOrigins));
 }
 
@@ -28,7 +29,7 @@ std::string PrintSinkDescriptor::toString() const { return "PrintSinkDescriptor(
 
 bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<PrintSinkDescriptor>(); }
 
-FaultToleranceType::Value PrintSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType PrintSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 uint64_t PrintSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 

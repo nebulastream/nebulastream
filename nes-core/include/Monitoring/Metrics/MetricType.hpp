@@ -22,7 +22,7 @@ namespace NES::Monitoring {
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
 */
-enum class MetricType : int8_t {
+enum class MetricType : uint8_t {
     CpuMetric,
     DiskMetric,
     MemoryMetric,
@@ -33,20 +33,6 @@ enum class MetricType : int8_t {
     WrappedNetworkMetrics,
     UnknownMetric
 };
-
-/**
- * @brief Converts a metric type to a string
- * @param type
- * @return the type as string
- */
-std::string toString(MetricType type);
-
-/**
- * @brief Creates a metric type from a string
- * @param metric type as string
- * @return the metric type
- */
-MetricType parse(std::string metricTypeStr);
 
 }// namespace NES::Monitoring
 

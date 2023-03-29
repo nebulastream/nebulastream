@@ -15,14 +15,7 @@ add_source_files(nes-core
         UtilityFunctions.cpp
         TimeMeasurement.cpp
         BufferSequenceNumber.cpp
-        FaultToleranceType.cpp
-        LineageType.cpp
-        PlacementStrategy.cpp
-        GatheringMode.cpp
-        SourceMode.cpp
         KalmanFilter.cpp
-        RequestType.cpp
-        SharedQueryPlanStatus.cpp
         SpatialUtils.cpp
         )
 if (NES_USE_MQTT)

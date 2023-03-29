@@ -62,7 +62,7 @@ class CompiledExecutablePipelineStage : public Runtime::Execution::ExecutablePip
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
   private:
-    enum class ExecutionStage : int8_t { NotInitialized, Initialized, Running, Stopped };
+    enum class ExecutionStage : uint8_t { NotInitialized, Initialized, Running, Stopped };
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
     std::shared_ptr<Compiler::DynamicObject> dynamicObject;
     std::mutex executionStageLock;

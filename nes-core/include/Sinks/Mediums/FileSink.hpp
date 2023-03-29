@@ -44,7 +44,7 @@ class FileSink : public SinkMedium {
                       bool append,
                       QueryId queryId,
                       QuerySubPlanId querySubPlanId,
-                      FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
+                      FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                       uint64_t numberOfOrigins = 1);
 
     /**

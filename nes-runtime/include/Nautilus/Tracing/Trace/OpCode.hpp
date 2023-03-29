@@ -17,7 +17,7 @@ namespace NES::Nautilus::Tracing {
 /**
  * @brief The OpCode enum defines the different traceable primitive operations.
  */
-enum class OpCode : int8_t {
+enum class OpCode : uint8_t {
     ADD,
     SUB,
     DIV,

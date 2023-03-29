@@ -40,8 +40,8 @@ DefaultSourceType::DefaultSourceType()
                                                                 1,
                                                                 "Gathering interval of the source.")),
       gatheringMode(
-          Configurations::ConfigurationOption<GatheringMode::Value>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
-                                                                            GatheringMode::Value::INTERVAL_MODE,
+          Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
+                                                                            GatheringMode::INTERVAL_MODE,
                                                                             "Gathering mode of the source.")) {
     NES_INFO2("NesSourceConfig: Init source config object with default values.");
 }
@@ -84,6 +84,6 @@ void DefaultSourceType::setGatheringMode(std::string inputGatheringMode) {
     gatheringMode->setValue(GatheringMode::getFromString(std::move(inputGatheringMode)));
 }
 
-void DefaultSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
+void DefaultSourceType::setGatheringMode(GatheringMode inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
 
 }// namespace NES

@@ -109,7 +109,7 @@ createLambdaSource(const SchemaPtr& schema,
                    OperatorId operatorId,
                    OriginId originId,
                    size_t numSourceLocalBuffers,
-                   GatheringMode::Value gatheringMode,
+                   GatheringMode gatheringMode,
                    uint64_t sourceAffinity,
                    uint64_t taskQueueId,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
@@ -138,7 +138,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  OperatorId operatorId,
                                  OriginId originId,
                                  size_t numSourceLocalBuffers,
-                                 GatheringMode::Value gatheringMode,
+                                 GatheringMode gatheringMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
@@ -189,7 +189,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     OperatorId operatorId,
                                     OriginId originId,
                                     size_t numSourceLocalBuffers,
-                                    GatheringMode::Value gatheringMode,
+                                    GatheringMode gatheringMode,
                                     SourceMode::Value sourceMode,
                                     uint64_t sourceAffinity,
                                     uint64_t taskQueueId,
@@ -228,7 +228,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                        operatorId,
                                        originId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::Value::INTERVAL_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 
@@ -247,7 +247,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                           operatorId,
                                           originId,
                                           numSourceLocalBuffers,
-                                          GatheringMode::Value::INTERVAL_MODE,
+                                          GatheringMode::INTERVAL_MODE,
                                           successors);
 }
 
@@ -284,7 +284,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        operatorId,
                                        originId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::Value::INTERVAL_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 
@@ -343,7 +343,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     operatorId,
                                                                                     originId,
                                                                                     numSourceLocalBuffers,
-                                                                                    GatheringMode::Value::INTERVAL_MODE,
+                                                                                    GatheringMode::INTERVAL_MODE,
                                                                                     successors,
                                                                                     view);
 }
@@ -403,7 +403,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                        password,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::Value::INTERVAL_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 #endif
@@ -423,7 +423,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         operatorId,
                                         originId,
                                         numSourceLocalBuffers,
-                                        GatheringMode::Value::INTERVAL_MODE,
+                                        GatheringMode::INTERVAL_MODE,
                                         successors);
 }
 #endif
@@ -443,7 +443,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                                        operatorId,
                                        originId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::Value::INTERVAL_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 }// namespace NES

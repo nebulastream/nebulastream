@@ -48,7 +48,6 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
 class WorkerMobilityHandler;
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 
-//enum class LocationProviderType;
 }// namespace Spatial::Mobility::Experimental
 
 namespace Configurations::Spatial::Mobility::Experimental {

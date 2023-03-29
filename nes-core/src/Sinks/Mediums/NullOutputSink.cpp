@@ -24,7 +24,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
-                               FaultToleranceType::Value faultToleranceType,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(nullptr,
                  std::move(nodeEngine),

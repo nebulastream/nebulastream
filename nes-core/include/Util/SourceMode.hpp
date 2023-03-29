@@ -20,10 +20,7 @@
 #include <string>
 
 namespace NES {
-class SourceMode {
-
-  public:
-    enum class Value : uint8_t {
+    enum class SourceMode : uint8_t {
         EMPTY_BUFFER = 0,
         WRAP_BUFFER = 1,
         CACHE_COPY = 2,
@@ -31,21 +28,6 @@ class SourceMode {
         COPY_BUFFER_SIMD_RTE = 4,
         COPY_BUFFER_SIMD_APEX = 5
     };
-
-    /**
-     * @brief Get Source Mode from string
-     * @param sourceMode : string representation of Source mode
-     * @return enum representing Source mode
-     */
-    static Value getFromString(const std::string sourceMode);
-
-    /**
-     * @brief Get Source mode in string representation
-     * @param sourceMode : enum value of the Source mode
-     * @return string representation of Source mode
-     */
-    static std::string toString(const Value sourceMode);
-};
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_UTIL_SOURCEMODE_HPP_

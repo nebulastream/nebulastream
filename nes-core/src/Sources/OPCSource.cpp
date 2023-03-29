@@ -47,7 +47,7 @@ OPCSource::OPCSource(const SchemaPtr& schema,
                      OperatorId operatorId,
                      OriginId originId,
                      size_t numSourceLocalBuffers,
-                     GatheringMode::Value gatheringMode,
+                     GatheringMode gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
                  std::move(bufferManager),

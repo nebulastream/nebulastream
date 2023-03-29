@@ -33,7 +33,7 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                      OperatorId operatorId,
                      OriginId originId,
                      uint64_t numSourceLocalBuffers,
-                     GatheringMode::Value gatheringMode,
+                     GatheringMode gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),

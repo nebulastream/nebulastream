@@ -58,7 +58,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OperatorId operatorId,
                         OriginId originId,
                         size_t numSourceLocalBuffers,
-                        GatheringMode::Value gatheringMode,
+                        GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
@@ -273,7 +273,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate{};
     std::chrono::milliseconds gatheringInterval{0};
-    GatheringMode::Value gatheringMode;
+    GatheringMode gatheringMode;
     SourceType type;
     Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
     std::atomic_bool wasStarted{false};

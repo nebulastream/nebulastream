@@ -64,7 +64,7 @@ class DefaultSourceType : public PhysicalSourceType {
     /**
      * @brief Get gathering mode
      */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode::Value>> getGatheringMode() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode>> getGatheringMode() const;
 
     /**
      * @brief Set gathering mode
@@ -72,10 +72,10 @@ class DefaultSourceType : public PhysicalSourceType {
     void setGatheringMode(std::string inputGatheringMode);
 
     /**
-     * @brief Sets the gathering mode given as GatheringMode::Value
+     * @brief Sets the gathering mode given as GatheringMode
      * @param inputGatheringMode
      */
-    void setGatheringMode(GatheringMode::Value inputGatheringMode);
+    void setGatheringMode(GatheringMode inputGatheringMode);
 
     std::string toString() override;
 

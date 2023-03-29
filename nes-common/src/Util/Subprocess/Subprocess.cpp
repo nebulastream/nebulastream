@@ -26,7 +26,7 @@ namespace NES::Util {
 
 static const size_t READ_BUFFER_SIZE = 128;
 
-enum class ends_of_pipe : int8_t { READ = 0, WRITE = 1 };
+enum class ends_of_pipe : uint8_t { READ = 0, WRITE = 1 };
 
 Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
     // initialize pipes

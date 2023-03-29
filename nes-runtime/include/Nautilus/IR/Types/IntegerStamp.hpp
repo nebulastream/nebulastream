@@ -25,10 +25,10 @@ namespace NES::Nautilus::IR::Types {
 class IntegerStamp : public Stamp {
   public:
     // Bit width for the integer
-    enum class BitWidth : int8_t { I8, I16, I32, I64 };
+    enum class BitWidth : uint8_t { I8, I16, I32, I64 };
 
     // Signedness semantics.
-    enum class SignednessSemantics : int8_t {
+    enum class SignednessSemantics : uint8_t {
         Signed,  /// Signed integer
         Unsigned,/// Unsigned integer
     };

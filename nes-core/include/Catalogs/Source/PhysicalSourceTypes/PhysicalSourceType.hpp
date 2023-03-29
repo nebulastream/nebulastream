@@ -22,7 +22,7 @@
 
 namespace NES {
 
-enum class SourceType : int8_t {
+enum class SourceType : uint8_t {
     OPC_SOURCE,
     ZMQ_SOURCE,
     CSV_SOURCE,

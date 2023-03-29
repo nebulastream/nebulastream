@@ -53,8 +53,8 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const std::string& placementStrategyName,
-                                                      const FaultToleranceType::Value faultTolerance,
-                                                      const LineageType::Value lineage) {
+                                                      const FaultToleranceType faultTolerance,
+                                                      const LineageType lineage) {
 
     NES_INFO2("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -70,9 +70,9 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy::Value placementStrategy;
+        PlacementStrategy placementStrategy;
         try {
-            placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
             NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
@@ -99,8 +99,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
                                       const std::string& placementStrategyName,
-                                      const FaultToleranceType::Value faultTolerance,
-                                      const LineageType::Value lineage) {
+                                      const FaultToleranceType faultTolerance,
+                                      const LineageType lineage) {
 
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     auto promise = std::make_shared<std::promise<QueryId>>();
@@ -117,9 +117,9 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy::Value placementStrategy;
+        PlacementStrategy placementStrategy;
         try {
-            placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
             NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);

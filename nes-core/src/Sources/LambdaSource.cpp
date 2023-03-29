@@ -35,7 +35,7 @@ LambdaSource::LambdaSource(
     OperatorId operatorId,
     OriginId originId,
     size_t numSourceLocalBuffers,
-    GatheringMode::Value gatheringMode,
+    GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -50,10 +50,10 @@ LambdaSource::LambdaSource(
                       std::move(successors)),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG2("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));
-    if (this->gatheringMode == GatheringMode::Value::INTERVAL_MODE ||
-    this->gatheringMode == GatheringMode::Value::ADAPTIVE_MODE) {
+    if (this->gatheringMode == GatheringMode::INTERVAL_MODE ||
+    this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
-    } else if (this->gatheringMode == GatheringMode::Value::INGESTION_RATE_MODE) {
+    } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));

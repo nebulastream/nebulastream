@@ -55,7 +55,7 @@ using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 
 namespace Runtime {
 
-enum class NumaAwarenessFlag { ENABLED, DISABLED };
+enum class NumaAwarenessFlag : uint8_t { ENABLED, DISABLED };
 
 class RuntimeEventListener;
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
