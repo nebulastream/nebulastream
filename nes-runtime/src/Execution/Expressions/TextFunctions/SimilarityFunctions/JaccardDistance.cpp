@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/JaccardDistance.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <regex>
 #include <string>
@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 JaccardDistance::JaccardDistance(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                               const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
+                                 const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
 /**
@@ -67,7 +67,10 @@ Value<> JaccardDistance::execute(NES::Nautilus::Record& record) const {
     Value<> rightValue = rightSubExpression->execute(record);
 
     if (leftValue->isType<Text>() && rightValue->isType<Text>()) {
-        return FunctionCall<>("textJaccard", textJaccard, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
+        return FunctionCall<>("textJaccard",
+                              textJaccard,
+                              leftValue.as<Text>()->getReference(),
+                              rightValue.as<Text>()->getReference());
     } else {
         // If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text.");

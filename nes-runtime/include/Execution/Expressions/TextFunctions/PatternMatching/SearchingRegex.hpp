@@ -15,8 +15,8 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_PATTERNMATCHING_SEARCHINGREGEX_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_PATTERNMATCHING_SEARCHINGREGEX_HPP_
 
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions {

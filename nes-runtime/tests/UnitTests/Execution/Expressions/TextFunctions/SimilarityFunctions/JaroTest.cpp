@@ -54,9 +54,8 @@ TEST_F(JaroTest, BaseJaroTest) {
     auto dist1 = expression.eval(textValue, textValue0, flagValue);
     EXPECT_EQ(dist1, (double) 8 / 9);
 
-
     auto textValue1 = Value<Text>("duck");
-    auto dist2 = expression.eval(textValue, textValue1,flagValue);
+    auto dist2 = expression.eval(textValue, textValue1, flagValue);
     EXPECT_EQ(dist2, (double) 1.0);
 
     auto textValue2 = Value<Text>("test");
@@ -75,7 +74,7 @@ TEST_F(JaroTest, FailJaroTest) {
     auto flagValue = Value<Boolean>(false);
     auto textValue0 = Value<Float>((float) 17.5);
     auto textValue1 = Value<Text>("duck");
-    EXPECT_ANY_THROW(expression.eval(textValue0, textValue1,flagValue));
+    EXPECT_ANY_THROW(expression.eval(textValue0, textValue1, flagValue));
 }
 
 TEST_F(JaroTest, BaseJaroWinklerTest) {
@@ -84,8 +83,7 @@ TEST_F(JaroTest, BaseJaroWinklerTest) {
     auto textValue = Value<Text>("duck");
     auto textValue0 = Value<Text>("duckdb");
     auto dist1 = expression.eval(textValue, textValue0, flagValue);
-    EXPECT_EQ(dist1, (double) 14/15);
-
+    EXPECT_EQ(dist1, (double) 14 / 15);
 
     auto textValue1 = Value<Text>("duck");
     auto dist2 = expression.eval(textValue, textValue1, flagValue);

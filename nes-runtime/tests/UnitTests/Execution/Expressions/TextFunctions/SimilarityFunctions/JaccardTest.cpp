@@ -63,9 +63,9 @@ TEST_F(JaccardTest, BaseTest) {
     //EXPECT_EQ(dist3, (double) 0.1);
     //TODO ASSERT_NEAR does not work out of the box, dist3 is identified as boolean
 
-   auto textValue4 = Value<Text>("duck");
-   auto dist4 = expression.eval(textValue, textValue4);
-   EXPECT_EQ(dist4, (double) 1.0);
+    auto textValue4 = Value<Text>("duck");
+    auto dist4 = expression.eval(textValue, textValue4);
+    EXPECT_EQ(dist4, (double) 1.0);
 }
 
 TEST_F(JaccardTest, FailTest) {
