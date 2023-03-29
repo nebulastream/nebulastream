@@ -45,7 +45,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  OriginId originId,
                                  size_t numSourceLocalBuffers,
                                  GatheringMode gatheringMode,
-                                 SourceMode::Value sourceMode,
+                                 SourceMode sourceMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
                                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -122,11 +122,11 @@ void BenchmarkSource::runningRoutine() {
         for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
             Runtime::TupleBuffer buffer;
             switch (sourceMode) {
-                case SourceMode::Value::EMPTY_BUFFER: {
+                case SourceMode::EMPTY_BUFFER: {
                     buffer = bufferManager->getBufferBlocking();
                     break;
                 }
-                case SourceMode::Value::COPY_BUFFER_SIMD_RTE: {
+                case SourceMode::COPY_BUFFER_SIMD_RTE: {
 #ifdef HAS_AVX
                     buffer = bufferManager->getBufferBlocking();
                     rte_memcpy(buffer.getBuffer(),
@@ -137,24 +137,24 @@ void BenchmarkSource::runningRoutine() {
 #endif
                     break;
                 }
-                case SourceMode::Value::COPY_BUFFER_SIMD_APEX: {
+                case SourceMode::COPY_BUFFER_SIMD_APEX: {
                     buffer = bufferManager->getBufferBlocking();
                     apex_memcpy(buffer.getBuffer(),
                                 numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
                                 buffer.getBufferSize());
                     break;
                 }
-                case SourceMode::Value::CACHE_COPY: {
+                case SourceMode::CACHE_COPY: {
                     buffer = bufferManager->getBufferBlocking();
                     memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
                     break;
                 }
-                case SourceMode::Value::COPY_BUFFER: {
+                case SourceMode::COPY_BUFFER: {
                     buffer = bufferManager->getBufferBlocking();
                     memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
                     break;
                 }
-                case SourceMode::Value::WRAP_BUFFER: {
+                case SourceMode::WRAP_BUFFER: {
                     buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
                                                               bufferSize,
                                                               this);

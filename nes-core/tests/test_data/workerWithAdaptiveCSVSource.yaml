@@ -23,13 +23,13 @@ physicalSources:
     # Set physical source name
     physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
-    type: CSVSource
+    type: CSV_SOURCE
     # DefaultSource and its needed configuration params
     configuration:
       ###### Define only the following configurations for CSVSource source
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
       numberOfBuffersToProduce: 1
       # Set gathering mode type
-      sourceGatheringMode: adaptive
+      sourceGatheringMode: ADAPTIVE_MODE
       # Set path
       filePath: fileLoc

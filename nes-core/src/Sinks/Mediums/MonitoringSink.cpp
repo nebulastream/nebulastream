@@ -81,7 +81,7 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 std::string MonitoringSink::toString() const {
     std::stringstream ss;
     ss << "MONITORING_SINK(";
-    ss << "COLLECTOR(" << NES::Monitoring::toString(collectorType) << ")";
+    ss << "COLLECTOR(" << std::string(magic_enum::enum_name(collectorType)) << ")";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
     ss << ")";
     return ss.str();

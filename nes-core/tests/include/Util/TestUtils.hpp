@@ -37,6 +37,7 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
@@ -109,8 +110,8 @@ template<typename T>
 
 [[nodiscard]] std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
 
-[[nodiscard]] std::string sourceType(std::string sourceType) {
-    return "--physicalSources." + SOURCE_TYPE_CONFIG + "=" + sourceType;
+[[nodiscard]] std::string sourceType(SourceType sourceType) {
+    return "--physicalSources." + SOURCE_TYPE_CONFIG + "=" + std::string(magic_enum::enum_name(sourceType));
 }
 
 [[nodiscard]] std::string csvSourceFilePath(std::string filePath) {
@@ -261,15 +262,15 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
         QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MarkedForHardStop:
-            case QueryStatus::MarkedForSoftStop:
-            case QueryStatus::SoftStopCompleted:
-            case QueryStatus::SoftStopTriggered:
-            case QueryStatus::Stopped:
-            case QueryStatus::Running: {
+            case QueryStatus::MARKEDFORHARDSTOP:
+            case QueryStatus::MARKEDFORSOFTSTOP:
+            case QueryStatus::SOFTSTOPCOMPLETED:
+            case QueryStatus::SOFTSTOPTRIGGERED:
+            case QueryStatus::STOPPED:
+            case QueryStatus::RUNNING: {
                 return true;
             }
-            case QueryStatus::Failed: {
+            case QueryStatus::FAILED: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " +
                             std::string(magic_enum::enum_name(status)));
                 return false;
@@ -415,7 +416,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
             return true;
         }
@@ -440,7 +441,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkFailedOrTimeout: check query status");
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::FAILED) {
             NES_DEBUG("checkFailedOrTimeout: status reached stopped");
             return true;
         }
@@ -568,13 +569,13 @@ template<typename T>
         NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
 
         auto entry = queryCatalogService->getEntryForQuery(queryId);
-        if (entry->getQueryStatus() == QueryStatus::Failed) {
+        if (entry->getQueryStatus() == QueryStatus::FAILED) {
             // the query failed, so we return true as a failure append during execution.
             NES_TRACE("checkStoppedOrTimeout: status reached failed");
             return false;
         }
 
-        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::Stopped;
+        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::STOPPED;
 
         // check if result is ready.
         std::ifstream ifs(outputFilePath);

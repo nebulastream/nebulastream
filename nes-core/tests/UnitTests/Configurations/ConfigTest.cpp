@@ -214,7 +214,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
                              "--queryCompiler.compilationStrategy=FAST",
                              "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
                              "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-                             "--physicalSources.type=DefaultSource",
+                             "--physicalSources.type=DEFAULT_SOURCE",
                              "--physicalSources.numberOfBuffersToProduce=5",
                              "--physicalSources.rowLayout=false",
                              "--physicalSources.physicalSourceName=x",
@@ -258,7 +258,7 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
                              "--queryCompiler.compilationStrategy=FAST",
                              "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
                              "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-                             "--physicalSources.type=CSVSource",
+                             "--physicalSources.type=CSV_SOURCE",
                              "--physicalSources.filePath=fileLoc",
                              "--physicalSources.rowLayout=false",
                              "--physicalSources.physicalSourceName=x",
@@ -290,7 +290,7 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
-    auto commandLineParams = makeCommandLineArgs({"type=DefaultSource",
+    auto commandLineParams = makeCommandLineArgs({"type=DEFAULT_SOURCE",
                                                   "numberOfBuffersToProduce=5",
                                                   "rowLayout=false",
                                                   "physicalSourceName=x",
@@ -307,7 +307,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               physicalSourceType1->getSourceGatheringInterval()->getDefaultValue());
     EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
 
-    auto commandLineParams1 = makeCommandLineArgs({"type=KafkaSource",
+    auto commandLineParams1 = makeCommandLineArgs({"type=KAFKA_SOURCE",
                                                    "physicalSourceName=x",
                                                    "logicalSourceName=default",
                                                    "topic=newTopic",
@@ -332,7 +332,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
     // given
-    auto commandLineParams = makeCommandLineArgs({"type=DefaultSource",
+    auto commandLineParams = makeCommandLineArgs({"type=DEFAULT_SOURCE",
                                                   "numberOfBuffersToProduce=5",
                                                   "rowLayout=false",
                                                   "physicalSourceName=x",
@@ -342,12 +342,12 @@ TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
     DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
     // then
     EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), physicalSourceType1->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
+    EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput) {
     // given
-    auto commandLineParams = makeCommandLineArgs({"type=CSVSource",
+    auto commandLineParams = makeCommandLineArgs({"type=CSV_SOURCE",
                                                   "numberOfBuffersToProduce=5",
                                                   "rowLayout=false",
                                                   "physicalSourceName=x",
@@ -358,24 +358,24 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
     // then
     EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("interval"));
+    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
     // given
-    auto commandLineParams = makeCommandLineArgs({"type=CSVSource",
+    auto commandLineParams = makeCommandLineArgs({"type=CSV_SOURCE",
                                                   "numberOfBuffersToProduce=5",
                                                   "rowLayout=false",
                                                   "physicalSourceName=x",
                                                   "logicalSourceName=default",
                                                   "filePath=fileLoc",
-                                                  "sourceGatheringMode=adaptive"});
+                                                  "sourceGatheringMode=ADAPTIVE_MODE"});
     // when
     PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
     CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
     // then
     EXPECT_NE(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
+    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::ADAPTIVE_MODE);
 }
 
 TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode) {
@@ -386,7 +386,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
 
     auto csvSourceType = workerConfigPtr->physicalSources.getValues()[0].getValue()->getPhysicalSourceType()->as<CSVSourceType>();
     EXPECT_NE(csvSourceType->getGatheringMode()->getValue(), csvSourceType->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), GatheringMode::getFromString("adaptive"));
+    EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
 }
 
 TEST_F(ConfigTest, parseWorkerOptionInCoordinatorConfigFile) {

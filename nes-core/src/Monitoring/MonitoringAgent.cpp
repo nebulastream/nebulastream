@@ -77,11 +77,11 @@ nlohmann::json MonitoringAgent::getMetricsAsJson() {
     nlohmann::json metricsJson{};
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
-            NES_INFO2("MonitoringAgent: Collecting metrics of type {}", toString(type));
+            NES_INFO2("MonitoringAgent: Collecting metrics of type {}", std::string(magic_enum::enum_name(type)));
             auto collector = catalog->getMetricCollector(type);
             collector->setNodeId(nodeId);
             auto metric = collector->readMetric();
-            metricsJson[toString(metric->getMetricType())] = asJson(metric);
+            metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
         }
     }
     NES_INFO2("MonitoringAgent: Metrics collected {}", metricsJson);
@@ -102,8 +102,8 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             // auto generate the specifics
             MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(magic_enum::enum_integer(MetricUtils::createCollectorTypeFromMetricType(metricType)));
-            std::string metricTypeString = NES::Monitoring::toString(metricType);
+                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
+            std::string metricTypeString = std::string(magic_enum::enum_name(metricType));
 
             NES_INFO2("MonitoringAgent: Adding physical source to config {} _ph", metricTypeString);
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);

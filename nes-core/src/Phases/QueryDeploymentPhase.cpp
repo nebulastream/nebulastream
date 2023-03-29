@@ -53,7 +53,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     }
 
     //Remove the old mapping of the shared query plan
-    if (SharedQueryPlanStatus::Value::Updated == sharedQueryPlan->getStatus()) {
+    if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
         queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
     }
 
@@ -77,7 +77,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Deployed, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::DEPLOYED, "");
     }
 
     bool successDeploy = deployQuery(sharedQueryId, executionNodes);
@@ -91,7 +91,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
     }
 
     NES_DEBUG2("QueryService: start query");

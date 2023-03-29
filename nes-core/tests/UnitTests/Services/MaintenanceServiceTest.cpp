@@ -65,7 +65,7 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
 TEST_F(MaintenanceServiceTest, testMaintenanceService) {
 
     //Prepare
-    auto nonExistentType = NES::Experimental::MigrationType(4);
+    auto nonExistentType = NES::Experimental::MigrationType(0);
     //test no such Topology Node ID
     uint64_t nonExistentId = 0;
     auto [result1, info1] = maintenanceService->submitMaintenanceRequest(nonExistentId, nonExistentType);

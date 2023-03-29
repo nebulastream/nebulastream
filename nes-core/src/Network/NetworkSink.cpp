@@ -33,7 +33,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType::Value faultToleranceType,
+                         FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
     : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
                  nodeEngine,
@@ -49,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG2("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
@@ -148,8 +148,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::ReconfigurationType::StartBuffering: {
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::Value::EXACTLY_ONCE) {
+            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
             if (reconnectBuffering) {
@@ -162,8 +162,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::ReconfigurationType::StopBuffering: {
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::Value::EXACTLY_ONCE) {
+            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we

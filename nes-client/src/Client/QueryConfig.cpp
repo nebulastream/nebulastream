@@ -16,23 +16,23 @@
 
 namespace NES::Client {
 
-QueryConfig::QueryConfig(FaultToleranceType::Value faultToleranceType,
-                         LineageType::Value lineageType,
-                         PlacementStrategy::Value placementType)
+QueryConfig::QueryConfig(FaultToleranceType faultToleranceType,
+                         LineageType lineageType,
+                         PlacementStrategy placementType)
     : faultToleranceType(faultToleranceType), lineageType(lineageType), placementType(placementType) {}
 
-FaultToleranceType::Value QueryConfig::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType QueryConfig::getFaultToleranceType() const { return faultToleranceType; }
 
-void QueryConfig::setFaultToleranceType(FaultToleranceType::Value faultToleranceType) {
+void QueryConfig::setFaultToleranceType(FaultToleranceType faultToleranceType) {
     QueryConfig::faultToleranceType = faultToleranceType;
 }
 
-LineageType::Value QueryConfig::getLineageType() const { return lineageType; }
+LineageType QueryConfig::getLineageType() const { return lineageType; }
 
-void QueryConfig::setLineageType(LineageType::Value lineageType) { QueryConfig::lineageType = lineageType; }
+void QueryConfig::setLineageType(LineageType lineageType) { QueryConfig::lineageType = lineageType; }
 
-PlacementStrategy::Value QueryConfig::getPlacementType() const { return placementType; }
+PlacementStrategy QueryConfig::getPlacementType() const { return placementType; }
 
-void QueryConfig::setPlacementType(PlacementStrategy::Value placementType) { QueryConfig::placementType = placementType; }
+void QueryConfig::setPlacementType(PlacementStrategy placementType) { QueryConfig::placementType = placementType; }
 
 }// namespace NES::Client

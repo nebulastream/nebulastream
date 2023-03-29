@@ -261,7 +261,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     OriginId originId,
                                     size_t numSourceLocalBuffers,
                                     GatheringMode gatheringMode,
-                                    SourceMode::Value sourceMode,
+                                    SourceMode sourceMode,
                                     uint64_t sourceAffinity,
                                     uint64_t taskQueueId,
                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);

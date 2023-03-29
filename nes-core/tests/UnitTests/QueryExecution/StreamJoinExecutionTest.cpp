@@ -28,6 +28,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
         NES::Logger::setupLogging("StreamJoinQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
     }
+
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
@@ -44,7 +45,9 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
+    static void TearDownTestCase() {
+        NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class.");
+    }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };

@@ -27,6 +27,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 using namespace Configurations;
@@ -77,7 +78,7 @@ TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
     for (auto type : monitoringPlan->getMetricTypes()) {
         auto collector = monitoringCatalog->getMetricCollector(type);
         Monitoring::MetricPtr metric = collector->readMetric();
-        metricsJson[toString(metric->getMetricType())] = asJson(metric);
+        metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
     }
     NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);
 }

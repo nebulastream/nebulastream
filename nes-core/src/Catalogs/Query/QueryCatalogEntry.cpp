@@ -65,8 +65,8 @@ std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
 
 const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
 
-PlacementStrategy::Value QueryCatalogEntry::getQueryPlacementStrategy() {
-    return PlacementStrategy::getFromString(queryPlacementStrategy);
+PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() {
+    return magic_enum::enum_cast<PlacementStrategy>(queryPlacementStrategy).value();
 }
 
 void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {
@@ -83,7 +83,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Running, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::RUNNING, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 

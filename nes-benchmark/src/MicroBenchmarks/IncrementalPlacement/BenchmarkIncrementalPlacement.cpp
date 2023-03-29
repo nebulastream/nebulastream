@@ -412,7 +412,7 @@ int main(int argc, const char* argv[]) {
 
                 auto queryPlan = queryObjects[i];
                 queryCatalogService->createNewEntry("", queryPlan, placementStrategy);
-                PlacementStrategy::Value queryPlacementStrategy = PlacementStrategy::getFromString(placementStrategy);
+                PlacementStrategy queryPlacementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategy).value();
                 auto runQueryRequest = RunQueryRequest::create(queryPlan, queryPlacementStrategy);
 
                 globalQueryUpdatePhase->execute({runQueryRequest});

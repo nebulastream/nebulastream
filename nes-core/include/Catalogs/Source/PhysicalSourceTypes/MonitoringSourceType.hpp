@@ -35,13 +35,14 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(uint64_t metricCollectorType, std::chrono::milliseconds waitTimeInMs);
+    static MonitoringSourceTypePtr create(Monitoring::MetricCollectorType metricCollectorType,
+                                          std::chrono::milliseconds waitTimeInMs);
 
     /**
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(uint64_t metricCollectorType);
+    static MonitoringSourceTypePtr create(Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief creates a string representation of the source

@@ -156,7 +156,7 @@ class SelectionDataGenSource : public GeneratorSource {
                           1,
                           0,
                           12,
-                          GatheringMode::Value::INTERVAL_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~SelectionDataGenSource() override = default;
@@ -209,7 +209,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                           1,
                           0,
                           12,
-                          GatheringMode::Value::INTERVAL_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~PredicateTestingDataGeneratorSource() override = default;
@@ -279,7 +279,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                           1,
                           0,
                           12,
-                          GatheringMode::Value::INTERVAL_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~WindowTestingDataGeneratorSource() override = default;
@@ -326,7 +326,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                           1,
                           0,
                           12,
-                          GatheringMode::Value::INTERVAL_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~WindowTestingWindowGeneratorSource() override = default;

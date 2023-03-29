@@ -23,8 +23,8 @@ BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
                                                      size_t memoryAreaSize,
                                                      uint64_t numBuffersToProcess,
                                                      uint64_t gatheringValue,
-                                                     GatheringMode::Value gatheringMode,
-                                                     SourceMode::Value sourceMode,
+                                                     GatheringMode gatheringMode,
+                                                     SourceMode sourceMode,
                                                      uint64_t sourceAffinity,
                                                      uint64_t taskQueueId,
                                                      std::string logicalSourceName,
@@ -40,8 +40,8 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                                              size_t memoryAreaSize,
                                                                              uint64_t numBuffersToProcess,
                                                                              uint64_t gatheringValue,
-                                                                             GatheringMode::Value gatheringMode,
-                                                                             SourceMode::Value sourceMode,
+                                                                             GatheringMode gatheringMode,
+                                                                             SourceMode sourceMode,
                                                                              uint64_t sourceAffinity,
                                                                              uint64_t taskQueueId,
                                                                              std::string logicalSourceName,
@@ -80,9 +80,9 @@ uint64_t BenchmarkSourceDescriptor::getSourceAffinity() const { return sourceAff
 
 uint64_t BenchmarkSourceDescriptor::getTaskQueueId() const { return taskQueueId; }
 
-GatheringMode::Value BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
+GatheringMode BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
 
-SourceMode::Value BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
+SourceMode BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
 
 uint64_t BenchmarkSourceDescriptor::getGatheringValue() const { return gatheringValue; }
 

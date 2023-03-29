@@ -25,21 +25,21 @@
 
 namespace NES::Optimizer {
 
-BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
+BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                const TopologyPtr& topology,
                                                                const TypeInferencePhasePtr& typeInferencePhase) {
     switch (placementStrategy) {
-        case PlacementStrategy::Value::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Value::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Value::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Value::Manual:
+        case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Manual:
             return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
 // #2486        case PlacementStrategy::IFCOP:
 //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 #ifdef TFDEF
-        case PlacementStrategy::Value::MlHeuristic:
+        case PlacementStrategy::MlHeuristic:
             return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 #endif
 

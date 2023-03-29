@@ -44,8 +44,8 @@ ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr glo
 
 bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
-    FaultToleranceType::Value faultToleranceType /*faultToleranceType*/,
-    LineageType::Value lineageType /*lineageType*/,
+    FaultToleranceType faultToleranceType /*faultToleranceType*/,
+    LineageType lineageType /*lineageType*/,
     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
 
