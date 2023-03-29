@@ -906,4 +906,92 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(response == 0);
 }
 
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingThresholdWindowKTMByKey) {
+    NES_INFO(" start coordinator");
+    std::string testFile = getTestResourceFolder() / "ktm-results.csv";
+    NES_INFO("testFile = " << testFile);
+    remove(testFile.c_str());
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::setDistributedWindowChildThreshold(1000),
+                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    std::stringstream schema;
+    schema << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
+              ":\"Schema::create()->addField(createField(\\\"Time\\\",INT32))->addField(createField(\\\"Dist\\\",UINT64))->"
+              "addField(createField(\\\"ABS_Front_Wheel_Press\\\",UINT64))->"
+              "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
+              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
+              "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
+              "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
+              "addField(createField(\\\"MMDD\\\",FLOAT64))->"
+              "addField(createField(\\\"HHMM\\\",FLOAT64))->"
+              "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
+              "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
+              "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
+              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT32))->"// 13th col.
+              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
+              "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
+              "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
+              "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
+              "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
+              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",FLOAT32))->"
+              "addField(createField(\\\"ECU_Side_StanD\\\",INT32))->"
+              "addField(createField(\\\"Longitude\\\",FLOAT64))->"
+              "addField(createField(\\\"Latitude\\\",FLOAT64))->"
+              "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+
+    auto worker = TestUtils::startWorker(
+            {TestUtils::rpcPort(0),
+             TestUtils::dataPort(0),
+             TestUtils::coordinatorPort(*rpcCoordinatorPort),
+             TestUtils::sourceType("CSVSource"),
+             TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
+                                          + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
+             TestUtils::physicalSourceName("test_stream"),
+             TestUtils::logicalSourceName("ktm"),
+             TestUtils::numberOfBuffersToProduce(1),
+             TestUtils::enableNautilus(),
+             TestUtils::numberOfTuplesToProducePerBuffer(4),
+             TestUtils::sourceGatheringInterval(1),
+             TestUtils::enableThreadLocalWindowing()});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"ktm\"))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ABS_Lean_Angle\") > 10.)))";
+    ss << R"(.byKey(Attribute(\"Time\")))";
+    ss << R"(.apply(Count()->as(Attribute(\"Count\")), Avg(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Pitch_Info\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\"))))";
+    ss << R"(.sink(FileSinkDescriptor::create(\")";
+    ss << testFile;
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
+    ss << R"(;","placement" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+
+    string expectedContent = "ktm$ABS_Lean_Angle:(Float),ktm$ABS_Front_Wheel_Speed:(Float),ktm$count:INTEGER\n"
+                             "14.300000,0.500000,2\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+
+    int response = remove(testFile.c_str());
+    EXPECT_TRUE(response == 0);
+}
+
 }// namespace NES
