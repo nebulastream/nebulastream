@@ -28,7 +28,10 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     libopencv-dev \
     libopencv4.5-java \
     libopencv4.5d-jni \
-    && apt-get clean -qq
+    python3-pip \
+    gradle \
+    curl \
+    && apt-get clean -qq && pip install trivup jsoncomment
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
@@ -43,5 +46,10 @@ RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || e
 ENV ACTUAL_TRIPLE='cat /debian-triple'
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
+
+WORKDIR /scripts
+ADD ./kafka-setup.sh /scripts/kafka-setup.sh
+RUN chmod +x kafka-setup.sh
+RUN ./kafka-setup.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

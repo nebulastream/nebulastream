@@ -14,14 +14,13 @@ from trivup.apps.KerberosKdcApp import KerberosKdcApp
 from trivup.apps.SslApp import SslApp
 from trivup.apps.OauthbearerOIDCApp import OauthbearerOIDCApp
 
-from cluster_testing import read_scenario_conf
-
 import subprocess
 import tempfile
 import os
 import sys
 import argparse
 import json
+from jsoncomment import JsonComment
 
 
 def version_as_number(version):
@@ -30,6 +29,11 @@ def version_as_number(version):
     tokens = version.split('.')
     return float('%s.%s' % (tokens[0], tokens[1]))
 
+def read_scenario_conf(scenario):
+    """ Read scenario configuration from scenarios/<scenario>.json """
+    parser = JsonComment(json)
+    with open(os.path.join('scenarios', scenario + '.json'), 'r') as f:
+        return parser.load(f)
 
 def test_version(version, cmd=None, deploy=True, conf={}, debug=False,
                  exec_cnt=1,
