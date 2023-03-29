@@ -786,7 +786,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
     auto outputSchema = windowOperator->getOutputSchema();
     // number of aggregates, and aggregate type for heuristic checks for query containment identification
-    windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(allAggregates.size()))});
+    uint64_t numberOfAggregates = allAggregates.size();
+    windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(numberOfAggregates))});
     windowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(aggregateTypes))});
 
     //Compute new schemas for this operator
