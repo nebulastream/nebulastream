@@ -151,7 +151,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     inputClass = "java/lang/Long";
     outputClass = "java/lang/Long";
 
-    auto initialValue = 42;
+    int64_t initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
                                                                method,
                                                                inputClass,
@@ -166,7 +166,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<>(initialValue)}});
+    auto record = Record({{"id", Value<Int64>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
 }
