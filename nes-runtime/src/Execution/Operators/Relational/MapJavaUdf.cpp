@@ -306,7 +306,8 @@ extern "C" void* createByteObject(void* state, int8_t value) { return createObje
  */
 extern "C" void* createStringObject(void* state, TextValue* value) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
-    return handler->getEnvironment()->NewStringUTF(value->c_str());
+    auto val = std::string(value->c_str(), value->length());
+    return handler->getEnvironment()->NewStringUTF(val.c_str());
 }
 
 /**
@@ -622,7 +623,8 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
         handler->getEnvironment()->SetByteField(pojo, id, (jbyte) value);
     } else if constexpr (std::is_same<T, const TextValue*>::value) {
         const TextValue* sourceString = value;
-        jstring string = handler->getEnvironment()->NewStringUTF(sourceString->c_str());
+        auto val = std::string(sourceString->c_str(), sourceString->length());
+        jstring string = handler->getEnvironment()->NewStringUTF(val.c_str());
         handler->getEnvironment()->SetObjectField(pojo, id, (jstring) string);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
