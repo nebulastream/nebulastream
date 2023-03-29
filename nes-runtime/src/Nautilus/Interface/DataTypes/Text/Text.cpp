@@ -11,11 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <memory>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -362,11 +361,11 @@ TextValue* lrTrim(const TextValue* text) {
 
 bool textSimilarTo(const TextValue* text, TextValue* pattern) {
     std::string target = std::string(text->c_str(), text->length());
-    NES_DEBUG("Received the following source string " <<  target );
+    NES_DEBUG("Received the following source string " << target);
     std::string strPattern = std::string(pattern->str(), pattern->length());
-    NES_DEBUG("Received the following source string " <<  strPattern );
+    NES_DEBUG("Received the following source string " << strPattern);
     std::regex regexPattern(strPattern);
-    return std::regex_match(target,  regexPattern);
+    return std::regex_match(target, regexPattern);
 }
 
 const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
@@ -374,24 +373,24 @@ const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
 }
 
 bool textLike(const TextValue* text, TextValue* pattern, Boolean caseSensitive) {
-    NES_DEBUG("Checking in textLike if " << text->c_str() << " and" << pattern << " are a match." );
+    NES_DEBUG("Checking in textLike if " << text->c_str() << " and" << pattern << " are a match.");
     auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
     auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
     auto addStartChar = textConcat(TextValue::create("^"), addWildcard);
     auto likeRegex = textConcat(addStartChar, TextValue::create("$"));
 
     std::string target = std::string(text->c_str(), text->length());
-    NES_DEBUG("Received the following source string " <<  target);
+    NES_DEBUG("Received the following source string " << target);
     std::string strPattern = std::string(likeRegex->c_str(), likeRegex->length());
-    NES_DEBUG("Received the following source string " <<  strPattern);
+    NES_DEBUG("Received the following source string " << strPattern);
     // LIKE and GLOB adoption requires syntax conversion functions
     // would make regex case in sensitive for ILIKE
     if (caseSensitive.getValue()) {
         std::regex regexPattern(strPattern, std::regex::icase);
-        return std::regex_match(target,  regexPattern);
+        return std::regex_match(target, regexPattern);
     } else {
         std::regex regexPattern(strPattern);
-        return std::regex_match(target,  regexPattern);
+        return std::regex_match(target, regexPattern);
     }
 }
 

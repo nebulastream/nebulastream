@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/JaroSimilarity.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <regex>
 #include <string>
@@ -150,14 +150,20 @@ Value<> JaroSimilarity::execute(NES::Nautilus::Record& record) const {
     Value<> flagValue = flagExpression->execute(record);
 
     if (leftValue->isType<Text>() && rightValue->isType<Text>() && flagValue->isType<Boolean>()) {
-        Value <> distance = FunctionCall<>("textJaro", textJaro, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
-        if (flagValue.as<Boolean>()){
-            return FunctionCall<>("textJaroWinkler", textJaroWinkler, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference(), distance.as<Double>());
+        Value<> distance =
+            FunctionCall<>("textJaro", textJaro, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
+        if (flagValue.as<Boolean>()) {
+            return FunctionCall<>("textJaroWinkler",
+                                  textJaroWinkler,
+                                  leftValue.as<Text>()->getReference(),
+                                  rightValue.as<Text>()->getReference(),
+                                  distance.as<Double>());
         }
         return distance;
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for the Winkler addition (favourable ratings og matching prefixes).");
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for the Winkler "
+                                "addition (favourable ratings og matching prefixes).");
     }
 }
 

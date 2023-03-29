@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 LevenshteinDistance::LevenshteinDistance(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                               const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
+                                         const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
     : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
 
 /**
@@ -79,12 +79,14 @@ Value<> LevenshteinDistance::execute(NES::Nautilus::Record& record) const {
     Value<> rightValue = rightSubExpression->execute(record);
 
     if (leftValue->isType<Text>() && rightValue->isType<Text>()) {
-        return FunctionCall<>("textLevenshtein", textLevenshtein, leftValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
+        return FunctionCall<>("textLevenshtein",
+                              textLevenshtein,
+                              leftValue.as<Text>()->getReference(),
+                              rightValue.as<Text>()->getReference());
     } else {
         // If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text.");
     }
-
 }
 
 }// namespace NES::Runtime::Execution::Expressions

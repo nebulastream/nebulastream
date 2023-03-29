@@ -26,7 +26,9 @@ namespace NES::Runtime::Execution::Expressions {
   */
 class JaroSimilarity : public Expression {
   public:
-    JaroSimilarity(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression, const ExpressionPtr& flagExpression);
+    JaroSimilarity(const ExpressionPtr& leftSubExpression,
+                   const ExpressionPtr& rightSubExpression,
+                   const ExpressionPtr& flagExpression);
     Value<> execute(Record& record) const override;
 
   private:
