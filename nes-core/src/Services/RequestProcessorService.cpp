@@ -68,7 +68,6 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                  topology,
                                                                  typeInferencePhase,
-                                                                 z3Context,
                                                                  queryReconfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);

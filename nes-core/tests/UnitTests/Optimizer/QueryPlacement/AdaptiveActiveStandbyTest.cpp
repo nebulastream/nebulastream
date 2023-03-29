@@ -12,7 +12,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "z3++.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -48,14 +47,9 @@ limitations under the License.
 #include <gtest/gtest.h>
 
 using namespace NES;
-using namespace z3;
 using namespace Configurations;
 
 class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing::Test> {
-
-  protected:
-    z3::ContextPtr z3Context;
-
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
@@ -71,12 +65,6 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
-
-        z3::config cfg;
-        cfg.set("timeout", 50000);
-        cfg.set("model", false);
-        cfg.set("type_check", false);
-        z3Context = std::make_shared<z3::context>(cfg);
     }
 
     /* Will be called before a test is executed. */
@@ -747,7 +735,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedySequential3) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -843,7 +830,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedySequential4) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -951,7 +937,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedySimpleShortDiamond) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1047,7 +1032,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedyTallDiamond) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1162,7 +1146,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedyTriangle) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1269,7 +1252,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedy2PhysicalSourcesSeparatePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1392,7 +1374,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedy2PhysicalSourcesSamePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1517,7 +1498,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedy3PhysicalSourcesSamePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1655,7 +1635,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedy5PhysicalSourcesSeparatePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1790,7 +1769,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedy4PhysicalSourcesSeparatePathDepth
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -1924,7 +1902,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchSequential3) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2020,7 +1997,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchSequential4) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2117,7 +2093,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchSimpleShortDiamond) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2213,7 +2188,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchTallDiamond) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2343,7 +2317,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchTriangle) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2450,7 +2423,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearch2PhysicalSourcesSeparatePath
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2573,7 +2545,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearch2PhysicalSourcesSamePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2698,7 +2669,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearch3PhysicalSourcesSamePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2836,7 +2806,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearch5PhysicalSourcesSeparatePath
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -2971,7 +2940,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearch4PhysicalSourcesSeparatePath
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3104,7 +3072,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILPSequential3) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3200,7 +3167,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILPSequential4) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3297,7 +3263,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILPSimpleShortDiamond) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3393,7 +3358,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILPTallDiamond) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3523,7 +3487,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILPTriangle) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3630,7 +3593,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILP2PhysicalSourcesSeparatePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3753,7 +3715,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILP2PhysicalSourcesSamePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -3878,7 +3839,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILP3PhysicalSourcesSamePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -4016,7 +3976,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILP5PhysicalSourcesSeparatePath) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -4151,7 +4110,6 @@ TEST_F(AdaptiveActiveStandbyTest, testAASILP4PhysicalSourcesSeparatePathDepth4) 
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topology,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")

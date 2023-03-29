@@ -40,8 +40,12 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
-                                                           z3::ContextPtr z3Context,
                                                            PlacementStrategy::ValueAAS placementStrategyAAS) {
+    z3::config cfg;
+    cfg.set("timeout", timeout);
+    cfg.set("model", false);
+    cfg.set("type_check", false);
+    auto z3Context = std::make_shared<z3::context>(cfg);
     return std::make_unique<ILPStrategy>
         (ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context, placementStrategyAAS));
 }

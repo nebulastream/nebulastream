@@ -50,7 +50,6 @@ class ILPStrategy : public BasePlacementStrategy {
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,
                                            TypeInferencePhasePtr typeInferencePhase,
-                                           z3::ContextPtr z3Context,
                                            PlacementStrategy::ValueAAS placementStrategyAAS);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
@@ -82,6 +81,7 @@ class ILPStrategy : public BasePlacementStrategy {
     double networkCostWeight = 1.0;
     // context from the Z3 library used for optimization
     z3::ContextPtr z3Context;
+    const static int timeout = 100000;    // 100s for model optimization
     //map to hold operators to place
     std::map<OperatorId, OperatorNodePtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";

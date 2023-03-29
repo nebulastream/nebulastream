@@ -58,14 +58,12 @@ class PlacementStrategyFactory {
      * @param topology : topology information
      * @param globalExecutionPlan : global execution plan to be updated
      * @param typeInferencePhase : type inference phase instance
-     * @param z3Context : context from the z3 library used for optimization
      * @return instance of type BaseOptimizer
      */
     static BasePlacementStrategyPtr getStrategy(PlacementStrategy::Value placementStrategy,
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
                                                 const TypeInferencePhasePtr& typeInferencePhase,
-                                                const z3::ContextPtr& z3Context,
                                                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::None);
 };
 }// namespace NES::Optimizer

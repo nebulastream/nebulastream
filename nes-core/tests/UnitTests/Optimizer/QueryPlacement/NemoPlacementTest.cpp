@@ -54,7 +54,6 @@ using namespace Configurations;
 class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
-    z3::ContextPtr z3Context;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     QueryPlanPtr queryPlan;
     SharedQueryPlanPtr sharedQueryPlan;
@@ -69,7 +68,6 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
     void SetUp() override {
         NES::Logger::setupLogging("NemoPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup NemoPlacementTest test case." << std::endl;
-        z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -170,7 +168,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         // Execute the placement
         sharedQueryPlan = SharedQueryPlan::create(queryPlan);
         auto queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
         queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     }
 

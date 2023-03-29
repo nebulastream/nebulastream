@@ -253,7 +253,6 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topologyForILP,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     //Prepare query plan
@@ -315,7 +314,6 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topologyForILP,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     //Prepare query to place
@@ -381,7 +379,6 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topologyForILP,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       false /*query reconfiguration*/);
 
     Query query = Query::from("car")
@@ -506,7 +503,6 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topologyForILP,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       true /*query reconfiguration*/);
     queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
@@ -701,7 +697,6 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topologyForILP,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       true /*query reconfiguration*/);
     queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
@@ -912,7 +907,6 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                       topologyForILP,
                                                                       typeInferencePhase,
-                                                                      z3Context,
                                                                       true /*query reconfiguration*/);
     queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();

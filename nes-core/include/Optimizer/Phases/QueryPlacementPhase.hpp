@@ -65,14 +65,12 @@ class QueryPlacementPhase {
      * @param globalExecutionPlan : an instance of global execution plan
      * @param topology : topology in which the placement is to be performed
      * @param typeInferencePhase  : a type inference phase instance
-     * @param z3Context : context from the z3 library used for optimization
      * @param queryReconfiguration: should place only updates in the query plan
      * @return pointer to query placement phase
      */
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         z3::ContextPtr z3Context,
                                          bool queryReconfiguration);
 
     /**
@@ -90,7 +88,6 @@ class QueryPlacementPhase {
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
-                                 z3::ContextPtr z3Context,
                                  bool queryReconfiguration);
 
     /**
