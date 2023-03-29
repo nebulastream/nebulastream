@@ -14,6 +14,7 @@
 
 #include <Nautilus/Backends/BCInterpreter/BCInterpreter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Nautilus::Backends::BC {
@@ -116,6 +117,7 @@ static Operation* OpTable[] = {
     (Operation*) store<bool>,
     (Operation*) andOp<bool>,
     (Operation*) orOp<bool>,
+    (Operation*) notOp<bool>,
     // FUNCTION CALLS
     // return void
     (Operation*) call<void>,
@@ -126,6 +128,8 @@ static Operation* OpTable[] = {
     (Operation*) call<void, void*, void*, void*, uint64_t, uint64_t, uint64_t, uint64_t>,
     // Return uint64_t
     (Operation*) call<uint64_t, void*>,
+    (Operation*) call<uint64_t, uint64_t, int8_t>,
+    (Operation*) call<uint64_t, uint64_t, int32_t>,
     (Operation*) call<uint64_t, uint64_t, int64_t>,
     // Return int64_t
     (Operation*) call<int64_t>,
@@ -226,4 +230,36 @@ int64_t BCInterpreter::execute(RegisterFile& regs) const {
     }
 }
 
+std::ostream& operator<<(std::ostream& os, const Code& code) {
+    for (size_t i = 0; i < code.blocks.size(); i++) {
+        os << "Block " << i << "\n";
+        os << code.blocks[i];
+    }
+    return os;
+}
+std::ostream& operator<<(std::ostream& os, const CodeBlock& block) {
+    for (auto& code : block.code) {
+        os << "\t" << code << "\n";
+    }
+
+    // handle terminator
+    if (const auto* res = std::get_if<BranchOp>(&block.terminatorOp)) {
+        os << "\t" << "BR " << res->nextBlock << "\n";
+    } else if (const auto* res = std::get_if<ConditionalJumpOp>(&block.terminatorOp)) {
+        os << "\t" << "CMP " << "r" << res->conditionalReg << " " <<  res->trueBlock << " " <<  res->falseBlock << "\n";
+    } else if (const auto* res = std::get_if<ReturnOp>(&block.terminatorOp)) {
+        os << "\t" << "Return " << "r" << res->resultReg << "\n";
+    }
+    return os;
+}
+std::ostream& operator<<(std::ostream& os, const OpCode& code) {
+
+    os << magic_enum::enum_name(code.op) << " r" << code.reg1;
+    if (code.reg2 != -1) {
+        os << " r" << code.reg2;
+    } else {
+        os << " r" << code.output;
+    }
+    return os;
+}
 }// namespace NES::Nautilus::Backends::BC

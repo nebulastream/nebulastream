@@ -17,6 +17,7 @@
 #include <any>
 #include <array>
 #include <cstdint>
+#include <ostream>
 #include <variant>
 #include <vector>
 
@@ -26,7 +27,8 @@ namespace NES::Nautilus::Backends::BC {
  * @brief This defines the central register file for the byte-code interpreter.
  * In the current version we only support 256 registers at max.
  */
-using RegisterFile = std::array<int64_t, 256>;
+constexpr short REGISTERS = 1024;
+using RegisterFile = std::array<int64_t, REGISTERS>;
 
 /**
  * @brief Defines an enum of all byte codes.
@@ -139,6 +141,8 @@ enum class ByteCode : short {
     AND_b,
     // OR
     OR_b,
+    // Negate
+    NOT_b,
     // Function calls
     // TODO #3466 come up with a better approach to call dynamically into runtime functions
     // functions with void return
@@ -149,6 +153,8 @@ enum class ByteCode : short {
     CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64,
     // functions with ui64 return
     CALL_ui64_ptr,
+    CALL_ui64_ui64_i8,
+    CALL_ui64_ui64_i32,
     CALL_ui64_ui64_i64,
     // functions with i64 return
     CALL_i64,
@@ -181,6 +187,7 @@ struct OpCode {
     short reg1;
     short reg2;
     short output;
+    friend std::ostream& operator<<(std::ostream& os, const OpCode& code);
 };
 
 typedef void Operation(const OpCode&, RegisterFile& regs);
@@ -283,6 +290,18 @@ void orOp(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l || r);
+}
+
+/**
+ * @brief Defines an not in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
+template<class RegisterType>
+void notOp(const OpCode& c, RegisterFile& regs) {
+    auto value = readReg<RegisterType>(regs, c.reg1);
+    writeReg(regs, c.output, !value);
 }
 
 /**
@@ -430,6 +449,7 @@ class CodeBlock {
     CodeBlock() = default;
     std::vector<OpCode> code = std::vector<OpCode>();
     std::variant<BranchOp, ConditionalJumpOp, ReturnOp> terminatorOp = ReturnOp{0};
+    friend std::ostream& operator<<(std::ostream& os, const CodeBlock& block);
 };
 
 class Code {
@@ -438,6 +458,7 @@ class Code {
     std::vector<short> arguments = std::vector<short>();
     std::vector<CodeBlock> blocks = std::vector<CodeBlock>();
     Type returnType = Type::v;
+    friend std::ostream& operator<<(std::ostream& os, const Code& code);
 };
 
 }// namespace NES::Nautilus::Backends::BC

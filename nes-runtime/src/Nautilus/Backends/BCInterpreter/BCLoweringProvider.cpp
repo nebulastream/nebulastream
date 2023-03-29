@@ -29,7 +29,10 @@ std::tuple<Code, RegisterFile> BCLoweringProvider::lower(std::shared_ptr<IR::IRG
     return ctx.process();
 }
 
-short BCLoweringProvider::RegisterProvider::allocRegister() { return currentRegister++; }
+short BCLoweringProvider::RegisterProvider::allocRegister() {
+    NES_ASSERT(currentRegister <= REGISTERS, "allocated to many registers.");
+    return currentRegister++;
+}
 
 void BCLoweringProvider::RegisterProvider::freeRegister() {
     // TODO
@@ -143,8 +146,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::ui16: bc = ByteCode::ADD_ui16; break;
         case Type::ui32: bc = ByteCode::ADD_ui32; break;
         case Type::ui64: bc = ByteCode::ADD_ui64; break;
-        case Type::d: bc = ByteCode::ADD_i8; break;
-        case Type::f: bc = ByteCode::ADD_d; break;
+        case Type::d: bc = ByteCode::ADD_d; break;
+        case Type::f: bc = ByteCode::ADD_f; break;
         case Type::ptr: bc = ByteCode::ADD_i64; break;
         default: {
             NES_NOT_IMPLEMENTED();
@@ -171,8 +174,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::ui16: bc = ByteCode::SUB_ui16; break;
         case Type::ui32: bc = ByteCode::SUB_ui32; break;
         case Type::ui64: bc = ByteCode::SUB_ui64; break;
-        case Type::d: bc = ByteCode::SUB_i8; break;
-        case Type::f: bc = ByteCode::SUB_d; break;
+        case Type::d: bc = ByteCode::SUB_d; break;
+        case Type::f: bc = ByteCode::SUB_f; break;
         case Type::ptr: bc = ByteCode::SUB_i64; break;
         default: {
             NES_NOT_IMPLEMENTED();
@@ -200,8 +203,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::ui16: bc = ByteCode::MUL_ui16; break;
         case Type::ui32: bc = ByteCode::MUL_ui32; break;
         case Type::ui64: bc = ByteCode::MUL_ui64; break;
-        case Type::d: bc = ByteCode::MUL_i8; break;
-        case Type::f: bc = ByteCode::MUL_d; break;
+        case Type::d: bc = ByteCode::MUL_d; break;
+        case Type::f: bc = ByteCode::MUL_f; break;
         case Type::ptr: bc = ByteCode::MUL_i64; break;
         default: {
             NES_NOT_IMPLEMENTED();
@@ -228,8 +231,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::ui16: bc = ByteCode::DIV_ui16; break;
         case Type::ui32: bc = ByteCode::DIV_ui32; break;
         case Type::ui64: bc = ByteCode::DIV_ui64; break;
-        case Type::d: bc = ByteCode::DIV_i8; break;
-        case Type::f: bc = ByteCode::DIV_d; break;
+        case Type::d: bc = ByteCode::DIV_d; break;
+        case Type::f: bc = ByteCode::DIV_f; break;
         case Type::ptr: bc = ByteCode::DIV_i64; break;
         default: {
             NES_NOT_IMPLEMENTED();
@@ -259,8 +262,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::ui16: bc = ByteCode::EQ_ui16; break;
             case Type::ui32: bc = ByteCode::EQ_ui32; break;
             case Type::ui64: bc = ByteCode::EQ_ui64; break;
-            case Type::d: bc = ByteCode::EQ_i8; break;
-            case Type::f: bc = ByteCode::EQ_d; break;
+            case Type::d: bc = ByteCode::EQ_d; break;
+            case Type::f: bc = ByteCode::EQ_f; break;
             case Type::ptr: bc = ByteCode::EQ_i64; break;
             default: {
                 NES_NOT_IMPLEMENTED();
@@ -280,8 +283,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::ui16: bc = ByteCode::LESS_THAN_ui16; break;
             case Type::ui32: bc = ByteCode::LESS_THAN_ui32; break;
             case Type::ui64: bc = ByteCode::LESS_THAN_ui64; break;
-            case Type::d: bc = ByteCode::LESS_THAN_i8; break;
-            case Type::f: bc = ByteCode::LESS_THAN_d; break;
+            case Type::d: bc = ByteCode::LESS_THAN_d; break;
+            case Type::f: bc = ByteCode::LESS_THAN_f; break;
             case Type::ptr: bc = ByteCode::LESS_THAN_i64; break;
             default: {
                 NES_NOT_IMPLEMENTED();
@@ -301,9 +304,33 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::ui16: bc = ByteCode::GREATER_THAN_ui16; break;
             case Type::ui32: bc = ByteCode::GREATER_THAN_ui32; break;
             case Type::ui64: bc = ByteCode::GREATER_THAN_ui64; break;
-            case Type::d: bc = ByteCode::GREATER_THAN_i8; break;
-            case Type::f: bc = ByteCode::GREATER_THAN_d; break;
+            case Type::d: bc = ByteCode::GREATER_THAN_d; break;
+            case Type::f: bc = ByteCode::GREATER_THAN_f; break;
             case Type::ptr: bc = ByteCode::GREATER_THAN_i64; break;
+            default: {
+                NES_NOT_IMPLEMENTED();
+            }
+        }
+        OpCode oc = {bc, leftInput, rightInput, resultReg};
+        program.blocks[block].code.emplace_back(oc);
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::FOLT) {
+        ByteCode bc;
+        auto type = cmpOp->getLeftInput()->getStamp();
+        switch (getType(type)) {
+            case Type::f: bc = ByteCode::LESS_THAN_f; break;
+            case Type::d: bc = ByteCode::LESS_THAN_d; break;
+            default: {
+                NES_NOT_IMPLEMENTED();
+            }
+        }
+        OpCode oc = {bc, leftInput, rightInput, resultReg};
+        program.blocks[block].code.emplace_back(oc);
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::FOEQ) {
+        ByteCode bc;
+        auto type = cmpOp->getLeftInput()->getStamp();
+        switch (getType(type)) {
+            case Type::f: bc = ByteCode::EQ_f; break;
+            case Type::d: bc = ByteCode::EQ_d; break;
             default: {
                 NES_NOT_IMPLEMENTED();
             }
@@ -332,8 +359,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::ui16: bc = ByteCode::LOAD_ui16; break;
         case Type::ui32: bc = ByteCode::LOAD_ui32; break;
         case Type::ui64: bc = ByteCode::LOAD_ui64; break;
-        case Type::d: bc = ByteCode::LOAD_i8; break;
-        case Type::f: bc = ByteCode::LOAD_d; break;
+        case Type::f: bc = ByteCode::LOAD_f; break;
+        case Type::d: bc = ByteCode::LOAD_d; break;
         case Type::ptr: bc = ByteCode::LOAD_i64; break;
         default: {
             NES_NOT_IMPLEMENTED();
@@ -360,8 +387,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::ui16: bc = ByteCode::STORE_ui16; break;
         case Type::ui32: bc = ByteCode::STORE_ui32; break;
         case Type::ui64: bc = ByteCode::STORE_ui64; break;
-        case Type::d: bc = ByteCode::STORE_i8; break;
-        case Type::f: bc = ByteCode::STORE_d; break;
+        case Type::d: bc = ByteCode::STORE_d; break;
+        case Type::f: bc = ByteCode::STORE_f; break;
         case Type::ptr: bc = ByteCode::STORE_i64; break;
         default: {
             NES_NOT_IMPLEMENTED();
@@ -510,9 +537,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             process(call, block, frame);
             return;
         }
-
         case IR::Operations::Operation::OrOp: {
             auto call = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
+            process(call, block, frame);
+            return;
+        }
+        case IR::Operations::Operation::AndOp: {
+            auto call = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
+            process(call, block, frame);
+            return;
+        }
+        case IR::Operations::Operation::NegateOp: {
+            auto call = std::static_pointer_cast<IR::Operations::NegateOperation>(opt);
             process(call, block, frame);
             return;
         }
@@ -600,8 +636,12 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         } else if (arguments.size() == 2) {
             if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
                 NES_NOT_IMPLEMENTED();
-            } if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i64) {
+            } else if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i64) {
                 bc = ByteCode::CALL_ui64_ui64_i64;
+            } else if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i32) {
+                bc = ByteCode::CALL_ui64_ui64_i32;
+            } else if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i8) {
+                bc = ByteCode::CALL_ui64_ui64_i8;
             } else {
                 NES_NOT_IMPLEMENTED();
             }
@@ -653,6 +693,17 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         frame.setValue(opt->getIdentifier(), resultRegister);
     }
     OpCode oc = {bc, funcInfoRegister, -1, resultRegister};
+    program.blocks[block].code.emplace_back(oc);
+}
+
+void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::NegateOperation>& negateOperation,
+                                                  short block,
+                                                  RegisterFrame& frame) {
+    auto input = frame.getValue(negateOperation->getInput()->getIdentifier());
+    auto resultReg = registerProvider.allocRegister();
+    frame.setValue(negateOperation->getIdentifier(), resultReg);
+    ByteCode bc = ByteCode::NOT_b;
+    OpCode oc = {bc, input, -1, resultReg};
     program.blocks[block].code.emplace_back(oc);
 }
 
