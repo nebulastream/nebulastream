@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.5.39](https://github.com/nebulastream/nebulastream/tree/v0.5.39) (2023-03-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.38...v0.5.39)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add Pattern Matching Operators SIMILAR TO [\#3193](https://github.com/nebulastream/nebulastream/issues/3193)
+- \[DBPRO\] Add Pattern Matching Operators LIKE [\#3192](https://github.com/nebulastream/nebulastream/issues/3192)
+- \[DBPRO\] Add Regular expression replacing [\#3191](https://github.com/nebulastream/nebulastream/issues/3191)
+- \[DBPRO\] Add Regular expression searching [\#3189](https://github.com/nebulastream/nebulastream/issues/3189)
+- \[DBPRO\] Add Regular expression matching [\#3188](https://github.com/nebulastream/nebulastream/issues/3188)
+- \[DBPRO\] Add Set-Operation-Based Text Similarity Functions [\#3181](https://github.com/nebulastream/nebulastream/issues/3181)
+- \[DBPRO\] Add Edit-Step-Based Text Similarity Functions [\#3180](https://github.com/nebulastream/nebulastream/issues/3180)
+- \[Feature\] Text Regex Function \(Pattern Matching\)  [\#3154](https://github.com/nebulastream/nebulastream/issues/3154)
+- \[Feature\] Text Similarity Functions [\#3153](https://github.com/nebulastream/nebulastream/issues/3153)
+- \[Feature\] Text Functions  [\#3152](https://github.com/nebulastream/nebulastream/issues/3152)
+
 ## [v0.5.38](https://github.com/nebulastream/nebulastream/tree/v0.5.38) (2023-03-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.37...v0.5.38)
