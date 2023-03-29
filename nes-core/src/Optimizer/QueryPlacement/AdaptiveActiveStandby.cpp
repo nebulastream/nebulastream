@@ -143,7 +143,12 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
         }
     } else if (placementStrategy == PlacementStrategy::ValueAAS::ILP_AAS) {
         if (z3Context == nullptr) {
-            NES_ERROR("AdaptiveActiveStandby: no z3Context for ILP strategy");
+            z3::config cfg;
+            cfg.set("timeout", timeout);
+            cfg.set("model", false);
+            cfg.set("type_check", false);
+            z3Context = std::make_shared<z3::context>(cfg);
+            NES_INFO("AdaptiveActiveStandby: no z3Context was passed for ILP strategy, created a new one");
             return false;
         }
 

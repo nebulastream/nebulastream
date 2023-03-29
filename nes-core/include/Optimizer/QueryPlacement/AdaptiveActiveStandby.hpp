@@ -152,6 +152,7 @@ class AdaptiveActiveStandby {
 
     // ILP solver
     z3::ContextPtr z3Context;
+    const static int timeout = 100000;    // 100s for model optimization
     const char* const KEY_SEPARATOR = ",";
     std::map<OperatorId, OperatorNodePtr> operatorMapILP;
     const int z3ScaleDistances = 1000;    // to avoid losing precision in case of many decimals
