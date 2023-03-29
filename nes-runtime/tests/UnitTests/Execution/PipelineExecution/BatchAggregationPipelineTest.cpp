@@ -120,10 +120,6 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
 
-
-
-
-
     auto aggScan = std::make_shared<Operators::BatchAggregationScan>(0 /*handler index*/, aggregationFunctions, resultFields);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     aggScan->setChild(emitOperator);

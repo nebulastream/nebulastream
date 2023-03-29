@@ -26,6 +26,7 @@
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
@@ -60,14 +61,14 @@ class TPCH_Query6 {
         std::vector<std::string> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
         auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
 
-        /* TODO use >= instead of LessThan
-     *   l_shipdate >= date '1994-01-01'
-     *   and l_shipdate < date '1995-01-01'
-     */
+        /*
+        *   l_shipdate >= date '1994-01-01'
+        *   and l_shipdate < date '1995-01-01'
+        */
         auto const_1994_01_01 = std::make_shared<ConstantInt32ValueExpression>(19940101);
         auto const_1995_01_01 = std::make_shared<ConstantInt32ValueExpression>(19950101);
         auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
-        auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
+        auto lessThanExpression1 = std::make_shared<LessEqualsExpression>(const_1994_01_01, readShipdate);
         auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
         auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
 
@@ -103,9 +104,8 @@ class TPCH_Query6 {
         std::vector<std::string> resultFields = {aggregationResultFieldName};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
             std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-        auto aggregation = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/,
-                                                                         aggregationFields,
-                                                                         aggregationFunctions);
+        auto aggregation =
+            std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions);
         selection2->setChild(aggregation);
 
         // create aggregation pipeline

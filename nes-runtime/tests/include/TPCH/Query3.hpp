@@ -206,9 +206,6 @@ class TPCH_Query3 {
         auto l_orderkey = std::make_shared<ReadFieldExpression>("l_orderkey");
         std::vector<ExpressionPtr> lineitemProbeKeys = {l_orderkey};
 
-        //std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-        //std::vector<IR::Types::StampPtr> valueStamps = {};
-        //std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
         std::vector<Record::RecordFieldIdentifier> orderProbeFieldNames = {"o_shippriority", "o_orderdate"};
 
         auto lineitemJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,

@@ -29,7 +29,8 @@ namespace NES::Runtime::Execution::Operators {
  * The build phase, consumes input records from the build side and materializes hash-entries in a thread local stack.
  * If all records, are consumed, we build a global hash-map on top of all materialized values (see mergeState).
  * The final probe phase, consumes the probe side and performs key lookups in the global hash-map.
- * TODO: Add support for concurrent merges
+ * TODO: We could further, improve this operator by adding support for concurrent merges of the local stacks to the hash table.
+ * This code improve performance, but it should first investigated if the merging becomes a performance bottleneck.
  */
 class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
                          public NES::detail::virtual_enable_shared_from_this<BatchJoinHandler, false> {
@@ -53,10 +54,6 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    /**
-     * @brief Stops the operator handler
-     * @param pipelineExecutionContext pipeline execution context
-     */
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
@@ -66,7 +63,17 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
      * @return  Nautilus::Interface::Stack*
      */
     Nautilus::Interface::Stack* getThreadLocalState(uint64_t workerId);
+
+    /**
+     * @brief This function creates the global hash map. To this end, it builds a new hash map based on the thread local stacks.
+     * @return ChainedHashMap*
+     */
     Nautilus::Interface::ChainedHashMap* mergeState();
+
+    /**
+     * @brief Returns a reference to the global hash map
+     * @return ChainedHashMap*
+     */
     Nautilus::Interface::ChainedHashMap* getGlobalHashMap();
 
     ~BatchJoinHandler();

@@ -59,14 +59,6 @@ namespace NES::Runtime::Execution {
 
 class BenchmarkRunner {
   public:
-    uint64_t iterations = 10;
-    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F1;
-    std::string compiler;
-    ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
-    std::shared_ptr<Runtime::BufferManager> table_bm;
-    std::shared_ptr<WorkerContext> wc;
-    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
     BenchmarkRunner(TPCH_SCALE_FACTOR targetScaleFactor, std::string compiler)
         : targetScaleFactor(targetScaleFactor), compiler(compiler) {
 
@@ -95,6 +87,16 @@ class BenchmarkRunner {
     };
     virtual ~BenchmarkRunner() = default;
     virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) = 0;
+
+  protected:
+    uint64_t iterations = 10;
+    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F1;
+    std::string compiler;
+    ExecutablePipelineProvider* provider;
+    std::shared_ptr<Runtime::BufferManager> bm;
+    std::shared_ptr<Runtime::BufferManager> table_bm;
+    std::shared_ptr<WorkerContext> wc;
+    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
 class Query6Runner : public BenchmarkRunner {
@@ -203,8 +205,6 @@ class Query3Runner : public BenchmarkRunner {
 }// namespace NES::Runtime::Execution
 
 int main(int, char**) {
-    //NES::Runtime::Execution::Query6Runner().run();
-    //NES::Runtime::Execution::Query1Runner().run();
     NES::TPCH_SCALE_FACTOR targetScaleFactor = NES::TPCH_SCALE_FACTOR::F1;
     std::vector<std::string> compilers = {"PipelineCompiler"};
     for (const auto& c : compilers) {
