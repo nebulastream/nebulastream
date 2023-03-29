@@ -169,10 +169,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
                 auto timeBasedWindowType = WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
                 if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::TUMBLINGWINDOW) {
-                    auto* window = std::shared_ptr<TumblingWindow*>(windowDefinition->getWindowType().get());
+                    auto* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
                     windowSize = window->getSize().getTime();
                 } else if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::SLIDINGWINDOW) {
-                    auto* window = std::shared_ptr<SlidingWindow*>(windowDefinition->getWindowType().get());
+                    auto* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
                     windowSize = window->getSize().getTime();
                 } else {
                     NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
