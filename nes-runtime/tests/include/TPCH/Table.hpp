@@ -24,6 +24,11 @@
 namespace NES::Runtime {
 
 class TableBuilder;
+
+/**
+ * @brief This provides a table abstraction for testing, revisit this if we have a similar abstraction in the runtime.
+ * A table stores a set of tuple buffers (chunks).
+ */
 class Table {
   public:
     Table(MemoryLayouts::MemoryLayoutPtr layout) : layout(std::move(layout)){};
@@ -78,6 +83,9 @@ class Table {
     std::vector<TupleBuffer> chunks;
 };
 
+/**
+ * @brief Builder to create tables.
+ */
 class TableBuilder {
   public:
     TableBuilder(Runtime::BufferManagerPtr bm, const MemoryLayouts::MemoryLayoutPtr& layout)

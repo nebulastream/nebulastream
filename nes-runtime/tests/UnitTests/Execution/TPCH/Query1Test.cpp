@@ -107,8 +107,12 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     NES_INFO("Query Runtime:\n" << timer);
     // compare results
     auto aggregationHandler = pipeline1.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(0);
-    auto numberOfKeys = aggregationHandler->getThreadLocalStore(wc->getId())->getCurrentSize();
+    // TODO extend for multi thread support
+    auto hashTable = aggregationHandler->getThreadLocalStore(wc->getId());
+    auto numberOfKeys = hashTable->getCurrentSize();
     EXPECT_EQ(numberOfKeys, 4);
+
+
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

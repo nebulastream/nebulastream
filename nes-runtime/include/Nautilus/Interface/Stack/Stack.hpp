@@ -21,7 +21,7 @@ namespace NES::Nautilus::Interface {
 class StackRef;
 
 /**
- * @brief This class provides an dynamically growing stack/list data structure of entries.
+ * @brief This class provides a dynamically growing stack/list data structure of entries.
  * All data is stored in a list of pages.
  * Entries consume a fixed size, which has to be smaller then the page size.
  * Each page can contain page_size/entry_size entries.

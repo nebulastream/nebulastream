@@ -13,5 +13,3 @@
 
 add_nes_runtime_test(runtime-tpch-test "Query6Test.cpp" "Query3Test.cpp" "Query1Test.cpp")
 target_link_libraries(runtime-tpch-test PUBLIC tpch-dbgen)
-add_nes_runtime_test(runtime-tpch-benchmark "TPCHBenchmark.cpp")
-target_link_libraries(runtime-tpch-benchmark PUBLIC tpch-dbgen)
