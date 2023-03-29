@@ -151,7 +151,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
 
     NES_DEBUG("GlobalQueryPlanTest: Removing the query plan for the query with id Q1");
-    globalQueryPlan->removeQuery(1, NES::RequestType::Value::Stop);
+    globalQueryPlan->removeQuery(1, NES::RequestType::Stop);
 
     //Assert
     NES_DEBUG("GlobalQueryPlanTest: Should return empty global query nodes");
@@ -287,7 +287,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId1) != queryIdToSinkOperatorMap1.end());
     EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
 
-    globalQueryPlan->removeQuery(queryId1, RequestType::Value::Stop);
+    globalQueryPlan->removeQuery(queryId1, RequestType::Stop);
     //Get MetaData information
     sharedQueryMetaData = globalQueryPlan->getSharedQueryPlansToDeploy();
     queryIdToSinkOperatorMap1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();

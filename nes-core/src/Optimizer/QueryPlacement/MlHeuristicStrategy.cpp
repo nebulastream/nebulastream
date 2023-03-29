@@ -53,8 +53,8 @@ MlHeuristicStrategy::MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionP
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                                    FaultToleranceType::Value faultToleranceType,
-                                                    LineageType::Value lineageType,
+                                                    FaultToleranceType faultToleranceType,
+                                                    LineageType lineageType,
                                                     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {
@@ -83,8 +83,8 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
 }
 
 void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
-                                                               FaultToleranceType::Value faultToleranceType,
-                                                               LineageType::Value lineageType) {
+                                                               FaultToleranceType faultToleranceType,
+                                                               LineageType lineageType) {
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     auto context = std::make_shared<z3::context>();
     auto signatureInferencePhase =

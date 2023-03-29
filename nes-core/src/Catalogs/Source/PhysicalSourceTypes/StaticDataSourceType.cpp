@@ -34,7 +34,7 @@ static StaticDataSourceTypePtr create(const std::string& sourceType,
                                       const std::string& pathTableFile,
                                       uint64_t numBuffersToProcess);
 
-GatheringMode::Value getGatheringMode() const;
+GatheringMode getGatheringMode() const;
 
 SourceMode getSourceMode() const;
 
@@ -60,7 +60,7 @@ StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTabl
                                                      uint64_t taskQueueId,
                                                      bool lateStart) {
     // todo check validity of path
-    SourceMode sourceModeEnum = SourceMode::getFromString(sourceMode);
+    SourceMode sourceModeEnum = magic_enum::enum_cast<SourceMode>(sourceMode).value();
     return std::make_shared<StaticDataSourceType>(pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId, lateStart);
 }
 
@@ -79,7 +79,7 @@ std::string StaticDataSourceType::toString() {
     ss << "StaticDataSourceType => {\n";
     ss << "pathTableFile :" << pathTableFile;
     ss << "numBuffersToProcess :" << numBuffersToProcess;
-    ss << "SourceMode :" << SourceMode::toString(sourceMode);
+    ss << "SourceMode :" << std::string(magic_enum::enum_name(sourceMode));
     ss << "taskQueueId :" << taskQueueId;
     ss << "lateStart :" << lateStart;
     ss << "\n}";

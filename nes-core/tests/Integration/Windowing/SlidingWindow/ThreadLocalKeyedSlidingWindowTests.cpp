@@ -144,7 +144,7 @@ PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t
         },
         numberOfBuffers,
         0,
-        GatheringMode::Value::INTERVAL_MODE);
+        GatheringMode::INTERVAL_MODE);
 }
 
 class DataGeneratorMultiKey {
@@ -166,7 +166,7 @@ class DataGeneratorMultiKey {
             },
             numberOfBuffers,
             0,
-            GatheringMode::Value::INTERVAL_MODE);
+            GatheringMode::INTERVAL_MODE);
     }
 
   private:
@@ -193,7 +193,7 @@ class DataGenerator {
             },
             numberOfBuffers,
             0,
-            GatheringMode::Value::INTERVAL_MODE);
+            GatheringMode::INTERVAL_MODE);
     }
 
   private:

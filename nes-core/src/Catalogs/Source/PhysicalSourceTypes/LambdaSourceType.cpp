@@ -21,7 +21,7 @@ namespace NES {
 LambdaSourceType::LambdaSourceType(std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>&& generationFunction,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
-                                   GatheringMode::Value gatheringMode,
+                                   GatheringMode gatheringMode,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
     : PhysicalSourceType(SourceType::LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
@@ -32,7 +32,7 @@ LambdaSourceTypePtr LambdaSourceType::create(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
-    GatheringMode::Value gatheringMode,
+    GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId) {
     return std::make_shared<LambdaSourceType>(LambdaSourceType(std::move(generationFunction),
@@ -51,7 +51,7 @@ uint64_t LambdaSourceType::getNumBuffersToProduce() const { return numBuffersToP
 
 uint64_t LambdaSourceType::getGatheringValue() const { return gatheringValue; }
 
-GatheringMode::Value LambdaSourceType::getGatheringMode() const { return gatheringMode; }
+GatheringMode LambdaSourceType::getGatheringMode() const { return gatheringMode; }
 
 uint64_t LambdaSourceType::getSourceAffinity() const { return sourceAffinity; }
 uint64_t LambdaSourceType::getTaskQueueId() const { return taskQueueId; }
@@ -61,7 +61,7 @@ std::string LambdaSourceType::toString() {
     ss << "LambdaSourceType => {\n";
     ss << "NumberOfBuffersToProduce :" << numBuffersToProduce;
     ss << "GatheringValue :" << gatheringValue;
-    ss << "GatheringMode :" << GatheringMode::toString(gatheringMode);
+    ss << "GatheringMode :" << std::string(magic_enum::enum_name(gatheringMode));
     ss << "sourceAffinity :" << sourceAffinity;
     ss << "taskQueueId :" << taskQueueId;
     ss << "\n}";

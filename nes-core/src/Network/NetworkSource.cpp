@@ -41,7 +41,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  nesPartition.getOperatorId(),
                  /*default origin id for the network source this is always zero*/ 0,
                  numSourceLocalBuffers,
-                 GatheringMode::Value::INTERVAL_MODE,
+                 GatheringMode::INTERVAL_MODE,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
       waitTime(waitTime), retryTimes(retryTimes) {

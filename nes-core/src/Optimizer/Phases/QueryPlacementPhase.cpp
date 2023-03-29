@@ -47,7 +47,7 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
                                                                      queryReconfiguration));
 }
 
-bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan) {
+bool QueryPlacementPhase::execute(PlacementStrategy placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO2("QueryPlacementPhase: Perform query placement phase for shared query plan {}",
               std::to_string(sharedQueryPlan->getSharedQueryId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
@@ -94,7 +94,7 @@ bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr
 std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan) {
     std::vector<OperatorNodePtr> upStreamPinnedOperators;
     auto queryPlan = sharedQueryPlan->getQueryPlan();
-    if (!queryReconfiguration || SharedQueryPlanStatus::Value::Created == sharedQueryPlan->getStatus()) {
+    if (!queryReconfiguration || SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
         //Fetch all Source operators
         upStreamPinnedOperators = queryPlan->getLeafOperators();
     } else {

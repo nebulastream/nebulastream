@@ -140,7 +140,7 @@ void E2ESingleRun::createSources() {
                     LambdaSourceType::create(dataProvidingFunc,
                                              configOverAllRuns.numberOfBuffersToProduce->getValue(),
                                              /* gatheringValue */ 0,
-                                             GatheringMode::Value::INTERVAL_MODE,
+                                             GatheringMode::INTERVAL_MODE,
                                              sourceAffinity,
                                              taskQueueId);
 
@@ -272,7 +272,7 @@ void E2ESingleRun::stopQuery() {
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
             NES_TRACE("checkStoppedOrTimeout: check query status for " << id);
-            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::Stopped) {
+            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::STOPPED) {
                 NES_TRACE("checkStoppedOrTimeout: status for " << id << " reached stopped");
                 break;
             }
@@ -404,15 +404,15 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MarkedForHardStop:
-            case QueryStatus::MarkedForSoftStop:
-            case QueryStatus::SoftStopCompleted:
-            case QueryStatus::SoftStopTriggered:
-            case QueryStatus::Stopped:
-            case QueryStatus::Running: {
+            case QueryStatus::MARKEDFORHARDSTOP:
+            case QueryStatus::MARKEDFORSOFTSTOP:
+            case QueryStatus::SOFTSTOPCOMPLETED:
+            case QueryStatus::SOFTSTOPTRIGGERED:
+            case QueryStatus::STOPPED:
+            case QueryStatus::RUNNING: {
                 return true;
             }
-            case QueryStatus::Failed: {
+            case QueryStatus::FAILED: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " +
                             std::string(magic_enum::enum_name(status)));
                 return false;

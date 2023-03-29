@@ -202,8 +202,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     lineageString = requestJson["lineage"].get<std::string>();
                 }
             }
-            auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
-            auto lineageMode = LineageType::getFromString(lineageString);
+            auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
+            auto lineageMode = magic_enum::enum_cast<LineageType>(lineageString).value();
             NES_DEBUG2("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, "
                        "lineage= {}",
                        userQuery,
@@ -267,8 +267,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             std::string* queryString = protobufMessage->mutable_querystring();
             std::string placementStrategy = context->at("placement").value();
-            auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
-            auto lineageType = LineageType::getFromString(lineageString);
+            auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
+            auto lineageType = magic_enum::enum_cast<LineageType>(lineageString).value();
             QueryId queryId =
                 queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageType);
 
@@ -329,21 +329,11 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     bool validatePlacementStrategy(const std::string& placementStrategy) {
-        try {
-            PlacementStrategy::getFromString(placementStrategy);
-        } catch (Exceptions::RuntimeException exc) {
-            return false;
-        }
-        return true;
+        return magic_enum::enum_cast<PlacementStrategy>(placementStrategy).has_value();
     }
 
     bool validateFaultToleranceType(const std::string& faultToleranceString) {
-        try {
-            FaultToleranceType::getFromString(faultToleranceString);
-        } catch (Exceptions::RuntimeException exc) {
-            return false;
-        }
-        return true;
+        return magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).has_value();
     }
 
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
@@ -370,12 +360,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     }
 
     bool validateLineageMode(const std::string& lineageModeString) {
-        try {
-            LineageType::getFromString(lineageModeString);
-        } catch (Exceptions::RuntimeException exc) {
-            return false;
-        }
-        return true;
+        return magic_enum::enum_cast<LineageType>(lineageModeString).has_value();
     }
 
     const std::string DEFAULT_TOLERANCE_TYPE = "NONE";

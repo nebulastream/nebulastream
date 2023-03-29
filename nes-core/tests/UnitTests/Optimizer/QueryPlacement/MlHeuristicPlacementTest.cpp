@@ -168,7 +168,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::Value::MlHeuristic, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::MlHeuristic, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n" << topology->toString());

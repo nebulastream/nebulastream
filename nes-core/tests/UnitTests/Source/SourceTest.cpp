@@ -173,7 +173,7 @@ class MockDataSource : public DataSource {
                    Runtime::QueryManagerPtr queryManager,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
-                   GatheringMode::Value gatheringMode,
+                   GatheringMode gatheringMode,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema,
                      bufferManager,
@@ -191,7 +191,7 @@ class MockDataSource : public DataSource {
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode::Value gatheringMode,
+                       GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
         return std::make_shared<MockDataSource>(schema,
                                                 bufferManager,
@@ -218,7 +218,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                                      Runtime::QueryManagerPtr queryManager,
                                      OperatorId operatorId,
                                      size_t numSourceLocalBuffers,
-                                     GatheringMode::Value gatheringMode,
+                                     GatheringMode gatheringMode,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema,
                      bufferManager,
@@ -251,7 +251,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                     Runtime::QueryManagerPtr queryManager,
                     OperatorId operatorId,
                     size_t numSourceLocalBuffers,
-                    GatheringMode::Value gatheringMode,
+                    GatheringMode gatheringMode,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema,
                      bufferManager,
@@ -304,7 +304,7 @@ class BinarySourceProxy : public BinarySource {
                        operatorId,
                        0,
                        numSourceLocalBuffers,
-                       GatheringMode::Value::INTERVAL_MODE,
+                       GatheringMode::INTERVAL_MODE,
                        successors){};
 
   private:
@@ -332,7 +332,7 @@ class CSVSourceProxy : public CSVSource {
                     operatorId,
                     0,
                     numSourceLocalBuffers,
-                    GatheringMode::Value::INTERVAL_MODE,
+                    GatheringMode::INTERVAL_MODE,
                     successors){};
 
   private:
@@ -361,7 +361,7 @@ class TCPSourceProxy : public TCPSource {
                     operatorId,
                     0,
                     numSourceLocalBuffers,
-                    GatheringMode::Value::INTERVAL_MODE,
+                    GatheringMode::INTERVAL_MODE,
                     successors){};
 
   private:
@@ -378,7 +378,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                          uint64_t numbersOfBufferToProduce,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
-                         GatheringMode::Value gatheringMode,
+                         GatheringMode gatheringMode,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : GeneratorSource(schema,
                           bufferManager,
@@ -424,7 +424,7 @@ class LambdaSourceProxy : public LambdaSource {
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         OperatorId operatorId,
         size_t numSourceLocalBuffers,
-        GatheringMode::Value gatheringMode,
+        GatheringMode gatheringMode,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : LambdaSource(schema,
                        bufferManager,
@@ -575,7 +575,7 @@ class SourceTest : public Testing::NESBaseTest {
                                              Runtime::QueryManagerPtr queryManager,
                                              OperatorId operatorId,
                                              size_t numSourceLocalBuffers,
-                                             GatheringMode::Value gatheringMode,
+                                             GatheringMode gatheringMode,
                                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
         return std::make_shared<DataSourceProxy>(schema,
                                                  bufferManager,
@@ -655,7 +655,7 @@ TEST_F(SourceTest, testDataSourceRunningImmediately) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(mDataSource.isRunning());
 }
@@ -666,7 +666,7 @@ TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -680,7 +680,7 @@ TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -695,7 +695,7 @@ TEST_F(SourceTest, testDataSourceStopImmediately) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
 }
@@ -706,7 +706,7 @@ TEST_F(SourceTest, testDataSourceStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -721,7 +721,7 @@ TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -738,7 +738,7 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::Value::INTERVAL_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -749,28 +749,13 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
     EXPECT_EQ(mDataSource.wasGracefullyStopped, Runtime::QueryTerminationType::HardStop);// private side-effect, use FRIEND_TEST
 }
 
-TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
-    // create a DefaultSource instead of raw DataSource
-    const DataSourcePtr source =
-        createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
-                                                      this->nodeEngine->getBufferManager(),
-                                                      this->nodeEngine->getQueryManager(),
-                                                      this->operatorId,
-                                                      0,
-                                                      this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::Value::INTERVAL_MODE);
-    ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::Value::INGESTION_RATE_MODE);
-    EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));
-}
-
 TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
     auto mDataSource = MockDataSource::create(this->schema,
                                               this->nodeEngine->getBufferManager(),
                                               this->nodeEngine->getQueryManager(),
                                               this->operatorId,
                                               this->numSourceLocalBuffersDefault,
-                                              GatheringMode::Value::INTERVAL_MODE,
+                                              GatheringMode::INTERVAL_MODE,
                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(*mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(*mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
@@ -783,7 +768,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
                                this->nodeEngine->getQueryManager(),
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               GatheringMode::Value::INGESTION_RATE_MODE,
+                               GatheringMode::INGESTION_RATE_MODE,
                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(Exactly(1));
@@ -796,7 +781,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
                                this->nodeEngine->getQueryManager(),
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               GatheringMode::Value::ADAPTIVE_MODE,
+                               GatheringMode::ADAPTIVE_MODE,
                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).Times(Exactly(1));
@@ -817,7 +802,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::Value::INTERVAL_MODE,
+                                                           GatheringMode::INTERVAL_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -864,7 +849,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::Value::INGESTION_RATE_MODE,
+                                                           GatheringMode::INGESTION_RATE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -910,7 +895,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::Value::ADAPTIVE_MODE,
+                                                           GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -956,7 +941,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::Value::ADAPTIVE_MODE,
+                                                           GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -1004,7 +989,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::Value::ADAPTIVE_MODE,
+                                                           GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -1044,7 +1029,7 @@ TEST_F(SourceTest, testDataSourceOpen) {
                                 this->nodeEngine->getQueryManager(),
                                 this->operatorId,
                                 this->numSourceLocalBuffersDefault,
-                                GatheringMode::Value::INGESTION_RATE_MODE,
+                                GatheringMode::INGESTION_RATE_MODE,
                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     // EXPECT_ANY_THROW(mDataSource.bufferManager->getAvailableBuffers()); currently not possible w/ Error: success :)
     mDataSource.open();
@@ -1770,7 +1755,7 @@ TEST_F(SourceTest, testGeneratorSourceGetType) {
                                        1,
                                        this->operatorId,
                                        this->numSourceLocalBuffersDefault,
-                                       GatheringMode::Value::INGESTION_RATE_MODE,
+                                       GatheringMode::INGESTION_RATE_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
@@ -1831,7 +1816,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeInterval) {
                                        func,
                                        this->operatorId,
                                        12,
-                                       GatheringMode::Value::INTERVAL_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
@@ -1880,7 +1865,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        func,
                                        this->operatorId,
                                        12,
-                                       GatheringMode::Value::INGESTION_RATE_MODE,
+                                       GatheringMode::INGESTION_RATE_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
@@ -1937,7 +1922,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         calls++;
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::Value::INTERVAL_MODE);
+    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
     wrkConf->physicalSources.add(physicalSource);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
@@ -1952,8 +1937,8 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE,
-                                                      LineageType::Value::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE,
+                                                      LineageType::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 

@@ -114,7 +114,7 @@ class KafkaSinkTest : public Testing::NESBaseTest {
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
     auto kafkaSink =
         createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1,
-                            FaultToleranceType::Value::NONE, 1);
+                            FaultToleranceType::NONE, 1);
 }
 
 /**
@@ -123,7 +123,7 @@ TEST_F(KafkaSinkTest, KafkaSinkInit) {
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     auto kafkaSink =
         createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1,
-                            FaultToleranceType::Value::NONE, 1);
+                            FaultToleranceType::NONE, 1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 
@@ -138,7 +138,7 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
  */
 TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::Value::NONE, 1);
+        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 
     auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto inputBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());

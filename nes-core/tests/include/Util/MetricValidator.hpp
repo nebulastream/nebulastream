@@ -215,7 +215,8 @@ class MetricValidator {
         bool check = true;
 
         if (!storedMetrics->contains(expectedType)) {
-            NES_ERROR("MetricValidator: Metrics for node " << expectedNodeId << " are missing type " << toString(expectedType));
+            NES_ERROR("MetricValidator: Metrics for node " << expectedNodeId << " are missing type "
+                        << std::string(magic_enum::enum_name(expectedType)));
             return false;
         }
 
@@ -226,8 +227,9 @@ class MetricValidator {
         NES_INFO("MetricValidator: Stored metrics for ID " << expectedNodeId << ": "
                                                            << Monitoring::MetricUtils::toJson(storedMetrics));
         if (retMetric->getMetricType() != expectedType) {
-            NES_ERROR("MetricValidator: MetricType is not as expected " << toString(retMetric->getMetricType())
-                                                                        << " != " << toString(expectedType));
+            NES_ERROR("MetricValidator: MetricType is not as expected "
+                        << std::string(magic_enum::enum_name(retMetric->getMetricType()))
+                        << " != " << std::string(magic_enum::enum_name(expectedType)));
             check = false;
         }
 

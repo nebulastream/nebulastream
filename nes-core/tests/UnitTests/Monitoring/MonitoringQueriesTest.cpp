@@ -100,8 +100,8 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         Monitoring::MetricType retMetricType =
             Monitoring::MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
         ASSERT_EQ(retMetricType, expectedType);
-        MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(magic_enum::enum_integer(collectorType));
-        std::string metricCollectorStr = NES::Monitoring::toString(collectorType);
+        MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
+        std::string metricCollectorStr = std::string(magic_enum::enum_name(collectorType));
 
         NesCoordinatorPtr crd = createCoordinator();
         NES_INFO("MonitoringQueriesTest: Start coordinator");
@@ -126,7 +126,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         NES_INFO("MonitoringQueriesTest: Submit query");
         auto query = createQueryString("logTestMetricStream", metricCollectorStr);
         QueryId queryId =
-            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
+            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
         GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

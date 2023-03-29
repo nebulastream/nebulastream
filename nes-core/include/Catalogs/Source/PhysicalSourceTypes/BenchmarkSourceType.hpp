@@ -44,8 +44,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
                                          size_t memoryAreaSize,
                                          uint64_t numberOfBuffersToProduce,
                                          uint64_t gatheringValue,
-                                         const std::string& gatheringMode,
-                                         const std::string& sourceMode,
+                                         GatheringMode gatheringMode,
+                                         SourceMode sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId);
 

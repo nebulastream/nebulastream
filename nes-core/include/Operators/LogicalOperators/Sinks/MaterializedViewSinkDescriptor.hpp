@@ -33,7 +33,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr create(uint64_t viewId,
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -59,7 +59,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @brief getter for fault-tolerance type
      * @return fault-tolerance type
      */
-    FaultToleranceType::Value getFaultToleranceType() const;
+    FaultToleranceType getFaultToleranceType() const;
 
     /**
      * @brief getter for number of origins
@@ -68,7 +68,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
     uint64_t getNumberOfOrigins() const;
 
   private:
-    MaterializedViewSinkDescriptor(uint64_t viewId, FaultToleranceType::Value faultToleranceType, uint64_t numberOfOrigins);
+    MaterializedViewSinkDescriptor(uint64_t viewId, FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
     uint64_t viewId;
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;

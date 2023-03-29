@@ -29,8 +29,8 @@ BenchmarkSourceType::BenchmarkSourceType(uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t numBuffersToProduce,
                                          uint64_t gatheringValue,
-                                         GatheringMode::Value gatheringMode,
-                                         SourceMode::Value sourceMode,
+                                         GatheringMode gatheringMode,
+                                         SourceMode sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId)
     : PhysicalSourceType(SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
@@ -41,19 +41,17 @@ BenchmarkSourceTypePtr BenchmarkSourceType::create(uint8_t* memoryArea,
                                                    size_t memoryAreaSize,
                                                    uint64_t numBuffersToProduce,
                                                    uint64_t gatheringValue,
-                                                   const std::string& gatheringMode,
-                                                   const std::string& sourceMode,
+                                                   GatheringMode gatheringMode,
+                                                   SourceMode sourceMode,
                                                    uint64_t sourceAffinity,
                                                    uint64_t taskQueueId) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
-    auto sourceModeEnum = SourceMode::getFromString(sourceMode);
     return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(memoryArea,
                                                                      memoryAreaSize,
                                                                      numBuffersToProduce,
                                                                      gatheringValue,
-                                                                     gatheringModeEnum,
-                                                                     sourceModeEnum,
+                                                                     gatheringMode,
+                                                                     sourceMode,
                                                                      sourceAffinity,
                                                                      taskQueueId));
 }
@@ -64,9 +62,9 @@ size_t BenchmarkSourceType::getMemoryAreaSize() const { return memoryAreaSize; }
 
 uint64_t BenchmarkSourceType::getGatheringValue() const { return gatheringValue; }
 
-GatheringMode::Value BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
+GatheringMode BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
 
-SourceMode::Value BenchmarkSourceType::getSourceMode() const { return sourceMode; }
+SourceMode BenchmarkSourceType::getSourceMode() const { return sourceMode; }
 
 uint64_t BenchmarkSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 

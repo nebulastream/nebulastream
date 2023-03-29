@@ -41,8 +41,8 @@ class ILPStrategy : public BasePlacementStrategy {
     ~ILPStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryId queryId,
-                                   FaultToleranceType::Value faultToleranceType,
-                                   LineageType::Value lineageType,
+                                   FaultToleranceType faultToleranceType,
+                                   LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 

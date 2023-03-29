@@ -44,8 +44,8 @@ TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                                FaultToleranceType::Value faultToleranceType,
-                                                LineageType::Value lineageType,
+                                                FaultToleranceType faultToleranceType,
+                                                LineageType lineageType,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {

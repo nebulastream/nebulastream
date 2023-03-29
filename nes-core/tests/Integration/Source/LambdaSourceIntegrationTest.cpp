@@ -90,9 +90,9 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
         }
     };
 
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, GatheringMode::Value::INTERVAL_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource1 = PhysicalSource::create("input1", "test_stream1", lambdaSourceType1);
-    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, GatheringMode::Value::INTERVAL_MODE);
+    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource2 = PhysicalSource::create("input2", "test_stream2", lambdaSourceType2);
     wrkConf->physicalSources.add(physicalSource1);
     wrkConf->physicalSources.add(physicalSource2);
@@ -107,8 +107,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE,
-                                                      LineageType::Value::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE,
+                                                      LineageType::IN_MEMORY);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
@@ -174,9 +174,9 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
         }
     };
 
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, GatheringMode::Value::INTERVAL_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource1 = PhysicalSource::create("input1", "test_stream", lambdaSourceType1);
-    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, GatheringMode::Value::INTERVAL_MODE);
+    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource2 = PhysicalSource::create("input2", "test_stream", lambdaSourceType2);
     wrkConf->physicalSources.add(physicalSource1);
     wrkConf->physicalSources.add(physicalSource2);
@@ -191,12 +191,12 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::Value::NONE,
-                                                      LineageType::Value::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE,
+                                                      LineageType::IN_MEMORY);
 
     auto queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::Value::NONE,
-                                                      LineageType::Value::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE,
+                                                      LineageType::IN_MEMORY);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
@@ -257,7 +257,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
-        auto lambdaSourceType1 = LambdaSourceType::create(std::move(func), 30, 0, GatheringMode::Value::INTERVAL_MODE);
+        auto lambdaSourceType1 = LambdaSourceType::create(std::move(func), 30, 0, GatheringMode::INTERVAL_MODE);
         auto physicalSource1 = PhysicalSource::create("input", "test_stream" + std::to_string(i), lambdaSourceType1);
         wrkConf->physicalSources.add(physicalSource1);
     }
@@ -272,7 +272,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::Value::NONE, LineageType::Value::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {

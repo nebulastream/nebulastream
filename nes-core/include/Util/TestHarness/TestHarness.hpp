@@ -397,7 +397,7 @@ class TestHarness {
                         "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                             << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         auto memorySourceType =
-            MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, "interval");
+            MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, GatheringMode::INTERVAL_MODE);
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 
@@ -494,9 +494,8 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        auto faultToleranceMode = FaultToleranceType::getFromString(faultTolerance);
-
-        auto lineageMode = LineageType::getFromString(lineage);
+        auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
+        auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
 
         QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
                                                                         std::move(placementStrategyName),

@@ -54,7 +54,7 @@ QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString
     NES_INFO2("QueryCatalog: Creating query catalog entry for query with id {}", queryId);
     QueryCatalogEntryPtr queryCatalogEntry =
         std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan,
-                                            QueryStatus::Registered);
+                                            QueryStatus::REGISTERED);
     queryIdAndCatalogEntryMapping[queryId] = queryCatalogEntry;
     return queryCatalogEntry;
 }

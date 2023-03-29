@@ -1001,7 +1001,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                               operatorId,
                               0,
                               numSourceLocalBuffers,
-                              GatheringMode::Value::INTERVAL_MODE,
+                              GatheringMode::INTERVAL_MODE,
                               successors) {}
 
         std::optional<Runtime::TupleBuffer> receiveData() override {

@@ -36,8 +36,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                        size_t memoryAreaSize,
                                        uint64_t numBuffersToProcess,
                                        uint64_t gatheringValue,
-                                       GatheringMode::Value gatheringMode,
-                                       SourceMode::Value sourceMode,
+                                       GatheringMode gatheringMode,
+                                       SourceMode sourceMode,
                                        uint64_t sourceAffinity,
                                        uint64_t taskQueueId,
                                        std::string logicalSourceName,
@@ -55,8 +55,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                                              size_t memoryAreaSize,
                                                              uint64_t numBuffersToProcess,
                                                              uint64_t gatheringValue,
-                                                             GatheringMode::Value gatheringMode,
-                                                             SourceMode::Value sourceMode,
+                                                             GatheringMode gatheringMode,
+                                                             SourceMode sourceMode,
                                                              uint64_t sourceAffinity = 0,
                                                              uint64_t taskQueueId = 0,
                                                              std::string logicalSourceName = "",
@@ -97,13 +97,13 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     * @brief return the gathering mode
     * @return
     */
-    GatheringMode::Value getGatheringMode() const;
+    GatheringMode getGatheringMode() const;
 
     /**
     * @brief return the source mode
     * @return
     */
-    SourceMode::Value getSourceMode() const;
+    SourceMode getSourceMode() const;
 
     /**
      * @brief return the gathering value
@@ -130,8 +130,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     size_t memoryAreaSize;
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
-    GatheringMode::Value gatheringMode;
-    SourceMode::Value sourceMode;
+    GatheringMode gatheringMode;
+    SourceMode sourceMode;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };

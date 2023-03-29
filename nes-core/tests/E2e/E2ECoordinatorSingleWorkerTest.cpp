@@ -45,7 +45,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -78,7 +78,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -140,7 +140,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -200,7 +200,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -256,7 +256,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::numberOfBuffersToProduce(2),
@@ -319,7 +319,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("exdra"),
@@ -441,7 +441,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("ktm"),
@@ -505,7 +505,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("window"),
@@ -570,7 +570,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("window"),
@@ -623,7 +623,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
@@ -643,7 +643,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
@@ -680,7 +680,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
@@ -720,7 +720,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery)
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
@@ -766,7 +766,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
@@ -862,7 +862,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
         {TestUtils::rpcPort(0),
          TestUtils::dataPort(0),
          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("CSVSource"),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
                                       + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
          TestUtils::physicalSourceName("test_stream"),

@@ -23,6 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -41,7 +42,7 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
         QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
-bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG2("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -83,7 +84,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
 
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
                                        const std::vector<ExecutionNodePtr>& executionNodes,
-                                       SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+                                       SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG2("QueryUndeploymentPhase:markQueryForStop queryId= {}", queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
@@ -100,13 +101,13 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
 
         Runtime::QueryTerminationType queryTerminationType;
 
-        if (SharedQueryPlanStatus::Value::Updated == sharedQueryPlanStatus ||
-            SharedQueryPlanStatus::Value::Stopped == sharedQueryPlanStatus) {
+        if (SharedQueryPlanStatus::Updated == sharedQueryPlanStatus ||
+            SharedQueryPlanStatus::Stopped == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::HardStop;
-        } else if (SharedQueryPlanStatus::Value::Failed == sharedQueryPlanStatus) {
+        } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;
         } else {
-            NES_ERROR2("Unhandled request type {}", SharedQueryPlanStatus::toString(sharedQueryPlanStatus));
+            NES_ERROR2("Unhandled request type {}", std::string(magic_enum::enum_name(sharedQueryPlanStatus)));
             NES_NOT_IMPLEMENTED();
         }
 

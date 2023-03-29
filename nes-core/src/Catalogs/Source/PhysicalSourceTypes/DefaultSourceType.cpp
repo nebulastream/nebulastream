@@ -55,7 +55,7 @@ std::string DefaultSourceType::toString() {
     ss << "Default Source Type =>{\n";
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG << ":" << numberOfBuffersToProduce->getValue();
     ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG << ":" << sourceGatheringInterval->getValue();
-    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG << ":" << GatheringMode::toString(gatheringMode->getValue());
+    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG << ":" << std::string(magic_enum::enum_name(gatheringMode->getValue()));
     ss << "\n}";
     return ss.str();
 }
@@ -81,7 +81,7 @@ void DefaultSourceType::setSourceGatheringInterval(uint32_t sourceGatheringInter
 }
 
 void DefaultSourceType::setGatheringMode(std::string inputGatheringMode) {
-    gatheringMode->setValue(GatheringMode::getFromString(std::move(inputGatheringMode)));
+    gatheringMode->setValue(magic_enum::enum_cast<GatheringMode>(inputGatheringMode).value());
 }
 
 void DefaultSourceType::setGatheringMode(GatheringMode inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }

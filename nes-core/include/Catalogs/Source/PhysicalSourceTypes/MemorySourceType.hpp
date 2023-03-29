@@ -43,7 +43,7 @@ class MemorySourceType : public PhysicalSourceType {
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProduce,
                                       uint64_t gatheringValue,
-                                      const std::string& gatheringMode,
+                                      GatheringMode gatheringMode,
                                       uint64_t sourceAffinity = 0,
                                       uint64_t taskQueueId = 0);
 

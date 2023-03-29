@@ -37,19 +37,19 @@ namespace NES {
      * Migrating: migrating query
      */
     enum class QueryStatus : uint8_t {
-        Registered = 0,
-        Optimizing,
-        Deployed,
-        Running,
-        MarkedForHardStop,
-        MarkedForSoftStop,
-        SoftStopTriggered,
-        SoftStopCompleted,
-        Stopped,
-        MarkedForFailure,
-        Failed,
-        Restarting,
-        Migrating
+        REGISTERED = 0,
+        OPTIMIZING,
+        DEPLOYED,
+        RUNNING,
+        MARKEDFORHARDSTOP,
+        MARKEDFORSOFTSTOP,
+        SOFTSTOPTRIGGERED,
+        SOFTSTOPCOMPLETED,
+        STOPPED,
+        MARKEDFORFAILURE,
+        FAILED,
+        RESTARTING,
+        MIGRATING
     };
 
 }// namespace NES
