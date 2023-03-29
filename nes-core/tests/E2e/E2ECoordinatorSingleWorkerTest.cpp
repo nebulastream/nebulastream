@@ -966,9 +966,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingThresholdWindowKTMByKey) {
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ABS_Lean_Angle\") > 10.)))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ECU_Oil_Temp_Sensor_Data\") > 15)))";
     ss << R"(.byKey(Attribute(\"Time\")))";
-    ss << R"(.apply(Count()->as(Attribute(\"Count\")), Avg(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Pitch_Info\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\"))))";
+    ss << R"(.apply(Count(), Avg(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Pitch_Info\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\"))))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
@@ -985,8 +985,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingThresholdWindowKTMByKey) {
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$ABS_Lean_Angle:(Float),ktm$ABS_Front_Wheel_Speed:(Float),ktm$count:INTEGER\n"
-                             "14.300000,0.500000,2\n";
+    string expectedContent = "ktm$count:INTEGER,ktm$ABS_Lean_Angle:(Float),ktm$ABS_Pitch_Info:(Float),ktm$ABS_Front_Wheel_Speed:(Float)\n"
+                             "2,14.400000,0.800000,0.500000\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
