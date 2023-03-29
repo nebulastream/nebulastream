@@ -743,10 +743,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //FIXME: change the logic here as part of #1377
     //Compute expression for aggregation method
     z3::func_decl aggregate(*context);
+    std::vector<z3::func_decl> allAggregates;
     z3::sort sort = context->int_sort();
-    uint64_t numberOfAggregates = 0;
     std::string aggregateTypes = "";
     for (auto windowAggregation : windowDefinition->getWindowAggregation()) {
+        NES_TRACE2("Current window aggregation: {}", windowAggregation->toString());
         switch (windowAggregation->getType()) {
             case Windowing::WindowAggregationDescriptor::Type::Count: {
                 aggregate = z3::function("Count", sort, sort);
@@ -780,12 +781,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         onFieldNames.push_back(windowAggregation->on()->as<FieldAccessExpressionNode>()->getFieldName());
         asFieldNames.push_back(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName());
         aggregateTypes += (std::to_string(windowAggregation->getType()) + ".");
-        numberOfAggregates++;
+        allAggregates.push_back(aggregate);
     }
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
     auto outputSchema = windowOperator->getOutputSchema();
     // number of aggregates, and aggregate type for heuristic checks for query containment identification
-    windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(numberOfAggregates))});
+    windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(allAggregates.size()))});
     windowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(aggregateTypes))});
 
     //Compute new schemas for this operator
@@ -793,21 +794,34 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Iterate over all child schemas
     for (auto& schemaFieldToExprMap : schemaFieldToExprMaps) {
         std::map<std::string, z3::ExprPtr> updatedSchemaMap;
+        NES_TRACE2("Output Schema: {}", outputSchema->toString());
         for (auto& outputField : outputSchema->fields) {
+            NES_TRACE2("Current outputField: {}", outputField->toString());
+            NES_TRACE2("Current outputField: {}", outputField->getName());
             auto originalAttributeName = outputField->getName();
             if (originalAttributeName.find("start") != std::string ::npos
                 || originalAttributeName.find("end") != std::string::npos
                 || originalAttributeName.find("cnt") != std::string::npos) {
                 updatedSchemaMap[originalAttributeName] =
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
-            } else if (originalAttributeName == "count") {
-                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate()));
+            } else if (Util::splitWithStringDelimiter<std::string>(originalAttributeName, "$")[1] == "count") {
+                NES_TRACE2("Count Attribute");
+                auto fieldAggregation = allAggregates[std::distance(asFieldNames.begin(),
+                                                                    std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
+                auto expr =std::make_shared<z3::expr>(context->int_const(originalAttributeName.c_str()));
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(
+                    *context,
+                    fieldAggregation(*expr)));
+                NES_TRACE2("UpdatedFieldExpr: {}", updatedFieldExpr->to_string());
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
                 auto fieldExpr = schemaFieldToExprMap[onFieldNames[std::distance(
                     asFieldNames.begin(),
                     std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))]];
-                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
+                auto fieldAggregation =
+                    allAggregates[std::distance(asFieldNames.begin(),
+                                                std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, fieldAggregation(*fieldExpr)));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else {
                 updatedSchemaMap[originalAttributeName] = schemaFieldToExprMap[originalAttributeName];
