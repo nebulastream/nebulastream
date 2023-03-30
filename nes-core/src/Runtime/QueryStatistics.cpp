@@ -122,4 +122,25 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     tsToLatencyMap = other.tsToLatencyMap;
 }
 
+Monitoring::NodeEngineMetrics QueryStatistics::convertToNodeEngineMetrics(const QueryStatistics& stats){
+    Monitoring::NodeEngineMetrics output;
+
+    output.processedTasks = stats.getProcessedTasks();
+    output.processedTuple = stats.getProcessedTuple();
+    output.processedBuffers = stats.getProcessedBuffers();
+    output.processedWatermarks = stats.getProcessedWatermarks();
+    output.latencySum = stats.latencySum;
+    output.queueSizeSum = stats.queueSizeSum;
+    output.availableGlobalBufferSum = stats.availableGlobalBufferSum;
+    output.availableFixedBufferSum = stats.availableFixedBufferSum;
+    output.timestampQueryStart = stats.timestampQueryStart;
+    output.timestampFirstProcessedTask = stats.getTimestampFirstProcessedTask();
+    output.timestampLastProcessedTask = stats.timestampLastProcessedTask;
+    output.queryId = stats.queryId;
+    output.subQueryId = stats.subQueryId;
+    //output.tsToLatencyMap = stats.tsToLatencyMap;  // TODO: should be added when non BasicType can be handled
+
+    return output;
+}
+
 }// namespace NES::Runtime

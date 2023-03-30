@@ -143,7 +143,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         NES_DEBUG2("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());
-        monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
+        monitoringAgent = Monitoring::MonitoringAgent::create(nodeEngine, workerConfig->enableMonitoring.getValue());
         monitoringAgent->addMonitoringStreams(workerConfig);
 
         nodeEngine =

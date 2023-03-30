@@ -32,6 +32,7 @@ enum class MetricType : uint8_t {
     RegistrationMetric,
     WrappedCpuMetrics,
     WrappedNetworkMetrics,
+    NodeEngineMetric,
     UnknownMetric
 };
 

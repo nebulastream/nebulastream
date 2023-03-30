@@ -216,6 +216,7 @@ class MonitoringManager {
     TopologyPtr topology;
     bool enableMonitoring;
     std::set<MetricCollectorType> monitoringCollectors;
+    std::set<MetricCollectorType> nodeEngineCollector;
     std::set<std::string> logicalMonitoringSources;
     NES::QueryServicePtr queryService;
     NES::QueryCatalogServicePtr catalogService;

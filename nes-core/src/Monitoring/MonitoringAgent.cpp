@@ -33,22 +33,22 @@
 namespace NES::Monitoring {
 using namespace Configurations;
 
-MonitoringAgent::MonitoringAgent() : MonitoringAgent(true) {}
+MonitoringAgent::MonitoringAgent() : MonitoringAgent(nullptr, true) {}
 
-MonitoringAgent::MonitoringAgent(bool enabled)
-    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), enabled) {}
+MonitoringAgent::MonitoringAgent(Runtime::NodeEnginePtr nodeEngine, bool enabled)
+    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), nodeEngine, enabled) {}
 
-MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
-    : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
+MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, Runtime::NodeEnginePtr nodeEngine, bool enabled)
+    : monitoringPlan(monitoringPlan), catalog(catalog), nodeEngine(nodeEngine), enabled(enabled) {
     NES_DEBUG2("MonitoringAgent: Init with monitoring plan {} and enabled={}", monitoringPlan->toString(), enabled);
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
 
-MonitoringAgentPtr MonitoringAgent::create(bool enabled) { return std::make_shared<MonitoringAgent>(enabled); }
+MonitoringAgentPtr MonitoringAgent::create(Runtime::NodeEnginePtr nodeEngine, bool enabled) { return std::make_shared<MonitoringAgent>(nodeEngine, enabled); }
 
-MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled) {
-    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
+MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, Runtime::NodeEnginePtr nodeEngine, bool enabled) {
+    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, nodeEngine, enabled);
 }
 
 const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
@@ -116,5 +116,9 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
 }
 
 void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
+
+Runtime::NodeEnginePtr MonitoringAgent::getNodeEngine() { return nodeEngine; }
+
+void MonitoringAgent::setNodeEngine(Runtime::NodeEnginePtr nodeEngine) { this->nodeEngine = nodeEngine; }
 
 }// namespace NES::Monitoring

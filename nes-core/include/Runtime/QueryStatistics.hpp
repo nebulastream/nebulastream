@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <Monitoring/Metrics/Gauge/NodeEngineMetrics.hpp>
 
 namespace NES::Runtime {
 
@@ -209,6 +210,13 @@ class QueryStatistics {
      * clear the content of the statistics
      */
     void clear();
+
+    /**
+     * @brief convert the statistics vector into NodeEngineMetrics
+     * @param QueryStatistics as vector
+     * @return QueryStatistics as metric
+     */
+    static Monitoring::NodeEngineMetrics convertToNodeEngineMetrics(const QueryStatistics& stats);
 
   private:
     std::atomic<uint64_t> processedTasks = 0;

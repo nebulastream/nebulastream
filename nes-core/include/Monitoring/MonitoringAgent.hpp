@@ -33,12 +33,12 @@ class RegistrationMetrics;
 class MonitoringAgent {
   public:
     MonitoringAgent();
-    explicit MonitoringAgent(bool enabled);
-    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
+    explicit MonitoringAgent(Runtime::NodeEnginePtr nodeEngine, bool enabled);
+    MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, Runtime::NodeEnginePtr nodeEngine, bool enabled);
 
     static MonitoringAgentPtr create();
-    static MonitoringAgentPtr create(bool enabled);
-    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
+    static MonitoringAgentPtr create(Runtime::NodeEnginePtr nodeEngine,bool enabled);
+    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, Runtime::NodeEnginePtr nodeEngine, bool enabled);
 
     /**
      * @brief Collect the metrics and store them in to the given output. The collected metrics depend on the monitoring plan.
@@ -90,10 +90,23 @@ class MonitoringAgent {
      */
     void setNodeId(TopologyNodeId nodeId);
 
+    /**
+     * @brief Get the nodeEngine
+     * @return nodeEngine
+     */
+    Runtime::NodeEnginePtr getNodeEngine();
+
+    /**
+     * @brief Set the nodeEngine
+     * @param nodeEngine
+     */
+    void setNodeEngine(Runtime::NodeEnginePtr nodeEngine);
+
   private:
     TopologyNodeId nodeId;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
+    Runtime::NodeEnginePtr nodeEngine;
     bool enabled;
 };
 

@@ -28,6 +28,7 @@
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 
 namespace NES {
 using namespace Configurations;
@@ -96,6 +97,56 @@ TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
 
     metricStore->removeMetrics(nodeId);
     ASSERT_FALSE(metricStore->hasMetrics(nodeId));
+}
+
+TEST_F(MetricStoreTest, testNodeEngineStatisticsMetricStore) {
+    //ContinousSourceTest.cpp
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+
+    crdConf->rpcPort = (*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+
+    NES_INFO("MetricStoreTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    ASSERT_NE(port, 0UL);
+    NES_INFO("MetricStoreTest: Coordinator started successfully");
+
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource1 = PhysicalSource::create("exdra", "test_stream", csvSourceType1);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    //register query
+    std::string queryString =
+        R"(Query::from("exdra").sink(PrintSinkDescriptor::create()); )";
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    int buffersToASSERT = 1;
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
+
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    auto stats = crd->getNodeEngine()->getQueryStatistics(queryId);
+
+    auto metricStore = std::make_shared<Monitoring::AllEntriesMetricStore>();
+    //ASSERT_EQ(metricStore->statistics, stats);
+
+    // Collector für stats
 }
 
 }// namespace NES

@@ -22,9 +22,11 @@
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
+#include <Monitoring/MetricCollectors/NodeEngineCollector.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/NodeEngineMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
@@ -209,6 +211,26 @@ TEST_F(MetricCollectorTest, testMemoryCollector) {
     ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
     Monitoring::MemoryMetrics parsedMetric{};
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
+    NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
+    ASSERT_EQ(typedMetric, parsedMetric);
+}
+
+TEST_F(MetricCollectorTest, testNodeEngineCollector) {
+    auto nodeEngineCollector = Monitoring::NodeEngineCollector();
+    nodeEngineCollector.setNodeId(nodeId);
+
+    Monitoring::MetricPtr nodeEngineMetric = nodeEngineCollector.readMetric();
+    Monitoring::NodeEngineMetrics typedMetric = nodeEngineMetric->getValue<Monitoring::NodeEngineMetrics>();
+    ASSERT_EQ(nodeEngineMetric->getMetricType(), Monitoring::MetricType::NodeEngineMetric);
+    auto bufferSize = Monitoring::NodeEngineMetrics::getSchema("")->getSchemaSizeInBytes();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+    writeToBuffer(typedMetric, tupleBuffer, 0);
+
+    ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    ASSERT_TRUE(MetricValidator::isValid(typedMetric));
+
+    Monitoring::NodeEngineMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
     ASSERT_EQ(typedMetric, parsedMetric);
