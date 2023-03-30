@@ -392,8 +392,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
         testSchemaSimple,
         [&](OperatorId id,
             OriginId origin,
-            SourceDescriptorPtr,
-            Runtime::NodeEnginePtr,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaSimple,
@@ -469,8 +469,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
         testSchemaMultipleFields,
         [&](OperatorId id,
             OriginId origin,
-            SourceDescriptorPtr,
-            Runtime::NodeEnginePtr,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaMultipleFields,
@@ -550,8 +550,8 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
         testSchemaColumnLayout,
         [&](OperatorId id,
             OriginId origin,
-            SourceDescriptorPtr,
-            Runtime::NodeEnginePtr,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
             return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaColumnLayout,
