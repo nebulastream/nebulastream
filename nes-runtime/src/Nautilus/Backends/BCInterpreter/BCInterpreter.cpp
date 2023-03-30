@@ -118,6 +118,48 @@ static Operation* OpTable[] = {
     (Operation*) andOp<bool>,
     (Operation*) orOp<bool>,
     (Operation*) notOp<bool>,
+    // Casts
+    // int to int
+    (Operation*) cast<int8_t, int16_t>,
+    (Operation*) cast<int8_t, int32_t>,
+    (Operation*) cast<int8_t, int64_t>,
+    (Operation*) cast<int16_t, int32_t>,
+    (Operation*) cast<int16_t, int64_t>,
+    (Operation*) cast<int32_t, int64_t>,
+    // uint to int
+    (Operation*) cast<uint8_t, int16_t>,
+    (Operation*) cast<uint8_t, int32_t>,
+    (Operation*) cast<uint8_t, int64_t>,
+    (Operation*) cast<uint16_t, int32_t>,
+    (Operation*) cast<uint16_t, int64_t>,
+    (Operation*) cast<uint32_t, int64_t>,
+    // uint to uint
+    (Operation*) cast<uint8_t, uint16_t>,
+    (Operation*) cast<uint8_t, uint32_t>,
+    (Operation*) cast<uint8_t, uint64_t>,
+    (Operation*) cast<uint16_t, uint32_t>,
+    (Operation*) cast<uint16_t, uint64_t>,
+    (Operation*) cast<uint32_t, uint64_t>,
+    // int to uint
+    (Operation*) cast<int8_t, uint8_t>,
+    (Operation*) cast<int8_t, uint16_t>,
+    (Operation*) cast<int8_t, uint32_t>,
+    (Operation*) cast<int8_t, uint64_t>,
+    (Operation*) cast<int16_t, uint16_t>,
+    (Operation*) cast<int16_t, uint32_t>,
+    (Operation*) cast<int16_t, uint64_t>,
+    (Operation*) cast<int32_t, uint32_t>,
+    (Operation*) cast<int32_t, uint64_t>,
+    (Operation*) cast<int64_t, uint64_t>,
+    (Operation*) cast<float, double>,
+    (Operation*) cast<int8_t, float>,
+    (Operation*) cast<int8_t, double>,
+    (Operation*) cast<int16_t, float>,
+    (Operation*) cast<int16_t, double>,
+    (Operation*) cast<int32_t, float>,
+    (Operation*) cast<int32_t, double>,
+    (Operation*) cast<int32_t, float>,
+    (Operation*) cast<int64_t, double>,
     // FUNCTION CALLS
     // return void
     (Operation*) call<void>,
@@ -177,6 +219,14 @@ std::any BCInterpreter::invokeGeneric(const std::vector<std::any>& args) {
         } else if (auto* value = std::any_cast<int32_t>(&args[i])) {
             writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<int64_t>(&args[i])) {
+            writeReg<>(registerFile, code.arguments[i], *value);
+        } else if (auto* value = std::any_cast<uint8_t>(&args[i])) {
+            writeReg<>(registerFile, code.arguments[i], *value);
+        } else if (auto* value = std::any_cast<uint16_t>(&args[i])) {
+            writeReg<>(registerFile, code.arguments[i], *value);
+        } else if (auto* value = std::any_cast<uint32_t>(&args[i])) {
+            writeReg<>(registerFile, code.arguments[i], *value);
+        } else if (auto* value = std::any_cast<uint64_t>(&args[i])) {
             writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<float>(&args[i])) {
             writeReg<>(registerFile, code.arguments[i], *value);
@@ -244,11 +294,16 @@ std::ostream& operator<<(std::ostream& os, const CodeBlock& block) {
 
     // handle terminator
     if (const auto* res = std::get_if<BranchOp>(&block.terminatorOp)) {
-        os << "\t" << "BR " << res->nextBlock << "\n";
+        os << "\t"
+           << "BR " << res->nextBlock << "\n";
     } else if (const auto* res = std::get_if<ConditionalJumpOp>(&block.terminatorOp)) {
-        os << "\t" << "CMP " << "r" << res->conditionalReg << " " <<  res->trueBlock << " " <<  res->falseBlock << "\n";
+        os << "\t"
+           << "CMP "
+           << "r" << res->conditionalReg << " " << res->trueBlock << " " << res->falseBlock << "\n";
     } else if (const auto* res = std::get_if<ReturnOp>(&block.terminatorOp)) {
-        os << "\t" << "Return " << "r" << res->resultReg << "\n";
+        os << "\t"
+           << "Return "
+           << "r" << res->resultReg << "\n";
     }
     return os;
 }
@@ -257,9 +312,12 @@ std::ostream& operator<<(std::ostream& os, const OpCode& code) {
     os << magic_enum::enum_name(code.op) << " r" << code.reg1;
     if (code.reg2 != -1) {
         os << " r" << code.reg2;
-    } else {
+    }
+
+    if (code.output != -1) {
         os << " r" << code.output;
     }
+
     return os;
 }
 }// namespace NES::Nautilus::Backends::BC

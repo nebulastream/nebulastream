@@ -143,6 +143,43 @@ enum class ByteCode : short {
     OR_b,
     // Negate
     NOT_b,
+    CAST_i8_i16,
+    CAST_i8_i32,
+    CAST_i8_i64,
+    CAST_i16_i32,
+    CAST_i16_i64,
+    CAST_i32_i64,
+    CAST_ui8_i16,
+    CAST_ui8_i32,
+    CAST_ui8_i64,
+    CAST_ui16_i32,
+    CAST_ui16_i64,
+    CAST_ui32_i64,
+    CAST_ui8_ui16,
+    CAST_ui8_ui32,
+    CAST_ui8_ui64,
+    CAST_ui16_ui32,
+    CAST_ui16_ui64,
+    CAST_ui32_ui64,
+    CAST_i8_ui8,
+    CAST_i8_ui16,
+    CAST_i8_ui32,
+    CAST_i8_ui64,
+    CAST_i16_ui16,
+    CAST_i16_ui32,
+    CAST_i16_ui64,
+    CAST_i32_ui32,
+    CAST_i32_ui64,
+    CAST_i64_ui64,
+    CAST_f_d,
+    CAST_i8_f,
+    CAST_i8_d,
+    CAST_i16_f,
+    CAST_i16_d,
+    CAST_i32_f,
+    CAST_i32_d,
+    CAST_i64_f,
+    CAST_i64_d,
     // Function calls
     // TODO #3466 come up with a better approach to call dynamically into runtime functions
     // functions with void return
@@ -419,6 +456,19 @@ void store(const OpCode& c, RegisterFile& regs) {
     auto address = readReg<int64_t>(regs, c.reg1);
     auto value = readReg<RegisterType>(regs, c.reg2);
     *reinterpret_cast<RegisterType*>(address) = value;
+}
+
+/**
+ * @brief Defines a cast in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
+template<class SrcRegisterType, class TargetRegisterType>
+void cast(const OpCode& c, RegisterFile& regs) {
+    auto src = readReg<SrcRegisterType>(regs, c.reg1);
+    TargetRegisterType value = src;
+    writeReg<TargetRegisterType>(regs, c.output, value);
 }
 
 /**
