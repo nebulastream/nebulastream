@@ -75,7 +75,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(addOpt, frame);
     frame.setValue(addOpt->getIdentifier(), resultReg);
     ByteCode bc = ByteCode::AND_b;
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -87,7 +87,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(addOpt, frame);
     frame.setValue(addOpt->getIdentifier(), resultReg);
     ByteCode bc = ByteCode::OR_b;
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -133,7 +133,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(addOpt, frame);
     frame.setValue(addOpt->getIdentifier(), resultReg);
     auto type = addOpt->getStamp();
     ByteCode bc;
@@ -162,7 +162,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(subOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(subOpt->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(subOpt, frame);
     frame.setValue(subOpt->getIdentifier(), resultReg);
     ByteCode bc;
     switch (getType(subOpt->getStamp())) {
@@ -190,7 +190,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(mulOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(mulOpt->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(mulOpt, frame);
     frame.setValue(mulOpt->getIdentifier(), resultReg);
 
     ByteCode bc;
@@ -219,7 +219,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(divOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(divOp->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(divOp, frame);
     frame.setValue(divOp->getIdentifier(), resultReg);
     ByteCode bc;
     switch (getType(divOp->getStamp())) {
@@ -247,7 +247,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     auto leftInput = frame.getValue(cmpOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(cmpOp->getRightInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(cmpOp, frame);
     frame.setValue(cmpOp->getIdentifier(), resultReg);
 
     if (cmpOp->getComparator() == IR::Operations::CompareOperation::IEQ) {
@@ -346,7 +346,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   short block,
                                                   RegisterFrame& frame) {
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(loadOp, frame);
     frame.setValue(loadOp->getIdentifier(), resultReg);
     auto type = loadOp->getStamp();
     ByteCode bc;
@@ -408,16 +408,18 @@ void BCLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInvo
         auto blockTargetArgument = blockTargetArguments[i]->getIdentifier();
         auto parentFrameReg = parentFrame.getValue(blockArgument);
         if (!parentFrame.contains(blockTargetArgument)) {
-            auto resultReg = registerProvider.allocRegister();
+            //auto resultReg = registerProvider.allocRegister();
             // TODO use child frame
-            parentFrame.setValue(blockTargetArgument, resultReg);
-            OpCode oc = {ByteCode::REG_MOV, parentFrameReg, -1, resultReg};
-            program.blocks[block].code.emplace_back(oc);
+            parentFrame.setValue(blockTargetArgument, parentFrameReg);
+            //OpCode oc = {ByteCode::REG_MOV, parentFrameReg, -1, resultReg};
+            //program.blocks[block].code.emplace_back(oc);
         } else {
             // TODO use child frame
             auto resultReg = parentFrame.getValue(blockTargetArgument);
-            OpCode oc = {ByteCode::REG_MOV, parentFrameReg, -1, resultReg};
-            program.blocks[block].code.emplace_back(oc);
+            if (resultReg != parentFrameReg) {
+                OpCode oc = {ByteCode::REG_MOV, parentFrameReg, -1, resultReg};
+                program.blocks[block].code.emplace_back(oc);
+            }
         }
     }
 }
@@ -550,6 +552,11 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case IR::Operations::Operation::NegateOp: {
             auto call = std::static_pointer_cast<IR::Operations::NegateOperation>(opt);
             process(call, block, frame);
+            return;
+        }
+        case IR::Operations::Operation::CastOp: {
+            auto cast = std::static_pointer_cast<IR::Operations::CastOperation>(opt);
+            process(cast, block, frame);
             return;
         }
         default: {
@@ -689,7 +696,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     defaultRegisterFile[funcInfoRegister] = (int64_t) fcall;
     short resultRegister = -1;
     if (!opt->getStamp()->isVoid()) {
-        resultRegister = registerProvider.allocRegister();
+        resultRegister = getResultRegister(opt, frame);
         frame.setValue(opt->getIdentifier(), resultRegister);
     }
     OpCode oc = {bc, funcInfoRegister, -1, resultRegister};
@@ -700,11 +707,127 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   short block,
                                                   RegisterFrame& frame) {
     auto input = frame.getValue(negateOperation->getInput()->getIdentifier());
-    auto resultReg = registerProvider.allocRegister();
+    auto resultReg = getResultRegister(negateOperation, frame);
     frame.setValue(negateOperation->getIdentifier(), resultReg);
     ByteCode bc = ByteCode::NOT_b;
     OpCode oc = {bc, input, -1, resultReg};
     program.blocks[block].code.emplace_back(oc);
+}
+
+void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::CastOperation>& castOp,
+                                                  short block,
+                                                  RegisterFrame& frame) {
+    auto input = frame.getValue(castOp->getInput()->getIdentifier());
+    auto resultReg = getResultRegister(castOp, frame);
+    frame.setValue(castOp->getIdentifier(), resultReg);
+    auto srcType = getType(castOp->getInput()->getStamp());
+    auto targetType = getType(castOp->getStamp());
+    ByteCode bc;
+    if (srcType == Type::i8) {
+        switch (targetType) {
+            case Type::i16: bc = ByteCode::CAST_i8_i16; break;
+            case Type::i32: bc = ByteCode::CAST_i8_i32; break;
+            case Type::i64: bc = ByteCode::CAST_i8_i64; break;
+            case Type::ui8: bc = ByteCode::CAST_i8_ui8; break;
+            case Type::ui16: bc = ByteCode::CAST_i8_ui16; break;
+            case Type::ui32: bc = ByteCode::CAST_i8_ui32; break;
+            case Type::ui64: bc = ByteCode::CAST_i8_ui64; break;
+            case Type::f: bc = ByteCode::CAST_i8_f; break;
+            case Type::d: bc = ByteCode::CAST_i8_d; break;
+            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+        }
+    } else if (srcType == Type::i16) {
+        switch (targetType) {
+            case Type::i32: bc = ByteCode::CAST_i16_i32; break;
+            case Type::i64: bc = ByteCode::CAST_i16_i64; break;
+            case Type::ui16: bc = ByteCode::CAST_i16_ui16; break;
+            case Type::ui32: bc = ByteCode::CAST_i16_ui32; break;
+            case Type::ui64: bc = ByteCode::CAST_i16_ui64; break;
+            case Type::f: bc = ByteCode::CAST_i16_f; break;
+            case Type::d: bc = ByteCode::CAST_i16_d; break;
+            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+        }
+    } else if (srcType == Type::i32) {
+        switch (targetType) {
+            case Type::i64: bc = ByteCode::CAST_i32_i64; break;
+            case Type::ui32: bc = ByteCode::CAST_i32_ui32; break;
+            case Type::ui64: bc = ByteCode::CAST_i32_ui64; break;
+            case Type::f: bc = ByteCode::CAST_i32_f; break;
+            case Type::d: bc = ByteCode::CAST_i32_d; break;
+            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+        }
+    } else if (srcType == Type::i64) {
+        switch (targetType) {
+            case Type::ui64: bc = ByteCode::CAST_i64_ui64; break;
+            case Type::f: bc = ByteCode::CAST_i64_f; break;
+            case Type::d: bc = ByteCode::CAST_i64_d; break;
+            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+        }
+    } else if (srcType == Type::ui8) {
+        switch (targetType) {
+            case Type::ui16: bc = ByteCode::CAST_ui8_ui16; break;
+            case Type::ui32: bc = ByteCode::CAST_ui8_ui32; break;
+            case Type::ui64: bc = ByteCode::CAST_ui8_ui64; break;
+            case Type::i16: bc = ByteCode::CAST_ui8_i16; break;
+            case Type::i32: bc = ByteCode::CAST_ui8_i32; break;
+            case Type::i64: bc = ByteCode::CAST_ui8_i64; break;
+            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+        }
+    } else if (srcType == Type::ui16) {
+        switch (targetType) {
+            case Type::ui32: bc = ByteCode::CAST_ui16_ui32; break;
+            case Type::ui64: bc = ByteCode::CAST_ui16_ui64; break;
+            case Type::i32: bc = ByteCode::CAST_ui16_i32; break;
+            case Type::i64: bc = ByteCode::CAST_ui16_i64; break;
+            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+        }
+    } else if (srcType == Type::ui32 && targetType == Type::ui64) {
+        bc = ByteCode::CAST_ui32_ui64;
+    } else if (srcType == Type::ui32 && targetType == Type::i64) {
+        bc = ByteCode::CAST_ui32_i64;
+    } else if (srcType == Type::f && targetType == Type::d) {
+        bc = ByteCode::CAST_f_d;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Cast from not supported");
+    }
+    OpCode oc = {bc, input, -1, resultReg};
+    program.blocks[block].code.emplace_back(oc);
+}
+
+short BCLoweringProvider::LoweringContext::getResultRegister(const std::shared_ptr<IR::Operations::Operation>& opt,
+                                                             RegisterFrame& frame) {
+    auto optResultIdentifier = opt->getIdentifier();
+
+    // if the result value of opt is directly passed to an block argument, then we can directly write the value to the correct target register.
+    if (opt->getUsages().size() == 1) {
+        auto* usage = opt->getUsages()[0];
+        if (usage->getOperationType() == IR::Operations::Operation::BlockInvocation) {
+            auto bi = dynamic_cast<const IR::Operations::BasicBlockInvocation*>(usage);
+            auto blockInputArguments = bi->getArguments();
+            auto blockTargetArguments = bi->getBlock()->getArguments();
+
+            std::vector<uint64_t> matchingArguments;
+
+            for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
+                auto blockArgument = blockInputArguments[i]->getIdentifier();
+                if (blockArgument == optResultIdentifier) {
+                    matchingArguments.emplace_back(i);
+                }
+            }
+
+            if (matchingArguments.size() == 1) {
+                auto blockTargetArgumentIdentifier = blockTargetArguments[matchingArguments[0]]->getIdentifier();
+                if (!frame.contains(blockTargetArgumentIdentifier)) {
+                    auto resultReg = registerProvider.allocRegister();
+                    frame.setValue(blockTargetArgumentIdentifier, resultReg);
+                    return resultReg;
+                } else {
+                    return frame.getValue(blockTargetArgumentIdentifier);
+                }
+            }
+        }
+    }
+    return registerProvider.allocRegister();
 }
 
 }// namespace NES::Nautilus::Backends::BC

@@ -76,8 +76,8 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_DEBUG(ir->toString());
-    //Nautilus::IR::RemoveBrOnlyBlocksPhase().apply(ir);
+    NES_INFO(ir->toString());
+    Nautilus::IR::RemoveBrOnlyBlocksPhase().apply(ir);
     timer.snapshot("NESIR Generation");
     NES_INFO(ir->toString());
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);

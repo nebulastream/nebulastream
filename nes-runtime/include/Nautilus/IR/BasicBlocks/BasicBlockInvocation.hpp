@@ -22,7 +22,7 @@ class BasicBlockInvocation : public Operation {
   public:
     BasicBlockInvocation();
     void setBlock(BasicBlockPtr block);
-    BasicBlockPtr getBlock();
+    BasicBlockPtr getBlock() const;
     void addArgument(OperationPtr argument);
     void removeArgument(uint64_t argumentIndex);
 
@@ -38,7 +38,7 @@ class BasicBlockInvocation : public Operation {
      * 
      * @return std::vector<OperationPtr> : vector with all arguments of the next block invocation.
      */
-    std::vector<OperationPtr> getArguments();
+    std::vector<OperationPtr> getArguments() const;
     std::string toString() override;
 
   private:

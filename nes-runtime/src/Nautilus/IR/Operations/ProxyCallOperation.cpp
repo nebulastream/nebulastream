@@ -41,8 +41,12 @@ std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
 }
 
 std::string ProxyCallOperation::toString() {
-    std::string baseString = identifier + " = " + getFunctionSymbol() + "(";
-    if (inputArguments.size() > 0) {
+    std::string baseString = "";
+    if (!identifier.empty()) {
+        baseString = identifier + " = ";
+    }
+    baseString = baseString + getFunctionSymbol() + "(";
+    if (!inputArguments.empty()) {
         baseString += inputArguments[0].lock()->getIdentifier();
         for (int i = 1; i < (int) inputArguments.size(); ++i) {
             baseString += ", " + inputArguments.at(i).lock()->getIdentifier();

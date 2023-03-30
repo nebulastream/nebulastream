@@ -22,8 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
-namespace NES {
-namespace Nautilus::IR {
+namespace NES::Nautilus::IR {
 
 NESIRDumpHandler::NESIRDumpHandler(std::ostream& out) : out(out) {}
 
@@ -59,7 +58,7 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
     }
 }
 
-void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scopeLevel) {
+void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t) {
     switch (terminatorOp->getOperationType()) {
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
@@ -79,11 +78,7 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
                 ifOp->getTrueBlockInvocation().getBlock(),
                 ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1);//todo can lead to error #3234
             dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
-            if (ifOp->getFalseBlockInvocation().getBlock()
-                && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel()
-                    >= (uint32_t) scopeLevel) {//todo remove scopeLevel check #3234
-                dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
-            }
+            dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
             if (lastTerminatorOp) {
                 dumpHelper(lastTerminatorOp);
             }
@@ -124,5 +119,4 @@ void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation>
     out << "}\n";
 }
 
-}// namespace Nautilus::IR
 }// namespace NES

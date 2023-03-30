@@ -22,7 +22,7 @@ BranchOperation::BranchOperation() : Operation(OperationType::BranchOp, Types::S
 BasicBlockInvocation& BranchOperation::getNextBlockInvocation() { return basicBlock; }
 
 std::string BranchOperation::toString() {
-    std::string baseString = "br " + basicBlock.getBlock()->getIdentifier() + "(";
+    std::string baseString = "br Block_" + basicBlock.getBlock()->getIdentifier() + "(";
     if (basicBlock.getBlock()->getArguments().size() > 0) {
         baseString += basicBlock.getArguments().at(0)->getIdentifier();
         for (int i = 1; i < (int) basicBlock.getArguments().size(); ++i) {
