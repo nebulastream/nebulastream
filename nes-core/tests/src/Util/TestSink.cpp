@@ -13,6 +13,7 @@
 */
 
 #include <Util/TestSink.hpp>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES {
 
@@ -33,7 +34,7 @@ std::shared_ptr<TestSink> TestSink::create(uint64_t expectedBuffer, const Schema
     return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
 }
 
-bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
+bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(m);
 
     resultBuffers.emplace_back(std::move(inputBuffer));
