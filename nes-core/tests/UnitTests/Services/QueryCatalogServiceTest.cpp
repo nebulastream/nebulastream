@@ -121,7 +121,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
     registeredQueries = queryCatalogService->getAllEntriesInStatus("REGISTERED");
     EXPECT_TRUE(registeredQueries.empty());
     std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop =
-        queryCatalogService->getAllEntriesInStatus("MARKED-FOR-HARD-STOP");
+        queryCatalogService->getAllEntriesInStatus("MARKED_FOR_HARD_STOP");
     EXPECT_TRUE(queriesMarkedForStop.size() == 1U);
 }
 

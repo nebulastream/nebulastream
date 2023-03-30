@@ -122,7 +122,12 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     EXPECT_EQ(r.status_code, 200);
 
     //check if content of r contains valid information
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    std::set<std::string> expectedMonitoringStreams {
+            toString(Monitoring::MetricType::WrappedNetworkMetrics),
+            toString(Monitoring::MetricType::WrappedCpuMetrics),
+            toString(Monitoring::MetricType::MemoryMetric),
+            toString(Monitoring::MetricType::DiskMetric)};
+
     nlohmann::json jsonsStart;
     ASSERT_NO_THROW(jsonsStart = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetStart request: " << jsonsStart.dump());
@@ -294,7 +299,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     auto json = jsons[std::to_string(1)];
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << std::to_string(1));
     NES_INFO("Received Data for node 1: " << json.dump());
-    auto jsonRegistration = json["registration"][0]["value"];
+    auto jsonRegistration = json[toString(Monitoring::MetricType::RegistrationMetric)][0]["value"];
     ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
                                                             jsonRegistration));
     ASSERT_EQ(jsonRegistration["NODE_ID"], 1);
@@ -328,7 +333,10 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     nlohmann::json jsons;
     ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    std::set<std::string> expectedMonitoringStreams{
+            toString(Monitoring::MetricType::WrappedNetworkMetrics),
+            toString(Monitoring::MetricType::WrappedCpuMetrics),toString(Monitoring::MetricType::MemoryMetric),
+            toString(Monitoring::MetricType::DiskMetric)};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
     ASSERT_TRUE(check);
     ASSERT_TRUE(waitForMonitoringQuery(coordinator, coordinatorConfig->restPort.getValue(), 5));

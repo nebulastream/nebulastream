@@ -69,8 +69,8 @@ nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     NES_INFO2("MonitoringService: Requesting metrics for node {}", std::to_string(root->getId()));
     metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId());
     Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
-    metricsJson[std::to_string(root->getId())]["registration"] =
-        Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
+    metricsJson[std::to_string(root->getId())][toString(Monitoring::MetricType::RegistrationMetric)] =
+        Monitoring::MetricUtils::toJson(tMetrics)[toString(Monitoring::MetricType::RegistrationMetric)][0]["value"];
 
     NES_INFO2("MonitoringService: MetricTypes from coordinator received\n{}", metricsJson.dump());
 
@@ -80,11 +80,10 @@ nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId());
 
         Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
-        metricsJson[std::to_string(tNode->getId())]["registration"] =
-            Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
+        metricsJson[std::to_string(tNode->getId())][toString(Monitoring::MetricType::RegistrationMetric)] =
+            Monitoring::MetricUtils::toJson(tMetrics)[toString(Monitoring::MetricType::RegistrationMetric)][0]["value"];
     }
     NES_INFO2("MonitoringService: MetricTypes from coordinator received\n{}", metricsJson.dump());
-    NES_DEBUG2("in MonitoringService Method sieht das json so aus: {}", metricsJson.dump());
     return metricsJson;
 }
 
