@@ -14,7 +14,8 @@
 include(ExternalProject)
 
 # Copy Test Data --------------------------------------------------------------
-file(COPY test_data DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/test_data/")
+#file(COPY test_data DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/test_data/")
+file(COPY test_data DESTINATION .)
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
@@ -32,6 +33,9 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
         "src/Util/TestSourceDescriptor.cpp"
         "src/Util/TestSinkProvider.cpp"
         "src/Util/TestSinkDescriptor.cpp"
+        "src/Util/MetricValidator.cpp"
+        "src/Util/JavaUdfDescriptorBuilder.cpp"
+        "src/Util/TestSink.cpp"
         )
 target_include_directories(nes-core-test-util PUBLIC "./include")
 

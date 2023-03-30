@@ -36,13 +36,6 @@ namespace NES {
  */
 namespace TestUtils {
 
-/**
- * Create a command line parameter for a configuration option for the coordinator or worker.
- * @param name The name of the command line option.
- * @param value The value of the command line option.
- * @param prefix If true, prefix the name of the option with "worker." to configure the internal worker of the coordinator.
- * @return A string representing the command line parameter.
- */
 [[nodiscard]] const std::string configOption(const std::string& name, const std::string& value, bool prefix) {
     const std::string result = prefix ? "--worker." : "--";
     return result + name + "=" + value;

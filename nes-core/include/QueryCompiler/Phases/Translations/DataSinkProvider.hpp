@@ -25,6 +25,10 @@ namespace QueryCompilation {
  */
 class DataSinkProvider {
   public:
+    /**
+     * @brief Factory method for creating a DataSinkProvider
+     * @return DataSinkProvider
+     */
     static DataSinkProviderPtr create();
 
     /**

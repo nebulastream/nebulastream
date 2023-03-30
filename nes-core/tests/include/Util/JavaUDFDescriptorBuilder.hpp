@@ -40,56 +40,35 @@ class JavaUDFDescriptorBuilder {
     /**
      * @return A Java UDF descriptor with the fields either set to default values or with explicitly specified values in setters.
      */
-    JavaUDFDescriptorPtr build() {
-        return JavaUDFDescriptor::create(className,
-                                         methodName,
-                                         instance,
-                                         byteCodeList,
-                                         inputSchema,
-                                         outputSchema,
-                                         inputClassName,
-                                         outputClassName);
-    }
+    JavaUdfDescriptorPtr build();
 
     /**
      * Set the class name of the Java UDF descriptor.
      * @param newClassName The class name of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setClassName(const std::string& newClassName) {
-        this->className = newClassName;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setClassName(const std::string& newClassName);
 
     /**
      * Set the method name of the Java UDF descriptor.
      * @param newMethodName The method name of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setMethodName(const std::string& newMethodName) {
-        this->methodName = newMethodName;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setMethodName(const std::string& newMethodName);
 
     /**
      * Set the serialized Java instance of the Java UDF descriptor.
      * @param newInstance The serialized Java instance of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setInstance(const JavaSerializedInstance& newInstance) {
-        this->instance = newInstance;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setInstance(const JavaSerializedInstance& newInstance);
 
     /**
      * Set the bytecode list of the Java UDF descriptor.
      * @param newByteCodeList The bytecode list of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setByteCodeList(const JavaUDFByteCodeList& newByteCodeList) {
-        this->byteCodeList = newByteCodeList;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setByteCodeList(const JavaUdfByteCodeList& newByteCodeList);
 
     /**
      * Set the input schema of the Java UDF descriptor.
@@ -106,36 +85,27 @@ class JavaUDFDescriptorBuilder {
      * @param newOutputSchema The output schema of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setOutputSchema(const SchemaPtr& newOutputSchema) {
-        this->outputSchema = newOutputSchema;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setOutputSchema(const SchemaPtr& newOutputSchema);
 
     /**
      * Set the class name of the input type of the UDF method.
      * @param newInputClassName The class name of the input type of the UDF method.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setInputClassName(const std::string newInputClassName) {
-        this->inputClassName = newInputClassName;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setInputClassName(const std::string newInputClassName);
 
     /**
      * Set the class name of the return type of the UDF method.
      * @param newOutputClassName The class name of the return type of the UDF method.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setOutputClassName(const std::string newOutputClassName) {
-        this->outputClassName = newOutputClassName;
-        return *this;
-    }
+    JavaUdfDescriptorBuilder& setOutputClassName(const std::string newOutputClassName);
 
     /**
      * Create a default Java UDF descriptor that can be used in tests.
      * @return A Java UDF descriptor instance.
      */
-    static JavaUDFDescriptorPtr createDefaultJavaUDFDescriptor() { return JavaUDFDescriptorBuilder().build(); }
+    static JavaUdfDescriptorPtr createDefaultJavaUdfDescriptor();
 
   private:
     std::string className = "some_package.my_udf";

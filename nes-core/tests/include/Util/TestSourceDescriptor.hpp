@@ -31,6 +31,11 @@ namespace NES::TestUtils {
 
 class TestSourceDescriptor : public SourceDescriptor {
   public:
+    /**
+     * @brief Constructor for a TestSourceDescriptor
+     * @param schema
+     * @param createSourceFunction
+     */
     TestSourceDescriptor(
         SchemaPtr schema,
         std::function<DataSourcePtr(OperatorId,
@@ -39,7 +44,16 @@ class TestSourceDescriptor : public SourceDescriptor {
                                     Runtime::NodeEnginePtr,
                                     size_t,
                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction);
-
+    /**
+     * @brief Factory method for creating a DataSource
+     * @param operatorId
+     * @param originId
+     * @param sourceDescriptor
+     * @param nodeEngine
+     * @param numSourceLocalBuffers
+     * @param successors
+     * @return DataSource
+     */
     DataSourcePtr create(OperatorId operatorId,
                          OriginId originId,
                          SourceDescriptorPtr sourceDescriptor,
@@ -47,8 +61,22 @@ class TestSourceDescriptor : public SourceDescriptor {
                          size_t numSourceLocalBuffers,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
+    /**
+     * @brief Creates a string representation
+     * @return String representation
+     */
     [[nodiscard]] std::string toString() override;
+
+    /**
+     * @brief Checks if two SourceDescriptors are equal
+     * @return True, if equal otherwise false
+     */
     [[nodiscard]] bool equal(SourceDescriptorPtr const&) override;
+
+    /**
+     * @brief Copies this SourceDescriptors
+     * @return New SourceDescriptor
+     */
     SourceDescriptorPtr copy() override;
 
   private:

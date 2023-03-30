@@ -34,69 +34,86 @@ using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer,
-             const SchemaPtr& schema,
-             const Runtime::NodeEnginePtr& nodeEngine,
-             uint32_t numOfProducers = 1)
-        : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
-          expectedBuffer(expectedBuffer) {
-        auto bufferManager = nodeEngine->getBufferManager(0);
-        if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
-            memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-            memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
-        }
-    };
+    /**
+     * @brief Constructor for a TestSink
+     * @param expectedBuffer
+     * @param schema
+     * @param nodeEngine
+     * @param numOfProducers
+     */
+    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine,
+             uint32_t numOfProducers = 1);
 
+    /**
+     * @brief Factory method for a TestSink
+     * @param expectedBuffer
+     * @param schema
+     * @param engine
+     * @param numOfProducers
+     * @return
+     */
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
-    }
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine,
+           uint32_t numOfProducers = 1);
 
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
-        std::unique_lock lock(m);
-        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::printTupleBufferAsCSV(inputBuffer, getSchemaPtr()));
+    /**
+     * @brief Writes the input Buffer to the resultBuffer
+     * @param inputBuffer
+     * @return Success of write
+     */
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override;
 
-        resultBuffers.emplace_back(std::move(inputBuffer));
-        if (resultBuffers.size() == expectedBuffer) {
-            completed.set_value(expectedBuffer);
-        } else if (resultBuffers.size() > expectedBuffer) {
-            EXPECT_TRUE(false);
-        }
-        return true;
-    }
+    /**
+     * @brief Returns the TupleBuffer at the index
+     * @param index
+     * @return Runtime::TupleBuffer
+     */
+    Runtime::TupleBuffer get(uint64_t index);
 
-    Runtime::TupleBuffer get(uint64_t index) {
-        std::unique_lock lock(m);
-        return resultBuffers[index];
-    }
+    /**
+     * @brief Returns the DynamicTupleBuffer at the index
+     * @param index
+     * @return DynamicTupleBuffer
+     */
+    Runtime::MemoryLayouts::DynamicTupleBuffer getResultBuffer(uint64_t index);
 
-    Runtime::MemoryLayouts::DynamicTupleBuffer getResultBuffer(uint64_t index) {
-        auto buffer = get(index);
-        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    }
+    /**
+     * @brief Setup method
+     */
+    void setup() override;
 
-    void setup() override{};
+    /**
+     * @brief Creates a string representation
+     * @return String representation
+     */
+    std::string toString() const override;
 
-    std::string toString() const override { return "Test_Sink"; }
+    /**
+     * @brief Returns the number of buffers that have been received
+     * @return NumberOfResultBuffers
+     */
+    uint32_t getNumberOfResultBuffers();
 
-    uint32_t getNumberOfResultBuffers() {
-        std::unique_lock lock(m);
-        return resultBuffers.size();
-    }
+    /**
+     * @brief Returns the MediumType
+     * @return SinkMediumTypes
+     */
+    SinkMediumTypes getSinkMediumType() override;
 
-    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
+    /**
+     * @brief Clears all resultBuffers
+     */
+    void cleanupBuffers();
 
-    void cleanupBuffers() {
-        NES_DEBUG("TestSink: cleanupBuffers()");
-        std::unique_lock lock(m);
-        resultBuffers.clear();
-    }
+    /**
+     * @brief Waits in a blocking fashion until all the number of expected buffers have been received
+     */
+    void waitTillCompleted();
 
-    void waitTillCompleted() { completed.get_future().wait(); }
-
-  public:
-    void shutdown() override { cleanupBuffers(); }
+    /**
+     * @brief Shuts this sink down
+     */
+    void shutdown() override;
 
     mutable std::recursive_mutex m;
     uint64_t expectedBuffer;

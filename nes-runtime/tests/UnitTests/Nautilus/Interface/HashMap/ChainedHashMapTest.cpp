@@ -52,7 +52,7 @@ class ChainedHashMapTest : public Testing::NESBaseTest {
 
 TEST_F(ChainedHashMapTest, insertEntryTableTest) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    auto hashMap = ChainedHashMap(8, 8, 100, std::move(allocator));
+    auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
     auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), keyDataTypes, 8, 8);
@@ -63,15 +63,17 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest) {
     ASSERT_FALSE(res1 != nullptr);
 
     // findOrCreate entry
-    hashMapRef.findOrCreate(hf->calculate(f1), {f1});
+    auto hash = hf->calculate(f1);
+    NES_INFO("Hash: " << hash);
+    hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
-    auto res2 = hashMapRef.findOne(hf->calculate(f1), {f1});
+    auto res2 = hashMapRef.findOne(hash, {f1});
     ASSERT_TRUE(res2 != nullptr);
     // next should be null
     ASSERT_FALSE(res2.getNext() != nullptr);
 
     // findOrCreate same key again -> size should keep the same
-    hashMapRef.findOrCreate(hf->calculate(f1), {f1});
+    hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
 }
 

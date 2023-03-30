@@ -28,12 +28,39 @@
 #define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSINKDESCRIPTOR_HPP_
 
 namespace NES::TestUtils {
+
+/**
+ * @brief This class is used for representing the description of a test sink operator
+ */
 class TestSinkDescriptor : public SinkDescriptor {
   public:
+    /**
+     * @brief Constructor for a TestSinkDescriptor
+     * @param dataSink
+     */
     explicit TestSinkDescriptor(DataSinkPtr dataSink);
+
+    /**
+     * @brief Getter for the DataSink
+     * @return DataSink
+     */
     DataSinkPtr getSink();
+
+    /**
+     * @brief Deconstructor for a TestSinkDescriptor
+     */
     ~TestSinkDescriptor() override = default;
+
+    /**
+     * @brief Creates a string representation
+     * @return String representation
+     */
     std::string toString() override;
+
+    /**
+     * @brief Checks if two SinkDescriptors are equal
+     * @return True, if equal otherwise false
+     */
     bool equal(SinkDescriptorPtr const&) override;
 
   private:
