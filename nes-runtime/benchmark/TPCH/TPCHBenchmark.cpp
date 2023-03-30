@@ -59,7 +59,7 @@ namespace NES::Runtime::Execution {
 
 class BenchmarkRunner {
   public:
-    BenchmarkRunner(TPCH_SCALE_FACTOR targetScaleFactor, std::string compiler)
+    BenchmarkRunner(TPCH_Scale_Factor targetScaleFactor, std::string compiler)
         : targetScaleFactor(targetScaleFactor), compiler(compiler) {
 
         NES::Logger::setupLogging("BenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
@@ -90,7 +90,7 @@ class BenchmarkRunner {
 
   protected:
     uint64_t iterations = 10;
-    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F1;
+    TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F1;
     std::string compiler;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -101,7 +101,7 @@ class BenchmarkRunner {
 
 class Query6Runner : public BenchmarkRunner {
   public:
-    Query6Runner(TPCH_SCALE_FACTOR targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
@@ -130,7 +130,7 @@ class Query6Runner : public BenchmarkRunner {
 
 class Query1Runner : public BenchmarkRunner {
   public:
-    Query1Runner(TPCH_SCALE_FACTOR targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query1Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];
@@ -153,7 +153,7 @@ class Query1Runner : public BenchmarkRunner {
 
 class Query3Runner : public BenchmarkRunner {
   public:
-    Query3Runner(TPCH_SCALE_FACTOR targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query3Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto& customers = tables[TPCHTable::Customer];
@@ -205,7 +205,7 @@ class Query3Runner : public BenchmarkRunner {
 }// namespace NES::Runtime::Execution
 
 int main(int, char**) {
-    NES::TPCH_SCALE_FACTOR targetScaleFactor = NES::TPCH_SCALE_FACTOR::F1;
+    NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F1;
     std::vector<std::string> compilers = {"PipelineCompiler"};
     for (const auto& c : compilers) {
         NES::Runtime::Execution::Query3Runner(targetScaleFactor, c).run();

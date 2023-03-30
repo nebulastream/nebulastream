@@ -33,7 +33,7 @@ class PipelinePlan {
         pipelines.emplace_back(pipe);
     }
     Pipeline& getPipeline(uint64_t index) {
-        NES_ASSERT(pipelines.size() > index, "Pipeline with index " << index << " dose not exist!");
+        NES_ASSERT(pipelines.size() > index, "Pipeline with index " << index << " does not exist!");
         return pipelines[index];
     }
 

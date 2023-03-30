@@ -57,7 +57,7 @@ using namespace Operators;
 class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
 
   public:
-    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F0_01;
+    TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
@@ -127,10 +127,10 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     resultSchema->addField("revenue", BasicType::FLOAT32);
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, pipeline2.ctx->buffers[0]);
-    if (targetScaleFactor == TPCH_SCALE_FACTOR::F1) {
+    if (targetScaleFactor == TPCH_Scale_Factor::F1) {
         NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
         EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122817720.0f, 200);
-    } else if (targetScaleFactor == TPCH_SCALE_FACTOR::F0_01) {
+    } else if (targetScaleFactor == TPCH_Scale_Factor::F0_01) {
         NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
         EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 1192973.625f, 200);
     } else {
