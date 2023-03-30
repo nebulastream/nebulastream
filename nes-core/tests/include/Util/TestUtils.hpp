@@ -82,160 +82,244 @@ template<typename T>
 }
 
 /**
- * @brief
+ * @brief Creates the command line argument with a buffer size
  * @param size
  * @param prefix
- * @return
+ * @return Command line argument
  */
 [[nodiscard]] std::string bufferSizeInBytes(uint64_t size, bool prefix = false);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the fileName
  * @param filename
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string configPath(const std::string& filename);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the worker config path
  * @param filename
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string workerConfigPath(const std::string& filename);
 
 /**
- * @brief
+ * @brief Creates the command line argument for a coordinator port
  * @param coordinatorPort
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the parent id
  * @param parentId
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string parentId(uint64_t parentId);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the numberOfSlots
  * @param coordinatorPort
  * @param prefix
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort, bool prefix = false);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the number of local buffers
  * @param localBuffers
  * @param prefix
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string numLocalBuffers(uint64_t localBuffers, bool prefix = false);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the number of global buffers
  * @param globalBuffers
  * @param prefix
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string numGlobalBuffers(uint64_t globalBuffers, bool prefix = false);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the rpc port
  * @param rpcPort
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string rpcPort(uint64_t rpcPort);
 
 /**
- * @brief
+ * @brief Creates the command line argument for the source type
  * @param sourceType
- * @return
+* @return Command line argument
  */
 [[nodiscard]] std::string sourceType(std::string sourceType);
 
+/**
+ * @brief Creates the command line argument for the csv source file path
+ * @param filePath
+* @return Command line argument
+ */
 [[nodiscard]] std::string csvSourceFilePath(std::string filePath);
 
+/**
+ * @brief Creates the command line argument for the data port
+ * @param dataPort
+* @return Command line argument
+ */
 [[nodiscard]] std::string dataPort(uint64_t dataPort);
+
+/**
+ * @brief Creates the command line argument for the number of tuples of tuples to produce per buffer
+ * @param numberOfTuplesToProducePerBuffer
+ * @return Command line argument
+ */
 [[nodiscard]] std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer);
 
+/**
+ * @brief Creates the command line argument for the physical source name
+ * @param physicalSourceName
+ * @return Command line argument
+ */
 [[nodiscard]] std::string physicalSourceName(std::string physicalSourceName);
 
+/**
+ * @brief Creates the command line argument for setting the logical source name
+ * @param logicalSourceName
+ * @return Command line argument
+ */
 [[nodiscard]] std::string logicalSourceName(std::string logicalSourceName);
 
+/**
+ * @brief Creates the command line argument for setting the number of buffers to produce
+ * @param numberOfBuffersToProduce
+ * @return Command line argument
+ */
 [[nodiscard]] std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce);
 
+/**
+ * @brief Creates the command line argument for setting the source gathering interval
+ * @param sourceGatheringInterval
+ * @return Command line argument
+ */
 [[nodiscard]] std::string sourceGatheringInterval(uint64_t sourceGatheringInterval);
 
+/**
+ * @brief Creates the command line argument for setting the rest port
+ * @param restPort
+ * @return Command line argument
+ */
 [[nodiscard]] std::string restPort(uint64_t restPort);
+
+/**
+ * @brief Creates the command line argument to enable debugging
+ * @return Command line argument
+ */
 [[nodiscard]] std::string enableDebug();
 
+/**
+ * @brief Creates the command line argument for setting the health check wait time for the worker
+ * @param workerWaitTime
+ * @return Command line argument
+ */
 [[nodiscard]] std::string workerHealthCheckWaitTime(uint64_t workerWaitTime);
+
+/**
+ * @brief Creates the command line argument for setting the health check wait time for the coordinator
+ * @param coordinatorWaitTime
+ * @return Command line argument
+ */
 [[nodiscard]] std::string coordinatorHealthCheckWaitTime(uint64_t coordinatorWaitTime);
 
+/**
+ * @brief Creates the command line argument if to enable monitoring
+ * @param prefix
+ * @return Command line argument
+ */
 [[nodiscard]] std::string enableMonitoring(bool prefix = false);
+
+
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization();
 
+/**
+ * @brief Creates the command line argument for enabling nemo placement
+ * @return Command line argument
+ */
 [[nodiscard]] std::string enableNemoPlacement();
 
+/**
+ * @brief Creates the command line argument for setting the threshold of the distributed window child
+ * @param val
+ * @return Command line argument
+ */
 [[nodiscard]] std::string setDistributedWindowChildThreshold(uint64_t val);
+
+/**
+ * @brief Creates the command line argument for setting the threshold of the distributed window combiner
+ * @param val
+ * @return Command line argument
+ */
 [[nodiscard]] std::string setDistributedWindowCombinerThreshold(uint64_t val);
 
+/**
+ * @brief Creates the command line argument if to enable thread local windowing
+ * @param prefix
+ * @return Command line argument
+ */
 [[nodiscard]] std::string enableThreadLocalWindowing(bool prefix = false);
 
 std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
 
 /**
-   * @brief start a new instance of a nes coordinator with a set of configuration flags
-   * @param flags
-   * @return coordinator process, which terminates if it leaves the scope
-   */
+ * @brief start a new instance of a nes coordinator with a set of configuration flags
+ * @param flags
+* @return coordinator process, which terminates if it leaves the scope
+ */
 [[nodiscard]] Util::Subprocess startCoordinator(std::initializer_list<std::string> list);
 
 /**
-     * @brief start a new instance of a nes worker with a set of configuration flags
-     * @param flags
-     * @return worker process, which terminates if it leaves the scope
-     */
+ * @brief start a new instance of a nes worker with a set of configuration flags
+ * @param flags
+ * @return worker process, which terminates if it leaves the scope
+ */
 [[nodiscard]] Util::Subprocess startWorker(std::initializer_list<std::string> flags);
 
 /**
-     * @brief start a new instance of a nes worker with a set of configuration flags
-     * @param flags
-     * @return worker process, which terminates if it leaves the scope
-     */
+ * @brief start a new instance of a nes worker with a set of configuration flags
+ * @param flags
+ * @return worker process, which terminates if it leaves the scope
+ */
 [[nodiscard]] std::shared_ptr<Util::Subprocess> startWorkerPtr(std::initializer_list<std::string> flags);
 
 /**
-     * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-     * @param ptr to Runtime
-     * @param queryId
-     * @param expectedResult
-     * @return bool indicating if the expected results are matched
-     */
+ * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
+ * @param ptr to Runtime
+ * @param queryId
+ * @param expectedResult
+ * @return bool indicating if the expected results are matched
+ */
 [[nodiscard]] bool checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult);
 
 /**
-     * @brief This method is used for waiting till the query gets into running status or a timeout occurs
-     * @param queryId : the query id to check for
-     * @param queryCatalogService: the catalog to look into for status change
-     * @param timeoutInSec: time to wait before stop checking
-     * @return true if query gets into running status else false
-     */
+ * @brief This method is used for waiting till the query gets into running status or a timeout occurs
+ * @param queryId : the query id to check for
+ * @param queryCatalogService: the catalog to look into for status change
+ * @param timeoutInSec: time to wait before stop checking
+ * @return true if query gets into running status else false
+ */
 [[nodiscard]] bool waitForQueryToStart(QueryId queryId,
                                        const QueryCatalogServicePtr& queryCatalogService,
                                        std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
 /**
-     * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-     * @param nesWorker to NesWorker
-     * @param queryId
-     * @param queryCatalog
-     * @param expectedResult
-     * @return bool indicating if the expected results are matched
-     */
+ * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
+ * @param nesWorker to NesWorker
+ * @param queryId
+ * @param queryCatalog
+ * @param expectedResult
+ * @return bool indicating if the expected results are matched
+ */
 template<typename Predicate = std::equal_to<uint64_t>>
 [[nodiscard]] bool checkCompleteOrTimeout(const NesWorkerPtr& nesWorker,
                                           QueryId queryId,
@@ -280,13 +364,13 @@ template<typename Predicate = std::equal_to<uint64_t>>
 }
 
 /**
-     * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
-     * @param nesCoordinator to NesCoordinator
-     * @param queryId
-     * @param queryCatalog
-     * @param expectedResult
-     * @return bool indicating if the expected results are matched
-     */
+ * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
+ * @param nesCoordinator to NesCoordinator
+ * @param queryId
+ * @param queryCatalog
+ * @param expectedResult
+ * @return bool indicating if the expected results are matched
+ */
 template<typename Predicate = std::equal_to<uint64_t>>
 [[nodiscard]] bool checkCompleteOrTimeout(const NesCoordinatorPtr& nesCoordinator,
                                           QueryId queryId,
@@ -365,27 +449,27 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                         std::chrono::seconds timeout = defaultTimeout);
 
 /**
-   * @brief Check if the query result was produced
-   * @param expectedContent
-   * @param outputFilePath
-   * @return true if successful
-   */
+ * @brief Check if the query result was produced
+ * @param expectedContent
+ * @param outputFilePath
+ * @return true if successful
+ */
 [[nodiscard]] bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeout = 0);
 
 /**
-   * @brief Check if any query result was produced
-   * @param outputFilePath
-   * @return true if successful
-   */
+ * @brief Check if any query result was produced
+ * @param outputFilePath
+ * @return true if successful
+ */
 [[nodiscard]] bool
 checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0);
 
 /**
-  * @brief Check if the query result was produced
-  * @param expectedContent
-  * @param outputFilePath
-  * @return true if successful
-  */
+ * @brief Check if the query result was produced
+ * @param expectedContent
+ * @param outputFilePath
+ * @return true if successful
+ */
 template<typename T>
 [[nodiscard]] bool checkBinaryOutputContentLengthOrTimeout(QueryId queryId,
                                                            QueryCatalogServicePtr queryCatalogService,
@@ -454,72 +538,72 @@ template<typename T>
 }
 
 /**
-   * @brief Check if a outputfile is created
-   * @param expectedContent
-   * @param outputFilePath
-   * @return true if successful
-   */
+ * @brief Check if a outputfile is created
+ * @param expectedContent
+ * @param outputFilePath
+ * @return true if successful
+ */
 [[nodiscard]] bool checkFileCreationOrTimeout(const string& outputFilePath);
 
 /**
-   * @brief Check if Coordinator REST API is available or timeout
-   * @param expectedContent
-   * @param outputFilePath
-   * @return true if successful
-   */
+ * @brief Check if Coordinator REST API is available or timeout
+ * @param expectedContent
+ * @param outputFilePath
+ * @return true if successful
+ */
 [[nodiscard]] bool checkRESTServerStartedOrTimeout(uint64_t restPort, uint64_t customTimeout = 0);
 
 /**
-     * @brief This method is used for checking if the submitted query produced the expected result within the timeout
-     * @param queryId: Id of the query
-     * @param expectedNumberBuffers: The expected value
-     * @return true if matched the expected result within the timeout
-     */
+ * @brief This method is used for checking if the submitted query produced the expected result within the timeout
+ * @param queryId: Id of the query
+ * @param expectedNumberBuffers: The expected value
+ * @return true if matched the expected result within the timeout
+ */
 [[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedNumberBuffers, const std::string& restPort = "8081");
 
 /**
-     * @brief This method is used for checking if the submitted query is running
-     * @param queryId: Id of the query
-     * @return true if is running within the timeout, else false
-     */
+ * @brief This method is used for checking if the submitted query is running
+ * @param queryId: Id of the query
+ * @return true if is running within the timeout, else false
+ */
 [[nodiscard]] bool checkRunningOrTimeout(QueryId queryId, const std::string& restPort = "8081");
 
 /**
-     * @brief This method is used for stop a query
-     * @param queryId: Id of the query
-     * @return if stopped
-     */
+ * @brief This method is used for stop a query
+ * @param queryId: Id of the query
+ * @return if stopped
+ */
 [[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081");
 
 /**
-     * @brief This method is used for executing a query
-     * @param query string
-     * @return if stopped
-     */
+ * @brief This method is used for executing a query
+ * @param query string
+ * @return if stopped
+ */
 [[nodiscard]] nlohmann::json startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
 
 /**
-     * @brief This method is used for making a monitoring rest call.
-     * @param1 the rest call
-     * @param2 the rest port
-     * @return the json
-     */
+ * @brief This method is used for making a monitoring rest call.
+ * @param1 the rest call
+ * @param2 the rest port
+ * @return the json
+ */
 [[nodiscard]] nlohmann::json makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081");
 
 /**
-   * @brief This method is used adding a logical source
-   * @param query string
-   * @return
-   */
+ * @brief This method is used adding a logical source
+ * @param query string
+ * @return
+ */
 [[nodiscard]] bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081");
 
 bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
 
 /**
-     * @brief This method is used for making a REST call to coordinator to get the topology as Json
-     * @param1 the rest port
-     * @return the json
-     */
+ * @brief This method is used for making a REST call to coordinator to get the topology as Json
+ * @param1 the rest port
+ * @return the json
+ */
 [[nodiscard]] nlohmann::json getTopology(uint64_t restPort);
 
 };// namespace TestUtils
