@@ -81,17 +81,78 @@ template<typename T>
     return configOption(name, std::to_string(value), prefix);
 }
 
+/**
+ * @brief
+ * @param size
+ * @param prefix
+ * @return
+ */
 [[nodiscard]] std::string bufferSizeInBytes(uint64_t size, bool prefix = false);
+
+/**
+ * @brief
+ * @param filename
+ * @return
+ */
 [[nodiscard]] std::string configPath(const std::string& filename);
+
+/**
+ * @brief
+ * @param filename
+ * @return
+ */
 [[nodiscard]] std::string workerConfigPath(const std::string& filename);
+
+/**
+ * @brief
+ * @param coordinatorPort
+ * @return
+ */
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort);
+
+/**
+ * @brief
+ * @param parentId
+ * @return
+ */
 [[nodiscard]] std::string parentId(uint64_t parentId);
+
+/**
+ * @brief
+ * @param coordinatorPort
+ * @param prefix
+ * @return
+ */
 [[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort, bool prefix = false);
 
+/**
+ * @brief
+ * @param localBuffers
+ * @param prefix
+ * @return
+ */
 [[nodiscard]] std::string numLocalBuffers(uint64_t localBuffers, bool prefix = false);
+
+/**
+ * @brief
+ * @param globalBuffers
+ * @param prefix
+ * @return
+ */
 [[nodiscard]] std::string numGlobalBuffers(uint64_t globalBuffers, bool prefix = false);
 
+/**
+ * @brief
+ * @param rpcPort
+ * @return
+ */
 [[nodiscard]] std::string rpcPort(uint64_t rpcPort);
+
+/**
+ * @brief
+ * @param sourceType
+ * @return
+ */
 [[nodiscard]] std::string sourceType(std::string sourceType);
 
 [[nodiscard]] std::string csvSourceFilePath(std::string filePath);

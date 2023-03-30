@@ -19,7 +19,21 @@ namespace NES::TestUtils {
 
 class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
   public:
+    /**
+     * @brief Constructor of a TestSourceProvider
+     * @param options
+     */
     explicit TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options);
+
+    /**
+     * @brief Lowers a source descriptor to a executable data source.
+     * @param operatorId id of the data source
+     * @param originId
+     * @param sourceDescriptor
+     * @param nodeEngine
+     * @param successors
+     * @return DataSourcePtr
+     */
     DataSourcePtr lower(OperatorId operatorId,
                         OriginId originId,
                         SourceDescriptorPtr sourceDescriptor,

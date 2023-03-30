@@ -42,6 +42,9 @@
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <Util/Experimental/S2Utilities.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
 
 using std::map;
 using std::string;
