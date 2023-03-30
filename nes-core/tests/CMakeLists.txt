@@ -622,8 +622,8 @@ add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefined
 #add_dependencies(monitoring-integration-test nesCoordinator nesWorker)
 
 # NemoIntegrationTest disabled until issue #3254 is fixed
-#add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
-#add_dependencies(nemo-integration-test nesCoordinator nesWorker)
+add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
+add_dependencies(nemo-integration-test nesCoordinator nesWorker)
 
 ### MemorySourceIntegrationTest ###
 add_nes_integration_test(memory-source-integration-test "Integration/Source/MemorySourceIntegrationTest.cpp")

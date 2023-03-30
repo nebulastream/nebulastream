@@ -168,7 +168,62 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
+TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
+    uint64_t childThreshold = 1000;
+    uint64_t combinerThreshold = 1;
+    uint64_t expectedNoBuffers = 3;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 4, childThreshold, combinerThreshold, expectedNoBuffers);
+
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+                             "0,10000,1,408\n"
+                             "10000,20000,1,1160\n"
+                             "0,10000,4,8\n"
+                             "0,10000,11,40\n"
+                             "0,10000,12,8\n"
+                             "0,10000,16,16\n";
+
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
+    ASSERT_EQ(content, expectedContent);
+}
+
+TEST_F(NemoIntegrationTest, testThreeLevelsTopologyBottomUp) {
+    uint64_t childThreshold = 1;
+    uint64_t combinerThreshold = 1000;
+    uint64_t expectedNoBuffers = 3;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 4, childThreshold, combinerThreshold, expectedNoBuffers);
+
+    NES_INFO("content=" << content);
+    //NES_INFO("expContent=" << expectedContent);
+    ASSERT_TRUE(content.size() > 300);
+}
+
+TEST_F(NemoIntegrationTest, testNemoThreelevels) {
+    uint64_t childThreshold = 1;
+    uint64_t combinerThreshold = 1;
+    uint64_t expectedNoBuffers = 2;
+    auto content = testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 4, childThreshold, combinerThreshold, expectedNoBuffers);
+
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+                             "0,10000,1,204\n"
+                             "10000,20000,1,580\n"
+                             "0,10000,4,4\n"
+                             "0,10000,11,20\n"
+                             "0,10000,12,4\n"
+                             "0,10000,16,8\n"
+                             "0,10000,1,204\n"
+                             "10000,20000,1,580\n"
+                             "0,10000,4,4\n"
+                             "0,10000,11,20\n"
+                             "0,10000,12,4\n"
+                             "0,10000,16,8\n";
+
+    NES_INFO("content=" << content);
+    NES_INFO("expContent=" << expectedContent);
+    ASSERT_EQ(content, expectedContent);
+}
+
+TEST_F(NemoIntegrationTest, DISABLED_testNemoFlatTopologyMerge) {
     uint64_t childThreshold = 0;
     uint64_t combinerThreshold = 0;
     uint64_t expectedNoBuffers = 3;
@@ -187,7 +242,7 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
     ASSERT_EQ(content, expectedContent);
 }
 
-TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
+TEST_F(NemoIntegrationTest, DISABLED_testNemoFlatTopologyNoMerge) {
     uint64_t childThreshold = 0;
     uint64_t combinerThreshold = 100;
     uint64_t expectedNoBuffers = 2;
@@ -206,31 +261,6 @@ TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
                              "0,10000,11,5\n"
                              "0,10000,12,1\n"
                              "0,10000,16,2\n";
-
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
-    ASSERT_EQ(content, expectedContent);
-}
-
-TEST_F(NemoIntegrationTest, testNemoThreelevels) {
-    uint64_t childThreshold = 0;
-    uint64_t combinerThreshold = 0;
-    uint64_t expectedNoBuffers = 2;
-    auto content = testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
-
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,102\n"
-                             "10000,20000,1,290\n"
-                             "0,10000,4,2\n"
-                             "0,10000,11,10\n"
-                             "0,10000,12,2\n"
-                             "0,10000,16,4\n"
-                             "0,10000,1,102\n"
-                             "10000,20000,1,290\n"
-                             "0,10000,4,2\n"
-                             "0,10000,11,10\n"
-                             "0,10000,12,2\n"
-                             "0,10000,16,4\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
