@@ -103,6 +103,27 @@ class DynamicField {
      */
     std::string toString();
 
+    /**
+     * @brief Compares the two DynamicFields if there underlying memory is equal
+     * @param rhs
+     * @return True if equal otherwise false
+     */
+    bool equal(const DynamicField& rhs) const;
+
+    /**
+     * @brief Checks if the DynamicField is equal
+     * @param rhs
+     * @return True if both fields are equal
+     */
+    bool operator==(const DynamicField& rhs) const;
+
+    /**
+     * @brief Checks if the DynamicField are not equal
+     * @param rhs
+     * @return True if both fields are equal
+     */
+    bool operator!=(const DynamicField& rhs) const;
+
   private:
     uint8_t* address;
     const PhysicalTypePtr physicalType;

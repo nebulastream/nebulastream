@@ -16,22 +16,44 @@
 #define NES_SAMPLERANDOMWITHREPLACEMENT_HPP
 
 #include <Synopses/AbstractSynopsis.hpp>
-#include <Synopses/SynopsisArguments.hpp>
 
 namespace NES::ASP{
 
+/**
+ * @brief Implementation of a  Simple Random Sample With Replacement
+ */
 class SampleRandomWithReplacement : public AbstractSynopsis {
 
   public:
+    /**
+     * @brief Constructor for a SampleRandomWithReplacement
+     * @param sampleSize
+     */
+    explicit SampleRandomWithReplacement(size_t sampleSize);
+
+    /**
+     * @brief Adds the record to this sample
+     * @param record
+     */
     void addToSynopsis(Nautilus::Record record) override;
 
-    std::vector<Nautilus::Record> getApproximate() override;
+    /**
+     * @brief Initializes this synopsis
+     */
+    void initialize() override;
 
+    /**
+     * @brief Once we have finished building our sample, we can ask for an approximate
+     * @return Record(s) with the approximation
+     */
+    std::vector<Runtime::Execution::RecordBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) override;
+
+    /**
+     * @brief Deconstructor
+     */
     virtual ~SampleRandomWithReplacement() = default;
 
-    SampleRandomWithReplacement(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
-                                size_t sampleSize)
-        : AbstractSynopsis(aggregationFunction), sampleSize(sampleSize) {}
+
 
 
   private:

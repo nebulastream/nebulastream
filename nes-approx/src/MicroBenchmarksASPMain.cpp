@@ -61,8 +61,8 @@ int main(int argc, const char* argv[]) {
     Exceptions::installGlobalErrorListener(runner);
 
     std::string yamlFileName;
-    auto pathArg = std::string(argv[1]);
-    if (argc == 2 && pathArg.find("--configPath") != std::string::npos) {
+    if (argc == 2 && std::string(argv[1]).find("--configPath") != std::string::npos) {
+        auto pathArg = std::string(argv[1]);
         yamlFileName = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
     } else {
         std::cerr << "Error: Only --configPath= is allowed as a command line argument!\nExiting now..." << std::endl;

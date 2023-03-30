@@ -18,17 +18,29 @@
 
 namespace NES::ASP {
 
-AbstractSynopsis::AbstractSynopsis(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction)
-    : aggregationFunction(aggregationFunction) {}
-
 AbstractSynopsesPtr AbstractSynopsis::create(SynopsisArguments arguments) {
 
     if (arguments.getType() == SynopsisArguments::Type::SRSWR) {
-        return std::make_shared<SampleRandomWithReplacement>(arguments.getAggregationFunction(), arguments.getWidth());
+        return std::make_shared<SampleRandomWithReplacement>(arguments.getWidth());
     } else {
         NES_NOT_IMPLEMENTED();
     }
 
 }
+
+void AbstractSynopsis::setAggregationFunction(
+    const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction) {
+    AbstractSynopsis::aggregationFunction = aggregationFunction;
+}
+
+void AbstractSynopsis::setFieldNameAggregation(const std::string& fieldNameAggregation) {
+    AbstractSynopsis::fieldNameAggregation = fieldNameAggregation;
+}
+
+void AbstractSynopsis::setFieldNameApproximate(const std::string& fieldNameApproximate) {
+    AbstractSynopsis::fieldNameApproximate = fieldNameApproximate;
+}
+
+void AbstractSynopsis::setOutputSchema(const SchemaPtr& outputSchema) { AbstractSynopsis::outputSchema = outputSchema; }
 
 } // namespace NES::ASP

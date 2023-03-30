@@ -16,11 +16,14 @@
 #define NES_MICROBENCHMARKRUN_HPP
 
 #include <API/Schema.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Benchmarking/MicroBenchmarkResult.hpp>
-#include <Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Benchmarking/Parsing/MicroBenchmarkSchemas.hpp>
+#include <Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Synopses/AbstractSynopsis.hpp>
 
 namespace NES::ASP::Benchmarking {
@@ -36,26 +39,23 @@ class MicroBenchmarkRun {
     /**
      * @brief Constructor for a MicroBenchmarkRun
      * @param synopsesArguments
-     * @param schema
+     * @param yamlAggregation
      * @param bufferSize
      * @param numberOfBuffers
      * @param windowSize
      * @param reps
-     * @param inputFile
-     * @param accuracyFile
      */
     MicroBenchmarkRun(const SynopsisArguments& synopsesArguments,
-                      const SchemaPtr& schema,
+                      const YamlAggregation& yamlAggregation,
                       const uint32_t bufferSize,
                       const uint32_t numberOfBuffers,
                       const size_t windowSize,
-                      const size_t reps,
-                      const std::string& inputFile,
-                      const std::string& accuracyFile);
+                      const size_t reps);
 
   public:
     MicroBenchmarkRun() = default;
 
+    MicroBenchmarkRun(const MicroBenchmarkRun& other);
     MicroBenchmarkRun& operator=(const MicroBenchmarkRun& other);
 
     /**
@@ -64,6 +64,7 @@ class MicroBenchmarkRun {
      * @return Vector of all micro-benchmarks
      */
     static std::vector<MicroBenchmarkRun> parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile);
+
 
     /**
      * @brief Runs this Microbenchmark and then writes the result to microBenchmarkResult
@@ -102,23 +103,21 @@ class MicroBenchmarkRun {
     std::vector<Runtime::Execution::RecordBuffer> createAccuracyRecords(Runtime::BufferManagerPtr bufferManager);
 
     /**
-     * @brief Compares the approximated with the exact query output and returns an accuracy
+     * @brief Compares the approximated with the exact query output and returns an accuracy.
      * @param allAccuracyRecords
      * @param allApproximateRecords
      * @return Accuracy of approximate
      */
-    double compareAccuracy(std::vector<Runtime::Execution::RecordBuffer> allAccuracyRecords,
-                           std::vector<Runtime::Execution::RecordBuffer> allApproximateRecords);
+    double compareAccuracy(std::vector<Runtime::Execution::RecordBuffer>& allAccuracyRecords,
+                           std::vector<Runtime::Execution::RecordBuffer>& allApproximateRecords);
 
   private:
     SynopsisArguments synopsesArguments;
-    SchemaPtr schema;
+    YamlAggregation aggregation;
     uint32_t bufferSize;
     uint32_t numberOfBuffers;
     size_t windowSize;
     uint64_t reps;
-    std::string inputFile;
-    std::string accuracyFile;
     std::vector<MicroBenchmarkResult> microBenchmarkResult;
 };
 

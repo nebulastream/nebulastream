@@ -62,7 +62,29 @@ class AbstractSynopsis {
      */
     static AbstractSynopsesPtr create(SynopsisArguments arguments);
 
+    /**
+     * @brief Sets the aggregation function for this synopsis
+     * @param aggregationFunction
+     */
+    void setAggregationFunction(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
 
+    /**
+     * @brief Sets the fieldname for this aggregation
+     * @param fieldNameAggregation
+     */
+    void setFieldNameAggregation(const std::string& fieldNameAggregation);
+
+    /**
+     * @brief Sets the fieldname of the output
+     * @param fieldNameOutput
+     */
+    void setFieldNameApproximate(const std::string& fieldNameOutput);
+
+    /**
+     * @brief Sets the outputSchema
+     * @param outputSchema
+     */
+    void setOutputSchema(const SchemaPtr& outputSchema);
 
     /**
      * @brief virtual deconstructor
@@ -70,12 +92,11 @@ class AbstractSynopsis {
     virtual ~AbstractSynopsis() = default;
 
   protected:
-    explicit AbstractSynopsis(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
-
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> aggregationValue;
     std::string fieldNameAggregation;
-
+    std::string fieldNameApproximate;
+    SchemaPtr outputSchema;
 
 };
 } // namespace NES::ASP
