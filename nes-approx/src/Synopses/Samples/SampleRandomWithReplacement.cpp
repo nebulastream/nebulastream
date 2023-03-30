@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <Benchmarking/MicroBenchmarkASPUtil.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Synopses/Samples/SampleRandomWithReplacement.hpp>
 #include <random>
 
@@ -22,7 +25,8 @@ void SampleRandomWithReplacement::addToSynopsis(Nautilus::Record record) {
     storedRecords.emplace_back(record);
 }
 
-std::vector<Nautilus::Record> SampleRandomWithReplacement::getApproximate() {
+std::vector<Runtime::Execution::RecordBuffer>
+SampleRandomWithReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
     // First, we have to pick our sample
     std::vector<Nautilus::Record> sample;
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
@@ -39,17 +43,24 @@ std::vector<Nautilus::Record> SampleRandomWithReplacement::getApproximate() {
     for (auto& item : sample) {
         aggregationFunction->lift(aggregationValueMemRef, item.read(fieldNameAggregation));
     }
-
     auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
-    record.write(fieldNameAggregation, approximatedValue);
+    record.write(fieldNameApproximate, approximatedValue);
 
-    return {{record}};
+    // Create an output buffer and write the approximation into it
+    auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), outputSchema);
+    auto outputBuffer = bufferManager->getBufferBlocking();
+    auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer));
+    Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
+    memoryProvider->write(recordIndex, outputRecordBuffer, record);
+
+
+    return {Runtime::Execution::RecordBuffer(outputRecordBuffer)};
 }
 
-SynopsisArguments
-SRSWR(size_t sampleSize, std::string fieldName,
-                        Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction) {
-    return SynopsisArguments::createArguments(aggregationFunction, fieldName, SynopsisArguments::Type::SRSWR, sampleSize);
+SampleRandomWithReplacement::SampleRandomWithReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
+
+void SampleRandomWithReplacement::initialize() {
+    storedRecords.clear();
 }
 
 } // namespace NES::ASP

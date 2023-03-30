@@ -15,25 +15,78 @@
 #ifndef NES_YAMLAGGREGATION_HPP
 #define NES_YAMLAGGREGATION_HPP
 
+#include <API/Schema.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <string>
-#include <API/Schema.hpp>
 
 namespace NES::ASP::Benchmarking {
 class YamlAggregation {
+    enum class Type : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
 
   public:
-    YamlAggregation(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction,
+    /**
+     * @brief Default constructor
+     */
+    YamlAggregation() = default;
+
+    /**
+     * @brief Custom constructor
+     * @param type
+     * @param fieldNameAggregation
+     * @param accuracyFile
+     * @param inputFile
+     * @param inputSchema
+     * @param outputSchema
+     */
+    YamlAggregation(const Type& type,
                     const std::string& fieldNameAggregation,
+                    const std::string& fieldNameApproximate,
                     const std::string& accuracyFile,
                     const std::string& inputFile,
-                    const SchemaPtr& schema);
+                    const SchemaPtr& inputSchema,
+                    const SchemaPtr& outputSchema);
 
-    const Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    const std::string fieldNameAggregation;
-    const std::string accuracyFile;
-    const std::string inputFile;
-    const SchemaPtr schema;
+    /**
+     * @brief Creates an YamlAggregation object from a yaml node
+     * @param aggregationNode
+     * @return YamlAggregation
+     */
+    static YamlAggregation createAggregationFromYamlNode(Yaml::Node& aggregationNode);
+
+    /**
+     * @brief Creates a string representation
+     * @return String representation
+     */
+    std::string toString();
+
+    /**
+     * @brief Creates a header for the output csv file from this SynopsisArguments
+     * @return Header as a string with comma separated values
+     */
+    std::string getHeaderAsCsv();
+
+    /**
+     * @brief Creates a csv string for all values from this SynopsisArguments
+     * @return Header as a string with comma separated values
+     */
+    std::string getValuesAsCsv();
+
+    /**
+     * @brief Creates an aggregation function from the current parameters
+     * @return AggregationFunction
+     */
+    Runtime::Execution::Aggregation::AggregationFunctionPtr createAggregationFunction();
+
+
+
+    Type type;
+    std::string fieldNameAggregation;
+    std::string fieldNameApproximate;
+    std::string accuracyFile;
+    std::string inputFile;
+    SchemaPtr inputSchema;
+    SchemaPtr outputSchema;
 };
 } // namespace NES::ASP::Benchmarking
 

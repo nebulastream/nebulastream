@@ -12,16 +12,24 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Benchmarking/Parsing/SynopsisArguments.hpp>
+#include <API/AttributeField.hpp>
 #include <Benchmarking/MicroBenchmarkASPUtil.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Benchmarking/Parsing/SynopsisArguments.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <filesystem>
 #include <fstream>
 
 namespace NES::ASP::Util {
@@ -47,6 +55,18 @@ std::vector<SynopsisArguments> parseSynopsisArguments(const Yaml::Node& synopses
     }
 
     return retVector;
+}
+
+std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode) {
+    std::vector<Benchmarking::YamlAggregation> parsedAggregations;
+
+    for (auto entry = aggregationsNode.Begin(); entry != aggregationsNode.End(); entry++) {
+        auto node = (*entry).second;
+        parsedAggregations.emplace_back(Benchmarking::YamlAggregation::createAggregationFromYamlNode(node));
+    }
+
+
+    return parsedAggregations;
 }
 
 std::string parseCsvFileFromYaml(const std::string& yamlFileName) {
@@ -81,14 +101,72 @@ Runtime::Execution::MemoryProvider::MemoryProviderPtr createMemoryProvider(const
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     } else {
         NES_NOT_IMPLEMENTED();
     }
-
-    return NES::Runtime::Execution::MemoryProvider::MemoryProviderPtr();
 }
 
+Runtime::MemoryLayouts::DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
+    std::vector<PhysicalTypePtr> retVector;
+
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        retVector.push_back(physicalField);
+    }
+
+    return retVector;
+}
+
+std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
+                                                                       Runtime::BufferManagerPtr bufferManager) {
+    std::vector<Runtime::Execution::RecordBuffer> recordBuffers;
+    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
+
+    // Creating everything for the csv parser
+    std::ifstream file(csvFile);
+    std::istream_iterator<std::string> beginIt(file);
+    std::istream_iterator<std::string> endIt;
+    const std::string delimiter = ",";
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+
+
+    // Do-while loop for checking, if we have another line to parse from the inputFile
+    const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    auto it = beginIt;
+    auto tupleCount = 0UL;
+    auto buffer = bufferManager->getBufferBlocking();
+    do {
+
+        std::string line = *it;
+        auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(buffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicTupleBuffer, schema, bufferManager);
+        tupleCount++;
+
+        if (tupleCount >= maxTuplesPerBuffer) {
+            buffer.setNumberOfTuples(tupleCount);
+            recordBuffers.emplace_back(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
+            buffer = bufferManager->getBufferBlocking();
+            tupleCount = 0;
+        }
+        ++it;
+    } while(it != endIt);
+
+    return recordBuffers;
+}
 }

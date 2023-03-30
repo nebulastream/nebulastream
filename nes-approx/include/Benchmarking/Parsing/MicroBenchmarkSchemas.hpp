@@ -21,21 +21,34 @@
 
 namespace NES::ASP::Benchmarking {
 
-static inline std::unordered_map<std::string, SchemaPtr>
-    benchmarkSchemas = {
-    {"schema1", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
+    {"some_input_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                     ->addField("id", BasicType::UINT64)
                     ->addField("value", BasicType::INT64)
                     ->addField("timestamp", BasicType::UINT64)},
 
-    {"schema2", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+    {"some_other_input_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                     ->addField("id", BasicType::UINT64)
                     ->addField("value1", BasicType::INT64)
                     ->addField("value2", BasicType::FLOAT32)
                     ->addField("value3", BasicType::BOOLEAN)
-                    ->addField("timestamp", BasicType::UINT64)}
-};
+                    ->addField("timestamp", BasicType::UINT64)}};
 
+static inline std::map<std::string, SchemaPtr> accuracyFileSchemas = {
+    {"some_min_acc_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                            ->addField("aggregation", BasicType::INT64)},
+
+    {"some_max_acc_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                  ->addField("aggregation", BasicType::INT64)},
+
+    {"some_sum_acc_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                              ->addField("aggregation", BasicType::INT64)},
+
+    {"some_average_acc_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                              ->addField("aggregation", BasicType::INT64)},
+
+    {"some_count_acc_file", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                              ->addField("aggregation", BasicType::INT64)}};
 
 } // namespace NES::ASP::Benchmarking
 

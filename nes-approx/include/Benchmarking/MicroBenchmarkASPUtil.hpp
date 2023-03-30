@@ -19,6 +19,8 @@
 #include <Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Benchmarking/Parsing/SynopsisArguments.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <string>
 
@@ -96,6 +98,30 @@ uint64_t parseReps(const Yaml::Node& repsNode);
  */
 Runtime::Execution::MemoryProvider::MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
 
+/**
+ * @brief Creates a DynamicTupleBuffer from the TupleBuffer and the schema
+ * @param buffer
+ * @param schema
+ * @return DynamicTupleBuffer
+ */
+Runtime::MemoryLayouts::DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
+
+/**
+ * @brief Returns the physical types of all fields of the schema
+ * @param schema
+ * @return PhysicalTypes of the schema's field
+ */
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
+
+/**
+ * @brief Creates multiple RecordBuffers from the csv file
+ * @param csvFile
+ * @param schema
+ * @param bufferManager
+ * @return Vector of RecordBuffers
+ */
+[[maybe_unused]] std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
+                                                                       Runtime::BufferManagerPtr bufferManager);
 
 
 } // namespace NES::ASP

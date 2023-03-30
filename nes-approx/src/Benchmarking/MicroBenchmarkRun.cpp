@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferManager.hpp>
 #include <Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Benchmarking/MicroBenchmarkRun.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -31,8 +32,11 @@ void MicroBenchmarkRun::run() {
     auto allAccuracyBuffers = this->createAccuracyRecords(bufferManager);
 
     auto synopsis = AbstractSynopsis::create(synopsesArguments);
-    auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, schema);
-
+    auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
+    synopsis->setAggregationFunction(aggregation.createAggregationFunction());
+    synopsis->setFieldNameAggregation(aggregation.fieldNameAggregation);
+    synopsis->setFieldNameApproximate(aggregation.fieldNameApproximate);
+    synopsis->setOutputSchema(aggregation.outputSchema);
 
     Timer timer("benchmarkLoop");
     for (auto rep = 0UL; rep < reps; ++rep) {
@@ -101,8 +105,8 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
             for (auto& windowSize : parsedWindowSizes) {
                 for (auto& bufferSize : parsedBufferSizes) {
                     for (auto& numberOfBuffers : parsedNumberOfBuffers) {
-                        retVector[++cnt] = MicroBenchmarkRun(synopsisArgument, aggregation.schema, bufferSize, numberOfBuffers,
-                                                             windowSize, parsedReps, aggregation.inputFile, aggregation.accuracyFile);
+                        retVector[++cnt] = MicroBenchmarkRun(synopsisArgument, aggregation, bufferSize, numberOfBuffers,
+                                                             windowSize, parsedReps);
                     }
                 }
             }
@@ -113,15 +117,13 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
 }
 
 MicroBenchmarkRun::MicroBenchmarkRun(const SynopsisArguments& synopsesArguments,
-                                     const SchemaPtr& schema,
+                                     const YamlAggregation& aggregation,
                                      const uint32_t bufferSize,
                                      const uint32_t numberOfBuffers,
                                      const size_t windowSize,
-                                     const size_t reps,
-                                     const std::string& inputFile,
-                                     const std::string& accuracyFile)
-    : synopsesArguments(synopsesArguments), schema(schema), bufferSize(bufferSize), numberOfBuffers(numberOfBuffers),
-      windowSize(windowSize), reps(reps), inputFile(inputFile), accuracyFile(accuracyFile) {}
+                                     const size_t reps)
+    : synopsesArguments(synopsesArguments), aggregation(aggregation), bufferSize(bufferSize),
+      numberOfBuffers(numberOfBuffers), windowSize(windowSize), reps(reps){}
 
 MicroBenchmarkRun& MicroBenchmarkRun::operator=(const MicroBenchmarkRun& other) {
     // If this is the same object, then return it
@@ -131,30 +133,37 @@ MicroBenchmarkRun& MicroBenchmarkRun::operator=(const MicroBenchmarkRun& other) 
 
     // Otherwise create a new object
     synopsesArguments = other.synopsesArguments;
-    schema = other.schema;
+    aggregation = other.aggregation;
     bufferSize = other.bufferSize;
     numberOfBuffers = other.numberOfBuffers;
     windowSize = other.windowSize;
     reps = other.reps;
-    inputFile = other.inputFile;
-    accuracyFile = other.accuracyFile;
     microBenchmarkResult = std::vector(other.microBenchmarkResult);
 
     return *this;
 }
 
+
+MicroBenchmarkRun::MicroBenchmarkRun(const MicroBenchmarkRun& other) {
+    synopsesArguments = other.synopsesArguments;
+    aggregation = other.aggregation;
+    bufferSize = other.bufferSize;
+    numberOfBuffers = other.numberOfBuffers;
+    windowSize = other.windowSize;
+    reps = other.reps;
+    microBenchmarkResult = std::vector(other.microBenchmarkResult);
+}
+
 std::string MicroBenchmarkRun::getHeaderAsCsv() {
     std::stringstream stringStream;
     stringStream << synopsesArguments.getHeaderAsCsv()
-                 << ",schema"
+                 << "," << aggregation.getHeaderAsCsv()
+                 << ",outputSchema"
                  << ",bufferSize"
                  << ",numberOfBuffers"
                  << ",windowSize"
                  << ",reps"
-                 << ",inputFile"
-                 << ",accuracyFile"
                  << "," << microBenchmarkResult[0].getHeaderAsCsv();
-
 
     return stringStream.str();
 }
@@ -163,14 +172,12 @@ std::string MicroBenchmarkRun::getRowsAsCsv() {
     std::stringstream stringStream;
 
     for (auto& benchmarkResult : microBenchmarkResult) {
-        stringStream << synopsesArguments.getHeaderAsCsv()
-                     << "," << schema->toString()
+        stringStream << synopsesArguments.getValuesAsCsv()
+                     << "," << aggregation.getValuesAsCsv()
                      << "," << bufferSize
                      << "," << numberOfBuffers
                      << "," << windowSize
                      << "," << reps
-                     << "," << inputFile
-                     << "," << accuracyFile
                      << "," << benchmarkResult.getRowAsCsv()
                      << std::endl;
     }
@@ -180,16 +187,51 @@ std::string MicroBenchmarkRun::getRowsAsCsv() {
 std::string MicroBenchmarkRun::toString() {
     std::stringstream stringStream;
     stringStream << std::endl << " - synopsis arguments: " << synopsesArguments.toString()
-                 << std::endl << " - schema:" << schema
+                 << std::endl << " - aggregation:" << aggregation.toString()
                  << std::endl << " - bufferSize:" << bufferSize
                  << std::endl << " - numberOfBuffers:" << numberOfBuffers
                  << std::endl << " - windowSize:" << windowSize
-                 << std::endl << " - reps:" << reps
-                 << std::endl << " - inputFile:" << inputFile
-                 << std::endl << " - accuracyFile:" << accuracyFile;
+                 << std::endl << " - reps:" << reps;
 
 
     return stringStream.str();
 }
 
+std::vector<Runtime::Execution::RecordBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
+    return ASP::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager);
+}
+
+std::vector<Runtime::Execution::RecordBuffer> MicroBenchmarkRun::createAccuracyRecords(Runtime::BufferManagerPtr bufferManager) {
+    return ASP::Util::createBuffersFromCSVFile(aggregation.accuracyFile, aggregation.outputSchema, bufferManager);
+}
+
+double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::Execution::RecordBuffer>& allAccuracyRecords,
+                                          std::vector<Runtime::Execution::RecordBuffer>& allApproximateRecords) {
+
+    double sumError = 0.0;
+    auto numTuples = 0UL;
+    for (auto& accBuf : allAccuracyRecords) {
+        auto dynamicAccBuf = ASP::Util::createDynamicTupleBuffer((Runtime::TupleBuffer&)accBuf.getReference(),
+                                                                 aggregation.outputSchema);
+        for (auto& approxBuf : allApproximateRecords) {
+            auto dynamicApproxBuf = ASP::Util::createDynamicTupleBuffer((Runtime::TupleBuffer&)approxBuf.getReference(),
+                                                                        aggregation.outputSchema);
+            NES_ASSERT(dynamicAccBuf.getNumberOfTuples() == dynamicApproxBuf.getNumberOfTuples(),
+                       "Approximate Buffer and Accuracy Buffer must have the same number of tuples");
+
+            for (auto i = 0UL; i < dynamicApproxBuf.getNumberOfTuples(); ++i) {
+                auto accId = dynamicAccBuf[i]["id"];
+                auto approxId = dynamicApproxBuf[i]["id"];
+                if (accId == approxId) {
+                    auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
+                    auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
+                    sumError += std::abs(exactAgg.read<double>() - approxAgg.read<double>());
+                    ++numTuples;
+                }
+            }
+        }
+    }
+
+    return sumError / numTuples;
+}
 } // namespace NES::ASP::Benchmarking
