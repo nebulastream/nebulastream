@@ -13,6 +13,7 @@
 
 add_source_files(nes-core
         Metric.cpp
+        MetricType.cpp
 )
 
 add_subdirectory(Gauge)

@@ -404,10 +404,10 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MARKEDFORHARDSTOP:
-            case QueryStatus::MARKEDFORSOFTSTOP:
-            case QueryStatus::SOFTSTOPCOMPLETED:
-            case QueryStatus::SOFTSTOPTRIGGERED:
+            case QueryStatus::MARKED_FOR_HARD_STOP:
+            case QueryStatus::MARKED_FOR_SOFT_STOP:
+            case QueryStatus::SOFT_STOP_COMPLETED:
+            case QueryStatus::SOFT_STOP_TRIGGERED:
             case QueryStatus::STOPPED:
             case QueryStatus::RUNNING: {
                 return true;

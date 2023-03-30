@@ -21,6 +21,7 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 
 namespace NES {
 
@@ -42,7 +43,7 @@ bool QueryCatalogService::checkAndMarkForSoftStop(SharedQueryId sharedQueryId, Q
     for (auto& queryCatalogEntry : queryCatalogEntries) {
         //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
         QueryStatus currentQueryStatus = queryCatalogEntry->getQueryStatus();
-        if (currentQueryStatus == QueryStatus::MARKEDFORHARDSTOP || currentQueryStatus == QueryStatus::FAILED
+        if (currentQueryStatus == QueryStatus::MARKED_FOR_HARD_STOP || currentQueryStatus == QueryStatus::FAILED
             || currentQueryStatus == QueryStatus::STOPPED) {
             NES_WARNING2("QueryCatalogService: Soft stop can not be initiated as query in {} status.",
                          queryCatalogEntry->getQueryStatusAsString());
@@ -52,7 +53,7 @@ bool QueryCatalogService::checkAndMarkForSoftStop(SharedQueryId sharedQueryId, Q
 
     //Mark queries for soft stop and return
     for (auto& queryCatalogEntry : queryCatalogEntries) {
-        queryCatalogEntry->setQueryStatus(QueryStatus::MARKEDFORSOFTSTOP);
+        queryCatalogEntry->setQueryStatus(QueryStatus::MARKED_FOR_SOFT_STOP);
     }
     NES_INFO2("QueryCatalogService: Shared query id {} is marked as soft stopped", sharedQueryId);
     return true;
@@ -76,8 +77,8 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     //        return true;
     //    }
 
-    if (currentStatus == QueryStatus::MARKEDFORSOFTSTOP || currentStatus == QueryStatus::MARKEDFORHARDSTOP
-        || currentStatus == QueryStatus::MARKEDFORFAILURE || currentStatus == QueryStatus::DEPLOYED
+    if (currentStatus == QueryStatus::MARKED_FOR_SOFT_STOP || currentStatus == QueryStatus::MARKED_FOR_HARD_STOP
+        || currentStatus == QueryStatus::MARKED_FOR_FAILURE || currentStatus == QueryStatus::DEPLOYED
         || currentStatus == QueryStatus::STOPPED || currentStatus == QueryStatus::FAILED) {
         NES_ERROR2("QueryCatalog: Found query status already as {}. Ignoring stop query request.",
                    queryCatalogEntry->getQueryStatusAsString());
@@ -87,7 +88,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
         return false;
     }
     NES_DEBUG2("QueryCatalog: Changing query status to Mark query for stop.");
-    queryCatalogEntry->setQueryStatus(QueryStatus::MARKEDFORHARDSTOP);
+    queryCatalogEntry->setQueryStatus(QueryStatus::MARKED_FOR_HARD_STOP);
     return true;
 }
 
@@ -107,7 +108,7 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
     for (auto& queryCatalogEntry : queryCatalogEntries) {
         //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
         QueryStatus currentQueryStatus = queryCatalogEntry->getQueryStatus();
-        if (currentQueryStatus == QueryStatus::MARKEDFORFAILURE || currentQueryStatus == QueryStatus::FAILED
+        if (currentQueryStatus == QueryStatus::MARKED_FOR_FAILURE || currentQueryStatus == QueryStatus::FAILED
             || currentQueryStatus == QueryStatus::STOPPED) {
             NES_WARNING2("QueryCatalogService: Query can not be marked for failure as query in {} status.",
                          queryCatalogEntry->getQueryStatusAsString());
@@ -117,13 +118,13 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
 
     //Mark queries for failure and return
     for (auto& queryCatalogEntry : queryCatalogEntries) {
-        queryCatalogEntry->setQueryStatus(QueryStatus::MARKEDFORFAILURE);
+        queryCatalogEntry->setQueryStatus(QueryStatus::MARKED_FOR_FAILURE);
         for (const auto& subQueryPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
             //Mark the sub query plan as already failed for which the failure message was received
             if (subQueryPlanMetaData->getQuerySubPlanId() == querySubPlanId) {
                 subQueryPlanMetaData->updateStatus(QueryStatus::FAILED);
             } else {
-                subQueryPlanMetaData->updateStatus(QueryStatus::MARKEDFORFAILURE);
+                subQueryPlanMetaData->updateStatus(QueryStatus::MARKED_FOR_FAILURE);
             }
         }
     }
@@ -147,17 +148,27 @@ Catalogs::Query::QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(Quer
 std::map<uint64_t, std::string> QueryCatalogService::getAllQueriesInStatus(std::string queryStatus) {
     std::unique_lock lock(serviceMutex);
 
-    QueryStatus status = magic_enum::enum_cast<QueryStatus>(queryStatus).value();
-    //return queryIdAndCatalogEntryMapping with status
-    return queryCatalog->getQueriesWithStatus(status);
+    auto status = magic_enum::enum_cast<QueryStatus>(queryStatus);
+    if (status.has_value()) {
+        //return queryIdAndCatalogEntryMapping with status
+        return queryCatalog->getQueriesWithStatus(status.value());
+    } else {
+        NES_ERROR2("No valid query status to parse");
+        throw InvalidArgumentException("status", queryStatus);
+    }
 }
 
 std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
     std::unique_lock lock(serviceMutex);
 
-    QueryStatus status = magic_enum::enum_cast<QueryStatus>(queryStatus).value();
-    //return queryIdAndCatalogEntryMapping with status
-    return queryCatalog->getQueryCatalogEntries(status);
+    auto status = magic_enum::enum_cast<QueryStatus>(queryStatus);
+    if (status.has_value()) {
+        //return queryIdAndCatalogEntryMapping with status
+        return queryCatalog->getQueryCatalogEntries(status.value());
+    } else {
+        NES_ERROR2("No valid query status to parse");
+        throw InvalidArgumentException("status", queryStatus);
+    }
 }
 
 bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus queryStatus, const std::string& metaInformation) {
@@ -230,7 +241,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
         auto queryId = queryCatalogEntry->getQueryId();
         //Check if query is in correct status
         auto currentQueryStatus = queryCatalogEntry->getQueryStatus();
-        if (currentQueryStatus != QueryStatus::MARKEDFORSOFTSTOP) {
+        if (currentQueryStatus != QueryStatus::MARKED_FOR_SOFT_STOP) {
             NES_WARNING2("Found query in {} but received {} for the sub query with id {} for query id {}",
                          queryCatalogEntry->getQueryStatusAsString(),
                          std::string(magic_enum::enum_name(subQueryStatus)),
@@ -248,18 +259,18 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
 
         // check the query sub plan status
         auto currentStatus = querySubPlanMetaData->getQuerySubPlanStatus();
-        if (currentStatus == QueryStatus::SOFTSTOPCOMPLETED && subQueryStatus == QueryStatus::SOFTSTOPCOMPLETED) {
+        if (currentStatus == QueryStatus::SOFT_STOP_COMPLETED && subQueryStatus == QueryStatus::SOFT_STOP_COMPLETED) {
             NES_WARNING2("Received multiple soft stop completed for sub query with id {} for query {}", querySubPlanId, queryId);
             NES_WARNING2("Skipping remaining operation");
             continue;
-        } else if (currentStatus == QueryStatus::SOFTSTOPCOMPLETED && subQueryStatus == QueryStatus::SOFTSTOPTRIGGERED) {
+        } else if (currentStatus == QueryStatus::SOFT_STOP_COMPLETED && subQueryStatus == QueryStatus::SOFT_STOP_TRIGGERED) {
             NES_ERROR2("Received soft stop triggered for sub query with id {} for query {} but sub query is already marked as "
                        "soft stop completed.",
                        querySubPlanId,
                        sharedQueryId);
             NES_WARNING2("Skipping remaining operation");
             continue;
-        } else if (currentStatus == QueryStatus::SOFTSTOPTRIGGERED && subQueryStatus == QueryStatus::SOFTSTOPTRIGGERED) {
+        } else if (currentStatus == QueryStatus::SOFT_STOP_TRIGGERED && subQueryStatus == QueryStatus::SOFT_STOP_TRIGGERED) {
             NES_ERROR2("Received multiple soft stop triggered for sub query with id {} for query {}",
                        querySubPlanId,
                        sharedQueryId);
@@ -271,13 +282,13 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
 
         //Check if all sub queryIdAndCatalogEntryMapping are stopped when a sub query soft stop completes
         bool stopQuery = true;
-        if (subQueryStatus == QueryStatus::SOFTSTOPCOMPLETED) {
+        if (subQueryStatus == QueryStatus::SOFT_STOP_COMPLETED) {
             for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
                 NES_DEBUG2("Updating query subplan status for query id= {} subplan= {} is {}",
                            queryId,
                            querySubPlanMetaData->getQuerySubPlanId(),
                            std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-                if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryStatus::SOFTSTOPCOMPLETED) {
+                if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryStatus::SOFT_STOP_COMPLETED) {
                     stopQuery = false;
                     break;
                 }
@@ -298,10 +309,10 @@ bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
     std::unique_lock lock(serviceMutex);
 
     switch (subQueryStatus) {
-        case QueryStatus::SOFTSTOPTRIGGERED:
-        case QueryStatus::SOFTSTOPCOMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
+        case QueryStatus::SOFT_STOP_TRIGGERED:
+        case QueryStatus::SOFT_STOP_COMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
         default:
-            throw InvalidQueryStatusException({QueryStatus::SOFTSTOPTRIGGERED, QueryStatus::SOFTSTOPCOMPLETED}, subQueryStatus);
+            throw InvalidQueryStatusException({QueryStatus::SOFT_STOP_TRIGGERED, QueryStatus::SOFT_STOP_COMPLETED}, subQueryStatus);
     }
     return true;
 }

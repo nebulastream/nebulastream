@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 
 #include <string>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Monitoring {
 
@@ -33,6 +34,9 @@ enum class MetricType : uint8_t {
     WrappedNetworkMetrics,
     UnknownMetric
 };
+
+std::string toString(MetricType metricType);
+
 
 }// namespace NES::Monitoring
 

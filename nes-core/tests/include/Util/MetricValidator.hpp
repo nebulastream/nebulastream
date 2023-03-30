@@ -257,50 +257,55 @@ class MetricValidator {
             return true;
         }
 
-        if (!json.contains("registration")) {
+        auto registrationMetric = toString(Monitoring::MetricType::RegistrationMetric);
+        if (!json.contains(registrationMetric)) {
             NES_ERROR("MetricValidator: Missing field registration");
             check = false;
         } else {
-            check = isValidRegistrationMetrics(reader, json["registration"]);
+            check = isValidRegistrationMetrics(reader, json[registrationMetric]);
         }
 
-        if (!json.contains("disk")) {
+        auto diskMetric = toString(Monitoring::MetricType::DiskMetric);
+        if (!json.contains(diskMetric)) {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
-            if (!(json["disk"].size() == 6U)) {
+            if (!(json[diskMetric].size() == 6U)) {
                 NES_ERROR("MetricValidator: Values for disk missing");
                 check = false;
             }
         }
 
-        if (!json.contains("wrapped_cpu")) {
+        auto wrappedCpuMetric = toString(Monitoring::MetricType::WrappedCpuMetrics);
+        if (!json.contains(wrappedCpuMetric)) {
             NES_ERROR("MetricValidator: Missing field wrapped cpu");
             check = false;
         } else {
-            auto numCpuFields = json["wrapped_cpu"].size();
+            auto numCpuFields = json[wrappedCpuMetric].size();
             if (numCpuFields <= 1) {
                 NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
                 check = false;
             }
         }
 
-        if (!json.contains("wrapped_network")) {
+        auto wrappedNetworkMetric = toString(Monitoring::MetricType::WrappedNetworkMetrics);
+        if (!json.contains(wrappedNetworkMetric)) {
             NES_ERROR("MetricValidator: Missing field wrapped network");
             check = false;
         } else {
-            auto numFields = json["wrapped_network"].size();
+            auto numFields = json[wrappedNetworkMetric].size();
             if (numFields < 1) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }
         }
 
-        if (!json.contains("memory")) {
+        auto memoryMetric = toString(Monitoring::MetricType::MemoryMetric);
+        if (!json.contains(memoryMetric)) {
             NES_ERROR("MetricValidator: Missing field memory");
             check = false;
         } else {
-            auto numFields = json["memory"].size();
+            auto numFields = json[memoryMetric].size();
             if (numFields < 13) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
@@ -316,50 +321,55 @@ class MetricValidator {
         }
 
         bool check = true;
-        if (!json.contains("registration")) {
+        auto registrationMetric = toString(Monitoring::MetricType::RegistrationMetric);
+        if (!json.contains(registrationMetric)) {
             NES_ERROR("MetricValidator: Missing field registration");
             check = false;
         } else {
-            check = isValidRegistrationMetrics(reader, json["registration"][0]["value"]);
+            check = isValidRegistrationMetrics(reader, json[registrationMetric][0]["value"]);
         }
 
-        if (!json.contains("disk")) {
+        auto diskMetric = toString(Monitoring::MetricType::DiskMetric);
+        if (!json.contains(diskMetric)) {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
-            if (!(json["disk"][0]["value"].size() == 6U)) {
+            if (!(json[diskMetric][0]["value"].size() == 6U)) {
                 NES_ERROR("MetricValidator: Values for disk missing");
                 check = false;
             }
         }
 
-        if (!json.contains("wrapped_cpu")) {
+        auto wrappedCpuMetric = toString(Monitoring::MetricType::WrappedCpuMetrics);
+        if (!json.contains(wrappedCpuMetric)) {
             NES_ERROR("MetricValidator: Missing field wrapped cpu");
             check = false;
         } else {
-            auto numCpuFields = json["wrapped_cpu"][0]["value"].size();
+            auto numCpuFields = json[wrappedCpuMetric][0]["value"].size();
             if (numCpuFields <= 1) {
                 NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
                 check = false;
             }
         }
 
-        if (!json.contains("wrapped_network")) {
+        auto wrappedNetworkMetric = toString(Monitoring::MetricType::WrappedNetworkMetrics);
+        if (!json.contains(wrappedNetworkMetric)) {
             NES_ERROR("MetricValidator: Missing field wrapped network");
             check = false;
         } else {
-            auto numFields = json["wrapped_network"][0]["value"].size();
+            auto numFields = json[wrappedNetworkMetric][0]["value"].size();
             if (numFields < 1) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }
         }
 
-        if (!json.contains("memory")) {
+        auto memoryMetric = toString(Monitoring::MetricType::MemoryMetric);
+        if (!json.contains(memoryMetric)) {
             NES_ERROR("MetricValidator: Missing field memory");
             check = false;
         } else {
-            auto numFields = json["memory"][0]["value"].size();
+            auto numFields = json[memoryMetric][0]["value"].size();
             if (numFields < 13) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
@@ -380,6 +390,7 @@ class MetricValidator {
             }
             return true;
         }
+
 
         if (!(json.contains("CpuCoreNum"))) {
             NES_ERROR("MetricValidator: Wrong CpuCoreNum.");
