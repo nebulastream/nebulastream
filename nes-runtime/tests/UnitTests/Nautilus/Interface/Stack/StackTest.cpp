@@ -35,13 +35,13 @@ class StackTest : public Testing::NESBaseTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("HashTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HashTest test class.");
+        NES::Logger::setupLogging("StackTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup StackTest test class.");
     }
     void SetUp() override { Testing::NESBaseTest::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down HashTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down StackTest test class."); }
 };
 
 TEST_F(StackTest, appendValue) {

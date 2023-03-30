@@ -36,7 +36,7 @@ using namespace Operators;
 class TPCH_Q1 : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
 
   public:
-    TPCH_SCALE_FACTOR targetScaleFactor = TPCH_SCALE_FACTOR::F0_01;
+    TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
@@ -45,15 +45,15 @@ class TPCH_Q1 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TPCH_Q6.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("TPCH_Q1.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("Setup TPCH_Q6 test class.");
+        NES_INFO("Setup TPCH_Q1 test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup TPCH_Q6 test case.");
+        NES_INFO("Setup TPCH_Q1 test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }

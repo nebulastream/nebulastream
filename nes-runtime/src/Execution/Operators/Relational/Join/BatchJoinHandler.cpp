@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
+#include <Nautilus/Interface/Stack/Stack.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -80,8 +80,6 @@ void BatchJoinHandler::stop(Runtime::QueryTerminationType queryTerminationType, 
 }
 BatchJoinHandler::~BatchJoinHandler() { NES_DEBUG("~BatchJoinHandler"); }
 
-void BatchJoinHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
-    // this->threadLocalSliceStores.clear();
-}
+void BatchJoinHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
 
 }// namespace NES::Runtime::Execution::Operators

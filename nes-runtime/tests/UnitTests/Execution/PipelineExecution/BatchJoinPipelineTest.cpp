@@ -43,7 +43,7 @@
 
 namespace NES::Runtime::Execution {
 
-class BatchAggregationPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class BatchJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -51,14 +51,14 @@ class BatchAggregationPipelineTest : public Testing::NESBaseTest, public Abstrac
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("BatchAggregationPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup BatchAggregationPipelineTest test class.");
+        NES::Logger::setupLogging("BatchJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup BatchJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup BatchAggregationPipelineTest test case.");
+        NES_INFO("Setup BatchJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -68,10 +68,10 @@ class BatchAggregationPipelineTest : public Testing::NESBaseTest, public Abstrac
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BatchAggregationPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down BatchJoinPipelineTest test class."); }
 };
 
-TEST_P(BatchAggregationPipelineTest, joinBuildPipeline) {
+TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("k1", BasicType::INT64)->addField("v1", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -133,9 +133,9 @@ TEST_P(BatchAggregationPipelineTest, joinBuildPipeline) {
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        BatchAggregationPipelineTest,
+                        BatchJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<BatchAggregationPipelineTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<BatchJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });
 

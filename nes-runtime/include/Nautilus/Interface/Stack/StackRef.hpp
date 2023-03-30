@@ -31,7 +31,7 @@ class StackRef {
     StackRef(const Value<MemRef>& stackRef, uint64_t entrySize);
 
     /**
-     * @brief Allocates an new entry end returns a reference to it.
+     * @brief Allocates an new entry and returns a reference to it.
      * @return Value<MemRef>
      */
     Value<MemRef> allocateEntry();

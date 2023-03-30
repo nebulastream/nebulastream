@@ -33,7 +33,7 @@ extern "C" {
 }
 
 namespace {
-enum class TPCHTable { Part, PartSupp, Supplier, Customer, Orders, LineItem, Nation, Region };
+enum class TPCHTable : uint8_t { Part, PartSupp, Supplier, Customer, Orders, LineItem, Nation, Region };
 const std::unordered_map<TPCHTable, std::underlying_type_t<TPCHTable>> tpch_table_to_dbgen_id = {{TPCHTable::Part, PART},
                                                                                                  {TPCHTable::PartSupp, PSUPP},
                                                                                                  {TPCHTable::Supplier, SUPP},
@@ -63,7 +63,7 @@ DSSType call_dbgen_mk(size_t idx, MKRetType (*mk_fn)(DSS_HUGE, DSSType* val, Arg
 }// namespace
 namespace NES {
 
-enum class TPCH_SCALE_FACTOR : uint8_t { F1, F0_1, F0_01 };
+enum class TPCH_Scale_Factor : uint8_t { F1, F0_1, F0_01 };
 
 class TPCHTableGenerator {
   public:
@@ -159,7 +159,7 @@ class TPCHTableGenerator {
                                                                    {TPCHTable::Region, regionSchema}};
 
     std::unordered_map<TPCHTable, NES::Runtime::MemoryLayouts::MemoryLayoutPtr> layouts;
-    TPCHTableGenerator(const Runtime::BufferManagerPtr& bufferManager, TPCH_SCALE_FACTOR scale_factor)
+    TPCHTableGenerator(const Runtime::BufferManagerPtr& bufferManager, TPCH_Scale_Factor scale_factor)
         : bufferManager(bufferManager), scaleFactor(scale_factor) {
         for (auto& [table, schema] : tableSchemas) {
             layouts[table] = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
@@ -168,9 +168,9 @@ class TPCHTableGenerator {
 
     auto getLocalScaleFactor() {
         switch (scaleFactor) {
-            case TPCH_SCALE_FACTOR::F1: return 1.0f;
-            case TPCH_SCALE_FACTOR::F0_1: return 0.1f;
-            case TPCH_SCALE_FACTOR::F0_01: return 0.01f;
+            case TPCH_Scale_Factor::F1: return 1.0f;
+            case TPCH_Scale_Factor::F0_1: return 0.1f;
+            case TPCH_Scale_Factor::F0_01: return 0.01f;
         }
     }
 
@@ -418,7 +418,7 @@ class TPCHTableGenerator {
 
   private:
     Runtime::BufferManagerPtr bufferManager;
-    TPCH_SCALE_FACTOR scaleFactor;
+    TPCH_Scale_Factor scaleFactor;
 };
 
 }// namespace NES
