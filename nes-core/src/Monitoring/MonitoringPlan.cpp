@@ -26,14 +26,18 @@ MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
-    std::set<MetricType> metricTypes{MetricType::WrappedCpuMetrics, MetricType::DiskMetric, MetricType::MemoryMetric,
+    std::set<MetricType> metricTypes{MetricType::WrappedCpuMetrics,
+                                     MetricType::DiskMetric,
+                                     MetricType::MemoryMetric,
                                      MetricType::WrappedNetworkMetrics};
     return MonitoringPlan::create(metricTypes);
 }
 
 std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {
-    return std::set<MetricCollectorType>{MetricCollectorType::CPU_COLLECTOR, MetricCollectorType::DISK_COLLECTOR,
-                                         MetricCollectorType::MEMORY_COLLECTOR, MetricCollectorType::NETWORK_COLLECTOR};
+    return std::set<MetricCollectorType>{MetricCollectorType::CPU_COLLECTOR,
+                                         MetricCollectorType::DISK_COLLECTOR,
+                                         MetricCollectorType::MEMORY_COLLECTOR,
+                                         MetricCollectorType::NETWORK_COLLECTOR};
 }
 
 bool MonitoringPlan::addMetric(MetricType metric) {

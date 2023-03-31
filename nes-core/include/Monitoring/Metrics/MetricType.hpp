@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 #define NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 
-#include <string>
 #include <Util/magicenum/magic_enum.hpp>
+#include <string>
 
 namespace NES::Monitoring {
 
@@ -36,7 +36,6 @@ enum class MetricType : uint8_t {
 };
 
 std::string toString(MetricType metricType);
-
 
 }// namespace NES::Monitoring
 

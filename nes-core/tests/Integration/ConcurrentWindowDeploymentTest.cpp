@@ -2147,7 +2147,8 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string input = R"(Schema::create()->addField("key", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
+    std::string input =
+        R"(Schema::create()->addField("key", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("schema", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -2202,7 +2203,10 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    auto schema = Schema::create()->addField("key", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);
+    auto schema = Schema::create()
+                      ->addField("key", BasicType::UINT64)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("ts", BasicType::UINT64);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"schema\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "

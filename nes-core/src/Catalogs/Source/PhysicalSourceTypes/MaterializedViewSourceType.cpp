@@ -61,4 +61,4 @@ bool MaterializedViewSourceType::equal(const PhysicalSourceTypePtr& other) {
     auto otherSourceType = other->as<MaterializedViewSourceType>();
     return id == otherSourceType->id;
 }
-}// NES::Configurations::Experimental::MaterializedView
+}// namespace NES::Configurations::Experimental::MaterializedView

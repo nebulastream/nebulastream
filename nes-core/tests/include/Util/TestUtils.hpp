@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -37,7 +38,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
@@ -271,8 +271,8 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
                 return true;
             }
             case QueryStatus::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " +
-                            std::string(magic_enum::enum_name(status)));
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found "
+                          + std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {

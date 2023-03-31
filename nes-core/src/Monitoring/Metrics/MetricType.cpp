@@ -15,7 +15,5 @@
 
 namespace NES::Monitoring {
 
-    std::string toString(MetricType metricType) {
-        return std::string(magic_enum::enum_name(metricType));
-    }
-};
+std::string toString(MetricType metricType) { return std::string(magic_enum::enum_name(metricType)); }
+};// namespace NES::Monitoring

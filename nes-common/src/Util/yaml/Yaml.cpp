@@ -88,8 +88,7 @@ InternalException::InternalException(const std::string& message) : Exception(mes
 
 ParsingException::ParsingException(const std::string& message) : Exception(message, eType::ParsingError) {}
 
-OperationFatalException::OperationFatalException(const std::string& message) : Exception(message,
-                                                                                         eType::OperationError) {}
+OperationFatalException::OperationFatalException(const std::string& message) : Exception(message, eType::OperationError) {}
 
 class TypeImp {
 
@@ -324,7 +323,7 @@ class NodeImp {
     }
 
     Node::eType m_Type{Node::eType::None};///< Type of node.
-    TypeImp* m_pImp{nullptr};      ///< Imp of type.
+    TypeImp* m_pImp{nullptr};             ///< Imp of type.
 };
 
 // Iterator implementation class
@@ -560,7 +559,9 @@ ConstIterator& ConstIterator::operator=(const ConstIterator& it) {
 
 std::pair<const std::string&, const Node&> ConstIterator::operator*() {
     switch (m_Type) {
-        case eType::SequenceType: return {g_EmptyString, *(static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator->second)}; break;
+        case eType::SequenceType:
+            return {g_EmptyString, *(static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator->second)};
+            break;
         case eType::MapType:
             return {static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator->first,
                     *(static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator->second)};

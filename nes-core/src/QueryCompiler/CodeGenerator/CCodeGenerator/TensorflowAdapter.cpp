@@ -20,9 +20,9 @@
 
 #ifdef TFDEF
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
-#include <Util/magicenum/magic_enum.hpp>
 
 #endif// TFDEF
 

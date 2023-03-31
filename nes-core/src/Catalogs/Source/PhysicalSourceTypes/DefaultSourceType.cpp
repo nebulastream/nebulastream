@@ -31,18 +31,17 @@ DefaultSourceTypePtr DefaultSourceType::create(Yaml::Node yamlConfig) {
 
 DefaultSourceType::DefaultSourceType()
     : PhysicalSourceType(SourceType::DEFAULT_SOURCE),
-      numberOfBuffersToProduce(Configurations::ConfigurationOption<uint32_t>::create(
-                                              Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
-                                              1,
-                                              "Number of buffers to produce.")),
+      numberOfBuffersToProduce(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                                                1,
+                                                                "Number of buffers to produce.")),
       sourceGatheringInterval(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
                                                                 1,
                                                                 "Gathering interval of the source.")),
-      gatheringMode(
-          Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
-                                                                            GatheringMode::INTERVAL_MODE,
-                                                                            "Gathering mode of the source.")) {
+      gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
+                                                                               GatheringMode::INTERVAL_MODE,
+                                                                               "Gathering mode of the source.")) {
     NES_INFO2("NesSourceConfig: Init source config object with default values.");
 }
 

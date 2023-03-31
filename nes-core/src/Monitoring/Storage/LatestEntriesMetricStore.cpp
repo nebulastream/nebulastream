@@ -15,8 +15,8 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sys/time.h>
 #include <Util/magicenum/magic_enum.hpp>
+#include <sys/time.h>
 
 namespace NES::Monitoring {
 
@@ -34,17 +34,18 @@ void LatestEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         nodeMetrics = storedMetrics[nodeId];
         // check if the metric type exists
         if (nodeMetrics->contains(metricType)) {
-            NES_TRACE2("LatestEntriesMetricStore: Removing metrics {} of {}", nodeId,
+            NES_TRACE2("LatestEntriesMetricStore: Removing metrics {} of {}",
+                       nodeId,
                        std::string(magic_enum::enum_name(metricType)));
             nodeMetrics->at(metricType)->clear();
         } else {
             NES_TRACE2("LatestEntriesMetricStore: Creating metrics {} of {}",
-                       nodeId, std::string(magic_enum::enum_name(metricType)));
+                       nodeId,
+                       std::string(magic_enum::enum_name(metricType)));
             nodeMetrics->insert({metricType, std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
-        NES_TRACE2("LatestEntriesMetricStore: Creating node {} of {}", nodeId,
-                   std::string(magic_enum::enum_name(metricType)));
+        NES_TRACE2("LatestEntriesMetricStore: Creating node {} of {}", nodeId, std::string(magic_enum::enum_name(metricType)));
         nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         nodeMetrics->insert({metricType, std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);

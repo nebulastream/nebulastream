@@ -372,10 +372,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCountAndS
     auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
-                     .apply(Count()->as(Attribute("test$Count")), Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Sum")))
-                     .sink(testSinkDescriptor);
+    auto query =
+        TestQuery::from(testSourceDescriptor)
+            .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+            .apply(Count()->as(Attribute("test$Count")), Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Sum")))
+            .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
 

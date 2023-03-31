@@ -13,9 +13,9 @@
 */
 
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <utility>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 

@@ -115,14 +115,16 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public Abst
                     nextBlocksAreCorrect =
                         correctBlocks.at(currentBlock->getIdentifier())
                             ->correctNextBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
+                } else if (currentBlock->getTerminatorOp()->getOperationType()
+                           == IR::Operations::Operation::OperationType::IfOp) {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
                     nextBlocksAreCorrect =
                         correctBlocks.at(currentBlock->getIdentifier())
                             ->correctNextBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())
                         && correctBlocks.at(currentBlock->getIdentifier())
                                ->correctNextBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::ReturnOp) {
+                } else if (currentBlock->getTerminatorOp()->getOperationType()
+                           == IR::Operations::Operation::OperationType::ReturnOp) {
                     nextBlocksAreCorrect = correctBlocks.at(currentBlock->getIdentifier())->correctNextBlocks.empty();
                 } else {
                     NES_NOT_IMPLEMENTED();

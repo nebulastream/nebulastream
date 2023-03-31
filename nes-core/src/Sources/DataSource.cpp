@@ -316,8 +316,10 @@ void DataSource::runningRoutineWithIngestionRate() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    NES_DEBUG2("DataSource {} Running Data Source of type={} ingestion rate={}", operatorId,
-               magic_enum::enum_name(getType()), gatheringIngestionRate);
+    NES_DEBUG2("DataSource {} Running Data Source of type={} ingestion rate={}",
+               operatorId,
+               magic_enum::enum_name(getType()),
+               gatheringIngestionRate);
     if (numBuffersToProcess == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
@@ -403,8 +405,10 @@ void DataSource::runningRoutineWithGatheringInterval() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId,
-               magic_enum::enum_name(getType()), gatheringInterval.count());
+    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}",
+               operatorId,
+               magic_enum::enum_name(getType()),
+               gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
@@ -472,7 +476,8 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId,
+    NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}",
+               operatorId,
                magic_enum::enum_name(getType()),
                gatheringInterval.count());
     if (numBuffersToProcess == 0) {

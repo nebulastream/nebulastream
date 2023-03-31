@@ -70,9 +70,10 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_400, "Field 'migrationType' must be provided");
         }
         uint64_t id = requestJson["id"];
-        auto optionalMigrationType = magic_enum::enum_cast<Experimental::MigrationType>(std::string(requestJson["migrationType"]));
-        auto migrationType = optionalMigrationType.has_value() ? optionalMigrationType.value() :
-                                        Experimental::MigrationType::INVALID;
+        auto optionalMigrationType =
+            magic_enum::enum_cast<Experimental::MigrationType>(std::string(requestJson["migrationType"]));
+        auto migrationType =
+            optionalMigrationType.has_value() ? optionalMigrationType.value() : Experimental::MigrationType::INVALID;
         auto info = maintenanceService->submitMaintenanceRequest(id, migrationType);
         if (info.first == true) {
             nlohmann::json result{};

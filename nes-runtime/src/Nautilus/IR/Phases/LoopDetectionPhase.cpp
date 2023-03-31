@@ -102,7 +102,8 @@ ConstIntOperationPtr LoopDetectionPhase::LoopDetectionPhaseContext::getStepSize(
                     && incrementOpAdd->getLeftInput()->getOperationType() == Operations::Operation::OperationType::ConstIntOp) {
                     return std::static_pointer_cast<Operations::ConstIntOperation>(incrementOpAdd->getLeftInput());
                 } else if (incrementOpAdd->getRightInput() == operation
-                           && incrementOpAdd->getRightInput()->getOperationType() == Operations::Operation::OperationType::ConstIntOp) {
+                           && incrementOpAdd->getRightInput()->getOperationType()
+                               == Operations::Operation::OperationType::ConstIntOp) {
                     return std::static_pointer_cast<Operations::ConstIntOperation>(incrementOpAdd->getRightInput());
                 }
             }
@@ -310,8 +311,8 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findLoopHeadBlocks(IR::Basic
         checkBranchForLoopHeadBlocks(currentBlock, ifBlocks, visitedBlocks, loopHeaderCandidates, priorBlock);
         // Set the current values for the loop halting values.
         noMoreIfBlocks = ifBlocks.empty();
-        returnBlockVisited =
-            returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::ReturnOp);
+        returnBlockVisited = returnBlockVisited
+            || (currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::ReturnOp);
         if (!noMoreIfBlocks) {
             priorBlock = ifBlocks.top();
             // When we take the false-branch of an ifOperation, we completely exhausted its true-branch.

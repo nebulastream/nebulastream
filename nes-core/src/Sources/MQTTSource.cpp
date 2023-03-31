@@ -25,6 +25,7 @@
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -32,7 +33,6 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <Util/magicenum/magic_enum.hpp>
 
 using namespace std;
 using namespace std::chrono;

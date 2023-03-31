@@ -93,7 +93,10 @@ bool NetworkSource::start() {
                                                          }},
                                       successor);
 
-            auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::ReconfigurationType::Initialize, shared_from_base<DataSource>());
+            auto newReconf = ReconfigurationMessage(queryId,
+                                                    querySubPlanId,
+                                                    Runtime::ReconfigurationType::Initialize,
+                                                    shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
             break;// hack as currently we assume only one executableSuccessor
         }
@@ -108,7 +111,8 @@ bool NetworkSource::fail() {
     bool expected = true;
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG2("NetworkSource: fail called on {}", nesPartition);
-        auto newReconf = ReconfigurationMessage(-1, -1, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
+        auto newReconf =
+            ReconfigurationMessage(-1, -1, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
         queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
@@ -124,9 +128,10 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG2("NetworkSource: stop called on {}", nesPartition);
         int invalidId = -1;
-        auto newReconf =
-            ReconfigurationMessage(invalidId, invalidId, ReconfigurationType::HardEndOfStream,
-                                   DataSource::shared_from_base<DataSource>());
+        auto newReconf = ReconfigurationMessage(invalidId,
+                                                invalidId,
+                                                ReconfigurationType::HardEndOfStream,
+                                                DataSource::shared_from_base<DataSource>());
         queryManager->addReconfigurationMessage(invalidId, invalidId, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);

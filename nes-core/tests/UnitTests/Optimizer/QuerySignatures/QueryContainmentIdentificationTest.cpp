@@ -32,11 +32,11 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <z3++.h>
-#include <Util/magicenum/magic_enum.hpp>
 
 using namespace NES;
 
@@ -145,8 +145,7 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         //Check if the host and target sink operator signatures have a containment relationship
         Optimizer::ContainmentType containment =
             signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
-        NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: "
-                    << magic_enum::enum_name(containment));
+        NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << magic_enum::enum_name(containment));
         ASSERT_EQ(containment, get<1>(entry));
     }
 }

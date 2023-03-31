@@ -24,6 +24,7 @@ std::string OnRecordTriggerPolicyDescription::toString() { return getTypeAsStrin
 
 TriggerType OnRecordTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
-OnRecordTriggerPolicyDescription::OnRecordTriggerPolicyDescription() : BaseWindowTriggerPolicyDescriptor(TriggerType::triggerOnRecord) {}
+OnRecordTriggerPolicyDescription::OnRecordTriggerPolicyDescription()
+    : BaseWindowTriggerPolicyDescriptor(TriggerType::triggerOnRecord) {}
 
 }// namespace NES::Windowing

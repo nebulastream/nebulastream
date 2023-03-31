@@ -202,7 +202,9 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         // We have two ways to generate code for arithmetical operations, we check here if they result in the same code
         auto plusOperatorCode =
-            BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::PLUS_OP, VarRefStatement(varDeclJ)).getCode()->code_;
+            BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::PLUS_OP, VarRefStatement(varDeclJ))
+                .getCode()
+                ->code_;
         auto plusOperatorCodeOp = (VarRefStatement(varDeclI) + VarRefStatement(varDeclJ)).getCode()->code_;
         EXPECT_EQ(plusOperatorCode, plusOperatorCodeOp);
 
@@ -237,7 +239,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(ifStatement.getCode()->code_, "if(i<j){\ni=i*k;\n\n}\n");
 
         auto ifStatementReturn = IFStatement(
-            BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::GREATER_THAN_OP, VarRefStatement(varDeclJ)).createCopy(),
+            BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::GREATER_THAN_OP, VarRefStatement(varDeclJ))
+                .createCopy(),
             ReturnStatement::create(VarRefStatement(varDeclI).createCopy()));
         EXPECT_EQ(ifStatementReturn.getCode()->code_, "if(i>j){\nreturn i;;\n\n}\n");
 
@@ -245,12 +248,15 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(compareWithOne.getCode()->code_, "if(j){\ni;\n\n}\n");
 
         auto ternStatement = TernaryOperatorStatement(
-            *BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::GREATER_THAN_OP, VarRefStatement(varDeclJ)).copy(),
+            *BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::GREATER_THAN_OP, VarRefStatement(varDeclJ))
+                 .copy(),
             *VarRefStatement(varDeclI).copy(),
-            *TernaryOperatorStatement(
-                 *BinaryOperatorStatement(VarRefStatement(varDeclI), BinaryOperatorType::GREATER_THAN_OP, VarRefStatement(varDeclJ)).copy(),
-                 *VarRefStatement(varDeclI).copy(),
-                 *VarRefStatement(varDeclJ).copy())
+            *TernaryOperatorStatement(*BinaryOperatorStatement(VarRefStatement(varDeclI),
+                                                               BinaryOperatorType::GREATER_THAN_OP,
+                                                               VarRefStatement(varDeclJ))
+                                           .copy(),
+                                      *VarRefStatement(varDeclI).copy(),
+                                      *VarRefStatement(varDeclJ).copy())
                  .copy());
         EXPECT_EQ(ternStatement.getCode()->code_, "i>j?i:i>j?i:j");
     }
@@ -270,23 +276,39 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                                         "num_tuples",
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::ADDRESS_OF_OP).getCode()->code_, "&num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::DEREFERENCE_POINTER_OP).getCode()->code_,
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::ADDRESS_OF_OP).getCode()->code_,
+                  "&num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::DEREFERENCE_POINTER_OP)
+                      .getCode()
+                      ->code_,
                   "*num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::PREFIX_INCREMENT_OP).getCode()->code_,
-                  "++num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::PREFIX_DECREMENT_OP).getCode()->code_,
-                  "--num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::POSTFIX_INCREMENT_OP).getCode()->code_,
+        EXPECT_EQ(
+            UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::PREFIX_INCREMENT_OP).getCode()->code_,
+            "++num_tuples");
+        EXPECT_EQ(
+            UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::PREFIX_DECREMENT_OP).getCode()->code_,
+            "--num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::POSTFIX_INCREMENT_OP)
+                      .getCode()
+                      ->code_,
                   "num_tuples++");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::POSTFIX_DECREMENT_OP).getCode()->code_,
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::POSTFIX_DECREMENT_OP)
+                      .getCode()
+                      ->code_,
                   "num_tuples--");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::BITWISE_COMPLEMENT_OP).getCode()->code_,
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::BITWISE_COMPLEMENT_OP)
+                      .getCode()
+                      ->code_,
                   "~num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::LOGICAL_NOT_OP).getCode()->code_, "!num_tuples");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::SIZE_OF_TYPE_OP).getCode()->code_,
-                  "sizeof(num_tuples)");
-        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::ABSOLUTE_VALUE_OF_OP).getCode()->code_,
+        EXPECT_EQ(
+            UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::LOGICAL_NOT_OP).getCode()->code_,
+            "!num_tuples");
+        EXPECT_EQ(
+            UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::SIZE_OF_TYPE_OP).getCode()->code_,
+            "sizeof(num_tuples)");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), UnaryOperatorType::ABSOLUTE_VALUE_OF_OP)
+                      .getCode()
+                      ->code_,
                   "abs(num_tuples)");
     }
 
@@ -306,20 +328,23 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
         ForLoopStatement loopStmt(
             varDeclQ.copy(),
-            BinaryOperatorStatement(VarRefStatement(varDeclQ), BinaryOperatorType::LESS_THAN_OP, VarRefStatement(varDeclNumTuple)).copy(),
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), BinaryOperatorType::LESS_THAN_OP, VarRefStatement(varDeclNumTuple))
+                .copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), UnaryOperatorType::PREFIX_INCREMENT_OP).copy());
 
         loopStmt.addStatement(
-            BinaryOperatorStatement(VarRefStatement(varDeclSum),
-                                    BinaryOperatorType::ASSIGNMENT_OP,
-                                    BinaryOperatorStatement(VarRefStatement(varDeclSum), BinaryOperatorType::PLUS_OP, VarRefStatement(varDeclQ)))
+            BinaryOperatorStatement(
+                VarRefStatement(varDeclSum),
+                BinaryOperatorType::ASSIGNMENT_OP,
+                BinaryOperatorStatement(VarRefStatement(varDeclSum), BinaryOperatorType::PLUS_OP, VarRefStatement(varDeclQ)))
                 .copy());
 
         EXPECT_EQ(loopStmt.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\nsum=sum+q;\n\n}\n");
 
         auto forLoop = ForLoopStatement(
             varDeclQ.copy(),
-            BinaryOperatorStatement(VarRefStatement(varDeclQ), BinaryOperatorType::LESS_THAN_OP, VarRefStatement(varDeclNumTuple)).copy(),
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), BinaryOperatorType::LESS_THAN_OP, VarRefStatement(varDeclNumTuple))
+                .copy(),
             UnaryOperatorStatement(VarRefStatement(varDeclQ), UnaryOperatorType::PREFIX_INCREMENT_OP).copy());
 
         EXPECT_EQ(forLoop.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");

@@ -149,7 +149,9 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
             .inferModel(
                 "../../../test_data/iris.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
+                {Attribute("iris0", BasicType::FLOAT32),
+                 Attribute("iris1", BasicType::FLOAT32),
+                 Attribute("iris2", BasicType::FLOAT32)})
             .filter(Attribute("iris0") < 3.0)
             .project(Attribute("iris1"), Attribute("iris2"))
             .sink(PrintSinkDescriptor::create());

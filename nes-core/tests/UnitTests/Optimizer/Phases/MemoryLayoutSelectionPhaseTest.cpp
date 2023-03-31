@@ -181,7 +181,8 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
                      .map(Attribute("f3") = Attribute("f1") * 42)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
+        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
@@ -210,7 +211,8 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
+        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
@@ -242,7 +244,8 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = typeInference->execute(plan);
 
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
+        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
     plan = typeInference->execute(plan);
     // Check if all operators in the query have an column layout

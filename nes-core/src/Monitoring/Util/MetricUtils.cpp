@@ -26,8 +26,8 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <nlohmann/json.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i) {
@@ -86,20 +86,17 @@ MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollector
         case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<DiskCollector>();
         case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<MemoryCollector>();
         case MetricCollectorType::NETWORK_COLLECTOR: return std::make_shared<NetworkCollector>();
-        default: NES_FATAL_ERROR2("MetricUtils: Not supported collector type {}",
-                                  std::string(magic_enum::enum_name(type)));
+        default: NES_FATAL_ERROR2("MetricUtils: Not supported collector type {}", std::string(magic_enum::enum_name(type)));
     }
     return nullptr;
 }
 
 MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(CpuMetricsWrapper{},
-                                                                                 MetricType::WrappedCpuMetrics);
-        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{},
-                                                                                  MetricType::DiskMetric);
-        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(MemoryMetrics{},
-                                                                                    MetricType::MemoryMetric);
+        case MetricCollectorType::CPU_COLLECTOR:
+            return std::make_shared<Metric>(CpuMetricsWrapper{}, MetricType::WrappedCpuMetrics);
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{}, MetricType::DiskMetric);
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(MemoryMetrics{}, MetricType::MemoryMetric);
         case MetricCollectorType::NETWORK_COLLECTOR:
             return std::make_shared<Metric>(NetworkMetricsWrapper{}, MetricType::WrappedNetworkMetrics);
         default: {

@@ -15,13 +15,13 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Exceptions/InvalidArgumentException.hpp>
 
 namespace NES {
 
@@ -225,9 +225,7 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
     queryEntry->addQuerySubPlanMetaData(querySubPlanId, workerId);
 }
 
-bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
-                                         QuerySubPlanId querySubPlanId,
-                                         QueryStatus subQueryStatus) {
+bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus) {
     std::unique_lock lock(serviceMutex);
     NES_DEBUG2("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
                "plan with id {}",
@@ -312,7 +310,8 @@ bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
         case QueryStatus::SOFT_STOP_TRIGGERED:
         case QueryStatus::SOFT_STOP_COMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
         default:
-            throw InvalidQueryStatusException({QueryStatus::SOFT_STOP_TRIGGERED, QueryStatus::SOFT_STOP_COMPLETED}, subQueryStatus);
+            throw InvalidQueryStatusException({QueryStatus::SOFT_STOP_TRIGGERED, QueryStatus::SOFT_STOP_COMPLETED},
+                                              subQueryStatus);
     }
     return true;
 }

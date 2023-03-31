@@ -34,9 +34,8 @@ MemorySourceType::MemorySourceType(uint8_t* memoryArea,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
     : PhysicalSourceType(SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
-            memoryAreaSize(memoryAreaSize), numberOfBufferToProduce(numBuffersToProduce),
-            gatheringValue(gatheringValue), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity),
-            taskQueueId(taskQueueId) {}
+      memoryAreaSize(memoryAreaSize), numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
+      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 MemorySourceTypePtr MemorySourceType::create(uint8_t* memoryArea,
                                              size_t memoryAreaSize,

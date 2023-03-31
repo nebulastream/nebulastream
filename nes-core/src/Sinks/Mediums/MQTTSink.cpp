@@ -18,12 +18,12 @@
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 /*
@@ -70,7 +70,11 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                                         : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSinkDescriptor::TimeUnits::nanoseconds)
                                            | (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
 
-    client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic,
+    client = std::make_shared<MQTTClientWrapper>(asynchronousClient,
+                                                 address,
+                                                 clientId,
+                                                 maxBufferedMSGs,
+                                                 topic,
                                                  magic_enum::enum_integer(qualityOfService));
     NES_TRACE2("MQTTSink::MQTTSink {}: Init MQTT Sink to {}", this->toString(), address);
 }

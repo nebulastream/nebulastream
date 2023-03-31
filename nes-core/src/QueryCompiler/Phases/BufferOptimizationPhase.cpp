@@ -104,8 +104,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         return operatorPipeline;
     }
 
-    if (inputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT ||
-        outputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT
+        || outputSchema->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT) {
         NES_DEBUG2("BufferOptimizationPhase: Currently buffer optimization is only possible if the input and output schema are "
                    "using a ROW layout.");
         return operatorPipeline;
@@ -122,8 +122,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
     if (inputSchema->equals(outputSchema) && !filterOperatorFound
-        && (level == QueryCompilerOptions::OutputBufferOptimizationLevel::ONLY_INPLACE_OPERATIONS_NO_FALLBACK ||
-            level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
+        && (level == QueryCompilerOptions::OutputBufferOptimizationLevel::ONLY_INPLACE_OPERATIONS_NO_FALLBACK
+            || level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
         // The highest level of optimization - just modifying the input buffer in place and passing it to the next pipeline
         // - can be applied as there are no filter statements etc.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::ONLY_INPLACE_OPERATIONS);
@@ -141,16 +141,16 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         return operatorPipeline;
     }
     if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
-        && (level == QueryCompilerOptions::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_NO_FALLBACK ||
-            level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
+        && (level == QueryCompilerOptions::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_NO_FALLBACK
+            || level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
         // The optimization  "reuse input buffer as output buffer" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER);
         NES_DEBUG2("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
         return operatorPipeline;
     }
     if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
-        && (level == QueryCompilerOptions::OutputBufferOptimizationLevel::OMIT_OVERFLOW_CHECK_NO_FALLBACK ||
-            level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
+        && (level == QueryCompilerOptions::OutputBufferOptimizationLevel::OMIT_OVERFLOW_CHECK_NO_FALLBACK
+            || level == QueryCompilerOptions::OutputBufferOptimizationLevel::ALL)) {
         // The optimization "omit size check" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK);
         NES_DEBUG2("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");

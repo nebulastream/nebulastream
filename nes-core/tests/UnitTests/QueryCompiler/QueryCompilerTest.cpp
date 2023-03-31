@@ -103,9 +103,10 @@ class QueryCompilerTest : public Testing::NESBaseTest {
             plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
         });
 
-        auto task =
-            Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(),
-                                            NES::Runtime::ReconfigurationType::SoftEndOfStream, plan);
+        auto task = Runtime::ReconfigurationMessage(plan->getQueryId(),
+                                                    plan->getQuerySubPlanId(),
+                                                    NES::Runtime::ReconfigurationType::SoftEndOfStream,
+                                                    plan);
         plan->postReconfigurationCallback(task);
 
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
@@ -194,7 +195,9 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto query = Query::from(logicalSourceName)
                      .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                  {Attribute("F1"), Attribute("F1"), Attribute("F1"), Attribute("F1")},
-                                 {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
+                                 {Attribute("iris0", BasicType::FLOAT32),
+                                  Attribute("iris1", BasicType::FLOAT32),
+                                  Attribute("iris2", BasicType::FLOAT32)})
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
     vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();

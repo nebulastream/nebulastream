@@ -21,7 +21,7 @@
 #include <unordered_map>
 
 namespace NES {
-    /**
+/**
      * @brief Represents various states a Shared query Plan goes through.
      *
      * Created: Shared query plan was just created
@@ -30,7 +30,7 @@ namespace NES {
      * Stopped: Shared Query Plan was stopped by user.
      * Failed: Shared Query Plan failed because of some reason.
      */
-    enum class SharedQueryPlanStatus : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed };
+enum class SharedQueryPlanStatus : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed };
 
 }// namespace NES
 

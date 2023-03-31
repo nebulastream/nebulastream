@@ -30,7 +30,8 @@ using CreateFunctionPtr = Runtime::Execution::ExecutablePipelineStagePtr (*)();
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(std::shared_ptr<Compiler::DynamicObject> dynamicObject,
                                                                  PipelineStageArity arity,
                                                                  std::string sourceCode)
-    : base(arity), dynamicObject(dynamicObject), currentExecutionStage(ExecutionStage::NotInitialized), sourceCode(std::move(sourceCode)) {
+    : base(arity), dynamicObject(dynamicObject), currentExecutionStage(ExecutionStage::NotInitialized),
+      sourceCode(std::move(sourceCode)) {
     auto createFunction = dynamicObject->getInvocableMember<CreateFunctionPtr>(MANGELED_ENTRY_POINT);
     this->executablePipelineStage = (*createFunction)();
 }

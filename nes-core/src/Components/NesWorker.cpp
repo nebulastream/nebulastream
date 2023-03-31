@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/magicenum/magic_enum.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -38,6 +37,7 @@
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <csignal>
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>

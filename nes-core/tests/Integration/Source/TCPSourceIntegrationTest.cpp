@@ -250,7 +250,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     EXPECT_NE(port, 0UL);
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
-    auto tcpSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::FLOAT32)->addField("onTime", BasicType::BOOLEAN);
+    auto tcpSchema = Schema::create()
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
+                         ->addField("onTime", BasicType::BOOLEAN);
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")

@@ -19,8 +19,8 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <string>
 #include <Util/magicenum/magic_enum.hpp>
+#include <string>
 
 namespace NES::Catalogs::Query {
 
@@ -31,7 +31,8 @@ std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus s
     for (auto const& [key, value] : queries) {
         result[key] = value->getQueryString();
     }
-    NES_INFO2("QueryCatalog : found {} all queryIdAndCatalogEntryMapping with status {}", result.size(),
+    NES_INFO2("QueryCatalog : found {} all queryIdAndCatalogEntryMapping with status {}",
+              result.size(),
               magic_enum::enum_name(status));
     return result;
 }
@@ -53,8 +54,7 @@ QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString
     QueryId queryId = queryPlan->getQueryId();
     NES_INFO2("QueryCatalog: Creating query catalog entry for query with id {}", queryId);
     QueryCatalogEntryPtr queryCatalogEntry =
-        std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan,
-                                            QueryStatus::REGISTERED);
+        std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan, QueryStatus::REGISTERED);
     queryIdAndCatalogEntryMapping[queryId] = queryCatalogEntry;
     return queryCatalogEntry;
 }

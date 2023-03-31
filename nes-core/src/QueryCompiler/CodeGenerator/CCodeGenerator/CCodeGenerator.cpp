@@ -305,9 +305,10 @@ void CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& sche
         // Create offSet in tupleBuffer
         auto lhs =
             TypeCast(getBuffer(varDeclarationBuffer), tf->createPointer(tf->createDataType(DataTypeFactory::createUInt8())));
-        auto expr =
-            BinaryOperatorStatement(lhs, BinaryOperatorType::PLUS_OP, Constant(tf->createValueType(DataTypeFactory::createBasicValue(offsetCounter))))
-                .addRight(BinaryOperatorType::MULTIPLY_OP, VarRef(capacityVarDeclaration), BracketMode::BRACKETS);
+        auto expr = BinaryOperatorStatement(lhs,
+                                            BinaryOperatorType::PLUS_OP,
+                                            Constant(tf->createValueType(DataTypeFactory::createBasicValue(offsetCounter))))
+                        .addRight(BinaryOperatorType::MULTIPLY_OP, VarRef(capacityVarDeclaration), BracketMode::BRACKETS);
         auto offSetAssignment = TypeCast(expr, tf->createPointer(tf->createDataType(field->getDataType())));
         statements.push_back(fieldRefStmt.assign(offSetAssignment).copy());
 
@@ -437,33 +438,28 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     }
     NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: {}", commonStamp->toString());
     if (commonStamp->isInteger()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-            DataTypeFactory::createBasicValue(BasicType::UINT8,
-                                              "BasicPhysicalType::NativeType::" +
-                                              std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::INT_64))))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            BasicType::UINT8,
+            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::INT_64))))));
     } else if (commonStamp->isFloat()) {
         std::shared_ptr<Float> floatStamp = commonStamp->as<Float>(commonStamp);
         if (floatStamp->getBits() == 32) {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-                DataTypeFactory::createBasicValue(BasicType::UINT8,
-                                                  "BasicPhysicalType::NativeType::" +
-                                                  std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::FLOAT))))));
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+                BasicType::UINT8,
+                "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::FLOAT))))));
         } else {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-                DataTypeFactory::createBasicValue(BasicType::UINT8,
-                                                  "BasicPhysicalType::NativeType::" +
-                                                  std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::DOUBLE))))));
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+                BasicType::UINT8,
+                "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::DOUBLE))))));
         }
     } else if (commonStamp->isBoolean()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-            DataTypeFactory::createBasicValue(BasicType::UINT8,
-                                              "BasicPhysicalType::NativeType::" +
-                                              std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::BOOLEAN))))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            BasicType::UINT8,
+            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::BOOLEAN))))));
     } else {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-            DataTypeFactory::createBasicValue(BasicType::UINT8,
-                                              "BasicPhysicalType::NativeType::" +
-                                              std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::UNDEFINED))))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            BasicType::UINT8,
+            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::UNDEFINED))))));
     }
     generateTensorFlowInferCall->addParameter(
         Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
@@ -584,7 +580,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
             if (bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-                || bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER) {// Reuse the input buffer as the result buffer.
+                || bufferStrategy
+                    == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER) {// Reuse the input buffer as the result buffer.
                 // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = inputTupleBuffer;
                 code->variableInitStmts.push_back(
                     VarDeclStatement(code->varDeclarationResultBuffer).assign(VarRef(code->varDeclarationInputBuffer)).copy());
@@ -675,8 +672,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
             // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
             // We can optimize this away if the result schema is smaller than the input schema.
-            if (!(bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK ||
-                    bufferStrategy == OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK)) {
+            if (!(bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+                  || bufferStrategy == OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK)) {
                 generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
             }
         }
@@ -738,7 +735,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller than the input schema.
         if (!(bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-              || bufferStrategy == OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK)) {// TODO does this work yet for col layout?
+              || bufferStrategy
+                  == OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK)) {// TODO does this work yet for col layout?
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
@@ -1255,7 +1253,8 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
                              recordHandler);
         }
         auto initializeValue = VarRef(state).accessPtr(
-            VarRef(isInitialized).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
+            VarRef(isInitialized)
+                .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
         stateNotInitializedCase->addStatement(initializeValue.copy());
     }
     {
@@ -1741,7 +1740,8 @@ std::shared_ptr<ForLoopStatement> CCodeGenerator::globalSliceMergeLoop(
             memcopyCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryContentSize))));
             stateNotInitializedCase->addStatement(memcopyCall);
             auto initializeValue = VarRef(state).accessPtr(
-                VarRef(isInitialized).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
+                VarRef(isInitialized)
+                    .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
             stateNotInitializedCase->addStatement(initializeValue.copy());
         }
 
@@ -1885,10 +1885,10 @@ bool CCodeGenerator::generateCodeForGlobalSlidingWindowSink(
             uint64_t entryContentSize = getAggregationValueSize(window);
             memcopyCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryContentSize))));
             stateNotInitializedCase->addStatement(memcopyCall);
-            auto initializeValue =
-                VarRef(globalSliceState)
-                    .accessPtr(VarRef(isInitialized)
-                                   .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
+            auto initializeValue = VarRef(globalSliceState)
+                                       .accessPtr(VarRef(isInitialized)
+                                                      .assign(Constant(tf->createValueType(
+                                                          DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
             stateNotInitializedCase->addStatement(initializeValue.copy());
         }
         {
@@ -2622,7 +2622,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     NES_ASSERT(join->getLeftSourceType() != nullptr && !join->getLeftSourceType()->fields.empty(), "left join type is undefined");
     NES_ASSERT(join->getRightSourceType() != nullptr && !join->getRightSourceType()->fields.empty(),
                "right join type is undefined");
-    NES_ASSERT(context->arity != PipelineContext::PipelineContextArity::Unary, "unary operator detected but join codegen invoked");
+    NES_ASSERT(context->arity != PipelineContext::PipelineContextArity::Unary,
+               "unary operator detected but join codegen invoked");
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
     auto handlers = context->getOperatorHandlers();
@@ -2969,7 +2970,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                "left join type is undefined");
     NES_ASSERT(joinDef->getRightSourceType() != nullptr && !joinDef->getRightSourceType()->fields.empty(),
                "right join type is undefined");
-    NES_ASSERT(context->arity != PipelineContext::PipelineContextArity::Unary, "unary operator detected but join codegen invoked");
+    NES_ASSERT(context->arity != PipelineContext::PipelineContextArity::Unary,
+               "unary operator detected but join codegen invoked");
 
     auto code = context->code;
 
@@ -3154,7 +3156,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     NES_DEBUG2("CCodeGenerator: Generate code for : {}", context->pipelineName);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::PipelineContextArity::BinaryLeft);
+    generateCodeForWatermarkUpdaterJoin(context,
+                                        windowJoinVariableDeclration,
+                                        context->arity == PipelineContext::PipelineContextArity::BinaryLeft);
     return true;
 }
 
@@ -4414,18 +4418,18 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     ExpressionStatementPtr arityStatement;
     switch (context->arity) {
         case PipelineContext::PipelineContextArity::Unary: {
-            arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::Unary")));
+            arityStatement = std::make_shared<ConstantExpressionStatement>(tf->createValueType(
+                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::Unary")));
             break;
         }
         case PipelineContext::PipelineContextArity::BinaryLeft: {
-            arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryLeft")));
+            arityStatement = std::make_shared<ConstantExpressionStatement>(tf->createValueType(
+                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryLeft")));
             break;
         }
         case PipelineContext::PipelineContextArity::BinaryRight: {
-            arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryRight")));
+            arityStatement = std::make_shared<ConstantExpressionStatement>(tf->createValueType(
+                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryRight")));
             break;
         }
     }

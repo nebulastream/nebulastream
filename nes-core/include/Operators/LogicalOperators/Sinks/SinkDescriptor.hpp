@@ -29,8 +29,7 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    explicit SinkDescriptor(FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                            uint64_t numberOfOrigins = 1);
+    explicit SinkDescriptor(FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfOrigins = 1);
 
     virtual ~SinkDescriptor() = default;
 

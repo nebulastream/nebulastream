@@ -20,11 +20,11 @@
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
 #include <memory>
 #include <stack>
 #include <unordered_map>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Nautilus::IR {
 

@@ -1707,7 +1707,8 @@ TEST_F(SourceTest, TCPSourcePrint) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: \n\nsocketBufferSize: "
+        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
+        "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
@@ -1742,7 +1743,8 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: \n\nsocketBufferSize: "
+        "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
+        "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
@@ -1937,8 +1939,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE,
-                                                      LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -2031,9 +2032,10 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::MetricType::CpuMetric, Monitoring::MetricType::DiskMetric, Monitoring::MetricType::MemoryMetric,
-         Monitoring::MetricType::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::MetricType::CpuMetric,
+                                                     Monitoring::MetricType::DiskMetric,
+                                                     Monitoring::MetricType::MemoryMetric,
+                                                     Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -2050,9 +2052,10 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::MetricType::CpuMetric, Monitoring::MetricType::DiskMetric, Monitoring::MetricType::MemoryMetric,
-         Monitoring::MetricType::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::MetricType::CpuMetric,
+                                                     Monitoring::MetricType::DiskMetric,
+                                                     Monitoring::MetricType::MemoryMetric,
+                                                     Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -2080,9 +2083,10 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::MetricType::CpuMetric, Monitoring::MetricType::DiskMetric, Monitoring::MetricType::MemoryMetric,
-         Monitoring::MetricType::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::MetricType::CpuMetric,
+                                                     Monitoring::MetricType::DiskMetric,
+                                                     Monitoring::MetricType::MemoryMetric,
+                                                     Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 

@@ -19,9 +19,9 @@
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <chrono>
 #include <utility>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -50,8 +50,7 @@ LambdaSource::LambdaSource(
                       std::move(successors)),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG2("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));
-    if (this->gatheringMode == GatheringMode::INTERVAL_MODE ||
-    this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
+    if (this->gatheringMode == GatheringMode::INTERVAL_MODE || this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;

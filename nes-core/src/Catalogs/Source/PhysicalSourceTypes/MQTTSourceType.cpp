@@ -112,10 +112,11 @@ MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
 }
 
 MQTTSourceType::MQTTSourceType()
-    : PhysicalSourceType(SourceType::MQTT_SOURCE), url(Configurations::ConfigurationOption<std::string>::create(
-                                           Configurations::URL_CONFIG,
-                                           "ws://127.0.0.1:9001",
-                                           "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
+    : PhysicalSourceType(SourceType::MQTT_SOURCE),
+      url(Configurations::ConfigurationOption<std::string>::create(
+          Configurations::URL_CONFIG,
+          "ws://127.0.0.1:9001",
+          "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
       clientId(Configurations::ConfigurationOption<std::string>::create(
           Configurations::CLIENT_ID_CONFIG,
           "testClient",

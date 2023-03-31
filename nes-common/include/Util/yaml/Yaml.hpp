@@ -275,8 +275,8 @@ class Iterator {
   private:
     enum class eType : int8_t { None, SequenceType, MapType };
 
-    eType m_Type{eType::None};   ///< Type of iterator.
-    void* m_pImp{nullptr};///< Implementation of iterator class.
+    eType m_Type{eType::None};///< Type of iterator.
+    void* m_pImp{nullptr};    ///< Implementation of iterator class.
 };
 
 /**
@@ -346,8 +346,8 @@ class ConstIterator {
   private:
     enum class eType : int8_t { None, SequenceType, MapType };
 
-    eType m_Type{eType::None};   ///< Type of iterator.
-    void* m_pImp{nullptr};///< Implementation of constant iterator class.
+    eType m_Type{eType::None};///< Type of iterator.
+    void* m_pImp{nullptr};    ///< Implementation of constant iterator class.
 };
 
 /**

@@ -21,9 +21,9 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <utility>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -101,8 +101,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
 
         Runtime::QueryTerminationType queryTerminationType;
 
-        if (SharedQueryPlanStatus::Updated == sharedQueryPlanStatus ||
-            SharedQueryPlanStatus::Stopped == sharedQueryPlanStatus) {
+        if (SharedQueryPlanStatus::Updated == sharedQueryPlanStatus || SharedQueryPlanStatus::Stopped == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::HardStop;
         } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;

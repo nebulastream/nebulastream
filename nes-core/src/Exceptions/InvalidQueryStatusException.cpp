@@ -13,8 +13,8 @@
 */
 
 #include "Exceptions/InvalidQueryStatusException.hpp"
-#include <sstream>
 #include <Util/magicenum/magic_enum.hpp>
+#include <sstream>
 
 namespace NES {
 

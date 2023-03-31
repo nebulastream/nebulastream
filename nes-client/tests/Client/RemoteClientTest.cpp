@@ -101,8 +101,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
         auto startTs = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < startTs + timeoutInSec) {
             auto status = magic_enum::enum_cast<QueryStatus>(client->getQueryStatus(queryId));
-            if (status == QueryStatus::REGISTERED || status == QueryStatus::OPTIMIZING ||
-                status == QueryStatus::DEPLOYED) {
+            if (status == QueryStatus::REGISTERED || status == QueryStatus::OPTIMIZING || status == QueryStatus::DEPLOYED) {
                 NES_DEBUG("Query " << queryId << " not started yet");
                 sleep(1);
             } else {

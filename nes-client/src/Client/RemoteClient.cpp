@@ -23,9 +23,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 
 using namespace std::string_literals;
 

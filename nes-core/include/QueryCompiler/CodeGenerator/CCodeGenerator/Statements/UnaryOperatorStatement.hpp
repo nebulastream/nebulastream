@@ -25,7 +25,9 @@ CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
 class UnaryOperatorStatement : public ExpressionStatement {
   public:
-    UnaryOperatorStatement(const ExpressionStatement& expr, const UnaryOperatorType& op, BracketMode bracket_mode = BracketMode::NO_BRACKETS);
+    UnaryOperatorStatement(const ExpressionStatement& expr,
+                           const UnaryOperatorType& op,
+                           BracketMode bracket_mode = BracketMode::NO_BRACKETS);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

@@ -114,7 +114,6 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
 
 PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) {
 
-
     if (!magic_enum::enum_cast<SourceType>(sourceType).has_value()) {
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }

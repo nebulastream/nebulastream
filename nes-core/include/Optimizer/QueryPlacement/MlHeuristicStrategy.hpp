@@ -95,9 +95,7 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      * @param faultToleranceType
      * @param lineageType
      */
-    void performOperatorRedundancyElimination(QueryId queryId,
-                                              FaultToleranceType faultToleranceType,
-                                              LineageType lineageType);
+    void performOperatorRedundancyElimination(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 };
 }// namespace NES::Optimizer
 

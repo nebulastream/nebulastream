@@ -54,7 +54,8 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    coordinatorConf->worker.queryCompiler.windowingStrategy =
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -413,8 +414,8 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
                 return true;
             }
             case QueryStatus::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " +
-                            std::string(magic_enum::enum_name(status)));
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found "
+                          + std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {

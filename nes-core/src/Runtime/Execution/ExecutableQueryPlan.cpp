@@ -278,13 +278,14 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
     // as a result, the data source might be the last one to decrease the `numOfTerminationTokens` thus it has to
     // trigger the QEP reconfiguration
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
-        auto reconfMessageQEP =
-            ReconfigurationMessage(getQueryId(),
-                                   getQuerySubPlanId(),
-                                   terminationType == QueryTerminationType::Graceful
-                                       ? ReconfigurationType::SoftEndOfStream
-                                       : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream : ReconfigurationType::FailEndOfStream),
-                                   Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+        auto reconfMessageQEP = ReconfigurationMessage(getQueryId(),
+                                                       getQuerySubPlanId(),
+                                                       terminationType == QueryTerminationType::Graceful
+                                                           ? ReconfigurationType::SoftEndOfStream
+                                                           : (terminationType == QueryTerminationType::HardStop
+                                                                  ? ReconfigurationType::HardEndOfStream
+                                                                  : ReconfigurationType::FailEndOfStream),
+                                                       Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
     }
 }
@@ -300,13 +301,14 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
     NES_DEBUG2("QEP {} Pipeline {} is terminated; tokens left = {}", querySubPlanId, pipeline->getPipelineId(), (tokensLeft - 1));
     // the same applies here for the pipeline
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
-        auto reconfMessageQEP =
-            ReconfigurationMessage(getQueryId(),
-                                   getQuerySubPlanId(),
-                                   terminationType == QueryTerminationType::Graceful
-                                       ? ReconfigurationType::SoftEndOfStream
-                                       : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream : ReconfigurationType::FailEndOfStream),
-                                   Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+        auto reconfMessageQEP = ReconfigurationMessage(getQueryId(),
+                                                       getQuerySubPlanId(),
+                                                       terminationType == QueryTerminationType::Graceful
+                                                           ? ReconfigurationType::SoftEndOfStream
+                                                           : (terminationType == QueryTerminationType::HardStop
+                                                                  ? ReconfigurationType::HardEndOfStream
+                                                                  : ReconfigurationType::FailEndOfStream),
+                                                       Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
     }
 }
@@ -321,13 +323,14 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     NES_DEBUG2("QEP {} Sink {} is terminated; tokens left = {}", querySubPlanId, sink->toString(), (tokensLeft - 1));
     // sinks also require to spawn a reconfig task for the qep
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
-        auto reconfMessageQEP =
-            ReconfigurationMessage(getQueryId(),
-                                   getQuerySubPlanId(),
-                                   terminationType == QueryTerminationType::Graceful
-                                       ? ReconfigurationType::SoftEndOfStream
-                                       : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream : ReconfigurationType::FailEndOfStream),
-                                   Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+        auto reconfMessageQEP = ReconfigurationMessage(getQueryId(),
+                                                       getQuerySubPlanId(),
+                                                       terminationType == QueryTerminationType::Graceful
+                                                           ? ReconfigurationType::SoftEndOfStream
+                                                           : (terminationType == QueryTerminationType::HardStop
+                                                                  ? ReconfigurationType::HardEndOfStream
+                                                                  : ReconfigurationType::FailEndOfStream),
+                                                       Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
     }
 }

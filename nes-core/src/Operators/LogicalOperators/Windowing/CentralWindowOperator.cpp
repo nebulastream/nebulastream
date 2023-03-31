@@ -90,12 +90,11 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
      * threshold windows
      */
     if (!windowDefinition->getWindowType()->isThresholdWindow()) {
-        outputSchema =
-                outputSchema
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
-                                       BasicType::UINT64))
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
-                                       BasicType::UINT64));
+        outputSchema = outputSchema
+                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
+                                                  BasicType::UINT64))
+                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
+                                                  BasicType::UINT64));
     }
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

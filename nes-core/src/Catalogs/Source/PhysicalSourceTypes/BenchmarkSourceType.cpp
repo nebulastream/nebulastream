@@ -33,9 +33,9 @@ BenchmarkSourceType::BenchmarkSourceType(uint8_t* memoryArea,
                                          SourceMode sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId)
-    : PhysicalSourceType(SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
-      numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
-      sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+    : PhysicalSourceType(SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+      memoryAreaSize(memoryAreaSize), numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
+      gatheringMode(gatheringMode), sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 BenchmarkSourceTypePtr BenchmarkSourceType::create(uint8_t* memoryArea,
                                                    size_t memoryAreaSize,

@@ -55,10 +55,10 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <string>
 #include <utility>
 #include <variant>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,

@@ -358,7 +358,11 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0,
+                                                          0,
+                                                          Runtime::ReconfigurationType::Initialize,
+                                                          networkSink,
+                                                          std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
@@ -530,7 +534,11 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0,
+                                                          0,
+                                                          Runtime::ReconfigurationType::Initialize,
+                                                          networkSink,
+                                                          std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
@@ -557,8 +565,11 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                 NES_DEBUG("Count before buffer: " << prevCount);
             }
         }
-        auto bufferReconfigMsg =
-            Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::StartBuffering, networkSink, std::make_any<uint32_t>(1));
+        auto bufferReconfigMsg = Runtime::ReconfigurationMessage(0,
+                                                                 0,
+                                                                 Runtime::ReconfigurationType::StartBuffering,
+                                                                 networkSink,
+                                                                 std::make_any<uint32_t>(1));
 
         sendEngine->bufferAllData();
         sleep(1);

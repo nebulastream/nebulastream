@@ -160,8 +160,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["Info"], "Successfully submitted Maintenance Request");
     EXPECT_EQ(res["Node Id"], nodeId);
-    EXPECT_EQ(res["Migration Type"],
-              std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING)));
+    EXPECT_EQ(res["Migration Type"], std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING)));
     stopCoordinator();
 }
 }// namespace NES
