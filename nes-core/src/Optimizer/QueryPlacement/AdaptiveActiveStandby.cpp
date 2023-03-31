@@ -171,16 +171,6 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
               << "Total score with penalties: " << score << "\n"
               << "Time elapsed: " << elapsedMilliseconds.count() << "ms");
 
-    // TODO: more tests to make sure that score changes reflect the actual score
-    {
-        auto expectedScore = evaluateEntireCandidatePlacement();
-
-        NES_DEBUG("ASD: \n" << candidateOperatorPlacementsToString() << "Expected score: " << expectedScore);
-
-        if (score != expectedScore)
-            NES_THROW_RUNTIME_ERROR("AAS: incorrect score");
-    }
-
     // 7. Pin the operators based on the best candidate
     pinOperators();
 
@@ -1452,9 +1442,11 @@ std::pair<LocalSearchStep, double> AdaptiveActiveStandby::getBestStepLocalSearch
         }
     }
 
-    // 3. complex steps: move or swap operator groups
+    // IDEA: complex steps - move or swap operator groups
     // e.g. operator group: collection of operators that are part of the same query and are placed on the same topology node
-    // TODO?
+    // - it would increase search space
+    //  -> allows exploring more solutions and potentially finding better ones than currently
+    //  -> substantially slows the optimization process
 
     // 4. return best pair
     return std::make_pair(bestStep, bestScoreChange);
@@ -1671,14 +1663,6 @@ double AdaptiveActiveStandby::executeILPStrategy(const std::vector<OperatorNodeP
                                                                               {topology->getRoot()},
                                                                               nodeIdsToExclude);
 
-        {
-            std::stringstream asd;
-            for (const auto& a: nodeIdsToExclude) {
-                asd << a << ", ";
-
-            }
-            NES_DEBUG("TESTTEST: " << asd.str());
-        }
 
         while (!topologyPath.back()->getParents().empty()) {
             topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
