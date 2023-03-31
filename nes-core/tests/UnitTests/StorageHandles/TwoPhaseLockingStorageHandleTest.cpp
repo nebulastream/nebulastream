@@ -163,21 +163,50 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestConcurrentAccess) {
                   ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
                   ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
                   ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
-                  auto sourceCatalogHandle = twoPLAccessHandle->getSourceCatalogHandle();
+                  ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(), std::exception);
+                  auto udfCatalogHandle = twoPLAccessHandle->getUdfCatalogHandle();
+                  auto thread6 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+                    ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
+                    ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
+                    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
+                    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
+                    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(), std::exception);
+                    ASSERT_THROW(twoPLAccessHandle->getUdfCatalogHandle(), std::exception);
+                  });
+                  thread6->join();
                 });
                 thread5->join();
+                ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
               });
               thread4->join();
+              ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+              ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
             });
             thread3->join();
+            ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+            ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+            ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
           });
           thread2->join();
+          ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+          ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+          ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
+          ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
         });
         thread1->join();
-        //destructor releases lock
+        ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+        ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+        ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
+        ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
+        ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
     }
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+      ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+      ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+      ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
+      ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
       ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
+      ASSERT_NO_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()));
     });
     thread->join();
 }

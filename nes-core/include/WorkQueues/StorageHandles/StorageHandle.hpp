@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STORAGEACCESSHANDLE_HPP
-#define NES_STORAGEACCESSHANDLE_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
@@ -79,6 +79,8 @@ class StorageHandle {
 
     virtual ~StorageHandle() = default;
 
+    //todo #3641: add pre execution function
+
     /**
      * @brief Obtain a mutable global execution plan handle.
      * @return a handle to the global execution plan.
@@ -124,4 +126,4 @@ class StorageHandle {
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }
-#endif//NES_STORAGEACCESSHANDLE_HPP
+#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_

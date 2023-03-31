@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_UNLOCKDELETER_HPP
-#define NES_UNLOCKDELETER_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_UNLOCKDELETER_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_UNLOCKDELETER_HPP_
 
 #include <mutex>
 
@@ -59,4 +59,4 @@ class UnlockDeleter {
     std::unique_lock<std::mutex> lock;
 };
 }
-#endif//NES_UNLOCKDELETER_HPP
+#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_UNLOCKDELETER_HPP_
