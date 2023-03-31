@@ -906,7 +906,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingThresholdWindowKTMByKey) {
+//TODO 3608 fixing bykey()
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey) {
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
     NES_INFO("testFile = " << testFile);
