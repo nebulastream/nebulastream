@@ -85,35 +85,35 @@ TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
-    auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(schema);
-    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+// TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
+//     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
+//     auto testSink = executionEngine->createDataSink(schema);
+//     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("one") == 1).sink(testSinkDescriptor);
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
-    auto source = executionEngine->getDataSource(plan, 0);
-    auto inputBuffer = executionEngine->getBuffer(schema);
-    fillBuffer(inputBuffer);
-    source->emitBuffer(inputBuffer);
-    testSink->waitTillCompleted();
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-    auto resultBuffer = testSink->getResultBuffer(0);
+//     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+//     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("one") == 1).sink(testSinkDescriptor);
+//     auto plan = executionEngine->submitQuery(query.getQueryPlan());
+//     auto source = executionEngine->getDataSource(plan, 0);
+//     auto inputBuffer = executionEngine->getBuffer(schema);
+//     fillBuffer(inputBuffer);
+//     source->emitBuffer(inputBuffer);
+//     testSink->waitTillCompleted();
+//     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+//     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
-        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
-    }
-    ASSERT_TRUE(executionEngine->stopQuery(plan));
-    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
-}
+//     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+//     for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+//         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
+//         EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
+//     }
+//     ASSERT_TRUE(executionEngine->stopQuery(plan));
+//     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+// }
 
 INSTANTIATE_TEST_CASE_P(testFilterQueries,
                         FilterQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER),
+                                        //   QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<FilterQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
 
+#include <Util/Logger/Logger.hpp>
 #include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
@@ -26,7 +27,9 @@
 #include <cstring>
 #include <memory>
 #include <ostream>
+#include <string>
 #include <variant>
+
 
 namespace NES::Runtime::MemoryLayouts {
 
@@ -302,25 +305,8 @@ class DynamicTupleBuffer {
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
-    bool pushRecordToBuffer(std::tuple<Types...> record) {
-        uint64_t numberOfRecords = buffer.getNumberOfTuples();
-        uint64_t fieldIndex = 0;
-        // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
-        // On each iteration, the lambda function is called with the current field value, and the field index is increased.
-        try {
-            std::apply(
-                [&](auto&&... fieldValue) {
-                    ((*this)[numberOfRecords][fieldIndex++].write(fieldValue), ...);
-                },
-                record
-            );
-        } catch (BufferAccessException& e) {
-            NES_ERROR("DynamicTupleBuffer:pushRecordToBuffer: Unable to push record to TupleBuffer." << 
-                        "Full error message:" << e.what());
-            return false;
-        }
-        this->setNumberOfTuples(numberOfRecords + 1);
-        return true;
+    void pushRecordToBuffer(std::tuple<Types...> record) {
+        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
     }
 
     /**
@@ -334,27 +320,24 @@ class DynamicTupleBuffer {
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
-    bool pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
+    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
+        if(recordIndex >= numberOfRecords) {
+            throw BufferAccessException("Current buffer is not big enough for index. Current buffer size: " + 
+                                    std::to_string(buffer.getBufferSize()) + ", Index: " + std::to_string(recordIndex));
+        }
         // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
         // On each iteration, the lambda function is called with the current field value, and the field index is increased.
-        try {
-            std::apply(
-                [&](auto&&... fieldValue) {
-                    ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
-                },
-                record
-            );
-        } catch (BufferAccessException& e) {
-            NES_ERROR("DynamicTupleBuffer:pushRecordToBuffer: Record index " << std::to_string(recordIndex) << 
-                            " is probably out of bounds." << "Full error message:" << e.what());
-            return false;
+        std::apply(
+            [&](auto&&... fieldValue) {
+                ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
+            },
+            record
+        );
+        if(recordIndex + 1 > numberOfRecords) {
+            this->setNumberOfTuples(recordIndex + 1);
         }
-        // Increase number of records, if the current recordIndex is larger than the current numberOfRecords.
-        numberOfRecords = (recordIndex + 1 > numberOfRecords) ? recordIndex + 1 : numberOfRecords;
-        this->setNumberOfTuples(recordIndex + 1);      
-        return true;
     }
 
     /**
@@ -408,6 +391,12 @@ class DynamicTupleBuffer {
         // We recursively iterated over all fields of the record, and can thus return.
         return true;
     }
+
+     /**
+     * @brief Gets the memoryLayout.
+     * @return MemoryLayoutPtr
+     */
+    MemoryLayoutPtr getMemoryLayout() const;
 
   private:
     const MemoryLayoutPtr memoryLayout;

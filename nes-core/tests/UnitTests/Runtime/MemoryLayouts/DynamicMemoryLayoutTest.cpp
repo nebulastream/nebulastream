@@ -15,22 +15,12 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <cstdint>
-#include <cstdlib>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <tuple>
-#include <vector>
-
 namespace NES::Runtime::MemoryLayouts {
 
 class DynamicMemoryLayoutTest
@@ -228,6 +218,6 @@ INSTANTIATE_TEST_CASE_P(TestInputs,
                         DynamicMemoryLayoutTestParameterized,
                         ::testing::Values(Schema::COLUMNAR_LAYOUT, Schema::ROW_LAYOUT),
                         [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });
 }// namespace NES::Runtime::MemoryLayouts
