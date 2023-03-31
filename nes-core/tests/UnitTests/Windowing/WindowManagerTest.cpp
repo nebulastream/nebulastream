@@ -605,14 +605,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        LogicalWindowDefinition::create({Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                        {aggregation},
-                                        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                        DistributionCharacteristic::createCombiningWindowType(),
-                                        trigger,
-                                        triggerAction,
-                                        0);
+    auto windowDef = LogicalWindowDefinition::create(
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCombiningWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setNumberOfInputEdges(1);
     auto exec = ExecutableSumAggregation<int64_t>::create();
 

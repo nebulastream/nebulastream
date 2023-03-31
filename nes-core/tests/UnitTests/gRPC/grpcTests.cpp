@@ -51,7 +51,8 @@ class GrpcTests : public Testing::NESBaseTest {
 */
 TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     // Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
+    std::string window =
+        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
                                             ->addField(createField("timestamp", BasicType::UINT64));)";
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -116,7 +117,8 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
 TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
 
     // Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
+    std::string window =
+        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
                                             ->addField(createField("timestamp", BasicType::UINT64));)";
     auto coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

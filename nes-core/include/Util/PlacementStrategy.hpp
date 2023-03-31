@@ -20,19 +20,19 @@
 #include <unordered_map>
 
 namespace NES {
-    enum class PlacementStrategy : uint8_t {
-        TopDown = 0,
-        BottomUp = 1,
-        IFCOP = 2,
-        ILP = 3,
-        Manual = 4,
-        MlHeuristic = 5
-        // FIXME: enable them with issue #755
-        // LowLatency,
-        //  HighThroughput,
-        //  MinimumResourceConsumption,
-        //  MinimumEnergyConsumption,
-        // HighAvailability
-    };
+enum class PlacementStrategy : uint8_t {
+    TopDown = 0,
+    BottomUp = 1,
+    IFCOP = 2,
+    ILP = 3,
+    Manual = 4,
+    MlHeuristic = 5
+    // FIXME: enable them with issue #755
+    // LowLatency,
+    //  HighThroughput,
+    //  MinimumResourceConsumption,
+    //  MinimumEnergyConsumption,
+    // HighAvailability
+};
 }// namespace NES
 #endif// NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

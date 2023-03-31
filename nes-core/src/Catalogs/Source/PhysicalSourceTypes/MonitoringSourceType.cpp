@@ -20,7 +20,8 @@
 
 namespace NES {
 
-MonitoringSourceType::MonitoringSourceType(Monitoring::MetricCollectorType metricCollectorType, std::chrono::milliseconds waitTime)
+MonitoringSourceType::MonitoringSourceType(Monitoring::MetricCollectorType metricCollectorType,
+                                           std::chrono::milliseconds waitTime)
     : PhysicalSourceType(SourceType::MONITORING_SOURCE), metricCollectorType(metricCollectorType), waitTime(waitTime) {}
 
 MonitoringSourceTypePtr MonitoringSourceType::create(Monitoring::MetricCollectorType metricCollectorType,

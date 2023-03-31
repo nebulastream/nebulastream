@@ -71,9 +71,10 @@ TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {
 }
 
 TEST_F(DynamicMemoryLayoutTest, readWriteColumnarDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT16)
-                                       ->addField("t2", BasicType::BOOLEAN)
-                                       ->addField("t3", BasicType::FLOAT64);
+    SchemaPtr schema = Schema::create()
+                           ->addField("t1", BasicType::UINT16)
+                           ->addField("t2", BasicType::BOOLEAN)
+                           ->addField("t3", BasicType::FLOAT64);
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -96,9 +97,10 @@ TEST_F(DynamicMemoryLayoutTest, readWriteColumnarDynamicBufferTest) {
 }
 
 TEST_F(DynamicMemoryLayoutTest, readWriteRowDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT16)
-                                       ->addField("t2", BasicType::BOOLEAN)
-                                       ->addField("t3", BasicType::FLOAT64);
+    SchemaPtr schema = Schema::create()
+                           ->addField("t1", BasicType::UINT16)
+                           ->addField("t2", BasicType::BOOLEAN)
+                           ->addField("t3", BasicType::FLOAT64);
 
     RowLayoutPtr layout;
     ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -121,9 +123,10 @@ TEST_F(DynamicMemoryLayoutTest, readWriteRowDynamicBufferTest) {
 }
 
 TEST_F(DynamicMemoryLayoutTest, iterateDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT16)
-                                       ->addField("t2", BasicType::BOOLEAN)
-                                       ->addField("t3", BasicType::FLOAT64);
+    SchemaPtr schema = Schema::create()
+                           ->addField("t1", BasicType::UINT16)
+                           ->addField("t2", BasicType::BOOLEAN)
+                           ->addField("t3", BasicType::FLOAT64);
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -218,7 +221,10 @@ TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
 
 TEST_F(DynamicMemoryLayoutTest, toStringTestRowLayout) {
     const uint32_t NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    const auto schema = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
+    const auto schema = Schema::create()
+                            ->addField("t1", BasicType::UINT16)
+                            ->addField("t2", BasicType::BOOLEAN)
+                            ->addField("t3", BasicType::FLOAT64);
 
     RowLayoutPtr layout;
     ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -256,9 +262,10 @@ TEST_F(DynamicMemoryLayoutTest, toStringTestRowLayout) {
 
 TEST_F(DynamicMemoryLayoutTest, toStringTestColumnLayout) {
     const uint32_t NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    const auto schema = Schema::create()->addField("t1", BasicType::UINT16)
-                                        ->addField("t2", BasicType::BOOLEAN)
-                                        ->addField("t3", BasicType::FLOAT64);
+    const auto schema = Schema::create()
+                            ->addField("t1", BasicType::UINT16)
+                            ->addField("t2", BasicType::BOOLEAN)
+                            ->addField("t3", BasicType::FLOAT64);
 
     ColumnLayoutPtr layout;
     ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));

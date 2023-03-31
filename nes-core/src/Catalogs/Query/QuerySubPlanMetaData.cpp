@@ -21,9 +21,7 @@ QuerySubPlanMetaData::create(QuerySubPlanId querySubPlanId, QueryStatus subQuery
     return std::make_shared<QuerySubPlanMetaData>(querySubPlanId, subQueryStatus, workerId);
 }
 
-QuerySubPlanMetaData::QuerySubPlanMetaData(QuerySubPlanId querySubPlanId,
-                                           NES::QueryStatus subQueryStatus,
-                                           uint64_t workerId)
+QuerySubPlanMetaData::QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, NES::QueryStatus subQueryStatus, uint64_t workerId)
     : querySubPlanId(querySubPlanId), subQueryStatus(subQueryStatus), workerId(workerId) {}
 
 void QuerySubPlanMetaData::updateStatus(QueryStatus queryStatus) { subQueryStatus = queryStatus; }

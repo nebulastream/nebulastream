@@ -26,7 +26,11 @@ namespace NES {
 class MQTTSinkDescriptor : public SinkDescriptor {
   public:
     enum class TimeUnits : uint8_t { nanoseconds, milliseconds, seconds };
-    enum class ServiceQualities : uint8_t { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
+    enum class ServiceQualities : uint8_t {
+        atMostOnce,
+        atLeastOnce,
+        exactlyOnce
+    };//cleanSession requires atLeastOnce or exactlyOnce
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker

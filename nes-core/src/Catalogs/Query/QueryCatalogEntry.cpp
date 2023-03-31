@@ -15,8 +15,8 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <utility>
 #include <Util/magicenum/magic_enum.hpp>
+#include <utility>
 
 namespace NES::Catalogs::Query {
 

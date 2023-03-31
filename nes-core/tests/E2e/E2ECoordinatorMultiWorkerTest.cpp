@@ -392,7 +392,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     auto schema = "{\n"
                   "  \"logicalSourceName\": \"test_source\",\n"
                   "  \"schema\": \"Schema::create()->addField(createField(\\\"timestamp\\\", "
-                  "UINT64))->addField(createField(\\\"key\\\", BasicType::UINT64))->addField(createField(\\\"value\\\", BasicType::UINT64));\"\n"
+                  "UINT64))->addField(createField(\\\"key\\\", BasicType::UINT64))->addField(createField(\\\"value\\\", "
+                  "BasicType::UINT64));\"\n"
                   "}";
     NES_DEBUG("Schema: " << schema);
     ASSERT_TRUE(TestUtils::addLogicalSource(schema, std::to_string(*restPort)));

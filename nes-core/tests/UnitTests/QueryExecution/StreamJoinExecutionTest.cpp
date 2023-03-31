@@ -45,9 +45,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class.");
-    }
+    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };

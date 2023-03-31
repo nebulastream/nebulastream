@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
-#include <Util/magicenum/magic_enum.hpp>
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <any>
 #include <memory>
@@ -282,7 +282,6 @@ const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "mobilityHandlerUpdateI
 const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
 const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
 const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimulatedStartTime";
-
 
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";

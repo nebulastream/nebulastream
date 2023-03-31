@@ -533,7 +533,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 }
 
 /**
@@ -573,12 +574,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage2 =
+        codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 }
 
 /**
@@ -617,12 +620,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage2 =
+        codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("_$start", BasicType::UINT64))
@@ -687,25 +692,27 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDefinition =
-        LogicalWindowDefinition::create({Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                        {sum},
-                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
-                                        DistributionCharacteristic::createCompleteWindowType(),
-                                        trigger,
-                                        triggerAction,
-                                        0);
+    auto windowDefinition = LogicalWindowDefinition::create(
+        {Attribute("key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {sum},
+        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDefinition->setNumberOfInputEdges(1);
     auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(schema, schema, context2);
-    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage2 =
+        codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("window$start", BasicType::UINT64))
@@ -840,14 +847,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDefinition =
-        LogicalWindowDefinition::create({Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                        {sum},
-                                        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
-                                        DistributionCharacteristic::createCompleteWindowType(),
-                                        trigger,
-                                        triggerAction,
-                                        0);
+    auto windowDefinition = LogicalWindowDefinition::create(
+        {Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {sum},
+        TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDefinition->setNumberOfInputEdges(1);
     auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
@@ -885,8 +892,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
         context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(inputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
-                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(inputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -966,8 +975,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     codeGenerator->generateCodeForInferModel(context, imop->getInputFields(), imop->getOutputFields());
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, 
-                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(outputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -1025,7 +1036,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(outputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -1076,8 +1090,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
-    auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(),
+                                                   nodeEngine->getQueryManager(),
+                                                   Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1103,7 +1118,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(outputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -1153,8 +1171,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
-    auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(),
+                                                   nodeEngine->getQueryManager(),
+                                                   Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1180,7 +1199,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(outputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -1229,8 +1251,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
-    auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::MemoryLayoutType::ROW_LAYOUT);
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(),
+                                                   nodeEngine->getQueryManager(),
+                                                   Schema::MemoryLayoutType::ROW_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1256,7 +1279,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
                                       context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(outputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -1338,7 +1364,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
         context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(outputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
@@ -1433,12 +1462,14 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, pipelineContext1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, pipelineContext1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage2 =
+        codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), joinOperatorHandler);
     auto context3 = QueryCompilation::PipelineContext::create();
@@ -1448,7 +1479,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
     codeGenerator->generateJoinSetup(joinDef, context3, 1);
     codeGenerator->generateCodeForJoin(joinDef, context3, 0);
-    auto stage3 = codeGenerator->compile(jitCompiler, context3, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage3 =
+        codeGenerator->compile(jitCompiler, context3, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
     stage3->setup(*executionContext);
 
     /* prepare input tuple buffer */
@@ -1539,12 +1571,14 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
         /* compile code to pipeline stage */
-        auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+        auto stage1 =
+            codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
         auto context2 = QueryCompilation::PipelineContext::create();
         context2->pipelineName = "1";
         codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-        auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+        auto stage2 =
+            codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
         auto windowOutputSchema = Schema::create()
                                       ->addField(createField("_$start", BasicType::UINT64))
@@ -1643,11 +1677,13 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage2 =
+        codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("_$start", BasicType::UINT64))
@@ -1733,11 +1769,13 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage1 =
+        codeGenerator->compile(jitCompiler, context1, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
+    auto stage2 =
+        codeGenerator->compile(jitCompiler, context2, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("_$start", BasicType::UINT64))
@@ -1795,7 +1833,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     codeGenerator->generateCodeForCEPIterationOperator(50, 150, context);
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(inputSchema, QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION, QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY, context);
+    codeGenerator->generateCodeForEmit(inputSchema,
+                                       QueryCompilation::OutputBufferAllocationStrategy::NO_OPTIMIZATION,
+                                       QueryCompilation::OutputBufferAssignmentStrategy::FIELD_COPY,
+                                       context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG);

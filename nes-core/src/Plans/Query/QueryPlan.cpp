@@ -275,9 +275,7 @@ void QueryPlan::setSourceConsumed(const std::string& sourceName) { sourceConsume
 
 FaultToleranceType QueryPlan::getFaultToleranceType() const { return faultToleranceType; }
 
-void QueryPlan::setFaultToleranceType(FaultToleranceType faultToleranceType) {
-    this->faultToleranceType = faultToleranceType;
-}
+void QueryPlan::setFaultToleranceType(FaultToleranceType faultToleranceType) { this->faultToleranceType = faultToleranceType; }
 
 LineageType QueryPlan::getLineageType() const { return lineageType; }
 

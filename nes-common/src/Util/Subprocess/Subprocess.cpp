@@ -14,13 +14,13 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <csignal>
 #include <cstdio>
 #include <fcntl.h>
 #include <thread>
 #include <vector>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Util {
 

@@ -80,7 +80,8 @@ class AndOperatorTest : public Testing::NESBaseTest {
  */
 TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     // Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
+    std::string window =
+        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
                                             ->addField(createField("timestamp", BasicType::UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);

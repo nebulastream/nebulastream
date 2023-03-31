@@ -17,6 +17,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
@@ -38,7 +39,6 @@
 #include <mlir/IR/Value.h>
 #include <mlir/IR/Verifier.h>
 #include <mlir/Support/LLVM.h>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Nautilus::Backends::MLIR {
 
@@ -504,8 +504,8 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame) {
-    if (compareOp->getComparator() == IR::Operations::CompareOperation::Comparator::IEQ && compareOp->getLeftInput()->getStamp()->isAddress()
-        && compareOp->getRightInput()->getStamp()->isInteger()) {
+    if (compareOp->getComparator() == IR::Operations::CompareOperation::Comparator::IEQ
+        && compareOp->getLeftInput()->getStamp()->isAddress() && compareOp->getRightInput()->getStamp()->isInteger()) {
         // add null check
         auto null =
             builder->create<mlir::LLVM::NullOp>(getNameLoc("null"), mlir::LLVM::LLVMPointerType::get(builder->getI8Type()));

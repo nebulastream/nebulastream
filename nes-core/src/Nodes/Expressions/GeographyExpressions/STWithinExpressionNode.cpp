@@ -55,8 +55,7 @@ std::string STWithinExpressionNode::toString() const {
 
 void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& shapeExpression) {
     if (!point->instanceOf<GeographyFieldsAccessExpressionNode>()
-        || (shapeExpression->getShapeType() != ShapeType::Polygon &&
-            shapeExpression->getShapeType() != ShapeType::Rectangle)) {
+        || (shapeExpression->getShapeType() != ShapeType::Polygon && shapeExpression->getShapeType() != ShapeType::Rectangle)) {
         throw InvalidArgumentException("Invalid arguments in STDWithinExpressionNode::setChildren(): ",
                                        "Point is : " + point->toString()
                                            + ", and shape expression is : " + shapeExpression->toString());

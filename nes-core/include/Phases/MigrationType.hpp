@@ -20,7 +20,7 @@
 
 namespace NES::Experimental {
 
-    /**
+/**
     * RESTART means the entire query is first undeployed and then redeployed, ie restarted
     * Query is undeployed by the QueryUndeploymentPhase. The Query is then redeployed just like a new query would be.
     *
@@ -35,8 +35,7 @@ namespace NES::Experimental {
     *         Suitable: reachable by all upstream nodes and can reach all downstream nodes of a query sub plan
     * Step 2: upstream node(s) are reconfigured to send data to the suitable alternative node(s)
     */
-    enum class MigrationType : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
-
+enum class MigrationType : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
 
 }//namespace NES::Experimental
 #endif// NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_

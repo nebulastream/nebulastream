@@ -15,8 +15,8 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <chrono>
 #include <Util/magicenum/magic_enum.hpp>
+#include <chrono>
 
 namespace NES::Monitoring {
 
@@ -33,12 +33,14 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         nodeMetrics = storedMetrics[nodeId];
         // check if the metric type exists
         if (!nodeMetrics->contains(metric->getMetricType())) {
-            NES_TRACE2("AllEntriesMetricStore: Creating metrics {} of {}", nodeId,
+            NES_TRACE2("AllEntriesMetricStore: Creating metrics {} of {}",
+                       nodeId,
                        std::string(magic_enum::enum_name(metric->getMetricType())));
             nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
-        NES_TRACE2("AllEntriesMetricStore: Creating node {} of {}", nodeId,
+        NES_TRACE2("AllEntriesMetricStore: Creating node {} of {}",
+                   nodeId,
                    std::string(magic_enum::enum_name(metric->getMetricType())));
         nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});

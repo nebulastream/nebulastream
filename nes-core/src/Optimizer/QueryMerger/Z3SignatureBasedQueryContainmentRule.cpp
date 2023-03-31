@@ -22,8 +22,8 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 #include <Util/magicenum/magic_enum.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 

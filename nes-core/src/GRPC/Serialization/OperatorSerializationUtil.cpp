@@ -97,8 +97,8 @@
 #endif
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <fstream>
 #include <Util/magicenum/magic_enum.hpp>
+#include <fstream>
 
 #endif
 
@@ -752,7 +752,8 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Combining) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Combining);
+        distChar =
+            std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Combining);
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Slicing) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
@@ -1635,8 +1636,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
     if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor>()) {
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
-        return NullOutputSinkDescriptor::create(FaultToleranceType(deserializedFaultTolerance),
-                                                deserializedNumberOfOrigins);
+        return NullOutputSinkDescriptor::create(FaultToleranceType(deserializedFaultTolerance), deserializedNumberOfOrigins);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as ZmqSinkDescriptor");
@@ -1998,12 +1998,15 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
     if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Complete) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(
             SerializableOperator_DistributionCharacteristic_Distribution_Complete);
-    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
+    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType()
+               == Windowing::DistributionCharacteristic::Type::Combining) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(
             SerializableOperator_DistributionCharacteristic_Distribution_Combining);
-    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Slicing) {
+    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType()
+               == Windowing::DistributionCharacteristic::Type::Slicing) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Slicing);
-    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Merging) {
+    } else if (windowJavaUdfOperatorNode.getDistributionType()->getType()
+               == Windowing::DistributionCharacteristic::Type::Merging) {
         windowJavaUdfDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Merging);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -2089,7 +2092,8 @@ LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWindowJavaUdfO
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Combining) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
-        distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Combining);
+        distChar =
+            std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Type::Combining);
 
     } else if (distrChar.distr() == SerializableOperator_DistributionCharacteristic_Distribution_Slicing) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "

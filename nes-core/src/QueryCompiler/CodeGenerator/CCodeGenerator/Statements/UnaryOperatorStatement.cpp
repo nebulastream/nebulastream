@@ -18,8 +18,8 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <array>
 #include <Util/magicenum/magic_enum.hpp>
+#include <array>
 
 namespace NES::QueryCompilation {
 std::string toString(const UnaryOperatorType& type) {
@@ -62,10 +62,10 @@ CodeExpressionPtr UnaryOperatorStatement::getCode() const {
     if (UnaryOperatorType::POSTFIX_INCREMENT_OP == op || UnaryOperatorType::POSTFIX_DECREMENT_OP == op) {
         /* postfix operators */
         code = combine(expr_->getCode(), toCodeExpression(op));
-    } else if (UnaryOperatorType::ABSOLUTE_VALUE_OF_OP == op || UnaryOperatorType::ROUND_OP == op ||
-               UnaryOperatorType::CEIL_OP == op || UnaryOperatorType::EXP_OP == op || UnaryOperatorType::FLOOR_OP == op ||
-               UnaryOperatorType::LOG_OP == op || UnaryOperatorType::LOG10_OP == op ||
-               UnaryOperatorType::SIZE_OF_TYPE_OP == op || UnaryOperatorType::SQRT_OP == op) {
+    } else if (UnaryOperatorType::ABSOLUTE_VALUE_OF_OP == op || UnaryOperatorType::ROUND_OP == op
+               || UnaryOperatorType::CEIL_OP == op || UnaryOperatorType::EXP_OP == op || UnaryOperatorType::FLOOR_OP == op
+               || UnaryOperatorType::LOG_OP == op || UnaryOperatorType::LOG10_OP == op || UnaryOperatorType::SIZE_OF_TYPE_OP == op
+               || UnaryOperatorType::SQRT_OP == op) {
         code = combine(toCodeExpression(op), std::make_shared<CodeExpression>("("));
         code = combine(code, expr_->getCode());
         code = combine(code, std::make_shared<CodeExpression>(")"));
@@ -84,12 +84,26 @@ CodeExpressionPtr UnaryOperatorStatement::getCode() const {
 
 ExpressionStatementPtr UnaryOperatorStatement::copy() const { return std::make_shared<UnaryOperatorStatement>(*this); }
 
-UnaryOperatorStatement operator&(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::ADDRESS_OF_OP); }
-UnaryOperatorStatement operator*(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::DEREFERENCE_POINTER_OP); }
-UnaryOperatorStatement operator++(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::PREFIX_INCREMENT_OP); }
-UnaryOperatorStatement operator--(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::PREFIX_DECREMENT_OP); }
-UnaryOperatorStatement operator~(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::BITWISE_COMPLEMENT_OP); }
-UnaryOperatorStatement operator!(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::LOGICAL_NOT_OP); }
+UnaryOperatorStatement operator&(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::ADDRESS_OF_OP);
+}
+UnaryOperatorStatement operator*(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::DEREFERENCE_POINTER_OP);
+}
+UnaryOperatorStatement operator++(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::PREFIX_INCREMENT_OP);
+}
+UnaryOperatorStatement operator--(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::PREFIX_DECREMENT_OP);
+}
+UnaryOperatorStatement operator~(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::BITWISE_COMPLEMENT_OP);
+}
+UnaryOperatorStatement operator!(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::LOGICAL_NOT_OP);
+}
 
-UnaryOperatorStatement sizeOf(const ExpressionStatement& ref) { return UnaryOperatorStatement(ref, UnaryOperatorType::SIZE_OF_TYPE_OP); }
+UnaryOperatorStatement sizeOf(const ExpressionStatement& ref) {
+    return UnaryOperatorStatement(ref, UnaryOperatorType::SIZE_OF_TYPE_OP);
+}
 }// namespace NES::QueryCompilation

@@ -23,7 +23,7 @@ WindowTriggerPolicyPtr OnBufferTriggerPolicyDescription::create() {
 std::string OnBufferTriggerPolicyDescription::toString() { return getTypeAsString(); }
 TriggerType OnBufferTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
-OnBufferTriggerPolicyDescription::OnBufferTriggerPolicyDescription() :
-    BaseWindowTriggerPolicyDescriptor(TriggerType::triggerOnBuffer) {}
+OnBufferTriggerPolicyDescription::OnBufferTriggerPolicyDescription()
+    : BaseWindowTriggerPolicyDescriptor(TriggerType::triggerOnBuffer) {}
 
 }// namespace NES::Windowing

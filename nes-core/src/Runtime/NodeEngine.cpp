@@ -596,9 +596,10 @@ bool NodeEngine::bufferAllData() {
             //whenever we encounter a network sink, send a reconfig message telling it to start buffering
             if (networkSink) {
                 NES_DEBUG2("Starting to buffer on Network Sink{}", networkSink->getUniqueNetworkSinkDescriptorId());
-                ReconfigurationMessage message =
-                    ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::ReconfigurationType::StartBuffering,
-                                           networkSink);
+                ReconfigurationMessage message = ReconfigurationMessage(qepPtr->getQueryId(),
+                                                                        qepId,
+                                                                        Runtime::ReconfigurationType::StartBuffering,
+                                                                        networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             } else {
                 //if the sink is not a network sink, do nothing
@@ -621,8 +622,7 @@ bool NodeEngine::stopBufferingAllData() {
             //whenever we encounter a network sink, send a reconfig message telling it to stop buffering
             if (networkSink) {
                 ReconfigurationMessage message =
-                    ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::ReconfigurationType::StopBuffering,
-                                           networkSink);
+                    ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::ReconfigurationType::StopBuffering, networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             }
         }

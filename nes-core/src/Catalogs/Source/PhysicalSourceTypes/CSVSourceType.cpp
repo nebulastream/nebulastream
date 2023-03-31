@@ -53,10 +53,9 @@ CSVSourceType::CSVSourceType()
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
                                                                 1,
                                                                 "Gathering interval of the source.")),
-      gatheringMode(
-          Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
-                                                                            GatheringMode::INTERVAL_MODE,
-                                                                            "Gathering mode of the source.")) {
+      gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
+                                                                               GatheringMode::INTERVAL_MODE,
+                                                                               "Gathering mode of the source.")) {
     NES_INFO2("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
@@ -88,7 +87,8 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
     }
     if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG) != sourceConfigMap.end()) {
         gatheringMode->setValue(
-                magic_enum::enum_cast<GatheringMode>(sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG)->second).value());
+            magic_enum::enum_cast<GatheringMode>(sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG)->second)
+                .value());
     }
 }
 
@@ -125,7 +125,8 @@ CSVSourceType::CSVSourceType(Yaml::Node yamlConfig) : CSVSourceType() {
     if (!yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>() != "\n") {
         gatheringMode->setValue(
-                magic_enum::enum_cast<GatheringMode>(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>()).value());
+            magic_enum::enum_cast<GatheringMode>(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>())
+                .value());
     }
 }
 
@@ -136,7 +137,8 @@ std::string CSVSourceType::toString() {
     ss << Configurations::SKIP_HEADER_CONFIG + ":" + skipHeader->toStringNameCurrentValue();
     ss << Configurations::DELIMITER_CONFIG + ":" + delimiter->toStringNameCurrentValue();
     ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG + ":" + sourceGatheringInterval->toStringNameCurrentValue();
-    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + std::string(magic_enum::enum_name(gatheringMode->getValue())) << "\n";
+    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + std::string(magic_enum::enum_name(gatheringMode->getValue()))
+       << "\n";
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + ":"
             + numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();

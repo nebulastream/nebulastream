@@ -40,8 +40,7 @@ class TestHarnessWorkerConfiguration {
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, uint32_t workerId) {
         return std::make_shared<TestHarnessWorkerConfiguration>(
-            TestHarnessWorkerConfiguration(std::move(workerConfiguration), TestHarnessWorkerSourceType::NonSource,
-                                           workerId));
+            TestHarnessWorkerConfiguration(std::move(workerConfiguration), TestHarnessWorkerSourceType::NonSource, workerId));
     }
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration,

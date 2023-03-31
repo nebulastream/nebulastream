@@ -76,7 +76,8 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
             if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
-            } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+            } else if (timeBasedWindowType->getTimeCharacteristic()->getType()
+                       == Windowing::TimeCharacteristic::Type::EventTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
                         Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
@@ -142,7 +143,8 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
             if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
-            } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+            } else if (timeBasedWindowType->getTimeCharacteristic()->getType()
+                       == Windowing::TimeCharacteristic::Type::EventTime) {
                 queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
                         Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),

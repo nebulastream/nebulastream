@@ -21,7 +21,7 @@
 #include <unordered_map>
 
 namespace NES {
-    /**
+/**
      * @brief Represents various states the user query goes through.
      *
      * Registered: Query is registered to be scheduled to the worker nodes (added to the queue).
@@ -36,21 +36,21 @@ namespace NES {
      * Restarting: restarting the query
      * Migrating: migrating query
      */
-    enum class QueryStatus : uint8_t {
-        REGISTERED = 0,
-        OPTIMIZING,
-        DEPLOYED,
-        RUNNING,
-        MARKED_FOR_HARD_STOP,
-        MARKED_FOR_SOFT_STOP,
-        SOFT_STOP_TRIGGERED,
-        SOFT_STOP_COMPLETED,
-        STOPPED,
-        MARKED_FOR_FAILURE,
-        FAILED,
-        RESTARTING,
-        MIGRATING
-    };
+enum class QueryStatus : uint8_t {
+    REGISTERED = 0,
+    OPTIMIZING,
+    DEPLOYED,
+    RUNNING,
+    MARKED_FOR_HARD_STOP,
+    MARKED_FOR_SOFT_STOP,
+    SOFT_STOP_TRIGGERED,
+    SOFT_STOP_COMPLETED,
+    STOPPED,
+    MARKED_FOR_FAILURE,
+    FAILED,
+    RESTARTING,
+    MIGRATING
+};
 
 }// namespace NES
 

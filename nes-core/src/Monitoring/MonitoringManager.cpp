@@ -73,7 +73,8 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     this->queryService = queryService;
     this->catalogService = catalogService;
-    NES_DEBUG2("MonitoringManager: Init with monitoring= {} , storage= {} ", enableMonitoring,
+    NES_DEBUG2("MonitoringManager: Init with monitoring= {} , storage= {} ",
+               enableMonitoring,
                std::string(magic_enum::enum_name(metricStore->getType())));
 }
 
@@ -158,7 +159,8 @@ StoredNodeMetricsPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
     NES_TRACE2("MonitoringManager: Adding metrics of type {} for node {}",
-               std::string(magic_enum::enum_name(metrics->getMetricType())), nodeId);
+               std::string(magic_enum::enum_name(metrics->getMetricType())),
+               nodeId);
     metricStore->addMetrics(nodeId, metrics);
 }
 
@@ -217,9 +219,9 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
 
     // params for iteration
     if (success) {
-        MetricType metricType = magic_enum::enum_cast<MetricType >(monitoringStream).value();
-        std::string metricCollectorStr = std::string(magic_enum::enum_name(
-                MetricUtils::createCollectorTypeFromMetricType(metricType)));
+        MetricType metricType = magic_enum::enum_cast<MetricType>(monitoringStream).value();
+        std::string metricCollectorStr =
+            std::string(magic_enum::enum_name(MetricUtils::createCollectorTypeFromMetricType(metricType)));
         std::string query =
             R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType::%COLLECTOR%));)";
         query = std::regex_replace(query, std::regex("%STREAM%"), monitoringStream);
@@ -228,8 +230,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
         // create new monitoring query
         NES_INFO2("MonitoringManager: Creating query for {}", monitoringStream);
         queryId =
-            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE,
-                                                          LineageType::IN_MEMORY);
+            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
             NES_INFO2("MonitoringManager: Successfully started query {}::{}", queryId, monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});

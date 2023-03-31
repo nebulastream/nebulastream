@@ -29,8 +29,8 @@
 #include <numaif.h>
 #endif
 #endif
-#include <utility>
 #include <Util/magicenum/magic_enum.hpp>
+#include <utility>
 
 namespace NES {
 

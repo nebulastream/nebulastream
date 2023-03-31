@@ -49,8 +49,9 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
         //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
         //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default: throw Exceptions::RuntimeException("Unknown placement strategy type " +
-                                                        std::string(magic_enum::enum_name(placementStrategy)));
+        default:
+            throw Exceptions::RuntimeException("Unknown placement strategy type "
+                                               + std::string(magic_enum::enum_name(placementStrategy)));
     }
 }
 }// namespace NES::Optimizer

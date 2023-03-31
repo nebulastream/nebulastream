@@ -32,7 +32,6 @@ class GeoLocation;
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
-
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;

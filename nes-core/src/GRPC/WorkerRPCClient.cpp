@@ -136,7 +136,7 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
 
             if (!status) {
                 NES_THROW_RUNTIME_ERROR("RPC failed, a scheduled async call for mode" << magic_enum::enum_name(mode)
-                                        << " failed");
+                                                                                      << " failed");
             }
 
             // Once we're complete, deallocate the call object.

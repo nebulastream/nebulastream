@@ -15,8 +15,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <bitset>
 #include <Util/magicenum/magic_enum.hpp>
+#include <bitset>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <Util/Backward/backward.hpp>
@@ -61,7 +61,7 @@ MemorySegment::MemorySegment(uint8_t* ptr,
     NES_ASSERT2_FMT(this->ptr, "invalid ptr");
     NES_ASSERT2_FMT(this->size, "invalid size");
     controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)),
-                                              magic_enum::enum_integer(MemorySegmentType::Wrapped));
+                       magic_enum::enum_integer(MemorySegmentType::Wrapped));
     controlBlock->prepare();
 }
 

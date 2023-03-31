@@ -122,11 +122,10 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     EXPECT_EQ(r.status_code, 200);
 
     //check if content of r contains valid information
-    std::set<std::string> expectedMonitoringStreams {
-            toString(Monitoring::MetricType::WrappedNetworkMetrics),
-            toString(Monitoring::MetricType::WrappedCpuMetrics),
-            toString(Monitoring::MetricType::MemoryMetric),
-            toString(Monitoring::MetricType::DiskMetric)};
+    std::set<std::string> expectedMonitoringStreams{toString(Monitoring::MetricType::WrappedNetworkMetrics),
+                                                    toString(Monitoring::MetricType::WrappedCpuMetrics),
+                                                    toString(Monitoring::MetricType::MemoryMetric),
+                                                    toString(Monitoring::MetricType::DiskMetric)};
 
     nlohmann::json jsonsStart;
     ASSERT_NO_THROW(jsonsStart = nlohmann::json::parse(r.text));
@@ -333,10 +332,10 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     nlohmann::json jsons;
     ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
-    std::set<std::string> expectedMonitoringStreams{
-            toString(Monitoring::MetricType::WrappedNetworkMetrics),
-            toString(Monitoring::MetricType::WrappedCpuMetrics),toString(Monitoring::MetricType::MemoryMetric),
-            toString(Monitoring::MetricType::DiskMetric)};
+    std::set<std::string> expectedMonitoringStreams{toString(Monitoring::MetricType::WrappedNetworkMetrics),
+                                                    toString(Monitoring::MetricType::WrappedCpuMetrics),
+                                                    toString(Monitoring::MetricType::MemoryMetric),
+                                                    toString(Monitoring::MetricType::DiskMetric)};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
     ASSERT_TRUE(check);
     ASSERT_TRUE(waitForMonitoringQuery(coordinator, coordinatorConfig->restPort.getValue(), 5));
