@@ -9,31 +9,31 @@ aggregation:
   - type: MIN
     inputFile: "data/some_input_file.csv"
     fieldNameAgg: "value"
-    accuracyFile: "data/some_min_acc_file.csv"
+    timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: MAX
     inputFile: "data/some_input_file.csv"
     fieldNameAgg: "value"
-    accuracyFile: "data/some_max_acc_file.csv"
+    timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: SUM
     inputFile: "data/some_other_input_file.csv"
     fieldNameAgg: "value1"
-    accuracyFile: "data/some_sum_acc_file.csv"
+    timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: AVERAGE
     inputFile: "data/some_other_input_file.csv"
     fieldNameAgg: "value2"
-    accuracyFile: "data/some_average_acc_file.csv"
+    timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: COUNT
     inputFile: "data/some_other_input_file.csv"
     fieldNameAgg: "value2"
-    accuracyFile: "data/some_count_acc_file.csv"
+    timestamp: "ts"
     fieldNameApprox: "aggregation"
 
 windowSize: 1000, 5000, 10000, 50000, 100000

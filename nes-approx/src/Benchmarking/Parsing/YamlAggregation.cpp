@@ -27,22 +27,22 @@
 
 namespace NES::ASP::Benchmarking {
 
-YamlAggregation::YamlAggregation(const Type& type,
+YamlAggregation::YamlAggregation(const AGGREGATION_TYPE& type,
                                  const std::string& fieldNameAggregation,
                                  const std::string& fieldNameApproximate,
-                                 const std::string& accuracyFile,
+                                 const std::string& timeStampFieldName,
                                  const std::string& inputFile,
                                  const SchemaPtr& inputSchema,
                                  const SchemaPtr& outputSchema)
-    : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate), accuracyFile(accuracyFile),
-      inputFile(inputFile), inputSchema(inputSchema), outputSchema(outputSchema) {}
+    : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate),
+      timeStampFieldName(timeStampFieldName), inputFile(inputFile), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
 std::string YamlAggregation::toString() {
     std::stringstream stringStream;
     stringStream << std::endl << " - type: " << magic_enum::enum_name(type)
                  << std::endl << " - fieldNameAggregation:" << fieldNameAggregation
                  << std::endl << " - fieldNameAccuracy:" << fieldNameApproximate
-                 << std::endl << " - accuracyFile:" << accuracyFile
+                 << std::endl << " - timeStampFieldName: " << timeStampFieldName
                  << std::endl << " - inputFile:" << inputFile
                  << std::endl << " - inputSchema:" << inputSchema->toString()
                  << std::endl << " - outputSchema:" << outputSchema->toString();
@@ -52,7 +52,7 @@ std::string YamlAggregation::toString() {
 }
 
 std::string YamlAggregation::getHeaderAsCsv() {
-    return "type,fieldNameAggregation,fieldNameApproximate,accuracyFile,inputFile,inputSchema,outputSchema";
+    return "type,fieldNameAggregation,fieldNameApproximate,timeStampFieldName,inputFile,inputSchema,outputSchema";
 }
 
 std::string YamlAggregation::getValuesAsCsv() {
@@ -60,7 +60,7 @@ std::string YamlAggregation::getValuesAsCsv() {
     stringStream << magic_enum::enum_name(type) << ","
                  << fieldNameAggregation << ","
                  << fieldNameApproximate << ","
-                 << accuracyFile << ","
+                 << timeStampFieldName << ","
                  << inputFile << ","
                  << inputSchema->toString() << ","
                  << outputSchema->toString();
@@ -69,18 +69,20 @@ std::string YamlAggregation::getValuesAsCsv() {
 }
 
 YamlAggregation YamlAggregation::createAggregationFromYamlNode(Yaml::Node& aggregationNode) {
-    auto type = magic_enum::enum_cast<Type>(aggregationNode["type"].As<std::string>()).value();
+    auto type = magic_enum::enum_cast<AGGREGATION_TYPE>(aggregationNode["type"].As<std::string>()).value();
     auto fieldNameAggregation = aggregationNode["fieldNameAgg"].As<std::string>();
     auto fieldNameAccuracy = aggregationNode["fieldNameAcc"].As<std::string>();
     auto inputFile = aggregationNode["inputFile"].As<std::string>();
-    auto accuracyFile = aggregationNode["accuracyFile"].As<std::string>();
+    auto timeStampFieldName = aggregationNode["timestamp"].As<std::string>();
+
     auto inputSchema = inputFileSchemas[inputFile];
-    auto outputSchema = accuracyFileSchemas[accuracyFile];
+    auto outputSchema = accuracyFileSchemas[type];
 
     NES_ASSERT(outputSchema->get(fieldNameAggregation)->getDataType() == DataTypeFactory::createDouble(),
                "Currently we only support double as the aggregation field data type!");
 
-    return YamlAggregation(type, fieldNameAggregation, fieldNameAccuracy, accuracyFile, inputFile, inputSchema, outputSchema);
+    return YamlAggregation(type, fieldNameAggregation, fieldNameAccuracy, timeStampFieldName,
+                           inputFile, inputSchema, outputSchema);
 }
 
 Runtime::Execution::Aggregation::AggregationFunctionPtr YamlAggregation::createAggregationFunction() {
@@ -90,18 +92,12 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr YamlAggregation::createA
     auto finalType = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
 
     switch (type) {
-        case Type::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType);
-        case Type::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);;
-        case Type::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);;
-        case Type::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);;
-        case Type::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);;
-        case Type::NONE: NES_NOT_IMPLEMENTED();
-    }
-
-    if (type == Type::MIN) {
-        return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);
-    } else if (type == Type::MIN) {
-        return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);
+        case AGGREGATION_TYPE::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType);
+        case AGGREGATION_TYPE::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);;
+        case AGGREGATION_TYPE::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);;
+        case AGGREGATION_TYPE::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);;
+        case AGGREGATION_TYPE::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);;
+        case AGGREGATION_TYPE::NONE: NES_NOT_IMPLEMENTED();
     }
 }
 

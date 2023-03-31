@@ -97,10 +97,13 @@ class MicroBenchmarkRun {
     std::vector<Runtime::Execution::RecordBuffer> createInputRecords(Runtime::BufferManagerPtr bufferManager);
 
     /**
-     * @brief Creates a vector of type Runtime::Execution::RecordBuffer from the accuracy file
+     * @brief Creates a vector of type Runtime::Execution::RecordBuffer by executing the exact query
+     * @param inputBuffers
+     * @param bufferManager
      * @return Vector of records
      */
-    std::vector<Runtime::Execution::RecordBuffer> createAccuracyRecords(Runtime::BufferManagerPtr bufferManager);
+    std::vector<Runtime::Execution::RecordBuffer> createAccuracyRecords(std::vector<Runtime::Execution::RecordBuffer>& inputBuffers,
+                                                                        Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief Compares the approximated with the exact query output and returns an accuracy.

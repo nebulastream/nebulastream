@@ -38,6 +38,7 @@ SampleRandomWithReplacement::getApproximate(Runtime::BufferManagerPtr bufferMana
 
     // Approximate over the sample and write the approximation into record
     Nautilus::Record record;
+    aggregationValue = ASP::Util::createAggregationValue(aggregationFunction);
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& item : sample) {
