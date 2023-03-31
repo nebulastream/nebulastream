@@ -70,11 +70,7 @@ QueryPlanPtr NemoWindowPinningRule::apply(QueryPlanPtr queryPlan) {
 
             if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
                 && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
-                if (enableNemoPlacement) {
-                    pinWindowOperators(windowOp, queryPlan);
-                } else {
-                    createDistributedWindowOperator(windowOp, queryPlan);// should be removed in the future
-                }
+                pinWindowOperators(windowOp, queryPlan);
             } else {
                 createCentralWindowOperator(windowOp);
                 NES_DEBUG("NemoWindowPinningRule::apply: central op \n" << queryPlan->toString());
