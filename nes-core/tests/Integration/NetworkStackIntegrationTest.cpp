@@ -37,6 +37,7 @@
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
