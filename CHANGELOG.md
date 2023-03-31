@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.40](https://github.com/nebulastream/nebulastream/tree/v0.5.40) (2023-03-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.39...v0.5.40)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add class and Type to all enums [\#3600](https://github.com/nebulastream/nebulastream/issues/3600)
+
 ## [v0.5.39](https://github.com/nebulastream/nebulastream/tree/v0.5.39) (2023-03-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.38...v0.5.39)
@@ -3176,7 +3184,7 @@
 - Improve performance of Folly [\#2003](https://github.com/nebulastream/nebulastream/issues/2003)
 - Implement Buffering [\#2002](https://github.com/nebulastream/nebulastream/issues/2002)
 - E2E sustainable throughput benchmark [\#1996](https://github.com/nebulastream/nebulastream/issues/1996)
-- Add Integer Linear Programming Placement Strategy for OPTIMIZING Operator Placement [\#1979](https://github.com/nebulastream/nebulastream/issues/1979)
+- Add Integer Linear Programming Placement Strategy for Optimizing Operator Placement [\#1979](https://github.com/nebulastream/nebulastream/issues/1979)
 -  Incorrect shutdown sequencing of gRPC async Server on NESWorker [\#1977](https://github.com/nebulastream/nebulastream/issues/1977)
 - Refactor NodeStats [\#1971](https://github.com/nebulastream/nebulastream/issues/1971)
 - Integrate new watermarking approach [\#1952](https://github.com/nebulastream/nebulastream/issues/1952)
