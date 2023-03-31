@@ -952,7 +952,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
             {TestUtils::rpcPort(0),
              TestUtils::dataPort(0),
              TestUtils::coordinatorPort(*rpcCoordinatorPort),
-             TestUtils::sourceType("CSVSource"),
+             TestUtils::sourceType(SourceType::CSV_SOURCE),
              TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
                                           + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
              TestUtils::physicalSourceName("test_stream"),
