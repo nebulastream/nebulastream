@@ -323,7 +323,7 @@ class DynamicTupleBuffer {
     void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
-        if(recordIndex >= numberOfRecords) {
+        if(recordIndex >= buffer.getBufferSize()) {
             throw BufferAccessException("Current buffer is not big enough for index. Current buffer size: " + 
                                     std::to_string(buffer.getBufferSize()) + ", Index: " + std::to_string(recordIndex));
         }

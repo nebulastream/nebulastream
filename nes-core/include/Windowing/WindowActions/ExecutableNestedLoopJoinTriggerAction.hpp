@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -344,14 +345,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                    sizeof(rightValue),
                    sizeof(InputTypeLeft),
                    sizeof(InputTypeRight));
-
-        auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
+        dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(windowTupleLayout, tupleBuffer);
         std::tuple<uint64_t, uint64_t, KeyType, InputTypeLeft, InputTypeRight> newTuple(startTs,
                                                                                         endTs,
                                                                                         key,
                                                                                         leftValue,
                                                                                         rightValue);
-        bindedRowLayout->pushRecord<true>(newTuple, index);
+        dynamicBuffer->pushRecordToBuffer(newTuple, index);
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }
@@ -359,6 +359,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     SchemaPtr windowSchema;
+    std::unique_ptr<Runtime::MemoryLayouts::DynamicTupleBuffer> dynamicBuffer;
     Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
 };

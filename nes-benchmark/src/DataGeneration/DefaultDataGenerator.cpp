@@ -17,7 +17,6 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
@@ -48,11 +47,11 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
         if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
-            auto rowLayoutBuffer = rowLayout->bind(bufferRef);
+            auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer->getCapacity(); ++curRecord) {
                 uint64_t value = uniformIntDistribution(generator);
-                rowLayoutBuffer->pushRecord<false>(
+                dynamicBuffer->pushRecordToBuffer(
                     std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
             }
 

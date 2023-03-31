@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/BasicTypes.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
@@ -55,7 +56,7 @@ class DynamicMemoryLayoutTestParameterized
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
 
-        schema = Schema::create()->addField("t1", UINT16)->addField("t2", BOOLEAN)->addField("t3", FLOAT64);
+        schema = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
         if(GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             RowLayoutPtr layout;
             ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -216,7 +217,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout) {
 
 INSTANTIATE_TEST_CASE_P(TestInputs,
                         DynamicMemoryLayoutTestParameterized,
-                        ::testing::Values(Schema::COLUMNAR_LAYOUT, Schema::ROW_LAYOUT),
+                        ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
                         [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });
