@@ -354,11 +354,8 @@ class DynamicTupleBuffer {
             "Provided tuple types: " << sizeof...(Types) << " do not match the number of fields in the memory layout: " 
             << memoryLayout->getFieldSizes().size() << '\n');
         std::tuple<Types...> retTuple;
-        if(copyRecordFromBufferToTuple(retTuple, recordIndex)) {
-            return retTuple;
-        } else {
-            return std::tuple<Types...>();
-        }
+        copyRecordFromBufferToTuple(retTuple, recordIndex);
+        return retTuple;
     }
 
   private: 
@@ -373,23 +370,15 @@ class DynamicTupleBuffer {
      * @return true if the record was read from the TupleBuffer successfully, false otherwise.
      */
     template <size_t I = 0, typename... Types>
-    constexpr bool copyRecordFromBufferToTuple(std::tuple<Types...> &record, uint64_t recordIndex)
+    void copyRecordFromBufferToTuple(std::tuple<Types...> &record, uint64_t recordIndex)
     {
         // Check if I matches the size of the tuple, which means that all fields of the record have been processed.
         if constexpr(I != sizeof...(Types)) {
             // Get type of current tuple element and cast field value to this type. Add value to return tuple.
-            try {
-                std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
-            } catch(BufferAccessException bufferAccessException) {
-                // Cannot use NES_ERROR, because we are in a constexpr function.
-                std::cout << "BufferAccessException: " << bufferAccessException.what() << '\n';
-                return false;
-            }
+            std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
             // Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
             copyRecordFromBufferToTuple<I + 1>(record, recordIndex);
         }
-        // We recursively iterated over all fields of the record, and can thus return.
-        return true;
     }
 
      /**
