@@ -81,7 +81,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     // Distinguish process between different window types (curretnly time-based and content-based)
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
         // typeInference
-        if (!windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType())->inferStamp(inputSchema)) {
+        if (!windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType())->inferStamp(inputSchema,typeInferencePhaseContext)) {
             return false;
         }
         outputSchema =
@@ -93,7 +93,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
         auto contentBasedWindowType = windowDefinition->getWindowType()->asContentBasedWindowType(windowDefinition->getWindowType());
         if(contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW){
             auto thresholdWindow = contentBasedWindowType->asThresholdWindow(contentBasedWindowType);
-            if (!thresholdWindow->inferStamp(typeInferencePhaseContext, inputSchema)) {
+            if (!thresholdWindow->inferStamp(inputSchema,typeInferencePhaseContext)) {
                 return false;
             }
         }

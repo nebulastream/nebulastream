@@ -139,7 +139,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
 
     //Infer stamp of window definition
     auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
-    windowType->inferStamp(leftInputSchema);
+    windowType->inferStamp(leftInputSchema, typeInferencePhaseContext);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
