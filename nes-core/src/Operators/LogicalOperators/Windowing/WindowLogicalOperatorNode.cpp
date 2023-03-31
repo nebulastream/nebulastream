@@ -81,23 +81,27 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     // Distinguish process between different window types (curretnly time-based and content-based)
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
         // typeInference
-        if (!windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType())->inferStamp(inputSchema,typeInferencePhaseContext)) {
+        if (!windowDefinition->getWindowType()
+                 ->asTimeBasedWindowType(windowDefinition->getWindowType())
+                 ->inferStamp(inputSchema, typeInferencePhaseContext)) {
             return false;
         }
-        outputSchema =
-            outputSchema
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64))
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64));
-    }else if(windowDefinition->getWindowType()->isContentBasedWindowType()) {
+        outputSchema = outputSchema
+                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
+                                                  BasicType::UINT64))
+                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
+                                                  BasicType::UINT64));
+    } else if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
         // type Inference for Content-based Windows requires the typeInferencePhaseContext
-        auto contentBasedWindowType = windowDefinition->getWindowType()->asContentBasedWindowType(windowDefinition->getWindowType());
-        if(contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW){
+        auto contentBasedWindowType =
+            windowDefinition->getWindowType()->asContentBasedWindowType(windowDefinition->getWindowType());
+        if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
             auto thresholdWindow = contentBasedWindowType->asThresholdWindow(contentBasedWindowType);
-            if (!thresholdWindow->inferStamp(inputSchema,typeInferencePhaseContext)) {
+            if (!thresholdWindow->inferStamp(inputSchema, typeInferencePhaseContext)) {
                 return false;
             }
         }
-    }else{
+    } else {
         NES_THROW_RUNTIME_ERROR("Unsupported window type" << windowDefinition->getWindowType()->toString());
     }
 
