@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
@@ -20,7 +21,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
