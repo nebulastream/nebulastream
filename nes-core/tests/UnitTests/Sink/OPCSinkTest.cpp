@@ -21,6 +21,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
