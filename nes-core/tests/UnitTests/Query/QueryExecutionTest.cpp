@@ -1211,7 +1211,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
-        auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
 
         auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
         auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);

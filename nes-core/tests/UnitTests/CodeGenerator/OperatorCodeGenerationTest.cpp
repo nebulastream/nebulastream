@@ -1306,9 +1306,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto outputLayout =
         Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
-    auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
-    auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
-
     auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
     auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);
     auto fourthFieldsOutput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
@@ -1390,9 +1387,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 
     auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
-
-    auto bindedInputLayout = inputLayout->bind(inputBuffer);
-    auto bindedOutputLayout = outputLayout->bind(resultBuffer);
 
     auto floatValueFields = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
     auto doubleValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);

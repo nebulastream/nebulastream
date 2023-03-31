@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -254,20 +255,20 @@ class ExecutableSliceAggregationTriggerAction
                            KeyType key,
                            ValueType value,
                            uint64_t cnt) {
-        auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
-
+        dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(windowTupleLayout, tupleBuffer);
         if (windowDefinition->isKeyed()) {
             std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> keyedTuple(startTs, endTs, cnt, key, value);
-            bindedRowLayout->pushRecord<true>(keyedTuple, index);
+            dynamicBuffer->pushRecordToBuffer(keyedTuple, index);
         } else {
             std::tuple<uint64_t, uint64_t, uint64_t, ValueType> notKeyedTuple(startTs, endTs, cnt, value);
-            bindedRowLayout->pushRecord<true>(notKeyedTuple, index);
+            dynamicBuffer->pushRecordToBuffer(notKeyedTuple, index);
         }
     }
 
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
+    std::unique_ptr<Runtime::MemoryLayouts::DynamicTupleBuffer> dynamicBuffer;
     Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
