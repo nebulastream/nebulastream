@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
