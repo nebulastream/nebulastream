@@ -61,6 +61,13 @@ class WindowType {
        */
     static ContentBasedWindowTypePtr asContentBasedWindowType(std::shared_ptr<WindowType> windowType);
 
+    /**
+     * @brief Infer stamp of the window type
+     * @param schema : the schema of the window
+     * @return true if success else false
+     */
+    virtual bool inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
+
 };
 
 }// namespace NES::Windowing

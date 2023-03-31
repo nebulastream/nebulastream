@@ -41,14 +41,6 @@ class ContentBasedWindowType : public WindowType {
     bool isContentBasedWindowType() override;
 
     /**
-     * @brief Infer stamp of the window type
-     * @param typeInferencePhaseContext
-     * @param schema : the schema of the window
-     * @return true if success else false
-     */
-    virtual bool inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, const SchemaPtr& schema) = 0;
-
-    /**
        * Cast the current window type as a threshold window type
        * @return a shared pointer of ThresholdWindow
        */

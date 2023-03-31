@@ -76,6 +76,15 @@ class TimeBasedWindowType : public WindowType {
     /**
      * @brief Infer stamp of time based window type
      * @param schema : the schema of the window
+     * @param typeInferencePhaseContext: typeInference context
+     * @return true if success else false
+     */
+    bool inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+
+  private:
+    /**
+     * @brief Infer stamp of time based window type
+     * @param schema : the schema of the window
      * @return true if success else false
      */
     bool inferStamp(const SchemaPtr& schema);

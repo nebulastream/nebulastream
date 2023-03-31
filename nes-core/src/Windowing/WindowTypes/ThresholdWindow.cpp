@@ -47,7 +47,7 @@ const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicat
 
 uint64_t ThresholdWindow::getMinimumCount() { return minimumCount; }
 
-bool ThresholdWindow::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, const SchemaPtr& schema) {
+bool ThresholdWindow::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
     NES_INFO("inferStamp for ThresholdWindow")
     predicate->inferStamp(typeInferencePhaseContext, schema);
     if (!predicate->isPredicate()) {

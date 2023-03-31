@@ -78,11 +78,11 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
         auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
         if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW){
-            contentBasedWindowType->inferStamp(typeInferencePhaseContext, inputSchema);
+            contentBasedWindowType->inferStamp(inputSchema,typeInferencePhaseContext);
         }
     } else {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        timeBasedWindowType->inferStamp(inputSchema);
+        timeBasedWindowType->inferStamp(inputSchema, typeInferencePhaseContext);
     }
 
     //Construct output schema
