@@ -648,6 +648,9 @@ add_nes_integration_test(string-query-test "Integration/StringQueryTest.cpp" )
 ### UpstreamBackup ###
 add_nes_integration_test(upstream-backup-test "Integration/UpstreamBackupTest.cpp" )
 
+### Adaptive Active Standby Benchmark ###
+add_nes_integration_test(aas-benchmark-test "Integration/AASBenchmarkTest.cpp" )
+
 ### gRPC Tests
 add_nes_integration_test(grpc-test "UnitTests/gRPC/grpcTests.cpp")
 

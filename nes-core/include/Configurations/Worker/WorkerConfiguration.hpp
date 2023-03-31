@@ -162,7 +162,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Enables the statistic output
      */
-    BoolOption enableStatisticOuput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
+    BoolOption enableStatisticOutput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
 
     /**
      * @brief Sets configuration properties for the query compiler.
@@ -222,6 +222,12 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption numberOfThreadsPerQueue = {NUMBER_OF_THREAD_PER_QUEUE, 0, "Number of threads per processing queue."};
 
+    UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
+
+    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1024, "Number of buffers to produce"};
+
+    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 100, "Source gathering interval"};
+
     /**
      * @brief Number of buffers per epoch
      * Set trimming frequency for upstream backup
@@ -278,11 +284,15 @@ class WorkerConfiguration : public BaseConfiguration {
                 &mobilityConfiguration,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
+                &lambdaSource,
+                &numberOfBuffersToProduce,
+                &sourceGatheringInterval,
                 &numberOfBuffersPerEpoch,
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
+                &enableStatisticOutput
 #ifdef TFDEF
                 &isTfInstalled
 #endif

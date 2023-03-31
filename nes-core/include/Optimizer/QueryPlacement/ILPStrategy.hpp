@@ -81,7 +81,7 @@ class ILPStrategy : public BasePlacementStrategy {
     double networkCostWeight = 1.0;
     // context from the Z3 library used for optimization
     z3::ContextPtr z3Context;
-    const static int timeout = 100000;    // 100s for model optimization
+    const static int timeout = 600000;    // 300s for model optimization
     //map to hold operators to place
     std::map<OperatorId, OperatorNodePtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";

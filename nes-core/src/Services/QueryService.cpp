@@ -69,6 +69,48 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         queryPlan->setFaultToleranceType(faultTolerance);
         queryPlan->setLineageType(lineage);
 
+        // add properties to the operators for AASBenchmarkTest
+//            + ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
+//            + ".filter(Attribute(\"d\") >= 2)"      // avg DMF = 0.5
+//            + R"(.map(Attribute("f") = Attribute("e") * 2))"   // DMF = 1
+        auto sources = queryPlan->getLeafOperators();   // sources
+        for (const auto& srcOperator: sources) {
+            // source
+            double dmf = 1;
+            double input = 100;
+            double output = input * dmf;
+            srcOperator->addProperty("output", output);
+            NES_DEBUG("QueryService: " << srcOperator->toString() << " output: " << output);
+
+            // ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
+            auto firstFilterOperator = srcOperator->getParents()[0]->as<OperatorNode>();
+            //            dmf = 0.3367;   // compensate for DMF_map = 0.99
+            dmf = 0.33;
+            input = output;
+            output = input * dmf;
+            firstFilterOperator->addProperty("output", output);
+            NES_DEBUG("QueryService: " << firstFilterOperator->toString() << " output: " << output);
+
+            // ".filter(Attribute(\"d\") >= 2)"      // avg DMF = 0.5
+            auto secondFilterOperator = firstFilterOperator->getParents()[0]->as<OperatorNode>();
+            dmf = 0.5;
+            input = output;
+            output = input * dmf;
+            secondFilterOperator->addProperty("output", output);
+            NES_DEBUG("QueryService: " << secondFilterOperator->toString() << " output: " << output);
+
+            // R"(.map(Attribute("f") = Attribute("e") * 2))"   // DMF = 1
+            auto mapOperator = secondFilterOperator->getParents()[0]->as<OperatorNode>();
+            //            dmf = 0.99;     // to help optimizer make a proper decision in case of ties (which could be caused by dmf = 1)
+            dmf = 1.1;
+            input = output;
+            output = input * dmf;
+            mapOperator->addProperty("output", output);
+            NES_DEBUG("QueryService: " << mapOperator->toString() << " output: " << output);
+
+            NES_DEBUG("QueryService: Added operator outputs");
+        }
+
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
