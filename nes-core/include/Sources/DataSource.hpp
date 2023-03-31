@@ -22,6 +22,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
+#include <Common/Identifiers.hpp>
 #include <atomic>
 #include <chrono>
 #include <future>
