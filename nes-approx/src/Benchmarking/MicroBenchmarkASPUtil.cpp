@@ -134,7 +134,9 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
 }
 
 std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
-                                                                       Runtime::BufferManagerPtr bufferManager) {
+                                                                       Runtime::BufferManagerPtr bufferManager,
+                                                                       const std::string& timeStampFieldName,
+                                                                       uint64_t lastTimeStamp) {
     std::vector<Runtime::Execution::RecordBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
@@ -157,6 +159,12 @@ std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std
         auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(buffer, schema);
         parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicTupleBuffer, schema, bufferManager);
         tupleCount++;
+
+        // If we have read enough tuples from the csv file, then stop iterating over it
+        if (dynamicTupleBuffer[tupleCount][timeStampFieldName].read<uint64_t>() >= lastTimeStamp) {
+            break;
+        }
+
 
         if (tupleCount >= maxTuplesPerBuffer) {
             buffer.setNumberOfTuples(tupleCount);

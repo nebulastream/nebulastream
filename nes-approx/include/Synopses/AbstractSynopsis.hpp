@@ -26,6 +26,8 @@ namespace NES::ASP {
 class AbstractSynopsis;
 using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopsis>;
 
+using AggregationValuePtr = std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>;
+
 constexpr auto GENERATOR_SEED_DEFAULT = 42;
 
 /**
@@ -93,7 +95,7 @@ class AbstractSynopsis {
 
   protected:
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> aggregationValue;
+    AggregationValuePtr aggregationValue;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     SchemaPtr outputSchema;

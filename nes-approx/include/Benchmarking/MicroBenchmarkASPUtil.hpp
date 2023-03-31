@@ -106,6 +106,9 @@ Runtime::Execution::MemoryProvider::MemoryProviderPtr createMemoryProvider(const
  */
 Runtime::MemoryLayouts::DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
 
+
+AggregationValuePtr createAggregationValue(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction);
+
 /**
  * @brief Returns the physical types of all fields of the schema
  * @param schema
@@ -114,14 +117,18 @@ Runtime::MemoryLayouts::DynamicTupleBuffer createDynamicTupleBuffer(Runtime::Tup
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 
 /**
- * @brief Creates multiple RecordBuffers from the csv file
+ * @brief Creates multiple RecordBuffers from the csv file until the lastTimeStamp has been read
  * @param csvFile
  * @param schema
+ * @param timeStampFieldName
+ * @param lastTimeStamp
  * @param bufferManager
  * @return Vector of RecordBuffers
  */
 [[maybe_unused]] std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
-                                                                       Runtime::BufferManagerPtr bufferManager);
+                                                                                        Runtime::BufferManagerPtr bufferManager,
+                                                                                        const std::string& timeStampFieldName,
+                                                                                        uint64_t lastTimeStamp);
 
 
 } // namespace NES::ASP

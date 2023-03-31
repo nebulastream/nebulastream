@@ -29,7 +29,7 @@ void MicroBenchmarkRun::run() {
 
     NES_INFO("Creating input buffer and accuracy buffer...");
     auto allRecordBuffers = this->createInputRecords(bufferManager);
-    auto allAccuracyBuffers = this->createAccuracyRecords(bufferManager);
+    auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, bufferManager);
 
     auto synopsis = AbstractSynopsis::create(synopsesArguments);
     auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
@@ -198,11 +198,44 @@ std::string MicroBenchmarkRun::toString() {
 }
 
 std::vector<Runtime::Execution::RecordBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
-    return ASP::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager);
+    return ASP::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager,
+                                               aggregation.timeStampFieldName, windowSize);
 }
 
-std::vector<Runtime::Execution::RecordBuffer> MicroBenchmarkRun::createAccuracyRecords(Runtime::BufferManagerPtr bufferManager) {
-    return ASP::Util::createBuffersFromCSVFile(aggregation.accuracyFile, aggregation.outputSchema, bufferManager);
+std::vector<Runtime::Execution::RecordBuffer>
+    MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::Execution::RecordBuffer>& inputBuffers,
+                                         Runtime::BufferManagerPtr bufferManager) {
+    auto aggregationFunction = aggregation.createAggregationFunction();
+    auto aggregationValue = ASP::Util::createAggregationValue(aggregationFunction);
+    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
+
+    auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
+
+    // TODO for now we can ignore windows
+    for (auto& buffer : inputBuffers) {
+        auto numberOfRecords = buffer.getNumRecords();
+        auto bufferAddress = buffer.getBuffer();
+        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
+            auto record = memoryProvider->read({}, bufferAddress, i);
+            aggregationFunction->lift(aggregationValueMemRef, record.read(aggregation.fieldNameAggregation));
+        }
+    }
+
+    // Writes the output into a Nautilus::Record
+    Nautilus::Record record;
+    auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
+    record.write(aggregation.fieldNameApproximate, approximatedValue);
+
+    // Create an output buffer and write the approximation into it
+    auto outputMemoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
+    auto outputBuffer = bufferManager->getBufferBlocking();
+    auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer));
+
+    Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
+    outputMemoryProvider->write(recordIndex, outputRecordBuffer, record);
+
+
+    return {Runtime::Execution::RecordBuffer(outputRecordBuffer)};
 }
 
 double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::Execution::RecordBuffer>& allAccuracyRecords,

@@ -21,8 +21,9 @@
 #include <string>
 
 namespace NES::ASP::Benchmarking {
+enum class AGGREGATION_TYPE : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
 class YamlAggregation {
-    enum class Type : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
+
 
   public:
     /**
@@ -34,15 +35,14 @@ class YamlAggregation {
      * @brief Custom constructor
      * @param type
      * @param fieldNameAggregation
-     * @param accuracyFile
      * @param inputFile
      * @param inputSchema
      * @param outputSchema
      */
-    YamlAggregation(const Type& type,
+    YamlAggregation(const AGGREGATION_TYPE& type,
                     const std::string& fieldNameAggregation,
                     const std::string& fieldNameApproximate,
-                    const std::string& accuracyFile,
+                    const std::string& timestampFieldName,
                     const std::string& inputFile,
                     const SchemaPtr& inputSchema,
                     const SchemaPtr& outputSchema);
@@ -78,12 +78,10 @@ class YamlAggregation {
      */
     Runtime::Execution::Aggregation::AggregationFunctionPtr createAggregationFunction();
 
-
-
-    Type type;
+    AGGREGATION_TYPE type;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
-    std::string accuracyFile;
+    std::string timeStampFieldName;
     std::string inputFile;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
