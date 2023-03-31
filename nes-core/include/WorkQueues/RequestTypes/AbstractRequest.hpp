@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_ABSTRACTREQUEST_HPP
-#define NES_ABSTRACTREQUEST_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 
 #include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
 #include <exception>
@@ -118,11 +118,10 @@ class AbstractRequest {
      */
     virtual void executeRequestLogic(StorageHandlePtr storageHandle) = 0;
 
-
   private:
     size_t maxRetries;
     size_t actualRetries;
     std::vector<StorageHandleResourceType> requiredResources;
 };
 }
-#endif//NES_ABSTRACTREQUEST_HPP
+#endif//NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_

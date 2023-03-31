@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_SERIALSTORAGEHANDLE_HPP
-#define NES_SERIALSTORAGEHANDLE_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_
 
 #include <WorkQueues/StorageHandles/StorageHandle.hpp>
 
@@ -75,4 +75,4 @@ class SerialStorageHandle : public StorageHandle {
     UdfCatalogHandle getUdfCatalogHandle() override;
 };
 }
-#endif//NES_SERIALSTORAGEHANDLE_HPP
+#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_

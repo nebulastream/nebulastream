@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
-#define NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
 
 #include <WorkQueues/StorageHandles/StorageHandle.hpp>
 
@@ -83,4 +83,4 @@ class TwoPhaseLockingStorageHandle : public StorageHandle {
     std::mutex udfCatalogMutex;
 };
 }
-#endif//NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
+#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
