@@ -1,4 +1,9 @@
 #include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/RowLayout.hpp"
+#include "Runtime/MemoryLayout/ColumnLayout.hpp"
+#include "API/Schema.hpp"
+//#include "../nes-data-types/include/API/Schema.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <lz4.h>
 #include <utility>
 

@@ -55,7 +55,7 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayout) {// TODO
 // ===================================
 TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
 
     RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -103,7 +103,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint
 
 TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -152,7 +152,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnU
 
 TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8)->addField("t2", UINT8)->addField("t3", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -212,7 +212,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8
 
 TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutMultiColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8)->addField("t2", UINT8)->addField("t3", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -276,7 +276,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutMultiColumnUi
 // ===================================
 TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseRowLayoutSingleColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
 
     RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -314,7 +314,7 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseRowLayoutSingleColumnUint
 
 TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutSingleColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -363,7 +363,7 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutSingleColumnU
 
 TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseRowLayoutMultiColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8)->addField("t2", UINT8)->addField("t3", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
@@ -411,7 +411,7 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseRowLayoutMultiColumnUint8
 
 TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutMultiColumnUint8) {
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8)->addField("t2", UINT8)->addField("t3", UINT8);
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
