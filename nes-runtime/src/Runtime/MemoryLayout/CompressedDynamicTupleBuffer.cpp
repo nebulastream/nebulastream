@@ -1,8 +1,7 @@
 #include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/ColumnLayout.hpp"
 #include "API/Schema.hpp"
-//#include "../nes-data-types/include/API/Schema.hpp"
+#include "Runtime/MemoryLayout/ColumnLayout.hpp"
+#include "Runtime/MemoryLayout/RowLayout.hpp"
 #include "Util/Logger/Logger.hpp"
 #include <lz4.h>
 #include <utility>
@@ -11,24 +10,39 @@ namespace NES::Runtime::MemoryLayouts {
 
 CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
     : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
+    maxBufferSize = this->getBuffer().getBufferSize();
     compressionAlgorithm = CompressionAlgorithm::NONE;
     compressionMode = CompressionMode::FULL_BUFFER;
-    compressed = false;
     lz4CompressedSizes = std::vector<int>{0};
     offsets = getOffsets(memoryLayout);
 }
 
 CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout,
                                                            TupleBuffer buffer,
-                                                           CompressionAlgorithm compressionAlgorithm,
-                                                           CompressionMode compressionMode)
+                                                           CompressionMode cm)
     : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
-    this->compressionAlgorithm = compressionAlgorithm;
-    this->compressionMode = compressionMode;
-    compressed = false;
+    maxBufferSize = this->getBuffer().getBufferSize();
+    this->compressionAlgorithm = CompressionAlgorithm::NONE;
+    this->compressionMode = cm;
     lz4CompressedSizes = std::vector<int>{0};
     offsets = getOffsets(memoryLayout);
 }
+
+CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout,
+                                                           TupleBuffer buffer,
+                                                           CompressionAlgorithm ca,
+                                                           CompressionMode cm)
+    : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
+    maxBufferSize = this->getBuffer().getBufferSize();
+    this->compressionAlgorithm = ca;
+    // TODO compress
+    this->compressionMode = cm;
+    lz4CompressedSizes = std::vector<int>{0};
+    offsets = getOffsets(memoryLayout);
+}
+
+CompressionAlgorithm CompressedDynamicTupleBuffer::getCompressionAlgorithm() { return compressionAlgorithm; }
+CompressionMode CompressedDynamicTupleBuffer::getCompressionMode() { return compressionMode; }
 
 std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayoutPtr& memoryLayout) {
     if (auto rowLayout = dynamic_cast<RowLayout*>(memoryLayout.get())) {
@@ -39,225 +53,91 @@ std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayou
     }
     NES_NOT_IMPLEMENTED();
 }
-
-// ====================================================================================================
-// Compressor
-// ====================================================================================================
-void Compressor::compress(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    switch (outBuf.compressionMode) {
-        case CompressionMode::FULL_BUFFER:
-            switch (outBuf.compressionAlgorithm) {
-                case CompressionAlgorithm::NONE: NES_NOT_IMPLEMENTED();
-                case CompressionAlgorithm::LZ4: Compressor::compressLz4(inBuf, outBuf); break;
-                case CompressionAlgorithm::RLE: Compressor::compressRLE(inBuf, outBuf); break;
-                case CompressionAlgorithm::SNAPPY: NES_NOT_IMPLEMENTED();
-            }
-            break;
-        case CompressionMode::COLUMN_WISE:
-            if (dynamic_cast<ColumnLayout*>(outBuf.getMemoryLayout().get()) == nullptr) {
-                NES_THROW_RUNTIME_ERROR("Only ColumnLayout supported for row-wise compression.");
-            }
-            switch (outBuf.compressionAlgorithm) {
-                case CompressionAlgorithm::NONE: NES_NOT_IMPLEMENTED();
-                case CompressionAlgorithm::LZ4: Compressor::compressLz4Columnar(inBuf, outBuf); break;
-                case CompressionAlgorithm::RLE: NES_NOT_IMPLEMENTED();
-                case CompressionAlgorithm::SNAPPY: NES_NOT_IMPLEMENTED();
-            }
-            break;
-        default: NES_NOT_IMPLEMENTED();
+void CompressedDynamicTupleBuffer::compress(CompressionAlgorithm targetCa) { compress(targetCa, CompressionMode::FULL_BUFFER); }
+void CompressedDynamicTupleBuffer::compress(CompressionAlgorithm targetCa, CompressionMode targetCm) {
+    if (compressionAlgorithm == CompressionAlgorithm::NONE) {
+        switch (targetCa) {
+            case CompressionAlgorithm::NONE: decompress(); break;
+            case CompressionAlgorithm::LZ4:
+                switch (targetCm) {
+                    case CompressionMode::FULL_BUFFER: compressLz4FullBuffer(); break;
+                    case CompressionMode::COLUMN_WISE: NES_NOT_IMPLEMENTED();
+                }
+                break;
+            case CompressionAlgorithm::SNAPPY: NES_NOT_IMPLEMENTED();
+            case CompressionAlgorithm::RLE: NES_NOT_IMPLEMENTED();
+        }
+    } else {
+        NES_THROW_RUNTIME_ERROR(printf("Cannot compress %s to %s.",
+                                       getCompressionAlgorithmName(compressionAlgorithm),
+                                       getCompressionAlgorithmName(targetCa)));
     }
 }
 
-void Compressor::compressLz4(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
-    uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
+void CompressedDynamicTupleBuffer::decompress() {
+    switch (compressionAlgorithm) {
+        case CompressionAlgorithm::NONE: break;
+        case CompressionAlgorithm::LZ4: decompressLz4FullBuffer(); break;
+        case CompressionAlgorithm::SNAPPY: NES_NOT_IMPLEMENTED();
+        case CompressionAlgorithm::RLE: NES_NOT_IMPLEMENTED();
+    }
+}
+
+void CompressedDynamicTupleBuffer::compressLz4FullBuffer() {//TODO WIP
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
+    size_t dstLength = 0;
     std::vector<int> compressedSizes;
-    for (auto offset : inBuf.offsets) {
+    for (auto offset : this->offsets) {
         const char* src = reinterpret_cast<const char*>(baseSrcPointer + offset);
         const int srcSize = strlen(src);
         const int maxDstSize = LZ4_compressBound(srcSize);// TODO handle if > buffer size
         char* compressed = (char*) malloc((size_t) maxDstSize);
         if (compressed == nullptr)
-            NES_NOT_IMPLEMENTED();// TODO
-        const int compressedSize = LZ4_compress_default(src, compressed, srcSize, outBuf.getCapacity());
+            NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
+        const int compressedSize = LZ4_compress_default(src, compressed, srcSize, maxDstSize);
         if (compressedSize <= 0)
-            NES_NOT_IMPLEMENTED();// TODO
+            NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
         compressedSizes.push_back(compressedSize);
         // free up memory
         compressed = (char*) realloc(compressed, (size_t) compressedSize);// TODO? always same as buffer size
+        dstLength += compressedSize;
         memcpy(baseDstPointer + offset, compressed, compressedSize);
     }
-    outBuf.lz4CompressedSizes = compressedSizes;
-    outBuf.compressed = true;
+    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
+    // TODO reduce buffer to `dstLength`
+    if (dstLength > maxBufferSize)
+        maxBufferSize = dstLength;
+    this->lz4CompressedSizes = compressedSizes;
+    this->compressionAlgorithm = CompressionAlgorithm::LZ4;
 }
 
-void Compressor::compressLz4Columnar(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
-    uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
-    int bufferSize = inBuf.getBuffer().getBufferSize();
-    char* src = new char[bufferSize];
-    std::vector<uint64_t> newOffsets{0};
-    // create one string to be compressed
-    strcpy(src, reinterpret_cast<const char*>(baseSrcPointer));
-    size_t newOffset = 0;
-    for (size_t i = 1; i < inBuf.offsets.size(); i++) {
-        const char* tmp = reinterpret_cast<const char*>(baseSrcPointer + inBuf.offsets[i]);
-        strcat(src, tmp);
-        newOffset += strlen(tmp);
-        newOffsets.push_back(newOffset);
-    }
-    int srcSize = strlen(src);
-    const int maxDstSize = LZ4_compressBound(srcSize);// TODO handle if > buffer size
-    char* compressed = (char*) malloc((size_t) maxDstSize);
-    if (compressed == nullptr)
-        NES_NOT_IMPLEMENTED();// TODO
-    const int compressedSize = LZ4_compress_default(src, compressed, srcSize, maxDstSize);
-    if (compressedSize <= 0)
-        NES_NOT_IMPLEMENTED();// TODO
-    // free up memory
-    compressed = (char*) realloc(compressed, (size_t) compressedSize);// TODO? always same as buffer size
-    memcpy(baseDstPointer, compressed, compressedSize);
-    outBuf.lz4CompressedSizes = {compressedSize};
-    outBuf.compressed = true;
-}
-
-void Compressor::compressRLE(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
-    uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
-    for (auto offset : inBuf.offsets) {
-        const char* in = reinterpret_cast<const char*>(baseSrcPointer + offset);
-        size_t size = strlen(in);
-        std::string temp;
-        for (size_t i = 0; i < size; i++) {
-            int count = 1;
-            while (in[i] == in[i + 1]) {
-                count++;
-                i++;
-            }
-            if (count <= 1) {
-                temp += in[i];
-            } else {
-                temp += std::to_string(count);
-                temp += in[i];
-            }
-        }
-        memcpy(baseDstPointer + offset, temp.c_str(), temp.size());// TODO handle case if buffer is too small
-    }
-    outBuf.compressed = true;
-}
-
-// ====================================================================================================
-// Decompressor
-// ====================================================================================================
-void Decompressor::decompress(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    switch (outBuf.compressionMode) {
-        case CompressionMode::FULL_BUFFER:
-            switch (inBuf.compressionAlgorithm) {
-                case CompressionAlgorithm::NONE: NES_NOT_IMPLEMENTED();
-                case CompressionAlgorithm::LZ4: decompressLz4(inBuf, outBuf); break;
-                case CompressionAlgorithm::RLE: decompressRLE(inBuf, outBuf); break;
-                case CompressionAlgorithm::SNAPPY: NES_NOT_IMPLEMENTED();
-            }
-            break;
-        case CompressionMode::COLUMN_WISE:
-            if (dynamic_cast<ColumnLayout*>(outBuf.getMemoryLayout().get()) == nullptr) {
-                NES_THROW_RUNTIME_ERROR("Only ColumnLayout supported for row-wise compression.");
-            }
-            switch (inBuf.compressionAlgorithm) {
-                case CompressionAlgorithm::NONE: NES_NOT_IMPLEMENTED();
-                case CompressionAlgorithm::LZ4: decompressLz4Columnar(inBuf, outBuf); break;
-                case CompressionAlgorithm::RLE: NES_NOT_IMPLEMENTED();
-                case CompressionAlgorithm::SNAPPY: NES_NOT_IMPLEMENTED();
-            }
-            break;
-        default: NES_NOT_IMPLEMENTED();
-    }
-}
-void Decompressor::decompressLz4(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
-    uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
+void CompressedDynamicTupleBuffer::decompressLz4FullBuffer() {//TODO WIP
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    uint8_t* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
     int i = 0;
-    for (auto offset : inBuf.offsets) {
+    size_t dstLength = 0;
+    for (auto offset : this->offsets) {
         const char* compressed = reinterpret_cast<const char*>(baseSrcPointer + offset);
-        const int compressedSize = inBuf.lz4CompressedSizes[i];
-        const int dstCapacity = 3 * compressedSize;// TODO
+        const int compressedSize = this->lz4CompressedSizes[i];
+        const int dstCapacity = 3 * compressedSize;// TODO magic number
         char* const decompressed = (char*) malloc(dstCapacity);
         if (decompressed == nullptr)
-            NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");// TODO
+            NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
         const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, compressedSize, dstCapacity);
         if (decompressedSize < 0)
             NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
         memcpy(baseDstPointer + offset, decompressed, decompressedSize);
+        dstLength += decompressedSize;
         i++;
     }
-    outBuf.compressed = false;
-}
-
-void Decompressor::decompressLz4Columnar(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
-    uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
-    const char* compressed = reinterpret_cast<const char*>(baseSrcPointer);
-    const int compressedSize = inBuf.lz4CompressedSizes[0];
-    const int dstCapacity = 3 * compressedSize;// TODO
-    char* const decompressed = (char*) malloc(dstCapacity);
-    if (decompressed == nullptr)
-        NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");// TODO
-    const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, compressedSize, dstCapacity);
-    if (decompressedSize < 0)
-        NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
-    memcpy(baseDstPointer, decompressed, decompressedSize);
-    auto columnLayout = dynamic_cast<ColumnLayout*>(inBuf.getMemoryLayout().get());
-    if (columnLayout == nullptr) {
-        NES_THROW_RUNTIME_ERROR("Invalid MemoryLayout.");
-    }
-    size_t numCols = columnLayout->getSchema()->getSize();
-    size_t numTuples = inBuf.getNumberOfTuples();
-    // insert values
-    int decoIdx = 0;
-    for (size_t col = 0; col < numCols; col++) {
-        for (size_t row = 0; row < numTuples; row++) {
-            outBuf[row][col].write<uint8_t>(decompressed[decoIdx]);
-            decoIdx++;
-        }
-    }
-    outBuf.setNumberOfTuples(numTuples);
-    std::vector<uint64_t> newOffsets{0};
-    for (uint64_t i = 1; i < numCols; i++) {
-        newOffsets.push_back(numTuples * i);
-    }
-    outBuf.offsets = newOffsets;
-    outBuf.compressed = false;
-}
-
-static bool alphaOrSpace(const char c) { return isalpha(c) || c == ' '; }
-
-void Decompressor::decompressRLE(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
-    uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
-    uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
-    for (auto offset : inBuf.offsets) {
-        const char* in = reinterpret_cast<const char*>(baseSrcPointer + offset);
-        size_t size = strlen(in);
-        std::string temp;
-        size_t i = 0;
-        size_t repeat;
-        while (i < size) {
-            // normal alpha characters
-            while (alphaOrSpace(in[i]))
-                temp.push_back(in[i++]);
-
-            // repeat number
-            repeat = 0;
-            while (isdigit(in[i]))
-                repeat = 10 * repeat + (in[i++] - '0');
-
-            // unroll related characters
-            auto char_to_unroll = in[i++];
-            while (repeat--)
-                temp.push_back(char_to_unroll);
-        }
-        memcpy(baseDstPointer + offset, temp.c_str(), temp.size());// TODO handle case if buffer is too small
-    }
-    outBuf.compressed = false;
+    if (dstLength > maxBufferSize)
+        maxBufferSize = dstLength;
+    // TODO could overwrite allocated boundaries
+    memcpy(baseSrcPointer, baseDstPointer, maxBufferSize);
+    // TODO adjust buffer to `dstLength`
+    this->lz4CompressedSizes = {0};
+    this->compressionAlgorithm = CompressionAlgorithm::NONE;
 }
 
 }// namespace NES::Runtime::MemoryLayouts
