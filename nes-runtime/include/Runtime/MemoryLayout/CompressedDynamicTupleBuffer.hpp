@@ -58,11 +58,14 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     CompressionMode compressionMode;
     size_t maxBufferSize;
     std::vector<uint64_t> offsets;
-    std::vector<int> lz4CompressedSizes;
+    std::vector<size_t> lz4CompressedSizes;
 
     std::vector<uint64_t> getOffsets(const MemoryLayoutPtr& memoryLayout);
+    void clearBuffer();
     void compressLz4FullBuffer();
     void decompressLz4FullBuffer();
+    void compressLz4ColumnWise();
+    void decompressLz4ColumnWise();
 };
 
 }// namespace NES::Runtime::MemoryLayouts
