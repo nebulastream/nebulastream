@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.42](https://github.com/nebulastream/nebulastream/tree/v0.5.42) (2023-04-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.41...v0.5.42)
+
+### Miscellaneous Issues ✌️
+
+- Migrate experimental relational Join and Aggregation to Nautilus [\#3444](https://github.com/nebulastream/nebulastream/issues/3444)
+
+## [v0.5.41](https://github.com/nebulastream/nebulastream/tree/v0.5.41) (2023-03-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.40...v0.5.41)
+
 ## [v0.5.40](https://github.com/nebulastream/nebulastream/tree/v0.5.40) (2023-03-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.39...v0.5.40)
