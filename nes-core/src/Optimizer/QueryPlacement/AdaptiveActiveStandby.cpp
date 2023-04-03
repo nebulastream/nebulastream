@@ -961,7 +961,7 @@ bool AdaptiveActiveStandby::executeGreedyPlacement(const std::vector<OperatorNod
         // 2.7 create and place current replica on the best evaluated node
         auto secondaryOperator = createReplica(currentPrimary);
 
-        auto bestCandidatePair = *(std::max_element(candidateTopologyNodes.begin(), candidateTopologyNodes.end()));
+        auto bestCandidatePair = *(std::min_element(candidateTopologyNodes.begin(), candidateTopologyNodes.end()));
         pinSecondaryOperator(secondaryOperator->getId(), bestCandidatePair.first);
 
         // 2.8 add parents as new target operators in the sorted list if all necessary children have already been replicated
@@ -1073,7 +1073,7 @@ std::map<TopologyNodeId, double> AdaptiveActiveStandby::getCandidatePlacementsGr
         }
 
         // 2.2.3 not enough resources
-        if (candidateNode->getAvailableResources() < getOperatorCost(primaryOperator)) {
+        if (calculateAvailableResources(candidateNode) < getOperatorCost(primaryOperator)) {
             NES_DEBUG("AdaptiveActiveStandby: candidate does not have enough resources, also adding its parents to the queue");
             // add parents as candidates
             for (const auto& parent: candidateNode->getParents())
