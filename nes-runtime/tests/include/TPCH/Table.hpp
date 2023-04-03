@@ -14,11 +14,11 @@
 
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <utility>
 namespace NES::Runtime {
@@ -43,7 +43,7 @@ class Table {
             auto chunkPath = fmt::format("{}/chunk_{}.nes", tableDir, i);
             outputFile.open(chunkPath, std::ios::out | std::ofstream::binary);
             auto numberOfTuple = chunk.getNumberOfTuples();
-            outputFile.write((char*) (&numberOfTuple),  sizeof(numberOfTuple));
+            outputFile.write((char*) (&numberOfTuple), sizeof(numberOfTuple));
             outputFile.write(chunk.getBuffer<char>(), (size_t) chunk.getBufferSize());
             outputFile.flush();
             outputFile.close();

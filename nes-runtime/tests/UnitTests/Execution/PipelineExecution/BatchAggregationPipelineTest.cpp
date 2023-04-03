@@ -99,7 +99,6 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
         std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions);
     scanOperator->setChild(aggregationOp);
 
-
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 

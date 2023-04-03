@@ -32,7 +32,6 @@ BatchAggregationScan::BatchAggregationScan(
     : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
       aggregationResultFields(aggregationResultFields) {}
 
-
 void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     Operators::Operator::open(ctx, rb);
     // 1. get the operator handler

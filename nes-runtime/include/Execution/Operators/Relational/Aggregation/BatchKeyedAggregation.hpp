@@ -26,7 +26,6 @@ namespace NES::Runtime::Execution::Operators {
  */
 class BatchKeyedAggregation : public ExecutableOperator {
   public:
-
     /**
      * @brief Creates a keyed batch aggregation operator.
      * @param operatorHandlerIndex operator handler index.

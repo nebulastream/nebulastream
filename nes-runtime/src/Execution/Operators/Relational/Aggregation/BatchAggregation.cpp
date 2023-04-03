@@ -42,7 +42,7 @@ BatchAggregation::BatchAggregation(
     const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
     : operatorHandlerIndex(operatorHandlerIndex), aggregationExpressions(aggregationExpressions),
-      aggregationFunctions(aggregationFunctions){}
+      aggregationFunctions(aggregationFunctions) {}
 
 void BatchAggregation::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);

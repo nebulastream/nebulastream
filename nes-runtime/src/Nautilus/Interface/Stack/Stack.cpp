@@ -35,25 +35,14 @@ Stack::~Stack() {
 }
 size_t Stack::getNumberOfEntries() { return (getNumberOfPages() - 1) * capacityPerPage() + numberOfEntries; }
 
-size_t Stack::getNumberOfPages() {
-    return pages.size();
-}
+size_t Stack::getNumberOfPages() { return pages.size(); }
 
-size_t Stack::capacityPerPage() {
-    return PAGE_SIZE / entrySize;
-}
+size_t Stack::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
-const std::vector<int8_t*> Stack::getPages() {
-    return pages;
-}
+const std::vector<int8_t*> Stack::getPages() { return pages; }
 
-void Stack::clear() {
-    pages.clear();
-}
+void Stack::clear() { pages.clear(); }
 
-size_t Stack::getNumberOfEntriesOnCurrentPage() {
-    return numberOfEntries;
-}
-
+size_t Stack::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
 
 }// namespace NES::Nautilus::Interface

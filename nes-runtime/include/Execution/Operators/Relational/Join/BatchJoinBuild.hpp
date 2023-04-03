@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
 
@@ -28,7 +27,6 @@ namespace NES::Runtime::Execution::Operators {
  */
 class BatchJoinBuild : public ExecutableOperator {
   public:
-
     /**
      * @brief Creates a batch join operator.
      * @param operatorHandlerIndex index of the operator handler.

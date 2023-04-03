@@ -17,8 +17,8 @@
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/Stack/StackRef.hpp>

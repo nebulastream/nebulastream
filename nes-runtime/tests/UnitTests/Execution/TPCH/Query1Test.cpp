@@ -22,8 +22,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <TPCH/TPCHTableGenerator.hpp>
 #include <TPCH/Query1.hpp>
+#include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
@@ -111,13 +111,11 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     auto hashTable = aggregationHandler->getThreadLocalStore(wc->getId());
     auto numberOfKeys = hashTable->getCurrentSize();
     EXPECT_EQ(numberOfKeys, 4);
-
-
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q1,
-                        ::testing::Values( "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q1::ParamType>& info) {
                             return info.param;
                         });

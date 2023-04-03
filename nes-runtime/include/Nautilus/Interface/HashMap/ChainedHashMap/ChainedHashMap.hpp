@@ -157,7 +157,6 @@ class ChainedHashMap {
      */
     Entry* entryIndexToAddress(uint64_t entryIndex);
 
-
   private:
     // ChainedHashMapRef is a friend to access private members and functions
     friend ChainedHashMapRef;
