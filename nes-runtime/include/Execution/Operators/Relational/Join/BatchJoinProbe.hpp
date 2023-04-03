@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_
 
@@ -27,7 +26,6 @@ namespace NES::Runtime::Execution::Operators {
  */
 class BatchJoinProbe : public ExecutableOperator {
   public:
-
     /**
      * @brief Creates a batch join probe operator.
      * @param operatorHandlerIndex index of the operator handler.

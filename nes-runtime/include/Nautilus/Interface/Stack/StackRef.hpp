@@ -47,6 +47,7 @@ class StackRef {
      * @param entries
      */
     void setNumberOfEntries(const Value<>& entries);
+
   private:
     Value<MemRef> getCurrentPage();
     Value<MemRef> stackRef;

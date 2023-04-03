@@ -14,6 +14,7 @@
 
 #ifdef ENABLE_JNI
 
+#include <API/Schema.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -23,9 +24,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <API/Schema.hpp>
+#include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>

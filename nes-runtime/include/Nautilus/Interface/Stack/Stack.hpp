@@ -73,7 +73,7 @@ class Stack {
      * @return size_t
      */
     size_t getNumberOfEntriesOnCurrentPage();
-    
+
     /**
      * @brief Appends a new page and updates the current page and number of enties.
      * @return int8_t* page
@@ -81,6 +81,7 @@ class Stack {
     int8_t* appendPage();
 
     ~Stack();
+
   private:
     friend StackRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
@@ -88,8 +89,6 @@ class Stack {
     std::vector<int8_t*> pages;
     int8_t* currentPage;
     uint64_t numberOfEntries;
-
-
 };
 
 }// namespace NES::Nautilus::Interface

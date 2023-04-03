@@ -15,8 +15,8 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TPCHTABLEGENERATOR_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TPCHTABLEGENERATOR_HPP_
 
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <API/Schema.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <TPCH/Table.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -146,8 +146,8 @@ class TPCHTableGenerator {
     // ->addField("n_comment", BasicType::INT32);
 
     const SchemaPtr regionSchema = Schema::create()->addField("r_regionkey", BasicType::INT32);
-        // ->addField("r_name", BasicType::INT32)
-        //->addField("r_comment", BasicType::INT32);
+    // ->addField("r_name", BasicType::INT32)
+    //->addField("r_comment", BasicType::INT32);
 
     const std::unordered_map<TPCHTable, SchemaPtr> tableSchemas = {{TPCHTable::Part, partSchema},
                                                                    {TPCHTable::PartSupp, partsuppSchema},
@@ -201,7 +201,7 @@ class TPCHTableGenerator {
         //                             lineitem_column_types,
         //                            lineitem_column_names,
         //                           ChunkOffset{order_count * 4}};
-        
+
         NES_DEBUG("Generate lineitem with size " << order_count * 4);
 
         Runtime::TableBuilder customerBuilder(bufferManager, layouts[TPCHTable::Customer]);
