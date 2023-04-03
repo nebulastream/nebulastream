@@ -608,6 +608,20 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     endif ()
 endif ()
 
+# compression
+find_package(lz4)
+if(lz4_FOUND)
+    set(LIBRARIES ${LIBRARIES} lz4::lz4)
+else()
+    message(FATAL_ERROR "Unable to find LZ4")
+endif()
+find_package(Snappy)
+if(Snappy_FOUND)
+    set(LIBRARIES ${LIBRARIES} Snappy::snappy)
+else()
+    message(FATAL_ERROR "Unable to find Snappy")
+endif()
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})

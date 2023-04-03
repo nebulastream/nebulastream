@@ -43,7 +43,7 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
         this->compressionMode = other.compressionMode;
         this->maxBufferSize = other.maxBufferSize;
         this->offsets = other.offsets;
-        this->lz4CompressedSizes = other.lz4CompressedSizes;
+        this->compressedSizes = other.compressedSizes;
     }
 
     CompressionAlgorithm getCompressionAlgorithm();
@@ -57,8 +57,8 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     CompressionAlgorithm compressionAlgorithm;
     CompressionMode compressionMode;
     size_t maxBufferSize;
-    std::vector<uint64_t> offsets;
-    std::vector<size_t> lz4CompressedSizes;
+    std::vector<uint64_t> offsets;// TODO mismatch to MemoryLayout offsets
+    std::vector<size_t> compressedSizes;
 
     std::vector<uint64_t> getOffsets(const MemoryLayoutPtr& memoryLayout);
     void clearBuffer();
@@ -66,6 +66,10 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     void decompressLz4FullBuffer();
     void compressLz4ColumnWise();
     void decompressLz4ColumnWise();
+    void compressSnappyFullBuffer();
+    void decompressSnappyFullBuffer();
+    void compressSnappyColumnWise();
+    void decompressSnappyColumnWise();
 };
 
 }// namespace NES::Runtime::MemoryLayouts
