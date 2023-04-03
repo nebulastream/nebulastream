@@ -73,7 +73,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
-        workerConfig1->sourceGatheringInterval = 10000;
+        workerConfig1->sourceGatheringInterval = 1;
         workerConfig1->numWorkerThreads = 4;
         workerConfig1->bufferSizeInBytes = 131072;
 
