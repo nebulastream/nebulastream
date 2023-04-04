@@ -20,6 +20,7 @@
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <jni.h>
 #include <iostream>
 #include <utility>
@@ -30,7 +31,7 @@ using Runtime::TupleBuffer;
 class MapJavaUdfQueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("MaQueryCompilerpJavaUdfQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("MapJavaUdfQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup MapJavaUdfQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
@@ -50,17 +51,20 @@ class MapJavaUdfQueryExecutionTest : public testing::Test {
     static void TearDownTestCase() { NES_DEBUG("MapJavaUdfQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
+    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData/";
 };
+
+constexpr auto numberOfRecords = 10;
+constexpr auto udfIncrement = 10;
 
 /**
  * This helper function fills a buffer with test data
  */
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+    for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
         buf[recordIndex][0].write<int32_t>(recordIndex);
     }
-    buf.setNumberOfTuples(10);
+    buf.setNumberOfTuples(numberOfRecords);
 }
 
 /**
@@ -87,6 +91,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Open the file
     std::ifstream file(path + className + ".class", std::ios::binary);
     if (!file.is_open()) {
+        NES_ERROR2("Could not open file: {}", path + className + ".class");
         return {};
     }
 
@@ -98,11 +103,9 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Read the file into the buffer
     file.seekg(0, std::ios::beg);
     if (!file.read(buffer.data(), fileSize)) {
+        NES_ERROR2("Could not read file: {}", path + className + ".class");
         return {};
     }
-
-    // Close the file and return the buffer
-    file.close();
     return buffer;
 }
 
@@ -128,13 +131,16 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     auto outputSchema = Schema::create()->addField("test$id", BasicType::INT32);
     auto inputClassName = "java/lang/Integer";
     auto outputClassName = "java/lang/Integer";
-    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create(className,
-                                                                        methodName,
-                                                                        serializedInstance,
-                                                                        byteCodeList,
-                                                                        outputSchema,
-                                                                        inputClassName,
-                                                                        outputClassName);
+    NES_INFO("testDataPath:" + testDataPath);
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder{}
+                                 .setClassName(className)
+                                 .setMethodName(methodName)
+                                 .setInstance(serializedInstance)
+                                 .setByteCodeList(byteCodeList)
+                                 .setOutputSchema(outputSchema)
+                                 .setInputClassName(inputClassName)
+                                 .setOutputClassName(outputClassName)
+                                 .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapJavaUdf(javaUdfDescriptor).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -147,9 +153,9 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), recordIndex + 10);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), numberOfRecords);
+    for (uint32_t recordIndex = 0u; recordIndex < numberOfRecords; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), recordIndex + udfIncrement);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
