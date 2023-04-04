@@ -28,8 +28,8 @@ namespace NES {
 class ConservativeTwoPhaseLockingStorageHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TwoPhaseLockingStorageHandleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TwoPhaseLockingAccessHandle test class.");
+        NES::Logger::setupLogging("ConservativeTwoPhaseLockingStorageHandleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ConservativeTwoPhaseLockingAccessHandle test class.");
     }
 };
 
