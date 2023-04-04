@@ -14,6 +14,7 @@
 
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandle.hpp>
 #include <utility>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -67,5 +68,10 @@ GlobalQueryPlanHandle TwoPhaseLockingStorageHandle::getGlobalQueryPlanHandle() {
 
 UdfCatalogHandle TwoPhaseLockingStorageHandle::getUdfCatalogHandle() {
     return {&*udfCatalog, UnlockDeleter(udfCatalogMutex, std::try_to_lock)};
+}
+
+void TwoPhaseLockingStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
+    (void) requiredResources;
+    NES_NOT_IMPLEMENTED();
 }
 }// namespace NES

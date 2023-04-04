@@ -46,6 +46,8 @@ class UnlockDeleter {
      */
     explicit UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock);
 
+    explicit UnlockDeleter(std::unique_lock<std::mutex> lock);
+
     /**
      * @brief The action called when the unique pointer is destroyed. We use a no op be cause we do NOT want to free the resource.
      * @tparam T: The type of the resource

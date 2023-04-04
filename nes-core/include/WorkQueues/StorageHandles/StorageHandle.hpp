@@ -14,8 +14,10 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 
+#include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
+#include <vector>
 
 namespace NES {
 
@@ -78,6 +80,7 @@ class StorageHandle {
     virtual ~StorageHandle() = default;
 
     //todo #3641: add pre execution function
+    virtual void preExecution(std::vector<StorageHandleResourceType> requiredResources) = 0;
 
     /**
      * @brief Obtain a mutable global execution plan handle.

@@ -24,4 +24,12 @@ UnlockDeleter::UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock) : 
         throw std::exception();
     }
 }
-}// namespace NES
+
+//todo: add tests for this
+UnlockDeleter::UnlockDeleter(std::unique_lock<std::mutex> lock) : lock(std::move(lock)) {
+    if (!this->lock) {
+        //todo #3611: write custom exception for this case
+        throw std::exception();
+    }
+}
+}
