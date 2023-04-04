@@ -13,15 +13,13 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERPIPELINECOMPILERBACKEND_HPP_
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERPIPELINECOMPILERBACKEND_HPP_
-#include <Experimental/ExecutionEngine/PipelineCompilerBackend.hpp>
-namespace NES::ExecutionEngine::Experimental {
-class FlounderPipelineCompilerBackend : public PipelineCompilerBackend {
+#include <Nautilus/Backends/CompilationBackend.hpp>
+namespace NES::Nautilus::Backends::Flounder {
+class FlounderCompilationBackend : public Nautilus::Backends::CompilationBackend {
   public:
-    std::shared_ptr<ExecutablePipeline> compile(std::shared_ptr<Runtime::Execution::RuntimePipelineContext> executionContext,
-                                                std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                std::shared_ptr<IR::NESIR> ir) override;
+    std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir) override;
 };
 
-}// namespace NES::ExecutionEngine::Experimental
+}// namespace NES::Nautilus::Backends::Flounder
 
 #endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERPIPELINECOMPILERBACKEND_HPP_
