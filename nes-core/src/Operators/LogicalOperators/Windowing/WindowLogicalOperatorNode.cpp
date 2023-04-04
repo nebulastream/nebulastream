@@ -23,8 +23,8 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <sstream>
 namespace NES {
 

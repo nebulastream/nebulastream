@@ -77,8 +77,8 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
 
     if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
         auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
-        if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW){
-            contentBasedWindowType->inferStamp(inputSchema,typeInferencePhaseContext);
+        if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
+            contentBasedWindowType->inferStamp(inputSchema, typeInferencePhaseContext);
         }
     } else {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -92,12 +92,11 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
      * threshold windows
      */
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
-        outputSchema =
-                outputSchema
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
-                                       BasicType::UINT64))
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
-                                       BasicType::UINT64));
+        outputSchema = outputSchema
+                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
+                                                  BasicType::UINT64))
+                           ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
+                                                  BasicType::UINT64));
     }
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.

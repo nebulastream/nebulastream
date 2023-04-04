@@ -70,7 +70,8 @@ bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
         return this->timeCharacteristic->getField()->getName()
             == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
             && this->size.getTime() == timeBasedWindowType->getSize().getTime()
-            && timeBasedWindowType->getTimeBasedSubWindowType() == TUMBLINGWINDOW && this->getTimeBasedSubWindowType() == TUMBLINGWINDOW;
+            && timeBasedWindowType->getTimeBasedSubWindowType() == TUMBLINGWINDOW
+            && this->getTimeBasedSubWindowType() == TUMBLINGWINDOW;
     } else {
         return false;
     }

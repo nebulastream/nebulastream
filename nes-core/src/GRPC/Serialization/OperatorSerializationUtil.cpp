@@ -552,7 +552,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
                                                              thresholdWindowDetails.mutable_predicate());
             thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
             windowDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
-        }else{
+        } else {
             NES_ERROR("OperatorSerializationUtil: Cant serialize this content based window Type");
         }
     }
@@ -1993,13 +1993,13 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
     } else if (windowType->isContentBasedWindowType()) {
         auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowType);
         if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
-        auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
-        auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
-        ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
-                                                         thresholdWindowDetails.mutable_predicate());
-        thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
-        windowJavaUdfDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
-        }else {
+            auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
+            auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
+            ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
+                                                             thresholdWindowDetails.mutable_predicate());
+            thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
+            windowJavaUdfDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
+        } else {
             NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: Cant serialize content based window Type");
         }
     }
