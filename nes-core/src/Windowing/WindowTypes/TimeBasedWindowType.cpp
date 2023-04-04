@@ -26,7 +26,7 @@ TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristi
 
 bool TimeBasedWindowType::isTimeBasedWindowType() { return true; }
 
-bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& ) {
+bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext&) {
     return inferStamp(schema);
 }
 

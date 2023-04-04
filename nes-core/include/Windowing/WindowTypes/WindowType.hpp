@@ -67,7 +67,6 @@ class WindowType {
      * @return true if success else false
      */
     virtual bool inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
-
 };
 
 }// namespace NES::Windowing

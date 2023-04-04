@@ -126,7 +126,7 @@ class WindowManager {
         if (store->empty()) {
             // set last watermark to current ts for processing time
             store->nextEdge = timeBasedWindowType->calculateNextWindowEnd(ts - allowedLateness);
-            if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::TUMBLINGWINDOW){
+            if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::TUMBLINGWINDOW) {
                 auto* window = dynamic_cast<TumblingWindow*>(timeBasedWindowType.get());
                 store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
                 NES_TRACE2("WindowManager {}: for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs={} "

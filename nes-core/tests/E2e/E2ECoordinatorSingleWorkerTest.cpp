@@ -949,19 +949,19 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker(
-            {TestUtils::rpcPort(0),
-             TestUtils::dataPort(0),
-             TestUtils::coordinatorPort(*rpcCoordinatorPort),
-             TestUtils::sourceType(SourceType::CSV_SOURCE),
-             TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
-                                          + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
-             TestUtils::physicalSourceName("test_stream"),
-             TestUtils::logicalSourceName("ktm"),
-             TestUtils::numberOfBuffersToProduce(1),
-             TestUtils::enableNautilus(),
-             TestUtils::numberOfTuplesToProducePerBuffer(4),
-             TestUtils::sourceGatheringInterval(1),
-             TestUtils::enableThreadLocalWindowing()});
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
+                                      + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
+         TestUtils::physicalSourceName("test_stream"),
+         TestUtils::logicalSourceName("ktm"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::enableNautilus(),
+         TestUtils::numberOfTuplesToProducePerBuffer(4),
+         TestUtils::sourceGatheringInterval(1),
+         TestUtils::enableThreadLocalWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -986,8 +986,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$count:INTEGER,ktm$ABS_Lean_Angle:(Float),ktm$ABS_Pitch_Info:(Float),ktm$ABS_Front_Wheel_Speed:(Float)\n"
-                             "2,14.400000,0.800000,0.500000\n";
+    string expectedContent =
+        "ktm$count:INTEGER,ktm$ABS_Lean_Angle:(Float),ktm$ABS_Pitch_Info:(Float),ktm$ABS_Front_Wheel_Speed:(Float)\n"
+        "2,14.400000,0.800000,0.500000\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 

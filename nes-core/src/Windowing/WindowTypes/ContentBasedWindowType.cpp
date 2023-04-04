@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 
 namespace NES::Windowing {
 

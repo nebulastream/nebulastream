@@ -330,7 +330,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
         auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
         //FIXME Once #3353 is merged, sliding window can be added
-        NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW, "Only a tumbling window is currently supported for StreamJoin");
+        NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
+                   "Only a tumbling window is currently supported for StreamJoin");
 
         // FIXME Once #3407 is done, we can change this to get the left and right fieldname
         auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
@@ -663,16 +664,18 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
         if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
             auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
             // check different content-based window types
-            if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
+            if (contentBasedWindowType->getContentBasedSubWindowType()
+                == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
                 NES_INFO("Lower ThresholdWindow");
-            auto thresholdWindowPhysicalOperator =
-                PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
-                                                                           windowOutputSchema,
-                                                                           windowOperatorHandler);
-            operatorNode->replace(thresholdWindowPhysicalOperator);
-            return;
-            }else {
-            throw QueryCompilationException("No support for this window type." + windowDefinition->getWindowType()->toString());
+                auto thresholdWindowPhysicalOperator =
+                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
+                                                                               windowOutputSchema,
+                                                                               windowOperatorHandler);
+                operatorNode->replace(thresholdWindowPhysicalOperator);
+                return;
+            } else {
+                throw QueryCompilationException("No support for this window type."
+                                                + windowDefinition->getWindowType()->toString());
             }
         }
         if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {

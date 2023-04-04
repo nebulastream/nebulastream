@@ -294,7 +294,7 @@ class JoinHandler : public AbstractJoinHandler {
                 } else {
                     NES_THROW_RUNTIME_ERROR("JoinHandler: Undefined Time-Based Window Type");
                 }
-            }else {
+            } else {
                 NES_THROW_RUNTIME_ERROR("JoinHandler: Joins only work for Time-Based Window Type");
             }
             //            NES_DEBUG2("Going to flush window {}", toString());

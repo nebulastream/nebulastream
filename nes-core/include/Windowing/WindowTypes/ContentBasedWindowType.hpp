@@ -45,7 +45,6 @@ class ContentBasedWindowType : public WindowType {
        * @return a shared pointer of ThresholdWindow
        */
     static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
-
 };
 }// namespace NES::Windowing
 
