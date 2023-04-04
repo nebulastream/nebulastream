@@ -54,7 +54,7 @@ class JVMContext {
     /**
      * @brief Returns true if the JVM has been created.
      */
-    [[nodiscard]] bool isJVMCreated() const { return created; }
+    bool isJVMCreated() const { return created; }
 
   private:
     /**
@@ -88,12 +88,12 @@ class JVMContext {
     void operator=(JVMContext const&&) = delete;
 
     /**
-     * @brief Boolean flag indicating whether JVMContext is attached.
+     * @brief Boolean flag indicating whether Jvm is attached.
      */
     bool attached = false;
 
     /**
-     * @brief Boolean flag indicating whether JVMContext is created.
+     * @brief Boolean flag indicating whether Jvm is created.
      */
     bool created = false;
 
@@ -105,7 +105,7 @@ class JVMContext {
     /**
      * @brief Pointer to JavaVM instance.
      */
-    JavaVM* jvm{};
+    JavaVM* jvm;
 };
 
 };    // namespace NES::Runtime::Execution::Operators
