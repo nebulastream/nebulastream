@@ -13,8 +13,11 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
+
+#include "Nautilus/IR/Operations/CastOperation.hpp"
+#include "flounder/ir/instructions.h"
+#include "flounder/ir/register.h"
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
-#include <Nautilus/IR/Frame.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
@@ -30,43 +33,44 @@
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/Util/Frame.hpp>
 
-#include <flounder/compiler.h>
+#include <flounder/compilation/compiler.h>
 #include <set>
 
 namespace flounder {
 class Executable;
 }
-namespace NES::ExecutionEngine::Experimental::Flounder {
+namespace NES::Nautilus::Backends::Flounder {
 
 class FlounderLoweringProvider {
   public:
     FlounderLoweringProvider();
-    std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::NESIR> ir);
+    std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::IRGraph> ir);
     flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
-                                                     /*collect the asm code to print later*/ false,
-                                                     /*do not collect asm instruction offsets*/ true};
+                                                     /*collect the asm code to print later*/ true};
 
   private:
-    using FlounderFrame = IR::Frame<std::string, flounder::Node*>;
+    using FlounderFrame = Frame<std::string, flounder::Register>;
     class LoweringContext {
       public:
-        LoweringContext(std::shared_ptr<IR::NESIR> ir);
+        LoweringContext(std::shared_ptr<IR::IRGraph> ir);
         std::unique_ptr<flounder::Executable> process(flounder::Compiler& compiler);
-        void process(std::shared_ptr<IR::Operations::FunctionOperation>);
+        void process(const std::shared_ptr<IR::Operations::FunctionOperation>&);
         void process(std::shared_ptr<IR::BasicBlock>, FlounderFrame& frame);
         void processInline(std::shared_ptr<IR::BasicBlock>, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::Operation>, FlounderFrame& frame);
         FlounderFrame processBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
         FlounderFrame processInlineBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
-        flounder::VirtualRegisterIdentifierNode*
-        createVreg(IR::Operations::OperationIdentifier id, IR::Types::StampPtr stamp, FlounderFrame& frame);
+        flounder::Register createVreg(IR::Operations::OperationIdentifier id, IR::Types::StampPtr stamp, FlounderFrame& frame);
+        flounder::VregInstruction requestVreg(flounder::Register& reg, IR::Types::StampPtr stamp);
 
       private:
         flounder::Program program;
-        std::shared_ptr<IR::NESIR> ir;
+        std::shared_ptr<IR::IRGraph> ir;
         std::set<std::string> activeBlocks;
         void process(std::shared_ptr<IR::Operations::AddOperation> opt, FlounderFrame& frame);
+        void process(std::shared_ptr<IR::Operations::CastOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::MulOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::SubOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::IfOperation> opt, FlounderFrame& frame);
@@ -78,12 +82,13 @@ class FlounderLoweringProvider {
         void process(std::shared_ptr<IR::Operations::ProxyCallOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame);
-        void processAnd(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
-        void
-        processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::LabelNode* falseCase);
+        void processAnd(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame, flounder::Label& trueCase, flounder::Label& falseCase);
+        void processOr(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame, flounder::Label& trueCase, flounder::Label& falseCase);
+        void processCmp(std::shared_ptr<IR::Operations::Operation> opt, FlounderFrame& frame, flounder::Label& trueCase, flounder::Label& falseCase);
+        void processCmp(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame, flounder::Label& falseCase);
     };
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Flounder
+}// namespace NES::Nautilus::Backends::Flounder
 
 #endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
