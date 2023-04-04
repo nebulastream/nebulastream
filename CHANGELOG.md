@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.43](https://github.com/nebulastream/nebulastream/tree/v0.5.43) (2023-04-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.42...v0.5.43)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Must use fully qualified attribute names in threshold window operaotr [\#3596](https://github.com/nebulastream/nebulastream/issues/3596)
+
 ## [v0.5.42](https://github.com/nebulastream/nebulastream/tree/v0.5.42) (2023-04-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.41...v0.5.42)
