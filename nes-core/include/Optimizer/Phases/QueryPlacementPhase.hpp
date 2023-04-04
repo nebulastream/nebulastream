@@ -82,7 +82,11 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan,
-                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::None);
+//                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::None);
+                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::Greedy_AAS);
+//                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::LocalSearch_AAS);
+//                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::ILP_AAS);
+
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,

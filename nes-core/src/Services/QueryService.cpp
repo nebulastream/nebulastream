@@ -99,9 +99,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             secondFilterOperator->addProperty("output", output);
             NES_DEBUG("QueryService: " << secondFilterOperator->toString() << " output: " << output);
 
-            // R"(.map(Attribute("f") = Attribute("e") * 2))"   // DMF = 1
+            // R"(.map(Attribute("i") = Attribute("h") * 2))"   // DMF = 1.1
             auto mapOperator = secondFilterOperator->getParents()[0]->as<OperatorNode>();
-            //            dmf = 0.99;     // to help optimizer make a proper decision in case of ties (which could be caused by dmf = 1)
             dmf = 1.1;
             input = output;
             output = input * dmf;

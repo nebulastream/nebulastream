@@ -64,7 +64,10 @@ class PlacementStrategyFactory {
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
                                                 const TypeInferencePhasePtr& typeInferencePhase,
-                                                PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::None);
+//                                                PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::None);
+                                                PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::Greedy_AAS);
+//                                                PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::LocalSearch_AAS);
+//                                                PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::ILP_AAS);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
