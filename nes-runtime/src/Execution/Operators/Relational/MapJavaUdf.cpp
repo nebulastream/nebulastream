@@ -66,7 +66,7 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
-    for (auto [className, byteCode] : byteCodeList) {
+    for (auto& [className, byteCode] : byteCodeList) {
         jbyteArray jData = handler->getEnvironment()->NewByteArray(byteCode.size());
         jniErrorCheck(handler->getEnvironment());
         jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
