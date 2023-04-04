@@ -23,6 +23,7 @@ class ConservativeTwoPhaseLockManager;
 using ConservativeTwoPhaseLockManagerPtr = std::shared_ptr<ConservativeTwoPhaseLockManager>;
 
 class ConservativeTwoPhaseLockingStorageHandle : public StorageHandle {
+  public:
     ConservativeTwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
                                              TopologyPtr topology,
                                              QueryCatalogServicePtr queryCatalogService,
@@ -30,6 +31,14 @@ class ConservativeTwoPhaseLockingStorageHandle : public StorageHandle {
                                              Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                              Catalogs::UDF::UdfCatalogPtr udfCatalog,
                                              ConservativeTwoPhaseLockManagerPtr lockManager);
+
+    static std::shared_ptr<ConservativeTwoPhaseLockingStorageHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
+                                                                const TopologyPtr&  topology,
+                                                                const QueryCatalogServicePtr&  queryCatalogService,
+                                                                const GlobalQueryPlanPtr&  globalQueryPlan,
+                                                                const Catalogs::Source::SourceCatalogPtr&  sourceCatalog,
+                                                                const Catalogs::UDF::UdfCatalogPtr&  udfCatalog,
+                                                                ConservativeTwoPhaseLockManagerPtr lockManager);
 
     void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
 
@@ -72,6 +81,7 @@ class ConservativeTwoPhaseLockingStorageHandle : public StorageHandle {
     void lockResource(StorageHandleResourceType);
 
     ConservativeTwoPhaseLockManagerPtr lockManager;
+    bool resourcesLocked;
 
     std::unique_lock<std::mutex> topologyLock;
     std::unique_lock<std::mutex> queryCatalogLock;

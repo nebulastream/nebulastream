@@ -23,9 +23,16 @@ ConservativeTwoPhaseLockingStorageHandle::ConservativeTwoPhaseLockingStorageHand
     Catalogs::Source::SourceCatalogPtr sourceCatalog,
     Catalogs::UDF::UdfCatalogPtr udfCatalog,
     ConservativeTwoPhaseLockManagerPtr lockManager)
-    : StorageHandle(globalExecutionPlan,topology,queryCatalogService,globalQueryPlan,sourceCatalog,udfCatalog), lockManager(lockManager) {}
+    : StorageHandle(globalExecutionPlan,topology,queryCatalogService,globalQueryPlan,sourceCatalog,udfCatalog), lockManager(lockManager), resourcesLocked(false) {}
 
 void ConservativeTwoPhaseLockingStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
+    //do not allow performing preexecution twice
+    if (resourcesLocked) {
+        //todo: more verbose exception handling
+        throw std::exception();
+    }
+    resourcesLocked = true;
+
     //sort the resource list to ensure that resources are acquired in a deterministic order for deadlock prevention
     std::sort(requiredResources.begin(), requiredResources.end());
 
@@ -65,15 +72,54 @@ GlobalExecutionPlanHandle ConservativeTwoPhaseLockingStorageHandle::getGlobalExe
     }
     return globalExecutionPlan;
 }
-TopologyHandle ConservativeTwoPhaseLockingStorageHandle::getTopologyHandle() { return NES::TopologyHandle(); }
-QueryCatalogServiceHandle ConservativeTwoPhaseLockingStorageHandle::getQueryCatalogHandle() {
-    return NES::QueryCatalogServiceHandle();
-}
-GlobalQueryPlanHandle ConservativeTwoPhaseLockingStorageHandle::getGlobalQueryPlanHandle() {
-    return NES::GlobalQueryPlanHandle();
-}
-SourceCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getSourceCatalogHandle() { return NES::SourceCatalogHandle(); }
-UdfCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getUdfCatalogHandle() { return NES::UdfCatalogHandle(); }
 
+TopologyHandle ConservativeTwoPhaseLockingStorageHandle::getTopologyHandle() {
+    if (!topologyLock) {
+        //todo #3611: write custom exception for this case
+        throw std::exception();
+    }
+    return topology;
+}
+
+QueryCatalogServiceHandle ConservativeTwoPhaseLockingStorageHandle::getQueryCatalogHandle() {
+    if (!queryCatalogLock) {
+        //todo #3611: write custom exception for this case
+        throw std::exception();
+    }
+    return queryCatalogService;
+}
+
+GlobalQueryPlanHandle ConservativeTwoPhaseLockingStorageHandle::getGlobalQueryPlanHandle() {
+    if (!globalQueryPlanLock) {
+        //todo #3611: write custom exception for this case
+        throw std::exception();
+    }
+    return globalQueryPlan;
+}
+
+SourceCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getSourceCatalogHandle() {
+    if (!sourceCatalogLock) {
+        //todo #3611: write custom exception for this case
+        throw std::exception();
+    }
+    return sourceCatalog;
+}
+UdfCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getUdfCatalogHandle() {
+    if (!udfCatalogLock) {
+        //todo #3611: write custom exception for this case
+        throw std::exception();
+    }
+    return udfCatalog;
+}
+std::shared_ptr<ConservativeTwoPhaseLockingStorageHandle>
+ConservativeTwoPhaseLockingStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                 const TopologyPtr& topology,
+                                                 const QueryCatalogServicePtr& queryCatalogService,
+                                                 const GlobalQueryPlanPtr& globalQueryPlan,
+                                                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
+                                                 ConservativeTwoPhaseLockManagerPtr lockManager) {
+    return std::make_shared<ConservativeTwoPhaseLockingStorageHandle>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog, lockManager);
+}
 
 }
