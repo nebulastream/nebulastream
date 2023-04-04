@@ -57,17 +57,54 @@ class JVMContext {
     [[nodiscard]] bool isJVMCreated() const { return created; }
 
   private:
+    /**
+     * @brief Default constructor for JVMContext.
+     */
     JVMContext() = default;
+
+    /**
+     * @brief Destructor for JVMContext.
+     */
     ~JVMContext();
+
+    /**
+     * @brief Copy constructor for JVMContext, which is deleted.
+     */
     JVMContext(JVMContext const&) = delete;
+
+    /**
+     * @brief Copy assignment operator for JVMContext, which is deleted.
+     */
     void operator=(JVMContext const&) = delete;
+
+    /**
+     * @brief Move constructor for JVMContext, which is deleted.
+     */
     JVMContext(JVMContext const&&) = delete;
+
+    /**
+     * @brief Move assignment operator for JVMContext, which is deleted.
+     */
     void operator=(JVMContext const&&) = delete;
 
+    /**
+     * @brief Boolean flag indicating whether JVMContext is attached.
+     */
     bool attached = false;
+
+    /**
+     * @brief Boolean flag indicating whether JVMContext is created.
+     */
     bool created = false;
 
+    /**
+     * @brief Mutex for thread safety.
+     */
     std::mutex mutex;
+
+    /**
+     * @brief Pointer to JavaVM instance.
+     */
     JavaVM* jvm{};
 };
 

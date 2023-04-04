@@ -256,7 +256,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG2("Query: add JoinType (INNER_JOIN) to Join Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                         subQueryRhs.getQueryPlan(),
                                                         onLeftKey,
@@ -277,7 +277,7 @@ Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG2("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                         subQueryRhs.getQueryPlan(),
                                                         onLeftKey,
@@ -292,7 +292,7 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG2("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                         subQueryRhs.getQueryPlan(),
                                                         onLeftKey,
