@@ -15,6 +15,7 @@
 #include <WorkQueues/StorageHandles/SerialStorageHandle.hpp>
 #include <memory>
 #include <utility>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -55,5 +56,12 @@ GlobalQueryPlanHandle SerialStorageHandle::getGlobalQueryPlanHandle() { return {
 
 SourceCatalogHandle SerialStorageHandle::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter()}; }
 
-UdfCatalogHandle SerialStorageHandle::getUdfCatalogHandle() { return {&*udfCatalog, UnlockDeleter()}; }
-}// namespace NES
+UdfCatalogHandle SerialStorageHandle::getUdfCatalogHandle() {
+    return {&*udfCatalog, UnlockDeleter()};
+}
+
+void SerialStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
+    (void) requiredResources;
+    NES_NOT_IMPLEMENTED();
+}
+}

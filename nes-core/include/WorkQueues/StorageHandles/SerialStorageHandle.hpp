@@ -73,6 +73,7 @@ class SerialStorageHandle : public StorageHandle {
      * @return a handle to the udf catalog.
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
+    void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_

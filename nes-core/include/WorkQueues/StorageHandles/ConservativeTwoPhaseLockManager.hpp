@@ -1,0 +1,33 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
+#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+
+//todo #3588: This class is not not needed if we move the mutexes into the data structures itself
+namespace NES {
+class ConservativeTwoPhaseLockManager {
+  public:
+    std::unique_lock<std::mutex> getLock(StorageHandleResourceType type);
+
+  private:
+    std::mutex topologyMutex;
+    std::mutex queryCatalogMutex;
+    std::mutex sourceCatalogMutex;
+    std::mutex globalExecutionPlanMutex;
+    std::mutex globalQueryPlanMutex;
+    std::mutex udfCatalogMutex;
+};
+}
+#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP

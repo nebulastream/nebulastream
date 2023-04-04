@@ -11,31 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
+#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKINGSTORAGEHANDLE_HPP
+#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKINGSTORAGEHANDLE_HPP
 
+#include <vector>
 #include <WorkQueues/StorageHandles/StorageHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
 
 namespace NES {
+class ConservativeTwoPhaseLockManager;
+using ConservativeTwoPhaseLockManagerPtr = std::shared_ptr<ConservativeTwoPhaseLockManager>;
 
-/**
- * @brief Resource handles created by this class ensure that the resource is locked until the handle goes out of scope.
- */
-class TwoPhaseLockingStorageHandle : public StorageHandle {
-  public:
-    TwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
-                                 TopologyPtr topology,
-                                 QueryCatalogServicePtr queryCatalogService,
-                                 GlobalQueryPlanPtr globalQueryPlan,
-                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                 Catalogs::UDF::UdfCatalogPtr udfCatalog);
-
-    static std::shared_ptr<TwoPhaseLockingStorageHandle> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                const TopologyPtr& topology,
-                                                                const QueryCatalogServicePtr& queryCatalogService,
-                                                                const GlobalQueryPlanPtr& globalQueryPlan,
-                                                                const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
+class ConservativeTwoPhaseLockingStorageHandle : public StorageHandle {
+    ConservativeTwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                                             TopologyPtr topology,
+                                             QueryCatalogServicePtr queryCatalogService,
+                                             GlobalQueryPlanPtr globalQueryPlan,
+                                             Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                             Catalogs::UDF::UdfCatalogPtr udfCatalog,
+                                             ConservativeTwoPhaseLockManagerPtr lockManager);
 
     void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
 
@@ -74,15 +68,18 @@ class TwoPhaseLockingStorageHandle : public StorageHandle {
      * @return a handle to the udf catalog.
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
-
   private:
-    //todo #3588: keep the mutexes here or in the class of the resource itself?
-    std::mutex topologyMutex;
-    std::mutex queryCatalogMutex;
-    std::mutex sourceCatalogMutex;
-    std::mutex globalExecutionPlanMutex;
-    std::mutex globalQueryPlanMutex;
-    std::mutex udfCatalogMutex;
+    void lockResource(StorageHandleResourceType);
+
+    ConservativeTwoPhaseLockManagerPtr lockManager;
+
+    std::unique_lock<std::mutex> topologyLock;
+    std::unique_lock<std::mutex> queryCatalogLock;
+    std::unique_lock<std::mutex> sourceCatalogLock;
+    std::unique_lock<std::mutex> globalExecutionPlanLock;
+    std::unique_lock<std::mutex> globalQueryPlanLock;
+    std::unique_lock<std::mutex> udfCatalogLock;
 };
-}// namespace NES
-#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
+}
+
+#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKINGSTORAGEHANDLE_HPP
