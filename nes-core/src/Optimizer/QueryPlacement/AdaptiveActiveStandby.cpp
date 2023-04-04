@@ -230,18 +230,27 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                         nextLevel.push_back(parentNode);
                 }
                 while (!nextLevel.empty() && currentLength < shortestLength) {
+                    // pick parent with least amount of connections to avoid bottlenecks
+                    size_t minConnections = std::numeric_limits<size_t>::max();
+                    TopologyNodePtr parentWithLeastConnections;
+                    for (const auto& node : nextLevel) {
+                        auto currentConnections = node->getChildren().size() + node->getParents().size();
+                        if (currentConnections < minConnections) {
+                            minConnections = currentConnections;
+                            parentWithLeastConnections = node;
+                        }
+                    }
+
                     // keep track of farthest parent
-                    farthestParentFromStart = nextLevel.front()->as<TopologyNode>();
+                    farthestParentFromStart = parentWithLeastConnections;
                     ++currentLength;
 
                     nextLevel.clear();
-                    // get next level by getting all parents of of the nodes of this level, barring nodes to exclude
-                    for (const auto& nextNode : nextLevel) {
-                        for (const auto& parent : nextNode->getParents()) {
-                            auto parentNode = parent->as<TopologyNode>();
-                            if (!nodeIdsToExclude.contains(parentNode->getId()))
-                                nextLevel.push_back(parentNode);
-                        }
+                    // get next level by getting all parents of the nodes, barring nodes to exclude
+                    for (const auto& parent : farthestParentFromStart->getParents()) {
+                        auto parentNode = parent->as<TopologyNode>();
+                        if (!nodeIdsToExclude.contains(parentNode->getId()))
+                            nextLevel.push_back(parentNode);
                     }
                 }
 
@@ -255,18 +264,27 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                         nextLevel.push_back(childNode);
                 }
                 while (!nextLevel.empty() && currentLength < shortestLength) {
-                    // keep track of farthest parent
-                    farthestChildFromRoot = nextLevel.front()->as<TopologyNode>();
+                    // pick child with least amount of connections to avoid bottlenecks
+                    size_t minConnections = std::numeric_limits<size_t>::max();
+                    TopologyNodePtr childWithLeastConnections;
+                    for (const auto& node : nextLevel) {
+                        auto currentConnections = node->getChildren().size() + node->getParents().size();
+                        if (currentConnections < minConnections) {
+                            minConnections = currentConnections;
+                            childWithLeastConnections = node;
+                        }
+                    }
+
+                    // keep track of farthest child
+                    farthestChildFromRoot = childWithLeastConnections;
                     ++currentLength;
 
                     nextLevel.clear();
-                    // get next level by getting all parents of of the nodes of this level, barring nodes to exclude
-                    for (const auto& nextNode : nextLevel) {
-                        for (const auto& child : nextNode->getChildren()) {
-                            auto childNode = child->as<TopologyNode>();
-                            if (!nodeIdsToExclude.contains(childNode->getId()))
-                                nextLevel.push_back(childNode);
-                        }
+                    // get next level by getting all children of the nodes, barring nodes to exclude
+                    for (const auto& child : farthestChildFromRoot->getChildren()) {
+                        auto childNode = child->as<TopologyNode>();
+                        if (!nodeIdsToExclude.contains(childNode->getId()))
+                            nextLevel.push_back(childNode);
                     }
                 }
 
