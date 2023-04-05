@@ -12,5 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(NebulaPSL)
-add_subdirectory(NebulaSQL)
+add_source_files(nes-core
+        NebulaSQLParser.cpp
+        NebulaSQLListener.cpp
+        NebulaSQLLexer.cpp
+        NebulaSQLBaseListener.cpp
+        )
+
