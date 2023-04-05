@@ -53,6 +53,7 @@ namespace NES {
 
 using namespace Configurations;
 const int nSourceWorkers = 4;   // should be an even number for correct topologies
+auto placementStrategyAAS = PlacementStrategy::Greedy_AAS;
 
 class AASBenchmarkTest : public Testing::NESBaseTest {
   public:
@@ -708,8 +709,6 @@ TEST_F(AASBenchmarkTest, testDiamondAAS) {
 
 // 1.1 Test the deployment of new nodes and operator replicas
 TEST_F(AASBenchmarkTest, testSequentialAASDeployment) {
-    auto placementStrategyAAS = PlacementStrategy::Greedy_AAS;
-
     auto topology = setupTopologyAndSourceCatalogSequential(nSourceWorkers); // tests written for nSourceWorkers = 4
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -1001,8 +1000,6 @@ TEST_F(AASBenchmarkTest, testSequentialRuntime) {
 
 // 2.1 Test the deployment of new nodes and operator replicas
 TEST_F(AASBenchmarkTest, testFatLowConnectivityAASDeployment) {
-    auto placementStrategyAAS = PlacementStrategy::Greedy_AAS;
-
     auto topology = setupTopologyAndSourceCatalogFatLowConnectivity(nSourceWorkers); // tests written for nSourceWorkers = 4
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -1315,8 +1312,6 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityRuntime) {
 
 // 3.1 Test the deployment of new nodes and operator replicas
 TEST_F(AASBenchmarkTest, testFatHighConnectivityAASDeployment) {
-    auto placementStrategyAAS = PlacementStrategy::Greedy_AAS;
-
     auto topology = setupTopologyAndSourceCatalogFatHighConnectivity(nSourceWorkers); // tests written for nSourceWorkers = 4
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -1590,4 +1585,48 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityRuntime) {
     NES_INFO("AASBenchmarkTest: Test finished");
 }
 
+TEST_F(AASBenchmarkTest, scalabilityAnalysis) {
+    for (int i = 2; i <= 8; i += 2) {
+        for (int j = 0; j < 3; ++j) {
+            TopologyPtr topology;
+
+            if (j == 0) {
+                NES_DEBUG("AASBenchmarkTest::scalabilityAnalysis: Sequential " << i);
+                topology = setupTopologyAndSourceCatalogSequential(i);
+            } else if (j == 1) {
+                NES_DEBUG("AASBenchmarkTest::scalabilityAnalysis: Fat Low Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
+            } else {
+                NES_DEBUG("AASBenchmarkTest::scalabilityAnalysis: Fat High Connectivity" << i);
+                topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
+            }
+
+            GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              false /*query reconfiguration*/);
+
+            auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
+
+            QueryPlanPtr queryPlan = query->getQueryPlan();
+            queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+            assignOperatorProperties(queryPlan);
+
+            auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+            auto queryId = sharedQueryPlan->getSharedQueryId();
+
+            auto topologySpecificQueryRewrite =
+                Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                     sourceCatalog,
+                                                                     Configurations::OptimizerConfiguration());
+            topologySpecificQueryRewrite->execute(queryPlan);
+            typeInferencePhase->execute(queryPlan);
+
+            queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan, placementStrategyAAS);
+        }
+    }
+}
 }// namespace NES

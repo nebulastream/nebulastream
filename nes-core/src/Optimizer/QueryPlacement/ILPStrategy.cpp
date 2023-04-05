@@ -67,6 +67,8 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
+    auto timeBeforeILP = std::chrono::steady_clock::now();
+
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
@@ -242,8 +244,24 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // 8. Pin the operators based on ILP solution.
     pinOperators(z3Model, placementVariables);
 
+    auto timeAfterILP = std::chrono::steady_clock::now();
+    auto elapsedMillisecondsILP =
+        duration_cast<std::chrono::milliseconds>(timeAfterILP - timeBeforeILP);
+    NES_DEBUG("ILPStrategy::Primary placement calculation: Time elapsed: " << elapsedMillisecondsILP.count() << "ms");
+
+
+    auto timeBeforeAAS = std::chrono::steady_clock::now();
+
     // 9. Create and place secondary operators
     executeAdaptiveActiveStandby(pinnedUpStreamOperators, placementStrategyAAS, z3Context);
+
+    auto timeAfterAAS = std::chrono::steady_clock::now();
+    auto elapsedMillisecondsAAS =
+        duration_cast<std::chrono::milliseconds>(timeAfterAAS - timeBeforeAAS);
+    NES_DEBUG("ILPStrategy::AAS total:: Time elapsed: " << elapsedMillisecondsAAS.count() << "ms");
+
+
+    auto timeBeforeETC = std::chrono::steady_clock::now();
 
     // 10. Perform operator placement.
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -252,7 +270,15 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 12. Run the type inference phase and return.
-    return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+    auto typeInferenceSuccess = runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+
+    auto timeAfterETC = std::chrono::steady_clock::now();
+    auto elapsedMillisecondsETC =
+        duration_cast<std::chrono::milliseconds>(timeAfterETC - timeBeforeETC);
+    NES_DEBUG("ILPStrategy::etc (placement of calculated model, network configurations): Time elapsed: "
+              << elapsedMillisecondsETC.count() << "ms");
+
+    return typeInferenceSuccess;
 }
 
 std::map<uint64_t, double> ILPStrategy::computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {

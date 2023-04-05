@@ -64,14 +64,29 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
         sourceNodes.insert(std::make_pair(sourceNode->getId(), sourceNode));
     }
 
+    auto timeBeforeNodeDeployment = std::chrono::steady_clock::now();
+
     // 2. deploy new topology nodes so that every operator can be replicated and have a secondary path
     deployNewNodes(pinnedUpStreamOperators);
+
+    auto timeAfterNodeDeployment = std::chrono::steady_clock::now();
+    auto elapsedMillisecondsNodeDeployment =
+        duration_cast<std::chrono::milliseconds>(timeAfterNodeDeployment - timeBeforeNodeDeployment);
+    NES_DEBUG("AdaptiveActiveStandby::Node deployment: Time elapsed: " << elapsedMillisecondsNodeDeployment.count() << "ms");
 
     // 3. choose placement method
     if (placementStrategy == PlacementStrategy::ValueAAS::Greedy_AAS
         || placementStrategy == PlacementStrategy::ValueAAS::LocalSearch_AAS) {
+
+        auto timeBeforeGreedy = std::chrono::steady_clock::now();
+
         // 3.1 find an initial placement using a greedy algorithm
         success = executeGreedyPlacement(pinnedUpStreamOperators);
+
+        auto timeAfterGreedy = std::chrono::steady_clock::now();
+        auto elapsedMillisecondsGreedy =
+            duration_cast<std::chrono::milliseconds>(timeAfterGreedy - timeBeforeGreedy);
+        NES_DEBUG("AdaptiveActiveStandby::Greedy placement: Time elapsed: " << elapsedMillisecondsGreedy.count() << "ms");
 
         if (!success) {
             NES_DEBUG("AdaptiveActiveStandby: There are no valid replica placements.");
@@ -89,6 +104,8 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
             auto bestScoreChange = 0.0;
             uint16_t unsuccessfulAttempts = 0;
             auto rep = 0;
+
+            auto timeBeforeRLS = std::chrono::steady_clock::now();
 
             // 3.3.1 save the greedy algorithm's candidate as the initial maps
             const OperatorToTopologyMap initialOperatorToTopologyMap = candidateOperatorToTopologyMap;
@@ -142,6 +159,11 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
             } else {
                 NES_DEBUG("AdaptiveActiveStandby: Local Search could not find a better placement than the Greedy Algorithm");
             }
+            auto timeAfterRLS = std::chrono::steady_clock::now();
+            auto elapsedMillisecondsRLS =
+                duration_cast<std::chrono::milliseconds>(timeAfterRLS - timeBeforeRLS);
+            NES_DEBUG("AdaptiveActiveStandby::Repeated local search: Time elapsed: " << elapsedMillisecondsRLS.count() << "ms"
+                                                                                     << " (excluding the Greedy Algorithm!)");
         }
     } else if (placementStrategy == PlacementStrategy::ValueAAS::ILP_AAS) {
         if (z3Context == nullptr) {
@@ -154,7 +176,14 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
             return false;
         }
 
+        auto timeBeforeILP = std::chrono::steady_clock::now();
+
         score = executeILPStrategy(pinnedUpStreamOperators);
+
+        auto timeAfterILP = std::chrono::steady_clock::now();
+        auto elapsedMillisecondsILP =
+            duration_cast<std::chrono::milliseconds>(timeAfterILP - timeBeforeILP);
+        NES_DEBUG("AdaptiveActiveStandby::ILP: Time elapsed: " << elapsedMillisecondsILP.count() << "ms");
 
         if (score <= 0) {
             NES_DEBUG("AdaptiveActiveStandby: There are no valid replica placements.");
@@ -169,7 +198,7 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
     NES_DEBUG("AdaptiveActiveStandby: Placing the best candidate \n"
               << candidateOperatorPlacementsToString()
               << "Total score with penalties: " << score << "\n"
-              << "Time elapsed: " << elapsedMilliseconds.count() << "ms");
+              << "Calculation time: " << elapsedMilliseconds.count() << "ms");
 
     // 7. Pin the operators based on the best candidate
     pinOperators();
