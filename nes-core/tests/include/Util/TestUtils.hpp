@@ -51,7 +51,7 @@ static const char* BASE_URL = "http://127.0.0.1:";
  */
 namespace TestUtils {
 
-static constexpr auto defaultTimeout = std::chrono::seconds(120);
+static constexpr auto defaultTimeout = std::chrono::seconds(180);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.

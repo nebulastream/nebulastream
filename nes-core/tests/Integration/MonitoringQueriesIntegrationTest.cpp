@@ -190,13 +190,39 @@ TEST_F(MonitoringQueriesIntegrationTest, testThreeLevelsTopologyTopDownMemory) {
     uint64_t childThreshold = 1000;
     uint64_t combinerThreshold = 1;
     uint64_t expectedNoBuffers = 100;
-    std::string query = createMonitoringQuery(Monitoring::MemoryMetric, "TOTAL_RAM", outputFilePath);
+    std::string query = createMonitoringQuery(Monitoring::WrappedNetworkMetrics, "tBytes", outputFilePath);
     auto content =
         testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 4, childThreshold, combinerThreshold, expectedNoBuffers, query);
 
     auto lineCnt = countLines(content);
 
     ASSERT_EQ(lineCnt, 92);
+}
+
+TEST_F(MonitoringQueriesIntegrationTest, testThreeLevelsTopologyBottomUp) {
+    uint64_t childThreshold = 1;
+    uint64_t combinerThreshold = 1000;
+    uint64_t expectedNoBuffers = 100;
+    std::string query = createMonitoringQuery(Monitoring::WrappedNetworkMetrics, "tBytes", outputFilePath);
+    auto content =
+        testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 4, childThreshold, combinerThreshold, expectedNoBuffers, query);
+
+    auto lineCnt = countLines(content);
+
+    ASSERT_EQ(lineCnt, 106);
+}
+
+TEST_F(MonitoringQueriesIntegrationTest, testNemoThreelevels) {
+    uint64_t childThreshold = 1;
+    uint64_t combinerThreshold = 1;
+    uint64_t expectedNoBuffers = 20;
+    std::string query = createMonitoringQuery(Monitoring::WrappedNetworkMetrics, "tBytes", outputFilePath);
+    auto content =
+        testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 4, childThreshold, combinerThreshold, expectedNoBuffers, query);
+
+    auto lineCnt = countLines(content);
+
+    ASSERT_EQ(lineCnt, 82);
 }
 
 }// namespace NES
