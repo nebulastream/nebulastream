@@ -1,9 +1,5 @@
 
-// Generated from CLionProjects/nebulastream/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from IoTDB/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4 by ANTLR 4.9.2
 
 
 #include <Parsers/NebulaSQL/gen/NebulaSQLBaseListener.h>
-
-
-using namespace NES::Parsers;
-
