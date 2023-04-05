@@ -59,6 +59,7 @@ class MemoryMetrics {
     bool operator!=(const MemoryMetrics& rhs) const;
 
     uint64_t nodeId;
+    uint64_t timestamp;
     uint64_t TOTAL_RAM;
     uint64_t TOTAL_SWAP;
     uint64_t FREE_RAM;

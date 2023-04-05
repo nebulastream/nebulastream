@@ -266,7 +266,7 @@ class MetricValidator {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
-            if (!(json["disk"].size() == 6U)) {
+            if (!(json["disk"].size() == 7U)) {
                 NES_ERROR("MetricValidator: Values for disk missing");
                 check = false;
             }
@@ -277,7 +277,7 @@ class MetricValidator {
             check = false;
         } else {
             auto numCpuFields = json["wrapped_cpu"].size();
-            if (numCpuFields <= 1) {
+            if (numCpuFields <= 2) {
                 NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
                 check = false;
             }
@@ -288,7 +288,7 @@ class MetricValidator {
             check = false;
         } else {
             auto numFields = json["wrapped_network"].size();
-            if (numFields < 1) {
+            if (numFields < 2) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }
@@ -299,7 +299,7 @@ class MetricValidator {
             check = false;
         } else {
             auto numFields = json["memory"].size();
-            if (numFields < 13) {
+            if (numFields < 14) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }
@@ -325,7 +325,7 @@ class MetricValidator {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
-            if (!(json["disk"][0]["value"].size() == 6U)) {
+            if (!(json["disk"][0]["value"].size() == 7U)) {
                 NES_ERROR("MetricValidator: Values for disk missing");
                 check = false;
             }
@@ -336,7 +336,7 @@ class MetricValidator {
             check = false;
         } else {
             auto numCpuFields = json["wrapped_cpu"][0]["value"].size();
-            if (numCpuFields <= 1) {
+            if (numCpuFields <= 2) {
                 NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
                 check = false;
             }
@@ -347,7 +347,7 @@ class MetricValidator {
             check = false;
         } else {
             auto numFields = json["wrapped_network"][0]["value"].size();
-            if (numFields < 1) {
+            if (numFields < 2) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }
@@ -358,7 +358,7 @@ class MetricValidator {
             check = false;
         } else {
             auto numFields = json["memory"][0]["value"].size();
-            if (numFields < 13) {
+            if (numFields < 14) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }

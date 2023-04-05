@@ -26,7 +26,7 @@ namespace NES::Monitoring {
  */
 class CpuMetricsWrapper {
   public:
-    CpuMetricsWrapper() = default;
+    CpuMetricsWrapper();
     CpuMetricsWrapper(uint64_t nodeId);
     CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 
@@ -78,6 +78,7 @@ class CpuMetricsWrapper {
   private:
     std::vector<CpuMetrics> cpuMetrics;
     uint64_t nodeId;
+    uint64_t timestamp;
 } __attribute__((packed));
 
 /**

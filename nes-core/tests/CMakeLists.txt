@@ -619,6 +619,11 @@ add_nes_integration_test(monitoring-integration-test "Integration/MonitoringInte
 set_tests_properties(monitoring-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(monitoring-integration-test nesCoordinator nesWorker)
 
+# MonitoringQueriesIntegrationTest
+add_nes_integration_test(monitoring-queries-integration-test "Integration/MonitoringQueriesIntegrationTest.cpp")
+set_tests_properties(monitoring-queries-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(monitoring-queries-integration-test nesCoordinator nesWorker)
+
 # NemoIntegrationTest
 add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
 add_dependencies(nemo-integration-test nesCoordinator nesWorker)
