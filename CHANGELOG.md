@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.44](https://github.com/nebulastream/nebulastream/tree/v0.5.44) (2023-04-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.43...v0.5.44)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cannot Start NES Executable Docker Image [\#3644](https://github.com/nebulastream/nebulastream/issues/3644)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add support for multiple aggregation functions [\#3315](https://github.com/nebulastream/nebulastream/issues/3315)
+
 ## [v0.5.43](https://github.com/nebulastream/nebulastream/tree/v0.5.43) (2023-04-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.42...v0.5.43)
