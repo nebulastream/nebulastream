@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
+#include <API/Schema.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -31,6 +32,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <cstdint>
 #include <utility>
 
 namespace NES::Windowing {
@@ -247,7 +249,6 @@ class ExecutableSliceAggregationTriggerAction
     * @param value value
     */
     template<typename ValueType>
-
     void writeResultRecord(Runtime::TupleBuffer& tupleBuffer,
                            uint64_t index,
                            uint64_t startTs,
@@ -255,20 +256,19 @@ class ExecutableSliceAggregationTriggerAction
                            KeyType key,
                            ValueType value,
                            uint64_t cnt) {
-        dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(windowTupleLayout, tupleBuffer);
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(windowTupleLayout, tupleBuffer);
         if (windowDefinition->isKeyed()) {
-            std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> keyedTuple(startTs, endTs, cnt, key, value);
-            dynamicBuffer->pushRecordToBuffer(keyedTuple, index);
+            std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> newRecord(startTs, endTs, cnt, key, value);
+            dynamicTupleBuffer.pushRecordToBufferAtIndex(newRecord, index);
         } else {
-            std::tuple<uint64_t, uint64_t, uint64_t, ValueType> notKeyedTuple(startTs, endTs, cnt, value);
-            dynamicBuffer->pushRecordToBuffer(notKeyedTuple, index);
+            std::tuple<uint64_t, uint64_t, uint64_t, ValueType> newRecord(startTs, endTs, cnt, value);
+            dynamicTupleBuffer.pushRecordToBufferAtIndex(newRecord, index);
         }
     }
 
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    std::unique_ptr<Runtime::MemoryLayouts::DynamicTupleBuffer> dynamicBuffer;
     Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
