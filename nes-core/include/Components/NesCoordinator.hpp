@@ -262,6 +262,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
     NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    std::shared_ptr<std::thread> statisticOutputThread;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

@@ -95,18 +95,18 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
 
         level3WorkerConfig = WorkerConfiguration::create();
         level3WorkerConfig->coordinatorPort = *rpcCoordinatorPort;
-        //        level3WorkerConfig->enableStatisticOutput = true;
+        level3WorkerConfig->enableStatisticOutput = true;
         level3WorkerConfig->numberOfSlots = 6;
 
         reserveWorkerConfig = WorkerConfiguration::create();
         reserveWorkerConfig->coordinatorPort = *rpcCoordinatorPort;
-        //        level3WorkerConfig->enableStatisticOutput = true;
+        reserveWorkerConfig->enableStatisticOutput = true;
         reserveWorkerConfig->numberOfSlots = 5;
 
         for (int i = 0; i < nSourceWorkers; ++i) {
             auto sourceWorkerConfig = WorkerConfiguration::create();
             sourceWorkerConfig->coordinatorPort = *rpcCoordinatorPort;
-            //        sourceWorker->enableStatisticOutput = true;
+            sourceWorkerConfig->enableStatisticOutput = true;
             sourceWorkerConfig->lambdaSource = i+1;
             sourceWorkerConfig->numberOfSlots = 0;
             sourceWorkerConfigs[i] = sourceWorkerConfig;

@@ -337,19 +337,19 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
             std::ofstream statisticsFile;
-            statisticsFile.open("statistics.csv", ios::out);
+            statisticsFile.open("statistics" + std::to_string(getWorkerId()) + ".csv", ios::out);
             if (statisticsFile.is_open()) {
-//                statisticsFile << "timestamp,";
-//                statisticsFile << "queryId,";
-//                statisticsFile << "subPlanId,";
-//                statisticsFile << "processedTasks,";
-//                statisticsFile << "processedTuple,";
-//                statisticsFile << "processedBuffers,";
-//                statisticsFile << "processedWatermarks,";
-//                statisticsFile << "latencyAVG,";
-//                statisticsFile << "queueSizeAVG,";
-//                statisticsFile << "availableGlobalBufferAVG,";
-//                statisticsFile << "availableFixedBufferAVG\n";
+                statisticsFile << "timestamp,";
+                statisticsFile << "queryId,";
+                statisticsFile << "subPlanId,";
+                statisticsFile << "processedTasks,";
+                statisticsFile << "processedTuple,";
+                statisticsFile << "processedBuffers,";
+                statisticsFile << "processedWatermarks,";
+                statisticsFile << "latencyAVG,";
+                statisticsFile << "queueSizeAVG,";
+                statisticsFile << "availableGlobalBufferAVG,";
+                statisticsFile << "availableFixedBufferAVG\n";
                 while (isRunning) {
                     auto ts = std::chrono::system_clock::now();
                     auto timeNow = std::chrono::system_clock::to_time_t(ts);
