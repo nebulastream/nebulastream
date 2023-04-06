@@ -202,6 +202,23 @@ enum class ByteCode : short {
     CALL_ptr_ptr_ptr,
     CALL_ptr_ptr_i64,
     CALL_ptr_ptr_ui64,
+    // dynamic function calls using dyncall.h
+    DYNCALL_reset,
+    DYNCALL_arg_b,
+    DYNCALL_arg_i8,
+    DYNCALL_arg_i16,
+    DYNCALL_arg_i32,
+    DYNCALL_arg_i64,
+    DYNCALL_arg_f,
+    DYNCALL_arg_d,
+    DYNCALL_arg_ptr,
+    DYNCALL_call_v,
+    DYNCALL_call_b,
+    DYNCALL_call_i8,
+    DYNCALL_call_i16,
+    DYNCALL_call_i32,
+    DYNCALL_call_i64,
+    DYNCALL_call_ptr
 };
 
 enum class Type : uint8_t { v, i8, i16, i32, i64, ui8, ui16, ui32, ui64, d, f, b, ptr };
@@ -220,6 +237,7 @@ class FunctionCallTarget {
  * @brief The general definition of opcode, that contains a bytecode, at max two input registers and a result register.
  */
 struct OpCode {
+    OpCode(ByteCode op, short reg1, short reg2, short output): op(op), reg1(reg1), reg2(reg2), output(output){};
     ByteCode op;
     short reg1;
     short reg2;

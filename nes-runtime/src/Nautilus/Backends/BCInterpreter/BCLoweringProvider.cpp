@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
@@ -39,6 +41,7 @@ void BCLoweringProvider::RegisterProvider::freeRegister() {
 }
 
 std::tuple<Code, RegisterFile> BCLoweringProvider::LoweringContext::process() {
+    defaultRegisterFile.fill(0);
     auto functionOperation = ir->getRootOperation();
     RegisterFrame rootFrame;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
@@ -99,24 +102,24 @@ Type getType(const IR::Types::StampPtr& stamp) {
         auto value = cast<IR::Types::IntegerStamp>(stamp);
         if (value->isSigned()) {
             switch (value->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: return Type::i8;
-                case IR::Types::IntegerStamp::I16: return Type::i16;
-                case IR::Types::IntegerStamp::I32: return Type::i32;
-                case IR::Types::IntegerStamp::I64: return Type::i64;
+                case IR::Types::IntegerStamp::BitWidth::I8: return Type::i8;
+                case IR::Types::IntegerStamp::BitWidth::I16: return Type::i16;
+                case IR::Types::IntegerStamp::BitWidth::I32: return Type::i32;
+                case IR::Types::IntegerStamp::BitWidth::I64: return Type::i64;
             }
         } else {
             switch (value->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: return Type::ui8;
-                case IR::Types::IntegerStamp::I16: return Type::ui16;
-                case IR::Types::IntegerStamp::I32: return Type::ui32;
-                case IR::Types::IntegerStamp::I64: return Type::ui64;
+                case IR::Types::IntegerStamp::BitWidth::I8: return Type::ui8;
+                case IR::Types::IntegerStamp::BitWidth::I16: return Type::ui16;
+                case IR::Types::IntegerStamp::BitWidth::I32: return Type::ui32;
+                case IR::Types::IntegerStamp::BitWidth::I64: return Type::ui64;
             }
         }
     } else if (stamp->isFloat()) {
         auto value = cast<IR::Types::FloatStamp>(stamp);
         switch (value->getBitWidth()) {
-            case IR::Types::FloatStamp::F32: return Type::f;
-            case IR::Types::FloatStamp::F64: return Type::d;
+            case IR::Types::FloatStamp::BitWidth::F32: return Type::f;
+            case IR::Types::FloatStamp::BitWidth::F64: return Type::d;
         }
     } else if (stamp->isAddress()) {
         return Type::ptr;
@@ -250,7 +253,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     auto resultReg = getResultRegister(cmpOp, frame);
     frame.setValue(cmpOp->getIdentifier(), resultReg);
 
-    if (cmpOp->getComparator() == IR::Operations::CompareOperation::IEQ) {
+    if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::IEQ) {
         auto type = cmpOp->getLeftInput()->getStamp();
         ByteCode bc;
         switch (getType(type)) {
@@ -271,7 +274,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::ISLT) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::ISLT) {
         auto type = cmpOp->getLeftInput()->getStamp();
         ByteCode bc;
         switch (getType(type)) {
@@ -292,7 +295,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::ISGT) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::ISGT) {
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {
@@ -313,7 +316,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::FOLT) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::FOLT) {
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {
@@ -325,7 +328,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::FOEQ) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::FOEQ) {
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {
@@ -447,25 +450,31 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   short block,
                                                   RegisterFrame& frame) {
     switch (opt->getOperationType()) {
-        case IR::Operations::Operation::ConstBooleanOp: {
+        case IR::Operations::Operation::OperationType::ConstBooleanOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(opt);
             auto defaultRegister = registerProvider.allocRegister();
-            frame.setValue(constInt->getIdentifier(), defaultRegister);
             defaultRegisterFile[defaultRegister] = constInt->getValue();
+
+            auto targetRegister = registerProvider.allocRegister();
+            frame.setValue(constInt->getIdentifier(), targetRegister);
+            OpCode oc = {ByteCode::REG_MOV, defaultRegister, -1, targetRegister};
+            program.blocks[block].code.emplace_back(oc);
             return;
         }
-        case IR::Operations::Operation::ConstIntOp: {
+        case IR::Operations::Operation::OperationType::ConstIntOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstIntOperation>(opt);
             auto defaultRegister = registerProvider.allocRegister();
-            frame.setValue(constInt->getIdentifier(), defaultRegister);
             defaultRegisterFile[defaultRegister] = constInt->getConstantIntValue();
+            auto targetRegister = registerProvider.allocRegister();
+            frame.setValue(constInt->getIdentifier(), targetRegister);
+            OpCode oc = {ByteCode::REG_MOV, defaultRegister, -1, targetRegister};
+            program.blocks[block].code.emplace_back(oc);
             return;
         }
-        case IR::Operations::Operation::ConstFloatOp: {
+        case IR::Operations::Operation::OperationType::ConstFloatOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstFloatOperation>(opt);
             auto defaultRegister = registerProvider.allocRegister();
-            frame.setValue(constInt->getIdentifier(), defaultRegister);
-            if (cast<IR::Types::FloatStamp>(constInt->getStamp())->getBitWidth() == IR::Types::FloatStamp::F32) {
+            if (cast<IR::Types::FloatStamp>(constInt->getStamp())->getBitWidth() == IR::Types::FloatStamp::BitWidth::F32) {
                 auto floatValue = (float) constInt->getConstantFloatValue();
                 auto floatReg = reinterpret_cast<float*>(&defaultRegisterFile[defaultRegister]);
                 *floatReg = floatValue;
@@ -474,29 +483,34 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                 auto floatReg = reinterpret_cast<double*>(&defaultRegisterFile[defaultRegister]);
                 *floatReg = floatValue;
             }
+
+            auto targetRegister = registerProvider.allocRegister();
+            frame.setValue(constInt->getIdentifier(), targetRegister);
+            OpCode oc = {ByteCode::REG_MOV, defaultRegister, -1, targetRegister};
+            program.blocks[block].code.emplace_back(oc);
             return;
         }
-        case IR::Operations::Operation::AddOp: {
+        case IR::Operations::Operation::OperationType::AddOp: {
             auto addOpt = std::static_pointer_cast<IR::Operations::AddOperation>(opt);
             process(addOpt, block, frame);
             return;
         }
-        case IR::Operations::Operation::MulOp: {
+        case IR::Operations::Operation::OperationType::MulOp: {
             auto mulOpt = std::static_pointer_cast<IR::Operations::MulOperation>(opt);
             process(mulOpt, block, frame);
             return;
         }
-        case IR::Operations::Operation::SubOp: {
+        case IR::Operations::Operation::OperationType::SubOp: {
             auto subOpt = std::static_pointer_cast<IR::Operations::SubOperation>(opt);
             process(subOpt, block, frame);
             return;
         }
-        case IR::Operations::Operation::DivOp: {
+        case IR::Operations::Operation::OperationType::DivOp: {
             auto divOpt = std::static_pointer_cast<IR::Operations::DivOperation>(opt);
             process(divOpt, block, frame);
             return;
         }
-        case IR::Operations::Operation::ReturnOp: {
+        case IR::Operations::Operation::OperationType::ReturnOp: {
             auto returnOpt = std::static_pointer_cast<IR::Operations::ReturnOperation>(opt);
             if (returnOpt->hasReturnValue()) {
                 auto returnFOp = frame.getValue(returnOpt->getReturnValue()->getIdentifier());
@@ -508,53 +522,53 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                 return;
             }
         }
-        case IR::Operations::Operation::CompareOp: {
+        case IR::Operations::Operation::OperationType::CompareOp: {
             auto compOpt = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
             process(compOpt, block, frame);
             return;
         }
-        case IR::Operations::Operation::IfOp: {
+        case IR::Operations::Operation::OperationType::IfOp: {
             auto ifOpt = std::static_pointer_cast<IR::Operations::IfOperation>(opt);
             process(ifOpt, block, frame);
             return;
         }
 
-        case IR::Operations::Operation::BranchOp: {
+        case IR::Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(opt);
             process(branchOp, block, frame);
             return;
         }
-        case IR::Operations::Operation::LoadOp: {
+        case IR::Operations::Operation::OperationType::LoadOp: {
             auto load = std::static_pointer_cast<IR::Operations::LoadOperation>(opt);
             process(load, block, frame);
             return;
         }
-        case IR::Operations::Operation::StoreOp: {
+        case IR::Operations::Operation::OperationType::StoreOp: {
             auto store = std::static_pointer_cast<IR::Operations::StoreOperation>(opt);
             process(store, block, frame);
             return;
         }
-        case IR::Operations::Operation::ProxyCallOp: {
+        case IR::Operations::Operation::OperationType::ProxyCallOp: {
             auto call = std::static_pointer_cast<IR::Operations::ProxyCallOperation>(opt);
             process(call, block, frame);
             return;
         }
-        case IR::Operations::Operation::OrOp: {
+        case IR::Operations::Operation::OperationType::OrOp: {
             auto call = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
             process(call, block, frame);
             return;
         }
-        case IR::Operations::Operation::AndOp: {
+        case IR::Operations::Operation::OperationType::AndOp: {
             auto call = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
             process(call, block, frame);
             return;
         }
-        case IR::Operations::Operation::NegateOp: {
+        case IR::Operations::Operation::OperationType::NegateOp: {
             auto call = std::static_pointer_cast<IR::Operations::NegateOperation>(opt);
             process(call, block, frame);
             return;
         }
-        case IR::Operations::Operation::CastOp: {
+        case IR::Operations::Operation::OperationType::CastOp: {
             auto cast = std::static_pointer_cast<IR::Operations::CastOperation>(opt);
             process(cast, block, frame);
             return;
@@ -568,7 +582,83 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
 
 void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
                                                   short block,
-                                                  RegisterFrame& frame) {
+                                                  NES::Nautilus::Backends::BC::BCLoweringProvider::RegisterFrame& frame) {
+    // first try to lower to a native call if the correct stub was registered.
+    //auto returnValue = processNativeCall(opt, block, frame);
+    //if (!returnValue) {
+        // if it was not possible to lower the call, we try to create a dynamic call using dyncall.h
+        processDynamicCall(opt, block, frame);
+    //}
+}
+
+bool BCLoweringProvider::LoweringContext::processDynamicCall(
+    const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
+    short block,
+    NES::Nautilus::Backends::BC::BCLoweringProvider::RegisterFrame& frame) {
+    auto& code = program.blocks[block].code;
+    NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
+    auto arguments = opt->getInputArguments();
+
+    // 1. reset dyncall stack
+    code.emplace_back(ByteCode::DYNCALL_reset, -1, -1, -1);
+
+    // 2. set dyncall arguments
+    for (auto& arg : arguments) {
+        auto argType = getType(arg->getStamp());
+        ByteCode bc;
+        switch (argType) {
+            case Type::i8: bc = ByteCode::DYNCALL_arg_i8; break;
+            case Type::i16: bc = ByteCode::DYNCALL_arg_i16; break;
+            case Type::i32: bc = ByteCode::DYNCALL_arg_i32; break;
+            case Type::i64: bc = ByteCode::DYNCALL_arg_i64; break;
+            case Type::ui8: bc = ByteCode::DYNCALL_arg_i8; break;
+            case Type::ui16: bc = ByteCode::DYNCALL_arg_i16; break;
+            case Type::ui32: bc = ByteCode::DYNCALL_arg_i32; break;
+            case Type::ui64: bc = ByteCode::DYNCALL_arg_i64; break;
+            case Type::d: bc = ByteCode::DYNCALL_arg_d; break;
+            case Type::f: bc = ByteCode::DYNCALL_arg_f; break;
+            case Type::b: bc = ByteCode::DYNCALL_arg_b; break;
+            case Type::ptr: bc = ByteCode::DYNCALL_arg_ptr; break;
+            default: NES_THROW_RUNTIME_ERROR("Type not implemented");
+        }
+        auto registerSlot = frame.getValue(arg->getIdentifier());
+        code.emplace_back(bc, registerSlot, -1, -1);
+    }
+
+    // 3. call function
+    auto returnType = getType(opt->getStamp());
+    ByteCode bc;
+    switch (returnType) {
+        case Type::i8: bc = ByteCode::DYNCALL_call_i8; break;
+        case Type::i16: bc = ByteCode::DYNCALL_call_i16; break;
+        case Type::i32: bc = ByteCode::DYNCALL_call_i32; break;
+        case Type::i64: bc = ByteCode::DYNCALL_call_i64; break;
+        case Type::ui8: bc = ByteCode::DYNCALL_call_i8; break;
+        case Type::ui16: bc = ByteCode::DYNCALL_call_i16; break;
+        case Type::ui32: bc = ByteCode::DYNCALL_call_i32; break;
+        case Type::ui64: bc = ByteCode::DYNCALL_call_i64; break;
+        case Type::ptr: bc = ByteCode::DYNCALL_call_ptr; break;
+        case Type::v: bc = ByteCode::DYNCALL_call_v; break;
+        default: NES_THROW_RUNTIME_ERROR("Type not implemented");
+    }
+
+    auto funcInfoRegister = registerProvider.allocRegister();
+    defaultRegisterFile[funcInfoRegister] = (int64_t)  opt->getFunctionPtr();
+
+    if (!opt->getStamp()->isVoid()) {
+        auto resultRegister = getResultRegister(opt, frame);
+        frame.setValue(opt->getIdentifier(), resultRegister);
+        code.emplace_back(bc, funcInfoRegister, -1, resultRegister);
+    } else {
+        code.emplace_back(bc, funcInfoRegister, -1, -1);
+    }
+    return true;
+}
+
+bool BCLoweringProvider::LoweringContext::processNativeCall(
+    const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
+    short block,
+    NES::Nautilus::Backends::BC::BCLoweringProvider::RegisterFrame& frame) {
 
     // TODO the following code is very bad and manually checks function signatures. Type to come up with something more generic.
     NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
@@ -581,20 +671,20 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             if (getType(arguments[0]->getStamp()) == Type::ptr) {
                 bc = ByteCode::CALL_v_ptr;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else if (arguments.size() == 2) {
             if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ui64) {
                 bc = ByteCode::CALL_v_ptr_ui64;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else if (arguments.size() == 3) {
             if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ptr
                 && getType(arguments[2]->getStamp()) == Type::ptr) {
                 bc = ByteCode::CALL_v_ptr_ptr_ptr;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else if (arguments.size() == 7) {
             if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ptr
@@ -603,7 +693,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                 && getType(arguments[6]->getStamp()) == Type::ui64) {
                 bc = ByteCode::CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else {
             // TODO support void function
@@ -616,33 +706,33 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             if (getType(arguments[0]->getStamp()) == Type::i64) {
                 bc = ByteCode::CALL_i64_i64;
             } else if (getType(arguments[0]->getStamp()) == Type::ptr) {
-                NES_NOT_IMPLEMENTED();
+                return false;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else if (arguments.size() == 2) {
             if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
                 bc = ByteCode::CALL_i64_i64_i64;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else {
-            NES_NOT_IMPLEMENTED();
+            return false;
         }
     } else if (getType(opt->getStamp()) == Type::ui64) {
         if (arguments.empty()) {
-            NES_NOT_IMPLEMENTED();
+            return false;
         } else if (arguments.size() == 1) {
             if (getType(arguments[0]->getStamp()) == Type::i64) {
-                NES_NOT_IMPLEMENTED();
+                return false;
             } else if (getType(arguments[0]->getStamp()) == Type::ptr) {
                 bc = ByteCode::CALL_ui64_ptr;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else if (arguments.size() == 2) {
             if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
-                NES_NOT_IMPLEMENTED();
+                return false;
             } else if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i64) {
                 bc = ByteCode::CALL_ui64_ui64_i64;
             } else if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i32) {
@@ -650,25 +740,25 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             } else if (getType(arguments[0]->getStamp()) == Type::ui64 && getType(arguments[1]->getStamp()) == Type::i8) {
                 bc = ByteCode::CALL_ui64_ui64_i8;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else {
-            NES_NOT_IMPLEMENTED();
+            return false;
         }
     } else if (getType(opt->getStamp()) == Type::ptr) {
         if (arguments.empty()) {
-            NES_NOT_IMPLEMENTED();
+            return false;
         } else if (arguments.size() == 1) {
             if (getType(arguments[0]->getStamp()) == Type::i64) {
-                NES_NOT_IMPLEMENTED();
+                return false;
             } else if (getType(arguments[0]->getStamp()) == Type::ptr) {
                 bc = ByteCode::CALL_ptr_ptr;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else if (arguments.size() == 2) {
             if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
-                NES_NOT_IMPLEMENTED();
+                return false;
             } else if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ui64) {
                 bc = ByteCode::CALL_ptr_ptr_ui64;
             } else if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::i64) {
@@ -676,13 +766,13 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             } else if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ptr) {
                 bc = ByteCode::CALL_ptr_ptr_ptr;
             } else {
-                NES_NOT_IMPLEMENTED();
+                return false;
             }
         } else {
-            NES_NOT_IMPLEMENTED();
+            return false;
         }
     } else {
-        NES_NOT_IMPLEMENTED();
+        return false;
     }
 
     std::vector<std::pair<short, Backends::BC::Type>> argRegisters;
@@ -701,6 +791,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     }
     OpCode oc = {bc, funcInfoRegister, -1, resultRegister};
     program.blocks[block].code.emplace_back(oc);
+    return true;
 }
 
 void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::NegateOperation>& negateOperation,
@@ -801,7 +892,7 @@ short BCLoweringProvider::LoweringContext::getResultRegister(const std::shared_p
     // if the result value of opt is directly passed to an block argument, then we can directly write the value to the correct target register.
     if (opt->getUsages().size() == 1) {
         auto* usage = opt->getUsages()[0];
-        if (usage->getOperationType() == IR::Operations::Operation::BlockInvocation) {
+        if (usage->getOperationType() == IR::Operations::Operation::OperationType::BlockInvocation) {
             auto bi = dynamic_cast<const IR::Operations::BasicBlockInvocation*>(usage);
             auto blockInputArguments = bi->getArguments();
             auto blockTargetArguments = bi->getBlock()->getArguments();

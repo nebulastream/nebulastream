@@ -34,8 +34,26 @@ target_include_directories(nes-runtime PUBLIC
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable bytecode interpreter")
+
+    ExternalProject_Add(
+            dyncall-external
+            GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
+            GIT_TAG "origin/main"
+            PREFIX "lib/dyncall"
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+            UPDATE_DISCONNECTED 1
+    )
+
+    ExternalProject_Get_Property(dyncall-external install_dir)
+
+    target_include_directories(nes-runtime PRIVATE ${install_dir}/include)
+
+    add_dependencies(nes-runtime dyncall-external)
+    target_link_libraries(nes-runtime PRIVATE ${install_dir}/lib/libdyncall_s.a)
+
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
