@@ -17,20 +17,24 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-CacheMisses::CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper, std::shared_ptr<Profiler> profiler)
-    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      profiler(profiler) {
+CacheMisses::CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                         const std::shared_ptr<Profiler>& profiler,
+                         uint64_t normalizationWindowSize)
+    : profiler(profiler),
+      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)) {
     eventId = profiler->addEvent(PERF_COUNT_HW_CACHE_MISSES);
 }
 
 void CacheMisses::collect(){
-    auto cacheMisses = profiler->getCount(eventId);
-    std::cout << "Cache Misses: " << cacheMisses << std::endl;
+    cacheMisses = profiler->getCount(eventId);
 
-    //todo normalize cache misses for change detection
-    /*if (changeDetectorWrapper->insertValue(cacheMisses)){
-            std::cout << "Change detected" << std::endl;
-    }*/
+    if (cacheMisses != 0){
+        normalizer.normalizeValue(cacheMisses);
+    }
+}
+
+uint64_t CacheMisses::getCacheMisses() const {
+    return cacheMisses;
 }
 
 std::string CacheMisses::getType() const {

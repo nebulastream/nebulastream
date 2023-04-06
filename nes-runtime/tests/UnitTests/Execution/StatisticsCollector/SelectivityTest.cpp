@@ -79,7 +79,7 @@ TEST_P(SelectivityTest, runtimeTest) {
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    std::uniform_int_distribution<int64_t> dist(0, 20);
+    std::uniform_int_distribution<int64_t> dist(0, 100);
 
     std::vector<TupleBuffer> bufferVector;
 
@@ -100,15 +100,17 @@ TEST_P(SelectivityTest, runtimeTest) {
     const char *fileSelectivity = "SelectivityTest.txt";
     FILE* selectivityFile = fopen(fileSelectivity, "a+");
 
+    uint64_t selectionConstant = 5;
+
     for (int j = 1; j < 21; ++j) {
 
-        fprintf(selectivityFile, "Selectivity\t%f\n", ((double)j / 20)) ;
-        fprintf(runtimeFile, "Selectivity\t%f\n", ((double)j / 20)) ;
+        fprintf(selectivityFile, "Selectivity\t%f\n", ((double)selectionConstant / 100)) ;
+        fprintf(runtimeFile, "Selectivity\t%f\n", ((double)selectionConstant / 100)) ;
 
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(j);
+        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(selectionConstant);
         auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
         auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
         auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
@@ -150,6 +152,8 @@ TEST_P(SelectivityTest, runtimeTest) {
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
         ASSERT_EQ(numberOfResultBuffers, 1000);
+
+        selectionConstant += 5;
     }
 
     fclose(selectivityFile);
@@ -220,7 +224,7 @@ TEST_P(SelectivityTest, branchMissesTest) {
         nautilusExecutablePipelineStage->setProfiler(profiler);
 
         // initialize statistics pipeline runtime
-        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler);
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 1000);
 
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {

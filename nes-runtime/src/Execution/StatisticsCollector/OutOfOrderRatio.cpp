@@ -27,8 +27,7 @@ void OutOfOrderRatio::collect() {
     auto numOutOfOrderRecords = outOfOrderOperatorHandler->numberOfOutOfOrderRecords;
 
     if(numRecords != 0){
-        auto outOfOrderRatio = (double) numOutOfOrderRecords / numRecords;
-        std::cout << "OutOfOrderRatio " << outOfOrderRatio << std::endl;
+        outOfOrderRatio = (double) numOutOfOrderRecords / numRecords;
 
         if (changeDetectorWrapper->insertValue(outOfOrderRatio)){
             std::cout << "Change detected" << std::endl;
@@ -37,6 +36,9 @@ void OutOfOrderRatio::collect() {
 
 }
 
+double OutOfOrderRatio::getOutOfOrderRatio() {
+    return outOfOrderRatio;
+}
 
 std::string OutOfOrderRatio::getType() const {
     return "OutOfOrderRatio";

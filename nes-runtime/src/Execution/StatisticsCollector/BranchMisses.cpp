@@ -17,9 +17,11 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper, std::shared_ptr<Profiler> profiler)
-    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      profiler(profiler),
+BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                           const std::shared_ptr<Profiler>& profiler,
+                           uint64_t normalizationWindowSize)
+    : profiler(profiler),
+      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)),
       branchMisses(0) {
     eventId = profiler->addEvent(PERF_COUNT_HW_BRANCH_MISSES);
 }
@@ -27,9 +29,9 @@ BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetector
 void BranchMisses::collect(){
     branchMisses = profiler->getCount(eventId);
 
-    /*if (branchMisses != 0){
+    if (branchMisses != 0){
         normalizer.normalizeValue(branchMisses);
-    }*/
+    }
 }
 
 uint64_t BranchMisses::getBranchMisses() const{

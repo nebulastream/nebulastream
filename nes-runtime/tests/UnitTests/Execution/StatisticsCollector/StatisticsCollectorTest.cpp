@@ -154,6 +154,7 @@ TEST_P(StatisticsCollectorTest, selectivityTest) {
         // collect the selectivity
         pipelineSelectivity->collect();
         ASSERT_EQ(selectivity[i], pipelineSelectivity->getSelectivity());
+        std::cout << "Selectivity: " << pipelineSelectivity->getSelectivity() << std::endl;
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -239,6 +240,7 @@ TEST_P(StatisticsCollectorTest, runtimeTest) {
         // collect the statistics
         pipelineRuntime->collect();
         ASSERT_GT(pipelineRuntime->getRuntime(), 0);
+        std::cout << "Runtime: " << pipelineRuntime->getRuntime() << std::endl;
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -318,15 +320,18 @@ TEST_P(StatisticsCollectorTest, branchAndCacheMissesTest) {
 
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
-    auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler);
-    auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperCache), profiler);
+    auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 5);
+    auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperCache), profiler, 5);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (auto& buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
         branchMisses->collect();
         ASSERT_GT(branchMisses->getBranchMisses(), 0);
+        std::cout << "Branch Misses: " << branchMisses->getBranchMisses() << std::endl;
         cacheMisses->collect();
+        ASSERT_GT(cacheMisses->getCacheMisses(), 0);
+        std::cout << "Cache Misses: " << cacheMisses->getCacheMisses() << std::endl;
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -402,6 +407,7 @@ TEST_P(StatisticsCollectorTest, outOfOrderRatioTest) {
     executablePipeline->stop(pipelineContext);
 
     outOfOrderRatio->collect();
+    std::cout << "Out-of-order Ratio: " << outOfOrderRatio->getOutOfOrderRatio() << std::endl;
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];

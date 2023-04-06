@@ -16,6 +16,7 @@ limitations under the License.
 #define NES_RUNTIME_INCLUDE_EXECUTION_CACHEMISSES_HPP_
 
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <Execution/StatisticsCollector/Normalizer.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
@@ -30,15 +31,19 @@ class CacheMisses : public Statistic {
     * @brief Initialize to collect the cache misses of an operator.
     * @param profiler instance of profiler that measures the branch misses.
     */
-    CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper, std::shared_ptr<Profiler> profiler);
+    CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                const std::shared_ptr<Profiler>& profiler,
+                uint64_t normalizationWindowSize);
     void collect() override;
-
+    uint64_t getCacheMisses() const;
     std::string getType() const override;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     std::shared_ptr<Profiler> profiler;
+    Normalizer normalizer;
     uint64_t eventId;
+    uint64_t cacheMisses{};
 };
 
 }// namespace NES::Runtime::Execution
