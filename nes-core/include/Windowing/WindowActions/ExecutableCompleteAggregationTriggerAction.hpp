@@ -331,8 +331,12 @@ class ExecutableCompleteAggregationTriggerAction
                            KeyType key,
                            ValueType value,
                            uint64_t cnt) {
+        // If doAction() was not called before, create RowLayout for DynamicTupleBuffer.
+        windowTupleLayout = (windowTupleLayout) ? windowTupleLayout : 
+            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(windowTupleLayout, tupleBuffer);
         if (windowDefinition->isKeyed()) {
+            // Todo fails for one test
             std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> newRecord(startTs, endTs, cnt, key, value);
             dynamicTupleBuffer.pushRecordToBufferAtIndex(newRecord, index);
         } else {
@@ -359,6 +363,9 @@ class ExecutableCompleteAggregationTriggerAction
                            uint64_t endTs,
                            KeyType key,
                            ValueType value) {
+        // If doAction() was not called before, create RowLayout for DynamicTupleBuffer.
+        windowTupleLayout = (windowTupleLayout) ? windowTupleLayout : 
+            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(windowTupleLayout, tupleBuffer);
         if (windowDefinition->isKeyed()) {
             std::tuple<uint64_t, uint64_t, KeyType, ValueType> newRecord(startTs, endTs, key, value);
