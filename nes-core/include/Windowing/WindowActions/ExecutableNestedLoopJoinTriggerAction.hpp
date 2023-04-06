@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 
+#include "Runtime/MemoryLayout/MemoryLayout.hpp"
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -39,6 +40,8 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <cstdint>
+#include <cstring>
 
 namespace NES::Join {
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
@@ -345,13 +348,24 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                    sizeof(rightValue),
                    sizeof(InputTypeLeft),
                    sizeof(InputTypeRight));
-        dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(windowTupleLayout, tupleBuffer);
-        std::tuple<uint64_t, uint64_t, KeyType, InputTypeLeft, InputTypeRight> newTuple(startTs,
-                                                                                        endTs,
-                                                                                        key,
-                                                                                        leftValue,
-                                                                                        rightValue);
-        dynamicBuffer->pushRecordToBuffer(newTuple, index);
+        NES_ASSERT(windowTupleLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Layout Type must be ROW");      
+        // A struct can be packed which assures that the correct bytes are written to the TupleBuffer.
+        // (Using a std::tuple here let to inconsistencies.)
+        struct __attribute__((packed)) NewRecord {
+            uint64_t startTs;
+            uint64_t endTs;
+            KeyType key;
+            InputTypeLeft leftValue;
+            InputTypeRight rightValue;
+        };
+        auto newRecordData = NewRecord{startTs, endTs, key, leftValue, rightValue};
+        // We use memcpy to write to the TupleBuffer, because (Row-/Column-)LayoutTupleBuffer were removed in #3467.
+        // We cannot use a DynamicTupleBuffer leftValue, because its 'write()' function does not support structs and
+        // leftValue and rightValue can be structs.
+        std::memcpy(tupleBuffer.getBuffer<NewRecord>() + index, &newRecordData, sizeof(NewRecord));
+        if(index + 1 > tupleBuffer.getNumberOfTuples()) {
+            tupleBuffer.setNumberOfTuples(index + 1);
+        }
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }
@@ -359,7 +373,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     SchemaPtr windowSchema;
-    std::unique_ptr<Runtime::MemoryLayouts::DynamicTupleBuffer> dynamicBuffer;
     Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
 };

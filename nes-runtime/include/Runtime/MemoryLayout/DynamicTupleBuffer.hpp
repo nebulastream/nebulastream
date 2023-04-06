@@ -123,7 +123,6 @@ class DynamicTuple {
      * @param buffer
      */
     DynamicTuple(uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer);
-
     /**
      * @brief Accesses an individual field in the tuple by index.
      * @param fieldIndex

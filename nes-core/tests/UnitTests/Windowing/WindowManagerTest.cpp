@@ -318,7 +318,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     ASSERT_EQ(tuples[0], 0UL);
     ASSERT_EQ(tuples[1], 10UL);
     ASSERT_EQ(tuples[2], 10UL);
-    //    ASSERT_EQ(tuples[3], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
@@ -349,7 +348,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
                                   ->addField("key", DataTypeFactory::createFixedChar(32))
-                                  ->addField("value", BasicType::UINT32);
+                                  ->addField("value", BasicType::UINT64);
 
     auto windowHandler = createWindowHandler<NES::ExecutableTypes::Array<char, 32>,
                                              uint64_t,
