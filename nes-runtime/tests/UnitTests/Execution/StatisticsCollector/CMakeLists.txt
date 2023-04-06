@@ -13,3 +13,4 @@
 
 add_nes_runtime_test(runtime-statistics-collector-test "StatisticsCollectorTest.cpp")
 add_nes_runtime_test(runtime-profiler-test "ProfilerTest.cpp")
+add_nes_runtime_test(runtime-selectivity-test "SelectivityTest.cpp")

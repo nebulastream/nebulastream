@@ -30,7 +30,6 @@ void PipelineRuntime::collect() {
     runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();
 
     if (runtime != 0){
-        std::cout << "PipelineRuntime " << runtime << " Microseconds" << std::endl;
         normalizer.normalizeValue(runtime);
     }
 }

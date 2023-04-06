@@ -34,8 +34,19 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
     // wait till pipeline is ready
     executablePipeline.wait();
     auto& pipeline = executablePipeline.get();
+    numberOfInputTuples = inputTupleBuffer.getNumberOfTuples();
+    if (profiler != nullptr) profiler->startProfiling();
+    auto runtimeStart = std::chrono::high_resolution_clock::now();
+
     auto func = pipeline->getInvocableMember<void, void*, void*, void*>("execute");
     func((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+
+    auto runtimeEnd = std::chrono::high_resolution_clock::now();
+    if (profiler != nullptr) profiler->stopProfiling();
+    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+    runtimePerBuffer = duration.count();
+    numberOfOutputTuples = pipelineExecutionContext.getNumberOfEmittedTuples();
+
     return ExecutionResult::Ok;
 }
 

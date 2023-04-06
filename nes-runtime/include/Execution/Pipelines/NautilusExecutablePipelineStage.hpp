@@ -51,14 +51,12 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
      */
     std::string getCodeAsString() override;
 
-  private:
+  protected:
+    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
+    std::shared_ptr<Profiler> profiler;
     uint64_t numberOfInputTuples{};
     uint64_t numberOfOutputTuples{};
     uint64_t runtimePerBuffer{};
-    std::shared_ptr<Profiler> profiler;
-
-  protected:
-    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 
 }// namespace NES::Runtime::Execution

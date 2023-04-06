@@ -26,11 +26,9 @@ BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetector
 
 void BranchMisses::collect(){
     branchMisses = profiler->getCount(eventId);
-    std::cout << "BranchMisses: " << branchMisses << std::endl;
 
-    //todo normalize branch misses for change detection
-    /*if (changeDetectorWrapper->insertValue(branchMisses)){
-            std::cout << "Change detected" << std::endl;
+    /*if (branchMisses != 0){
+        normalizer.normalizeValue(branchMisses);
     }*/
 }
 

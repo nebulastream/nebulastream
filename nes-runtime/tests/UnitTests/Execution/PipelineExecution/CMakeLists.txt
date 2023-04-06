@@ -18,4 +18,3 @@ add_nes_runtime_test(runtime-global-window-pipeline-test "GlobalTimeWindowPipeli
 add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
 add_nes_runtime_test(runtime-mapjavaudf-pipeline-test "MapJavaUDFPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-join-pipeline-test "StreamJoinPipelineTest.cpp")
-add_nes_runtime_test(runtime-selectivity-runtime-test "SelectivityRuntimeTest.cpp")

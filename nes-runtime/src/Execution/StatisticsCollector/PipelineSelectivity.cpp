@@ -30,7 +30,6 @@ void PipelineSelectivity::collect() {
 
     if(numberOfInputTuples != 0){
         selectivity = (double) numberOfOutputTuples / (double) numberOfInputTuples;
-        std::cout << "PipelineSelectivity " << selectivity << std::endl;
 
         if (changeDetectorWrapper->insertValue(selectivity)){
             std::cout << "Change detected" << std::endl;
