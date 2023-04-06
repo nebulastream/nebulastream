@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.45](https://github.com/nebulastream/nebulastream/tree/v0.5.45) (2023-04-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.45)
+
+### Bug Fixes 🐛
+
+- \[BUG\] GPU unit tests are outdated [\#3629](https://github.com/nebulastream/nebulastream/issues/3629)
+
 ## [v0.5.44](https://github.com/nebulastream/nebulastream/tree/v0.5.44) (2023-04-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.43...v0.5.44)
