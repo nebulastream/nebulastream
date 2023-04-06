@@ -13,6 +13,7 @@
 */
 
 #include <Nautilus/Backends/BCInterpreter/BCInterpreter.hpp>
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCInterpreterBackend.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
 #include <Util/Logger/Logger.hpp>
