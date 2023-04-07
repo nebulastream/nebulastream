@@ -122,7 +122,7 @@ class AdaptiveActiveStandby {
     uint16_t resources = 5;
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(1000, 0));
     // constraints & weights
-    std::chrono::milliseconds timeConstraint{5000};
+    std::chrono::milliseconds timeConstraint{120000};
     double overUtilizationPenaltyWeight = 0.2;
     double networkCostWeight = 0.8;
     bool excludeNodesConnectingPrimaries = true;    // false -> only exclude nodes that host the primary operators themselves

@@ -106,7 +106,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * Controls how much memory is consumed by the system.
      */
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-                                                       1024,
+                                                       65536,
                                                        "Number buffers in global buffer pool."};
     /**
      * @brief Indicates how many buffers a single worker thread can allocate.
@@ -118,13 +118,13 @@ class WorkerConfiguration : public BaseConfiguration {
      * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
      */
     UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
-                                                         64,
+                                                         1024,
                                                          "Number buffers in source local buffer pool."};
     /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
-    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 8192, "BufferSizeInBytes."};
 
     /**
      * @brief Indicates a list of cpu cores, which are used to pin data sources to specific cores.
@@ -226,7 +226,7 @@ class WorkerConfiguration : public BaseConfiguration {
 
     UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1024, "Number of buffers to produce"};
 
-    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 100, "Source gathering interval"};
+    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 1000, "Source gathering interval"};
 
     /**
      * @brief Number of buffers per epoch

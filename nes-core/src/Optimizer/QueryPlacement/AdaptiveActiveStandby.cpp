@@ -140,7 +140,7 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
                 } else {
                     unsuccessfulAttempts++;
                     // NOTE: just an arbitrary breaking point in addition to the time constraint, could be changed to something else
-                    if (unsuccessfulAttempts >= secondaryOperatorMap.size()) {
+                    if (unsuccessfulAttempts >= secondaryOperatorMap.size() / 3) { // experiments: 3 secondary operators per source
                         NES_DEBUG("AdaptiveActiveStandby: No improvements found for the last "
                                   << secondaryOperatorMap.size() << " Local Search reps. Terminating.");
                         break;

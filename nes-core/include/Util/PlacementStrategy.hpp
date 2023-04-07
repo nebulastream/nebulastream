@@ -45,6 +45,11 @@ class PlacementStrategy {
         ILP_AAS = 3,
     };
 
+//    const static auto defaultStrategyAAS = ValueAAS::None;
+    const static auto defaultStrategyAAS = ValueAAS::Greedy_AAS;
+//    const static auto defaultStrategyAAS = ValueAAS::LocalSearch_AAS;
+//    const static auto defaultStrategyAAS = ValueAAS::ILP_AAS;
+
     /**
      * @brief Get Placement Strategy from string
      * @param placementStrategy : string representation of placement strategy
