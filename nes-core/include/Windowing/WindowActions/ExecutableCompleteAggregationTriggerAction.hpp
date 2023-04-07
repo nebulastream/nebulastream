@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLECOMPLETEAGGREGATIONTRIGGERACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLECOMPLETEAGGREGATIONTRIGGERACTION_HPP_
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -92,8 +92,6 @@ class ExecutableCompleteAggregationTriggerAction
 
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = workerContext.allocateTupleBuffer();
-
-        windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
 
         // iterate over all keys in the window state
@@ -332,11 +330,9 @@ class ExecutableCompleteAggregationTriggerAction
                            ValueType value,
                            uint64_t cnt) {
         // If doAction() was not called before, create RowLayout for DynamicTupleBuffer.
-        windowTupleLayout = (windowTupleLayout) ? windowTupleLayout : 
-            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(windowTupleLayout, tupleBuffer);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, tupleBuffer);
         if (windowDefinition->isKeyed()) {
-            // Todo fails for one test
             std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> newRecord(startTs, endTs, cnt, key, value);
             dynamicTupleBuffer.pushRecordToBufferAtIndex(newRecord, index);
         } else {
@@ -364,9 +360,8 @@ class ExecutableCompleteAggregationTriggerAction
                            KeyType key,
                            ValueType value) {
         // If doAction() was not called before, create RowLayout for DynamicTupleBuffer.
-        windowTupleLayout = (windowTupleLayout) ? windowTupleLayout : 
-            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(windowTupleLayout, tupleBuffer);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, tupleBuffer);
         if (windowDefinition->isKeyed()) {
             std::tuple<uint64_t, uint64_t, KeyType, ValueType> newRecord(startTs, endTs, key, value);
             dynamicTupleBuffer.pushRecordToBufferAtIndex(newRecord, index);
@@ -379,7 +374,6 @@ class ExecutableCompleteAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
     PartialAggregateType partialAggregateTypeInitialValue;
 };

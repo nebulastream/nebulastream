@@ -1122,7 +1122,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowIngesti
 /**
  * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     struct Test {
         uint64_t id;
         uint64_t value;
@@ -1166,10 +1166,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
             return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
         }
     };
-    // Todo expectedOutput does not match if we fix index
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
-    // std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
-
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
