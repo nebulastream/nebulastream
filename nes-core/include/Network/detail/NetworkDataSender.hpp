@@ -55,6 +55,10 @@ class NetworkDataSender : public BaseChannelType {
         if (payloadSize == 0) {
             return true;
         }
+        auto bandwidth = 1000; // [kbps]
+        auto delay = payloadSize / (bandwidth); // [b] / [kbps] = [ms]
+//        NES_DEBUG("NetworkDataSender: simulate transmission delay: " << delay << " tuple size: " << tupleSize);
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
         sendMessage<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
                                                                payloadSize,
                                                                numOfTuples,

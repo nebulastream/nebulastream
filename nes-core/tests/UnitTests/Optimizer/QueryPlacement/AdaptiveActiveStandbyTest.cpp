@@ -93,7 +93,7 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
         sourceNode->addNodeProperty("slots", 0);
         topology->addNewTopologyNodeAsChild(middleNode1, sourceNode);
 
-        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(1000, 0));
 
         sourceNode->addLinkProperty(middleNode1, linkProperty);
 

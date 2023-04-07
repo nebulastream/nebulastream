@@ -63,7 +63,7 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
     WorkerConfigurationPtr sourceWorkerConfigs[nSourceWorkers];
     SchemaPtr inputSchema;
     const std::string sourceName = "A";
-    const LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+    const LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(1000, 0));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;

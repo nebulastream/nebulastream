@@ -120,7 +120,7 @@ class AdaptiveActiveStandby {
     uint32_t grpcPort = 123;
     uint32_t dataPort = 124;
     uint16_t resources = 5;
-    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(1000, 0));
     // constraints & weights
     std::chrono::milliseconds timeConstraint{5000};
     double overUtilizationPenaltyWeight = 0.2;
