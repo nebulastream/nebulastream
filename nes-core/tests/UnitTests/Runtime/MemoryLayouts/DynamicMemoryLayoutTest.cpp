@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Common/DataTypes/BasicTypes.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
@@ -20,8 +19,8 @@
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 namespace NES::Runtime::MemoryLayouts {
 
 class DynamicMemoryLayoutTest

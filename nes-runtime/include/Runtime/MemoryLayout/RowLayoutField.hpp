@@ -22,7 +22,6 @@
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-using FIELD_SIZE = uint64_t;
 /**
  * @brief The RowLayoutField enables assesses to a specific field in a row layout.
  * It overrides the operator[] for a more user friendly access of tuples for a predefined field.

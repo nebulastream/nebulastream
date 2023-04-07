@@ -31,7 +31,6 @@ class MemoryLayoutTupleBuffer;
  * Currently. we support a RowLayout and a ColumnLayout.
  */
 class MemoryLayout {
-
   public:
     /**
      * @brief Constructor for MemoryLayout.
