@@ -84,7 +84,6 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 
             // ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
             auto firstFilterOperator = srcOperator->getParents()[0]->as<OperatorNode>();
-            //            dmf = 0.3367;   // compensate for DMF_map = 0.99
             dmf = 0.33;
             input = output;
             output = input * dmf;
@@ -99,13 +98,14 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             secondFilterOperator->addProperty("output", output);
             NES_DEBUG("QueryService: " << secondFilterOperator->toString() << " output: " << output);
 
-            // R"(.map(Attribute("i") = Attribute("h") * 2))"   // DMF = 1.1
-            auto mapOperator = secondFilterOperator->getParents()[0]->as<OperatorNode>();
-            dmf = 1.1;
+            // R"(.project(...))"   // DMF = 2
+            auto projectOperator = secondFilterOperator->getParents()[0]->as<OperatorNode>();
+            dmf = 2;
             input = output;
             output = input * dmf;
-            mapOperator->addProperty("output", output);
-            NES_DEBUG("QueryService: " << mapOperator->toString() << " output: " << output);
+            projectOperator->addProperty("output", output);
+            projectOperator->addProperty("cost", 2);
+            NES_DEBUG("QueryService: " << projectOperator->toString() << " output: " << output);
 
             NES_DEBUG("QueryService: Added operator outputs");
         }

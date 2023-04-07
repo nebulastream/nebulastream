@@ -26,6 +26,7 @@ limitations under the License.
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
@@ -53,6 +54,7 @@ namespace NES {
 
 using namespace Configurations;
 const int nSourceWorkers = 4;   // should be an even number for correct topologies
+const std::chrono::milliseconds runtime{30000};
 auto placementStrategyAAS = PlacementStrategy::Greedy_AAS;
 
 class AASBenchmarkTest : public Testing::NESBaseTest {
@@ -146,7 +148,8 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
             "Query::from(\"" + sourceName + "\")"
             + ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
             + ".filter(Attribute(\"d\") >= 2)"      // avg DMF = 0.5
-            + R"(.map(Attribute("i") = Attribute("h") * 2))"   // DMF = 1.1
+//            + R"(.map(Attribute("i") = Attribute("h") * 2))"   // DMF = 1.1
+            + R"(.project(Attribute("a"),Attribute("b"),Attribute("c"),Attribute("d"),Attribute("e"),Attribute("f"),Attribute("g"),Attribute("h"),Attribute("timestamp1"),Attribute("timestamp2"),Attribute("a").as("a2"),Attribute("a").as("a3"),Attribute("a").as("a4"),Attribute("a").as("a5"),Attribute("a").as("a6"),Attribute("a").as("a7"),Attribute("a").as("a8"),Attribute("a").as("a9"),Attribute("a").as("a10"),Attribute("a").as("a11")))"   // DMF = 1.1
             + ".sink(FileSinkDescriptor::create(\""
             + outputFilePath
             + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -441,12 +444,13 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
             output = input * dmf;
             secondFilterOperator->addProperty("output", output);
 
-            // R"(.map(Attribute("i") = Attribute("h") * 2))"   // DMF = 1.1
-            auto mapOperator = secondFilterOperator->getParents()[0]->as<OperatorNode>();
-            dmf = 1.1;
+            // R"(.project(...))"   // DMF = 2
+            auto projectOperator = secondFilterOperator->getParents()[0]->as<OperatorNode>();
+            dmf = 2;
             input = output;
             output = input * dmf;
-            mapOperator->addProperty("output", output);
+            projectOperator->addProperty("output", output);
+            projectOperator->addProperty("cost", 2);
         }
     }
 };
@@ -465,8 +469,8 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
 * @brief test
 */
 TEST_F(AASBenchmarkTest, test) {
-    int nLevel2Workers = 2;
-    int nLevel3Workers = 0;
+    int nLevel2Workers = 1;
+    int nLevel3Workers = 1;
 
     // setup coordinator
 
@@ -513,8 +517,8 @@ TEST_F(AASBenchmarkTest, test) {
         EXPECT_TRUE(retStart);
         srcWrk->removeParent(1);
 //        srcWrk->addParent(level3Workers[0]->getWorkerId());
-        srcWrk->addParent(level2Workers[0]->getWorkerId());
-        srcWrk->addParent(level2Workers[1]->getWorkerId());
+        srcWrk->addParent(level3Workers[0]->getWorkerId());
+//        srcWrk->addParent(level2Workers[1]->getWorkerId());
         NES_INFO("AASBenchmarkTest: srcWrk" << i << " started successfully");
         sourceWorkers[i] = srcWrk;
     }
@@ -550,7 +554,7 @@ TEST_F(AASBenchmarkTest, test) {
 
 
     NES_DEBUG("AASBenchmarkTest: Sleep");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::this_thread::sleep_for(runtime);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
@@ -785,7 +789,7 @@ TEST_F(AASBenchmarkTest, testSequentialAASDeployment) {
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<ProjectionLogicalOperatorNode>());
                 ASSERT_EQ(actualRootOperator->getChildren()[0]->getChildren().size(), 1U);
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>() ||
                             actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
@@ -804,7 +808,7 @@ TEST_F(AASBenchmarkTest, testSequentialAASDeployment) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             auto op = actualRootOperator->getChildren()[0];
             if (placementStrategyAAS == PlacementStrategy::Greedy_AAS) {
-                EXPECT_TRUE(op->instanceOf<MapLogicalOperatorNode>());
+                EXPECT_TRUE(op->instanceOf<ProjectionLogicalOperatorNode>());
                 ASSERT_EQ(op->getChildren().size(), 1U);
                 op = op->getChildren()[0];
             }
@@ -828,7 +832,7 @@ TEST_F(AASBenchmarkTest, testSequentialAASDeployment) {
                 // secondary maps on node 1 for LS and ILP
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 8U);// 4 maps + 4 sources
                 for (int i = 0; i < 8; i++)
-                    EXPECT_TRUE(actualRootOperator->getChildren()[i]->instanceOf<MapLogicalOperatorNode>()
+                    EXPECT_TRUE(actualRootOperator->getChildren()[i]->instanceOf<ProjectionLogicalOperatorNode>()
                                 || actualRootOperator->getChildren()[i]->instanceOf<SourceLogicalOperatorNode>());
             }
         } else {
@@ -953,7 +957,7 @@ TEST_F(AASBenchmarkTest, testSequentialRuntime) {
 
 
     NES_DEBUG("AASBenchmarkTest: Sleep");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::this_thread::sleep_for(runtime);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
@@ -972,10 +976,16 @@ TEST_F(AASBenchmarkTest, testSequentialRuntime) {
     }
 
     for (const auto& [i, reserveWorker] : reserveWorkers) {
+        if (i == 0)
+            continue;
         NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << i);
         bool retStopWrk = reserveWorker->stop(true);
         EXPECT_TRUE(retStopWrk);
     }
+
+    NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << 0);
+    bool retStopWrk0 = reserveWorkers[0]->stop(true);
+    EXPECT_TRUE(retStopWrk0);
 
     for (const auto& [i, level2Worker] : level2Workers) {
         NES_INFO("AASBenchmarkTest: Stop worker level2Worker" << i);
@@ -1065,7 +1075,7 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityAASDeployment) {
             ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<ProjectionLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
             // secondary path
             actualRootOperator = querySubPlans[1U]->getRootOperators()[0];
@@ -1100,7 +1110,7 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityAASDeployment) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             auto op = actualRootOperator->getChildren()[0];
             if (placementStrategyAAS == PlacementStrategy::Greedy_AAS) {
-                EXPECT_TRUE(op->instanceOf<MapLogicalOperatorNode>());
+                EXPECT_TRUE(op->instanceOf<ProjectionLogicalOperatorNode>());
                 ASSERT_EQ(op->getChildren().size(), 1U);
                 op = op->getChildren()[0];
             }
@@ -1124,7 +1134,7 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityAASDeployment) {
                 // secondary maps on node 1 for LS and ILP
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 8U);// 4 maps + 4 sources
                 for (int i = 0; i < 8; i++)
-                    EXPECT_TRUE(actualRootOperator->getChildren()[i]->instanceOf<MapLogicalOperatorNode>()
+                    EXPECT_TRUE(actualRootOperator->getChildren()[i]->instanceOf<ProjectionLogicalOperatorNode>()
                                 || actualRootOperator->getChildren()[i]->instanceOf<SourceLogicalOperatorNode>());
             }
         } else {
@@ -1261,7 +1271,7 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityRuntime) {
 
 
     NES_DEBUG("AASBenchmarkTest: Sleep");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::this_thread::sleep_for(runtime);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
@@ -1280,10 +1290,16 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityRuntime) {
     }
 
     for (const auto& [i, reserveWorker] : reserveWorkers) {
+        if (i == 0)
+            continue;
         NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << i);
         bool retStopWrk = reserveWorker->stop(true);
         EXPECT_TRUE(retStopWrk);
     }
+
+    NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << 0);
+    bool retStopWrk0 = reserveWorkers[0]->stop(true);
+    EXPECT_TRUE(retStopWrk0);
 
     for (const auto& [i, level2Worker] : level2Workers) {
         NES_INFO("AASBenchmarkTest: Stop worker level2Worker" << i);
@@ -1378,7 +1394,7 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityAASDeployment) {
             ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<ProjectionLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
             // secondary path
             actualRootOperator = querySubPlans[1U]->getRootOperators()[0];
@@ -1411,7 +1427,7 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityAASDeployment) {
                     // secondary
                     auto op = actualRootOperator->getChildren()[0];
                     if (placementStrategyAAS == PlacementStrategy::Greedy_AAS) {
-                        EXPECT_TRUE(op->instanceOf<MapLogicalOperatorNode>());
+                        EXPECT_TRUE(op->instanceOf<ProjectionLogicalOperatorNode>());
                         ASSERT_EQ(op->getChildren().size(), 1U);
                         op = op->getChildren()[0];
                     }
@@ -1437,7 +1453,7 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityAASDeployment) {
                 // secondary maps on node 1 for LS and ILP
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 8U);// 4 maps + 4 sources
                 for (int i = 0; i < 8; i++)
-                    EXPECT_TRUE(actualRootOperator->getChildren()[i]->instanceOf<MapLogicalOperatorNode>()
+                    EXPECT_TRUE(actualRootOperator->getChildren()[i]->instanceOf<ProjectionLogicalOperatorNode>()
                                 || actualRootOperator->getChildren()[i]->instanceOf<SourceLogicalOperatorNode>());
             }
         } else {
@@ -1555,7 +1571,7 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityRuntime) {
 
 
     NES_DEBUG("AASBenchmarkTest: Sleep");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    std::this_thread::sleep_for(runtime);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
