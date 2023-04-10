@@ -167,28 +167,23 @@ endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     target_compile_definitions(nes-runtime PUBLIC USE_FLOUNDER)
-    #ExternalProject_Add(
-    #        fmt-external
-    #        GIT_REPOSITORY "https://github.com/fmtlib/fmt"
-    #        GIT_TAG "8.1.1"
-    #        PREFIX "lib/fmt"
-    #        INSTALL_COMMAND cmake -E echo ""
-    #        CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE -DFMT_TEST=FALSE -DFMT_MASTER_PROJECT=OFF"
-   # )
 
-    target_include_directories(nes-runtime PUBLIC
-            $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/src/>
-            $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/src/>)
+    include(FetchContent)
+    FetchContent_Declare(
+            flounder
+            GIT_REPOSITORY git@github.com:nebulastream/flounder-compiler.git
+            GIT_TAG flounder
+            PREFIX ${BOTAN_LIB_FCSTUFF_DIR}
+            SOURCE_DIR "lib/flounder"
+            BINARY_DIR "lib/flounder"
+    )
+    set (flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
+    set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(flounder)
+    target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
+    target_link_libraries(nes-runtime PRIVATE flounder)
+    target_include_directories(nes-runtime PRIVATE ${flounder_SOURCE_DIR}/src)
 
-    target_include_directories(nes-runtime PUBLIC
-            $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>
-            $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>)
-    target_link_libraries(nes-runtime PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.a)
-    target_link_libraries(nes-runtime PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.a)
-    #find_package(fmt REQUIRED)
-    target_link_libraries(nes-runtime PUBLIC fmt::fmt-header-only)
-    #target_link_libraries(nes-runtime PUBLIC fmt::fmt)
-    #target_link_libraries(nes-runtime PUBLIC /home/pgrulich/projects/MxTasking/lib/fmt/src/fmt-external-build/libfmt.so.9)
 endif ()
 
 if (NES_RUNTIME_BENCHMARKS)
