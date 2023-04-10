@@ -124,7 +124,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
-    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 8192, "BufferSizeInBytes."};
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 2048, "BufferSizeInBytes."};
 
     /**
      * @brief Indicates a list of cpu cores, which are used to pin data sources to specific cores.
@@ -224,7 +224,7 @@ class WorkerConfiguration : public BaseConfiguration {
 
     UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
 
-    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1024, "Number of buffers to produce"};
+    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 512, "Number of buffers to produce"};
 
     UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 1000, "Source gathering interval"};
 

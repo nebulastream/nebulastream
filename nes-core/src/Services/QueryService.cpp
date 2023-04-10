@@ -82,17 +82,18 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             srcOperator->addProperty("output", output);
             NES_DEBUG("QueryService: " << srcOperator->toString() << " output: " << output);
 
-            // ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
+
+            // ".filter(Attribute(\"c\") > 0)"       // avg DMF = 0.66
             auto firstFilterOperator = srcOperator->getParents()[0]->as<OperatorNode>();
-            dmf = 0.33;
+            dmf = 0.66;
             input = output;
             output = input * dmf;
             firstFilterOperator->addProperty("output", output);
             NES_DEBUG("QueryService: " << firstFilterOperator->toString() << " output: " << output);
 
-            // ".filter(Attribute(\"d\") >= 2)"      // avg DMF = 0.5
+            // ".filter(Attribute(\"e\") < 4)"      // avg DMF = 0.8
             auto secondFilterOperator = firstFilterOperator->getParents()[0]->as<OperatorNode>();
-            dmf = 0.5;
+            dmf = 0.8;
             input = output;
             output = input * dmf;
             secondFilterOperator->addProperty("output", output);

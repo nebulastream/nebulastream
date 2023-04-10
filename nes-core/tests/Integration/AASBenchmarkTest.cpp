@@ -54,8 +54,8 @@ namespace NES {
 
 using namespace Configurations;
 const int nSourceWorkers = 4;   // should be an even number for correct topologies
-const std::chrono::milliseconds runtime{30000};
-auto placementStrategyAAS = PlacementStrategy::Greedy_AAS;
+const std::chrono::milliseconds runtime{120000}; // 120s
+auto placementStrategyAAS = PlacementStrategy::defaultStrategyAAS;
 
 class AASBenchmarkTest : public Testing::NESBaseTest {
   public:
@@ -65,7 +65,7 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
     WorkerConfigurationPtr sourceWorkerConfigs[nSourceWorkers];
     SchemaPtr inputSchema;
     const std::string sourceName = "A";
-    const LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(1000, 0));
+    const LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(100, 0));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
@@ -146,9 +146,8 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
     string createQueryString(const string& outputFilePath) {
         return
             "Query::from(\"" + sourceName + "\")"
-            + ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
-            + ".filter(Attribute(\"d\") >= 2)"      // avg DMF = 0.5
-//            + R"(.map(Attribute("i") = Attribute("h") * 2))"   // DMF = 1.1
+            + ".filter(Attribute(\"c\") > 0)"       // avg DMF = 0.66
+            + ".filter(Attribute(\"e\") < 4)"      // avg DMF = 0.8
             + R"(.project(Attribute("a"),Attribute("b"),Attribute("c"),Attribute("d"),Attribute("e"),Attribute("f"),Attribute("g"),Attribute("h"),Attribute("timestamp1"),Attribute("timestamp2"),Attribute("a").as("a2"),Attribute("a").as("a3"),Attribute("a").as("a4"),Attribute("a").as("a5"),Attribute("a").as("a6"),Attribute("a").as("a7"),Attribute("a").as("a8"),Attribute("a").as("a9"),Attribute("a").as("a10"),Attribute("a").as("a11")))"   // DMF = 1.1
             + ".sink(FileSinkDescriptor::create(\""
             + outputFilePath
@@ -198,12 +197,12 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
         rootNode->addNodeProperty("slots", 0);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr level2Node = TopologyNode::create(2, ipAddress, 123, 124, 10);
-        level2Node->addNodeProperty("slots", 10);
+        TopologyNodePtr level2Node = TopologyNode::create(2, ipAddress, 123, 124, 3*n-2);
+        level2Node->addNodeProperty("slots", 3*n-2);
         topology->addNewTopologyNodeAsChild(rootNode, level2Node);
 
-        TopologyNodePtr level3Node = TopologyNode::create(3, ipAddress, 123, 124, 6);
-        level3Node->addNodeProperty("slots", 6);
+        TopologyNodePtr level3Node = TopologyNode::create(3, ipAddress, 123, 124, 2*n-2);
+        level3Node->addNodeProperty("slots", 2*n-2);
         topology->addNewTopologyNodeAsChild(level2Node, level3Node);
 
         std::map<int, TopologyNodePtr> sourceNodes;
@@ -430,16 +429,16 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
             double output = input * dmf;
             srcOperator->addProperty("output", output);
 
-            // ".filter(Attribute(\"c\") == 1)"       // avg DMF = 0.33
+            // ".filter(Attribute(\"c\") > 0)"       // avg DMF = 0.66
             auto firstFilterOperator = srcOperator->getParents()[0]->as<OperatorNode>();
-            dmf = 0.33;
+            dmf = 0.66;
             input = output;
             output = input * dmf;
             firstFilterOperator->addProperty("output", output);
 
-            // ".filter(Attribute(\"d\") >= 2)"      // avg DMF = 0.5
+            // ".filter(Attribute(\"e\") < 4)"      // avg DMF = 0.8
             auto secondFilterOperator = firstFilterOperator->getParents()[0]->as<OperatorNode>();
-            dmf = 0.5;
+            dmf = 0.8;
             input = output;
             output = input * dmf;
             secondFilterOperator->addProperty("output", output);
@@ -454,15 +453,6 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
         }
     }
 };
-
-//measure time:
-
-//    auto start = std::chrono::steady_clock::now();
-//    ...
-//
-//    auto currentTime = std::chrono::steady_clock::now();
-//    elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
-//    elapsedMilliseconds.count()
 
 
 /*
@@ -1601,19 +1591,19 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityRuntime) {
     NES_INFO("AASBenchmarkTest: Test finished");
 }
 
-TEST_F(AASBenchmarkTest, scalabilityAnalysis) {
+TEST_F(AASBenchmarkTest, testScalability) {
     for (int i = 2; i <= 8; i += 2) {
         for (int j = 0; j < 3; ++j) {
             TopologyPtr topology;
 
             if (j == 0) {
-                NES_DEBUG("AASBenchmarkTest::scalabilityAnalysis: Sequential " << i);
+                NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
                 topology = setupTopologyAndSourceCatalogSequential(i);
             } else if (j == 1) {
-                NES_DEBUG("AASBenchmarkTest::scalabilityAnalysis: Fat Low Connectivity " << i);
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
                 topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
             } else {
-                NES_DEBUG("AASBenchmarkTest::scalabilityAnalysis: Fat High Connectivity" << i);
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
                 topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
             }
 
