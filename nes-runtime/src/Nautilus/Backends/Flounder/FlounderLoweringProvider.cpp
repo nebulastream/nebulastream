@@ -15,7 +15,6 @@
 #include "Nautilus/IR/Operations/CastOperation.hpp"
 #include "Nautilus/IR/Operations/LoadOperation.hpp"
 #include "Nautilus/IR/Operations/Operation.hpp"
-#include "asmjit/x86/x86operand.h"
 #include "flounder/ir/instructions.h"
 #include "flounder/ir/label.h"
 #include "flounder/ir/register.h"
