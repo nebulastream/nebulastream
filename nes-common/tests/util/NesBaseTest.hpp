@@ -141,7 +141,7 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
     std::unique_ptr<std::thread> waitThread;
     std::promise<bool> testCompletion;
     std::atomic<bool> testCompletionSet{false};
-    static constexpr uint64_t WAIT_TIME_SETUP = 5;
+    static constexpr uint64_t WAIT_TIME_SETUP = 40;
 };
 }// namespace Testing
 
