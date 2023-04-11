@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifdef ENABLE_JNI
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/JVMContext.hpp>
-#include <Execution/Operators/Relational/MapJavaUdf.hpp>
-#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <cstring>
@@ -25,18 +26,39 @@
 #include <fstream>
 #include <jni.h>
 #include <utility>
-#if not(defined(__APPLE__))
-#include <experimental/source_location>
-#endif
+
+#include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
+#include <jni.h>
+#include <Util/Logger/Logger.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+// TODO Change this to general class
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
+// TODO check if other version needed
+#include <filesystem>
 
 namespace NES::Runtime::Execution::Operators {
+
+/**
+ * free a jvm object
+ * @param state operator handler state
+ * @param object object to free
+ */
+void freeObject(void* state, void* object) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+
+    handler->getEnvironment()->DeleteLocalRef((jobject) object);
+}
+
 
 /**
  * This function is used for JNI error handling.
  * @param env jni environment
  * @param location location of the error. Leave default to use the location of the caller.
  */
-inline void jniErrorCheck(JNIEnv* env, const std::source_location& location = std::source_location::current()) {
+inline void jniErrorCheck(JNIEnv* env, const std::source_location& location) {
     auto exception = env->ExceptionOccurred();
     if (exception) {
         // print exception
@@ -62,7 +84,7 @@ inline bool dirExists(const std::string& path) { return std::filesystem::exists(
  * @param state operator handler state
  * @param byteCodeList byte code list
  */
-extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
+void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -83,7 +105,7 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
  * Deserializes the given instance
  * @param state operator handler state
  */
-extern "C" jobject deserializeInstance(void* state) {
+jobject deserializeInstance(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -103,7 +125,7 @@ extern "C" jobject deserializeInstance(void* state) {
  * Start the java vm and load the classes given in the javaPath
  * @param state operator handler state
  */
-extern "C" void startOrAttachVMWithJarFile(void* state) {
+void startOrAttachVMWithJarFile(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -134,7 +156,7 @@ extern "C" void startOrAttachVMWithJarFile(void* state) {
  * Start the java vm and load the classes given in the byteCodeList
  * @param state operator handler state
  */
-extern "C" void startOrAttachVMWithByteList(void* state) {
+void startOrAttachVMWithByteList(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -165,7 +187,7 @@ extern "C" void startOrAttachVMWithByteList(void* state) {
  * When no java path is given, the byte code list is used.
  * @param state operator handler state
  */
-extern "C" void startOrAttachVM(void* state) {
+void startOrAttachVM(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -182,20 +204,20 @@ extern "C" void startOrAttachVM(void* state) {
  * Detach the current thread from the JVM.
  * This is needed to avoid memory leaks.
  */
-extern "C" void detachVM() { JVMContext::instance().detachFromJVM(); }
+void detachVM() { JVMContext::instance().detachFromJVM(); }
 
 /**
  * Unloads the java VM.
  * This is needed to avoid memory leaks.
  */
-extern "C" void destroyVM() { JVMContext::instance().destroyJVM(); }
+void destroyVM() { JVMContext::instance().destroyJVM(); }
 
 /**
  * Finds the input class in the JVM and returns a jclass object pointer.
  * @param state operator handler state
  * @return jclass input class object pointer
  */
-extern "C" void* findInputClass(void* state) {
+void* findInputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -209,7 +231,7 @@ extern "C" void* findInputClass(void* state) {
  * @param state operator handler state
  * @class jclass output class object pointer
  */
-extern "C" void* findOutputClass(void* state) {
+void* findOutputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -224,7 +246,7 @@ extern "C" void* findOutputClass(void* state) {
  * @param classPtr class to allocate
  * @return jobject instance of the given class
  */
-extern "C" void* allocateObject(void* state, void* classPtr) {
+void* allocateObject(void* state, void* classPtr) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
@@ -263,7 +285,7 @@ void* createObjectType(void* state, T value, std::string className, std::string 
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createBooleanObject(void* state, bool value) {
+void* createBooleanObject(void* state, bool value) {
     return createObjectType(state, value, "java/lang/Boolean", "(Z)V");
 }
 
@@ -272,14 +294,14 @@ extern "C" void* createBooleanObject(void* state, bool value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createFloatObject(void* state, float value) { return createObjectType(state, value, "java/lang/Float", "(F)V"); }
+void* createFloatObject(void* state, float value) { return createObjectType(state, value, "java/lang/Float", "(F)V"); }
 
 /**
  * Creates a new double object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createDoubleObject(void* state, double value) {
+void* createDoubleObject(void* state, double value) {
     return createObjectType(state, value, "java/lang/Double", "(D)V");
 }
 
@@ -288,7 +310,7 @@ extern "C" void* createDoubleObject(void* state, double value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createIntegerObject(void* state, int32_t value) {
+void* createIntegerObject(void* state, int32_t value) {
     return createObjectType(state, value, "java/lang/Integer", "(I)V");
 }
 
@@ -297,14 +319,14 @@ extern "C" void* createIntegerObject(void* state, int32_t value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createLongObject(void* state, int64_t value) { return createObjectType(state, value, "java/lang/Long", "(J)V"); }
+void* createLongObject(void* state, int64_t value) { return createObjectType(state, value, "java/lang/Long", "(J)V"); }
 
 /**
  * Creates a new short object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createShortObject(void* state, int16_t value) {
+void* createShortObject(void* state, int16_t value) {
     return createObjectType(state, value, "java/lang/Short", "(S)V");
 }
 
@@ -313,14 +335,14 @@ extern "C" void* createShortObject(void* state, int16_t value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createByteObject(void* state, int8_t value) { return createObjectType(state, value, "java/lang/Byte", "(B)V"); }
+void* createByteObject(void* state, int8_t value) { return createObjectType(state, value, "java/lang/Byte", "(B)V"); }
 
 /**
  * Creates a new string object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void* createStringObject(void* state, TextValue* value) {
+void* createStringObject(void* state, TextValue* value) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
     return handler->getEnvironment()->NewStringUTF(value->c_str());
 }
@@ -372,7 +394,7 @@ T getObjectTypeValue(void* state, void* object, std::string className, std::stri
  * @param object object to get the field from
  * @return bool value of the field
  */
-extern "C" bool getBooleanObjectValue(void* state, void* object) {
+bool getBooleanObjectValue(void* state, void* object) {
     return getObjectTypeValue<bool>(state, object, "java/lang/Boolean", "booleanValue", "()Z");
 }
 
@@ -382,7 +404,7 @@ extern "C" bool getBooleanObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return float value of the field
  */
-extern "C" float getFloatObjectValue(void* state, void* object) {
+float getFloatObjectValue(void* state, void* object) {
     return getObjectTypeValue<float>(state, object, "java/lang/Float", "floatValue", "()F");
 }
 
@@ -392,7 +414,7 @@ extern "C" float getFloatObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return double value of the field
  */
-extern "C" double getDoubleObjectValue(void* state, void* object) {
+double getDoubleObjectValue(void* state, void* object) {
     return getObjectTypeValue<double>(state, object, "java/lang/Double", "doubleValue", "()D");
 }
 
@@ -402,7 +424,7 @@ extern "C" double getDoubleObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return int value of the field
  */
-extern "C" int32_t getIntegerObjectValue(void* state, void* object) {
+int32_t getIntegerObjectValue(void* state, void* object) {
     return getObjectTypeValue<int32_t>(state, object, "java/lang/Integer", "intValue", "()I");
 }
 
@@ -412,7 +434,7 @@ extern "C" int32_t getIntegerObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return long value of the field
  */
-extern "C" int64_t getLongObjectValue(void* state, void* object) {
+int64_t getLongObjectValue(void* state, void* object) {
     return getObjectTypeValue<int64_t>(state, object, "java/lang/Long", "longValue", "()J");
 }
 
@@ -422,7 +444,7 @@ extern "C" int64_t getLongObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return short value of the field
  */
-extern "C" int16_t getShortObjectValue(void* state, void* object) {
+int16_t getShortObjectValue(void* state, void* object) {
     return getObjectTypeValue<int16_t>(state, object, "java/lang/Short", "shortValue", "()S");
 }
 
@@ -432,7 +454,7 @@ extern "C" int16_t getShortObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return byte value of the field
  */
-extern "C" int8_t getByteObjectValue(void* state, void* object) {
+int8_t getByteObjectValue(void* state, void* object) {
     return getObjectTypeValue<int16_t>(state, object, "java/lang/Byte", "byteValue", "()B");
 }
 
@@ -442,7 +464,7 @@ extern "C" int8_t getByteObjectValue(void* state, void* object) {
  * @param object object to get the field from
  * @return TextValue value of the field
  */
-extern "C" TextValue* getStringObjectValue(void* state, void* object) {
+TextValue* getStringObjectValue(void* state, void* object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(object != nullptr, "object should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
@@ -512,7 +534,7 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
  * @param fieldIndex index of the field
  * @return bool value of the field
  */
-extern "C" bool getBooleanField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+bool getBooleanField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<bool>(state, classPtr, objectPtr, fieldIndex, "Z");
 }
 
@@ -524,7 +546,7 @@ extern "C" bool getBooleanField(void* state, void* classPtr, void* objectPtr, in
  * @param fieldIndex index of the field
  * @return float value of the field
  */
-extern "C" float getFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+float getFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<float>(state, classPtr, objectPtr, fieldIndex, "F");
 }
 
@@ -536,7 +558,7 @@ extern "C" float getFloatField(void* state, void* classPtr, void* objectPtr, int
  * @param fieldIndex index of the field
  * @return double value of the field
  */
-extern "C" double getDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+double getDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<double>(state, classPtr, objectPtr, fieldIndex, "D");
 }
 
@@ -548,7 +570,7 @@ extern "C" double getDoubleField(void* state, void* classPtr, void* objectPtr, i
  * @param fieldIndex index of the field
  * @return int32_t value of the field
  */
-extern "C" int32_t getIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+int32_t getIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<int32_t>(state, classPtr, objectPtr, fieldIndex, "I");
 }
 
@@ -560,7 +582,7 @@ extern "C" int32_t getIntegerField(void* state, void* classPtr, void* objectPtr,
  * @param fieldIndex index of the field
  * @return int64_t value of the field
  */
-extern "C" int64_t getLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+int64_t getLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<int64_t>(state, classPtr, objectPtr, fieldIndex, "J");
 }
 
@@ -572,7 +594,7 @@ extern "C" int64_t getLongField(void* state, void* classPtr, void* objectPtr, in
  * @param fieldIndex index of the field
  * @return int16_t value of the field
  */
-extern "C" int16_t getShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+int16_t getShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<int16_t>(state, classPtr, objectPtr, fieldIndex, "S");
 }
 
@@ -584,7 +606,7 @@ extern "C" int16_t getShortField(void* state, void* classPtr, void* objectPtr, i
  * @param fieldIndex index of the field
  * @return int8_t value of the field
  */
-extern "C" int8_t getByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+int8_t getByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<int8_t>(state, classPtr, objectPtr, fieldIndex, "B");
 }
 
@@ -596,7 +618,7 @@ extern "C" int8_t getByteField(void* state, void* classPtr, void* objectPtr, int
  * @param fieldIndex index of the field
  * @return TextValue* value of the field
  */
-extern "C" TextValue* getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+TextValue* getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<TextValue*>(state, classPtr, objectPtr, fieldIndex, "Ljava/lang/String;");
 }
 
@@ -654,7 +676,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setBooleanField(void* state, void* classPtr, void* objectPtr, int fieldIndex, bool value) {
+void setBooleanField(void* state, void* classPtr, void* objectPtr, int fieldIndex, bool value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "Z");
 }
 
@@ -666,7 +688,7 @@ extern "C" void setBooleanField(void* state, void* classPtr, void* objectPtr, in
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex, float value) {
+void setFloatField(void* state, void* classPtr, void* objectPtr, int fieldIndex, float value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "F");
 }
 
@@ -678,7 +700,7 @@ extern "C" void setFloatField(void* state, void* classPtr, void* objectPtr, int 
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex, double value) {
+void setDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex, double value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "D");
 }
 
@@ -690,7 +712,7 @@ extern "C" void setDoubleField(void* state, void* classPtr, void* objectPtr, int
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int32_t value) {
+void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int32_t value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "I");
 }
 
@@ -702,7 +724,7 @@ extern "C" void setIntegerField(void* state, void* classPtr, void* objectPtr, in
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int64_t value) {
+void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int64_t value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "J");
 }
 
@@ -714,7 +736,7 @@ extern "C" void setLongField(void* state, void* classPtr, void* objectPtr, int f
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int16_t value) {
+void setShortField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int16_t value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "S");
 }
 
@@ -726,7 +748,7 @@ extern "C" void setShortField(void* state, void* classPtr, void* objectPtr, int 
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int8_t value) {
+void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int8_t value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "B");
 }
 
@@ -738,293 +760,9 @@ extern "C" void setByteField(void* state, void* classPtr, void* objectPtr, int f
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const TextValue* value) {
+void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const TextValue* value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "Ljava/lang/String;");
 }
 
-/**
- * free a jvm object
- * @param state operator handler state
- * @param object object to free
- */
-extern "C" void freeObject(void* state, void* object) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
-
-    handler->getEnvironment()->DeleteLocalRef((jobject) object);
-}
-
-/**
- * Execute the java udf
- * @param state operator handler state
- * @param pojoObjectPtr pojo object
- * @return result of the udf
- */
-extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
-
-    // Find class implementing the map udf
-    jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
-    jniErrorCheck(handler->getEnvironment());
-
-    // Build function signature of map function
-    std::string sig = "(L" + handler->getInputClassName() + ";)L" + handler->getOutputClassName() + ";";
-
-    // Find udf function
-    jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
-    jniErrorCheck(handler->getEnvironment());
-
-    jobject udf_result, instance;
-    // The map udf class will be either loaded from a serialized instance or allocated using class information
-    if (!handler->getSerializedInstance().empty()) {
-        // Load instance if defined
-        instance = deserializeInstance(state);
-    } else {
-        // Create instance object using class information
-        jclass clazz = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
-        jniErrorCheck(handler->getEnvironment());
-
-        // Here we assume the default constructor is available
-        auto constr = handler->getEnvironment()->GetMethodID(clazz, "<init>", "()V");
-        instance = handler->getEnvironment()->NewObject(clazz, constr);
-        jniErrorCheck(handler->getEnvironment());
-    }
-
-    // Call udf function
-    udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
-    jniErrorCheck(handler->getEnvironment());
-    return udf_result;
-}
-
-/**
- * Operator execution function
- * @param ctx operator context
- * @param record input record
- */
-void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
-    auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-
-    // We need to ensure that the current thread is attached to the JVM
-    // When we can guarantee that the operator is always executed in the same thread we can remove attaching and detaching
-    FunctionCall("startOrAttachVM", startOrAttachVM, handler);
-
-    // Allocate java input class
-    auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
-    auto inputPojoPtr = FunctionCall("allocateObject", allocateObject, handler, inputClassPtr);
-
-    // Loading record values into java input class
-    // We derive the types of the values from the schema. The type can be complex or simple.
-    // 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
-    // 2. Complex: plain old java object containing the multiple primitive types
-    if (inputSchema->fields.size() == 1) {
-        // 1. Simple, the input schema contains only one field
-        auto field = inputSchema->fields[0];
-        auto fieldName = field->getName();
-
-        if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-            inputPojoPtr =
-                FunctionCall<>("createBooleanObject", createBooleanObject, handler, record.read(fieldName).as<Boolean>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-            inputPojoPtr = FunctionCall<>("createFloatObject", createFloatObject, handler, record.read(fieldName).as<Float>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-            inputPojoPtr = FunctionCall<>("createDoubleObject", createDoubleObject, handler, record.read(fieldName).as<Double>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-            inputPojoPtr =
-                FunctionCall<>("createIntegerObject", createIntegerObject, handler, record.read(fieldName).as<Int32>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-            inputPojoPtr = FunctionCall<>("createLongObject", createLongObject, handler, record.read(fieldName).as<Int64>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-            inputPojoPtr = FunctionCall<>("createShortObject", createShortObject, handler, record.read(fieldName).as<Int16>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-            inputPojoPtr = FunctionCall<>("createByteObject", createByteObject, handler, record.read(fieldName).as<Int8>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
-            inputPojoPtr = FunctionCall<>("createStringObject",
-                                          createStringObject,
-                                          handler,
-                                          record.read(fieldName).as<Text>()->getReference());
-        } else {
-            NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
-        }
-    } else {
-        // 2. Complex, a plain old java object with multiple primitive types as map input
-        for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
-            auto field = inputSchema->fields[i];
-            auto fieldName = field->getName();
-
-            if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-                FunctionCall<>("setBooleanField",
-                               setBooleanField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Boolean>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-                FunctionCall<>("setFloatField",
-                               setFloatField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Float>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-                FunctionCall<>("setDoubleField",
-                               setDoubleField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Double>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-                FunctionCall<>("setIntegerField",
-                               setIntegerField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Int32>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-                FunctionCall<>("setLongField",
-                               setLongField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Int64>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-                FunctionCall<>("setShortField",
-                               setShortField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Int16>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-                FunctionCall<>("setByteField",
-                               setByteField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Int8>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
-                FunctionCall<>("setStringField",
-                               setStringField,
-                               handler,
-                               inputClassPtr,
-                               inputPojoPtr,
-                               Value<Int32>(i),
-                               record.read(fieldName).as<Text>()->getReference());
-            } else {
-                NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
-            }
-        }
-    }
-
-    // Get output class and call udf
-    auto outputClassPtr = FunctionCall<>("findOutputClass", findOutputClass, handler);
-    auto outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, handler, inputPojoPtr);
-
-    FunctionCall<>("freeObject", freeObject, handler, inputPojoPtr);
-
-    // Create new record for result
-    record = Record();
-
-    // Reading result values from jvm into result record
-    // Same differentiation as for input class above
-    if (outputSchema->fields.size() == 1) {
-        // 1. Simple, the input schema contains only one field
-        auto field = outputSchema->fields[0];
-        auto fieldName = field->getName();
-
-        if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-            Value<> val = FunctionCall<>("getBooleanObjectValue", getBooleanObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-            Value<> val = FunctionCall<>("getFloatObjectValue", getFloatObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-            Value<> val = FunctionCall<>("getDoubleObjectValue", getDoubleObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-            Value<> val = FunctionCall<>("getIntegerObjectValue", getIntegerObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-            Value<> val = FunctionCall<>("getLongObjectValue", getLongObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-            Value<> val = FunctionCall<>("getShortObjectValue", getShortObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-            Value<> val = FunctionCall<>("getByteObjectValue", getByteObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
-            Value<> val = FunctionCall<>("getStringObjectValue", getStringObjectValue, handler, outputPojoPtr);
-            record.write(fieldName, val);
-        } else {
-            NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
-        }
-    } else {
-        // 2. Complex, a plain old java object with multiple primitive types as map input
-        for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
-            auto field = outputSchema->fields[i];
-            auto fieldName = field->getName();
-
-            if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-                Value<> val =
-                    FunctionCall<>("getBooleanField", getBooleanField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-                Value<> val =
-                    FunctionCall<>("getFloatField", getFloatField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-                Value<> val =
-                    FunctionCall<>("getDoubleField", getDoubleField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-                Value<> val =
-                    FunctionCall<>("getIntegerField", getIntegerField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-                Value<> val =
-                    FunctionCall<>("getLongField", getLongField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-                Value<> val =
-                    FunctionCall<>("getShortField", getShortField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-                Value<> val =
-                    FunctionCall<>("getByteField", getByteField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
-                Value<> val =
-                    FunctionCall<>("getStringField", getStringField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-                record.write(fieldName, val);
-            } else {
-                NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
-            }
-        }
-    }
-
-    FunctionCall<>("freeObject", freeObject, handler, outputPojoPtr);
-    FunctionCall<>("detachJVM", detachVM);
-
-    // Trigger execution of next operator
-    child->execute(ctx, (Record&) record);
-}
-
-/**
- * Terminate operator
- * @param ctx execution context
- */
-void MapJavaUdf::terminate(ExecutionContext&) const {
-    // TODO fix usage of jvm
-    //FunctionCall<>("destroyVM", destroyVM);
-}
-
-}// namespace NES::Runtime::Execution::Operators
-#endif// ENABLE_JIN
+} // namespace NES::Runtime::Execution::Operators
+#endif // ENABLE_JNI

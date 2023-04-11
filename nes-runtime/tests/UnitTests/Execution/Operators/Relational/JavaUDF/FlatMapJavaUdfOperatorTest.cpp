@@ -15,28 +15,30 @@
 #ifdef ENABLE_JNI
 
 #include <API/Schema.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/JVMContext.hpp>
-#include <Execution/Operators/Relational/MapJavaUdf.hpp>
-#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUdf.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+// Test
+#include <string>
+#include <vector>
 
 namespace NES::Runtime::Execution::Operators {
-class MapJavaUdfOperatorTest : public testing::Test {
+
+class FlatMapJavaUdfOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("MapJavaUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
+        NES::Logger::setupLogging("FlatMapJavaUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup FlatMapJavaUdfOperatorTest test class." << std::endl;
     }
 };
 
@@ -51,7 +53,7 @@ std::string clazz, inputClass, outputClass;
  * @brief Test simple UDF with integer objects as input and output (IntegerMapFunction<Integer, Integer>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, IntegerUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT32);
     output = Schema::create()->addField("id", BasicType::INT32);
     clazz = "IntegerMapFunction";
@@ -68,7 +70,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -82,7 +84,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
  * @brief Test simple UDF with short objects as input and output (IntegerMapFunction<Short, Short>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, ShortUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT16);
     output = Schema::create()->addField("id", BasicType::INT16);
     clazz = "ShortMapFunction";
@@ -99,7 +101,7 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -113,7 +115,7 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
  * @brief Test simple UDF with byte objects as input and output (IntegerMapFunction<Byte, Byte>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, ByteUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT8);
     output = Schema::create()->addField("id", BasicType::INT8);
     clazz = "ByteMapFunction";
@@ -130,7 +132,7 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -144,7 +146,7 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
  * @brief Test simple UDF with long objects as input and output (IntegerMapFunction<Long, Long>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, LongUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT64);
     output = Schema::create()->addField("id", BasicType::INT64);
     clazz = "LongMapFunction";
@@ -161,7 +163,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -175,7 +177,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
  * @brief Test simple UDF with double objects as input and output (IntegerMapFunction<Double, Double>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, DoubleUDFTest) {
     input = Schema::create()->addField("id", BasicType::FLOAT64);
     output = Schema::create()->addField("id", BasicType::FLOAT64);
     clazz = "DoubleMapFunction";
@@ -192,7 +194,7 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -206,7 +208,7 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
  * @brief Test simple UDF with float objects as input and output (FloatMapFunction<Float, Float>)
  * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, FloatUDFTest) {
     input = Schema::create()->addField("id", BasicType::FLOAT32);
     output = Schema::create()->addField("id", BasicType::FLOAT32);
     clazz = "FloatMapFunction";
@@ -223,7 +225,7 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -237,7 +239,7 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
  * @brief Test simple UDF with boolean objects as input and output (BooleanMapFunction<Boolean, Boolean>)
  * The UDF sets incoming tuples to false.
 */
-TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, BooleanUDFTest) {
     input = Schema::create()->addField("id", BasicType::BOOLEAN);
     output = Schema::create()->addField("id", BasicType::BOOLEAN);
     clazz = "BooleanMapFunction";
@@ -254,7 +256,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -269,7 +271,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
  * The UDF appends incoming tuples the postfix 'appended'.
  * //TODO After fixing the text equal function this test fails, the bug is specified in issue #3625
 */
-TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     input = Schema::create()->addField("id", BasicType::TEXT);
@@ -287,7 +289,7 @@ TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -301,7 +303,7 @@ TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
  * @brief Test simple UDF with loaded java classes as input and output (ComplexMapFunction<ComplexPojo, ComplexPojo>)
  * The UDF sets the bool to false, numerics +10 and appends to strings the postfix 'appended'.
 */
-TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
+TEST_F(FlatMapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     input = Schema::create()
@@ -342,7 +344,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -371,7 +373,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
 /**
 * @brief Test UDF with multiple internal dependencies (DummyRichMapFunction<Integer, Integer>)
 */
-TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
+TEST_F(FlatMapJavaUdfOperatorTest, DependenciesUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT32);
     output = Schema::create()->addField("id", BasicType::INT32);
     clazz = "DummyRichMapFunction";
@@ -388,7 +390,7 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
                                                                input,
                                                                output,
                                                                path);
-    auto map = MapJavaUdf(0, input, output);
+    auto map = FlatMapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});

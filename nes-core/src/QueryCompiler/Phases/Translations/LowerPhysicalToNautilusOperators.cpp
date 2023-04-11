@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp"
+#include "Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
@@ -27,8 +29,6 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Relational/MapJavaUdf.hpp>
-#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
