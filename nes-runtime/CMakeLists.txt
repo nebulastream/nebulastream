@@ -54,6 +54,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
             BUILD_IN_SOURCE true # Build the project in the source directory
             BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
             INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
+            DOW
             )
 
     # Create a static imported library for the external project
