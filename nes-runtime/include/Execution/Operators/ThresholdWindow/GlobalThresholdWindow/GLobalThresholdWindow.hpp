@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Threshold window operator that compute aggregation of tuples satisfying the threshold.
  */
-class ThresholdWindow : public ExecutableOperator {
+class GLobalThresholdWindow : public ExecutableOperator {
   public:
     /**
      * @brief Creates a threshold window operator.
@@ -32,7 +32,7 @@ class ThresholdWindow : public ExecutableOperator {
      * @param aggregationResultFieldIdentifier a string indicating the name of field to store the aggregation result
      * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
-    ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+    GLobalThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                     uint64_t minCount,
                     const std::vector<Expressions::ExpressionPtr>& aggregatedFieldAccessExpressions,
                     const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,

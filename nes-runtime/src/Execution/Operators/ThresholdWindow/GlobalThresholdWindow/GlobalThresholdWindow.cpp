@@ -15,8 +15,8 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GLobalThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -72,7 +72,7 @@ extern "C" void* getAggregationValue(void* state, uint64_t i) {
     return (void*) handler->AggregationValues[i].get();
 }
 
-ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+GLobalThresholdWindow::GLobalThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                                  uint64_t minCount,
                                  const std::vector<Expressions::ExpressionPtr>& aggregatedFieldAccessExpressions,
                                  const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
@@ -85,7 +85,7 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
                "The number of aggregation expression and aggregation functions need to be equals");
 }
 
-void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
+void GLobalThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);

@@ -45,8 +45,8 @@
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GLobalThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -519,7 +519,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         }
     }
 
-    return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
+    return std::make_shared<Runtime::Execution::Operators::GLobalThresholdWindow>(predicate,
                                                                             minCount,
                                                                             aggregatedFieldAccesses,
                                                                             aggregationResultFieldNames,
