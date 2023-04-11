@@ -1,8 +1,12 @@
 # Changelog
 
-## [v0.5.45](https://github.com/nebulastream/nebulastream/tree/v0.5.45) (2023-04-06)
+## [v0.5.46](https://github.com/nebulastream/nebulastream/tree/v0.5.46) (2023-04-11)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.45)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.46)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add ExecutionTest for MapJavaUdf operator [\#3585](https://github.com/nebulastream/nebulastream/issues/3585)
 
 ### Bug Fixes 🐛
 
