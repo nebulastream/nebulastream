@@ -25,7 +25,7 @@ namespace NES::Nautilus::Backends::BC {
 
 /**
  * @brief This defines the central register file for the byte-code interpreter.
- * In the current version we only support 256 registers at max.
+ * In the current version we only support 1024 registers at max.
  */
 constexpr short REGISTERS = 1024;
 using RegisterFile = std::array<int64_t, REGISTERS>;
@@ -143,6 +143,7 @@ enum class ByteCode : short {
     OR_b,
     // Negate
     NOT_b,
+    // Cast
     CAST_i8_i16,
     CAST_i8_i32,
     CAST_i8_i64,

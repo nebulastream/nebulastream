@@ -18,7 +18,6 @@
 #include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
-#include <mlir/IR/MLIRContext.h>
 
 namespace NES::Nautilus::Backends::BC {
 

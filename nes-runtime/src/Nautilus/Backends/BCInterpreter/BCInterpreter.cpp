@@ -13,6 +13,7 @@
 */
 
 #include <Nautilus/Backends/BCInterpreter/BCInterpreter.hpp>
+#include <Nautilus/Backends/BCInterpreter/Dyncall.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
@@ -22,77 +23,80 @@
 namespace NES::Nautilus::Backends::BC {
 void regMov(const OpCode& c, RegisterFile& regs) { regs[c.output] = regs[c.reg1]; }
 
-DCCallVM* getVM() {
-    static auto vm = dcNewCallVM(4096);
-    /* initial callconv mode */
-    dcMode(vm, DC_CALL_C_DEFAULT);
+Dyncall& getVM() {
+    // creates a vm for the
+    static Dyncall vm;
     return vm;
+    //static auto vm = dcNewCallVM(4096);
+    /* initial callconv mode */
+    //dcMode(vm, DC_CALL_C_DEFAULT);
+    //return vm;
 };
-void dyncallReset(const OpCode&, RegisterFile&) { dcReset(getVM()); };
+void dyncallReset(const OpCode&, RegisterFile&) { Dyncall::getVM().reset(); };
 void dyncallArgB(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<bool>(regs, op.reg1);
-    dcArgBool(getVM(), value);
+    Dyncall::getVM().addArgB(value);
 };
 void dyncallArgI8(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<int8_t>(regs, op.reg1);
-    dcArgChar(getVM(), value);
+    Dyncall::getVM().addArgI8(value);
 };
 void dyncallArgI16(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<int16_t>(regs, op.reg1);
-    dcArgShort(getVM(), value);
+    Dyncall::getVM().addArgI16(value);
 };
 void dyncallArgI32(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<int32_t>(regs, op.reg1);
-    dcArgInt(getVM(), value);
+    Dyncall::getVM().addArgI32(value);
 };
 void dyncallArgI64(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<int64_t>(regs, op.reg1);
-    dcArgLong(getVM(), value);
+    Dyncall::getVM().addArgI32(value);
 };
 void dyncallArgF(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<float>(regs, op.reg1);
-    dcArgFloat(getVM(), value);
+    Dyncall::getVM().addArgF(value);
 };
 void dyncallArgD(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<double>(regs, op.reg1);
-    dcArgDouble(getVM(), value);
+    Dyncall::getVM().addArgD(value);
 };
 void dyncallArgPtr(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<void*>(regs, op.reg1);
-    dcArgPointer(getVM(), value);
+    Dyncall::getVM().addArgPtr(value);
 };
 void dyncallCallV(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<void*>(regs, op.reg1);
-    dcCallVoid(getVM(), value);
+    Dyncall::getVM().callVoid(value);
 };
 void dyncallCallB(const OpCode& op, RegisterFile& regs) {
     auto address = readReg<void*>(regs, op.reg1);
-    auto returnValue = dcCallBool(getVM(), address);
+    auto returnValue = Dyncall::getVM().callB(address);
     writeReg<bool>(regs, op.output, returnValue);
 }
 void dyncallCallI8(const OpCode& op, RegisterFile& regs) {
     auto address = readReg<void*>(regs, op.reg1);
-    auto returnValue = dcCallChar(getVM(), address);
+    auto returnValue = Dyncall::getVM().callI8(address);
     writeReg<int8_t>(regs, op.output, returnValue);
 }
 void dyncallCallI16(const OpCode& op, RegisterFile& regs) {
     auto address = readReg<void*>(regs, op.reg1);
-    auto returnValue = dcCallShort(getVM(), address);
+    auto returnValue = Dyncall::getVM().callI16(address);
     writeReg<int16_t>(regs, op.output, returnValue);
 }
 void dyncallCallI32(const OpCode& op, RegisterFile& regs) {
     auto address = readReg<void*>(regs, op.reg1);
-    auto returnValue = dcCallInt(getVM(), address);
+    auto returnValue = Dyncall::getVM().callI32(address);
     writeReg<int32_t>(regs, op.output, returnValue);
 }
 void dyncallCallI64(const OpCode& op, RegisterFile& regs) {
     auto address = readReg<void*>(regs, op.reg1);
-    auto returnValue = dcCallLong(getVM(), address);
+    auto returnValue = Dyncall::getVM().callI64(address);
     writeReg<int64_t>(regs, op.output, returnValue);
 }
 void dyncallCallPtr(const OpCode& op, RegisterFile& regs) {
     auto address = readReg<void*>(regs, op.reg1);
-    auto returnValue = dcCallPointer(getVM(), address);
+    auto returnValue = Dyncall::getVM().callPtr(address);
     writeReg<void*>(regs, op.output, returnValue);
 }
 

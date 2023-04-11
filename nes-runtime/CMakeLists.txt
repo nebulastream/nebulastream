@@ -38,21 +38,32 @@ target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fP
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable bytecode interpreter")
 
-    ExternalProject_Add(
-            dyncall-external
+
+    # We use the dyncall lib to call arbitrary runtime function.
+    set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
+    file(MAKE_DIRECTORY ${dyncall_dir}/include)
+
+    ExternalProject_Add(extProject
             GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
             GIT_TAG "origin/main"
-            PREFIX "lib/dyncall"
             CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-            UPDATE_DISCONNECTED 1
-    )
+            BUILD_IN_SOURCE true
+            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a
+            INSTALL_DIR  ${dyncall_dir}
+            )
 
-    ExternalProject_Get_Property(dyncall-external install_dir)
+    add_library(extLib STATIC IMPORTED)
+    add_dependencies(extLib extProject)
 
-    target_include_directories(nes-runtime PRIVATE ${install_dir}/include)
+    ExternalProject_Get_Property(extProject install_dir)
+    target_include_directories(extLib INTERFACE ${install_dir}/include)
 
-    add_dependencies(nes-runtime dyncall-external)
-    target_link_libraries(nes-runtime PRIVATE ${install_dir}/lib/libdyncall_s.a)
+
+    set_target_properties(extLib
+            PROPERTIES IMPORTED_LOCATION  ${install_dir}/lib/libdyncall_s.a
+            )
+
+    target_link_libraries(nes-runtime PRIVATE extLib)
 
 endif ()
 
