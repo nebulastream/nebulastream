@@ -40,30 +40,39 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
 
 
     # We use the dyncall lib to call arbitrary runtime function.
+    # Set the path to the dyncall directory
     set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
+
+    # Create the include directory for dyncall
     file(MAKE_DIRECTORY ${dyncall_dir}/include)
 
-    ExternalProject_Add(extProject
+    # Download and build the external project
+    ExternalProject_Add(dyncallProject
             GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
             GIT_TAG "origin/main"
-            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-            BUILD_IN_SOURCE true
-            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a
-            INSTALL_DIR  ${dyncall_dir}
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> # Specify installation directory
+            BUILD_IN_SOURCE true # Build the project in the source directory
+            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
+            INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
             )
 
-    add_library(extLib STATIC IMPORTED)
-    add_dependencies(extLib extProject)
+    # Create a static imported library for the external project
+    add_library(dyncall STATIC IMPORTED)
+    add_dependencies(dyncall dyncallProject)
 
-    ExternalProject_Get_Property(extProject install_dir)
-    target_include_directories(extLib INTERFACE ${install_dir}/include)
+    # Get the installation directory of the external project
+    ExternalProject_Get_Property(dyncallProject install_dir)
 
+    # Add the include directory of the external project to the interface of extLib
+    target_include_directories(dyncall INTERFACE ${install_dir}/include)
 
-    set_target_properties(extLib
-            PROPERTIES IMPORTED_LOCATION  ${install_dir}/lib/libdyncall_s.a
+    # Set the imported location of the external library to the installation directory
+    set_target_properties(dyncall
+            PROPERTIES IMPORTED_LOCATION ${install_dir}/lib/libdyncall_s.a
             )
 
-    target_link_libraries(nes-runtime PRIVATE extLib)
+    # Link the external library to nes-runtime
+    target_link_libraries(nes-runtime PRIVATE dyncall)
 
 endif ()
 
