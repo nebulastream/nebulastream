@@ -815,7 +815,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto inputPojoPtr = FunctionCall("allocateObject", allocateObject, handler, inputClassPtr);
 
     // Loading record values into java input class
-    // We derive the types of the values from the schema. The type can be complex of simple.
+    // We derive the types of the values from the schema. The type can be complex or simple.
     // 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
     // 2. Complex: plain old java object containing the multiple primitive types
     if (inputSchema->fields.size() == 1) {

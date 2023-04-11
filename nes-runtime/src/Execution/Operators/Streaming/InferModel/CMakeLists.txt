@@ -10,11 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregations)
-add_subdirectory(Join)
-add_subdirectory(InferModel)
 add_source_files(nes-runtime
-        MultiOriginWatermarkProcessor.cpp
-        SlidingWindowAssigner.cpp
-        EventTimeWatermarkAssignment.cpp
+        InferModel.cpp
+        InferModelHandler.cpp
+        TensorflowAdapter.cpp
         )

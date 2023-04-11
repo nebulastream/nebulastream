@@ -54,6 +54,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -80,7 +81,6 @@
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
-
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -122,6 +122,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     queryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
+
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
@@ -246,6 +247,24 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
         auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
                                      : buildOperator->getOperatorHandler()->getJoinSchemaRight();
+
+        auto joinBuildNautilus =
+            std::make_shared<Runtime::Execution::Operators::StreamJoinBuild>(handlerIndex,
+                                                                             isLeftSide,
+                                                                             joinFieldName,
+                                                                             buildOperator->getTimeStampFieldName(),
+                                                                             joinSchema);
+
+        parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
+        return joinBuildNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
+        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalInferModelOperator>();
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
+
 
         auto joinBuildNautilus =
             std::make_shared<Runtime::Execution::Operators::StreamJoinBuild>(handlerIndex,
@@ -702,6 +721,20 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
             }
         default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
     }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerInferModelOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+
+    auto inferModelOperator = physicalOperator->as<PhysicalOperators::PhysicalInferModelOperator>();
+    auto assignmentField = inferModelOperator->getMapExpression()->getField();
+    auto assignmentExpression = inferModelOperator->getMapExpression()->getAssignment();
+    auto expression = expressionProvider->lowerExpression(assignmentExpression);
+    auto writeField =
+        std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
+    return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
