@@ -13,33 +13,52 @@
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferModel.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
-#include <Execution/Operators/Streaming/InferModel/InferModel.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getTensorflowAdapter(void* op) {
-    auto handler = static_cast<InferModelHandler*>(op);
-    return handler->getTensorflowAdapter();
+
+void applyModel(void* inferModelHandler, void* inputFields, void* outputFields, void* record) {
+
+    auto castedInputFields = static_cast<std::vector<ExpressionItemPtr>*>(inputFields);
+    auto castedRecord = static_cast<NES::Nautilus::Record*>(record);
+
+    std::vector<Value<>> modelInput;
+    for (const auto& inputField : *castedInputFields) {
+        modelInput.push_back(castedRecord->read(""));
+    }
+
+    auto handler = static_cast<InferModelHandler*>(inferModelHandler);
+    auto adapter = handler->getTensorflowAdapter();
+    adapter->infer(BasicPhysicalType::NativeType::UINT_32, modelInput);
+
+    auto castedOutputFields = static_cast<std::vector<ExpressionItemPtr>*>(outputFields);
+
+    for (const auto& outputField : *castedOutputFields) {
+        castedRecord->write("", adapter->getResultAt(0));
+    }
 }
 
 void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const {
 
-    //1. Extract the adapter
+    std::vector<Value<>> modelInput;
+
+    //1. Extract the input vector
+    //2. Extract and call the adapter
+    //3. Update the record
     auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
-    auto tensorflowAdapter = Nautilus::FunctionCall("getTensorflowAdapter", getTensorflowAdapter, inferModelHandler);
+    Nautilus::FunctionCall("applyModel",
+                           applyModel,
+                           inferModelHandler,
+                           Value<MemRef>((int8_t*) &inputFields),
+                           Value<MemRef>((int8_t*) &outputFields),
+                           Value<MemRef>((int8_t*) &record));
 
-    //2. Extract the input vector
-
-    //3. Call the adapter
-    tensorflowAdapter.
-
-    //4. Update the record
-
-    //5. Trigger execution of next operator
+    //4. Trigger execution of next operator
     child->execute(ctx, (Record&) record);
 }
 

@@ -40,6 +40,8 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferModel.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
@@ -257,24 +259,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
+
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
-        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalInferModelOperator>();
-
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
-        operatorHandlers.push_back(buildOperator->getOperatorHandler());
-        auto handlerIndex = operatorHandlers.size() - 1;
-
-
-
-        auto joinBuildNautilus =
-            std::make_shared<Runtime::Execution::Operators::StreamJoinBuild>(handlerIndex,
-                                                                             isLeftSide,
-                                                                             joinFieldName,
-                                                                             buildOperator->getTimeStampFieldName(),
-                                                                             joinSchema);
-
-        parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
-        return joinBuildNautilus;
+        auto inferModel = lowerInferModelOperator(operatorNode, operatorHandlers);
+        parentOperator->setChild(inferModel);
+        return inferModel;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -590,6 +579,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
         });
     return aggregationFunctions;
 }
+
 std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
 LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
     Windowing::WindowAggregationDescriptor::Type aggregationType,
@@ -724,17 +714,21 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerInferModelOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
 
     auto inferModelOperator = physicalOperator->as<PhysicalOperators::PhysicalInferModelOperator>();
-    auto assignmentField = inferModelOperator->getMapExpression()->getField();
-    auto assignmentExpression = inferModelOperator->getMapExpression()->getAssignment();
-    auto expression = expressionProvider->lowerExpression(assignmentExpression);
-    auto writeField =
-        std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
-    return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
+    auto model = inferModelOperator->getModel();
+    auto inputFields = inferModelOperator->getInputFields();
+    auto outputFields = inferModelOperator->getOutputFields();
+
+    //build the handler to invoke model during execution
+    auto handler = std::make_shared<Runtime::Execution::Operators::InferModelHandler>(model);
+    operatorHandlers.push_back(handler);
+    auto indexForThisHandler = operatorHandlers.size() - 1;
+
+    //build nautilus infer model operator
+    return std::make_shared<Runtime::Execution::Operators::InferModel>(indexForThisHandler, inputFields, outputFields);
 }
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;

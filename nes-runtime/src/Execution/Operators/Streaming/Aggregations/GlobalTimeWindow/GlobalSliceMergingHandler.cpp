@@ -23,6 +23,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
 GlobalSliceMergingHandler::GlobalSliceMergingHandler(std::shared_ptr<GlobalSliceStaging> globalSliceStaging)
