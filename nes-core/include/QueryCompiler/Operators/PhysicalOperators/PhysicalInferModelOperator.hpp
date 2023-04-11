@@ -33,6 +33,7 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                                std::vector<ExpressionItemPtr> inputFields,
                                std::vector<ExpressionItemPtr> outputFields,
                                InferModel::InferModelOperatorHandlerPtr operatorHandler);
+
     static PhysicalOperatorPtr create(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
@@ -40,12 +41,14 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                                       std::vector<ExpressionItemPtr> inputFields,
                                       std::vector<ExpressionItemPtr> outputFields,
                                       InferModel::InferModelOperatorHandlerPtr operatorHandler);
+
     static PhysicalOperatorPtr create(SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
                                       std::string model,
                                       std::vector<ExpressionItemPtr> inputFields,
                                       std::vector<ExpressionItemPtr> outputFields,
                                       InferModel::InferModelOperatorHandlerPtr operatorHandler);
+
     std::string toString() const override;
     OperatorNodePtr copy() override;
     const std::string& getModel() const;
