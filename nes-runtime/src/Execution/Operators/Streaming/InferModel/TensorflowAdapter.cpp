@@ -13,9 +13,9 @@
 */
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdarg>
 #include <fstream>
 #include <iostream>
-#include <cstdarg>
 
 #ifdef TFDEF
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -43,10 +43,7 @@ TensorflowAdapterPtr TensorflowAdapter::create() { return std::make_shared<Tenso
 
 float TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
-void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...) {
-
-    va_list vl;
-    va_start(vl, n);
+void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, std::vector<NES::Nautilus::Value<>> modelInput) {
 
     //create input for tensor
     TfLiteTensor* inputTensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
@@ -56,8 +53,9 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...
     if (dataType == BasicPhysicalType::NativeType::INT_64) {
 
         int* inputData = (int*) malloc(inputSize);
-        for (int i = 0; i < n; ++i) {
-            inputData[i] = (int) va_arg(vl, int);
+
+        for (uint32_t i = 0; i < modelInput.size(); ++i) {
+            inputData[i] = (int) modelInput.at(i);
         }
 
         //Copy input tensor
@@ -84,8 +82,8 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...
     } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
         //create input for tensor
         float* inputData = (float*) malloc(inputSize);
-        for (int i = 0; i < n; ++i) {
-            inputData[i] = (float) va_arg(vl, double);
+        for (uint32_t i = 0; i < modelInput.size(); ++i) {
+            inputData[i] = (float) modelInput.at(i);
         }
 
         //Copy input tensor
@@ -112,8 +110,8 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...
     } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
         //create input for tensor
         double* inputData = (double*) malloc(inputSize);
-        for (int i = 0; i < n; ++i) {
-            inputData[i] = (double) va_arg(vl, double);
+        for (uint32_t i = 0; i < modelInput.size(); ++i) {
+            inputData[i] = (double) modelInput.at(i);
         }
 
         //Copy input tensor
@@ -140,8 +138,8 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...
     } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
         //create input for tensor
         bool* inputData = (bool*) malloc(inputSize);
-        for (int i = 0; i < n; ++i) {
-            inputData[i] = (bool) va_arg(vl, int);
+        for (uint32_t i = 0; i < modelInput.size(); ++i) {
+            inputData[i] = (bool) modelInput.at(i);
         }
 
         //Copy input tensor
@@ -165,8 +163,6 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
     }
-
-    va_end(vl);
 }
 
 }// namespace NES::Runtime::Execution::Operators

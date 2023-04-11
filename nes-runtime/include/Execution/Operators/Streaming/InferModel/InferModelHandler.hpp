@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELOPERATORHANDLER_HPP_
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
+#include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 
@@ -29,11 +29,12 @@ using InferModelHandlerPtr = std::shared_ptr<InferModelHandler>;
  */
 class InferModelHandler : public OperatorHandler {
   public:
-    InferModelHandler(std::string model);
+    explicit InferModelHandler(const std::string& model);
 
-    static InferModelHandlerPtr create(std::string model);
+    static InferModelHandlerPtr create(const std::string& model);
 
     ~InferModelHandler() override = default;
+
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;

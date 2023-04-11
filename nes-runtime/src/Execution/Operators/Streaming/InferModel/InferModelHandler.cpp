@@ -18,36 +18,24 @@
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-InferModelHandlerPtr InferModelHandler::create(std::string model) {
-    return std::make_shared<InferModelHandler>(model);
-}
+InferModelHandlerPtr InferModelHandler::create(const std::string& model) { return std::make_shared<InferModelHandler>(model); }
 
-InferModelHandler::InferModelHandler(std::string model) {
+InferModelHandler::InferModelHandler(const std::string& model) {
     this->model = model;
     tfAdapter = TensorflowAdapter::create();
     tfAdapter->initializeModel(model);
 }
 
-void InferModelHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                      Runtime::StateManagerPtr stateManager,
-                                      uint32_t localStateVariableId) {
-    NES_DEBUG2("nodeId: {}", stateManager->getNodeId());
-    NES_DEBUG2("localStateVaribaleId: {}", localStateVariableId);
-}
+void InferModelHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {}
 
 void InferModelHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {}
 
-void InferModelHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
-    reconfigure(task, context);
-}
+void InferModelHandler::reconfigure(Runtime::ReconfigurationMessage&, Runtime::WorkerContext&) {}
 
-void InferModelHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
-    postReconfigurationCallback(task);
-}
+void InferModelHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
 
 const std::string& InferModelHandler::getModel() const { return model; }
 

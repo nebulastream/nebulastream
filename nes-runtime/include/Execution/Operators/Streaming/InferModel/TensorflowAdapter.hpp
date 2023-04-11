@@ -16,6 +16,7 @@
 #define NES_RUNTIME_EXECUTION_OPERATORS_TENSORFLOWADAPTER_HPP_
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
 #include <vector>
 
@@ -39,7 +40,7 @@ class TensorflowAdapter {
      * @param n size of the first dimensional input tensor (vector)
      * @param ... values for the first dimensional input tensor (vector)
      */
-    void infer(BasicPhysicalType::NativeType dataType, int n, ...);
+    void infer(BasicPhysicalType::NativeType dataType, std::vector<NES::Nautilus::Value<>> modelInput);
 
     /**
      * @brief accesses the ith field of the output

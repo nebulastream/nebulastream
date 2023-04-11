@@ -151,8 +151,7 @@ class LowerPhysicalToNautilusOperators {
 #endif// ENABLE_JIN
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerInferModelOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                            const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
   private:
