@@ -21,8 +21,8 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <cstring>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 #include <jni.h>
 #include <utility>
 #if not(defined(__APPLE__))
@@ -71,8 +71,8 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
         jniErrorCheck(handler->getEnvironment());
         jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
         jniErrorCheck(handler->getEnvironment());
-        std::memcpy(jCode, byteCode.data(), byteCode.size()); // copy the byte array into the JVM byte array
-        handler->getEnvironment()->DefineClass(className.c_str(), nullptr, jCode, (jint)byteCode.size());
+        std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
+        handler->getEnvironment()->DefineClass(className.c_str(), nullptr, jCode, (jint) byteCode.size());
         jniErrorCheck(handler->getEnvironment());
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
         jniErrorCheck(handler->getEnvironment());
@@ -114,8 +114,8 @@ extern "C" void startOrAttachVMWithJarFile(void* state) {
         exit(EXIT_FAILURE);
     }
 
-    JavaVMInitArgs args {};
-    std::vector<std::string> opt {"-verbose:jni", "-verbose:class", "-Djava.class.path=" + javaPath};
+    JavaVMInitArgs args{};
+    std::vector<std::string> opt{"-verbose:jni", "-verbose:class", "-Djava.class.path=" + javaPath};
     std::vector<JavaVMOption> options;
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
@@ -139,8 +139,8 @@ extern "C" void startOrAttachVMWithByteList(void* state) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     std::string utilsPath = std::string(JAVA_UDF_UTILS);
-    JavaVMInitArgs args {};
-    std::vector<std::string> opt {"-verbose:jni", "-verbose:class", "-Djava.class.path=" + utilsPath};
+    JavaVMInitArgs args{};
+    std::vector<std::string> opt{"-verbose:jni", "-verbose:class", "-Djava.class.path=" + utilsPath};
     std::vector<JavaVMOption> options;
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});

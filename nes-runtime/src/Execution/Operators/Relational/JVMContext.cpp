@@ -92,5 +92,5 @@ JVMContext::~JVMContext() {
         jniErrorCheck(rc);
     }
 }
-}; // namespace NES::Runtime::Execution::Operators
+};    // namespace NES::Runtime::Execution::Operators
 #endif//ENABLE_JNI
