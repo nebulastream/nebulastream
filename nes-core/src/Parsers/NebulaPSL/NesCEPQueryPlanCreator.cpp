@@ -424,11 +424,11 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
             auto rightKeyFieldAccess = onRightKey.getExpressionNode()->as<FieldAccessExpressionNode>();
 
             leftQueryPlan = QueryPlanBuilder::addJoin(leftQueryPlan,
-                                                              rightQueryPlan,
-                                                              onLeftKey,
-                                                              onRightKey,
-                                                              windowType,
-                                                              Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
+                                                      rightQueryPlan,
+                                                      onLeftKey,
+                                                      onRightKey,
+                                                      windowType,
+                                                      Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
 
             if (operaterName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time

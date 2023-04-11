@@ -444,7 +444,6 @@ class Query {
      */
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
-
     /**
      * @brief: Create map java udf operator.
      * @param descriptor java udf descriptor

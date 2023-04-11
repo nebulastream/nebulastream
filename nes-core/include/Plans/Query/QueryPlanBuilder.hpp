@@ -97,11 +97,11 @@ class QueryPlanBuilder {
      * @return the updated queryPlan
      */
     static NES::QueryPlanPtr addJoin(NES::QueryPlanPtr leftQueryPlan,
-                                             NES::QueryPlanPtr rightQueryPlan,
-                                             NES::ExpressionItem onLeftKey,
-                                             NES::ExpressionItem onRightKey,
-                                             const NES::Windowing::WindowTypePtr& windowType,
-                                             NES::Join::LogicalJoinDefinition::JoinType joinType);
+                                     NES::QueryPlanPtr rightQueryPlan,
+                                     NES::ExpressionItem onLeftKey,
+                                     NES::ExpressionItem onRightKey,
+                                     const NES::Windowing::WindowTypePtr& windowType,
+                                     NES::Join::LogicalJoinDefinition::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query
@@ -113,9 +113,9 @@ class QueryPlanBuilder {
      * @return the updated queryPlan
      */
     static NES::QueryPlanPtr addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
-                                                  NES::QueryPlanPtr rightQueryPlan,
-                                                  NES::ExpressionItem onProbeKey,
-                                                  NES::ExpressionItem onBuildKey);
+                                          NES::QueryPlanPtr rightQueryPlan,
+                                          NES::ExpressionItem onProbeKey,
+                                          NES::ExpressionItem onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.

@@ -15,13 +15,13 @@
 #include <API/AttributeField.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -70,7 +70,8 @@ QueryPlanPtr QueryPlanBuilder::addFilter(NES::ExpressionNodePtr const& filterExp
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan) {
+NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr const& descriptor,
+                                                  NES::QueryPlanPtr queryPlan) {
     NES_DEBUG2("QueryPlanBuilder: add map java udf operator to query plan");
     auto op = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
@@ -95,11 +96,11 @@ QueryPlanPtr QueryPlanBuilder::addUnion(NES::QueryPlanPtr leftQueryPlan, NES::Qu
 }
 
 QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
-                                               NES::QueryPlanPtr rightQueryPlan,
-                                               ExpressionItem onLeftKey,
-                                               ExpressionItem onRightKey,
-                                               const Windowing::WindowTypePtr& windowType,
-                                               Join::LogicalJoinDefinition::JoinType joinType) {
+                                       NES::QueryPlanPtr rightQueryPlan,
+                                       ExpressionItem onLeftKey,
+                                       ExpressionItem onRightKey,
+                                       const Windowing::WindowTypePtr& windowType,
+                                       Join::LogicalJoinDefinition::JoinType joinType) {
     NES_DEBUG2("Query: joinWith the subQuery to current query");
 
     auto leftKeyFieldAccess = checkExpression(onLeftKey.getExpressionNode(), "leftSide");
@@ -143,9 +144,9 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
 }
 
 NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
-                                                         NES::QueryPlanPtr rightQueryPlan,
-                                                         ExpressionItem onProbeKey,
-                                                         ExpressionItem onBuildKey) {
+                                                 NES::QueryPlanPtr rightQueryPlan,
+                                                 ExpressionItem onProbeKey,
+                                                 ExpressionItem onBuildKey) {
     NES_DEBUG2("Query: joinWith the subQuery to current query");
     auto probeKeyFieldAccess = checkExpression(onProbeKey.getExpressionNode(), "onProbeKey");
     auto buildKeyFieldAccess = checkExpression(onBuildKey.getExpressionNode(), "onBuildKey");
