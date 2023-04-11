@@ -12,39 +12,40 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_HPP_
 
 #ifdef ENABLE_JNI
 
-#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This handler stores states of a MapJavaUdf operator during its execution.
+ * @brief This handler stores states of a FlatMapJavaUdf operator during its execution.
  */
-class MapJavaUdfOperatorHandler : public OperatorHandler {
+class JavaUDFOperatorHandler : public OperatorHandler {
   public:
+
     /**
-     * @brief This creates a MapJavaUdfOperatorHandler
+     * @brief This creates a FlatMapJavaUdfOperatorHandler
      * @param className The java class name containing the java udf
      * @param methodName The java method name of the java udf
      * @param inputClassName The class name of the input type of the udf
      * @param outputClassName The class name of the output type of the udf
      * @param byteCodeList The byteCode containing serialized java objects to load into jvm
      * @param serializedInstance The serialized instance of the java java class
-     * @param inputSchema The input schema of the records of the map function
-     * @param outputSchema The output schema of the records of the map function
+     * @param inputSchema The input schema of the records of the flat map function
+     * @param outputSchema The output schema of the records of the flat map function
      * @param javaPath Optional: path to jar files to load classes from into JVM
      */
-    explicit MapJavaUdfOperatorHandler(const std::string& className,
+    explicit JavaUDFOperatorHandler(const std::string& className,
                                        const std::string& methodName,
                                        const std::string& inputClassName,
                                        const std::string& outputClassName,
@@ -55,7 +56,7 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
                                        const std::optional<std::string>& javaPath)
         : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
           byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
-          outputSchema(outputSchema), javaPath(javaPath) {}
+          outputSchema(outputSchema), javaPath(javaPath), flatMapObject(nullptr), flatMapMethodId(nullptr) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
@@ -126,6 +127,31 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
      */
     void setEnvironment(JNIEnv* env) { this->env = env; }
 
+    // TODO: Move these 4 mehtods later
+    /**
+     * @brief This method returns the java udf object state
+     * @return jobject java udf object
+     */
+    jobject getFlatMapObject() const { return flatMapObject; }
+
+    /**
+     * @brief This method sets the java udf object state
+     * @param flatMapObject java udf object
+     */
+    void setFlatMapObject(jobject flatMapObject) { this->flatMapObject = flatMapObject; }
+
+    /**
+     * @brief This method returns the java udf method id
+     * @return jmethodID java udf method id
+     */
+    jmethodID getFlatMapMethodId() const { return flatMapMethodId; }
+
+    /**
+     * @brief This method sets the java udf method id
+     * @param flatMapMethodId java udf method id
+     */
+    void setFlatMapMethodId(const jmethodID flatMapMethodId) { this->flatMapMethodId = flatMapMethodId; }
+
   private:
     const std::string className;
     const std::string methodName;
@@ -137,8 +163,9 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
     const SchemaPtr outputSchema;
     JNIEnv* env;
     const std::optional<std::string> javaPath;
+    jmethodID flatMapMethodId;
+    jobject flatMapObject;
 };
 
-}// namespace NES::Runtime::Execution::Operators
 #endif//ENABLE_JNI
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
+#endif //NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_HPP_
