@@ -14,6 +14,7 @@
 
 #ifdef ENABLE_JNI
 
+
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
