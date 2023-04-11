@@ -16,7 +16,7 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GLobalThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobaThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -25,49 +25,49 @@
 namespace NES::Runtime::Execution::Operators {
 
 extern "C" void incrementCount(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called incrementCount: recordCount = " << handler->recordCount + 1);
     handler->recordCount++;
 }
 
 extern "C" void setIsWindowOpen(void* state, bool isWindowOpen) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called setIsWindowOpen: " << isWindowOpen);
     handler->isWindowOpen = isWindowOpen;
 }
 
 extern "C" bool getIsWindowOpen(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->isWindowOpen);
     return handler->isWindowOpen;
 }
 
 extern "C" uint64_t getRecordCount(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getRecordCount: recordCount = " << handler->recordCount);
     return handler->recordCount;
 }
 
 extern "C" void resetCount(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called resetCount");
     handler->recordCount = 0;
 }
 
 extern "C" void lockWindowHandler(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called lockWindowHandler");
     handler->mutex.lock();
 }
 
 extern "C" void unlockWindowHandler(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called unlockWindowHandler");
     handler->mutex.unlock();
 }
 
 extern "C" void* getAggregationValue(void* state, uint64_t i) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobaThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getAggregationValue: i = " << i);
     return (void*) handler->AggregationValues[i].get();
 }
