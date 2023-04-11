@@ -516,13 +516,10 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
     auto leftStamp = compareOp->getLeftInput()->getStamp();
     auto rightStamp = compareOp->getRightInput()->getStamp();
 
-    // Avoid comparing integer to float
     if ((leftStamp->isInteger() && leftStamp->isFloat()) || (leftStamp->isFloat() && rightStamp->isInteger())) {
+        // Avoid comparing integer to float
         NES_THROW_RUNTIME_ERROR("Type missmatch: cannot compare " << leftStamp->toString() << " to " << rightStamp->toString());
-    }
-
-    // handle address comparison
-    if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ && compareOp->getLeftInput()->getStamp()->isAddress()
+    } else if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ && compareOp->getLeftInput()->getStamp()->isAddress()
         && compareOp->getRightInput()->getStamp()->isInteger()) {
         // add null check
         auto null =
@@ -532,22 +529,22 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                          null);
         frame.setValue(compareOp->getIdentifier(), cmpOp);
-        return;
-    }
-
-    // handle integer and float comparison
-    if (leftStamp->isInteger() && rightStamp->isInteger()) {
+    } else if (leftStamp->isInteger() && rightStamp->isInteger()) {
+        // handle integer
         auto cmpOp = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
                                                           convertToIntMLIRComparison(compareOp->getComparator(), leftStamp),
                                                           frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                           frame.getValue(compareOp->getRightInput()->getIdentifier()));
         frame.setValue(compareOp->getIdentifier(), cmpOp);
     } else if (leftStamp->isFloat() && rightStamp->isFloat()) {
+        // handle float comparison
         auto cmpOp = builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
                                                           convertToFloatMLIRComparison(compareOp->getComparator()),
                                                           frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                           frame.getValue(compareOp->getRightInput()->getIdentifier()));
         frame.setValue(compareOp->getIdentifier(), cmpOp);
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unknown type to compare: " << leftStamp->toString() << " and " << rightStamp->toString());
     }
 }
 
