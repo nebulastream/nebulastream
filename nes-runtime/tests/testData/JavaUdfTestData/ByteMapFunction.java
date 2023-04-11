@@ -1,3 +1,4 @@
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
 import java.io.Serializable;
 
 /**
