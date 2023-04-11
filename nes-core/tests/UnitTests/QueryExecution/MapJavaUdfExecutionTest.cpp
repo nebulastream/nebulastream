@@ -122,7 +122,7 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     auto methodName = "map";
     std::vector<char> serializedInstance = {};
     auto byteCodeList = std::unordered_map<std::string, std::vector<char>>();
-    for (auto &className : classNames) {
+    for (const auto &className : classNames) {
         auto buffer = loadClassFileIntoBuffer(testDataPath, className);
         byteCodeList.insert(std::make_pair(className, buffer));
     }
