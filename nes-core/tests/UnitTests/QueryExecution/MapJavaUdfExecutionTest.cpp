@@ -114,7 +114,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
-    auto schema = Schema::create()->addField("test$id", BasicType::INT32);
+    auto schema = Schema::create()->addField("id", BasicType::INT32);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
@@ -128,7 +128,7 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     }
 
     auto className = classNames[0];
-    auto outputSchema = Schema::create()->addField("test$id", BasicType::INT32);
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
     auto inputClassName = "java/lang/Integer";
     auto outputClassName = "java/lang/Integer";
     NES_INFO("testDataPath:" + testDataPath);
