@@ -197,12 +197,12 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
         rootNode->addNodeProperty("slots", 0);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr level2Node = TopologyNode::create(2, ipAddress, 123, 124, 3*n-2);
-        level2Node->addNodeProperty("slots", 3*n-2);
+        TopologyNodePtr level2Node = TopologyNode::create(2, ipAddress, 123, 124, std::max(3*n-2,6));
+        level2Node->addNodeProperty("slots", std::max(3*n-2,6));
         topology->addNewTopologyNodeAsChild(rootNode, level2Node);
 
-        TopologyNodePtr level3Node = TopologyNode::create(3, ipAddress, 123, 124, 2*n-2);
-        level3Node->addNodeProperty("slots", 2*n-2);
+        TopologyNodePtr level3Node = TopologyNode::create(3, ipAddress, 123, 124, std::max(2*n-2,4));
+        level3Node->addNodeProperty("slots", std::max(2*n-2,4));
         topology->addNewTopologyNodeAsChild(level2Node, level3Node);
 
         std::map<int, TopologyNodePtr> sourceNodes;
