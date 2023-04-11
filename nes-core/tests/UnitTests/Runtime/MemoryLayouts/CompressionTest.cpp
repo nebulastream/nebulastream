@@ -69,15 +69,16 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(71);
     }
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
+
     const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -87,7 +88,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint
     // raw content
     contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
@@ -118,16 +119,16 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnU
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -135,13 +136,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnU
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -178,16 +179,16 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][2].write<uint8_t>(offset + 3);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -195,13 +196,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -239,16 +240,16 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutMultiColumnUi
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][2].write<uint8_t>(offset + 3);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -256,13 +257,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutMultiColumnUi
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -326,16 +327,16 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutSingleColumnU
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -343,13 +344,13 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutSingleColumnU
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -432,16 +433,16 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutMultiColumnUi
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][2].write<uint8_t>(offset + 3);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -449,13 +450,13 @@ TEST_F(CompressionTest, compressDecompressLZ4ColumnWiseColumnLayoutMultiColumnUi
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -487,15 +488,16 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferRowLayoutSingleColumnU
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(71);
     }
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
+
     const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -505,7 +507,7 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferRowLayoutSingleColumnU
     // raw content
     contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
@@ -536,16 +538,16 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayoutSingleColu
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -553,13 +555,13 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayoutSingleColu
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -596,16 +598,16 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferRowLayoutMultiColumnUi
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][2].write<uint8_t>(offset + 3);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -613,13 +615,13 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferRowLayoutMultiColumnUi
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -656,16 +658,16 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayoutMultiColum
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][2].write<uint8_t>(offset + 3);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -673,13 +675,13 @@ TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayoutMultiColum
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -743,16 +745,16 @@ TEST_F(CompressionTest, compressDecompressSnappyColumnWiseColumnLayoutSingleColu
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -760,13 +762,13 @@ TEST_F(CompressionTest, compressDecompressSnappyColumnWiseColumnLayoutSingleColu
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
@@ -849,16 +851,16 @@ TEST_F(CompressionTest, compressDecompressSnappyColumnWiseColumnLayoutMultiColum
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][2].write<uint8_t>(offset + 3);
     }
-
-    // TODO deep copy
-    //auto bufferOrig = buffer;
-    auto bufferOrig = CompressedDynamicTupleBuffer(buffer);
+    // copy for comparison
+    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-    const char* contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+
+    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_FALSE(contentIsEqual);
 
     //decompress
@@ -866,13 +868,13 @@ TEST_F(CompressionTest, compressDecompressSnappyColumnWiseColumnLayoutMultiColum
 
     // evaluate
     // raw content
-    contentOrig = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
+    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
     contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strcmp(contentOrig, contentCompressed) == 0;
+    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
     for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
+        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
 
