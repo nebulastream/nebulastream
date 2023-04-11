@@ -229,7 +229,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     statisticOutputThread = std::make_shared<std::thread>(([this]() {
         NES_DEBUG("NesWorker: start statistic collection");
         std::ofstream statisticsFile;
-        statisticsFile.open("coordinator.csv", std::ios::out);
+        statisticsFile.open("stats/coordinator.csv", std::ios::out);
         if (statisticsFile.is_open()) {
             statisticsFile << "timestamp,";
             statisticsFile << "queryId,";

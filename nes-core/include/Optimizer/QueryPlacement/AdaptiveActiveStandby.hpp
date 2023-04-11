@@ -123,8 +123,8 @@ class AdaptiveActiveStandby {
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(100, 0));
     // constraints & weights
     std::chrono::milliseconds timeConstraint{120000};
-    double overUtilizationPenaltyWeight = 0.2;
-    double networkCostWeight = 0.8;
+    double overUtilizationPenaltyWeight = 0.4;
+    double networkCostWeight = 0.6;
     bool excludeNodesConnectingPrimaries = true;    // false -> only exclude nodes that host the primary operators themselves
 
     // NOTE: replace topology->findNodeWithId(ID) with topologyMap[ID], if topologyMap contains all relevant paths instead of a
