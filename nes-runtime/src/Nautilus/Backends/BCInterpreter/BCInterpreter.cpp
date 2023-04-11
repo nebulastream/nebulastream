@@ -237,7 +237,7 @@ static Operation* OpTable[] = {(Operation*) regMov,
                                (Operation*) cast<int16_t, double>,
                                (Operation*) cast<int32_t, float>,
                                (Operation*) cast<int32_t, double>,
-                               (Operation*) cast<int32_t, float>,
+                               (Operation*) cast<int64_t, float>,
                                (Operation*) cast<int64_t, double>,
                                // FUNCTION CALLS
                                // return void
