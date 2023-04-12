@@ -118,8 +118,8 @@ TEST(UtilFunctionTest, differentTimeUnits) {
     timer2.pause();
 
     // runtime returned in int64_t, so expect no precision
-    EXPECT_NEAR(timer1.getPrintTime(), 1, 0.1);
-    EXPECT_NEAR(timer2.getPrintTime(), 1.3, 0.1);
+    EXPECT_NEAR(timer1.getPrintTime(), 1000, 100);
+    EXPECT_NEAR(timer2.getPrintTime(), 1300, 100);
 }
 
 /**
