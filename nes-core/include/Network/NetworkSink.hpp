@@ -139,6 +139,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+    std::function<void(Runtime::TupleBuffer&)> sendPropagationCallback;
     std::atomic<bool> reconnectBuffering;
 };
 

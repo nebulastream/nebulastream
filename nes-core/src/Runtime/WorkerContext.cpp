@@ -34,11 +34,27 @@ WorkerContext::WorkerContext(uint32_t workerId,
     });
     NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
     NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
+
+    statisticsFile.open("stats/latency" + std::to_string(workerId) + ".csv", std::ios::out);
+    statisticsFile << "time,latency\n";
 }
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
     localBufferPoolTLS.reset(nullptr);
+    statisticsFile.flush();
+    statisticsFile.close();
+}
+
+void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }

@@ -75,7 +75,7 @@ void FileSink::setup() {}
 
 void FileSink::shutdown() {}
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     std::unique_lock lock(writeMutex);
     NES_TRACE("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "
                                             << this->getAppendAsString());
@@ -125,6 +125,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
     }
     outputFile.flush();
+    workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
     return true;
 }

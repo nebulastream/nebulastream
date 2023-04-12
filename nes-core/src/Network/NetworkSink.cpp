@@ -58,13 +58,17 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
         };
     }
+    if (faultToleranceType != FaultToleranceType::AT_MOST_ONCE) {
+        sendPropagationCallback = [](Runtime::TupleBuffer&) {};
+    }
+    bufferCount = 0;
 }
 
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     if(workerContext.getId() == PlacementStrategy::workerContextIdToFail) {
-        NES_DEBUG("NetworkSink: failing worker context " << PlacementStrategy::workerContextIdToFail << " = worker " << PlacementStrategy::workerContextIdToFail+1);
+//        NES_DEBUG("NetworkSink: failing worker context " << PlacementStrategy::workerContextIdToFail << " = worker " << PlacementStrategy::workerContextIdToFail+1);
         return true;
     }
 
@@ -78,6 +82,16 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        auto ts = std::chrono::system_clock::now();
+        auto timeNow = std::chrono::system_clock::to_time_t(ts);
+        inputBuffer.setCreationTimestamp(value.count());
+        sendPropagationCallback(inputBuffer);
+        bufferCount++;
+
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         if (success) {
             insertIntoStorageCallback(inputBuffer, workerContext);
