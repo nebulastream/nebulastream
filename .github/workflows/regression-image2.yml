@@ -2,9 +2,9 @@ name: Docker Image for Regression tests
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "3654_elegant_regression" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "3654_elegant_regression" ]
 
 jobs:
   build:
