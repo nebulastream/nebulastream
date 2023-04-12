@@ -1,8 +1,8 @@
 #ifndef NES_COMPRESSEDDYNAMICTUPLEBUFFER_HPP
 #define NES_COMPRESSEDDYNAMICTUPLEBUFFER_HPP
 
-#include "Compression.hpp"
 #include "DynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/Compression/fsst.h"
 #include <cstring>
 #include <lz4.h>
 #include <snappy.h>
@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, RLE };
+enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, FSST, RLE };
 enum class CompressionMode { FULL_BUFFER, COLUMN_WISE };
 
 const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
@@ -18,6 +18,7 @@ const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
         case CompressionAlgorithm::NONE: return "None";
         case CompressionAlgorithm::LZ4: return "LZ4";
         case CompressionAlgorithm::SNAPPY: return "Snappy";
+        case CompressionAlgorithm::FSST: return "FSST";
         case CompressionAlgorithm::RLE: return "RLE";
     }
 }
@@ -59,6 +60,8 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     size_t maxBufferSize;
     std::vector<uint64_t> offsets;// TODO mismatch to MemoryLayout offsets
     std::vector<size_t> compressedSizes;
+    fsst_encoder_t* encoder;
+    size_t fsstOutSize;
 
     std::vector<uint64_t> getOffsets(const MemoryLayoutPtr& memoryLayout);
     void clearBuffer();
@@ -70,6 +73,10 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     void decompressSnappyFullBuffer();
     void compressSnappyColumnWise();
     void decompressSnappyColumnWise();
+    void compressFsstFullBuffer();
+    void decompressFsstFullBuffer();
+    void compressFsstColumnWise();
+    void decompressFsstColumnWise();
 };
 
 }// namespace NES::Runtime::MemoryLayouts

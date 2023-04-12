@@ -21,4 +21,6 @@ add_source_files(nes-runtime
         DynamicTupleBuffer.cpp
         CompressedDynamicTupleBuffer.cpp
         BufferAccessException.cpp
+        Compression/libfsst.cpp
+        Compression/fsst_avx512.cpp
 )
