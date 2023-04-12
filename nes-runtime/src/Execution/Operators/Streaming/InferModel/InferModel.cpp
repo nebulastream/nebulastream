@@ -22,10 +22,10 @@
 namespace NES::Runtime::Execution::Operators {
 
 template<class T>
-void addValueToModel(int index, std::any value, void* inferModelHandler) {
+void addValueToModel(int index, T value, void* inferModelHandler) {
     auto handler = static_cast<InferModelHandler*>(inferModelHandler);
     auto adapter = handler->getTensorflowAdapter();
-    adapter->addModelInput<T>(index, any_cast<T>(value));
+    adapter->addModelInput<T>(index, value);
 }
 
 void applyModel(void* inferModelHandler) {
@@ -54,7 +54,13 @@ void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) c
             FunctionCall("addValueToModel", addValueToModel<float>, Value<UInt32>(i), value.as<Float>(), inferModelHandler);
         } else if (value->isType<Double>()) {
             FunctionCall("addValueToModel", addValueToModel<double>, Value<UInt32>(i), value.as<Double>(), inferModelHandler);
-        } else if (value->isType<Int32>()) {
+        } else if (value->isType<UInt64>()) {
+            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<UInt64>(), inferModelHandler);
+        }else if (value->isType<UInt32>()) {
+            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<UInt32>(), inferModelHandler);
+        }else if (value->isType<Int64>()) {
+            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<Int64>(), inferModelHandler);
+        }else if (value->isType<Int32>()) {
             FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<Int32>(), inferModelHandler);
         } else {
             NES_ERROR2("Can not handle inputs other than of type int, bool, float, and double");

@@ -248,20 +248,16 @@ TEST_F(InferModelOperatorTest, testInferModelForIntInput) {
 
     inferModelOperator->setup(ctx);
 
-    auto firstRecord = Record({{"f1", Value<Int32>((Int32) 5)},
-                               {"f2", Value<Int32>((Int32) 3)},
-                               {"f3", Value<Int32>((Int32) 1)},
-                               {"f4", Value<Int32>((Int32) 0)}});
-    auto secondRecord = Record({{"f1", Value<Int32>((Int32) 4)},
-                                {"f2", Value<Int32>((Int32) 3)},
-                                {"f3", Value<Int32>((Int32) 1)},
-                                {"f4", Value<Int32>((Int32) 0)}});
+    auto firstRecord = Record({{"f1", Value<>(5)}, {"f2", Value<>(3)}, {"f3", Value<>(1)}, {"f4", Value<>(0)}});
+    auto secondRecord = Record({{"f1", Value<>(4)}, {"f2", Value<>(3)}, {"f3", Value<>(1)}, {"f4", Value<>(0)}});
     inferModelOperator->execute(ctx, firstRecord);
     inferModelOperator->execute(ctx, secondRecord);
 
     //Assertion
     std::vector<Output> expectedOutput{{0.43428239, 0.31287873, 0.25283894}, {0.43428239, 0.31287873, 0.25283894}};
+    auto delta = 0.0000001;
     EXPECT_EQ(collector->records.size(), 2);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 7);
     EXPECT_EQ(collector->records[0].read(f1), firstRecord.read(f1));
     EXPECT_EQ(collector->records[0].read(f2), firstRecord.read(f2));
     EXPECT_EQ(collector->records[0].read(f3), firstRecord.read(f3));
@@ -274,7 +270,7 @@ TEST_F(InferModelOperatorTest, testInferModelForIntInput) {
     EXPECT_EQ(collector->records[1].read(f2), secondRecord.read(f2));
     EXPECT_EQ(collector->records[1].read(f3), secondRecord.read(f3));
     EXPECT_EQ(collector->records[1].read(f4), secondRecord.read(f4));
-    EXPECT_EQ(collector->records[1].read(iris0), expectedOutput.at(1).iris0);
+    EXPECT_EQ(collector->records[1].read(iris0).as<Float>(), expectedOutput.at(1).iris0);
     EXPECT_EQ(collector->records[1].read(iris1), expectedOutput.at(1).iris1);
     EXPECT_EQ(collector->records[1].read(iris2), expectedOutput.at(1).iris2);
 
