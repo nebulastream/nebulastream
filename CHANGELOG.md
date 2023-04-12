@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.47](https://github.com/nebulastream/nebulastream/tree/v0.5.47) (2023-04-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.46...v0.5.47)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Infer comparison stamp in compiler backend [\#3631](https://github.com/nebulastream/nebulastream/issues/3631)
+
 ## [v0.5.46](https://github.com/nebulastream/nebulastream/tree/v0.5.46) (2023-04-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.46)
