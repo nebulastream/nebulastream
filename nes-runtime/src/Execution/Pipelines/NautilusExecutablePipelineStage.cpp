@@ -29,6 +29,7 @@ uint32_t NautilusExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
     auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
+    pipelineId = pipelineExecutionContext.getPipelineID();
     return 0;
 }
 
@@ -77,7 +78,7 @@ uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext&) {
 }
 
 uint32_t NautilusExecutablePipelineStage::stop(std::shared_ptr<StatisticsCollector> statisticsCollector){
-    auto collectorTrigger = CollectorTrigger(PipelineStatisticsTrigger);
+    auto collectorTrigger = CollectorTrigger(PipelineStatisticsTrigger, pipelineId);
     statisticsCollector->updateStatisticsHandler(collectorTrigger);
     return 0;
 }

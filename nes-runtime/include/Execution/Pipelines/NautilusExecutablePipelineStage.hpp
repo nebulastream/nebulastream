@@ -53,6 +53,7 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
 
   protected:
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
+    uint64_t pipelineId;
     std::shared_ptr<Profiler> profiler;
     uint64_t numberOfInputTuples{};
     uint64_t numberOfOutputTuples{};

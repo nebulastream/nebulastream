@@ -28,7 +28,6 @@ void StatisticsCollector::addStatistic(uint64_t id, std::shared_ptr<Statistic> s
 }
 
 void StatisticsCollector::updateStatisticsHandler(CollectorTrigger trigger) {
-    TriggerType type = trigger.getTriggerType();
     uint64_t id = trigger.getId();
 
     if (id != 0) {

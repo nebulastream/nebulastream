@@ -14,3 +14,5 @@
 add_nes_runtime_test(runtime-statistics-collector-test "StatisticsCollectorTest.cpp")
 add_nes_runtime_test(runtime-profiler-test "ProfilerTest.cpp")
 add_nes_runtime_test(runtime-selectivity-test "SelectivityTest.cpp")
+add_nes_runtime_test(runtime-change-detection-test "ChangeDetectionTest.cpp")
+add_nes_runtime_test(runtime-multiple-pipelines-test "MultiplePipelinesTest.cpp")
