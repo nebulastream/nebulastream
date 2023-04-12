@@ -216,7 +216,7 @@ TEST_F(ConservativeTwoPhaseLockingStorageHandleTest, TestNoDeadLock) {
     std::barrier beforeLockingBarrier(numThreads, []() {
     });
 
-    std::vector<std::jthread> threads;
+    std::vector<std::thread> threads;
     threads.reserve(numThreads);
     for (size_t i = 0; i < numThreads; ++i) {
         auto twoPLAccessHandle = ConservativeTwoPhaseLockingStorageHandle::create(globalExecutionPlan,
@@ -248,6 +248,9 @@ TEST_F(ConservativeTwoPhaseLockingStorageHandleTest, TestNoDeadLock) {
                 ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle().get());
                 EXPECT_EQ(lockHolder, i);
             });
+    }
+    for (auto& thread : threads) {
+        thread.join();
     }
 }
 }// namespace NES
