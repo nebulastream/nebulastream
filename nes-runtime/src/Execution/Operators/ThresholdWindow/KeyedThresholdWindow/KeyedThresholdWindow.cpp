@@ -13,7 +13,11 @@
 */
 
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/MaxAggregation.hpp>
+#include <Execution/Aggregation/MinAggregation.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
@@ -53,6 +57,9 @@ extern "C" void resetKeyedThresholdWindowCount(void* state) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called resetCount");
     handler->recordCount = 0;
+    for (auto &aggregationValue : handler->AggregationValues){
+        aggregationValue.clear();
+    }
 }
 
 extern "C" void lockKeyedThresholdWindowHandler(void* state) {
@@ -67,7 +74,9 @@ extern "C" void unlockKeyedThresholdWindowHandler(void* state) {
     handler->mutex.unlock();
 }
 
-extern "C" void* getKeyedThresholdWindowAggregationValueOrCreate(void* state, uint64_t aggFuncIndex, uint32_t aggKey) {
+extern "C" void*
+getKeyedThresholdWindowAggregationValueOrCreate(void* state, uint64_t aggFuncIndex, uint32_t aggKey, uint8_t aggFunc) {
+    (void) aggFunc;
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called AggregationValue of aggFuncIndex: " << aggFuncIndex << " and aggKey: " << aggKey);
 
@@ -77,9 +86,25 @@ extern "C" void* getKeyedThresholdWindowAggregationValueOrCreate(void* state, ui
         return (void*) handler->AggregationValues[aggFuncIndex].at(aggKey).get();
     } else {
         // key does not exist, create a new map entry with aggKey as key
-        // TODO #3608: this should follow the aggregation function used, and not hardcodded
-        auto aggValue = std::make_unique<Aggregation::SumAggregationValue<uint64_t>>();
-        handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggValue)));
+        // TODO #3608: find a better way to propagate the aggregation type and the data type as well
+        if (aggFunc == 0) {
+            auto aggVal = std::make_unique<Aggregation::SumAggregationValue<uint64_t>>();
+            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
+        } else if (aggFunc == 1) {
+            auto aggVal = std::make_unique<Aggregation::SumAggregationValue<uint64_t>>();
+            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
+        } else if (aggFunc == 2) {
+            auto aggVal = std::make_unique<Aggregation::CountAggregationValue<uint64_t>>();
+            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
+        } else if (aggFunc == 3) {
+            auto aggVal = std::make_unique<Aggregation::MinAggregationValue<uint64_t>>();
+            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
+        } else if (aggFunc == 4) {
+            auto aggVal = std::make_unique<Aggregation::AvgAggregationValue<uint64_t>>();
+            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
+        } else {
+            throw std::runtime_error("Unknown aggregation type");
+        }
 
         // return the aggregation value
         return (void*) handler->AggregationValues[aggFuncIndex].at(aggKey).get();
@@ -123,7 +148,8 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
                                                        getKeyedThresholdWindowAggregationValueOrCreate,
                                                        handler,
                                                        Value<UInt64>(i),
-                                                       hash);
+                                                       hash,
+                                                       Value<UInt8>((uint8_t) 0));
             auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
             auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i]);
             // if the agg function is not a count, then get the aggregated value from the "onField" field
@@ -144,16 +170,33 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
             if (recordCount >= minCount) {
                 auto resultRecord = Record();
                 for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
+                    // TODO #3608: an ugly way to state the aggregation type
+                    uint8_t aggType = 0;
+                    // determine the type of agg function
+                    // TODO: #3608 also check the data type of the input and output of the aggregation
+                    if (std::dynamic_pointer_cast<Aggregation::SumAggregationFunction>(aggregationFunctions[i])) {
+                        aggType = (uint8_t) 0;
+                    } else if (std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i])) {
+                        aggType = (uint8_t) 1;
+                    } else if (std::dynamic_pointer_cast<Aggregation::MaxAggregationFunction>(aggregationFunctions[i])) {
+                        aggType = (uint8_t) 2;
+                    } else if (std::dynamic_pointer_cast<Aggregation::MinAggregationFunction>(aggregationFunctions[i])) {
+                        aggType = (uint8_t) 3;
+                    } else if (std::dynamic_pointer_cast<Aggregation::AvgAggregationFunction>(aggregationFunctions[i])) {
+                        aggType = (uint8_t) 4;
+                    }
+
                     auto aggregationValueMemref = FunctionCall("getKeyedThresholdWindowAggregationValueOrCreate",
                                                                getKeyedThresholdWindowAggregationValueOrCreate,
                                                                handler,
                                                                Value<UInt64>(i),
-                                                               hash);
+                                                               hash,
+                                                               Value<UInt8>(aggType));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
                     NES_TRACE("Write back result for" << aggregationResultFieldIdentifiers[i].c_str()
                                                       << "result: " << aggregationResult)
                     resultRecord.write(aggregationResultFieldIdentifiers[i], aggregationResult);
-                    resultRecord.write("key", keyValue); //TODO: 3631: maybe the "key" field name should be inferred
+                    resultRecord.write("key", keyValue);//TODO: 3608: maybe the "key" field name should be inferred
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }
                 FunctionCall("setKeyedThresholdWindowIsWindowOpen",
