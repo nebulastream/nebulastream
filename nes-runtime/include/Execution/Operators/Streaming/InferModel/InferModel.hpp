@@ -15,15 +15,9 @@
 #ifndef NES_RUNTIME_EXECUTION_OPERATOR_INFERMODEL_HPP
 #define NES_RUNTIME_EXECUTION_OPERATOR_INFERMODEL_HPP
 
-#include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES {
-
-class ExpressionItem;
-using ExpressionItemPtr = std::shared_ptr<ExpressionItem>;
-
-namespace Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators {
 
 class InferModel : public ExecutableOperator {
 
@@ -31,20 +25,20 @@ class InferModel : public ExecutableOperator {
     /**
      * @brief Creates a infer model operator.
      * @param inferModelHandlerIndex index of infer model handler.
-     * @param inputFields input fields for the model inference
-     * @param outputFields output fields from the model inference
+     * @param inputFieldNames names of input fields for the model inference
+     * @param outputFieldNames names of output fields from the model inference
      */
     InferModel(const uint32_t inferModelHandlerIndex,
-               const std::vector<ExpressionItemPtr>& inputFields,
-               const std::vector<ExpressionItemPtr>& outputFields)
-        : inferModelHandlerIndex(inferModelHandlerIndex), inputFields(inputFields), outputFields(outputFields){};
+               const std::vector<std::string>& inputFieldNames,
+               const std::vector<std::string>& outputFieldNames)
+        : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
     const uint32_t inferModelHandlerIndex;
-    const std::vector<ExpressionItemPtr> inputFields;
-    const std::vector<ExpressionItemPtr> outputFields;
+    const std::vector<std::string> inputFieldNames;
+    const std::vector<std::string> outputFieldNames;
 };
 
 }// namespace Runtime::Execution::Operators

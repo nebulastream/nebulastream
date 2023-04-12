@@ -35,24 +35,32 @@ class TensorflowAdapter {
     TensorflowAdapter() = default;
 
     /**
-     * @brief runs the tensorflow model of a single tuple
-     * @param dataType enum of type BasicPhysicalType::NativeType; only available options currently are: INT_64, DOUBLE, and BOOLEAN
-     * @param n size of the first dimensional input tensor (vector)
-     * @param ... values for the first dimensional input tensor (vector)
+     * @brief Initialize tensorflow model
+     * @param model file containing the serialized model
      */
-    void infer(BasicPhysicalType::NativeType dataType, std::vector<NES::Nautilus::Value<>> modelInput);
+    void initializeModel(std::string model);
+
+    /**
+     * @brief Add input for model inference
+     * @param input: the nautilus input value
+     */
+    void addModelInput(const NES::Nautilus::Value<>& input);
+
+    /**
+     * @brief runs the tensorflow model of a single tuple
+     */
+    void infer();
 
     /**
      * @brief accesses the ith field of the output
-     * @param i
-     * @return
+     * @param i index of the output value
+     * @return float value
      */
     float getResultAt(int i);
-    void initializeModel(std::string model);
-    void pass() {}
 
   private:
     TfLiteInterpreter* interpreter{};
+    std::vector<NES::Nautilus::Value<>> modelInput;
     // TODO https://github.com/nebulastream/nebulastream/issues/3424
     // Right now we only support 32-bit floats as output.
     float* output{};
