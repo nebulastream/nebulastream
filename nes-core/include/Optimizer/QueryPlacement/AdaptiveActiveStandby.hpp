@@ -111,6 +111,8 @@ class AdaptiveActiveStandby {
     const static int newTopologyNodeIdStart = 1000;      // Assumption: IDs above this reserved for new nodes
     const static int newOperatorNodeIdStart = 1000;
 
+    static void setNewNodeResources(int n) { resources = n; }
+
   private:
     PlacementStrategy::ValueAAS placementStrategy;
     std::map<TopologyNodeId, std::map<TopologyNodeId, double>> distances;
@@ -119,7 +121,7 @@ class AdaptiveActiveStandby {
     std::string ipAddress = "localhost";
     uint32_t grpcPort = 123;
     uint32_t dataPort = 124;
-    uint16_t resources = 5;
+    inline static uint16_t resources = 5;
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(100, 0));
     // constraints & weights
     std::chrono::milliseconds timeConstraint{120000};
