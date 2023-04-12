@@ -18,12 +18,13 @@
 #include <iostream>
 
 #ifdef TFDEF
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
 
 namespace NES::Runtime::Execution::Operators {
+
+TensorflowAdapterPtr TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
 
 void TensorflowAdapter::initializeModel(std::string model) {
     NES_DEBUG2("INITIALIZING MODEL:  {}", model);
@@ -39,23 +40,20 @@ void TensorflowAdapter::initializeModel(std::string model) {
     TfLiteInterpreterAllocateTensors(interpreter);
 }
 
-TensorflowAdapterPtr TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
-
 float TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
-void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, std::vector<NES::Nautilus::Value<>> modelInput) {
+void TensorflowAdapter::infer() {
 
     //create input for tensor
     TfLiteTensor* inputTensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
     int inputSize = (int) (TfLiteTensorByteSize(inputTensor));
 
     //Prepare input parameters based on data type
-    if (dataType == BasicPhysicalType::NativeType::INT_64) {
-
-        int* inputData = (int*) malloc(inputSize);
-
+    if (modelInput[0]->isType<Nautilus::Int32>()) {
+        //create input for tensor
+        auto* inputData = (int*) malloc(inputSize);
         for (uint32_t i = 0; i < modelInput.size(); ++i) {
-            inputData[i] = (int) modelInput.at(i);
+            inputData[i] = modelInput.at(i).as<Nautilus::Int32>();
         }
 
         //Copy input tensor
@@ -79,11 +77,11 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, std::vecto
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
-    } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
+    } else if (modelInput[0]->isType<Nautilus::Float>()) {
         //create input for tensor
-        float* inputData = (float*) malloc(inputSize);
+        auto* inputData = (float*) malloc(inputSize);
         for (uint32_t i = 0; i < modelInput.size(); ++i) {
-            inputData[i] = (float) modelInput.at(i);
+            inputData[i] = modelInput.at(i).as<Nautilus::Float>();
         }
 
         //Copy input tensor
@@ -107,11 +105,11 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, std::vecto
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
-    } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
+    } else if (modelInput[0]->isType<Nautilus::Double>()) {
         //create input for tensor
-        double* inputData = (double*) malloc(inputSize);
+        auto* inputData = (double*) malloc(inputSize);
         for (uint32_t i = 0; i < modelInput.size(); ++i) {
-            inputData[i] = (double) modelInput.at(i);
+            inputData[i] = modelInput.at(i).as<Nautilus::Double>();
         }
 
         //Copy input tensor
@@ -135,11 +133,11 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, std::vecto
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
-    } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
+    } else if (modelInput[0]->isType<Nautilus::Boolean>()) {
         //create input for tensor
-        bool* inputData = (bool*) malloc(inputSize);
+        auto* inputData = (bool*) malloc(inputSize);
         for (uint32_t i = 0; i < modelInput.size(); ++i) {
-            inputData[i] = (bool) modelInput.at(i);
+            inputData[i] = modelInput.at(i).as<Nautilus::Boolean>();
         }
 
         //Copy input tensor
@@ -164,6 +162,8 @@ void TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, std::vecto
         TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
     }
 }
+
+void TensorflowAdapter::addModelInput(const NES::Nautilus::Value<>& input) { modelInput.push_back(input); }
 
 }// namespace NES::Runtime::Execution::Operators
 

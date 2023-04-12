@@ -12,51 +12,63 @@
     limitations under the License.
 */
 
+#include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModel.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
-#include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-
-void applyModel(void* inferModelHandler, void* inputFields, void* outputFields, void* record) {
-
-    auto castedInputFields = static_cast<std::vector<ExpressionItemPtr>*>(inputFields);
-    auto castedRecord = static_cast<NES::Nautilus::Record*>(record);
-
-    std::vector<Value<>> modelInput;
-    for (const auto& inputField : *castedInputFields) {
-        modelInput.push_back(castedRecord->read(""));
-    }
-
+template<class T>
+void addValueToModel(T value, void* inferModelHandler) {
     auto handler = static_cast<InferModelHandler*>(inferModelHandler);
     auto adapter = handler->getTensorflowAdapter();
-    adapter->infer(BasicPhysicalType::NativeType::UINT_32, modelInput);
+    adapter->addModelInput(value);
+}
 
-    auto castedOutputFields = static_cast<std::vector<ExpressionItemPtr>*>(outputFields);
+void applyModel(void* inferModelHandler) {
+    auto handler = static_cast<InferModelHandler*>(inferModelHandler);
+    auto adapter = handler->getTensorflowAdapter();
+    adapter->infer();
+}
 
-    for (const auto& outputField : *castedOutputFields) {
-        castedRecord->write("", adapter->getResultAt(0));
-    }
+float getValueFromModel(int index, void* inferModelHandler) {
+    auto handler = static_cast<InferModelHandler*>(inferModelHandler);
+    auto adapter = handler->getTensorflowAdapter();
+    return adapter->getResultAt(index);
 }
 
 void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const {
 
-    std::vector<Value<>> modelInput;
-
-    //1. Extract the input vector
-    //2. Extract and call the adapter
-    //3. Update the record
+    //1. Extract the handler
     auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
-    Nautilus::FunctionCall("applyModel",
-                           applyModel,
-                           inferModelHandler,
-                           Value<MemRef>((int8_t*) &inputFields),
-                           Value<MemRef>((int8_t*) &outputFields),
-                           Value<MemRef>((int8_t*) &record));
+
+    //2. Add input values for the model inference
+    for (const auto& inputFieldName : inputFieldNames) {
+        Value<> value = record.read(inputFieldName);
+        if (value->isType<Int32>()) {
+            FunctionCall("addValueToModel", addValueToModel<Int32>, value.as<Int32>(), inferModelHandler);
+        } else if (value->isType<Boolean>()) {
+            FunctionCall("addValueToModel", addValueToModel<Boolean>, value.as<Boolean>(), inferModelHandler);
+        } else if (value->isType<Float>()) {
+            FunctionCall("addValueToModel", addValueToModel<Float>, value.as<Float>(), inferModelHandler);
+        } else if (value->isType<Double>()) {
+            FunctionCall("addValueToModel", addValueToModel<Double>, value.as<Double>(), inferModelHandler);
+        } else {
+            NES_ERROR2("Can not handle inputs other than of type int, bool, float, and double");
+        }
+    }
+
+    //3. infer model on the input values
+    Nautilus::FunctionCall("applyModel", applyModel, inferModelHandler);
+
+    //4. Get inferred output from the adapter
+    for (uint32_t i = 0; i < outputFieldNames.size(); i++) {
+        auto value = FunctionCall("getValueFromModel", getValueFromModel, Value<UInt32>(i), inferModelHandler);
+        record.write(outputFieldNames.at(i), Value<Float>(value));
+    }
 
     //4. Trigger execution of next operator
     child->execute(ctx, (Record&) record);
