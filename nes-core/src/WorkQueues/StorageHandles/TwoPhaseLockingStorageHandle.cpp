@@ -72,6 +72,5 @@ UdfCatalogHandle TwoPhaseLockingStorageHandle::getUdfCatalogHandle() {
 
 void TwoPhaseLockingStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
     (void) requiredResources;
-    NES_NOT_IMPLEMENTED();
 }
 }// namespace NES

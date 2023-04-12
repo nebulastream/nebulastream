@@ -46,6 +46,11 @@ class UnlockDeleter {
      */
     explicit UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock);
 
+    /**
+     * @brief Keeps the supplied lock in a locked state until the unlock deleter is destructed.
+     * Throws an exception if the supplied lock is not in locked state.
+     * @param lock The lock to be kept for the whole lifetime of the unlock deleter object
+     */
     explicit UnlockDeleter(std::unique_lock<std::mutex> lock);
 
     /**

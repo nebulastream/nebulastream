@@ -79,7 +79,10 @@ class StorageHandle {
 
     virtual ~StorageHandle() = default;
 
-    //todo #3641: add pre execution function
+    /**
+     * Performs tasks necessary before request execution and locks resources if necessary
+     * @param requiredResources The resources required for executing the request.
+     */
     virtual void preExecution(std::vector<StorageHandleResourceType> requiredResources) = 0;
 
     /**

@@ -62,6 +62,5 @@ UdfCatalogHandle SerialStorageHandle::getUdfCatalogHandle() {
 
 void SerialStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
     (void) requiredResources;
-    NES_NOT_IMPLEMENTED();
 }
 }

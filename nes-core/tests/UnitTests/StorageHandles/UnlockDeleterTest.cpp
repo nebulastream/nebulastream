@@ -83,4 +83,20 @@ TEST_F(UnlockDeleterTest, TestLocking) {
     });
     thread->join();
 }
-}// namespace NES
+
+TEST_F(UnlockDeleterTest, TestTakingOwnershipOfLock) {
+    std::mutex mtx;
+    auto lock = std::unique_lock(mtx);
+    UnlockDeleter deleter;
+    ASSERT_NO_THROW(deleter = UnlockDeleter(std::move(lock)));
+    ASSERT_FALSE(mtx.try_lock());
+}
+
+TEST_F(UnlockDeleterTest, TestTakingOwnershipNotLocked) {
+    std::mutex mtx;
+    auto lock = std::unique_lock(mtx, std::defer_lock);
+    UnlockDeleter deleter;
+    ASSERT_THROW(deleter = UnlockDeleter(std::move(lock)), std::exception);
+}
+
+}
