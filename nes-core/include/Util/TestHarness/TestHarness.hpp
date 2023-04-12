@@ -423,6 +423,8 @@ class TestHarness {
         coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
         coordinatorConfiguration->restPort = restPort;
         coordinatorConfiguration->rpcPort = rpcPort;
+        coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         crdConfigFunctor(coordinatorConfiguration);
 
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
@@ -438,6 +440,8 @@ class TestHarness {
             //Set ports at runtime
             workerConfiguration->coordinatorPort = coordinatorRPCPort;
             workerConfiguration->coordinatorIp = coordinatorIPAddress;
+            workerConfiguration->queryCompiler.queryCompilerType =
+                QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
 
             switch (workerConf->getSourceType()) {
                 case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource: {

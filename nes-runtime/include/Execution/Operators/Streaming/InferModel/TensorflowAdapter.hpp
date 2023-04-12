@@ -15,12 +15,12 @@
 #ifndef NES_RUNTIME_EXECUTION_OPERATORS_TENSORFLOWADAPTER_HPP_
 #define NES_RUNTIME_EXECUTION_OPERATORS_TENSORFLOWADAPTER_HPP_
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <any>
 #include <memory>
 #include <vector>
 
 class TfLiteInterpreter;
+class TfLiteTensor;
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -42,9 +42,13 @@ class TensorflowAdapter {
 
     /**
      * @brief Add input for model inference
-     * @param input: the nautilus input value
+     * @param index: location of the input value
+     * @param value: the input value
      */
-    void addModelInput(const NES::Nautilus::Value<>& input);
+    template<class T>
+    void addModelInput(int index, T value) {
+        ((T*) inputData)[index] = value;
+    };
 
     /**
      * @brief runs the tensorflow model of a single tuple
@@ -60,10 +64,12 @@ class TensorflowAdapter {
 
   private:
     TfLiteInterpreter* interpreter{};
-    std::vector<NES::Nautilus::Value<>> modelInput;
+    TfLiteTensor* inputTensor;
+    int tensorSize;
+    void* inputData{};
     // TODO https://github.com/nebulastream/nebulastream/issues/3424
     // Right now we only support 32-bit floats as output.
-    float* output{};
+    float* outputData{};
 #endif// TFDEF
 };
 

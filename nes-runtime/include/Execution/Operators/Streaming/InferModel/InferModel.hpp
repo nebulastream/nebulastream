@@ -41,6 +41,5 @@ class InferModel : public ExecutableOperator {
     const std::vector<std::string> outputFieldNames;
 };
 
-}// namespace Runtime::Execution::Operators
-}// namespace NES
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_RUNTIME_EXECUTION_OPERATOR_INFERMODEL_HPP

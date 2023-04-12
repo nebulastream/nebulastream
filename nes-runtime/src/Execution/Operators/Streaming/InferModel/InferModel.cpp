@@ -22,10 +22,10 @@
 namespace NES::Runtime::Execution::Operators {
 
 template<class T>
-void addValueToModel(T value, void* inferModelHandler) {
+void addValueToModel(int index, std::any value, void* inferModelHandler) {
     auto handler = static_cast<InferModelHandler*>(inferModelHandler);
     auto adapter = handler->getTensorflowAdapter();
-    adapter->addModelInput(value);
+    adapter->addModelInput<T>(index, any_cast<T>(value));
 }
 
 void applyModel(void* inferModelHandler) {
@@ -46,16 +46,16 @@ void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) c
     auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
 
     //2. Add input values for the model inference
-    for (const auto& inputFieldName : inputFieldNames) {
-        Value<> value = record.read(inputFieldName);
-        if (value->isType<Int32>()) {
-            FunctionCall("addValueToModel", addValueToModel<Int32>, value.as<Int32>(), inferModelHandler);
-        } else if (value->isType<Boolean>()) {
-            FunctionCall("addValueToModel", addValueToModel<Boolean>, value.as<Boolean>(), inferModelHandler);
+    for (uint32_t i = 0; i < inputFieldNames.size(); i++) {
+        Value<> value = record.read(inputFieldNames.at(i));
+        if (value->isType<Boolean>()) {
+            FunctionCall("addValueToModel", addValueToModel<bool>, Value<UInt32>(i), value.as<Boolean>(), inferModelHandler);
         } else if (value->isType<Float>()) {
-            FunctionCall("addValueToModel", addValueToModel<Float>, value.as<Float>(), inferModelHandler);
+            FunctionCall("addValueToModel", addValueToModel<float>, Value<UInt32>(i), value.as<Float>(), inferModelHandler);
         } else if (value->isType<Double>()) {
-            FunctionCall("addValueToModel", addValueToModel<Double>, value.as<Double>(), inferModelHandler);
+            FunctionCall("addValueToModel", addValueToModel<double>, Value<UInt32>(i), value.as<Double>(), inferModelHandler);
+        } else if (value->isType<Int32>()) {
+            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<Int32>(), inferModelHandler);
         } else {
             NES_ERROR2("Can not handle inputs other than of type int, bool, float, and double");
         }
@@ -66,8 +66,8 @@ void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) c
 
     //4. Get inferred output from the adapter
     for (uint32_t i = 0; i < outputFieldNames.size(); i++) {
-        auto value = FunctionCall("getValueFromModel", getValueFromModel, Value<UInt32>(i), inferModelHandler);
-        record.write(outputFieldNames.at(i), Value<Float>(value));
+        Value<> value = FunctionCall("getValueFromModel", getValueFromModel, Value<UInt32>(i), inferModelHandler);
+        record.write(outputFieldNames.at(i), value);
     }
 
     //4. Trigger execution of next operator
