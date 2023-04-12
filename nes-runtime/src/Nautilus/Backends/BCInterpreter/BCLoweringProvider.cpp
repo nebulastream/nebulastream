@@ -584,19 +584,19 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
 
 void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
                                                   short block,
-                                                  NES::Nautilus::Backends::BC::BCLoweringProvider::RegisterFrame& frame) {
+                                                  RegisterFrame& frame) {
     // first try to lower to a native call if the correct stub was registered.
-    //auto returnValue = processNativeCall(opt, block, frame);
-    //if (!returnValue) {
+    auto returnValue = processNativeCall(opt, block, frame);
+    if (!returnValue) {
         // if it was not possible to lower the call, we try to create a dynamic call using dyncall.h
         processDynamicCall(opt, block, frame);
-    //}
+    }
 }
 
-bool BCLoweringProvider::LoweringContext::processDynamicCall(
+void BCLoweringProvider::LoweringContext::processDynamicCall(
     const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
     short block,
-    NES::Nautilus::Backends::BC::BCLoweringProvider::RegisterFrame& frame) {
+    RegisterFrame& frame) {
     auto& code = program.blocks[block].code;
     NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
@@ -655,13 +655,12 @@ bool BCLoweringProvider::LoweringContext::processDynamicCall(
     } else {
         code.emplace_back(bc, funcInfoRegister, -1, -1);
     }
-    return true;
 }
 
 bool BCLoweringProvider::LoweringContext::processNativeCall(
     const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
     short block,
-    NES::Nautilus::Backends::BC::BCLoweringProvider::RegisterFrame& frame) {
+    RegisterFrame& frame) {
 
     // TODO the following code is very bad and manually checks function signatures. Type to come up with something more generic.
     NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
