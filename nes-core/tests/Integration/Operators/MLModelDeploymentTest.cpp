@@ -14,21 +14,11 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/ExecutableType/Array.hpp>
-#include <Common/Identifiers.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
 

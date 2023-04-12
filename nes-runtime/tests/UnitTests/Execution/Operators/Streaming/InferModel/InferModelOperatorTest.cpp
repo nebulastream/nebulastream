@@ -26,7 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -44,12 +43,12 @@ class InferModelOperatorTest : public Testing::NESBaseTest {
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ThresholdWindowOperatorTest test class.");
+        NES::Logger::setupLogging("InferModelOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup InferModelOperatorTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down InferModelOperatorTest test class."); }
 };
 
 /**
