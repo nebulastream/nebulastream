@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -719,8 +719,20 @@ LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperator
 
     auto inferModelOperator = physicalOperator->as<PhysicalOperators::PhysicalInferModelOperator>();
     auto model = inferModelOperator->getModel();
-    auto inputFields = inferModelOperator->getInputFields();
-    auto outputFields = inferModelOperator->getOutputFields();
+
+    //Fetch the name of input fields
+    std::vector<std::string> inputFields;
+    for (const auto& inputField : inferModelOperator->getInputFields()) {
+        auto fieldAccessExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+        inputFields.push_back(fieldAccessExpression->getFieldName());
+    }
+
+    //Fetch the name of output fields
+    std::vector<std::string> outputFields;
+    for (const auto& outputField : inferModelOperator->getOutputFields()) {
+        auto fieldAccessExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+        outputFields.push_back(fieldAccessExpression->getFieldName());
+    }
 
     //build the handler to invoke model during execution
     auto handler = std::make_shared<Runtime::Execution::Operators::InferModelHandler>(model);
