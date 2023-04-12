@@ -23,7 +23,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <barrier>
 
 namespace NES {
 class ConservativeTwoPhaseLockingStorageHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
@@ -213,9 +212,6 @@ TEST_F(ConservativeTwoPhaseLockingStorageHandleTest, TestNoDeadLock) {
     auto reverseResourceVector = resourceVector;
     std::reverse(reverseResourceVector.begin(), reverseResourceVector.end());
 
-    std::barrier beforeLockingBarrier(numThreads, []() {
-    });
-
     std::vector<std::thread> threads;
     threads.reserve(numThreads);
     for (size_t i = 0; i < numThreads; ++i) {
@@ -227,8 +223,7 @@ TEST_F(ConservativeTwoPhaseLockingStorageHandleTest, TestNoDeadLock) {
                                                                                   udfCatalog,
                                                                                   lockManager);
         threads.emplace_back(
-            [i, &lockHolder, &resourceVector, &reverseResourceVector, &beforeLockingBarrier, twoPLAccessHandle]() {
-                beforeLockingBarrier.arrive_and_wait();
+            [i, &lockHolder, &resourceVector, &reverseResourceVector, twoPLAccessHandle]() {
                 if (i % 2 == 0) {
                     twoPLAccessHandle->preExecution(resourceVector);
                     NES_DEBUG2("Previous lockholder {}", lockHolder);
