@@ -519,8 +519,8 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
     if ((leftStamp->isInteger() && leftStamp->isFloat()) || (leftStamp->isFloat() && rightStamp->isInteger())) {
         // Avoid comparing integer to float
         NES_THROW_RUNTIME_ERROR("Type missmatch: cannot compare " << leftStamp->toString() << " to " << rightStamp->toString());
-    } else if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ && compareOp->getLeftInput()->getStamp()->isAddress()
-        && compareOp->getRightInput()->getStamp()->isInteger()) {
+    } else if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ
+               && compareOp->getLeftInput()->getStamp()->isAddress() && compareOp->getRightInput()->getStamp()->isInteger()) {
         // add null check
         auto null =
             builder->create<mlir::LLVM::NullOp>(getNameLoc("null"), mlir::LLVM::LLVMPointerType::get(builder->getI8Type()));
