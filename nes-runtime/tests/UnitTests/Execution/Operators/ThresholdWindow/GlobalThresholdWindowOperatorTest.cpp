@@ -22,8 +22,8 @@
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GLobalThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobaThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindow.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -72,7 +72,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -125,7 +125,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -180,7 +180,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      3,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -228,7 +228,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(minAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -282,7 +282,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(maxAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -336,7 +336,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(avgAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -390,7 +390,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType);
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggVector.push_back(countAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -468,7 +468,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     aggVector.push_back(minAgg);
     aggVector.push_back(avgAgg);
     aggVector.push_back(countAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
@@ -540,7 +540,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggFieldAccessExpressionsVector.push_back(readF2);
     aggVector.push_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<GLobalThresholdWindow>(greaterThanExpression,
+    auto thresholdWindowOperator = std::make_shared<GlobalThresholdWindow>(greaterThanExpression,
                                                                      0,
                                                                      aggFieldAccessExpressionsVector,
                                                                      resultFieldVector,
