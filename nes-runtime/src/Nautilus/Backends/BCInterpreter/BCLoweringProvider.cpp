@@ -839,7 +839,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::ui64: bc = ByteCode::CAST_i16_ui64; break;
             case Type::f: bc = ByteCode::CAST_i16_f; break;
             case Type::d: bc = ByteCode::CAST_i16_d; break;
-            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+            default: NES_THROW_RUNTIME_ERROR("Cast from i16 not supported");
         }
     } else if (srcType == Type::i32) {
         switch (targetType) {
@@ -848,14 +848,14 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::ui64: bc = ByteCode::CAST_i32_ui64; break;
             case Type::f: bc = ByteCode::CAST_i32_f; break;
             case Type::d: bc = ByteCode::CAST_i32_d; break;
-            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+            default: NES_THROW_RUNTIME_ERROR("Cast from i32 not supported");
         }
     } else if (srcType == Type::i64) {
         switch (targetType) {
             case Type::ui64: bc = ByteCode::CAST_i64_ui64; break;
             case Type::f: bc = ByteCode::CAST_i64_f; break;
             case Type::d: bc = ByteCode::CAST_i64_d; break;
-            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+            default: NES_THROW_RUNTIME_ERROR("Cast from i64 not supported");
         }
     } else if (srcType == Type::ui8) {
         switch (targetType) {
@@ -865,7 +865,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::i16: bc = ByteCode::CAST_ui8_i16; break;
             case Type::i32: bc = ByteCode::CAST_ui8_i32; break;
             case Type::i64: bc = ByteCode::CAST_ui8_i64; break;
-            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+            default: NES_THROW_RUNTIME_ERROR("Cast from ui8 not supported");
         }
     } else if (srcType == Type::ui16) {
         switch (targetType) {
@@ -873,7 +873,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             case Type::ui64: bc = ByteCode::CAST_ui16_ui64; break;
             case Type::i32: bc = ByteCode::CAST_ui16_i32; break;
             case Type::i64: bc = ByteCode::CAST_ui16_i64; break;
-            default: NES_THROW_RUNTIME_ERROR("Cast from i8 not supported");
+            default: NES_THROW_RUNTIME_ERROR("Cast from ui16 not supported");
         }
     } else if (srcType == Type::ui32 && targetType == Type::ui64) {
         bc = ByteCode::CAST_ui32_ui64;

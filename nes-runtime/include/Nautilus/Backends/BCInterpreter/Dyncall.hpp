@@ -106,6 +106,7 @@ class Dyncall {
    * @param value The pointer value to add.
    */
     void addArgPtr(void* value);
+
     /**
     * @brief Call a void function with the provided function pointer and the currently set arguments.
     * @param value Function pointer to the target void function.
@@ -148,7 +149,7 @@ class Dyncall {
     int64_t callI64(void* value);
 
     /**
-   * @brief Call a function returning an int64_t value with the provided function pointer and the currently set arguments.
+   * @brief Call a function returning an double value with the provided function pointer and the currently set arguments.
    * @param value Function pointer to the target function returning an double value.
    * @return The double result of the function call.
    */
