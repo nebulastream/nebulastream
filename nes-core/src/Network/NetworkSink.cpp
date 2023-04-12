@@ -20,6 +20,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/PlacementStrategy.hpp>
 
 namespace NES::Network {
 
@@ -62,6 +63,11 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+    if(workerContext.getId() == PlacementStrategy::workerContextIdToFail) {
+        NES_DEBUG("NetworkSink: failing worker context " << PlacementStrategy::workerContextIdToFail << " = worker " << PlacementStrategy::workerContextIdToFail+1);
+        return true;
+    }
+
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
     NES_TRACE("context " << workerContext.getId() << " writing data");
     if (reconnectBuffering) {

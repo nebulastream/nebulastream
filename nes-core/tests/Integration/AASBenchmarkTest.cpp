@@ -55,7 +55,7 @@ namespace NES {
 using namespace Configurations;
 const int nSourceWorkers = 4;   // should be an even number for correct topologies
 const std::chrono::milliseconds runtime{120000}; // 120s
-auto placementStrategyAAS = PlacementStrategy::defaultStrategyAAS;
+auto const placementStrategyAAS = PlacementStrategy::defaultStrategyAAS;
 
 class AASBenchmarkTest : public Testing::NESBaseTest {
   public:
@@ -544,7 +544,12 @@ TEST_F(AASBenchmarkTest, test) {
 
 
     NES_DEBUG("AASBenchmarkTest: Sleep");
-    std::this_thread::sleep_for(runtime);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+    NES_INFO("AASBenchmarkTest: Stop worker level3Worker" << 0);
+    PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
@@ -576,7 +581,6 @@ TEST_F(AASBenchmarkTest, test) {
 }
 
 
-// TODO: how to fail a node?
 TEST_F(AASBenchmarkTest, testDiamondAAS) {
     int nLevel2Workers = 2;
     int nLevel3Workers = 2;
@@ -663,14 +667,11 @@ TEST_F(AASBenchmarkTest, testDiamondAAS) {
     NES_DEBUG("AASBenchmarkTest: Sleep");
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
-    // TODO: leads to errors
-//    NES_INFO("AASBenchmarkTest: Manually fail level2Worker" << 1);
-//    bool retStopWrk1 = level2Workers[1]->disconnect();
-//    retStopWrk1 = level2Workers[1]->stop(true);
-//    EXPECT_TRUE(retStopWrk1);
-//
-//    NES_DEBUG("AASBenchmarkTest: Sleep again");
-//    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
+    PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
+
+    NES_DEBUG("AASBenchmarkTest: Sleep again");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);

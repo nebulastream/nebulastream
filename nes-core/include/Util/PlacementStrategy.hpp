@@ -50,6 +50,8 @@ class PlacementStrategy {
 //    const static auto defaultStrategyAAS = ValueAAS::LocalSearch_AAS;
 //    const static auto defaultStrategyAAS = ValueAAS::ILP_AAS;
 
+    inline static uint32_t workerContextIdToFail = UINT32_MAX;    // "disabled" by default
+
     /**
      * @brief Get Placement Strategy from string
      * @param placementStrategy : string representation of placement strategy
