@@ -119,4 +119,4 @@ void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation>
     out << "}\n";
 }
 
-}// namespace NES
+}// namespace NES::Nautilus::IR

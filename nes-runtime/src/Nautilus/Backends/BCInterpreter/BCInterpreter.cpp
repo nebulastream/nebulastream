@@ -23,15 +23,6 @@
 namespace NES::Nautilus::Backends::BC {
 void regMov(const OpCode& c, RegisterFile& regs) { regs[c.output] = regs[c.reg1]; }
 
-Dyncall& getVM() {
-    // creates a vm for the
-    static Dyncall vm;
-    return vm;
-    //static auto vm = dcNewCallVM(4096);
-    /* initial callconv mode */
-    //dcMode(vm, DC_CALL_C_DEFAULT);
-    //return vm;
-};
 void dyncallReset(const OpCode&, RegisterFile&) { Dyncall::getVM().reset(); };
 void dyncallArgB(const OpCode& op, RegisterFile& regs) {
     auto value = readReg<bool>(regs, op.reg1);
