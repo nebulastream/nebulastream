@@ -1,4 +1,4 @@
-name: Docker Image for Regression tests
+name: Regression Image KTM
 
 on:
   push:
@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: docker compose -f ./docker/regressionImage/docker-compose.yml
+      - run: docker compose -f ./docker/regressionImage/docker-compose.yml up
