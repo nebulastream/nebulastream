@@ -126,7 +126,7 @@ Type getType(const IR::Types::StampPtr& stamp) {
     } else if (stamp->isVoid()) {
         return Type::v;
     } else if (stamp->isBoolean()) {
-        return Type::v;
+        return Type::b;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -365,6 +365,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::f: bc = ByteCode::LOAD_f; break;
         case Type::d: bc = ByteCode::LOAD_d; break;
         case Type::ptr: bc = ByteCode::LOAD_i64; break;
+        case Type::b: bc = ByteCode::LOAD_b; break ;
         default: {
             NES_NOT_IMPLEMENTED();
         }
@@ -393,6 +394,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::d: bc = ByteCode::STORE_d; break;
         case Type::f: bc = ByteCode::STORE_f; break;
         case Type::ptr: bc = ByteCode::STORE_i64; break;
+        case Type::b: bc = ByteCode::STORE_b; break ;
         default: {
             NES_NOT_IMPLEMENTED();
         }
