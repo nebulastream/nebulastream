@@ -21,12 +21,12 @@ namespace NES::Nautilus::IR::Operations {
 class CompareOperation : public Operation {
   public:
     enum Comparator {
-        EQ=0,
-        NE=1,
-        LT=2,
-        LE=3,
-        GT=4,
-        GE=5,
+        EQ = 0,
+        NE = 1,
+        LT = 2,
+        LE = 3,
+        GT = 4,
+        GE = 5,
     };
     CompareOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
     ~CompareOperation() override = default;

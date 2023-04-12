@@ -205,7 +205,8 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                         && std::static_pointer_cast<Operations::BranchOperation>(priorBlock->getTerminatorOp())
                                 ->getNextBlockInvocation()
                                 .getOperationArgIndex(countOp)
-                            != -1 && !compareOp->getLeftInput()->getStamp()->isFloat()) {
+                            != -1
+                        && !compareOp->getLeftInput()->getStamp()->isFloat()) {
                         // A loop-count-operation, contains the loop-induction-variable, and the step size as inputs.
                         // The result of the loop-count-operation is passed to the loop-header as the new value
                         // of the induction variable. This allows us to figure out which input to the compare-operation
