@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GLOBAL_THRESHOLDWINDOWOPERATORHANDLER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GLOBAL_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYED_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYED_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -24,9 +24,9 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This handler stores states of a threshold window during its execution
  */
-class GlobaThresholdWindowOperatorHandler : public OperatorHandler {
+class KeyedThresholdWindowOperatorHandler : public OperatorHandler {
   public:
-    explicit GlobaThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
+    explicit KeyedThresholdWindowOperatorHandler(std::vector<std::map<uint32_t, std::unique_ptr<Aggregation::AggregationValue>>> AggregationValues)
         : AggregationValues(std::move(AggregationValues)) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
@@ -36,9 +36,10 @@ class GlobaThresholdWindowOperatorHandler : public OperatorHandler {
     uint64_t recordCount = 0;// counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
-    std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues;
+//    std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues;
+    std::vector<std::map<uint32_t, std::unique_ptr<Aggregation::AggregationValue>>> AggregationValues;
     uint8_t aggregationType;
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_GLOBAL_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYED_THRESHOLDWINDOWOPERATORHANDLER_HPP_
