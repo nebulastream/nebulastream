@@ -18,6 +18,10 @@
 
 namespace NES {
 
+/*TODO #3657: This class currently lacks a deadlock prevention mechanism and does not properly enforce the division into growing and
+ * shrinking phase in the case where the pointers obtained from this class have different scopes
+ */
+
 /**
  * @brief Resource handles created by this class ensure that the resource is locked until the handle goes out of scope.
  */
@@ -37,6 +41,10 @@ class TwoPhaseLockingStorageHandle : public StorageHandle {
                                                                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
+    /**
+     * @brief This function does nothing because in non conservative two phase locking does not enforce locking resources before beginning execution
+     * @param requiredResources The resources required
+     */
     void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
 
     /**

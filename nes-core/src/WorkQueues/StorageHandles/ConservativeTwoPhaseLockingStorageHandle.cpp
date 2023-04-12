@@ -28,7 +28,7 @@ ConservativeTwoPhaseLockingStorageHandle::ConservativeTwoPhaseLockingStorageHand
 void ConservativeTwoPhaseLockingStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
     //do not allow performing preexecution twice
     if (resourcesLocked) {
-        //todo: more verbose exception handling
+        //todo #3611: more verbose exception handling
         throw std::exception();
     }
     resourcesLocked = true;
@@ -36,7 +36,7 @@ void ConservativeTwoPhaseLockingStorageHandle::preExecution(std::vector<StorageH
     //sort the resource list to ensure that resources are acquired in a deterministic order for deadlock prevention
     std::sort(requiredResources.begin(), requiredResources.end());
 
-    //lockthe resources
+    //lock the resources
     for (const auto& type : requiredResources) {
         lockResource(type);
     }
@@ -104,6 +104,7 @@ SourceCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getSourceCatalogHa
     }
     return sourceCatalog;
 }
+
 UdfCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getUdfCatalogHandle() {
     if (!udfCatalogLock) {
         //todo #3611: write custom exception for this case
@@ -111,6 +112,7 @@ UdfCatalogHandle ConservativeTwoPhaseLockingStorageHandle::getUdfCatalogHandle()
     }
     return udfCatalog;
 }
+
 std::shared_ptr<ConservativeTwoPhaseLockingStorageHandle>
 ConservativeTwoPhaseLockingStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  const TopologyPtr& topology,
@@ -121,5 +123,4 @@ ConservativeTwoPhaseLockingStorageHandle::create(const GlobalExecutionPlanPtr& g
                                                  ConservativeTwoPhaseLockManagerPtr lockManager) {
     return std::make_shared<ConservativeTwoPhaseLockingStorageHandle>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog, lockManager);
 }
-
 }

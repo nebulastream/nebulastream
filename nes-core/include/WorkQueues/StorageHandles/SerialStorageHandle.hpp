@@ -39,6 +39,12 @@ class SerialStorageHandle : public StorageHandle {
                                                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
+     * @brief This function does nothing because no special actions are needed before beginning serial execution
+     * @param requiredResources The resources required for request execution
+     */
+    void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
+
+    /**
      * @brief Obtain a mutable topology handle.
      * @return a handle to the topology
      */
@@ -73,7 +79,6 @@ class SerialStorageHandle : public StorageHandle {
      * @return a handle to the udf catalog.
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
-    void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_
