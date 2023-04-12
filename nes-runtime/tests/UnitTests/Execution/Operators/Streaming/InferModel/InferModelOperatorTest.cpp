@@ -48,22 +48,6 @@ class InferModelOperatorTest : public Testing::NESBaseTest {
         NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
 
-/*    static auto createFloatTestData() {
-        return std::make_tuple(
-            "Test InferModel With Float Input",
-            std::vector<floatInput>{{5.1, 3.5, 1.4, 0.2}, {4.9, 3.0, 1.4, 0.2}, {4.7, 3.2, 1.3, 0.2}, {4.6, 3.1, 1.5, 0.2}},
-            std::vector<Output>{{{0.86352879, 0.12861125, 0.0078599472},
-                                 {0.82480621, 0.16215269, 0.013041073},
-                                 {0.84584343, 0.14335836, 0.010798273},
-                                 {0.81788188, 0.16869366, 0.013424426}}});
-    }*/
-
-    /*static auto createIntTestData() {
-        return std::make_tuple("Test InferModel With Int Input",
-                               std::vector<intInput>{{5, 3, 1, 0}, {4, 3, 1, 0}},
-                               std::vector<Output>{{0.43428239, 0.31287873, 0.25283894}, {0.43428239, 0.31287873, 0.25283894}});
-    }
-*/
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
 };
@@ -167,10 +151,22 @@ TEST_F(InferModelOperatorTest, testInferModelForFloatInput) {
 
     inferModelOperator->setup(ctx);
 
-    auto firstRecord = Record({{"f1", Value<>(5.1)}, {"f2", Value<>(3.5)}, {"f3", Value<>(1.4)}, {"f4", Value<>(0.2)}});
-    auto secondRecord = Record({{"f1", Value<>(4.9)}, {"f2", Value<>(3.0)}, {"f3", Value<>(1.4)}, {"f4", Value<>(0.2)}});
-    auto thirdRecord = Record({{"f1", Value<>(4.7)}, {"f2", Value<>(3.2)}, {"f3", Value<>(1.3)}, {"f4", Value<>(0.2)}});
-    auto fourthRecord = Record({{"f1", Value<>(4.6)}, {"f2", Value<>(3.1)}, {"f3", Value<>(1.5)}, {"f4", Value<>(0.2)}});
+    auto firstRecord = Record({{"f1", Value<Float>((Float) 5.1)},
+                               {"f2", Value<Float>((Float) 3.5)},
+                               {"f3", Value<Float>((Float) 1.4)},
+                               {"f4", Value<Float>((Float) 0.2)}});
+    auto secondRecord = Record({{"f1", Value<Float>((Float) 4.9)},
+                                {"f2", Value<Float>((Float) 3.0)},
+                                {"f3", Value<Float>((Float) 1.4)},
+                                {"f4", Value<Float>((Float) 0.2)}});
+    auto thirdRecord = Record({{"f1", Value<Float>((Float) 4.7)},
+                               {"f2", Value<Float>((Float) 3.2)},
+                               {"f3", Value<Float>((Float) 1.3)},
+                               {"f4", Value<Float>((Float) 0.2)}});
+    auto fourthRecord = Record({{"f1", Value<Float>((Float) 4.6)},
+                                {"f2", Value<Float>((Float) 3.1)},
+                                {"f3", Value<Float>((Float) 1.5)},
+                                {"f4", Value<Float>((Float) 0.2)}});
     inferModelOperator->execute(ctx, firstRecord);
     inferModelOperator->execute(ctx, secondRecord);
     inferModelOperator->execute(ctx, thirdRecord);
@@ -178,7 +174,7 @@ TEST_F(InferModelOperatorTest, testInferModelForFloatInput) {
 
     //Assertion
     std::vector<Output> expectedOutput{{0.86352879, 0.12861125, 0.0078599472},
-                                       {0.82480621, 0.16215269, 0.013041073},
+                                       {0.82480621, 0.16215269, 0.0130410725},
                                        {0.84584343, 0.14335836, 0.010798273},
                                        {0.81788188, 0.16869366, 0.013424426}};
     EXPECT_EQ(collector->records.size(), 4);
@@ -197,6 +193,22 @@ TEST_F(InferModelOperatorTest, testInferModelForFloatInput) {
     EXPECT_EQ(collector->records[1].read(iris0), expectedOutput.at(1).iris0);
     EXPECT_EQ(collector->records[1].read(iris1), expectedOutput.at(1).iris1);
     EXPECT_EQ(collector->records[1].read(iris2), expectedOutput.at(1).iris2);
+
+    EXPECT_EQ(collector->records[2].read(f1), thirdRecord.read(f1));
+    EXPECT_EQ(collector->records[2].read(f2), thirdRecord.read(f2));
+    EXPECT_EQ(collector->records[2].read(f3), thirdRecord.read(f3));
+    EXPECT_EQ(collector->records[2].read(f4), thirdRecord.read(f4));
+    EXPECT_EQ(collector->records[2].read(iris0), expectedOutput.at(2).iris0);
+    EXPECT_EQ(collector->records[2].read(iris1), expectedOutput.at(2).iris1);
+    EXPECT_EQ(collector->records[2].read(iris2), expectedOutput.at(2).iris2);
+
+    EXPECT_EQ(collector->records[3].read(f1), fourthRecord.read(f1));
+    EXPECT_EQ(collector->records[3].read(f2), fourthRecord.read(f2));
+    EXPECT_EQ(collector->records[3].read(f3), fourthRecord.read(f3));
+    EXPECT_EQ(collector->records[3].read(f4), fourthRecord.read(f4));
+    EXPECT_EQ(collector->records[3].read(iris0), expectedOutput.at(3).iris0);
+    EXPECT_EQ(collector->records[3].read(iris1), expectedOutput.at(3).iris1);
+    EXPECT_EQ(collector->records[3].read(iris2), expectedOutput.at(3).iris2);
 
     inferModelOperator->terminate(ctx);
 }
@@ -237,8 +249,14 @@ TEST_F(InferModelOperatorTest, testInferModelForIntInput) {
 
     inferModelOperator->setup(ctx);
 
-    auto firstRecord = Record({{"f1", Value<>(5)}, {"f2", Value<>(3)}, {"f3", Value<>(1)}, {"f4", Value<>(0)}});
-    auto secondRecord = Record({{"f1", Value<>(4)}, {"f2", Value<>(3)}, {"f3", Value<>(1)}, {"f4", Value<>(0)}});
+    auto firstRecord = Record({{"f1", Value<Int32>((Int32) 5)},
+                               {"f2", Value<Int32>((Int32) 3)},
+                               {"f3", Value<Int32>((Int32) 1)},
+                               {"f4", Value<Int32>((Int32) 0)}});
+    auto secondRecord = Record({{"f1", Value<Int32>((Int32) 4)},
+                                {"f2", Value<Int32>((Int32) 3)},
+                                {"f3", Value<Int32>((Int32) 1)},
+                                {"f4", Value<Int32>((Int32) 0)}});
     inferModelOperator->execute(ctx, firstRecord);
     inferModelOperator->execute(ctx, secondRecord);
 
