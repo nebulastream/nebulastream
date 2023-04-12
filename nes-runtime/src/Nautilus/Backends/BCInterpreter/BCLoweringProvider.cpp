@@ -641,6 +641,7 @@ bool BCLoweringProvider::LoweringContext::processDynamicCall(
         case Type::ui64: bc = ByteCode::DYNCALL_call_i64; break;
         case Type::ptr: bc = ByteCode::DYNCALL_call_ptr; break;
         case Type::v: bc = ByteCode::DYNCALL_call_v; break;
+        case Type::b: bc = ByteCode::DYNCALL_call_b; break;
         default: NES_THROW_RUNTIME_ERROR("Type not implemented");
     }
 

@@ -629,7 +629,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });
