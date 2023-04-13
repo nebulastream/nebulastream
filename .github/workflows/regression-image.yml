@@ -1,0 +1,17 @@
+name: Regression Image KTM
+
+on:
+  push:
+    branches: [ "3654_elegant_regression" ]
+  pull_request:
+    branches: [ "3654_elegant_regression" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: KTM use case
+      - run: (sleep 300 && docker compose down ) & docker compose -f ./docker/regressionImage/KTM/docker-compose.yml up
+      - name: Video use case
+      - run: (sleep 300 && docker compose down ) & docker compose -f ./docker/regressionImage/Video/docker-compose.yml up
