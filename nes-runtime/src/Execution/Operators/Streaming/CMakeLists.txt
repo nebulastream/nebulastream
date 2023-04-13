@@ -12,7 +12,7 @@
 
 add_subdirectory(Aggregations)
 add_subdirectory(Join)
-if (TFDEF)
+if (NES_USE_TF)
     add_subdirectory(InferModel)
 endif ()
 

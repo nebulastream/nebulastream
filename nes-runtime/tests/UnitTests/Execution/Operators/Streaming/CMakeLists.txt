@@ -12,4 +12,6 @@
 
 add_nes_runtime_test(runtime-stream-join-operator-test "StreamJoinOperatorTest.cpp")
 add_subdirectory(Aggregations)
-add_subdirectory(InferModel)
+IF (NES_USE_TF)
+    add_subdirectory(InferModel)
+ENDIF ()
