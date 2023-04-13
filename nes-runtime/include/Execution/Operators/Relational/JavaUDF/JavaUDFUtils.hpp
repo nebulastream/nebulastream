@@ -20,7 +20,7 @@
 #include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
 #include <jni.h>
-#include <Util/Logger/Logger.hpp>
+#include <Util/SourceLocation.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 // TODO Change this to general class
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
@@ -30,21 +30,33 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-    // TODO: move def to the cpp
+/**
+ * @brief Checks for a pending exception in the JNI environment and throws a runtime error if one is found.
+ *
+ * @param env JNI environment
+ * @param func_name name of the function where the error occurred: should be __func__
+ * @param line_number line number where the error occurred: should be __LINE__
+ */
+inline void jniErrorCheck(JNIEnv* env, const char* func_name, int line_number) {
+    auto exception = env->ExceptionOccurred();
+    if (exception) {
+        // print exception
+        jboolean isCopy = false;
+        auto clazz = env->FindClass("java/lang/Object");
+        auto toString = env->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
+        auto string = (jstring) env->CallObjectMethod(exception, toString);
+        const char* utf = env->GetStringUTFChars(string, &isCopy);
+        NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function "
+                                        << func_name << " at line " << line_number << ": " << utf);
+    }
+}
+
 /**
  * free a jvm object
  * @param state operator handler state
  * @param object object to free
  */
 void freeObject(void* state, void* object);
-
-
-/**
- * This function is used for JNI error handling.
- * @param env jni environment
- * @param location location of the error. Leave default to use the location of the caller.
- */
-inline void jniErrorCheck(JNIEnv* env, const std::source_location& location = std::source_location::current());
 
 /**
  * Returns if directory of path exists.

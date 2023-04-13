@@ -59,7 +59,7 @@ void freeObject(void* state, void* object) {
  * @param env jni environment
  * @param location location of the error. Leave default to use the location of the caller.
  */
-inline void jniErrorCheck(JNIEnv* env, const std::source_location& location) {
+/*inline void jniErrorCheck(JNIEnv* env, const std::source_location& location) {
     auto exception = env->ExceptionOccurred();
     if (exception) {
         // print exception
@@ -71,7 +71,7 @@ inline void jniErrorCheck(JNIEnv* env, const std::source_location& location) {
         NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function "
                                 << location.function_name() << " at line " << location.line() << ": " << utf);
     }
-}
+}*/
 
 /**
  * Returns if directory of path exists.
@@ -91,14 +91,14 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
 
     for (auto& [className, byteCode] : byteCodeList) {
         jbyteArray jData = handler->getEnvironment()->NewByteArray(byteCode.size());
-        jniErrorCheck(handler->getEnvironment());
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
-        jniErrorCheck(handler->getEnvironment());
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
         handler->getEnvironment()->DefineClass(className.c_str(), nullptr, jCode, (jint) byteCode.size());
-        jniErrorCheck(handler->getEnvironment());
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
-        jniErrorCheck(handler->getEnvironment());
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     }
 }
 
@@ -113,12 +113,12 @@ jobject deserializeInstance(void* state) {
     // use deserializer given in java utils file
     void* object = (void*) handler->getSerializedInstance().data();
     auto clazz = handler->getEnvironment()->FindClass("MapJavaUdfUtils");
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     // TODO: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
     auto mid = handler->getEnvironment()->GetMethodID(clazz, "deserialize", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     auto obj = handler->getEnvironment()->CallStaticObjectMethod(clazz, mid, object);
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return obj;
 }
 
@@ -223,7 +223,7 @@ void* findInputClass(void* state) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassName().c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return clazz;
 }
 
@@ -237,7 +237,7 @@ void* findOutputClass(void* state) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getOutputClassName().c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return clazz;
 }
 
@@ -254,7 +254,7 @@ void* allocateObject(void* state, void* classPtr) {
 
     auto clazz = (jclass) classPtr;
     jobject obj = handler->getEnvironment()->AllocObject(clazz);
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return obj;
 }
 
@@ -273,11 +273,11 @@ void* createObjectType(void* state, T value, std::string className, std::string 
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     auto mid = handler->getEnvironment()->GetMethodID(clazz, "<init>", constructorSignature.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     auto object = handler->getEnvironment()->NewObject(clazz, mid, value);
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return object;
 }
 
@@ -364,9 +364,9 @@ T getObjectTypeValue(void* state, void* object, std::string className, std::stri
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     auto mid = handler->getEnvironment()->GetMethodID(clazz, getterName.c_str(), getterSignature.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     T value;
     if constexpr (std::is_same<T, bool>::value) {
         value = handler->getEnvironment()->CallBooleanMethod((jobject) object, mid);
@@ -385,7 +385,7 @@ T getObjectTypeValue(void* state, void* object, std::string className, std::stri
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return value;
 }
 
@@ -498,7 +498,7 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
     auto pojo = (jobject) objectPtr;
     std::string fieldName = handler->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     T value;
     if constexpr (std::is_same<T, bool>::value) {
         value = (T) handler->getEnvironment()->GetBooleanField(pojo, id);
@@ -523,7 +523,7 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return value;
 }
 
@@ -644,7 +644,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     auto pojo = (jobject) objectPtr;
     std::string fieldName = handler->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     if constexpr (std::is_same<T, bool>::value) {
         handler->getEnvironment()->SetBooleanField(pojo, id, (jboolean) value);
     } else if constexpr (std::is_same<T, float>::value) {
@@ -666,7 +666,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 }
 
 /**

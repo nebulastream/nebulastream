@@ -1,4 +1,4 @@
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -35,6 +35,18 @@ public class ShortMapFunction implements MapFunction<Short, Short>, Serializable
     public Short map(Short value) {
         Short val = (short)(instanceVariable + value);
         return val;
+    }
+
+    /**
+     * Updates the instanceVariable by adding the given value to it and returns it.
+     *
+     * @param value the input Short value to apply the function to and add to the instanceVariable
+     * @return the result of applying the function to the input Short value
+     */
+    @Override
+    public Short flatMap(Short value) {
+        instanceVariable += (short) value;
+        return instanceVariable;
     }
 
 }

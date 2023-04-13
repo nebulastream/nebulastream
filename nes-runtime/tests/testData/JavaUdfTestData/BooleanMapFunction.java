@@ -1,4 +1,4 @@
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -36,5 +36,17 @@ public class BooleanMapFunction implements MapFunction<Boolean, Boolean> {
     @Override
     public Boolean map(Boolean value) {
         return value && instanceVariable;
+    }
+
+    /**
+     * Performs a logical AND operation between the input Boolean value and the instance variable.
+     *
+     * @param value The input Boolean value to which the instance variable is applied.
+     * @return The result of performing a logical AND operation between the input Boolean value and the instance variable.
+     */
+    @Override
+    public Boolean flatMap(Boolean value) {
+        this.instanceVariable = value && instanceVariable;
+        return this.instanceVariable;
     }
 }
