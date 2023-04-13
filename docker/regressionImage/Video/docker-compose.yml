@@ -9,7 +9,7 @@ services:
       - ./:/tutorial
     networks:
       nebulastream-network:
-        ipv4_address: 172.323.0.20
+        ipv4_address: 172.33.0.20
   worker:
     image: nebulastream/nes-executable-image:0.5.44
     entrypoint: ["bash", "-c", "sleep 3 && nesWorker --configPath=/tutorial/worker-1.yml"]
@@ -17,7 +17,7 @@ services:
       - ./:/tutorial
     networks:
       nebulastream-network:
-        ipv4_address: 172.323.0.30
+        ipv4_address: 172.33.0.30
   mosquitto:
     image: eclipse-mosquitto
     ports:
@@ -38,4 +38,4 @@ networks:
   nebulastream-network:
     ipam:
       config:
-        - subnet: 172.32.0.0/24
+        - subnet: 172.33.0.0/24
