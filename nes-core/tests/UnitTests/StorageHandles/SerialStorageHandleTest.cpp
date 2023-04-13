@@ -28,7 +28,7 @@ class SerialStorageHandleTest : public Testing::TestWithErrorHandling<testing::T
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SerialStorageHandleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup SerialAccessHandle test class.");
+        NES_INFO2("Setup SerialAccessHandle test class.")
     }
 };
 

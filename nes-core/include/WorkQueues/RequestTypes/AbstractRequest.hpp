@@ -26,6 +26,8 @@ namespace Configurations {
 class OptimizerConfiguration;
 }
 
+class StorageHandle;
+using StorageHandlePtr = std::shared_ptr<StorageHandle>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class AbstractRequest;
@@ -52,7 +54,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
-    explicit AbstractRequest(size_t maxRetries, std::vector<StorageHandleResourceType> requiredResources);
+    explicit AbstractRequest(size_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -100,16 +102,15 @@ class AbstractRequest {
     /**
      * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
      * @param storageHandle: The storage access handle used by the request
-     * @param requiredResources: The resources required during the execution phase
      */
-    virtual void preExecution(StorageHandlePtr storageHandle, std::vector<StorageHandleResourceType> requiredResources) = 0;
+    virtual void preExecution(const StorageHandlePtr& storageHandle);
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
      * @param storageHandle: The storage access handle used by the request
      * @param requiredResources: The resources required during the execution phase
      */
-    virtual void postExecution(StorageHandlePtr storageHandle, std::vector<StorageHandleResourceType> requiredResources) = 0;
+    virtual void postExecution(StorageHandlePtr storageHandle) = 0;
 
     /**
      * @brief Executes the request logic.

@@ -14,7 +14,7 @@
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandle.hpp>
+#include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -98,5 +98,4 @@ TEST_F(UnlockDeleterTest, TestTakingOwnershipNotLocked) {
     UnlockDeleter deleter;
     ASSERT_THROW(deleter = UnlockDeleter(std::move(lock)), std::exception);
 }
-
 }
