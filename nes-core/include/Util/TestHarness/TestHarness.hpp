@@ -86,11 +86,12 @@ class TestHarness {
                          uint16_t restPort,
                          uint16_t rpcPort,
                          std::filesystem::path testHarnessResourcePath,
+                         bool useNautilus = false,
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-          memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
-          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
+          useNautilus(useNautilus), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess),
+          bufferSize(4096), physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
           testHarnessResourcePath(testHarnessResourcePath) {}
 
     /**
@@ -423,8 +424,10 @@ class TestHarness {
         coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
         coordinatorConfiguration->restPort = restPort;
         coordinatorConfiguration->rpcPort = rpcPort;
-        coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        if (useNautilus) {
+            coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
+                QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        }
         crdConfigFunctor(coordinatorConfiguration);
 
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
@@ -440,8 +443,11 @@ class TestHarness {
             //Set ports at runtime
             workerConfiguration->coordinatorPort = coordinatorRPCPort;
             workerConfiguration->coordinatorIp = coordinatorIPAddress;
-            workerConfiguration->queryCompiler.queryCompilerType =
-                QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+
+            if (useNautilus) {
+                workerConfiguration->queryCompiler.queryCompilerType =
+                    QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            }
 
             switch (workerConf->getSourceType()) {
                 case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource: {
@@ -603,6 +609,7 @@ class TestHarness {
     std::string coordinatorIPAddress;
     uint16_t restPort;
     uint16_t rpcPort;
+    bool useNautilus;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;
     uint64_t bufferSize;
