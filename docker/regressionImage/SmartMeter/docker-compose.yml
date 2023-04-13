@@ -8,7 +8,7 @@ services:
       - "1880:1880"
     networks:
       nebulastream-network-1:
-       ipv4_address: 172.31.0.151
+       ipv4_address: 172.32.0.151
     volumes:
       - node-red-data:/data
       - ./:/demo
@@ -22,7 +22,7 @@ services:
       - ./:/demo
     networks:
       nebulastream-network-1:
-        ipv4_address: 172.31.0.21
+        ipv4_address: 172.32.0.21
   #coordinator_worker_1:
   #  image: nebulastream/nes-executable-image:latest
   #  entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator_worker_1.yml"]
@@ -32,7 +32,7 @@ services:
   #    - ./:/demo
   #  networks:
   #    nebulastream-network:
-  #      ipv4_address: 172.31.0.23
+  #      ipv4_address: 172.32.0.23
   #coordinator_worker_2:
   #  image: nebulastream/nes-executable-image:latest
   #  entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator_worker_2.yml"]
@@ -42,7 +42,7 @@ services:
   #    - ./:/demo
   #  networks:
   #    nebulastream-network:
-  #      ipv4_address: 172.31.0.24
+  #      ipv4_address: 172.32.0.24
   worker-1:
     image: nebulastream/nes-executable-image:latest
     entrypoint: ["bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-1.yml"]
@@ -50,7 +50,7 @@ services:
       - ./:/demo
     networks:
       nebulastream-network-1:
-        ipv4_address: 172.31.0.31
+        ipv4_address: 172.32.0.31
 #  worker-2:
 #    image: nebulastream/nes-executable-image:latest
 #    entrypoint: ["bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-2.yml"]
@@ -58,7 +58,7 @@ services:
 #      - ./:/demo
 #    networks:
 #      nebulastream-network:
-#        ipv4_address: 172.31.0.4
+#        ipv4_address: 172.32.0.4
   worker-w-1:
     image: nebulastream/nes-executable-image:latest
     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1.yml" ]
@@ -66,7 +66,7 @@ services:
       - ./:/demo
     networks:
       nebulastream-network-1:
-        ipv4_address: 172.31.0.231
+        ipv4_address: 172.32.0.231
   worker-w-2:
     image: nebulastream/nes-executable-image:latest
     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-2.yml" ]
@@ -74,7 +74,7 @@ services:
       - ./:/demo
     networks:
       nebulastream-network-1:
-        ipv4_address: 172.31.0.241
+        ipv4_address: 172.32.0.241
 #   worker-w-1-l:
 #     image: nebulastream/nes-executable-image:latest
 #     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1-l.yml" ]
@@ -82,7 +82,7 @@ services:
 #       - ./:/demo
 #     networks:
 #       nebulastream-network:
-#         ipv4_address: 172.31.0.25
+#         ipv4_address: 172.32.0.25
 #   worker-w-2-l:
 #     image: nebulastream/nes-executable-image:latest
 #     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-2-l.yml" ]
@@ -90,7 +90,7 @@ services:
 #       - ./:/demo
 #     networks:
 #       nebulastream-network:
-#         ipv4_address: 172.31.0.26
+#         ipv4_address: 172.32.0.26
   mosquitto:
     image: eclipse-mosquitto
     ports:
@@ -101,7 +101,7 @@ services:
       - ./mosquitto/config:/mosquitto/config
     networks:
       nebulastream-network-1:
-        ipv4_address: 172.31.0.111
+        ipv4_address: 172.32.0.111
 
   #mosquitto_cw_1:
   #  image: eclipse-mosquitto
@@ -113,7 +113,7 @@ services:
   #    - ./mosquitto/config:/mosquitto/config
   #  networks:
   #    nebulastream-network:
-  #      ipv4_address: 172.31.0.12
+  #      ipv4_address: 172.32.0.12
 
   #mosquitto_cw_2:
   #  image: eclipse-mosquitto
@@ -125,14 +125,14 @@ services:
   #    - ./mosquitto/config:/mosquitto/config
   #  networks:
   #    nebulastream-network:
-  #      ipv4_address: 172.31.0.13
+  #      ipv4_address: 172.32.0.13
   ui:
     image: nebulastream/nes-ui-image:latest
     ports:
       - 9000:9000
     networks:
       nebulastream-network-1:
-        ipv4_address: 172.31.0.141
+        ipv4_address: 172.32.0.141
 
 volumes:
   node-red-data:
@@ -141,4 +141,4 @@ networks:
   nebulastream-network-1:
     ipam:
       config:
-        - subnet: 172.31.0.0/24
+        - subnet: 172.32.0.0/24

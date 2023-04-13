@@ -10,7 +10,7 @@ logLevel: LOG_DEBUG
 ###
 ### Network configuration
 ###
-localWorkerIp: 172.31.0.30
+localWorkerIp: 172.33.0.30
 coordinatorIp: coordinator
 
 

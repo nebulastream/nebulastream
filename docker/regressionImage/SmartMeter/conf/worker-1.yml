@@ -8,7 +8,7 @@ logLevel: LOG_ERROR
 ###
 ### Network configuration
 ###
-localWorkerIp: 172.31.0.31
+localWorkerIp: 172.32.0.31
 coordinatorIp: coordinator
 
 # Use new windowing strategy
@@ -23,7 +23,7 @@ physicalSources:
     physicalSourceName: lora_worker_1
     type: MQTTSource
     configuration:
-            url: ws://172.31.0.11:9001
+            url: ws://172.32.0.11:9001
             clientId: workerClientLora1
             userName: workerRadio1
             topic: /ELEGANT/lora/workerRadio/1
