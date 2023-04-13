@@ -996,9 +996,11 @@ TEST_F(AASBenchmarkTest, testSequentialRuntime) {
         EXPECT_TRUE(retStopWrk);
     }
 
-    NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << 0);
-    bool retStopWrk0 = reserveWorkers[0]->stop(true);
-    EXPECT_TRUE(retStopWrk0);
+    if (placementStrategyAAS != PlacementStrategy::ValueAAS::None) {
+        NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << 0);
+        bool retStopWrk0 = reserveWorkers[0]->stop(true);
+        EXPECT_TRUE(retStopWrk0);
+    }
 
     for (const auto& [i, level2Worker] : level2Workers) {
         NES_INFO("AASBenchmarkTest: Stop worker level2Worker" << i);
