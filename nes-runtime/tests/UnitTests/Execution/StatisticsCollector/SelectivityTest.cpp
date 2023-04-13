@@ -36,6 +36,7 @@ limitations under the License.
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <fstream>
 #include <memory>
 #include <random>
 
@@ -103,7 +104,7 @@ TEST_P(SelectivityTest, runtimeTest) {
 
     uint64_t selectionConstant = 5;
 
-    for (int j = 1; j < 21; ++j) {
+    for (int j = 1; j <= 100; ++j) {
 
         fprintf(selectivityFile, "Selectivity\t%f\n", ((double)selectionConstant / 100)) ;
         fprintf(runtimeFile, "Selectivity\t%f\n", ((double)selectionConstant / 100)) ;
@@ -138,7 +139,7 @@ TEST_P(SelectivityTest, runtimeTest) {
 
         // initialize statistics pipeline runtime
         auto selectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapperSelectivity), nautilusExecutablePipelineStage);
-        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 1000);
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 4);
 
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {
@@ -159,6 +160,96 @@ TEST_P(SelectivityTest, runtimeTest) {
 
     fclose(selectivityFile);
     fclose(runtimeFile);
+}
+
+/**
+* @brief collect branch misses of multiple selectivities with multiple buffers
+*/
+TEST_P(SelectivityTest, runtimeTest2) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    // generate list of values 0 til 100
+    std::vector<int64_t> fieldValues(100);
+    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+    auto rng = std::default_random_engine {};
+
+    std::vector<TupleBuffer> bufferVector;
+
+    for (int i = 0; i < 1000; ++i){
+        auto buffer = bm->getBufferBlocking();
+        bufferVector.push_back(buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (int k = 0; k < 5; k++) {
+            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+            for (uint64_t j = 0; j < 100; j++) {
+                dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                dynamicBuffer[j]["f2"].write((int64_t) 1);
+                dynamicBuffer.setNumberOfTuples(j + 1);
+            }
+        }
+    }
+
+    std::ofstream csvFile("RuntimeTest.csv");
+
+    for (int j = 1; j <= 100; ++j) {
+
+        csvFile << "Selectivity\t" << ((double) j / 100);
+
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(j+1);
+        auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
+        auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+        auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
+
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics pipeline runtime
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 1000);
+
+        std::vector<uint64_t> values;
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (TupleBuffer buffer : bufferVector) {
+            executablePipelineStage->execute(buffer, pipelineContext, *wc);
+
+            runtime->collect();
+            values.push_back(std::any_cast<uint64_t>(runtime->getStatisticValue()));
+        }
+        executablePipelineStage->stop(pipelineContext);
+
+        for (auto value : values) {
+            csvFile << "," << value;
+        }
+        csvFile << "\n";
+
+        auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
+        ASSERT_EQ(numberOfResultBuffers, 1000);
+    }
+
+    csvFile.close();
 }
 
 /**
@@ -192,7 +283,7 @@ TEST_P(SelectivityTest, branchMissesTest) {
     const char *fileName = "BranchMissesTest.txt";
     FILE* outputFile = fopen(fileName, "a+");
 
-    for (int j = 1; j < 21; ++j) {
+    for (int j = 1; j <= 20; ++j) {
 
         fprintf(outputFile, "Selectivity\t%f\n", ((double)j / 20)) ;
 
@@ -241,6 +332,96 @@ TEST_P(SelectivityTest, branchMissesTest) {
     }
 
     fclose(outputFile);
+}
+
+/**
+* @brief collect branch misses of multiple selectivities with multiple buffers
+*/
+TEST_P(SelectivityTest, branchMissesTest3) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    // generate list of values 0 til 100
+    std::vector<int64_t> fieldValues(100);
+    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+    auto rng = std::default_random_engine {};
+
+    std::vector<TupleBuffer> bufferVector;
+
+    for (int i = 0; i < 1000; ++i){
+        auto buffer = bm->getBufferBlocking();
+        bufferVector.push_back(buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (int k = 0; k < 5; k++) {
+            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+            for (uint64_t j = 0; j < 100; j++) {
+                dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                dynamicBuffer[j]["f2"].write((int64_t) 1);
+                dynamicBuffer.setNumberOfTuples(j + 1);
+            }
+        }
+    }
+
+    std::ofstream csvFile("BranchMissesTest.csv");
+
+    for (int j = 1; j <= 100; ++j) {
+
+        csvFile << "Selectivity\t" << ((double) j / 100);
+
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(j+1);
+        auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
+        auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        auto adwinBranchMisses = std::make_unique<Adwin>(0.001, 4);
+        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(adwinBranchMisses));
+
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics pipeline runtime
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
+
+        std::vector<uint64_t> values;
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (TupleBuffer buffer : bufferVector) {
+            executablePipelineStage->execute(buffer, pipelineContext, *wc);
+
+            branchMisses->collect();
+            values.push_back(std::any_cast<uint64_t>(branchMisses->getStatisticValue()));
+        }
+        executablePipelineStage->stop(pipelineContext);
+
+        for (auto value : values) {
+            csvFile << "," << value;
+        }
+        csvFile << "\n";
+
+        auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
+        ASSERT_EQ(numberOfResultBuffers, 1000);
+    }
+
+    csvFile.close();
 }
 
 /**
