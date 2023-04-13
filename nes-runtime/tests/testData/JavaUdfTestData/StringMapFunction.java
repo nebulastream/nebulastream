@@ -1,4 +1,4 @@
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -13,7 +13,7 @@ public class StringMapFunction implements MapFunction<String, String>, Serializa
      * Constructs a new instance of StringMapFunction with the default appended string.
      */
     public StringMapFunction(){
-        this.instanceVariable = "_appended";
+        this.instanceVariable = "Appended String:";
     }
 
     /**
@@ -33,9 +33,21 @@ public class StringMapFunction implements MapFunction<String, String>, Serializa
      */
     @Override
     public String map(String value) {
-        String result = value + instanceVariable;
+        String result = instanceVariable + value;
         System.out.println("Result: " + result);
         return result;
+    }
+
+    /**
+     * Appends the input sting to the instanceVariable and returns the resulting string.
+     *
+     * @param value The input string.
+     * @return The instance variable with the input string appended to it.
+     */
+    @Override
+    public String flatMap(String value) {
+        this.instanceVariable += value ;
+        return this.instanceVariable;
     }
 
 }

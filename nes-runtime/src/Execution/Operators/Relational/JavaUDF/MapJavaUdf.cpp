@@ -44,14 +44,14 @@ void* executeMapUdf(void* state, void* pojoObjectPtr) {
 
     // Find class implementing the map udf
     jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
     // Build function signature of map function
     std::string sig = "(L" + handler->getInputClassName() + ";)L" + handler->getOutputClassName() + ";";
 
     // Find udf function
     jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
     jobject udf_result, instance;
     // The map udf class will be either loaded from a serialized instance or allocated using class information
@@ -61,17 +61,17 @@ void* executeMapUdf(void* state, void* pojoObjectPtr) {
     } else {
         // Create instance object using class information
         jclass clazz = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
-        jniErrorCheck(handler->getEnvironment());
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
         // Here we assume the default constructor is available
         auto constr = handler->getEnvironment()->GetMethodID(clazz, "<init>", "()V");
         instance = handler->getEnvironment()->NewObject(clazz, constr);
-        jniErrorCheck(handler->getEnvironment());
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     }
 
     // Call udf function
     udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
-    jniErrorCheck(handler->getEnvironment());
+    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return udf_result;
 }
 

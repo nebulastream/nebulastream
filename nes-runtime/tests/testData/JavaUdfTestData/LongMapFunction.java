@@ -1,4 +1,4 @@
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -36,5 +36,17 @@ public class LongMapFunction implements MapFunction<Long, Long>, Serializable {
     @Override
     public Long map(Long value) {
         return value + instanceVariable;
+    }
+
+    /**
+     * Updates the instanceVariable by adding the given value to it and returns it.
+     *
+     * @param value the input Long value to apply the function to and add to the instanceVariable
+     * @return the result of applying the function to the input Long value
+     */
+    @Override
+    public Long flatMap(Long value) {
+        instanceVariable += (long) value;
+        return instanceVariable;
     }
 }

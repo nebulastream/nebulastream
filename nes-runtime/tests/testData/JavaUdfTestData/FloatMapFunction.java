@@ -1,4 +1,4 @@
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -38,6 +38,18 @@ public class FloatMapFunction implements MapFunction<Float, Float> {
     @Override
     public Float map(Float value) {
         return value + instanceVariable;
+    }
+
+    /**
+     * Updates the instanceVariable by adding the given value to it and returns it.
+     *
+     * @param value the input Float value to apply the function to and add to the instanceVariable
+     * @return the result of applying the function to the input Float value
+     */
+    @Override
+    public Float flatMap(Float value) {
+        instanceVariable += (float) value;
+        return instanceVariable;
     }
    
 }

@@ -1,4 +1,4 @@
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh to update the JAR file.
+// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -9,19 +9,21 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
     /**
      * This field is used to verify that we store the actual instance in the UDF descriptor.
      */
-    public String stringVariable = "_appended";
-    public float floatVariable = 10;
-    public int intVariable = 10;
-    public long longVariable = 10;
-    public short shortVariable = 10;
-    public byte byteVariable = 10;
-    public double doubleVariable = 10;
-    public boolean booleanVariable = false;
+    ComplexPojo pojo;
 
     /**
      * Constructs a new ComplexPojoMapFunction instance.
      */
     public ComplexPojoMapFunction(){
+        pojo = new ComplexPojo();
+        pojo.stringVariable = "Appended String:";
+        pojo.floatVariable = 10;
+        pojo.intVariable = 10;
+        pojo.longVariable = 10;
+        pojo.shortVariable = 10;
+        pojo.byteVariable = 10;
+        pojo.doubleVariable = 10;
+        pojo.booleanVariable = false;
     }
 
     /**
@@ -30,14 +32,14 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
      * @param value The {@link ComplexPojo} value to be used for initializing the instance variables.
      */
     public ComplexPojoMapFunction(ComplexPojo value) {
-        this.stringVariable = value.stringVariable;
-        this.floatVariable = value.floatVariable;
-        this.intVariable = value.intVariable;
-        this.booleanVariable = value.booleanVariable;
-        this.longVariable = value.longVariable;
-        this.shortVariable = value.shortVariable;
-        this.byteVariable = value.byteVariable;
-        this.doubleVariable = value.doubleVariable;
+        pojo.stringVariable = value.stringVariable;
+        pojo.floatVariable = value.floatVariable;
+        pojo.intVariable = value.intVariable;
+        pojo.booleanVariable = value.booleanVariable;
+        pojo.longVariable = value.longVariable;
+        pojo.shortVariable = value.shortVariable;
+        pojo.byteVariable = value.byteVariable;
+        pojo.doubleVariable = value.doubleVariable;
     }
 
     /**
@@ -48,15 +50,32 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
      */
     @Override
     public ComplexPojo map(ComplexPojo value) {
-        value.stringVariable += stringVariable;
-        value.floatVariable += floatVariable;
-        value.intVariable += intVariable;
-        value.shortVariable += shortVariable;
-        value.longVariable += longVariable;
-        value.doubleVariable += doubleVariable;
-        value.byteVariable += byteVariable;
-        value.booleanVariable = value.booleanVariable && booleanVariable;
+        value.stringVariable += pojo.stringVariable;
+        value.floatVariable += pojo.floatVariable;
+        value.intVariable += pojo.intVariable;
+        value.shortVariable += pojo.shortVariable;
+        value.longVariable += pojo.longVariable;
+        value.doubleVariable += pojo.doubleVariable;
+        value.byteVariable += pojo.byteVariable;
+        value.booleanVariable = value.booleanVariable && pojo.booleanVariable;
         return value;
     }
 
+    /**
+     * Appends fixed values to various instance variables of the input {@link ComplexPojo} value.
+     *
+     * @param value The {@link ComplexPojo} value to which the fixed values are appended.
+     * @return The updated {@link ComplexPojo} value.
+     */
+    @Override
+    public ComplexPojo flatMap(ComplexPojo value) {
+        pojo.stringVariable += value.stringVariable;
+        pojo.floatVariable += value.floatVariable;
+        pojo.intVariable += value.intVariable;
+        pojo.longVariable += value.longVariable;
+        pojo.shortVariable += value.shortVariable;
+        pojo.byteVariable += value.byteVariable;
+        pojo.doubleVariable += value.doubleVariable;
+        return pojo;
+    }
 }
