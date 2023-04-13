@@ -14,22 +14,11 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Execution/Aggregation/CountAggregation.hpp>
-#include <Execution/Aggregation/MaxAggregation.hpp>
-#include <Execution/Aggregation/MinAggregation.hpp>
-#include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -46,7 +35,7 @@
 namespace NES::Runtime::Execution {
 class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
-    std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
+
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -96,8 +85,6 @@ TEST_P(InferModelPipelineTest, thresholdWindowWithSum) {
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    resultFieldVector.emplace_back("iris0");
 
     std::vector<std::string> inputFields;
     inputFields.emplace_back(f1);
