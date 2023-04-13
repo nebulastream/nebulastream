@@ -4,7 +4,7 @@ services:
     image: nebulastream/nes-executable-image:0.5.44
     entrypoint: ["bash", "-c", "nesCoordinator --configPath=/tutorial/coordinator.yml"]
     ports:
-      - 8081:8081
+      - 8082:8082
     volumes:
       - ./:/tutorial
     networks:
@@ -21,7 +21,7 @@ services:
   mosquitto:
     image: eclipse-mosquitto
     ports:
-      - 9001:9001
+      - 9002:9002
     volumes:
       - ./mosquitto/config:/mosquitto/config
     networks:
@@ -30,7 +30,7 @@ services:
   ui:
     image: nebulastream/nes-ui-image:latest
     ports:
-      - 3000:3000
+      - 3001:3001
     networks:
       nebulastream-network:
         ipv4_address: 172.33.0.120
