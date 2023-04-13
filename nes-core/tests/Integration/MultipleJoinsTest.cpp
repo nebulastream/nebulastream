@@ -378,8 +378,8 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     auto query = TestQuery::from(testSourceDescriptor1)
                      .joinWith(TestQuery::from(testSourceDescriptor2)).where(Attribute(joinFieldName1)).equalsTo(Attribute(joinFieldName2))
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .joinWith(TestQuery::from(testSourceDescriptor3)).joinWith(TestQuery::from(testSourceDescriptor4)).where(Attribute(joinFieldName3)).equalsTo(Attribute(joinFieldName4))
-                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                     .joinWith(TestQuery::from(testSourceDescriptor3).joinWith(TestQuery::from(testSourceDescriptor4)).where(Attribute(joinFieldName3)).equalsTo(Attribute(joinFieldName4))
+                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize))))
                      .where(Attribute(joinFieldName1)).equalsTo(Attribute(joinFieldName4)).window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
@@ -636,13 +636,12 @@ TEST_P(MultipleJoinsTest, DISABLED_testJoin3WithDifferentSourceSlidingWindowOnCo
     auto testSourceDescriptor3 = executionEngine->createDataSource(window3);
     auto testSourceDescriptor4 = executionEngine->createDataSource(window4);
 
-    // TODO nested joins are currently not supported by NAUTILUS
     auto query = TestQuery::from(testSourceDescriptor1)
                      .joinWith(TestQuery::from(testSourceDescriptor2)).where(Attribute(joinFieldName1)).equalsTo(Attribute(joinFieldName2))
                      .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
-                     /*.joinWith(TestQuery::from(testSourceDescriptor3)).joinWith(TestQuery::from(testSourceDescriptor4)).where(Attribute(joinFieldName3)).equalsTo(Attribute(joinFieldName4))
-                     .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
-                     .where(Attribute(joinFieldName1)).equalsTo(Attribute(joinFieldName4)).window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))*/
+                     .joinWith(TestQuery::from(testSourceDescriptor3).joinWith(TestQuery::from(testSourceDescriptor4)).where(Attribute(joinFieldName3)).equalsTo(Attribute(joinFieldName4))
+                     .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide))))
+                     .where(Attribute(joinFieldName1)).equalsTo(Attribute(joinFieldName4)).window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
                      .sink(testSinkDescriptor);
 
     NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
