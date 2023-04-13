@@ -10,8 +10,8 @@
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, FSST, RLE };
-enum class CompressionMode { FULL_BUFFER, COLUMN_WISE };
+enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, FSST };
+enum class CompressionMode { HORIZONTAL, VERTICAL };
 
 const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
     switch (ca) {
@@ -19,7 +19,6 @@ const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
         case CompressionAlgorithm::LZ4: return "LZ4";
         case CompressionAlgorithm::SNAPPY: return "Snappy";
         case CompressionAlgorithm::FSST: return "FSST";
-        case CompressionAlgorithm::RLE: return "RLE";
     }
 }
 
@@ -65,18 +64,23 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
 
     std::vector<uint64_t> getOffsets(const MemoryLayoutPtr& memoryLayout);
     void clearBuffer();
-    void compressLz4FullBuffer();
-    void decompressLz4FullBuffer();
-    void compressLz4ColumnWise();
-    void decompressLz4ColumnWise();
-    void compressSnappyFullBuffer();
-    void decompressSnappyFullBuffer();
-    void compressSnappyColumnWise();
-    void decompressSnappyColumnWise();
-    void compressFsstFullBuffer();
-    void decompressFsstFullBuffer();
-    void compressFsstColumnWise();
-    void decompressFsstColumnWise();
+    void compressHorizontal(CompressionAlgorithm targetCa);
+    void compressVertical(CompressionAlgorithm targetCa);
+    void decompressHorizontal();
+    void decompressVertical();
+    void compressLz4Vertical();
+    void decompressLz4Vertical();
+    void compressLz4Horizontal();
+    void decompressLz4Horizontal();
+    void concatColumns();
+    void compressSnappyVertical();
+    void decompressSnappyVertical();
+    void compressSnappyHorizontal();
+    void decompressSnappyHorizontal();
+    void compressFsstHorizontal();
+    void decompressFsstHorizontal();
+    void compressFsstVertical();
+    void decompressFsstVertical();
 };
 
 }// namespace NES::Runtime::MemoryLayouts
