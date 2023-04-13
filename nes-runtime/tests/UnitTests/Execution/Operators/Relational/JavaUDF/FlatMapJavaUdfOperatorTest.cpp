@@ -20,16 +20,12 @@
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <NesBaseTest.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-// Test
-#include <string>
-#include <vector>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -43,7 +39,7 @@ class FlatMapJavaUdfOperatorTest : public Testing::NESBaseTest {
 };
 
 std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
-std::string method = "map";
+std::string method = "flatMap";
 std::unordered_map<std::string, std::vector<char>> byteCodeList;
 std::vector<char> serializedInstance;
 SchemaPtr input, output;
@@ -268,7 +264,7 @@ TEST_F(FlatMapJavaUdfOperatorTest, BooleanUDFTest) {
 
 /**
  * @brief Test simple UDF with string objects as input and output (StringMapFunction<String, String>)
- * The UDF appends incoming tuples the postfix 'appended'.
+ * The UDF appends incoming tuples the postfix 'X'.
  * //TODO After fixing the text equal function this test fails, the bug is specified in issue #3625
 */
 TEST_F(FlatMapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
@@ -294,9 +290,9 @@ TEST_F(FlatMapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) &wc), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<Text>("testValue")}});
+    auto record = Record({{"id", Value<Text>("X")}});
     map.execute(ctx, record);
-    ASSERT_EQ(record.read("id"), Value<Text>("testValue_appended"));
+    ASSERT_EQ(record.read("id"), Value<Text>("Appended String:X"));
 }
 
 /**
