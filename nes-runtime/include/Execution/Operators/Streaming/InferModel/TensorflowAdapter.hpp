@@ -34,11 +34,13 @@ class TensorflowAdapter {
 
     TensorflowAdapter() = default;
 
+    ~TensorflowAdapter();
+
     /**
      * @brief Initialize tensorflow model
-     * @param model file containing the serialized model
+     * @param pathToModel file containing the serialized model
      */
-    void initializeModel(std::string model);
+    void initializeModel(std::string pathToModel);
 
     /**
      * @brief Add input for model inference

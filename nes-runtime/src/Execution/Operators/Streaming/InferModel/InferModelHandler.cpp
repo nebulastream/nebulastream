@@ -16,7 +16,6 @@
 
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
-#include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
