@@ -1,0 +1,144 @@
+version: "3"
+services:
+  node-red:
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    networks:
+      nebulastream-network-1:
+       ipv4_address: 172.31.0.15
+    volumes:
+      - node-red-data:/data
+      - ./:/demo
+
+  coordinator:
+    image: nebulastream/nes-executable-image:latest
+    entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator.yml"]
+    ports:
+      - 8081:8081
+    volumes:
+      - ./:/demo
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.31.0.2
+  #coordinator_worker_1:
+  #  image: nebulastream/nes-executable-image:latest
+  #  entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator_worker_1.yml"]
+  #  ports:
+  #    - 8082:8081
+  #  volumes:
+  #    - ./:/demo
+  #  networks:
+  #    nebulastream-network:
+  #      ipv4_address: 172.31.0.23
+  #coordinator_worker_2:
+  #  image: nebulastream/nes-executable-image:latest
+  #  entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator_worker_2.yml"]
+  #  ports:
+  #    - 8083:8081
+  #  volumes:
+  #    - ./:/demo
+  #  networks:
+  #    nebulastream-network:
+  #      ipv4_address: 172.31.0.24
+  worker-1:
+    image: nebulastream/nes-executable-image:latest
+    entrypoint: ["bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-1.yml"]
+    volumes:
+      - ./:/demo
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.31.0.3
+#  worker-2:
+#    image: nebulastream/nes-executable-image:latest
+#    entrypoint: ["bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-2.yml"]
+#    volumes:
+#      - ./:/demo
+#    networks:
+#      nebulastream-network:
+#        ipv4_address: 172.31.0.4
+  worker-w-1:
+    image: nebulastream/nes-executable-image:latest
+    entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1.yml" ]
+    volumes:
+      - ./:/demo
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.31.0.23
+  worker-w-2:
+    image: nebulastream/nes-executable-image:latest
+    entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-2.yml" ]
+    volumes:
+      - ./:/demo
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.31.0.24
+#   worker-w-1-l:
+#     image: nebulastream/nes-executable-image:latest
+#     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1-l.yml" ]
+#     volumes:
+#       - ./:/demo
+#     networks:
+#       nebulastream-network:
+#         ipv4_address: 172.31.0.25
+#   worker-w-2-l:
+#     image: nebulastream/nes-executable-image:latest
+#     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-2-l.yml" ]
+#     volumes:
+#       - ./:/demo
+#     networks:
+#       nebulastream-network:
+#         ipv4_address: 172.31.0.26
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - 1885:1885
+      - 9001:9001
+      - 9010:9010
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.31.0.11
+
+  #mosquitto_cw_1:
+  #  image: eclipse-mosquitto
+  #  ports:
+  #    - 1886:1885
+  #    - 9002:9001
+  #    - 9011:9010
+  #  volumes:
+  #    - ./mosquitto/config:/mosquitto/config
+  #  networks:
+  #    nebulastream-network:
+  #      ipv4_address: 172.31.0.12
+
+  #mosquitto_cw_2:
+  #  image: eclipse-mosquitto
+  #  ports:
+  #    - 1887:1885
+  #    - 9003:9001
+  #    - 9012:9010
+  #  volumes:
+  #    - ./mosquitto/config:/mosquitto/config
+  #  networks:
+  #    nebulastream-network:
+  #      ipv4_address: 172.31.0.13
+  ui:
+    image: nebulastream/nes-ui-image:latest
+    ports:
+      - 9000:9000
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.31.0.14
+
+volumes:
+  node-red-data:
+
+networks:
+  nebulastream-network-1:
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24

@@ -1,0 +1,46 @@
+###
+### General configuration
+###
+logLevel: LOG_ERROR
+#logLevel: LOG_WARNING
+#logLevel: LOG_DEBUG
+
+###
+### Network configuration
+###
+localWorkerIp: 172.31.0.2
+coordinatorIp: coordinator
+
+# Use new windowing strategy
+queryCompiler:
+  windowingStrategy: THREAD_LOCAL
+
+###
+### Physical source configuration
+###
+physicalSources:
+  - logicalSourceName: wdn_stream
+    physicalSourceName: wdn_worker_1
+    type: CSVSource
+    configuration:
+            filePath: /demo/input-data/waterdata_1_5_M_one_res_small_merged.csv # one month and half
+#            filePath: /demo/input-data/waterdata_1_5_M_one_res_small_merged.csv # one month and half
+            numberOfBuffersToProduce: 1024 #40 1024
+            numberOfTuplesToProducePerBuffer: 0 #4 0
+            skipHeader: true
+                  sourceGatheringInterval: 3000
+#physicalSources:
+#  - logicalSourceName: wdn_stream
+#    physicalSourceName: wdn_worker_1
+#    type: MQTTSource
+#    configuration:
+#            url: ws://172.31.0.11:9001
+#            clientId: testClient1
+#            userName: testUser1
+#            topic: testTopic
+#            cleanSession: true
+#            flushIntervalMS: -1
+#            inputFormat: JSON
+#            qos: 2
+
+
