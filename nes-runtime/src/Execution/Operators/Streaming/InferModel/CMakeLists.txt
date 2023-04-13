@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        InferModel.cpp
+        InferModelOperator.cpp
         InferModelHandler.cpp
         TensorflowAdapter.cpp
         )

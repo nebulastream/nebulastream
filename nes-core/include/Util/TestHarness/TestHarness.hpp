@@ -86,13 +86,21 @@ class TestHarness {
                          uint16_t restPort,
                          uint16_t rpcPort,
                          std::filesystem::path testHarnessResourcePath,
-                         bool useNautilus = false,
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-          useNautilus(useNautilus), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess),
+          useNautilus(false), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess),
           bufferSize(4096), physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
           testHarnessResourcePath(testHarnessResourcePath) {}
+
+    /**
+     * @brief Enable using nautilus compiler
+     * @return self
+     */
+    TestHarness& enableNautilus(){
+        useNautilus = true;
+        return *this;
+    }
 
     /**
          * @brief push a single element/tuple to specific source

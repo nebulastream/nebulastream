@@ -150,9 +150,11 @@ class LowerPhysicalToNautilusOperators {
                     uint64_t handlerIndex);
 #endif// ENABLE_JIN
 
+#ifdef TFDEF
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+#endif
 
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;

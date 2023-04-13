@@ -149,7 +149,8 @@ TEST_F(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes)
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder(), true /*use nautilus*/)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
                                   .validate()
@@ -202,7 +203,8 @@ TEST_F(InferModelDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
                         {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
                         .filter(Attribute("iris0") > 0))";
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder(), true /*use nautilus*/)
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
@@ -242,7 +244,8 @@ TEST_P(InferModelDeploymentTest, testSimpleMLModelDeployment) {
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder(), true /*use nautilus*/)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
                                   .validate()
