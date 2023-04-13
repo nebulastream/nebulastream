@@ -1,9 +1,9 @@
 ###
 ### General configuration
 ###
-logLevel: LOG_ERROR
+#logLevel: LOG_ERROR
 #logLevel: LOG_WARNING
-#logLevel: LOG_DEBUG
+logLevel: LOG_DEBUG
 
 ###
 ### Network configuration
@@ -21,7 +21,7 @@ queryCompiler:
 physicalSources:
   - logicalSourceName: lora_stream
     physicalSourceName: lora_worker_1
-    type: MQTTSource
+    type: MQTT_SOURCE
     configuration:
             url: ws://172.32.0.11:9001
             clientId: workerClientLora1

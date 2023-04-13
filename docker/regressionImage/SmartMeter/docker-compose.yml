@@ -17,7 +17,7 @@ services:
     image: nebulastream/nes-executable-image:latest
     entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator.yml"]
     ports:
-      - 8081:8081
+      - 8085:8085
     volumes:
       - ./:/demo
     networks:
@@ -59,22 +59,22 @@ services:
 #    networks:
 #      nebulastream-network:
 #        ipv4_address: 172.32.0.4
-  worker-w-1:
-    image: nebulastream/nes-executable-image:latest
-    entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1.yml" ]
-    volumes:
-      - ./:/demo
-    networks:
-      nebulastream-network-1:
-        ipv4_address: 172.32.0.231
-  worker-w-2:
-    image: nebulastream/nes-executable-image:latest
-    entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-2.yml" ]
-    volumes:
-      - ./:/demo
-    networks:
-      nebulastream-network-1:
-        ipv4_address: 172.32.0.241
+#  worker-w-1:
+#    image: nebulastream/nes-executable-image:latest
+#    entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1.yml" ]
+#    volumes:
+#      - ./:/demo
+#    networks:
+#      nebulastream-network-1:
+#        ipv4_address: 172.32.0.231
+#  worker-w-2:
+#    image: nebulastream/nes-executable-image:latest
+#    entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-2.yml" ]
+#    volumes:
+#      - ./:/demo
+#    networks:
+#      nebulastream-network-1:
+#        ipv4_address: 172.32.0.241
 #   worker-w-1-l:
 #     image: nebulastream/nes-executable-image:latest
 #     entrypoint: [ "bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-w-1-l.yml" ]
@@ -94,9 +94,9 @@ services:
   mosquitto:
     image: eclipse-mosquitto
     ports:
-      - 1885:1885
-      - 9001:9001
-      - 9010:9010
+      - 1882:1882
+      - 9008:9008
+      - 9014:9014
     volumes:
       - ./mosquitto/config:/mosquitto/config
     networks:
@@ -129,7 +129,7 @@ services:
   ui:
     image: nebulastream/nes-ui-image:latest
     ports:
-      - 9000:9000
+      - 9005:9005
     networks:
       nebulastream-network-1:
         ipv4_address: 172.32.0.141
