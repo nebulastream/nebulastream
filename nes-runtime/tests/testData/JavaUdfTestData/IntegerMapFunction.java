@@ -36,7 +36,6 @@ public class IntegerMapFunction implements MapFunction<Integer, Integer> {
     @Override
     public Integer map(Integer value) {
         this.instanceVariable = (int)value + (int)this.instanceVariable;
-        System.out.println("instanceVariable " + (int)this.instanceVariable + " value " + (int)value);
         return instanceVariable;
     }
 }

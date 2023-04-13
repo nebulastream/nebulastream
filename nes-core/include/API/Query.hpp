@@ -452,6 +452,13 @@ class Query {
     Query& mapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr descriptor);
 
     /**
+     * @brief: Create flat map java udf operator.
+     * @param descriptor java udf descriptor
+     * @return query
+     */
+    Query& flatMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr descriptor);
+
+    /**
      * @brief: Map records according to a map expression. An
      * examplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
      * @param map expression

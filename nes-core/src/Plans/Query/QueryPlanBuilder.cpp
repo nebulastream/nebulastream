@@ -78,6 +78,13 @@ NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUdf(Catalogs::UDF::JavaUdfDescript
     return queryPlan;
 }
 
+NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan) {
+    NES_DEBUG2("QueryPlanBuilder: add flat map java udf operator to query plan");
+    auto op = LogicalOperatorFactory::createFlatMapJavaUdfLogicalOperator(descriptor);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
 QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan) {
     NES_DEBUG2("QueryPlanBuilder: add map operator to query plan");
     if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {

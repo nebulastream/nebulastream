@@ -148,6 +148,10 @@ class LowerPhysicalToNautilusOperators {
     lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerFlatMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                    const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
+                    uint64_t handlerIndex);
 #endif// ENABLE_JIN
 
 #ifdef TFDEF

@@ -215,6 +215,17 @@ class LogicalOperatorFactory {
                                     OperatorId id = Util::getNextOperatorId());
 
     /**
+     * Create a new FlatMapJavaUdfLogicalOperatorNode.
+     *
+     * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
+     * @param id The operator ID.
+     * @return A logical operator node which encapsulates the Java UDF.
+     */
+    static LogicalUnaryOperatorNodePtr
+    createFlatMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                    OperatorId id = Util::getNextOperatorId());
+
+    /**
      * @brief Create a new WindowJavaUdfLogicalOperatorNode.
      * @param javaUdfDescriptor
      * @param windowType
