@@ -15,19 +15,71 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_STOPQUERYREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_STOPQUERYREQUEST_HPP_
 
+#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
+#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+
+namespace NES::Optimizer {
+class TypeInferencePhase;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class QueryRewritePhase;
+using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
+
+class QueryPlacementPhase;
+using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
+
+class GlobalQueryPlanUpdatePhase;
+using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
+}// namespace NES::Optimizer
 
 namespace NES {
+
+class GlobalQueryPlan;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class QueryDeploymentPhase;
+using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
+
+class QueryUndeploymentPhase;
+using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+
+class WorkerRPCClient;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class StopQueryRequest;
 using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 
+namespace Catalogs {
+
+namespace Source {
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+}// namespace Source
+
+namespace UDF {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}// namespace UDF
+
+}// namespace Catalogs
+
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequest : public Request {
+class StopQueryRequest : public Request, public AbstractRequest {
 
   public:
+    //todo: remove method after Request Restructuring was successfully completed
     /**
      * @brief Create instance of  StopQueryRequest
      * @param queryId : the id of query to be stopped
@@ -35,15 +87,42 @@ class StopQueryRequest : public Request {
      */
     static StopQueryRequestPtr create(QueryId queryId);
 
+    static StopQueryRequestPtr
+    create(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
+
+    void executeRequestLogic(const StorageHandlePtr storageHandle) override;
+
+    void preRollbackHandle(std::exception ex, StorageHandlePtr storageHandle) override;
+    void postRollbackHandle(std::exception ex, StorageHandlePtr storageHandle) override;
+    void rollBack(std::exception& ex, StorageHandlePtr storageHandle) override;
+    void preExecution(StorageHandlePtr storageHandle, std::vector<StorageHandleResourceType> requiredResources) override;
+    void postExecution(StorageHandlePtr storageHandle, std::vector<StorageHandleResourceType> requiredResources) override;
+
     std::string toString() override;
 
     ~StopQueryRequest() override = default;
 
-    QueryId getQueryId() const;
+    const WorkerRPCClientPtr& getWorkerRpcClient() const;
+
+    const QueryId& getQueryId() const;
 
   private:
-    explicit StopQueryRequest(QueryId queryId);
+    StopQueryRequest(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
+    //todo: remove constructor after Request Restructuring was successfully completed
+    StopQueryRequest(QueryId queryId);
+    const WorkerRPCClientPtr& workerRpcClient;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    TopologyPtr topology;
+    QueryCatalogServicePtr queryCatalogService;
+    GlobalQueryPlanPtr globalQueryPlan;
     QueryId queryId;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    QueryDeploymentPhasePtr queryDeploymentPhase;
+    QueryUndeploymentPhasePtr queryUndeploymentPhase;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    bool queryReconfiguration;
 };
 }// namespace NES
 
