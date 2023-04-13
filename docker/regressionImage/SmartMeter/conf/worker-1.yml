@@ -1,0 +1,33 @@
+###
+### General configuration
+###
+logLevel: LOG_ERROR
+#logLevel: LOG_WARNING
+#logLevel: LOG_DEBUG
+
+###
+### Network configuration
+###
+localWorkerIp: 172.31.0.3
+coordinatorIp: coordinator
+
+# Use new windowing strategy
+queryCompiler:
+  windowingStrategy: THREAD_LOCAL
+
+###
+### Physical source configuration
+###
+physicalSources:
+  - logicalSourceName: lora_stream
+    physicalSourceName: lora_worker_1
+    type: MQTTSource
+    configuration:
+            url: ws://172.31.0.11:9001
+            clientId: workerClientLora1
+            userName: workerRadio1
+            topic: /ELEGANT/lora/workerRadio/1
+            cleanSession: true
+            flushIntervalMS: -1
+            inputFormat: JSON
+            qos: 2

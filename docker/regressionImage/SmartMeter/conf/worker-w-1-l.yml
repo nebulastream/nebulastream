@@ -1,0 +1,31 @@
+###
+### General configuration
+###
+logLevel: LOG_ERROR
+#logLevel: LOG_WARNING
+#logLevel: LOG_DEBUG
+
+###
+### Network configuration
+###
+localWorkerIp: 172.31.0.25
+coordinatorIp: coordinator
+
+# Use new windowing strategy
+queryCompiler:
+  windowingStrategy: THREAD_LOCAL
+#queryCompiler.windowingStrategy: THREAD_LOCAL
+
+###
+### Physical source configuration
+###
+physicalSources:
+  - logicalSourceName: wdn_stream_l
+    physicalSourceName: wdn_worker_1_l
+    type: CSVSource
+    configuration:
+            filePath: /demo/waterdata1_1_5_M_one_res_small_with_leak.csv # one month and half
+            numberOfBuffersToProduce: 1024 #40 1024
+            numberOfTuplesToProducePerBuffer: 0 #4 0
+            skipHeader: true
+#                  sourceGatheringInterval: 3000
