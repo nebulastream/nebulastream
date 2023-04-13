@@ -18,21 +18,31 @@
 namespace NES {
 
 TwoPhaseLockingStorageHandle::TwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                       TopologyPtr topology,
-                                                                       QueryCatalogServicePtr queryCatalogService,
-                                                                       GlobalQueryPlanPtr globalQueryPlan,
-                                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                                       Catalogs::UDF::UdfCatalogPtr udfCatalog)
-    : StorageHandle(std::move(globalExecutionPlan), std::move(topology), std::move(queryCatalogService), std::move(globalQueryPlan), std::move(sourceCatalog), std::move(udfCatalog)) {}
+                                                           TopologyPtr topology,
+                                                           QueryCatalogServicePtr queryCatalogService,
+                                                           GlobalQueryPlanPtr globalQueryPlan,
+                                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                           Catalogs::UDF::UdfCatalogPtr udfCatalog)
+    : StorageHandle(std::move(globalExecutionPlan),
+                    std::move(topology),
+                    std::move(queryCatalogService),
+                    std::move(globalQueryPlan),
+                    std::move(sourceCatalog),
+                    std::move(udfCatalog)) {}
 
 std::shared_ptr<TwoPhaseLockingStorageHandle>
 TwoPhaseLockingStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                       const TopologyPtr& topology,
-                                                                       const QueryCatalogServicePtr& queryCatalogService,
-                                                                       const GlobalQueryPlanPtr& globalQueryPlan,
-                                                                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
-    return std::make_shared<TwoPhaseLockingStorageHandle>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
+                                     const TopologyPtr& topology,
+                                     const QueryCatalogServicePtr& queryCatalogService,
+                                     const GlobalQueryPlanPtr& globalQueryPlan,
+                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                     const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
+    return std::make_shared<TwoPhaseLockingStorageHandle>(globalExecutionPlan,
+                                                          topology,
+                                                          queryCatalogService,
+                                                          globalQueryPlan,
+                                                          sourceCatalog,
+                                                          udfCatalog);
 }
 
 TopologyHandle TwoPhaseLockingStorageHandle::getTopologyHandle() {

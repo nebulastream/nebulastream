@@ -24,4 +24,4 @@ UnlockDeleter::UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock) : 
         throw std::exception();
     }
 }
-}
+}// namespace NES

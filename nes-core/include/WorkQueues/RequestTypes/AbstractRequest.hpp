@@ -51,7 +51,6 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
-
     explicit AbstractRequest(size_t maxRetries, std::vector<StorageHandleResourceType> requiredResources);
 
     /**
@@ -123,5 +122,5 @@ class AbstractRequest {
     size_t actualRetries;
     std::vector<StorageHandleResourceType> requiredResources;
 };
-}
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_

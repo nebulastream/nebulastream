@@ -41,8 +41,12 @@ TEST_F(SerialStorageHandleTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto serialAccessHandle = SerialStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
-                                                                globalQueryPlan, sourceCatalog, udfCatalog);
+    auto serialAccessHandle = SerialStorageHandle::create(globalExecutionPlan,
+                                                          topology,
+                                                          queryCatalogService,
+                                                          globalQueryPlan,
+                                                          sourceCatalog,
+                                                          udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
     ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle().get());
@@ -53,4 +57,4 @@ TEST_F(SerialStorageHandleTest, TestResourceAccess) {
     ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUdfCatalogHandle().get());
 }
 
-}
+}// namespace NES

@@ -19,43 +19,41 @@
 namespace NES {
 
 SerialStorageHandle::SerialStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                     TopologyPtr topology,
-                                                     QueryCatalogServicePtr queryCatalogService,
-                                                     GlobalQueryPlanPtr globalQueryPlan,
-                                                     Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                     Catalogs::UDF::UdfCatalogPtr udfCatalog)
-    : StorageHandle(std::move(globalExecutionPlan), std::move(topology), std::move(queryCatalogService), std::move(globalQueryPlan), std::move(sourceCatalog), std::move(udfCatalog)) {}
+                                         TopologyPtr topology,
+                                         QueryCatalogServicePtr queryCatalogService,
+                                         GlobalQueryPlanPtr globalQueryPlan,
+                                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                         Catalogs::UDF::UdfCatalogPtr udfCatalog)
+    : StorageHandle(std::move(globalExecutionPlan),
+                    std::move(topology),
+                    std::move(queryCatalogService),
+                    std::move(globalQueryPlan),
+                    std::move(sourceCatalog),
+                    std::move(udfCatalog)) {}
 
 std::shared_ptr<SerialStorageHandle> SerialStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                     const TopologyPtr& topology,
-                                                     const QueryCatalogServicePtr& queryCatalogService,
-                                                     const GlobalQueryPlanPtr& globalQueryPlan,
-                                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                     const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
-    return std::make_shared<SerialStorageHandle>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
+                                                                 const TopologyPtr& topology,
+                                                                 const QueryCatalogServicePtr& queryCatalogService,
+                                                                 const GlobalQueryPlanPtr& globalQueryPlan,
+                                                                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
+    return std::make_shared<SerialStorageHandle>(globalExecutionPlan,
+                                                 topology,
+                                                 queryCatalogService,
+                                                 globalQueryPlan,
+                                                 sourceCatalog,
+                                                 udfCatalog);
 }
 
-GlobalExecutionPlanHandle SerialStorageHandle::getGlobalExecutionPlanHandle() {
-    return {&*globalExecutionPlan, UnlockDeleter()};
-}
+GlobalExecutionPlanHandle SerialStorageHandle::getGlobalExecutionPlanHandle() { return {&*globalExecutionPlan, UnlockDeleter()}; }
 
-TopologyHandle SerialStorageHandle::getTopologyHandle() {
-    return {&*topology, UnlockDeleter()};
-}
+TopologyHandle SerialStorageHandle::getTopologyHandle() { return {&*topology, UnlockDeleter()}; }
 
-QueryCatalogServiceHandle SerialStorageHandle::getQueryCatalogHandle() {
-    return {&*queryCatalogService, UnlockDeleter()};
-}
+QueryCatalogServiceHandle SerialStorageHandle::getQueryCatalogHandle() { return {&*queryCatalogService, UnlockDeleter()}; }
 
-GlobalQueryPlanHandle SerialStorageHandle::getGlobalQueryPlanHandle() {
-    return {&*globalQueryPlan, UnlockDeleter()};
-}
+GlobalQueryPlanHandle SerialStorageHandle::getGlobalQueryPlanHandle() { return {&*globalQueryPlan, UnlockDeleter()}; }
 
-SourceCatalogHandle SerialStorageHandle::getSourceCatalogHandle() {
-    return {&*sourceCatalog, UnlockDeleter()};
-}
+SourceCatalogHandle SerialStorageHandle::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter()}; }
 
-UdfCatalogHandle SerialStorageHandle::getUdfCatalogHandle() {
-    return {&*udfCatalog, UnlockDeleter()};
-}
-}
+UdfCatalogHandle SerialStorageHandle::getUdfCatalogHandle() { return {&*udfCatalog, UnlockDeleter()}; }
+}// namespace NES

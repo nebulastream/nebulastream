@@ -23,19 +23,19 @@ namespace NES {
  */
 class TwoPhaseLockingStorageHandle : public StorageHandle {
   public:
-    TwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
-                         TopologyPtr  topology,
-                         QueryCatalogServicePtr  queryCatalogService,
-                         GlobalQueryPlanPtr  globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
-                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
+    TwoPhaseLockingStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                                 TopologyPtr topology,
+                                 QueryCatalogServicePtr queryCatalogService,
+                                 GlobalQueryPlanPtr globalQueryPlan,
+                                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                 Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
-    static std::shared_ptr<TwoPhaseLockingStorageHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
-                         const TopologyPtr&  topology,
-                         const QueryCatalogServicePtr&  queryCatalogService,
-                         const GlobalQueryPlanPtr&  globalQueryPlan,
-                         const Catalogs::Source::SourceCatalogPtr&  sourceCatalog,
-                         const Catalogs::UDF::UdfCatalogPtr&  udfCatalog);
+    static std::shared_ptr<TwoPhaseLockingStorageHandle> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                const TopologyPtr& topology,
+                                                                const QueryCatalogServicePtr& queryCatalogService,
+                                                                const GlobalQueryPlanPtr& globalQueryPlan,
+                                                                const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                                const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
      * @brief Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
@@ -82,5 +82,5 @@ class TwoPhaseLockingStorageHandle : public StorageHandle {
     std::mutex globalQueryPlanMutex;
     std::mutex udfCatalogMutex;
 };
-}
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLE_HPP_
