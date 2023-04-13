@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 
+#include <WorkQueues/StorageHandles/StorageHandle.hpp>
 #include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
 #include <exception>
 #include <memory>
