@@ -17,11 +17,11 @@
 
 //todo #3588: This class is not not needed if we move the mutexes into the data structures itself
 /**
- * @brief This class contains hands out locks to different instances of the conservative two phase locking
+ * @brief This class hands out locks to different instances of the two phase locking
  * storage handle, This way each request can have its own storage handle but still have thread sage access.
  */
 namespace NES {
-class ConservativeTwoPhaseLockManager {
+class LockStore {
   public:
     /**
      * @brief Obtain a lock for a resource

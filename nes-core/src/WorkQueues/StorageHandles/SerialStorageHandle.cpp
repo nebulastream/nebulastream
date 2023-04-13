@@ -15,7 +15,6 @@
 #include <WorkQueues/StorageHandles/SerialStorageHandle.hpp>
 #include <memory>
 #include <utility>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

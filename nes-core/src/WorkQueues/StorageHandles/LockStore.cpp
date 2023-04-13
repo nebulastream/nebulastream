@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/StorageHandles/ConservativeTwoPhaseLockManager.hpp>
+#include <WorkQueues/StorageHandles/LockStore.hpp>
 #include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
 
 namespace NES {
-std::unique_lock<std::mutex> ConservativeTwoPhaseLockManager::getLock(StorageHandleResourceType type) {
+std::unique_lock<std::mutex> LockStore::getLock(StorageHandleResourceType type) {
     switch (type) {
         case StorageHandleResourceType::Topology:
             return std::unique_lock(topologyMutex);
