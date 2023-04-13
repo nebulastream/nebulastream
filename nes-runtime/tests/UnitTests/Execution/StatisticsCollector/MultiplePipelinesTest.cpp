@@ -75,7 +75,7 @@ class MultiplePipelinesTest : public testing::Test, public AbstractPipelineExecu
 };
 
 /**
-* @brief test change detection with multiple pipelines
+* @brief test statistics collection with multiple pipelines
 */
 TEST_P(MultiplePipelinesTest, multiplePipelines) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

@@ -131,7 +131,7 @@ TEST_P(StatisticsCollectorTest, selectivityTest) {
             dynamicBuffer[i]["f2"].write((int64_t) 1);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
-        selectivity[j] = (double) tupleCount / numberOfTuplesPerBuffer;
+        selectivity[j] = (double) tupleCount / (double) numberOfTuplesPerBuffer;
     }
 
     auto executablePipeline = provider->create(pipeline);
@@ -152,8 +152,9 @@ TEST_P(StatisticsCollectorTest, selectivityTest) {
 
         // collect the selectivity
         pipelineSelectivity->collect();
-        ASSERT_EQ(selectivity[i], pipelineSelectivity->getSelectivity());
-        std::cout << "Selectivity: " << pipelineSelectivity->getSelectivity() << std::endl;
+        auto selectivityValue = std::any_cast<double> (pipelineSelectivity->getStatisticValue());
+        ASSERT_EQ(selectivity[i], selectivityValue);
+        std::cout << "Selectivity: " << selectivityValue << std::endl;
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -238,8 +239,9 @@ TEST_P(StatisticsCollectorTest, runtimeTest) {
 
         // collect the statistics
         pipelineRuntime->collect();
-        ASSERT_GT(pipelineRuntime->getRuntime(), 0);
-        std::cout << "Runtime: " << pipelineRuntime->getRuntime() << std::endl;
+        auto runtimeValue = std::any_cast<uint64_t>(pipelineRuntime->getStatisticValue());
+        ASSERT_GT(runtimeValue, 0);
+        std::cout << "Runtime: " << runtimeValue << std::endl;
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -326,11 +328,13 @@ TEST_P(StatisticsCollectorTest, branchAndCacheMissesTest) {
     for (auto& buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
         branchMisses->collect();
-        ASSERT_GT(branchMisses->getBranchMisses(), 0);
-        std::cout << "Branch Misses: " << branchMisses->getBranchMisses() << std::endl;
+        auto branchMissesValue = std::any_cast<uint64_t>(branchMisses->getStatisticValue());
+        ASSERT_GT(branchMissesValue, 0);
+        std::cout << "Branch Misses: " << branchMissesValue << std::endl;
         cacheMisses->collect();
-        ASSERT_GT(cacheMisses->getCacheMisses(), 0);
-        std::cout << "Cache Misses: " << cacheMisses->getCacheMisses() << std::endl;
+        auto cacheMissesValue = std::any_cast<uint64_t>(cacheMisses->getStatisticValue());
+        ASSERT_GT(cacheMissesValue, 0);
+        std::cout << "Cache Misses: " << cacheMissesValue << std::endl;
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -406,9 +410,9 @@ TEST_P(StatisticsCollectorTest, outOfOrderRatioTest) {
     executablePipeline->stop(pipelineContext);
 
     outOfOrderRatio->collect();
-    auto ratio = outOfOrderRatio->getOutOfOrderRatio();
-    ASSERT_GE(ratio, 0);
-    ASSERT_LE(ratio, 1);
+    auto ratio = std::any_cast<double>(outOfOrderRatio->getStatisticValue());
+    ASSERT_GE(ratio, 0.0);
+    ASSERT_LE(ratio, 1.0);
     std::cout << "Out-of-order Ratio: " << ratio << std::endl;
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);

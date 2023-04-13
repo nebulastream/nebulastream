@@ -26,6 +26,7 @@ limitations under the License.
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
+#include <Execution/StatisticsCollector/CacheMisses.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
@@ -145,8 +146,8 @@ TEST_P(SelectivityTest, runtimeTest) {
 
             selectivity->collect();
             runtime->collect();
-            fprintf(selectivityFile, "%f\n", selectivity->getSelectivity());
-            fprintf(runtimeFile, "%lu\n", runtime->getRuntime());
+            fprintf(selectivityFile, "%f\n", std::any_cast<double>(selectivity->getStatisticValue()));
+            fprintf(runtimeFile, "%lu\n", std::any_cast<uint64_t>(runtime->getStatisticValue()));
         }
         executablePipelineStage->stop(pipelineContext);
 
@@ -231,7 +232,89 @@ TEST_P(SelectivityTest, branchMissesTest) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             branchMisses->collect();
-            fprintf(outputFile, "%lu\n", branchMisses->getBranchMisses()) ;
+            fprintf(outputFile, "%lu\n", std::any_cast<uint64_t>(branchMisses->getStatisticValue()));
+        }
+        executablePipelineStage->stop(pipelineContext);
+
+        auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
+        ASSERT_EQ(numberOfResultBuffers, 1000);
+    }
+
+    fclose(outputFile);
+}
+
+/**
+* @brief collect cache misses of multiple selectivities with multiple buffers
+*/
+TEST_P(SelectivityTest, cacheMissesTest) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    // generate values in random order
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int64_t> dist(0, 20);
+
+    std::vector<TupleBuffer> bufferVector;
+
+    for (int i = 0; i < 1000; ++i){
+        auto buffer = bm->getBufferBlocking();
+        bufferVector.push_back(buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t j = 0; j < 500; j++) {
+            int64_t randomNumber = dist(rng);
+            dynamicBuffer[j]["f1"].write(randomNumber);
+            dynamicBuffer[j]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(j + 1);
+        }
+    }
+
+    const char *fileName = "CacheMissesTest.txt";
+    FILE* outputFile = fopen(fileName, "a+");
+
+    for (int j = 1; j < 21; ++j) {
+
+        fprintf(outputFile, "Selectivity\t%f\n", ((double)j / 20)) ;
+
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(j);
+        auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
+        auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        auto adwinCacheMisses = std::make_unique<Adwin>(0.001, 4);
+        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(adwinCacheMisses));
+
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics pipeline runtime
+        auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperBranch), profiler, 1000);
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (TupleBuffer buffer : bufferVector) {
+            executablePipelineStage->execute(buffer, pipelineContext, *wc);
+
+            cacheMisses->collect();
+            fprintf(outputFile, "%lu\n", std::any_cast<uint64_t>(cacheMisses->getStatisticValue())) ;
         }
         executablePipelineStage->stop(pipelineContext);
 

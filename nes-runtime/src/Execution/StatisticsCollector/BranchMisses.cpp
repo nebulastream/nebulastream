@@ -34,12 +34,8 @@ void BranchMisses::collect(){
     }
 }
 
-uint64_t BranchMisses::getBranchMisses() const{
+std::any BranchMisses::getStatisticValue() {
     return branchMisses;
-}
-
-std::string BranchMisses::getType() const {
-    return "BranchMisses";
 }
 
 } // namespace NES::Runtime::Execution

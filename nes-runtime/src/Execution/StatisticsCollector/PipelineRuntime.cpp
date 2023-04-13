@@ -33,13 +33,8 @@ void PipelineRuntime::collect() {
         normalizer.normalizeValue(runtime);
     }
 }
-
-uint64_t PipelineRuntime::getRuntime() const{
+std::any PipelineRuntime::getStatisticValue() {
     return runtime;
-}
-
-std::string PipelineRuntime::getType() const {
-    return "PipelineRuntime";
 }
 
 } // namespace NES::Runtime::Execution

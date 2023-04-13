@@ -14,6 +14,7 @@ limitations under the License.
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_STATISTIC_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_STATISTIC_HPP_
 
+#include <any>
 #include <string>
 
 namespace NES::Runtime::Execution {
@@ -27,11 +28,12 @@ class Statistic {
      * @brief Collects the statistic when called from the StatisticsCollector.
      */
     virtual void collect() = 0;
+
     /**
-     * @brief Get the type of statistic.
-     * @return type of statistic.
+     * @brief Returns the value of the collected statistic.
      */
-    virtual std::string getType() const = 0;
+    virtual std::any getStatisticValue() = 0;
+
     virtual ~Statistic() = default;
 };
 

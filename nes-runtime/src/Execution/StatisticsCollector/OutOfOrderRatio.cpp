@@ -36,11 +36,8 @@ void OutOfOrderRatio::collect() {
 
 }
 
-double OutOfOrderRatio::getOutOfOrderRatio() {
+std::any OutOfOrderRatio::getStatisticValue() {
     return outOfOrderRatio;
 }
 
-std::string OutOfOrderRatio::getType() const {
-    return "OutOfOrderRatio";
-}
 } // namespace NES::Runtime::Execution

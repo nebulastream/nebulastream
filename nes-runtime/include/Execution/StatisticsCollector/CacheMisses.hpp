@@ -35,8 +35,7 @@ class CacheMisses : public Statistic {
                 const std::shared_ptr<Profiler>& profiler,
                 uint64_t normalizationWindowSize);
     void collect() override;
-    uint64_t getCacheMisses() const;
-    std::string getType() const override;
+    std::any getStatisticValue() override;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;

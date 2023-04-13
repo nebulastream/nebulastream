@@ -36,9 +36,7 @@ class BranchMisses : public Statistic {
                  uint64_t normalizationWindowSize);
     void collect() override;
 
-    std::string getType() const override;
-
-    uint64_t getBranchMisses() const;
+    std::any getStatisticValue() override;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;

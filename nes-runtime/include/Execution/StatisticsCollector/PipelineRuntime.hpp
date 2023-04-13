@@ -34,8 +34,7 @@ class PipelineRuntime : public Statistic {
                     std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                     uint64_t normalizationWindowSize);
     void collect() override;
-    uint64_t getRuntime() const;
-    std::string getType() const override;
+    std::any getStatisticValue() override;
 
   private:
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;

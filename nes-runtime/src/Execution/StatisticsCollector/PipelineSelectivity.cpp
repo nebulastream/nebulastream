@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution {
@@ -40,12 +40,8 @@ void PipelineSelectivity::collect() {
 
 }
 
-double PipelineSelectivity::getSelectivity() const{
+std::any PipelineSelectivity::getStatisticValue() {
     return selectivity;
-}
-
-std::string PipelineSelectivity::getType() const {
-    return "PipelineSelectivity";
 }
 
 } // namespace NES::Runtime::Execution

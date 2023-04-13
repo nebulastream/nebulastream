@@ -33,12 +33,8 @@ void CacheMisses::collect(){
     }
 }
 
-uint64_t CacheMisses::getCacheMisses() const {
+std::any CacheMisses::getStatisticValue() {
     return cacheMisses;
-}
-
-std::string CacheMisses::getType() const {
-    return "CacheMisses";
 }
 
 } // namespace NES::Runtime::Execution
