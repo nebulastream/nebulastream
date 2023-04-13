@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.48](https://github.com/nebulastream/nebulastream/tree/v0.5.48) (2023-04-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.47...v0.5.48)
+
+**Implemented enhancements:**
+
+- \[TASK\]\[Nautilus\] Improve Bytecode interpreter [\#3466](https://github.com/nebulastream/nebulastream/issues/3466)
+
 ## [v0.5.47](https://github.com/nebulastream/nebulastream/tree/v0.5.47) (2023-04-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.46...v0.5.47)
