@@ -343,7 +343,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
         // Extract the schema of the right side
         auto rightSchema = joinOperator->getRightInputSchema();
-        //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+        // Extract the first field from right schema and trim it to find the schema qualifier for the right side
         bool found = false;
         for (auto& field : rightSchema->fields) {
             if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {

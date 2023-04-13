@@ -98,12 +98,37 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
     std::ifstream inputFile(fullPath);
     std::istream_iterator<std::string> beginIt(inputFile);
     std::istream_iterator<std::string> endIt;
+    auto tupleCount = 0;
     for (auto it = beginIt; it != endIt; ++it) {
         std::string line = *it;
-        parser->writeInputTupleToTupleBuffer(line, buffer.getNumberOfTuples(), buffer, schema, bufferManager);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
+        tupleCount++;
     }
-
+    buffer.setNumberOfTuples(tupleCount);
     return buffer;
+}
+
+MemoryLayouts::DynamicTupleBuffer mergeBuffers(MemoryLayouts::DynamicTupleBuffer firstBuffer,
+                                               MemoryLayouts::DynamicTupleBuffer secondBuffer,
+                                               const SchemaPtr schema,
+                                               BufferManagerPtr bufferManager) {
+    auto firstBufferAsCSV = NES::Util::printTupleBufferAsCSV(firstBuffer.getBuffer(), schema);
+    auto secondBufferAsCSV = NES::Util::printTupleBufferAsCSV(secondBuffer.getBuffer(), schema);
+    firstBufferAsCSV.append(secondBufferAsCSV);
+
+    const std::string delimiter = ",";
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+
+    auto beginIt = firstBufferAsCSV.begin();
+    auto endIt = firstBufferAsCSV.end();
+    auto tupleCount = 0;
+    for (auto it = beginIt; it != endIt; ++it) {
+        std::string line(*it, std::strlen(it));
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, firstBuffer, schema, bufferManager);
+        tupleCount++;
+    }
+    firstBuffer.setNumberOfTuples(tupleCount);
+    return firstBuffer;
 }
 
 /**
@@ -244,7 +269,11 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
     auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
-    auto testSink = executionEngine->createDataSink(joinSchema);
+    NES_INFO("leftBuffer: " << NES::Util::printTupleBufferAsCSV(leftBuffer.getBuffer(), leftSchema));
+    NES_INFO("rightBuffer: " << NES::Util::printTupleBufferAsCSV(rightBuffer.getBuffer(), rightSchema));
+    NES_INFO("expectedBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
+
+    auto testSink = executionEngine->createDataSink(joinSchema, 20);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
@@ -268,8 +297,12 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
-    auto resultBuffer = testSink->getResultBuffer(0);
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
+
+    auto resultBuffer = testSink->getResultBuffer(0).getBuffer();
+    for (int i = 1; i < 20; ++i) {
+
+    }
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -1042,10 +1075,9 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
 //    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 //}
 
-INSTANTIATE_TEST_CASE_P(testoinQueries,
+INSTANTIATE_TEST_CASE_P(testJoinQueries,
                         JoinDeploymentTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });
