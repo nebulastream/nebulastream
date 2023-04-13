@@ -12,6 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: KTM use case
-      - run: (sleep 300 && docker compose down ) & docker compose -f ./docker/regressionImage/KTM/docker-compose.yml up
+        run: (sleep 300 && docker compose down ) & docker compose -f ./docker/regressionImage/KTM/docker-compose.yml up
       - name: Video use case
-      - run: (sleep 300 && docker compose down ) & docker compose -f ./docker/regressionImage/Video/docker-compose.yml up
+        run: (sleep 300 && docker compose down ) & docker compose -f ./docker/regressionImage/Video/docker-compose.yml up
