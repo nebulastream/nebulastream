@@ -55,7 +55,7 @@ TEST_F(UnlockDeleterTest, TestBlocking) {
         //constructor acquires lock
         std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
         thread = std::make_shared<std::thread>([&mtx]() {
-          ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx))));
+            ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx))));
         });
         //destructor releases lock
     }
@@ -70,7 +70,8 @@ TEST_F(UnlockDeleterTest, TestLocking) {
         //constructor acquires lock
         std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
         auto thread = std::make_shared<std::thread>([&mtx]() {
-          ASSERT_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))), std::exception);
+            ASSERT_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))),
+                         std::exception);
         });
         thread->join();
         //destructor releases lock
@@ -78,8 +79,8 @@ TEST_F(UnlockDeleterTest, TestLocking) {
 
     //check that try lock will not throw an exception if mutex is not locked
     auto thread = std::make_shared<std::thread>([&mtx]() {
-      ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))));
+        ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))));
     });
     thread->join();
 }
-}
+}// namespace NES

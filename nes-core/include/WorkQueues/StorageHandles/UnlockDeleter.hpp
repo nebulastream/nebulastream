@@ -50,13 +50,13 @@ class UnlockDeleter {
      * @brief The action called when the unique pointer is destroyed. We use a no op be cause we do NOT want to free the resource.
      * @tparam T: The type of the resource
      */
-    template <typename T>
-    void operator () (T*) const noexcept {
+    template<typename T>
+    void operator()(T*) const noexcept {
         // no-op
     }
 
   private:
     std::unique_lock<std::mutex> lock;
 };
-}
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_UNLOCKDELETER_HPP_

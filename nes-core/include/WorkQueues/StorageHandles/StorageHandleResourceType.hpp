@@ -28,6 +28,6 @@ enum class StorageHandleResourceType : char {
     GlobalQueryPlan,
     UdfCatalog,
 };
-}
+}// namespace NES
 
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLERESOURCETYPE_HPP_

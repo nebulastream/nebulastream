@@ -16,7 +16,7 @@
 
 #include <WorkQueues/StorageHandles/StorageHandle.hpp>
 
-namespace NES{
+namespace NES {
 
 /**
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
@@ -24,19 +24,19 @@ namespace NES{
  */
 class SerialStorageHandle : public StorageHandle {
   public:
-    SerialStorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
-                         TopologyPtr  topology,
-                         QueryCatalogServicePtr  queryCatalogService,
-                         GlobalQueryPlanPtr  globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
-                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
+    SerialStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                        TopologyPtr topology,
+                        QueryCatalogServicePtr queryCatalogService,
+                        GlobalQueryPlanPtr globalQueryPlan,
+                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                        Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
-    static std::shared_ptr<SerialStorageHandle> create(const GlobalExecutionPlanPtr&  globalExecutionPlan,
-                         const TopologyPtr&  topology,
-                         const QueryCatalogServicePtr&  queryCatalogService,
-                         const GlobalQueryPlanPtr&  globalQueryPlan,
-                         const Catalogs::Source::SourceCatalogPtr&  sourceCatalog,
-                         const Catalogs::UDF::UdfCatalogPtr&  udfCatalog);
+    static std::shared_ptr<SerialStorageHandle> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                       const TopologyPtr& topology,
+                                                       const QueryCatalogServicePtr& queryCatalogService,
+                                                       const GlobalQueryPlanPtr& globalQueryPlan,
+                                                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
      * @brief Obtain a mutable topology handle.
@@ -74,5 +74,5 @@ class SerialStorageHandle : public StorageHandle {
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
 };
-}
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_

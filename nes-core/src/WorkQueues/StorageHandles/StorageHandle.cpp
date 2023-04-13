@@ -16,13 +16,13 @@
 
 namespace NES {
 
-StorageHandle::StorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
-                                         TopologyPtr  topology,
-                                         QueryCatalogServicePtr  queryCatalogService,
-                                         GlobalQueryPlanPtr  globalQueryPlan,
-                                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
-                                         Catalogs::UDF::UdfCatalogPtr  udfCatalog)
+StorageHandle::StorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                             TopologyPtr topology,
+                             QueryCatalogServicePtr queryCatalogService,
+                             GlobalQueryPlanPtr globalQueryPlan,
+                             Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                             Catalogs::UDF::UdfCatalogPtr udfCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
-}
+}// namespace NES

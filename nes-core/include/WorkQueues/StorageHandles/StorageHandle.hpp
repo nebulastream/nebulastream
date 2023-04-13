@@ -37,7 +37,7 @@ using QueryCatalogServiceHandle = ResourceHandle<QueryCatalogService>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}
+}// namespace Catalogs::Source
 using SourceCatalogHandle = ResourceHandle<Catalogs::Source::SourceCatalog>;
 
 class GlobalExecutionPlan;
@@ -51,9 +51,8 @@ using GlobalQueryPlanHandle = ResourceHandle<GlobalQueryPlan>;
 namespace Catalogs::UDF {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
-}
+}// namespace Catalogs::UDF
 using UdfCatalogHandle = ResourceHandle<Catalogs::UDF::UdfCatalog>;
-
 
 class StorageHandle;
 using StorageHandlePtr = std::shared_ptr<StorageHandle>;
@@ -69,13 +68,12 @@ class StorageHandle {
      * @brief Constructs a new storage access handle.
      * @param topology
      */
-    StorageHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
-                         TopologyPtr  topology,
-                         QueryCatalogServicePtr  queryCatalogService,
-                         GlobalQueryPlanPtr  globalQueryPlan,
-                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
-                         Catalogs::UDF::UdfCatalogPtr  udfCatalog
-        );
+    StorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                  TopologyPtr topology,
+                  QueryCatalogServicePtr queryCatalogService,
+                  GlobalQueryPlanPtr globalQueryPlan,
+                  Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                  Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     virtual ~StorageHandle() = default;
 
@@ -125,5 +123,5 @@ class StorageHandle {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
-}
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_

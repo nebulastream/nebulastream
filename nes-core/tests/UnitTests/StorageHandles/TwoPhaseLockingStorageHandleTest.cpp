@@ -40,8 +40,12 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
-                                                                globalQueryPlan, sourceCatalog, udfCatalog);
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandle::create(globalExecutionPlan,
+                                                                  topology,
+                                                                  queryCatalogService,
+                                                                  globalQueryPlan,
+                                                                  sourceCatalog,
+                                                                  udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
     ASSERT_EQ(globalExecutionPlan.get(), twoPLAccessHandle->getGlobalExecutionPlanHandle().get());
@@ -62,22 +66,26 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
-                                                                         globalQueryPlan, sourceCatalog, udfCatalog);
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandle::create(globalExecutionPlan,
+                                                                  topology,
+                                                                  queryCatalogService,
+                                                                  globalQueryPlan,
+                                                                  sourceCatalog,
+                                                                  udfCatalog);
 
     //if a thread holds a handle to a resource, another thread should not be able to acquire a handle at the same time
     {
         //constructor acquires lock
         auto topologyHandle = twoPLAccessHandle->getTopologyHandle();
         auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-          ASSERT_THROW((twoPLAccessHandle->getTopologyHandle()), std::exception);
+            ASSERT_THROW((twoPLAccessHandle->getTopologyHandle()), std::exception);
         });
         thread->join();
         //destructor releases lock
     }
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle, &rootNode]() {
-      ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
-      ASSERT_EQ(twoPLAccessHandle->getTopologyHandle()->getRoot(), rootNode);
+        ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
+        ASSERT_EQ(twoPLAccessHandle->getTopologyHandle()->getRoot(), rootNode);
     });
     thread->join();
     ASSERT_EQ(twoPLAccessHandle->getTopologyHandle()->getRoot(), rootNode);
@@ -93,8 +101,12 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestCopyingHandle) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
-                                                                   globalQueryPlan, sourceCatalog, udfCatalog);
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandle::create(globalExecutionPlan,
+                                                                  topology,
+                                                                  queryCatalogService,
+                                                                  globalQueryPlan,
+                                                                  sourceCatalog,
+                                                                  udfCatalog);
 
     //if a thread holds a handle to a resource, another thread should not be able to acquire a handle at the same time
     {
@@ -110,14 +122,14 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestCopyingHandle) {
         }
         auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
             //cannot acquire resource because copy of handle still exists
-          ASSERT_THROW((twoPLAccessHandle->getTopologyHandle()), std::exception);
+            ASSERT_THROW((twoPLAccessHandle->getTopologyHandle()), std::exception);
         });
         thread->join();
         //copy of handle goes out of scope and releases lock
     }
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle, &rootNode]() {
-      ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
-      ASSERT_EQ(twoPLAccessHandle->getTopologyHandle()->getRoot(), rootNode);
+        ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
+        ASSERT_EQ(twoPLAccessHandle->getTopologyHandle()->getRoot(), rootNode);
     });
     thread->join();
     ASSERT_EQ(twoPLAccessHandle->getTopologyHandle()->getRoot(), rootNode);
@@ -132,8 +144,12 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestConcurrentAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle  = TwoPhaseLockingStorageHandle::create(globalExecutionPlan, topology, queryCatalogService,
-                                                                         globalQueryPlan, sourceCatalog, udfCatalog);
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandle::create(globalExecutionPlan,
+                                                                  topology,
+                                                                  queryCatalogService,
+                                                                  globalQueryPlan,
+                                                                  sourceCatalog,
+                                                                  udfCatalog);
 
     //test with multiple threads, that other threads will not be able to acquire a handle while another thread holds it
 
@@ -141,57 +157,57 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestConcurrentAccess) {
         //constructor acquires lock
         auto globalExecutionPlanHandle = twoPLAccessHandle->getGlobalExecutionPlanHandle();
         auto thread1 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-          ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
-          auto topologyHandle = twoPLAccessHandle->getTopologyHandle();
-          auto thread2 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
             ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
-            ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
-            auto queryCatalogHandle = twoPLAccessHandle->getQueryCatalogHandle();
-            auto thread3 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-              ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
-              ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
-              ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
-              auto globalQueryPlanHandle = twoPLAccessHandle->getGlobalQueryPlanHandle();
-              auto thread4 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+            auto topologyHandle = twoPLAccessHandle->getTopologyHandle();
+            auto thread2 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
                 ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
                 ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
-                ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
-                ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
-                auto sourceCatalogHandle = twoPLAccessHandle->getSourceCatalogHandle();
-                auto thread5 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-                  ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
-                  ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
-                  ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
-                  ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
-                  ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(), std::exception);
-                  auto udfCatalogHandle = twoPLAccessHandle->getUdfCatalogHandle();
-                  auto thread6 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+                auto queryCatalogHandle = twoPLAccessHandle->getQueryCatalogHandle();
+                auto thread3 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
                     ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
                     ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
                     ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
-                    ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
-                    ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(), std::exception);
-                    ASSERT_THROW(twoPLAccessHandle->getUdfCatalogHandle(), std::exception);
-                  });
-                  thread6->join();
+                    auto globalQueryPlanHandle = twoPLAccessHandle->getGlobalQueryPlanHandle();
+                    auto thread4 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+                        ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
+                        ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
+                        ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
+                        ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
+                        auto sourceCatalogHandle = twoPLAccessHandle->getSourceCatalogHandle();
+                        auto thread5 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+                            ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
+                            ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
+                            ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
+                            ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
+                            ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(), std::exception);
+                            auto udfCatalogHandle = twoPLAccessHandle->getUdfCatalogHandle();
+                            auto thread6 = std::make_shared<std::thread>([&twoPLAccessHandle]() {
+                                ASSERT_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()), std::exception);
+                                ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(), std::exception);
+                                ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(), std::exception);
+                                ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(), std::exception);
+                                ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(), std::exception);
+                                ASSERT_THROW(twoPLAccessHandle->getUdfCatalogHandle(), std::exception);
+                            });
+                            thread6->join();
+                        });
+                        thread5->join();
+                        ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+                    });
+                    thread4->join();
+                    ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+                    ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
                 });
-                thread5->join();
+                thread3->join();
                 ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
-              });
-              thread4->join();
-              ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
-              ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+                ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+                ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
             });
-            thread3->join();
+            thread2->join();
             ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
             ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
             ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
-          });
-          thread2->join();
-          ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
-          ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
-          ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
-          ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
+            ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
         });
         thread1->join();
         ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
@@ -201,14 +217,14 @@ TEST_F(TwoPhaseLockingStorageHandleTest, TestConcurrentAccess) {
         ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
     }
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-      ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
-      ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
-      ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
-      ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
-      ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
-      ASSERT_NO_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()));
+        ASSERT_NO_THROW(twoPLAccessHandle->getUdfCatalogHandle());
+        ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle());
+        ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle());
+        ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle());
+        ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
+        ASSERT_NO_THROW((twoPLAccessHandle->getGlobalExecutionPlanHandle()));
     });
     thread->join();
 }
 
-}
+}// namespace NES
