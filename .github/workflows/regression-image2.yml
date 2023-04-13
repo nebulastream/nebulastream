@@ -11,5 +11,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: sleep 15 && docker kill $(docker ps -q)
       - run: docker compose -f ./docker/regressionImage/docker-compose.yml up
+      - run: sleep 15 && docker kill $(docker ps -q)
