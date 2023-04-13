@@ -37,7 +37,8 @@ OperationPtr IfOperation::getBooleanValue() { return booleanValue.lock(); }
 void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
 
 std::string IfOperation::toString() {
-    std::string baseString = "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
+    std::string baseString =
+        "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
     if (trueBlockInvocation.getArguments().size() > 0) {
         baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
         for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {

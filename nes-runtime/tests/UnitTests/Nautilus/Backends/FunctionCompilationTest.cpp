@@ -76,7 +76,7 @@ void voidException() { NES_THROW_RUNTIME_ERROR("An expected exception"); };
 void voidExceptionFunction() { FunctionCall<>("voidException", voidException); }
 
 TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
-    if(this->GetParam() != "MLIR"){
+    if (this->GetParam() != "MLIR") {
         // Only MLIR supports exceptions
         GTEST_SKIP();
     }

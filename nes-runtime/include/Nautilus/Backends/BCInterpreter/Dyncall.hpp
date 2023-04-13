@@ -18,7 +18,7 @@
 #include <cinttypes>
 #include <cstdint>
 
-typedef struct DCCallVM_    DCCallVM;
+typedef struct DCCallVM_ DCCallVM;
 namespace NES::Nautilus::Backends::BC {
 
 /**
