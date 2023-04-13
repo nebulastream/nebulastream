@@ -25,8 +25,6 @@
 // TODO Change this to general class
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
-// TODO check if other version needed
-#include <filesystem>
 
 namespace NES::Runtime::Execution::Operators {
 
