@@ -32,7 +32,7 @@ queryCompiler:
 physicalSources:
   - logicalSourceName: wdn_stream
     physicalSourceName: wdn_worker_1
-    type: MQTTSource
+    type: MQTT_SOURCE
     configuration:
             url: ws://172.32.0.11:9001
             clientId: workerClient1
