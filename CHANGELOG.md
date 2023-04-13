@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.49](https://github.com/nebulastream/nebulastream/tree/v0.5.49) (2023-04-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.48...v0.5.49)
+
+**Implemented enhancements:**
+
+- \[TASK\] create new Coordinator AbstractRequest and StorageAccessHandle classes [\#3601](https://github.com/nebulastream/nebulastream/issues/3601)
+
 ## [v0.5.48](https://github.com/nebulastream/nebulastream/tree/v0.5.48) (2023-04-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.47...v0.5.48)
