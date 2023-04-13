@@ -90,7 +90,7 @@ TEST(UtilFunctionTest, mergeTimers) {
     EXPECT_NEAR(timer1.getRuntime(), 2000000000, 100000000);
     EXPECT_EQ(snapshots[0].name, "testComponent1_test1");
     EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 50000000);
-    EXPECT_EQ(snapshots[1].name , "testComponent1_testComponent2");
+    EXPECT_EQ(snapshots[1].name, "testComponent1_testComponent2");
     EXPECT_NEAR(snapshots[1].getRuntime(), 1000000000, 50000000);
     EXPECT_EQ(snapshots[1].children[0].name, "testComponent2_test2");
     EXPECT_NEAR(snapshots[1].children[0].getRuntime(), 1000000000, 50000000);

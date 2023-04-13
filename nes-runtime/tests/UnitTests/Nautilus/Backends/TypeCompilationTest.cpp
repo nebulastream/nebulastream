@@ -256,7 +256,7 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
     });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<uint32_t , void*>("execute");
+    auto function = engine->getInvocableMember<uint32_t, void*>("execute");
     ASSERT_EQ(function(listRef.get()), 4);
 }
 

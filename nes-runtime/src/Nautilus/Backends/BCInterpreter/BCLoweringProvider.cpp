@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
@@ -365,7 +365,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::f: bc = ByteCode::LOAD_f; break;
         case Type::d: bc = ByteCode::LOAD_d; break;
         case Type::ptr: bc = ByteCode::LOAD_i64; break;
-        case Type::b: bc = ByteCode::LOAD_b; break ;
+        case Type::b: bc = ByteCode::LOAD_b; break;
         default: {
             NES_NOT_IMPLEMENTED();
         }
@@ -394,7 +394,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case Type::d: bc = ByteCode::STORE_d; break;
         case Type::f: bc = ByteCode::STORE_f; break;
         case Type::ptr: bc = ByteCode::STORE_i64; break;
-        case Type::b: bc = ByteCode::STORE_b; break ;
+        case Type::b: bc = ByteCode::STORE_b; break;
         default: {
             NES_NOT_IMPLEMENTED();
         }
@@ -593,10 +593,9 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     }
 }
 
-void BCLoweringProvider::LoweringContext::processDynamicCall(
-    const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
-    short block,
-    RegisterFrame& frame) {
+void BCLoweringProvider::LoweringContext::processDynamicCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
+                                                             short block,
+                                                             RegisterFrame& frame) {
     auto& code = program.blocks[block].code;
     NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
@@ -646,7 +645,7 @@ void BCLoweringProvider::LoweringContext::processDynamicCall(
     }
 
     auto funcInfoRegister = registerProvider.allocRegister();
-    defaultRegisterFile[funcInfoRegister] = (int64_t)  opt->getFunctionPtr();
+    defaultRegisterFile[funcInfoRegister] = (int64_t) opt->getFunctionPtr();
 
     if (!opt->getStamp()->isVoid()) {
         auto resultRegister = getResultRegister(opt, frame);
@@ -657,10 +656,9 @@ void BCLoweringProvider::LoweringContext::processDynamicCall(
     }
 }
 
-bool BCLoweringProvider::LoweringContext::processNativeCall(
-    const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
-    short block,
-    RegisterFrame& frame) {
+bool BCLoweringProvider::LoweringContext::processNativeCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt,
+                                                            short block,
+                                                            RegisterFrame& frame) {
 
     // TODO the following code is very bad and manually checks function signatures. Type to come up with something more generic.
     NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())

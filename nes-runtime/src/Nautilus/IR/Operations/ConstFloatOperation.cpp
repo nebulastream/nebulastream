@@ -26,6 +26,6 @@ ConstFloatOperation::ConstFloatOperation(OperationIdentifier identifier, double 
 double ConstFloatOperation::getConstantFloatValue() { return constantValue; }
 bool ConstFloatOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
 
-std::string ConstFloatOperation::toString()  { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstFloatOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
 
 }// namespace NES::Nautilus::IR::Operations

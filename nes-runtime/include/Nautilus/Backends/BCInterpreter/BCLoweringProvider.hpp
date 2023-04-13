@@ -93,7 +93,8 @@ class BCLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::NegateOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::CastOperation>& opt, short block, RegisterFrame& frame);
         bool processNativeCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
-        void processDynamicCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
+        void
+        processDynamicCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
         short getResultRegister(const std::shared_ptr<IR::Operations::Operation>& opt, RegisterFrame& frame);
     };
 };
