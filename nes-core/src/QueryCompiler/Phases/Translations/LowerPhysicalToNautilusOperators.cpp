@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp"
-#include "Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp"
+
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
@@ -30,6 +29,9 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUdf.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
@@ -59,6 +61,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -180,6 +183,36 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
         parentOperator->setChild(mapJavaUdf);
         return mapJavaUdf;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapJavaUdfOperator>()) {
+        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapJavaUdfOperator>();
+        // We can't copy the descriptor because it is in nes-core and the PhysicalFlatMapJavaUdfOperator is in nes-runtime
+        // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
+        auto flatMapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
+        auto className = flatMapJavaUdfDescriptor->getClassName();
+        auto methodName = flatMapJavaUdfDescriptor->getMethodName();
+        auto byteCodeList = flatMapJavaUdfDescriptor->getByteCodeList();
+        auto inputClassName = flatMapJavaUdfDescriptor->getInputClassName();
+        auto outputClassName = flatMapJavaUdfDescriptor->getOutputClassName();
+        auto inputSchema = flatMapJavaUdfDescriptor->getInputSchema();
+        auto outputSchema = flatMapJavaUdfDescriptor->getOutputSchema();
+        auto serializedInstance = flatMapJavaUdfDescriptor->getSerializedInstance();
+        auto returnType = flatMapJavaUdfDescriptor->getReturnType();
+
+        auto handler = std::make_shared<Runtime::Execution::Operators::MapJavaUdfOperatorHandler>(className,
+                                                                                                  methodName,
+                                                                                                  inputClassName,
+                                                                                                  outputClassName,
+                                                                                                  byteCodeList,
+                                                                                                  serializedInstance,
+                                                                                                  inputSchema,
+                                                                                                  outputSchema,
+                                                                                                  std::nullopt);
+        operatorHandlers.push_back(handler);
+        auto indexForThisHandler = operatorHandlers.size() - 1;
+
+        auto flatMapJavaUdf = lowerFlatMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
+        parentOperator->setChild(flatMapJavaUdf);
+        return flatMapJavaUdf;
 #endif// ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
@@ -538,6 +571,18 @@ LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOp
     auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
 
     return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(handlerIndex, inputSchema, outputSchema);
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerFlatMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                                  uint64_t handlerIndex) {
+    auto flatMapOperator = operatorPtr->as<PhysicalOperators::PhysicalFlatMapJavaUdfOperator>();
+    auto mapJavaUdfDescriptor = flatMapOperator->getJavaUdfDescriptor();
+    auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
+    auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+
+    return std::make_shared<Runtime::Execution::Operators::FlatMapJavaUdf>(handlerIndex, inputSchema, outputSchema);
 }
 #endif// ENABLE_JNI
 

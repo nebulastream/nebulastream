@@ -303,8 +303,14 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
 }
 
 Query& Query::mapJavaUdf(const Catalogs::UDF::JavaUdfDescriptorPtr descriptor) {
-    NES_DEBUG2("Query: add map operator to query");
+    NES_DEBUG2("Query: add map java udf operator to query");
     this->queryPlan = QueryPlanBuilder::addMapJavaUdf(descriptor, this->queryPlan);
+    return *this;
+}
+
+Query& Query::flatMapJavaUdf(const Catalogs::UDF::JavaUdfDescriptorPtr descriptor) {
+    NES_DEBUG2("Query: add flat map java udf operator to query");
+    this->queryPlan = QueryPlanBuilder::addFlatMapJavaUdf(descriptor, this->queryPlan);
     return *this;
 }
 

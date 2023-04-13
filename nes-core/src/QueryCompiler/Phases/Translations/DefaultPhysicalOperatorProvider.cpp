@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -53,6 +54,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -193,6 +195,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerCEPIterationOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
         lowerJavaUdfMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<FlatMapJavaUdfLogicalOperatorNode>()) {
+        lowerJavaUdfFlatMapOperator(queryPlan, operatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -259,6 +263,14 @@ void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr
     auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUdfOperator::create(mapJavaUdfOperator->getInputSchema(),
                                                                                      mapJavaUdfOperator->getOutputSchema(),
                                                                                      mapJavaUdfOperator->getJavaUdfDescriptor());
+    operatorNode->replace(physicalMapOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerJavaUdfFlatMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto flatMapJavaUdfOperator = operatorNode->as<FlatMapJavaUdfLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapJavaUdfOperator::create(flatMapJavaUdfOperator->getInputSchema(),
+                                                                                     flatMapJavaUdfOperator->getOutputSchema(),
+                                                                                     flatMapJavaUdfOperator->getJavaUdfDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
 
