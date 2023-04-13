@@ -8,8 +8,8 @@ logLevel: LOG_ERROR
 ###
 ### Network configuration
 ###
-localWorkerIp: 172.31.0.231
-coordinatorIp: 172.31.0.21
+localWorkerIp: 172.32.0.231
+coordinatorIp: 172.32.0.21
 
 # Use new windowing strategy
 queryCompiler:
@@ -34,7 +34,7 @@ physicalSources:
     physicalSourceName: wdn_worker_1
     type: MQTTSource
     configuration:
-            url: ws://172.31.0.11:9001
+            url: ws://172.32.0.11:9001
             clientId: workerClient1
             userName: worker1
             topic: /ELEGANT/lora/worker/1
