@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 
+#include <Execution/Aggregation/Util/HyperLogLog.hpp>
 #include <cstdint>
 #include <numeric>
 namespace NES::Runtime::Execution::Aggregation {
@@ -66,16 +67,17 @@ struct MaxAggregationValue : AggregationValue {
 };
 
 /**
- * Class for distinct aggregation Value, maintains the approximate distinct value of all occurred tuples
+ * Class for HyperLogLog Algorithm, maintains the approximate distinct count value of all occurred tuples
  */
-struct DistinctAggregationValue : AggregationValue
-    int64_t count = 0;
+struct HyperLogLogDistinctCountApproximationValue : AggregationValue {
+    //TODO: #3889 for approximation we require some flexibility to define the size, e.g., appr. window count, etc. to get the best possible result
+    hll::HyperLogLog hyperLogLog = hll::HyperLogLog(10);
 };
 
 /**
  * Class for quantile aggregation Value, maintains the quantile value of all occurred tuples
  */
-struct QuantileAggregationValue : AggregationValue
+struct QuantileAggregationValue : AggregationValue {
     int64_t count = 0;
 };
 

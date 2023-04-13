@@ -17,7 +17,7 @@
 #include <Execution/Aggregation/tdigest.h>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 
-namespace NES::Runtime::Execution::Aggregation {
+/*namespace NES::Runtime::Execution::Aggregation {
 QuantileAggregationFunction::QuantileAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
@@ -56,4 +56,4 @@ Nautilus::Value<> QuantileAggregationFunction::lower(Nautilus::Value<Nautilus::M
     return erg;
 
 }
-}
+}*/

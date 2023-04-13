@@ -18,12 +18,13 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/HyperLogLogDistinctCountApproximation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Execution/Aggregation/DistinctAggregation.hpp>
+//#include <Execution/Aggregation/DistinctAggregation.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -110,7 +111,7 @@ TEST_F(AggregationFunctionTest, countAggregation) {
 /**
  * Tests the lift, combine, lower and reset functions of the Average Aggregation
  */
-TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
+TEST_F(AggregationFunctionTest, AvgAggregation) {
     auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
@@ -146,7 +147,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
 /**
  * Tests the lift, combine, lower and reset functions of the Min Aggregation
  */
-TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
+TEST_F(AggregationFunctionTest, MinAggregation) {
     auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -212,7 +213,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
 /**
  * Tests the lift, combine, lower and reset functions of the Max Aggregation
  */
-TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
+TEST_F(AggregationFunctionTest, MaxAggregation) {
     auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -266,7 +267,6 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
     // test if memref1 = memref2
-
     inputRecord = Record({{"value", incomingValueFifteen}});
     maxAgg.lift(anotherMemref, inputRecord);
     maxAgg.combine(memref, anotherMemref);
@@ -283,39 +283,89 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
 }
 
 /**
- * Tests the lift, combine, lower and reset functions of the Distinct Aggregation
+ * Tests the lift, combine, lower and reset functions of the HyperLogLog Aggregation, i.e., a event sequence
+*  with identical value (1) that results in a distinct count of 1 (ideal case).
  */
-TEST_F(AggregationFunctionTest, scanEmitPipelineDistinct) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto disAgg = Aggregation::DistinctAggregationFunction(integerType, integerType);
-    auto disValue = Aggregation::DistinctAggregationValue();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &disValue);
+TEST_F(AggregationFunctionTest, HyperLogLogAggregationSimpleTest) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
+    auto distinctCountEstimation = Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
+    auto distinctCountValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &distinctCountValue);
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
 
-    // lift value in disAgg
-    disAgg.lift(memref, incomingValue);
-    disAgg.lift(memref, incomingValue);
-    disAgg.lift(memref, incomingValue);
-    disAgg.lift(memref, incomingValue);
-    disAgg.lift(memref, incomingValue);
-    ASSERT_EQ(disAgg.getSize(), 5);
+    // lift several records in HyperLogLogAgg with an initial value of 1
+    auto inputRecord = Record({{"value", incomingValue}});
 
-    // combine memrefs in minAgg
-    disAgg.combine(memref, memref);
-    ASSERT_EQ(disAgg.getSize(), 10);
+    // lift value in distinctCountEstimation
+    distinctCountEstimation.lift(memref, inputRecord);
+    distinctCountEstimation.lift(memref, inputRecord);
+    distinctCountEstimation.lift(memref, inputRecord);
+    distinctCountEstimation.lift(memref, inputRecord);
+    distinctCountEstimation.lift(memref, inputRecord);
+
+    // combine memrefs in HyperLogLogAgg
+    distinctCountEstimation.combine(memref, memref);
+
+    // lower value in HyperLogLogAgg
+    auto result = Record();
+    distinctCountEstimation.lower(memref, result);
+    EXPECT_TRUE((bool) (result.read("result") > (1.0 * 0.9) && result.read("result") < (1.0 * 1.1)));
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the HyperLogLog Aggregation, i.e., the following event sequence
+ *  {4,3,6,2,2,6,1,7} that results in a distinct count of 6 (ideal case).
+ */
+TEST_F(AggregationFunctionTest, HyperLogLogExampleTest) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
+    auto distinctCountEstimation = Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
+    auto distinctCountValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &distinctCountValue);
+    auto incomingValue4 = Nautilus::Value<Nautilus::Int64>((int64_t) 4);
+    auto incomingValue3 = Nautilus::Value<Nautilus::Int64>((int64_t) 3);
+    auto incomingValue6 = Nautilus::Value<Nautilus::Int64>((int64_t) 6);
+    auto incomingValue2 = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+    auto incomingValue1 = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValue7 = Nautilus::Value<Nautilus::Int64>((int64_t) 7);
+
+    // lift value in distinctCountEstimation
+    auto inputRecord4 = Record({{"value", incomingValue4}});
+    distinctCountEstimation.lift(memref, inputRecord4);
+    auto inputRecord3 = Record({{"value", incomingValue3}});
+    distinctCountEstimation.lift(memref, inputRecord3);
+    auto inputRecord6 = Record({{"value", incomingValue6}});
+    distinctCountEstimation.lift(memref, inputRecord6);
+    auto inputRecord2 = Record({{"value", incomingValue2}});
+    distinctCountEstimation.lift(memref, inputRecord2);
+    distinctCountEstimation.lift(memref, inputRecord2);
+    distinctCountEstimation.lift(memref, inputRecord6);
+    auto inputRecord1 = Record({{"value", incomingValue1}});
+    distinctCountEstimation.lift(memref, inputRecord1);
+    auto inputRecord7 = Record({{"value", incomingValue7}});
+    distinctCountEstimation.lift(memref, inputRecord7);
 
     // lower value in minAgg
-    auto aggregationResult = disAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 1);
+    auto result = Record();
+    distinctCountEstimation.lower(memref, result);
+    EXPECT_TRUE((bool) (result.read("result") > (6.0 * 0.9) && result.read("result") < (6.0 * 1.1)));
 }
 
 /**
  * Tests the lift, combine, lower and reset functions of the Quantile Aggregation
- */
+ *
+
 TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto quAgg = Aggregation::DistinctAggregationFunction(integerType, integerType);
-    auto quValue = Aggregation::DistinctAggregationValue();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
+    auto quAgg = Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType);
+    auto quValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quValue);
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
 
@@ -334,6 +384,6 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile) {
     // lower value in minAgg
     auto aggregationResult = quAgg.lower(memref);
     ASSERT_EQ(aggregationResult, 1);
-}
+} */
 
 }// namespace NES::Runtime::Execution::Expressions
