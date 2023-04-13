@@ -149,7 +149,7 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder(), true /*use nautilus*/)
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
                                   .validate()
@@ -187,6 +187,47 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     }
 }
 
+TEST_F(MLModelDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
+
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
+
+    string query = R"(Query::from("test").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
+                        {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
+                        {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
+                        .filter(Attribute("iris0") > 0))";
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder(), true /*use nautilus*/)
+                           .addLogicalSource("test", defaultLogicalSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("test") //2
+                           .attachWorkerWithMemorySourceToCoordinator("test");//3
+
+    for (int i = 0; i < 10; ++i) {
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+    }
+    testHarness.validate().setupTopology();
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+    struct Output {
+        uint32_t id;
+        uint32_t value;
+        float_t iris0;
+        float_t iris1;
+        float_t iris2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "BottomUp", "NONE", "IN_MEMORY");
+    EXPECT_EQ(actualOutput.size(), 20);
+}
+
 TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 
     auto irisSchema = std::get<1>(GetParam());
@@ -201,7 +242,7 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder(), true /*use nautilus*/)
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
                                   .validate()
