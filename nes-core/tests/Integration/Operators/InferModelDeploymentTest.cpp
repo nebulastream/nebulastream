@@ -37,7 +37,7 @@ struct Output {
     bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
 };
 
-class MLModelDeploymentTest
+class InferModelDeploymentTest
     : public Testing::NESBaseTest,
       public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
   public:
@@ -121,7 +121,7 @@ class MLModelDeploymentTest
  *
  * Disabled because it is not clear what this test tests. There is no code path that supports different data types in the input values. The results are also non-deterministic.
  */
-TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
+TEST_F(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     struct IrisData {
         uint64_t id;
         float f1;
@@ -187,7 +187,7 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     }
 }
 
-TEST_F(MLModelDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
+TEST_F(InferModelDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
     struct Test {
         uint32_t id;
         uint32_t value;
@@ -228,7 +228,7 @@ TEST_F(MLModelDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
     EXPECT_EQ(actualOutput.size(), 20);
 }
 
-TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
+TEST_P(InferModelDeploymentTest, testSimpleMLModelDeployment) {
 
     auto irisSchema = std::get<1>(GetParam());
 
@@ -262,11 +262,11 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 }
 
 INSTANTIATE_TEST_CASE_P(TestInputs,
-                        MLModelDeploymentTest,
-                        ::testing::Values(MLModelDeploymentTest::createBooleanTestData(),
-                                          MLModelDeploymentTest::createFloatTestData(),
-                                          MLModelDeploymentTest::createIntTestData()),
-                        [](const testing::TestParamInfo<MLModelDeploymentTest::ParamType>& info) {
+                        InferModelDeploymentTest,
+                        ::testing::Values(InferModelDeploymentTest::createBooleanTestData(),
+                                          InferModelDeploymentTest::createFloatTestData(),
+                                          InferModelDeploymentTest::createIntTestData()),
+                        [](const testing::TestParamInfo<InferModelDeploymentTest::ParamType>& info) {
                             std::string name = std::get<0>(info.param);
                             return name;
                         });

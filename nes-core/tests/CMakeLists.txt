@@ -576,8 +576,8 @@ add_dependencies(tcp-source-integration-test nesCoordinator nesWorker)
 add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp")
 
 if (NES_USE_TF)
-### MLModelDeploymentTest ###
-add_nes_integration_test(ml-model-deployment-test "Integration/Operators/MLModelDeploymentTest.cpp")
+### InferModelDeploymentTest ###
+add_nes_integration_test(infer-model-deployment-test "Integration/Operators/InferModelDeploymentTest.cpp")
 endif()
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
