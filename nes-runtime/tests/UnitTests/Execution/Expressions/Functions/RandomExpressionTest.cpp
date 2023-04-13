@@ -129,8 +129,5 @@ TEST_F(RandomExpressionTest, evaluateSinExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<RandomExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
-<<<<<<< HEAD
+
 }// namespace NES::Runtime::Execution::Expressions
-=======
-}
->>>>>>> 3050_Random_V1.0
