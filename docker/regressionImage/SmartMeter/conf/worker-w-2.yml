@@ -8,7 +8,7 @@ logLevel: LOG_ERROR
 ###
 ### Network configuration
 ###
-localWorkerIp: 172.31.0.24
+localWorkerIp: 172.31.0.241
 coordinatorIp: coordinator
 
 # Use new windowing strategy

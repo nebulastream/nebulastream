@@ -22,8 +22,8 @@ optimizer:
 ###
 ### Network configuration
 ###
-restIp: 172.31.0.2
-coordinatorIp: 172.31.0.2
+restIp: 172.31.0.21
+coordinatorIp: 172.31.0.21
 restPort: 8081
 #workerConfigPath: /demo/conf/worker-w-1-coordinator.yml
 
