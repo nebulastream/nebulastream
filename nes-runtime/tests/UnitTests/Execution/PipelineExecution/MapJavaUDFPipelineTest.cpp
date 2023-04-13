@@ -14,12 +14,13 @@
 
 #ifdef ENABLE_JNI
 
-#include "Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp"
-#include "Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp"
+
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>

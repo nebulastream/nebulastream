@@ -13,8 +13,8 @@
 */
 #ifdef ENABLE_JNI
 
-#include "Execution/Operators/Relational/JavaUDF/JVMContext.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <jni.h>
 #include <mutex>
 
