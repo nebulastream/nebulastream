@@ -84,8 +84,6 @@ void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
     auto windowEnd = windowStart + windowSize - 1;
     NES_DEBUG("StreamJoinOperatorHandler: create a new window for the stream join [" << windowStart << ", " << windowEnd << "]");
 
-    NES_DEBUG("StreamJoinOperatorHandler: create a new window for the stream join [" << windowStart << ", " << windowEnd << "]");
-
     streamJoinWindows.emplace_back(numberOfWorkerThreads,
                                    counterFinishedBuildingStart,
                                    counterFinishedSinkStart,
