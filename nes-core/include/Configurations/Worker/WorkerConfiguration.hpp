@@ -224,9 +224,9 @@ class WorkerConfiguration : public BaseConfiguration {
 
     UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
 
-    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 512, "Number of buffers to produce"};
+    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1000, "Number of buffers to produce"};
 
-    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 1000, "Source gathering interval"};
+    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 100, "Source gathering interval"};
 
     /**
      * @brief Number of buffers per epoch

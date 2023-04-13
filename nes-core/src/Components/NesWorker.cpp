@@ -201,7 +201,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             records[u].timestamp2 = value.count();
         }
     };
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), workerConfig->numberOfBuffersToProduce, workerConfig->sourceGatheringInterval, GatheringMode::INGESTION_RATE_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), workerConfig->numberOfBuffersToProduce, workerConfig->sourceGatheringInterval, GatheringMode::INTERVAL_MODE);
     switch(workerConfig->lambdaSource) {
         case 1: {
             auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
