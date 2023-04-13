@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -94,22 +95,23 @@ TEST_F(InferModelOperatorTest, testInferModelForBoolInput) {
 
     //Assertion
     std::vector<Output> expectedOutput{{0.43428239, 0.31287873, 0.25283894}, {0.43428239, 0.31287873, 0.25283894}};
+    auto delta = 0.0000001;
     EXPECT_EQ(collector->records.size(), 2);
     EXPECT_EQ(collector->records[0].read(f1), firstRecord.read(f1));
     EXPECT_EQ(collector->records[0].read(f2), firstRecord.read(f2));
     EXPECT_EQ(collector->records[0].read(f3), firstRecord.read(f3));
     EXPECT_EQ(collector->records[0].read(f4), firstRecord.read(f4));
-    EXPECT_EQ(collector->records[0].read(iris0), expectedOutput.at(0).iris0);
-    EXPECT_EQ(collector->records[0].read(iris1), expectedOutput.at(0).iris1);
-    EXPECT_EQ(collector->records[0].read(iris2), expectedOutput.at(0).iris2);
+    EXPECT_NEAR(collector->records[0].read(iris0).as<Float>()->getValue(), expectedOutput[0].iris0, delta);
+    EXPECT_NEAR(collector->records[0].read(iris1).as<Float>()->getValue(), expectedOutput[0].iris1, delta);
+    EXPECT_NEAR(collector->records[0].read(iris2).as<Float>()->getValue(), expectedOutput[0].iris2, delta);
 
     EXPECT_EQ(collector->records[1].read(f1), secondRecord.read(f1));
     EXPECT_EQ(collector->records[1].read(f2), secondRecord.read(f2));
     EXPECT_EQ(collector->records[1].read(f3), secondRecord.read(f3));
     EXPECT_EQ(collector->records[1].read(f4), secondRecord.read(f4));
-    EXPECT_EQ(collector->records[1].read(iris0), expectedOutput.at(1).iris0);
-    EXPECT_EQ(collector->records[1].read(iris1), expectedOutput.at(1).iris1);
-    EXPECT_EQ(collector->records[1].read(iris2), expectedOutput.at(1).iris2);
+    EXPECT_NEAR(collector->records[1].read(iris0).as<Float>()->getValue(), expectedOutput[1].iris0, delta);
+    EXPECT_NEAR(collector->records[1].read(iris1).as<Float>()->getValue(), expectedOutput[1].iris1, delta);
+    EXPECT_NEAR(collector->records[1].read(iris2).as<Float>()->getValue(), expectedOutput[1].iris2, delta);
 
     inferModelOperator->terminate(ctx);
 }
@@ -176,38 +178,39 @@ TEST_F(InferModelOperatorTest, testInferModelForFloatInput) {
                                        {0.82480621, 0.16215269, 0.0130410725},
                                        {0.84584343, 0.14335836, 0.010798273},
                                        {0.81788188, 0.16869366, 0.013424426}};
+    auto delta = 0.0000001;
     EXPECT_EQ(collector->records.size(), 4);
     EXPECT_EQ(collector->records[0].read(f1), firstRecord.read(f1));
     EXPECT_EQ(collector->records[0].read(f2), firstRecord.read(f2));
     EXPECT_EQ(collector->records[0].read(f3), firstRecord.read(f3));
     EXPECT_EQ(collector->records[0].read(f4), firstRecord.read(f4));
-    EXPECT_EQ(collector->records[0].read(iris0), expectedOutput.at(0).iris0);
-    EXPECT_EQ(collector->records[0].read(iris1), expectedOutput.at(0).iris1);
-    EXPECT_EQ(collector->records[0].read(iris2), expectedOutput.at(0).iris2);
+    EXPECT_NEAR(collector->records[0].read(iris0).as<Float>()->getValue(), expectedOutput[0].iris0, delta);
+    EXPECT_NEAR(collector->records[0].read(iris1).as<Float>()->getValue(), expectedOutput[0].iris1, delta);
+    EXPECT_NEAR(collector->records[0].read(iris2).as<Float>()->getValue(), expectedOutput[0].iris2, delta);
 
     EXPECT_EQ(collector->records[1].read(f1), secondRecord.read(f1));
     EXPECT_EQ(collector->records[1].read(f2), secondRecord.read(f2));
     EXPECT_EQ(collector->records[1].read(f3), secondRecord.read(f3));
     EXPECT_EQ(collector->records[1].read(f4), secondRecord.read(f4));
-    EXPECT_EQ(collector->records[1].read(iris0), expectedOutput.at(1).iris0);
-    EXPECT_EQ(collector->records[1].read(iris1), expectedOutput.at(1).iris1);
-    EXPECT_EQ(collector->records[1].read(iris2), expectedOutput.at(1).iris2);
+    EXPECT_NEAR(collector->records[1].read(iris0).as<Float>()->getValue(), expectedOutput[1].iris0, delta);
+    EXPECT_NEAR(collector->records[1].read(iris1).as<Float>()->getValue(), expectedOutput[1].iris1, delta);
+    EXPECT_NEAR(collector->records[1].read(iris2).as<Float>()->getValue(), expectedOutput[1].iris2, delta);
 
     EXPECT_EQ(collector->records[2].read(f1), thirdRecord.read(f1));
     EXPECT_EQ(collector->records[2].read(f2), thirdRecord.read(f2));
     EXPECT_EQ(collector->records[2].read(f3), thirdRecord.read(f3));
     EXPECT_EQ(collector->records[2].read(f4), thirdRecord.read(f4));
-    EXPECT_EQ(collector->records[2].read(iris0), expectedOutput.at(2).iris0);
-    EXPECT_EQ(collector->records[2].read(iris1), expectedOutput.at(2).iris1);
-    EXPECT_EQ(collector->records[2].read(iris2), expectedOutput.at(2).iris2);
+    EXPECT_NEAR(collector->records[2].read(iris0).as<Float>()->getValue(), expectedOutput[2].iris0, delta);
+    EXPECT_NEAR(collector->records[2].read(iris1).as<Float>()->getValue(), expectedOutput[2].iris1, delta);
+    EXPECT_NEAR(collector->records[2].read(iris2).as<Float>()->getValue(), expectedOutput[2].iris2, delta);
 
     EXPECT_EQ(collector->records[3].read(f1), fourthRecord.read(f1));
     EXPECT_EQ(collector->records[3].read(f2), fourthRecord.read(f2));
     EXPECT_EQ(collector->records[3].read(f3), fourthRecord.read(f3));
     EXPECT_EQ(collector->records[3].read(f4), fourthRecord.read(f4));
-    EXPECT_EQ(collector->records[3].read(iris0), expectedOutput.at(3).iris0);
-    EXPECT_EQ(collector->records[3].read(iris1), expectedOutput.at(3).iris1);
-    EXPECT_EQ(collector->records[3].read(iris2), expectedOutput.at(3).iris2);
+    EXPECT_NEAR(collector->records[3].read(iris0).as<Float>()->getValue(), expectedOutput[3].iris0, delta);
+    EXPECT_NEAR(collector->records[3].read(iris1).as<Float>()->getValue(), expectedOutput[3].iris1, delta);
+    EXPECT_NEAR(collector->records[3].read(iris2).as<Float>()->getValue(), expectedOutput[3].iris2, delta);
 
     inferModelOperator->terminate(ctx);
 }
@@ -262,17 +265,17 @@ TEST_F(InferModelOperatorTest, testInferModelForIntInput) {
     EXPECT_EQ(collector->records[0].read(f2), firstRecord.read(f2));
     EXPECT_EQ(collector->records[0].read(f3), firstRecord.read(f3));
     EXPECT_EQ(collector->records[0].read(f4), firstRecord.read(f4));
-    EXPECT_EQ(collector->records[0].read(iris0), expectedOutput.at(0).iris0);
-    EXPECT_EQ(collector->records[0].read(iris1), expectedOutput.at(0).iris1);
-    EXPECT_EQ(collector->records[0].read(iris2), expectedOutput.at(0).iris2);
+    EXPECT_NEAR(collector->records[0].read(iris0).as<Float>()->getValue(), expectedOutput[0].iris0, delta);
+    EXPECT_NEAR(collector->records[0].read(iris1).as<Float>()->getValue(), expectedOutput[0].iris1, delta);
+    EXPECT_NEAR(collector->records[0].read(iris2).as<Float>()->getValue(), expectedOutput[0].iris2, delta);
 
     EXPECT_EQ(collector->records[1].read(f1), secondRecord.read(f1));
     EXPECT_EQ(collector->records[1].read(f2), secondRecord.read(f2));
     EXPECT_EQ(collector->records[1].read(f3), secondRecord.read(f3));
     EXPECT_EQ(collector->records[1].read(f4), secondRecord.read(f4));
-    EXPECT_EQ(collector->records[1].read(iris0).as<Float>(), expectedOutput.at(1).iris0);
-    EXPECT_EQ(collector->records[1].read(iris1), expectedOutput.at(1).iris1);
-    EXPECT_EQ(collector->records[1].read(iris2), expectedOutput.at(1).iris2);
+    EXPECT_NEAR(collector->records[1].read(iris0).as<Float>()->getValue(), expectedOutput[1].iris0, delta);
+    EXPECT_NEAR(collector->records[1].read(iris1).as<Float>()->getValue(), expectedOutput[1].iris1, delta);
+    EXPECT_NEAR(collector->records[1].read(iris2).as<Float>()->getValue(), expectedOutput[1].iris2, delta);
 
     inferModelOperator->terminate(ctx);
 }

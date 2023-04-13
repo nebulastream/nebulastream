@@ -146,7 +146,9 @@ TEST_P(InferModelPipelineTest, thresholdWindowWithSum) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
     float expectedValue = 0.43428239;
+    auto delta = 0.0000001;
     EXPECT_EQ(resultDynamicBuffer[0][iris0].read<float>(), expectedValue);
+    EXPECT_NEAR(resultDynamicBuffer[0][iris0].read<float>(), expectedValue, delta);
 }
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
