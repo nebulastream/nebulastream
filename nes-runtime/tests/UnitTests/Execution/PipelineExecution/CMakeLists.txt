@@ -21,3 +21,7 @@ add_nes_runtime_test(runtime-mapjavaudf-pipeline-test "MapJavaUDFPipelineTest.cp
 add_nes_runtime_test(runtime-stream-join-pipeline-test "StreamJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
+
+if (NES_USE_TF)
+    add_nes_runtime_test(runtime-infer-model-pipeline-test "InferModelPipelineTest.cpp")
+endif ()

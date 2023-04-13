@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef TFDEF
-
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -42,4 +40,3 @@ const TensorflowAdapterPtr& InferModelHandler::getTensorflowAdapter() const { re
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// TFDEF

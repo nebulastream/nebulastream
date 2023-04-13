@@ -17,8 +17,8 @@
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/InferModel/InferModel.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <NesBaseTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -75,7 +75,7 @@ TEST_F(InferModelOperatorTest, testInferModelForBoolInput) {
     outputFields.emplace_back(iris1);
     outputFields.emplace_back(iris2);
 
-    auto inferModelOperator = std::make_shared<InferModel>(0, inputFields, outputFields);
+    auto inferModelOperator = std::make_shared<InferModelOperator>(0, inputFields, outputFields);
 
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
@@ -138,7 +138,7 @@ TEST_F(InferModelOperatorTest, testInferModelForFloatInput) {
     outputFields.emplace_back(iris1);
     outputFields.emplace_back(iris2);
 
-    auto inferModelOperator = std::make_shared<InferModel>(0, inputFields, outputFields);
+    auto inferModelOperator = std::make_shared<InferModelOperator>(0, inputFields, outputFields);
 
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
@@ -236,7 +236,7 @@ TEST_F(InferModelOperatorTest, testInferModelForIntInput) {
     outputFields.emplace_back(iris1);
     outputFields.emplace_back(iris2);
 
-    auto inferModelOperator = std::make_shared<InferModel>(0, inputFields, outputFields);
+    auto inferModelOperator = std::make_shared<InferModelOperator>(0, inputFields, outputFields);
 
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);

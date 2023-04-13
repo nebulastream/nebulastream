@@ -13,11 +13,9 @@
 */
 #include <Execution/Operators/Streaming/InferModel/TensorflowAdapter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
 #include <iostream>
-
-#ifdef TFDEF
-#include <Util/magicenum/magic_enum.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
 
@@ -42,7 +40,6 @@ void TensorflowAdapter::initializeModel(std::string pathToModel) {
 float TensorflowAdapter::getResultAt(int i) { return outputData[i]; }
 
 void TensorflowAdapter::infer() {
-
     //Copy input tensor
     TfLiteTensorCopyFromBuffer(inputTensor, inputData, tensorSize);
     //Invoke tensor model and perform inference
@@ -67,5 +64,3 @@ TensorflowAdapter::~TensorflowAdapter() {
 }
 
 }// namespace NES::Runtime::Execution::Operators
-
-#endif// TFDEF

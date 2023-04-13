@@ -14,8 +14,8 @@
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/InferModel/InferModel.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
+#include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -40,7 +40,7 @@ float getValueFromModel(int index, void* inferModelHandler) {
     return adapter->getResultAt(index);
 }
 
-void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const {
+void InferModelOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const {
 
     //1. Extract the handler
     auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
@@ -55,13 +55,21 @@ void InferModel::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) c
         } else if (value->isType<Double>()) {
             FunctionCall("addValueToModel", addValueToModel<double>, Value<UInt32>(i), value.as<Double>(), inferModelHandler);
         } else if (value->isType<UInt64>()) {
-            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<UInt64>(), inferModelHandler);
-        }else if (value->isType<UInt32>()) {
-            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<UInt32>(), inferModelHandler);
-        }else if (value->isType<Int64>()) {
-            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<Int64>(), inferModelHandler);
-        }else if (value->isType<Int32>()) {
-            FunctionCall("addValueToModel", addValueToModel<int>, Value<UInt32>(i), value.as<Int32>(), inferModelHandler);
+            FunctionCall("addValueToModel", addValueToModel<uint64_t>, Value<UInt32>(i), value.as<UInt64>(), inferModelHandler);
+        } else if (value->isType<UInt32>()) {
+            FunctionCall("addValueToModel", addValueToModel<uint32_t>, Value<UInt32>(i), value.as<UInt32>(), inferModelHandler);
+        } else if (value->isType<UInt16>()) {
+            FunctionCall("addValueToModel", addValueToModel<uint16_t>, Value<UInt32>(i), value.as<UInt16>(), inferModelHandler);
+        } else if (value->isType<UInt8>()) {
+            FunctionCall("addValueToModel", addValueToModel<uint8_t>, Value<UInt32>(i), value.as<UInt8>(), inferModelHandler);
+        } else if (value->isType<Int64>()) {
+            FunctionCall("addValueToModel", addValueToModel<int64_t>, Value<UInt32>(i), value.as<Int64>(), inferModelHandler);
+        } else if (value->isType<Int32>()) {
+            FunctionCall("addValueToModel", addValueToModel<int32_t>, Value<UInt32>(i), value.as<Int32>(), inferModelHandler);
+        } else if (value->isType<Int16>()) {
+            FunctionCall("addValueToModel", addValueToModel<int16_t>, Value<UInt32>(i), value.as<Int16>(), inferModelHandler);
+        } else if (value->isType<Int8>()) {
+            FunctionCall("addValueToModel", addValueToModel<int8_t>, Value<UInt32>(i), value.as<Int8>(), inferModelHandler);
         } else {
             NES_ERROR2("Can not handle inputs other than of type int, bool, float, and double");
         }

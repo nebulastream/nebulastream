@@ -19,7 +19,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class InferModel : public ExecutableOperator {
+/**
+ * @brief this is the nautilus implementation of infer model operator. This operator allows for inferring (currently only tensorflow) machine learning model over incoming data stream.
+ */
+class InferModelOperator : public ExecutableOperator {
 
   public:
     /**
@@ -28,9 +31,9 @@ class InferModel : public ExecutableOperator {
      * @param inputFieldNames names of input fields for the model inference
      * @param outputFieldNames names of output fields from the model inference
      */
-    InferModel(const uint32_t inferModelHandlerIndex,
-               const std::vector<std::string>& inputFieldNames,
-               const std::vector<std::string>& outputFieldNames)
+    InferModelOperator(const uint32_t inferModelHandlerIndex,
+                       const std::vector<std::string>& inputFieldNames,
+                       const std::vector<std::string>& outputFieldNames)
         : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
