@@ -25,21 +25,38 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
+#include <Util/TestExecutionEngine.hpp>
 
-using namespace std;
+namespace NES::Runtime::Execution {
 
-namespace NES {
-
-using namespace Configurations;
-
-class MultipleJoinsTest : public Testing::NESBaseTest {
+class MultipleJoinsTest : public Testing::TestWithErrorHandling<testing::Test>,
+                          public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultipleJoinsTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MultipleJoinsTest test class.");
+        NES_INFO("QueryExecutionTest: Setup MultipleJoinsTest test class.");
+    }
+    /* Will be called before a test is executed. */
+    void SetUp() override {
+        NES_INFO("QueryExecutionTest: Setup MultipleJoinsTest test class.");
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        auto queryCompiler = this->GetParam();
+        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
     }
 
-    std::string ipAddress = "127.0.0.1";
+    /* Will be called before a test is executed. */
+    void TearDown() override {
+        NES_INFO("QueryExecutionTest: Tear down MultipleJoinsTest test case.");
+        EXPECT_TRUE(executionEngine->stop());
+        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+    }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down MultipleJoinsTest test class."); }
+
+    std::shared_ptr<TestExecutionEngine> executionEngine;
 };
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinator) {
