@@ -142,3 +142,9 @@ jobs:
           rm -rf nes-amd64.deb nes-arm64.deb
           echo "Pushed the execution image"
           docker logout
+              - name: KTM Use Case Regression Test
+      - run: sh ./docker/regressionImage/KTM/run.sh
+      - name: Video Use Case Regression Test
+        run: sh ./docker/regressionImage/Video/run.sh
+      - name: Smart Meter Use Case Regression Test
+        run: sh ./docker/regressionImage/SmartMeter/run.sh
