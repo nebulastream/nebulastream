@@ -156,7 +156,7 @@ class SignatureContainmentUtil {
      * @param condition condition that will just be added to the solver as it is
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool containmentConditionsUnsatisfied(z3::expr_vector& negatedCondition, z3::expr_vector& condition);
+    bool checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition, z3::expr_vector& condition);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions is unsatisfiable
@@ -165,7 +165,7 @@ class SignatureContainmentUtil {
      * @param rightConditions condition that will be negated
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions, const z3::expr_vector& rightConditions);
+    bool checkEqualityConditionsUnsatisfied(const z3::expr_vector& leftConditions, const z3::expr_vector& rightConditions);
 
     /**
      * @brief checks if window containment is possible, i.e. no join window, no avg or median aggregation, and filter conditions are equal

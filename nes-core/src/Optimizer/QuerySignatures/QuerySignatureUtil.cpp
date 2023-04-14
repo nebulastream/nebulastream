@@ -182,12 +182,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                 auto fieldRename = expression->as<FieldRenameExpressionNode>();
                 newFieldName = fieldRename->getNewFieldName();
                 fieldName = fieldRename->getOriginalField()->getFieldName();
-                NES_TRACE("Renaming field " + fieldName + " to " + newFieldName);
+                NES_TRACE2("Renaming field {}", fieldName ," to {}", newFieldName);
             } else {
                 auto fieldAccess = expression->as<FieldAccessExpressionNode>();
                 newFieldName = fieldAccess->getFieldName();
                 fieldName = newFieldName;
-                NES_TRACE("Projecting field " + fieldName);
+                NES_TRACE2("Projecting field {}", fieldName);
             }
 
             auto found = schemaFieldToExprMap.find(fieldName);
