@@ -19,7 +19,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -42,7 +42,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
   public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -54,7 +54,7 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {

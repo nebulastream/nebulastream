@@ -19,9 +19,9 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -32,7 +32,7 @@ namespace NES::Runtime::Execution::Operators {
 
 void freeObject(void* state, void* object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     handler->getEnvironment()->DeleteLocalRef((jobject) object);
 }
@@ -41,7 +41,7 @@ inline bool dirExists(const std::string& path) { return std::filesystem::exists(
 
 void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     for (auto& [className, byteCode] : byteCodeList) {
         jbyteArray jData = handler->getEnvironment()->NewByteArray(byteCode.size());
@@ -58,7 +58,7 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
 
 jobject deserializeInstance(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     // use deserializer given in java utils file
     void* object = (void*) handler->getSerializedInstance().data();
@@ -74,7 +74,7 @@ jobject deserializeInstance(void* state) {
 
 void startOrAttachVMWithJarFile(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     // Sanity check javaPath
     auto javaPath = handler->getJavaPath().value();
@@ -101,7 +101,7 @@ void startOrAttachVMWithJarFile(void* state) {
 
 void startOrAttachVMWithByteList(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     std::string utilsPath = std::string(JAVA_UDF_UTILS);
     JavaVMInitArgs args{};
@@ -126,7 +126,7 @@ void startOrAttachVMWithByteList(void* state) {
 
 void startOrAttachVM(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     if (handler->getJavaPath().has_value()) {
         // Get java classes using jar files
@@ -143,7 +143,7 @@ void destroyVM() { JVMContext::instance().destroyJVM(); }
 
 void* findInputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassName().c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -152,7 +152,7 @@ void* findInputClass(void* state) {
 
 void* findOutputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getOutputClassName().c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -162,7 +162,7 @@ void* findOutputClass(void* state) {
 void* allocateObject(void* state, void* classPtr) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     auto clazz = (jclass) classPtr;
     jobject obj = handler->getEnvironment()->AllocObject(clazz);
@@ -173,7 +173,7 @@ void* allocateObject(void* state, void* classPtr) {
 template<typename T>
 void* createObjectType(void* state, T value, std::string className, std::string constructorSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -207,14 +207,14 @@ void* createShortObject(void* state, int16_t value) {
 void* createByteObject(void* state, int8_t value) { return createObjectType(state, value, "java/lang/Byte", "(B)V"); }
 
 void* createStringObject(void* state, TextValue* value) {
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
     return handler->getEnvironment()->NewStringUTF(value->c_str());
 }
 
 template<typename T>
 T getObjectTypeValue(void* state, void* object, std::string className, std::string getterName, std::string getterSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -273,7 +273,7 @@ int8_t getByteObjectValue(void* state, void* object) {
 TextValue* getStringObjectValue(void* state, void* object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(object != nullptr, "object should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     auto size = handler->getEnvironment()->GetStringUTFLength((jstring) object);
     auto resultText = TextValue::create(size);
@@ -287,7 +287,7 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     auto pojoClass = (jclass) classPtr;
     auto pojo = (jobject) objectPtr;
@@ -359,7 +359,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
-    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     auto pojoClass = (jclass) classPtr;
     auto pojo = (jobject) objectPtr;

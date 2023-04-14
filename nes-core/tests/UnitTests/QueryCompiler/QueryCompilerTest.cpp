@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -75,7 +75,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCompilerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryCompilerTest test class.");
@@ -86,7 +86,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {

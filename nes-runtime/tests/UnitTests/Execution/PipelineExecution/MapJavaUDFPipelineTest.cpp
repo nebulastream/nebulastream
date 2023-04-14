@@ -19,8 +19,8 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -57,17 +57,17 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
+    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData";
 };
 
 /**
- * Initializes a pipeline with a Scan of the input tuples, a MapJavaUdf operator, and a emit of the processed tuples.
+ * Initializes a pipeline with a Scan of the input tuples, a MapJavaUDF operator, and a emit of the processed tuples.
  * @param schema Schema of the input and output tuples.
  * @param memoryLayout memory layout
  * @return
  */
 auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
-    auto mapOperator = std::make_shared<Operators::MapJavaUdf>(0, schema, schema);
+    auto mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -119,15 +119,15 @@ auto initMapHandler(std::string className,
                     std::string testDataPath) {
     std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
     std::vector<char> serializedInstance = {};
-    return std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
-                                                                  methodName,
-                                                                  inputProxyName,
-                                                                  outputProxyName,
-                                                                  byteCodeList,
-                                                                  serializedInstance,
-                                                                  schema,
-                                                                  schema,
-                                                                  testDataPath);
+    return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
+                                                               methodName,
+                                                               inputProxyName,
+                                                               outputProxyName,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               schema,
+                                                               schema,
+                                                               testDataPath);
 }
 
 /**

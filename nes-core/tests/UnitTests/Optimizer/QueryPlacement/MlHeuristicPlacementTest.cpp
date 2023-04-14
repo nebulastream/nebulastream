@@ -16,7 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -51,7 +51,7 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -66,7 +66,7 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void topologyGenerator() {

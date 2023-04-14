@@ -18,7 +18,7 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -34,7 +34,7 @@ using namespace NES;
 class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BinaryOperatorSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -44,7 +44,7 @@ class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling<testing
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
 

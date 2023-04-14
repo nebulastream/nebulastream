@@ -19,7 +19,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -41,7 +41,7 @@ namespace NES::Optimizer {
 
 class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SignatureInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
@@ -50,7 +50,7 @@ class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testin
 
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
 

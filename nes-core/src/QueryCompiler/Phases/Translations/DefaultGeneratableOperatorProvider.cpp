@@ -54,7 +54,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -162,7 +162,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         return;
     }
 #ifdef PYTHON_UDF_ENABLED
-    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUdfOperator>()) {
+    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>()) {
         return;
     }
 #endif

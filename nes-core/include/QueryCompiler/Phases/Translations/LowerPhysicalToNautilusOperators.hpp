@@ -145,14 +145,14 @@ class LowerPhysicalToNautilusOperators {
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 #ifdef ENABLE_JNI
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    lowerMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFlatMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
-#endif// ENABLE_JIN
+#endif// ENABLE_JNI
 
 #ifdef TFDEF
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

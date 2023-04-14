@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -56,7 +56,7 @@ using namespace Configurations;
 
 class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     QueryPlanPtr queryPlan;
     SharedQueryPlanPtr sharedQueryPlan;
@@ -77,7 +77,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void setupTopologyAndSourceCatalog(uint64_t layers, uint64_t nodesPerNode, uint64_t leafNodesPerNode) {

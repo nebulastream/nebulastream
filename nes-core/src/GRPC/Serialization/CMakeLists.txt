@@ -18,5 +18,5 @@ add_source_files(nes-core
         ExpressionSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
         ShapeTypeSerializationUtil.cpp
-        UdfSerializationUtil.cpp
+        UDFSerializationUtil.cpp
 )

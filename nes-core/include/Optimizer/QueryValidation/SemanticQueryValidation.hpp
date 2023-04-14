@@ -25,8 +25,8 @@ class Query;
 using QueryPtr = std::shared_ptr<Query>;
 
 namespace Catalogs::UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 
 }// namespace NES
@@ -55,7 +55,7 @@ class SemanticQueryValidation {
      */
     explicit SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                      bool advanceChecks,
-                                     Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                                     Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
@@ -64,7 +64,7 @@ class SemanticQueryValidation {
      */
     static SemanticQueryValidationPtr create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                              bool advanceChecks,
-                                             const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
+                                             const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
 
   private:
     /**
@@ -124,7 +124,7 @@ class SemanticQueryValidation {
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool performAdvanceChecks;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;

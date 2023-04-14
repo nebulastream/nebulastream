@@ -43,7 +43,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog)
+                                                       const Catalogs::UDF::UDFCatalogPtr& udfCatalog)
     : topology(topology), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
@@ -71,7 +71,7 @@ GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   Catalogs::UDF::UdfCatalogPtr udfCatalog) {
+                                   Catalogs::UDF::UDFCatalogPtr udfCatalog) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
                                                                                    std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),

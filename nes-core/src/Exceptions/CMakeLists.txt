@@ -25,7 +25,7 @@ add_source_files(nes-core
         QueryNotFoundException.cpp
         QueryUndeploymentException.cpp
         TypeInferenceException.cpp
-        UdfException.cpp
+        UDFException.cpp
         SignatureComputationException.cpp
         WindowProcessingException.cpp
         CoordinatesOutOfRangeException.cpp

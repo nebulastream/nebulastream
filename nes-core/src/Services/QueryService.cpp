@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -41,7 +41,7 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            Catalogs::Source::SourceCatalogPtr sourceCatalog,
                            QueryParsingServicePtr queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                           Catalogs::UDF::UdfCatalogPtr udfCatalog)
+                           Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG2("QueryService()");

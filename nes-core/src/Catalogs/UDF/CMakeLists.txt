@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        UdfCatalog.cpp
-        JavaUdfDescriptor.cpp
-        PythonUdfDescriptor.cpp
+        UDFCatalog.cpp
+        JavaUDFDescriptor.cpp
+        PythonUDFDescriptor.cpp
 )

@@ -71,9 +71,9 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
 
 #ifdef PYTHON_UDF_ENABLED
     // same as for external operators
-    if (rootOperator->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUdfOperator>()) {
-        auto PhysicalPythonUdfOperator = rootOperator->as<PhysicalOperators::Experimental::PhysicalPythonUdfOperator>();
-        auto pipelineStage = PhysicalPythonUdfOperator->getExecutablePipelineStage();
+    if (rootOperator->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>()) {
+        auto PhysicalPythonUDFOperator = rootOperator->as<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>();
+        auto pipelineStage = PhysicalPythonUDFOperator->getExecutablePipelineStage();
         // todo register operator handler
         auto executableOperator = ExecutableOperator::create(pipelineStage, {});
         pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);

@@ -46,7 +46,7 @@ endif ()
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
-add_nes_unit_test(udf-test "UnitTests/Catalogs/UdfCatalogTest.cpp" "UnitTests/Catalogs/JavaUdfDescriptorTest.cpp" "UnitTests/Catalogs/PythonUdfDescriptorTest.cpp")
+add_nes_unit_test(udf-test "UnitTests/Catalogs/UDFCatalogTest.cpp" "UnitTests/Catalogs/JavaUDFDescriptorTest.cpp" "UnitTests/Catalogs/PythonUDFDescriptorTest.cpp")
 
 
 add_nes_unit_test(hashmap-test "UnitTests/Util/HashMapTest.cpp")
@@ -118,7 +118,7 @@ add_nes_integration_test(monitoring-controller-tests "Integration/REST/Controlle
 add_nes_integration_test(topology-controller-integration-tests "Integration/REST/Controller/TopologyControllerTest.cpp")
 
 ### NES Udf Catalog Controller Test ###
-add_nes_integration_test(udf-catalog-controller-integration-tests "Integration/REST/Controller/UdfCatalogControllerTest.cpp")
+add_nes_integration_test(udf-catalog-controller-integration-tests "Integration/REST/Controller/UDFCatalogControllerTest.cpp")
 
 ### NES Query Controller Test ###
 add_nes_integration_test(query-controller-integration-tests "Integration/REST/Controller/QueryControllerTest.cpp")
@@ -234,7 +234,7 @@ endif ()
 # LogicalOperatorPlanNodeTest
 add_nes_unit_test(logical-operator-node-tests
         "UnitTests/Operators/LogicalOperatorNodeTest.cpp"
-        "UnitTests/Operators/LogicalOperators/MapJavaUdfLogicalOperatorNodeTest.cpp")
+        "UnitTests/Operators/MapJavaUDFLogicalOperatorNodeTest.cpp")
 
 
 # ExpressionNodeTest

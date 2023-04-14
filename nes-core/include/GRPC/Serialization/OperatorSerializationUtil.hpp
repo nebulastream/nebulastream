@@ -20,8 +20,8 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowJavaUDFLogicalOperatorNode.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
 
@@ -311,7 +311,7 @@ class OperatorSerializationUtil {
      * @param mapJavaUdfOperatorNode
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeMapJavaUdfOperator(const MapJavaUdfLogicalOperatorNode& mapJavaUdfOperatorNode,
+    static void serializeMapJavaUDFOperator(const MapJavaUDFLogicalOperatorNode& mapJavaUDFOperatorNode,
                                             SerializableOperator& serializedOperator);
 
     /**
@@ -320,14 +320,14 @@ class OperatorSerializationUtil {
      * @return MapJavaUdfLogicalOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr
-    deserializeMapJavaUdfOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails);
+    deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUDFDetails);
 
     /**
      * @brief Serializes a windowJavaUdf operator
      * @param windowJavaUdfOperatorNode
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeWindowJavaUdfOperator(const WindowJavaUdfLogicalOperatorNode& windowJavaUdfOperatorNode,
+    static void serializeWindowJavaUDFOperator(const WindowJavaUDFLogicalOperatorNode& windowJavaUDFOperatorNode,
                                                SerializableOperator& serializedOperator);
 
     /**
@@ -336,7 +336,7 @@ class OperatorSerializationUtil {
      * @return WindowJavaUdfLogicalOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr
-    deserializeWindowJavaUdfOperator(const SerializableOperator_JavaUdfWindowDetails& windowJavaUdfDetails);
+    deserializeWindowJavaUDFOperator(const SerializableOperator_JavaUdfWindowDetails& windowJavaUDFDetails);
 };
 }// namespace NES
 

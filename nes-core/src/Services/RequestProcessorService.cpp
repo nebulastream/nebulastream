@@ -58,7 +58,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration,
-                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog)
+                                                 const Catalogs::UDF::UDFCatalogPtr& udfCatalog)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
       udfCatalog(udfCatalog) {

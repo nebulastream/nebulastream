@@ -21,7 +21,7 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -43,7 +43,7 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -85,7 +85,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <GRPC/Serialization/UdfSerializationUtil.hpp>
+#include <GRPC/Serialization/UDFSerializationUtil.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
@@ -184,13 +184,13 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         renameDetails.set_newsourcename(operatorNode->as<RenameSourceOperatorNode>()->getNewSourceName());
         serializedOperator.mutable_details()->PackFrom(renameDetails);
 
-    } else if (operatorNode->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<MapJavaUDFLogicalOperatorNode>()) {
         // Serialize map java udf operator
-        serializeMapJavaUdfOperator(*operatorNode->as<MapJavaUdfLogicalOperatorNode>(), serializedOperator);
+        serializeMapJavaUDFOperator(*operatorNode->as<MapJavaUDFLogicalOperatorNode>(), serializedOperator);
 
-    } else if (operatorNode->instanceOf<WindowJavaUdfLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<WindowJavaUDFLogicalOperatorNode>()) {
         // Serialize window java udf operator
-        serializeWindowJavaUdfOperator(*operatorNode->as<WindowJavaUdfLogicalOperatorNode>(), serializedOperator);
+        serializeWindowJavaUDFOperator(*operatorNode->as<WindowJavaUDFLogicalOperatorNode>(), serializedOperator);
 
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
@@ -344,15 +344,15 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
 
     } else if (details.Is<SerializableOperator_MapJavaUdfDetails>()) {
         NES_TRACE("Deserialize map Java UDF operator.");
-        auto mapJavaUdfDetails = SerializableOperator_MapJavaUdfDetails();
-        details.UnpackTo(&mapJavaUdfDetails);
-        operatorNode = deserializeMapJavaUdfOperator(mapJavaUdfDetails);
+        auto mapJavaUDFDetails = SerializableOperator_MapJavaUdfDetails();
+        details.UnpackTo(&mapJavaUDFDetails);
+        operatorNode = deserializeMapJavaUDFOperator(mapJavaUDFDetails);
 
     } else if (details.Is<SerializableOperator_JavaUdfWindowDetails>()) {
         NES_TRACE("Deserialize map Java UDF operator.");
-        auto windowJavaUdfDetails = SerializableOperator_JavaUdfWindowDetails();
-        details.UnpackTo(&windowJavaUdfDetails);
-        operatorNode = deserializeWindowJavaUdfOperator(windowJavaUdfDetails);
+        auto windowJavaUDFDetails = SerializableOperator_JavaUdfWindowDetails();
+        details.UnpackTo(&windowJavaUDFDetails);
+        operatorNode = deserializeWindowJavaUDFOperator(windowJavaUDFDetails);
 
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
@@ -1923,26 +1923,26 @@ OperatorSerializationUtil::deserializeCEPIterationOperator(const SerializableOpe
     return LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration, Util::getNextOperatorId());
 }
 
-void OperatorSerializationUtil::serializeMapJavaUdfOperator(const MapJavaUdfLogicalOperatorNode& mapJavaUdfOperatorNode,
+void OperatorSerializationUtil::serializeMapJavaUDFOperator(const MapJavaUDFLogicalOperatorNode& mapJavaUdfOperatorNode,
                                                             SerializableOperator& serializedOperator) {
-    NES_TRACE("OperatorSerializationUtil:: serialize to MapJavaUdfLogicalOperatorNode");
+    NES_TRACE("OperatorSerializationUtil:: serialize to MapJavaUDFLogicalOperatorNode");
     auto mapJavaUdfDetails = SerializableOperator_MapJavaUdfDetails();
-    UdfSerializationUtil::serializeJavaUdfDescriptor(*mapJavaUdfOperatorNode.getJavaUdfDescriptor(),
+    UDFSerializationUtil::serializeJavaUDFDescriptor(*mapJavaUdfOperatorNode.getJavaUDFDescriptor(),
                                                      *mapJavaUdfDetails.mutable_javaudfdescriptor());
     serializedOperator.mutable_details()->PackFrom(mapJavaUdfDetails);
 }
 
 LogicalUnaryOperatorNodePtr
-OperatorSerializationUtil::deserializeMapJavaUdfOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
-    auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(mapJavaUdfDetails.javaudfdescriptor());
-    return LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
+OperatorSerializationUtil::deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
+    auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(mapJavaUdfDetails.javaudfdescriptor());
+    return LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
 }
 
-void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaUdfLogicalOperatorNode& windowJavaUdfOperatorNode,
+void OperatorSerializationUtil::serializeWindowJavaUDFOperator(const WindowJavaUDFLogicalOperatorNode& windowJavaUdfOperatorNode,
                                                                SerializableOperator& serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize to WindowJavaUdfLogicalOperatorNode");
     auto windowJavaUdfDetails = SerializableOperator_JavaUdfWindowDetails();
-    UdfSerializationUtil::serializeJavaUdfDescriptor(*windowJavaUdfOperatorNode.getJavaUdfDescriptor(),
+    UDFSerializationUtil::serializeJavaUDFDescriptor(*windowJavaUdfOperatorNode.getJavaUDFDescriptor(),
                                                      *windowJavaUdfDetails.mutable_javaudfdescriptor());
 
     if (windowJavaUdfOperatorNode.isKeyed()) {
@@ -2025,9 +2025,9 @@ void OperatorSerializationUtil::serializeWindowJavaUdfOperator(const WindowJavaU
     serializedOperator.mutable_details()->PackFrom(windowJavaUdfDetails);
 }
 
-LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWindowJavaUdfOperator(
+LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWindowJavaUDFOperator(
     const SerializableOperator_JavaUdfWindowDetails& windowJavaUdfDetails) {
-    auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(windowJavaUdfDetails.javaudfdescriptor());
+    auto javaUdfDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(windowJavaUdfDetails.javaudfdescriptor());
 
     // Deserializing windowType
     Windowing::WindowTypePtr windowType;
@@ -2125,7 +2125,7 @@ LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWindowJavaUdfO
             ExpressionSerializationUtil::deserializeExpression(key)->as<FieldAccessExpressionNode>());
     }
 
-    return LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(javaUdfDescriptor,
+    return LogicalOperatorFactory::createWindowJavaUDFLogicalOperator(javaUdfDescriptor,
                                                                       windowType,
                                                                       distChar,
                                                                       keyAccessExpression,
