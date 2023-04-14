@@ -47,22 +47,17 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
     jobject udf_result, instance;
     // Check if flat map object was created
     if(handler->getFlatMapObject() == nullptr) {
-        // TODO: move this to the operator::setup method
         // Find class implementing the map udf
         jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
-        // TODO: store the signature in the handler as it should not change
         // Build function signature of map function
         std::string sig = "(L" + handler->getInputClassName() + ";)L" + handler->getOutputClassName() + ";";
 
-        // TODO: store the whole class instance in the handler
         // Find udf function
         jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
-        // TODO: do not create a new instance but load it from the handler
-        // TODO: create a new handler for the flat map udf
         // The map udf class will be either loaded from a serialized instance or allocated using class information
         if (!handler->getSerializedInstance().empty()) {
             // Load instance if defined
@@ -80,22 +75,22 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
             jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         }
 
+        // Persist the method id
+        handler->setFlatMapMethodId(mid);
+
         // Call udf function
         udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
-        // TODO: need to call DeleteGlobalRef at the end of the execution
         instance = handler->getEnvironment()->NewGlobalRef(instance);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
-        handler->setFlatMapMethodId(mid);
-        // ?
         pojoObjectPtr = handler->getEnvironment()->NewGlobalRef((jobject)pojoObjectPtr);
+        jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
         // persist the udf state
         handler->setFlatMapObject(instance);
     } else {
-        // TODO: move this into the handler with a method just calling the udf
         jmethodID mid = handler->getFlatMapMethodId();
         instance = handler->getFlatMapObject();
         udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
@@ -105,11 +100,6 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
     return udf_result;
 }
 
-/**
- * Operator execution function
- * @param ctx operator context
- * @param record input record
- */
 void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
@@ -325,15 +315,10 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     child->execute(ctx, (Record&) record);
 }
 
-/**
- * Terminate operator
- * @param ctx execution context
- */
 void FlatMapJavaUDF::terminate(ExecutionContext&) const {
     // TODO fix usage of jvm
     //FunctionCall<>("destroyVM", destroyVM);
 }
-
 
 }// namespace NES::Runtime::Execution::Operators
 #endif// ENABLE_JIN
