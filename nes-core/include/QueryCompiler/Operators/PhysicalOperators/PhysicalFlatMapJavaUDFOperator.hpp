@@ -30,17 +30,48 @@ namespace QueryCompilation::PhysicalOperators {
  */
 class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
   public:
+    /**
+     * @brief Constructor for PhysicalFlatMapJavaUDFOperator
+     * @param id The identifier of this operator
+     * @param inputSchema The schema of the input data
+     * @param outputSchema The schema of the output data
+     * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
+     */
     PhysicalFlatMapJavaUDFOperator(OperatorId id,
                                    SchemaPtr inputSchema,
                                    SchemaPtr outputSchema,
                                    Catalogs::UDF::JavaUDFDescriptorPtr javaUdfDescriptor);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
+    /**
+     * @brief Creates a new instance of PhysicalFlatMapJavaUDFOperator
+     * @param id The identifier of this operator
+     * @param inputSchema The schema of the input data
+     * @param outputSchema The schema of the output data
+     * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
+     * @return A new instance of PhysicalFlatMapJavaUDFOperator
+     */
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
                                       const Catalogs::UDF::JavaUDFDescriptorPtr& javaUdfDescriptor);
-    static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Catalogs::UDF::JavaUDFDescriptorPtr javaUdfDescriptor);
+
+    /**
+     * @brief Creates a new instance of PhysicalFlatMapJavaUDFOperator with no specified operator ID
+     * @param inputSchema The schema of the input data
+     * @param outputSchema The schema of the output data
+     * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
+     * @return A new instance of PhysicalFlatMapJavaUDFOperator
+     */
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      Catalogs::UDF::JavaUDFDescriptorPtr javaUdfDescriptor);
+
+    /**
+     * @brief Returns a string representation of this operator
+     * @return A string representation of this operator
+     */
     std::string toString() const override;
+
+    /**
+     * @brief Creates a copy of this operator node
+     * @return A copy of this operator node
+     */
     OperatorNodePtr copy() override;
 
     /**
