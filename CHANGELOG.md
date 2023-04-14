@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.50](https://github.com/nebulastream/nebulastream/tree/v0.5.50) (2023-04-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.49...v0.5.50)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate infer model operator to Nautilus [\#3624](https://github.com/nebulastream/nebulastream/issues/3624)
+
 ## [v0.5.49](https://github.com/nebulastream/nebulastream/tree/v0.5.49) (2023-04-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.48...v0.5.49)
