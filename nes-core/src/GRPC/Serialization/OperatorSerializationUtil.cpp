@@ -1211,7 +1211,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         auto defaultSourceDescriptor = sourceDescriptor.as<const DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         defaultSerializedSourceDescriptor.set_sourcegatheringinterval(defaultSourceDescriptor->getSourceGatheringIntervalCount());
-        defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
+        defaultSerializedSourceDescriptor.set_numberofbufferstoproduce(defaultSourceDescriptor->getNumbersOfBufferToProduce());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(),
                                                  defaultSerializedSourceDescriptor.mutable_sourceschema());
@@ -1408,7 +1408,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.sourceschema());
         auto ret = DefaultSourceDescriptor::create(schema,
-                                                   defaultSerializedSourceDescriptor.numbufferstoprocess(),
+                                                   defaultSerializedSourceDescriptor.numberofbufferstoproduce(),
                                                    defaultSerializedSourceDescriptor.sourcegatheringinterval());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
