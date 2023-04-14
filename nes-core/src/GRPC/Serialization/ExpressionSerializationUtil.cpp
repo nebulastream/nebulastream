@@ -566,9 +566,9 @@ void ExpressionSerializationUtil::serializeUDFCallExpressions(const ExpressionNo
     NES_DEBUG2("ExpressionSerializationUtil:: serialize udf call expression");
     auto udfCallExpressionNode = expression->as<UDFCallExpressionNode>();
     auto serializedExpressionNode = SerializableExpression_UdfCallExpression();
-    auto UDFNameExpression = udfCallExpressionNode->getUDFNameNode();
+    auto udfNameExpression = udfCallExpressionNode->getUDFNameNode();
     //serialize udf name
-    auto constantValueExpression = UDFNameExpression->as<ConstantValueExpressionNode>();
+    auto constantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
     auto constantValue = constantValueExpression->getConstantValue();
     auto* serializedConstantValue = serializedExpressionNode.mutable_udfname();
     DataTypeSerializationUtil::serializeDataValue(constantValue, serializedConstantValue->mutable_value());
