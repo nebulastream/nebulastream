@@ -8,6 +8,8 @@
 #include <lz4.h>
 #include <snappy.h>
 #include <utility>
+//#include "Runtime/MemoryLayout/Compression/Integer/codecs.h"
+#include "Runtime/MemoryLayout/Compression/Integer/codecfactory.h"
 
 namespace NES::Runtime::MemoryLayouts {
 
@@ -536,4 +538,36 @@ void CompressedDynamicTupleBuffer::decompressFsstVertical() {
     compressionAlgorithm = CompressionAlgorithm::NONE;
 }
 
+void CompressedDynamicTupleBuffer::dummyInteger() {
+    vector<shared_ptr<SIMDCompressionLib::IntegerCODEC>> codecs = SIMDCompressionLib::CODECFactory::allSchemes();
+
+    vector<uint32_t> data;
+    data.push_back(1U);
+    data.push_back(3U);
+    data.push_back(5U);
+    data.push_back(15U + 1024U);
+    data.push_back(21U + 1024U);
+
+    for (shared_ptr<SIMDCompressionLib::IntegerCODEC> codec : codecs) {
+        std::cout << "testing small ... with codec " << codec->name();
+        vector<uint32_t> dirtycopy(data);
+        vector<uint32_t> compressedbuffer(data.size() + 1024);
+        vector<uint32_t> recoverybuffer(data.size() + 1024);
+        size_t nvalue = compressedbuffer.size();
+        codec->encodeArray(dirtycopy.data(), dirtycopy.size(),
+                           compressedbuffer.data(), nvalue);
+        size_t recoveredvalues = recoverybuffer.size();
+        codec->decodeArray(compressedbuffer.data(), nvalue, recoverybuffer.data(),
+                           recoveredvalues);
+        recoverybuffer.resize(recoveredvalues);
+        if (data != recoverybuffer) {
+            cout << "Problem with  " << codec->name() << endl;
+            for (size_t i = 0; i < data.size(); ++i)
+                cout << i << " " << data[i] << " " << recoverybuffer[i] << endl;
+            throw std::logic_error("bug");
+        } else {
+            std::cout << "... ok!" << std::endl;
+        }
+    }
+}
 }// namespace NES::Runtime::MemoryLayouts

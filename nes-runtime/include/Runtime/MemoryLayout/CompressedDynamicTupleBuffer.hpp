@@ -52,6 +52,7 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     void compress(CompressionAlgorithm targetCa);
     void compress(CompressionAlgorithm targetCa, CompressionMode targetCm);
     void decompress();
+    void dummyInteger(); // TODO
 
   private:
     CompressionAlgorithm compressionAlgorithm;

@@ -1163,4 +1163,21 @@ TEST_F(CompressionTest, fsstColumnLayoutVerticalMultiColumnUint8) {
     }
 }
 
+// ====================================================================================================
+// Integer Compression
+// ====================================================================================================
+TEST_F(CompressionTest, integerCompression) {
+    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8);
+
+    RowLayoutPtr rowLayout;
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(rowLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
+    buffer.dummyInteger();
+}
+
 }// namespace NES::Runtime::MemoryLayouts
