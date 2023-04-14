@@ -40,7 +40,18 @@ class FlatMapJavaUDF : public ExecutableOperator {
      */
     FlatMapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
         : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
+
+    /**
+     * Operator execution function
+     * @param ctx operator context
+     * @param record input record
+     */
     void execute(ExecutionContext& ctx, Record& record) const override;
+
+    /**
+     * Terminate operator
+     * @param ctx execution context
+     */
     void terminate(ExecutionContext& ctx) const override;
 
   private:
