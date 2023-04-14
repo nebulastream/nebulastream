@@ -2,9 +2,9 @@ name: Regression Image KTM
 
 on:
   push:
-    branches: [ "3654_elegant_regression" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "3654_elegant_regression" ]
+    branches: [ "master" ]
 
 jobs:
   build:
