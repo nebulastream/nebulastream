@@ -803,7 +803,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::INTERVAL_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
@@ -850,7 +850,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::INGESTION_RATE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 11;
@@ -896,7 +896,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 1;
@@ -942,7 +942,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
@@ -990,7 +990,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->setGatheringInterval(std::chrono::milliseconds{1000});
