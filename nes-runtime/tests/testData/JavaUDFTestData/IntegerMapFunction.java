@@ -35,8 +35,7 @@ public class IntegerMapFunction implements MapFunction<Integer, Integer> {
      */
     @Override
     public Integer map(Integer value) {
-        this.instanceVariable = (int)value + (int)this.instanceVariable;
-        return instanceVariable;
+        return (int)value + (int)this.instanceVariable;
     }
 
     /**

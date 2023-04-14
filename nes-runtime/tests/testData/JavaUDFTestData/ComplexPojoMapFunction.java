@@ -15,7 +15,7 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
      * Constructs a new ComplexPojoMapFunction instance.
      */
     public ComplexPojoMapFunction(){
-        pojo = new ComplexPojo();
+        this.pojo = new ComplexPojo();
         pojo.stringVariable = "Appended String:";
         pojo.floatVariable = 10;
         pojo.intVariable = 10;
@@ -50,15 +50,15 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
      */
     @Override
     public ComplexPojo map(ComplexPojo value) {
-        value.stringVariable += pojo.stringVariable;
-        value.floatVariable += pojo.floatVariable;
-        value.intVariable += pojo.intVariable;
-        value.shortVariable += pojo.shortVariable;
-        value.longVariable += pojo.longVariable;
-        value.doubleVariable += pojo.doubleVariable;
-        value.byteVariable += pojo.byteVariable;
-        value.booleanVariable = value.booleanVariable && pojo.booleanVariable;
-        return value;
+        pojo.stringVariable += value.stringVariable;
+        pojo.floatVariable += value.floatVariable;
+        pojo.intVariable += value.intVariable;
+        pojo.shortVariable += value.shortVariable;
+        pojo.longVariable += value.longVariable;
+        pojo.doubleVariable += value.doubleVariable;
+        pojo.byteVariable += value.byteVariable;
+        pojo.booleanVariable = value.booleanVariable && pojo.booleanVariable;
+        return pojo;
     }
 
     /**
