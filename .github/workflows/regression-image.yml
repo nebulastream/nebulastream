@@ -14,6 +14,6 @@ jobs:
       - name: KTM use case
         run: sh ./docker/regressionImage/KTM/run.sh
       - name: Video use case
-        run: ./docker/regressionImage/Video/run.sh
+        run: sh ./docker/regressionImage/Video/run.sh
       - name: Smart Meter use case
-        run: ./docker/regressionImage/SmartMeter/run.sh
+        run: sh ./docker/regressionImage/SmartMeter/run.sh
