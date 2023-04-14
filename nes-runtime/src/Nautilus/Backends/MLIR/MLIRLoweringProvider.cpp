@@ -171,7 +171,7 @@ mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std
     generateMLIR(ir->getRootOperation(), firstFrame);
     mlir::OpPrintingFlags flags;
     llvm::raw_ostream& output = llvm::outs();
-    theModule->print(output, flags);
+    //theModule->print(output, flags);
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");

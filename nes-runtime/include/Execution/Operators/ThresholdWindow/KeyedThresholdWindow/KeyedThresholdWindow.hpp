@@ -41,7 +41,6 @@ class KeyedThresholdWindow : public ExecutableOperator {
                          const Expressions::ExpressionPtr keyExpression,
                          const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
                          const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
                          uint64_t operatorHandlerIndex);
 
     void execute(ExecutionContext& ctx, Record& record) const override;

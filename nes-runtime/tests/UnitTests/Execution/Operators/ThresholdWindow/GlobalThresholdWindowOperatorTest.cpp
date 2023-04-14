@@ -19,6 +19,8 @@
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
+#include <Execution/Expressions/Functions/AbsExpression.hpp>
+#include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -45,7 +47,7 @@ class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_INFO);
         NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
 
@@ -59,8 +61,9 @@ class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(4);
+    auto absFortyTwo = std::make_shared<Expressions::FactorialExpression>(fortyTwo);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, absFortyTwo);
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";

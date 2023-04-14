@@ -29,86 +29,72 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-extern "C" void incrementKeyedThresholdWindowCount(void* state) {
+extern "C" void incrementKeyedThresholdWindowCount(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called incrementCount: recordCount = " << handler->recordCount + 1);
-    handler->recordCount++;
+    NES_TRACE("Called incrementCount: recordCount = " << handler->keyedAggregationStates.at(aggKey).recordCount + 1);
+    handler->keyedAggregationStates.at(aggKey).recordCount++;
 }
 
-extern "C" void setKeyedThresholdWindowIsWindowOpen(void* state, bool isWindowOpen) {
+extern "C" void setKeyedThresholdWindowIsWindowOpen(void* state, uint32_t aggKey, bool isWindowOpen) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called setIsWindowOpen: " << isWindowOpen);
-    handler->isWindowOpen = isWindowOpen;
+    handler->keyedAggregationStates.at(aggKey).isWindowOpen = isWindowOpen;
 }
 
-extern "C" bool getIsKeyedThresholdWindowOpen(void* state) {
+extern "C" bool getIsKeyedThresholdWindowOpen(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->isWindowOpen);
-    return handler->isWindowOpen;
+    NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->keyedAggregationStates.at(aggKey).isWindowOpen);
+    return handler->keyedAggregationStates.at(aggKey).isWindowOpen;
 }
 
-extern "C" uint64_t getKeyedThresholdWindowRecordCount(void* state) {
+extern "C" uint64_t getKeyedThresholdWindowRecordCount(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called getRecordCount: recordCount = " << handler->recordCount);
-    return handler->recordCount;
+    NES_TRACE("Called getRecordCount: recordCount = " << handler->keyedAggregationStates.at(aggKey).recordCount);
+    return handler->keyedAggregationStates.at(aggKey).recordCount;
 }
 
-extern "C" void resetKeyedThresholdWindowCount(void* state) {
+extern "C" void resetKeyedThresholdWindowCount(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called resetCount");
-    handler->recordCount = 0;
-    for (auto &aggregationValue : handler->AggregationValues){
-        aggregationValue.clear();
-    }
+    handler->keyedAggregationStates.at(aggKey).recordCount = 0;
 }
 
-extern "C" void lockKeyedThresholdWindowHandler(void* state) {
+extern "C" void lockKeyedThresholdWindowHandler(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called lockWindowHandler");
-    handler->mutex.lock();
+    handler->keyedAggregationStates.at(aggKey).mutex.lock();
 }
 
-extern "C" void unlockKeyedThresholdWindowHandler(void* state) {
+extern "C" void unlockKeyedThresholdWindowHandler(void* state, uint32_t aggKey) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called unlockWindowHandler");
-    handler->mutex.unlock();
+    handler->keyedAggregationStates.at(aggKey).mutex.unlock();
 }
 
-extern "C" void*
-getKeyedThresholdWindowAggregationValueOrCreate(void* state, uint64_t aggFuncIndex, uint32_t aggKey, uint8_t aggFunc) {
-    (void) aggFunc;
-    auto handler = (KeyedThresholdWindowOperatorHandler*) state;
-    NES_TRACE("Called AggregationValue of aggFuncIndex: " << aggFuncIndex << " and aggKey: " << aggKey);
-
-    // Check if key exists
-    if (handler->AggregationValues[aggFuncIndex].find(aggKey) != handler->AggregationValues[aggFuncIndex].end()) {
-        // key exist, retrieve the key
-        return (void*) handler->AggregationValues[aggFuncIndex].at(aggKey).get();
-    } else {
+extern "C" void createStateIfNotExist(void* hanlderMemref, uint32_t aggKey) {
+    auto handler = (KeyedThresholdWindowOperatorHandler*) hanlderMemref;
+    NES_TRACE("Called createStateIfNotExist");
+    // Create a key if not exist
+    if (handler->keyedAggregationStates.find(aggKey) == handler->keyedAggregationStates.end()) {
         // key does not exist, create a new map entry with aggKey as key
-        // TODO #3608: find a better way to propagate the aggregation type and the data type as well
-        if (aggFunc == 0) {
-            auto aggVal = std::make_unique<Aggregation::SumAggregationValue<uint64_t>>();
-            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
-        } else if (aggFunc == 1) {
-            auto aggVal = std::make_unique<Aggregation::SumAggregationValue<uint64_t>>();
-            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
-        } else if (aggFunc == 2) {
-            auto aggVal = std::make_unique<Aggregation::CountAggregationValue<uint64_t>>();
-            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
-        } else if (aggFunc == 3) {
-            auto aggVal = std::make_unique<Aggregation::MinAggregationValue<uint64_t>>();
-            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
-        } else if (aggFunc == 4) {
-            auto aggVal = std::make_unique<Aggregation::AvgAggregationValue<uint64_t>>();
-            handler->AggregationValues[aggFuncIndex].insert(std::make_pair(aggKey, std::move(aggVal)));
-        } else {
-            throw std::runtime_error("Unknown aggregation type");
-        }
-
-        // return the aggregation value
-        return (void*) handler->AggregationValues[aggFuncIndex].at(aggKey).get();
+        auto keyedThresholdWindowStates = KeyedThresholdWindowState();
+        handler->keyedAggregationStates.insert(std::make_pair(aggKey, std::move(keyedThresholdWindowStates)));
     }
+}
+
+template<class T>
+void addAggregationValues(void* state, uint32_t aggKey) {
+    auto handler = (KeyedThresholdWindowOperatorHandler*) state;
+
+    auto aggVal = std::make_unique<T>();
+    handler->keyedAggregationStates.at(aggKey).aggregationValues.push_back(std::move(aggVal));
+}
+
+// TODO: only support uint64 key
+extern "C" void* getKeyedAggregationValue(void* state, uint64_t aggFuncIdx, uint64_t aggKey) {
+    auto handler = (KeyedThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getAggregationValue: for aggIdx = " << aggFuncIdx << " and aggKey = " << aggKey);
+    return (void*) handler->keyedAggregationStates.at(aggKey).aggregationValues[aggFuncIdx].get();
 }
 
 KeyedThresholdWindow::KeyedThresholdWindow(
@@ -118,12 +104,10 @@ KeyedThresholdWindow::KeyedThresholdWindow(
     const Expressions::ExpressionPtr keyExpression,
     const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
     uint64_t operatorHandlerIndex)
     : predicateExpression(std::move(predicateExpression)), aggregatedFieldAccessExpressions(aggregatedFieldAccessExpressions),
       aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers), keyExpression(keyExpression), minCount(minCount),
-      operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
-      hashFunction(std::move(hashFunction)) {
+      operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {
     NES_ASSERT(this->aggregationFunctions.size() == this->aggregationResultFieldIdentifiers.size(),
                "The number of aggregation expression and aggregation functions need to be equals");
 }
@@ -134,22 +118,58 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
     // XX. derive key values
     Value<> keyValue = keyExpression->execute(record);
 
-    // XX. calculate hash
-    auto hash = hashFunction->calculate(keyValue);
+    // get the handler for this threshold window operator
+    auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+
+    // Create the state for the current key if not exists
+    FunctionCall("createStateIfNotExist", createStateIfNotExist, handler, keyValue.as<UInt64>());
 
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
-    auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall("lockWindowHandler", lockKeyedThresholdWindowHandler, handler);
+    FunctionCall("lockWindowHandler", lockKeyedThresholdWindowHandler, handler, keyValue.as<UInt64>());
+
+    for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
+        // check the aggregation function types
+        // TODO #3608 the data type should not be hard-coded
+        if (std::dynamic_pointer_cast<Aggregation::SumAggregationFunction>(aggregationFunctions[i])) {
+            FunctionCall("addAggregationValues",
+                         addAggregationValues<Aggregation::SumAggregationValue<int64_t>>,
+                         handler,
+                         keyValue.as<UInt64>());
+        } else if (std::dynamic_pointer_cast<Aggregation::MaxAggregationFunction>(aggregationFunctions[i])) {
+            FunctionCall("addAggregationValues",
+                         addAggregationValues<Aggregation::MaxAggregationValue<int64_t>>,
+                         handler,
+                         keyValue.as<UInt64>());
+        } else if (std::dynamic_pointer_cast<Aggregation::MinAggregationFunction>(aggregationFunctions[i])) {
+            FunctionCall("addAggregationValues",
+                         addAggregationValues<Aggregation::MinAggregationValue<int64_t>>,
+                         handler,
+                         keyValue.as<UInt64>());
+        } else if (std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i])) {
+            FunctionCall("addAggregationValues",
+                         addAggregationValues<Aggregation::CountAggregationValue<int64_t>>,
+                         handler,
+                         keyValue.as<UInt64>());
+        } else if (std::dynamic_pointer_cast<Aggregation::AvgAggregationFunction>(aggregationFunctions[i])) {
+            FunctionCall("addAggregationValues",
+                         addAggregationValues<Aggregation::AvgAggregationValue<int64_t>>,
+                         handler,
+                         keyValue.as<UInt64>());
+        } else {
+            NES_ERROR2("Unknown aggregation type");
+            NES_THROW_RUNTIME_ERROR("Unknown aggregation type");
+        }
+    }
+
     if (val) {
         NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
+
+
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
-            auto aggregationValueMemref = FunctionCall("getKeyedThresholdWindowAggregationValueOrCreate",
-                                                       getKeyedThresholdWindowAggregationValueOrCreate,
-                                                       handler,
-                                                       Value<UInt64>(i),
-                                                       hash,
-                                                       Value<UInt8>((uint8_t) 0));
+            auto aggregationValueMemref =
+                FunctionCall("getKeyedAggregationValue", getKeyedAggregationValue, handler, keyValue.as<UInt64>(), Value<UInt64>(i));
+
             auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
             auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i]);
             // if the agg function is not a count, then get the aggregated value from the "onField" field
@@ -160,38 +180,31 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
             NES_TRACE("lift the following value to agg" << aggregatedValue);
             aggregationFunctions[i]->lift(aggregationValueMemref, aggregatedValue);
         }
-        FunctionCall("incrementKeyedThresholdWindowCount", incrementKeyedThresholdWindowCount, handler);
-        FunctionCall("setKeyedThresholdWindowIsWindowOpen", setKeyedThresholdWindowIsWindowOpen, handler, Value<Boolean>(true));
-        FunctionCall("unlockKeyedThresholdWindowHandler", unlockKeyedThresholdWindowHandler, handler);
+
+        FunctionCall("incrementKeyedThresholdWindowCount", incrementKeyedThresholdWindowCount, handler, keyValue.as<UInt64>());
+        FunctionCall("setKeyedThresholdWindowIsWindowOpen",
+                     setKeyedThresholdWindowIsWindowOpen,
+                     handler,
+                     keyValue.as<UInt64>(),
+                     Value<Boolean>(true));
+        FunctionCall("unlockKeyedThresholdWindowHandler", unlockKeyedThresholdWindowHandler, handler, keyValue.as<UInt64>());
     } else {
-        auto isWindowOpen = FunctionCall("getIsKeyedThresholdWindowOpen", getIsKeyedThresholdWindowOpen, handler);
+        auto isWindowOpen =
+            FunctionCall("getIsKeyedThresholdWindowOpen", getIsKeyedThresholdWindowOpen, handler, keyValue.as<UInt64>());
         if (isWindowOpen) {
-            auto recordCount = FunctionCall("getKeyedThresholdWindowRecordCount", getKeyedThresholdWindowRecordCount, handler);
+            auto recordCount = FunctionCall("getKeyedThresholdWindowRecordCount",
+                                            getKeyedThresholdWindowRecordCount,
+                                            handler,
+                                            keyValue.as<UInt64>());
             if (recordCount >= minCount) {
                 auto resultRecord = Record();
                 for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
-                    // TODO #3608: an ugly way to state the aggregation type
-                    uint8_t aggType = 0;
-                    // determine the type of agg function
-                    // TODO: #3608 also check the data type of the input and output of the aggregation
-                    if (std::dynamic_pointer_cast<Aggregation::SumAggregationFunction>(aggregationFunctions[i])) {
-                        aggType = (uint8_t) 0;
-                    } else if (std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i])) {
-                        aggType = (uint8_t) 1;
-                    } else if (std::dynamic_pointer_cast<Aggregation::MaxAggregationFunction>(aggregationFunctions[i])) {
-                        aggType = (uint8_t) 2;
-                    } else if (std::dynamic_pointer_cast<Aggregation::MinAggregationFunction>(aggregationFunctions[i])) {
-                        aggType = (uint8_t) 3;
-                    } else if (std::dynamic_pointer_cast<Aggregation::AvgAggregationFunction>(aggregationFunctions[i])) {
-                        aggType = (uint8_t) 4;
-                    }
-
-                    auto aggregationValueMemref = FunctionCall("getKeyedThresholdWindowAggregationValueOrCreate",
-                                                               getKeyedThresholdWindowAggregationValueOrCreate,
+                    auto aggregationValueMemref = FunctionCall("getKeyedAggregationValue",
+                                                               getKeyedAggregationValue,
                                                                handler,
-                                                               Value<UInt64>(i),
-                                                               hash,
-                                                               Value<UInt8>(aggType));
+                                                               keyValue.as<UInt64>(),
+                                                               Value<UInt64>(i));
+
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
                     NES_TRACE("Write back result for" << aggregationResultFieldIdentifiers[i].c_str()
                                                       << "result: " << aggregationResult)
@@ -202,9 +215,13 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
                 FunctionCall("setKeyedThresholdWindowIsWindowOpen",
                              setKeyedThresholdWindowIsWindowOpen,
                              handler,
+                             keyValue.as<UInt64>(),
                              Value<Boolean>(false));
-                FunctionCall("resetKeyedThresholdWindowCount", resetKeyedThresholdWindowCount, handler);
-                FunctionCall("unlockKeyedThresholdWindowHandler", unlockKeyedThresholdWindowHandler, handler);
+                FunctionCall("resetKeyedThresholdWindowCount", resetKeyedThresholdWindowCount, handler, keyValue.as<UInt64>());
+                FunctionCall("unlockKeyedThresholdWindowHandler",
+                             unlockKeyedThresholdWindowHandler,
+                             handler,
+                             keyValue.as<UInt64>());
                 // crucial to release the handler here before we execute the rest of the pipeline
                 child->execute(ctx, resultRecord);
             } else {
@@ -212,15 +229,19 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
                 FunctionCall("setKeyedThresholdWindowIsWindowOpen",
                              setKeyedThresholdWindowIsWindowOpen,
                              handler,
+                             keyValue.as<UInt64>(),
                              Value<Boolean>(false));
-                FunctionCall("resetKeyedThresholdWindowCount", resetKeyedThresholdWindowCount, handler);
-                FunctionCall("unlockKeyedThresholdWindowHandler", unlockKeyedThresholdWindowHandler, handler);
+                FunctionCall("resetKeyedThresholdWindowCount", resetKeyedThresholdWindowCount, handler, keyValue.as<UInt64>());
+                FunctionCall("unlockKeyedThresholdWindowHandler",
+                             unlockKeyedThresholdWindowHandler,
+                             handler,
+                             keyValue.as<UInt64>());
             }
         }// end if isWindowOpen
         else {
             // if the window is closed, we reset the counter and release the handler
-            FunctionCall("resetKeyedThresholdWindowCount", resetKeyedThresholdWindowCount, handler);
-            FunctionCall("unlockKeyedThresholdWindowHandler", unlockKeyedThresholdWindowHandler, handler);
+            FunctionCall("resetKeyedThresholdWindowCount", resetKeyedThresholdWindowCount, handler, keyValue.as<UInt64>());
+            FunctionCall("unlockKeyedThresholdWindowHandler", unlockKeyedThresholdWindowHandler, handler, keyValue.as<UInt64>());
         }
     }
 }
