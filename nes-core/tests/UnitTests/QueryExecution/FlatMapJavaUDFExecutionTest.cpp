@@ -54,17 +54,17 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
 };
 
-constexpr auto numberOfRecords = 10;
-constexpr auto udfIncrement = 10;
+constexpr auto NUMBER_OF_RECORDS = 10;
+constexpr auto UDF_INCREMENT = 10;
 
 /**
  * This helper function fills a buffer with test data
  */
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
+    for (int recordIndex = 0; recordIndex < NUMBER_OF_RECORDS; recordIndex++) {
         buf[recordIndex][0].write<int32_t>(recordIndex);
     }
-    buf.setNumberOfTuples(numberOfRecords);
+    buf.setNumberOfTuples(NUMBER_OF_RECORDS);
 }
 
 /**
@@ -153,9 +153,9 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), numberOfRecords);
-    int32_t udfState = udfIncrement;
-    for (uint32_t recordIndex = 0u; recordIndex < numberOfRecords; ++recordIndex) {
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), NUMBER_OF_RECORDS);
+    int32_t udfState = UDF_INCREMENT;
+    for (uint32_t recordIndex = 0u; recordIndex < NUMBER_OF_RECORDS; ++recordIndex) {
         udfState += recordIndex;
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), udfState);
     }
