@@ -15,6 +15,7 @@
 #ifndef NES_ABSTRACTSYNOPSIS_HPP
 #define NES_ABSTRACTSYNOPSIS_HPP
 
+#include <Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -25,8 +26,6 @@ namespace NES::ASP {
 
 class AbstractSynopsis;
 using AbstractSynopsesPtr = std::shared_ptr<AbstractSynopsis>;
-
-using AggregationValuePtr = std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>;
 
 constexpr auto GENERATOR_SEED_DEFAULT = 42;
 
@@ -47,7 +46,7 @@ class AbstractSynopsis {
      * @brief Once all records have been inserted, we can ask for an approximation
      * @return Record that stores the approximation
      */
-    virtual std::vector<Runtime::Execution::RecordBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) = 0;
+    virtual std::vector<Runtime::TupleBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) = 0;
 
     /**
      * @brief Initializes the synopsis. This means that the synopsis should create a state in which a new approximation
@@ -69,6 +68,11 @@ class AbstractSynopsis {
      * @param aggregationFunction
      */
     void setAggregationFunction(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
+
+    /**
+     * @brief Sets the aggregation value for this synopsis
+     */
+    void setAggregationValue(Benchmarking::AggregationValuePtr aggregationValue);
 
     /**
      * @brief Sets the fieldname for this aggregation
@@ -95,7 +99,7 @@ class AbstractSynopsis {
 
   protected:
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    AggregationValuePtr aggregationValue;
+    Benchmarking::AggregationValuePtr aggregationValue;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     SchemaPtr outputSchema;

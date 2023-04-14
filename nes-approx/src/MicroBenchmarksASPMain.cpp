@@ -60,18 +60,31 @@ int main(int argc, const char* argv[]) {
     auto runner = std::make_shared<MicroBenchmarkRunner>();
     Exceptions::installGlobalErrorListener(runner);
 
-    std::string yamlFileName;
-    if (argc == 2 && std::string(argv[1]).find("--configPath") != std::string::npos) {
-        auto pathArg = std::string(argv[1]);
-        yamlFileName = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
-    } else {
-        std::cerr << "Error: Only --configPath= is allowed as a command line argument!\nExiting now..." << std::endl;
+    if (argc > 3 || argc == 0) {
+        std::cerr << "Too many arguments error: Only --configPath= and --dataPath= are allowed as a command line argument!\nExiting now..."
+                  << std::endl;
         return -1;
     }
 
+    // Iterating through the arguments
+    std::unordered_map<std::string, std::string> argMap;
+    for (int i = 0; i < argc; ++i) {
+        auto pathArg = std::string(argv[i]);
+        if (pathArg.find("--configPath") != std::string::npos) {
+            argMap["configPath"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        }
+        if (pathArg.find("--dataPath") != std::string::npos) {
+            argMap["dataPath"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        }
+    }
+
+    auto yamlFileName = argMap["configPath"];
+    auto absoluteDataPath = std::filesystem::absolute(std::filesystem::path(argMap["dataPath"]));
+
     NES_INFO("Parsing all micro-benchmarks...");
     auto csvFileName = ASP::Util::parseCsvFileFromYaml(yamlFileName);
-    auto allMicroBenchmarks = ASP::Benchmarking::MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFileName);
+    auto allMicroBenchmarks = ASP::Benchmarking::MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFileName,
+                                                                                                     absoluteDataPath);
 
     NES_INFO("Running all micro-benchmarks...");
     for (auto& microBenchmark : allMicroBenchmarks) {

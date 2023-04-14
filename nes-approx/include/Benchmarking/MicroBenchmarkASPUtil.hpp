@@ -15,6 +15,7 @@
 #ifndef NES_MICROBENCHMARKASPUTIL_HPP
 #define NES_MICROBENCHMARKASPUTIL_HPP
 
+#include <Synopses/AbstractSynopsis.hpp>
 #include <Benchmarking/MicroBenchmarkResult.hpp>
 #include <Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Benchmarking/Parsing/SynopsisArguments.hpp>
@@ -57,9 +58,11 @@ std::vector<SynopsisArguments> parseSynopsisArguments(const Yaml::Node& synopses
 /**
  * @brief Parses the yaml node and creates YamlAggregation (wrapper for the aggregation, e.g., input and accuracy file)
  * @param aggregationsNode
+ * @param data folder to the data files
  * @return Vector of YamlAggregation objects
  */
-std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode);
+std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode,
+                                                             const std::filesystem::path& data);
 
 /**
  * @brief Parses the window size
@@ -106,9 +109,6 @@ Runtime::Execution::MemoryProvider::MemoryProviderPtr createMemoryProvider(const
  */
 Runtime::MemoryLayouts::DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
 
-
-AggregationValuePtr createAggregationValue(Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction);
-
 /**
  * @brief Returns the physical types of all fields of the schema
  * @param schema
@@ -117,18 +117,18 @@ AggregationValuePtr createAggregationValue(Runtime::Execution::Aggregation::Aggr
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 
 /**
- * @brief Creates multiple RecordBuffers from the csv file until the lastTimeStamp has been read
+ * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
  * @param csvFile
  * @param schema
  * @param timeStampFieldName
  * @param lastTimeStamp
  * @param bufferManager
- * @return Vector of RecordBuffers
+ * @return Vector of TupleBuffers
  */
-[[maybe_unused]] std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
-                                                                                        Runtime::BufferManagerPtr bufferManager,
-                                                                                        const std::string& timeStampFieldName,
-                                                                                        uint64_t lastTimeStamp);
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
+                                                                            Runtime::BufferManagerPtr bufferManager,
+                                                                            const std::string& timeStampFieldName,
+                                                                            uint64_t lastTimeStamp);
 
 
 } // namespace NES::ASP

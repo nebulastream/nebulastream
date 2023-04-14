@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Synopses/AbstractSynopsis.hpp>
 #include <Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Benchmarking/MicroBenchmarkRun.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -33,7 +34,9 @@ void MicroBenchmarkRun::run() {
 
     auto synopsis = AbstractSynopsis::create(synopsesArguments);
     auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
+
     synopsis->setAggregationFunction(aggregation.createAggregationFunction());
+    synopsis->setAggregationValue(aggregation.createAggregationValue());
     synopsis->setFieldNameAggregation(aggregation.fieldNameAggregation);
     synopsis->setFieldNameApproximate(aggregation.fieldNameApproximate);
     synopsis->setOutputSchema(aggregation.outputSchema);
@@ -51,11 +54,12 @@ void MicroBenchmarkRun::run() {
         synopsis->initialize();
 
         for (auto& buffer : allRecordBuffers) {
-            auto numberOfRecords = buffer.getNumRecords();
-            auto bufferAddress = buffer.getBuffer();
+            auto numberOfRecords = buffer.getNumberOfTuples();
+            auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer));
             for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
                 auto record = memoryProvider->read({}, bufferAddress, i);
                 synopsis->addToSynopsis(record);
+
             }
         }
 
@@ -78,7 +82,8 @@ void MicroBenchmarkRun::run() {
     NES_INFO("Loop timers: " << timer);
 }
 
-std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile) {
+std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile,
+                                                                                   const std::filesystem::path& absoluteDataPath) {
     std::vector<MicroBenchmarkRun> retVector;
 
     Yaml::Node configFile;
@@ -87,26 +92,23 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
         NES_THROW_RUNTIME_ERROR("Could not parse " << yamlConfigFile << "!");
     }
 
+
     // Parsing all required members from the yaml file
     auto parsedReps = ASP::Util::parseReps(configFile["reps"]);
     auto parsedSynopsisArguments = ASP::Util::parseSynopsisArguments(configFile["synopsis"]);
-    auto parsedAggregations = ASP::Util::parseAggregations(configFile["aggregation"]);
+    auto parsedAggregations = ASP::Util::parseAggregations(configFile["aggregation"], absoluteDataPath);
     auto parsedWindowSizes = ASP::Util::parseWindowSizes(configFile["windowSize"]);
     auto parsedBufferSizes = ASP::Util::parseBufferSizes(configFile["bufferSize"]);
     auto parsedNumberOfBuffers = ASP::Util::parseNumberOfBuffers(configFile["numberOfBuffers"]);
 
 
-    retVector.reserve(parsedSynopsisArguments.size() * parsedAggregations.size() *
-                      parsedWindowSizes.size() * parsedBufferSizes.size() *
-                      parsedNumberOfBuffers.size());
-    auto cnt = 0UL;
     for (auto& synopsisArgument : parsedSynopsisArguments) {
         for (auto& aggregation : parsedAggregations) {
             for (auto& windowSize : parsedWindowSizes) {
                 for (auto& bufferSize : parsedBufferSizes) {
                     for (auto& numberOfBuffers : parsedNumberOfBuffers) {
-                        retVector[++cnt] = MicroBenchmarkRun(synopsisArgument, aggregation, bufferSize, numberOfBuffers,
-                                                             windowSize, parsedReps);
+                        retVector.push_back(MicroBenchmarkRun(synopsisArgument, aggregation, bufferSize, numberOfBuffers,
+                                                             windowSize, parsedReps));
                     }
                 }
             }
@@ -197,24 +199,24 @@ std::string MicroBenchmarkRun::toString() {
     return stringStream.str();
 }
 
-std::vector<Runtime::Execution::RecordBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
     return ASP::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager,
                                                aggregation.timeStampFieldName, windowSize);
 }
 
-std::vector<Runtime::Execution::RecordBuffer>
-    MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::Execution::RecordBuffer>& inputBuffers,
-                                         Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
+                                                                           Runtime::BufferManagerPtr bufferManager) {
     auto aggregationFunction = aggregation.createAggregationFunction();
-    auto aggregationValue = ASP::Util::createAggregationValue(aggregationFunction);
+    auto aggregationValue = aggregation.createAggregationValue();
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
 
     auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
 
+
     // TODO for now we can ignore windows
     for (auto& buffer : inputBuffers) {
-        auto numberOfRecords = buffer.getNumRecords();
-        auto bufferAddress = buffer.getBuffer();
+        auto numberOfRecords = buffer.getNumberOfTuples();
+        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer));
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read({}, bufferAddress, i);
             aggregationFunction->lift(aggregationValueMemRef, record.read(aggregation.fieldNameAggregation));
@@ -229,32 +231,30 @@ std::vector<Runtime::Execution::RecordBuffer>
     // Create an output buffer and write the approximation into it
     auto outputMemoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
     auto outputBuffer = bufferManager->getBufferBlocking();
-    auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer));
-
+    auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) outputBuffer.getBuffer());
     Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
     outputMemoryProvider->write(recordIndex, outputRecordBuffer, record);
+    outputBuffer.setNumberOfTuples(1);
 
-
-    return {Runtime::Execution::RecordBuffer(outputRecordBuffer)};
+    return {outputBuffer};
 }
 
-double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::Execution::RecordBuffer>& allAccuracyRecords,
-                                          std::vector<Runtime::Execution::RecordBuffer>& allApproximateRecords) {
+double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& allAccuracyRecords,
+                                          std::vector<Runtime::TupleBuffer>& allApproximateBuffers) {
 
     double sumError = 0.0;
     auto numTuples = 0UL;
+
     for (auto& accBuf : allAccuracyRecords) {
-        auto dynamicAccBuf = ASP::Util::createDynamicTupleBuffer((Runtime::TupleBuffer&)accBuf.getReference(),
-                                                                 aggregation.outputSchema);
-        for (auto& approxBuf : allApproximateRecords) {
-            auto dynamicApproxBuf = ASP::Util::createDynamicTupleBuffer((Runtime::TupleBuffer&)approxBuf.getReference(),
-                                                                        aggregation.outputSchema);
+        auto dynamicAccBuf = ASP::Util::createDynamicTupleBuffer(accBuf, aggregation.outputSchema);
+        for (auto& approxBuf : allApproximateBuffers) {
+            auto dynamicApproxBuf = ASP::Util::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
             NES_ASSERT(dynamicAccBuf.getNumberOfTuples() == dynamicApproxBuf.getNumberOfTuples(),
                        "Approximate Buffer and Accuracy Buffer must have the same number of tuples");
 
             for (auto i = 0UL; i < dynamicApproxBuf.getNumberOfTuples(); ++i) {
-                auto accId = dynamicAccBuf[i]["id"];
-                auto approxId = dynamicApproxBuf[i]["id"];
+                auto accId = dynamicAccBuf[i][aggregation.fieldNameApproximate];
+                auto approxId = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
                 if (accId == approxId) {
                     auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
                     auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];

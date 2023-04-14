@@ -16,11 +16,16 @@
 #define NES_YAMLAGGREGATION_HPP
 
 #include <API/Schema.hpp>
-#include <Util/yaml/Yaml.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Util/yaml/Yaml.hpp>
+#include <filesystem>
 #include <string>
 
 namespace NES::ASP::Benchmarking {
+
+using AggregationValuePtr = std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>;
+
 enum class AGGREGATION_TYPE : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
 class YamlAggregation {
 
@@ -30,6 +35,9 @@ class YamlAggregation {
      * @brief Default constructor
      */
     YamlAggregation() = default;
+
+    YamlAggregation(const YamlAggregation& other);
+    YamlAggregation& operator=(const YamlAggregation& other);
 
     /**
      * @brief Custom constructor
@@ -50,9 +58,11 @@ class YamlAggregation {
     /**
      * @brief Creates an YamlAggregation object from a yaml node
      * @param aggregationNode
+     * @param data is needed for providing an absolute path to the input file
      * @return YamlAggregation
      */
-    static YamlAggregation createAggregationFromYamlNode(Yaml::Node& aggregationNode);
+    static YamlAggregation createAggregationFromYamlNode(Yaml::Node& aggregationNode,
+                                                         const std::filesystem::path& data);
 
     /**
      * @brief Creates a string representation
@@ -78,6 +88,45 @@ class YamlAggregation {
      */
     Runtime::Execution::Aggregation::AggregationFunctionPtr createAggregationFunction();
 
+    /**
+     * @brief Creates an aggregation value from the current parameters
+     * @return AggregationValue
+     */
+    AggregationValuePtr createAggregationValue();
+
+
+  private:
+    /**
+     * @brief Creates an aggregation value from the current parameters for a min aggregation function
+     * @return AggregationValue
+     */
+    AggregationValuePtr createAggregationValueMin();
+
+    /**
+     * @brief Creates an aggregation value from the current parameters for a max aggregation function
+     * @return AggregationValue
+     */
+    AggregationValuePtr createAggregationValueMax();
+
+    /**
+     * @brief Creates an aggregation value from the current parameters for a count aggregation function
+     * @return AggregationValue
+     */
+    AggregationValuePtr createAggregationValueCount();
+
+    /**
+     * @brief Creates an aggregation value from the current parameters for an average aggregation function
+     * @return AggregationValue
+     */
+    AggregationValuePtr createAggregationValueAverage();
+
+    /**
+     * @brief Creates an aggregation value from the current parameters for a sum aggregation function
+     * @return AggregationValue
+     */
+    AggregationValuePtr createAggregationValueSum();
+
+  public:
     AGGREGATION_TYPE type;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;

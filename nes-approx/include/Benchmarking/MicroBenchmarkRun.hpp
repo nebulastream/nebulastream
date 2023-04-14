@@ -61,9 +61,11 @@ class MicroBenchmarkRun {
     /**
      * @brief Parses all micro-benchmarks from the yaml file
      * @param yamlConfigFile
+     * @param absoluteDataPath
      * @return Vector of all micro-benchmarks
      */
-    static std::vector<MicroBenchmarkRun> parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile);
+    static std::vector<MicroBenchmarkRun> parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile,
+                                                                           const std::filesystem::path& absoluteDataPath);
 
 
     /**
@@ -91,28 +93,28 @@ class MicroBenchmarkRun {
 
   private:
     /**
-     * @brief Creates a vector of type Nautilus::Record from the inputFile
-     * @return Vector of records
+     * @brief Creates a vector of type TupleBuffer from the inputFile
+     * @return Vector of TupleBuffer
      */
-    std::vector<Runtime::Execution::RecordBuffer> createInputRecords(Runtime::BufferManagerPtr bufferManager);
+    std::vector<Runtime::TupleBuffer> createInputRecords(Runtime::BufferManagerPtr bufferManager);
 
     /**
-     * @brief Creates a vector of type Runtime::Execution::RecordBuffer by executing the exact query
+     * @brief Creates a vector of type TupleBuffer by executing the exact query
      * @param inputBuffers
      * @param bufferManager
      * @return Vector of records
      */
-    std::vector<Runtime::Execution::RecordBuffer> createAccuracyRecords(std::vector<Runtime::Execution::RecordBuffer>& inputBuffers,
+    std::vector<Runtime::TupleBuffer> createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
                                                                         Runtime::BufferManagerPtr bufferManager);
 
     /**
      * @brief Compares the approximated with the exact query output and returns an accuracy.
      * @param allAccuracyRecords
-     * @param allApproximateRecords
+     * @param allApproximateBuffers
      * @return Accuracy of approximate
      */
-    double compareAccuracy(std::vector<Runtime::Execution::RecordBuffer>& allAccuracyRecords,
-                           std::vector<Runtime::Execution::RecordBuffer>& allApproximateRecords);
+    double compareAccuracy(std::vector<Runtime::TupleBuffer>& allAccuracyRecords,
+                           std::vector<Runtime::TupleBuffer>& allApproximateBuffers);
 
   private:
     SynopsisArguments synopsesArguments;

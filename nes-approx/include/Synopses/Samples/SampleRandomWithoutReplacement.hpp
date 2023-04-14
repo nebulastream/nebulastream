@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SAMPLERANDOMWITHREPLACEMENT_HPP
-#define NES_SAMPLERANDOMWITHREPLACEMENT_HPP
+#ifndef NES_SAMPLERANDOMWITHOUTREPLACEMENT_HPP
+#define NES_SAMPLERANDOMWITHOUTREPLACEMENT_HPP
 
 #include <Synopses/AbstractSynopsis.hpp>
 
@@ -22,14 +22,14 @@ namespace NES::ASP{
 /**
  * @brief Implementation of a  Simple Random Sample With Replacement
  */
-class SampleRandomWithReplacement : public AbstractSynopsis {
+class SampleRandomWithoutReplacement : public AbstractSynopsis {
 
   public:
     /**
      * @brief Constructor for a SampleRandomWithReplacement
      * @param sampleSize
      */
-    explicit SampleRandomWithReplacement(size_t sampleSize);
+    explicit SampleRandomWithoutReplacement(size_t sampleSize);
 
     /**
      * @brief Adds the record to this sample
@@ -46,12 +46,12 @@ class SampleRandomWithReplacement : public AbstractSynopsis {
      * @brief Once we have finished building our sample, we can ask for an approximate
      * @return Record(s) with the approximation
      */
-    std::vector<Runtime::Execution::RecordBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) override;
+    std::vector<Runtime::TupleBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) override;
 
     /**
      * @brief Deconstructor
      */
-    virtual ~SampleRandomWithReplacement() = default;
+    virtual ~SampleRandomWithoutReplacement() = default;
 
 
 
@@ -68,4 +68,4 @@ SRSWR(size_t sampleSize, std::string fieldName,
 
 } // namespace NES::ASP
 
-#endif//NES_SAMPLERANDOMWITHREPLACEMENT_HPP
+#endif//NES_SAMPLERANDOMWITHOUTREPLACEMENT_HPP

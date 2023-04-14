@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Synopses/AbstractSynopsis.hpp>
-#include <Synopses/Samples/SampleRandomWithReplacement.hpp>
+#include <Synopses/Samples/SampleRandomWithoutReplacement.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
@@ -21,7 +22,7 @@ namespace NES::ASP {
 AbstractSynopsesPtr AbstractSynopsis::create(SynopsisArguments arguments) {
 
     if (arguments.getType() == SynopsisArguments::Type::SRSWR) {
-        return std::make_shared<SampleRandomWithReplacement>(arguments.getWidth());
+        return std::make_shared<SampleRandomWithoutReplacement>(arguments.getWidth());
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -42,5 +43,9 @@ void AbstractSynopsis::setFieldNameApproximate(const std::string& fieldNameAppro
 }
 
 void AbstractSynopsis::setOutputSchema(const SchemaPtr& outputSchema) { AbstractSynopsis::outputSchema = outputSchema; }
+
+void AbstractSynopsis::setAggregationValue(Benchmarking::AggregationValuePtr aggregationValue) {
+    AbstractSynopsis::aggregationValue = std::move(aggregationValue);
+}
 
 } // namespace NES::ASP
