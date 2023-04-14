@@ -341,7 +341,8 @@ void DataSource::runningRoutineWithIngestionRate() {
         uint64_t buffersProcessedCnt = 0;
 
         //produce buffers until limit for this second or for all perionds is reached or source is topped
-        while (buffersProcessedCnt < buffersToProducePer100Ms && running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
+        while (buffersProcessedCnt < buffersToProducePer100Ms && running
+               && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
@@ -375,8 +376,6 @@ void DataSource::runningRoutineWithIngestionRate() {
                 "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime={} endTimeSendBuffers={}",
                 nextPeriodStartTime,
                 endPeriod);
-            //            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
-            //                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
         }
 
         uint64_t sleepCnt = 0;
@@ -418,10 +417,10 @@ void DataSource::runningRoutineWithGatheringInterval() {
         NES_DEBUG2("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
     }
     open();
-    uint64_t cnt = 0;
+    uint64_t numberOfBuffersProduced = 0;
     while (running) {
         //check if already produced enough buffer
-        if (numberOfBuffersToProduce == 0 || cnt < numberOfBuffersToProduce) {
+        if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
             auto optBuf = receiveData();// note that receiveData might block
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
@@ -435,7 +434,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                            magic_enum::enum_name(getType()),
                            toString(),
                            buf.getNumberOfTuples(),
-                           cnt,
+                           numberOfBuffersProduced,
                            this->operatorId,
                            this->operatorId);
 
@@ -446,7 +445,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                 }
 
                 emitWorkFromSource(buf);
-                ++cnt;
+                ++numberOfBuffersProduced;
             } else {
                 NES_DEBUG2("DataSource {}: stopping cause of invalid buffer", operatorId);
                 running = false;
@@ -456,11 +455,11 @@ void DataSource::runningRoutineWithGatheringInterval() {
             NES_DEBUG2("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
                        "numBuffersToProcess={} now return",
                        operatorId,
-                       cnt,
+                       numberOfBuffersProduced,
                        numberOfBuffersToProduce);
             running = false;
         }
-        NES_TRACE2("DataSource {} : Data Source finished processing iteration {}", operatorId, cnt);
+        NES_TRACE2("DataSource {} : Data Source finished processing iteration {}", operatorId, numberOfBuffersProduced);
 
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
@@ -493,10 +492,10 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     this->kFilter->setGatheringIntervalRange(std::chrono::milliseconds{8000});
 
     open();
-    uint64_t cnt = 0;
+    uint64_t numberOfBuffersProduced = 0;
     while (running) {
         //check if already produced enough buffer
-        if (cnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0) {
+        if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
             auto optBuf = receiveData();// note that receiveData might block
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
@@ -518,7 +517,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     magic_enum::enum_name(getType()),
                     toString(),
                     buf.getNumberOfTuples(),
-                    cnt,
+                    numberOfBuffersProduced,
                     this->operatorId,
                     this->operatorId);
 
@@ -529,7 +528,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 }
 
                 emitWorkFromSource(buf);
-                ++cnt;
+                ++numberOfBuffersProduced;
             } else {
                 NES_ERROR2("DataSource {}: stopping cause of invalid buffer", operatorId);
                 running = false;
@@ -539,11 +538,11 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
             NES_DEBUG2("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
                        "numBuffersToProcess={} now return",
                        operatorId,
-                       cnt,
+                       numberOfBuffersProduced,
                        numberOfBuffersToProduce);
             running = false;
         }
-        NES_DEBUG2("DataSource  {} : Data Source finished processing iteration  {}", operatorId, cnt);
+        NES_DEBUG2("DataSource  {} : Data Source finished processing iteration  {}", operatorId, numberOfBuffersProduced);
     }
 
     // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
