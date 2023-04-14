@@ -53,7 +53,7 @@ class GeneratorSource : public DataSource {
                      numSourceLocalBuffers,
                      gatheringMode,
                      std::move(successors)) {
-        this->numBuffersToProcess = numbersOfBufferToProduce;
+        this->numberOfBuffersToProduce = numbersOfBufferToProduce;
     }
     /**
    * @brief override function to create one buffer

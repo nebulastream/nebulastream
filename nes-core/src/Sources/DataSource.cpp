@@ -321,12 +321,12 @@ void DataSource::runningRoutineWithIngestionRate() {
                operatorId,
                magic_enum::enum_name(getType()),
                gatheringIngestionRate);
-    if (numBuffersToProcess == 0) {
+    if (numberOfBuffersToProduce == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
             "the source is empty");
     } else {
-        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numBuffersToProcess);
+        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
     }
     open();
 
@@ -341,7 +341,7 @@ void DataSource::runningRoutineWithIngestionRate() {
         uint64_t buffersProcessedCnt = 0;
 
         //produce buffers until limit for this second or for all perionds is reached or source is topped
-        while (buffersProcessedCnt < buffersToProducePer100Ms && running && processedOverallBufferCnt < numBuffersToProcess) {
+        while (buffersProcessedCnt < buffersToProducePer100Ms && running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
@@ -410,18 +410,18 @@ void DataSource::runningRoutineWithGatheringInterval() {
                operatorId,
                magic_enum::enum_name(getType()),
                gatheringInterval.count());
-    if (numBuffersToProcess == 0) {
+    if (numberOfBuffersToProduce == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
             "the source is empty");
     } else {
-        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numBuffersToProcess);
+        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
     }
     open();
     uint64_t cnt = 0;
     while (running) {
         //check if already produced enough buffer
-        if (numBuffersToProcess == 0 || cnt < numBuffersToProcess) {
+        if (numberOfBuffersToProduce == 0 || cnt < numberOfBuffersToProduce) {
             auto optBuf = receiveData();// note that receiveData might block
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
@@ -457,7 +457,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                        "numBuffersToProcess={} now return",
                        operatorId,
                        cnt,
-                       numBuffersToProcess);
+                       numberOfBuffersToProduce);
             running = false;
         }
         NES_TRACE2("DataSource {} : Data Source finished processing iteration {}", operatorId, cnt);
@@ -481,12 +481,12 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                operatorId,
                magic_enum::enum_name(getType()),
                gatheringInterval.count());
-    if (numBuffersToProcess == 0) {
+    if (numberOfBuffersToProduce == 0) {
         NES_DEBUG2(
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
             "the source is empty");
     } else {
-        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numBuffersToProcess);
+        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
     }
 
     this->kFilter->setGatheringInterval(this->gatheringInterval);
@@ -496,7 +496,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     uint64_t cnt = 0;
     while (running) {
         //check if already produced enough buffer
-        if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
+        if (cnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0) {
             auto optBuf = receiveData();// note that receiveData might block
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
@@ -540,7 +540,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                        "numBuffersToProcess={} now return",
                        operatorId,
                        cnt,
-                       numBuffersToProcess);
+                       numberOfBuffersToProduce);
             running = false;
         }
         NES_DEBUG2("DataSource  {} : Data Source finished processing iteration  {}", operatorId, cnt);
@@ -566,7 +566,7 @@ uint64_t DataSource::getNumberOfGeneratedBuffers() const { return generatedBuffe
 
 std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 
-uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess; }
+uint64_t DataSource::getNumBuffersToProcess() const { return numberOfBuffersToProduce; }
 
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }

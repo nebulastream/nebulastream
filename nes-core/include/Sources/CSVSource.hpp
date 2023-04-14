@@ -82,21 +82,6 @@ class CSVSource : public DataSource {
     std::string getFilePath() const;
 
     /**
-     * @brief Get the csv file delimiter
-     */
-    std::string getDelimiter() const;
-
-    /**
-     * @brief Get number of tuples per buffer
-     */
-    uint64_t getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief getter for skip header
-     */
-    bool getSkipHeader() const;
-
-    /**
      * @brief getter for source config
      * @return csvSourceType1
      */
@@ -105,7 +90,6 @@ class CSVSource : public DataSource {
   protected:
     std::ifstream input;
     bool fileEnded;
-    bool loopOnFile;
 
   private:
     CSVSourceTypePtr csvSourceType;
