@@ -11,5 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-approx
-        SampleRandomWithReplacement.cpp
+        SampleRandomWithoutReplacement.cpp
         )

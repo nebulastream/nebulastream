@@ -57,12 +57,13 @@ std::vector<SynopsisArguments> parseSynopsisArguments(const Yaml::Node& synopses
     return retVector;
 }
 
-std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode) {
+std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode,
+                                                             const std::filesystem::path& data) {
     std::vector<Benchmarking::YamlAggregation> parsedAggregations;
 
     for (auto entry = aggregationsNode.Begin(); entry != aggregationsNode.End(); entry++) {
         auto node = (*entry).second;
-        parsedAggregations.emplace_back(Benchmarking::YamlAggregation::createAggregationFromYamlNode(node));
+        parsedAggregations.emplace_back(Benchmarking::YamlAggregation::createAggregationFromYamlNode(node, data));
     }
 
 
@@ -133,11 +134,11 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
     return retVector;
 }
 
-std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
+std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
                                                                        Runtime::BufferManagerPtr bufferManager,
                                                                        const std::string& timeStampFieldName,
                                                                        uint64_t lastTimeStamp) {
-    std::vector<Runtime::Execution::RecordBuffer> recordBuffers;
+    std::vector<Runtime::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
     // Creating everything for the csv parser
@@ -158,22 +159,27 @@ std::vector<Runtime::Execution::RecordBuffer> createBuffersFromCSVFile(const std
         std::string line = *it;
         auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(buffer, schema);
         parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicTupleBuffer, schema, bufferManager);
-        tupleCount++;
+        ++tupleCount;
 
         // If we have read enough tuples from the csv file, then stop iterating over it
-        if (dynamicTupleBuffer[tupleCount][timeStampFieldName].read<uint64_t>() >= lastTimeStamp) {
+        if (dynamicTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>() >= lastTimeStamp) {
             break;
         }
 
 
         if (tupleCount >= maxTuplesPerBuffer) {
             buffer.setNumberOfTuples(tupleCount);
-            recordBuffers.emplace_back(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
+            recordBuffers.emplace_back(buffer);
             buffer = bufferManager->getBufferBlocking();
-            tupleCount = 0;
+            tupleCount = 0UL;
         }
         ++it;
     } while(it != endIt);
+
+    if (tupleCount > 0) {
+        buffer.setNumberOfTuples(tupleCount);
+        recordBuffers.emplace_back(buffer);
+    }
 
     return recordBuffers;
 }

@@ -15,18 +15,18 @@
 #include <Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Synopses/Samples/SampleRandomWithReplacement.hpp>
+#include <Synopses/Samples/SampleRandomWithoutReplacement.hpp>
 #include <random>
 
 namespace NES::ASP{
 
-void SampleRandomWithReplacement::addToSynopsis(Nautilus::Record record) {
+void SampleRandomWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     // Here we just store all records and then perform the sampling in getApproximate()
     storedRecords.emplace_back(record);
 }
 
-std::vector<Runtime::Execution::RecordBuffer>
-SampleRandomWithReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer>
+SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
     // First, we have to pick our sample
     std::vector<Nautilus::Record> sample;
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
@@ -38,7 +38,6 @@ SampleRandomWithReplacement::getApproximate(Runtime::BufferManagerPtr bufferMana
 
     // Approximate over the sample and write the approximation into record
     Nautilus::Record record;
-    aggregationValue = ASP::Util::createAggregationValue(aggregationFunction);
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& item : sample) {
@@ -50,17 +49,20 @@ SampleRandomWithReplacement::getApproximate(Runtime::BufferManagerPtr bufferMana
     // Create an output buffer and write the approximation into it
     auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), outputSchema);
     auto outputBuffer = bufferManager->getBufferBlocking();
-    auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer));
+    auto outputRecordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer)));
+
     Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
-    memoryProvider->write(recordIndex, outputRecordBuffer, record);
+    Nautilus::Value<Nautilus::UInt64> numRecords(1UL);
+    auto bufferAddress = outputRecordBuffer.getBuffer();
+    memoryProvider->write(recordIndex, bufferAddress, record);
+    outputRecordBuffer.setNumRecords(numRecords);
 
-
-    return {Runtime::Execution::RecordBuffer(outputRecordBuffer)};
+    return {outputBuffer};
 }
 
-SampleRandomWithReplacement::SampleRandomWithReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
+SampleRandomWithoutReplacement::SampleRandomWithoutReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
 
-void SampleRandomWithReplacement::initialize() {
+void SampleRandomWithoutReplacement::initialize() {
     storedRecords.clear();
 }
 

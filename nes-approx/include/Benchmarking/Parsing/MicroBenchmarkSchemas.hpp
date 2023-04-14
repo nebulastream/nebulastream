@@ -37,19 +37,19 @@ static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
 
 static inline std::map<AGGREGATION_TYPE, SchemaPtr> accuracyFileSchemas = {
     {AGGREGATION_TYPE::MIN, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                            ->addField("aggregation", BasicType::FLOAT64)},
+                                ->addField("aggregation", BasicType::FLOAT64)},
 
     {AGGREGATION_TYPE::MAX, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                  ->addField("aggregation", BasicType::FLOAT64)},
+                                ->addField("aggregation", BasicType::FLOAT64)},
 
     {AGGREGATION_TYPE::SUM, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                              ->addField("aggregation", BasicType::FLOAT64)},
+                                ->addField("aggregation", BasicType::FLOAT64)},
 
     {AGGREGATION_TYPE::AVERAGE, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                              ->addField("aggregation", BasicType::FLOAT64)},
+                                ->addField("aggregation", BasicType::FLOAT64)},
 
     {AGGREGATION_TYPE::COUNT, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                              ->addField("aggregation", BasicType::FLOAT64)}};
+                                ->addField("aggregation", BasicType::FLOAT64)}};
 
 } // namespace NES::ASP::Benchmarking
 
