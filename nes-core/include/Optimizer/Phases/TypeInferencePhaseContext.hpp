@@ -57,7 +57,7 @@ class TypeInferencePhaseContext {
 
   private:
     const Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    const Catalogs::UDF::UDFCatalogPtr UDFCatalog;
+    const Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 
 }// namespace NES::Optimizer
