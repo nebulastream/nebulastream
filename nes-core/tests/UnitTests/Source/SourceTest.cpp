@@ -1406,7 +1406,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1423,7 +1422,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
         }
     }
     EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
@@ -1446,7 +1444,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1463,7 +1460,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
         }
     }
     EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
@@ -1488,7 +1484,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1497,7 +1492,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
         csvDataSource.fillBuffer(buffer);
     }
     EXPECT_FALSE(csvDataSource.fileEnded);
-    EXPECT_TRUE(csvDataSource.loopOnFile);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
