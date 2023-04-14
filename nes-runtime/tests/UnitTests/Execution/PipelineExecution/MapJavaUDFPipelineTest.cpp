@@ -300,7 +300,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        std::string value = "testValue";
+        std::string value = "X";
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
@@ -327,7 +327,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
-        ASSERT_EQ(std::string(textValue->c_str(), size), "testValue_appended");
+        ASSERT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
     }
 }
 
@@ -351,7 +351,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        std::string value = "testValue";
+        std::string value = "X";
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
@@ -393,7 +393,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
-        EXPECT_EQ(std::string(textValue->c_str(), size), "testValue_appended");
+        EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
     }
 }
 
