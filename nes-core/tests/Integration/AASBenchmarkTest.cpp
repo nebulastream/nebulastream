@@ -958,19 +958,14 @@ TEST_F(AASBenchmarkTest, testSequentialRuntime) {
     NES_DEBUG("AASBenchmarkTest:: Topology print: " << crd->getTopology()->toString());
 
 
-    if (placementStrategyAAS != PlacementStrategy::ValueAAS::None) {
-        NES_DEBUG("AASBenchmarkTest: Sleep");
-        std::this_thread::sleep_for(runtime / 6);
+    NES_DEBUG("AASBenchmarkTest: Sleep");
+    std::this_thread::sleep_for(runtime / 6);
 
-        NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
-        PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
+    NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
+    PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
 
-        NES_DEBUG("AASBenchmarkTest: Sleep again");
-        std::this_thread::sleep_for(5 * runtime / 6);
-    } else {
-        NES_DEBUG("AASBenchmarkTest: Sleep");
-        std::this_thread::sleep_for(runtime);
-    }
+    NES_DEBUG("AASBenchmarkTest: Sleep again");
+    std::this_thread::sleep_for(5 * runtime / 6);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
@@ -1285,20 +1280,14 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityRuntime) {
 
     NES_DEBUG("AASBenchmarkTest:: Topology print: " << crd->getTopology()->toString());
 
+    NES_DEBUG("AASBenchmarkTest: Sleep");
+    std::this_thread::sleep_for(runtime / 6);
 
-    if (placementStrategyAAS != PlacementStrategy::ValueAAS::None) {
-        NES_DEBUG("AASBenchmarkTest: Sleep");
-        std::this_thread::sleep_for(runtime / 6);
+    NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
+    PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
 
-        NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
-        PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
-
-        NES_DEBUG("AASBenchmarkTest: Sleep again");
-        std::this_thread::sleep_for(5 * runtime / 6);
-    } else {
-        NES_DEBUG("AASBenchmarkTest: Sleep");
-        std::this_thread::sleep_for(runtime);
-    }
+    NES_DEBUG("AASBenchmarkTest: Sleep again");
+    std::this_thread::sleep_for(5 * runtime / 6);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
@@ -1324,9 +1313,11 @@ TEST_F(AASBenchmarkTest, testFatLowConnectivityRuntime) {
         EXPECT_TRUE(retStopWrk);
     }
 
-    NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << 0);
-    bool retStopWrk0 = reserveWorkers[0]->stop(true);
-    EXPECT_TRUE(retStopWrk0);
+    if (placementStrategyAAS != PlacementStrategy::ValueAAS::None) {
+        NES_INFO("AASBenchmarkTest: Stop worker reserveWorker" << 0);
+        bool retStopWrk0 = reserveWorkers[0]->stop(true);
+        EXPECT_TRUE(retStopWrk0);
+    }
 
     for (const auto& [i, level2Worker] : level2Workers) {
         NES_INFO("AASBenchmarkTest: Stop worker level2Worker" << i);
@@ -1595,19 +1586,14 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityRuntime) {
 
     NES_DEBUG("AASBenchmarkTest:: Topology print: " << crd->getTopology()->toString())
 
-    if (placementStrategyAAS != PlacementStrategy::ValueAAS::None) {
-        NES_DEBUG("AASBenchmarkTest: Sleep");
-        std::this_thread::sleep_for(runtime / 6);
+    NES_DEBUG("AASBenchmarkTest: Sleep");
+    std::this_thread::sleep_for(runtime / 6);
 
-        NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
-        PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
+    NES_INFO("AASBenchmarkTest: Manually fail level3Worker" << 0 << ", id: " << level3Workers[0]->getWorkerId());
+    PlacementStrategy::workerContextIdToFail = level3Workers[0]->getWorkerId() - 1;
 
-        NES_DEBUG("AASBenchmarkTest: Sleep again");
-        std::this_thread::sleep_for(5 * runtime / 6);
-    } else {
-        NES_DEBUG("AASBenchmarkTest: Sleep");
-        std::this_thread::sleep_for(runtime);
-    }
+    NES_DEBUG("AASBenchmarkTest: Sleep again");
+    std::this_thread::sleep_for(5 * runtime / 6);
 
     NES_INFO("AASBenchmarkTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
