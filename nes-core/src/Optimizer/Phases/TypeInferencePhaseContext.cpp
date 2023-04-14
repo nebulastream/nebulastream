@@ -17,11 +17,11 @@
 namespace NES::Optimizer {
 
 TypeInferencePhaseContext::TypeInferencePhaseContext(Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                     Catalogs::UDF::UDFCatalogPtr UDFCatalog)
-    : sourceCatalog(std::move(sourceCatalog)), UDFCatalog(std::move(UDFCatalog)) {}
+                                                     Catalogs::UDF::UDFCatalogPtr udfCatalog)
+    : sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
 const Catalogs::Source::SourceCatalogPtr& TypeInferencePhaseContext::getSourceCatalog() const { return sourceCatalog; }
 
-const Catalogs::UDF::UDFCatalogPtr& TypeInferencePhaseContext::getUDFCatalog() const { return UDFCatalog; }
+const Catalogs::UDF::UDFCatalogPtr& TypeInferencePhaseContext::getUDFCatalog() const { return udfCatalog; }
 
 }// namespace NES::Optimizer
