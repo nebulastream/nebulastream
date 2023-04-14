@@ -126,7 +126,6 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      */
     void setEnvironment(JNIEnv* env) { this->env = env; }
 
-    // TODO: Move these 4 mehtods later
     /**
      * @brief This method returns the java udf object state
      * @return jobject java udf object

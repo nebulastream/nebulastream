@@ -15,7 +15,6 @@
 
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-// TODO Change to flatmap operator handler
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>

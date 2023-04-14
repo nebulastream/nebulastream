@@ -40,9 +40,9 @@ ExpressionNodePtr UDFCallExpressionNode::create(const ConstantValueExpressionNod
     return udfExpressionNode;
 }
 
-void UDFCallExpressionNode::setChildren(const ConstantValueExpressionNodePtr& UDFName,
+void UDFCallExpressionNode::setChildren(const ConstantValueExpressionNodePtr& udfName,
                                         std::vector<ExpressionNodePtr> functionArguments) {
-    this->UDFName = UDFName;
+    this->udfName = udfName;
     this->functionArguments = std::move(functionArguments);
 }
 
@@ -91,7 +91,7 @@ std::string UDFCallExpressionNode::toString() const {
 
 ExpressionNodePtr UDFCallExpressionNode::copy() { return std::make_shared<UDFCallExpressionNode>(UDFCallExpressionNode(this)); }
 
-ExpressionNodePtr UDFCallExpressionNode::getUDFNameNode() const { return UDFName; }
+ExpressionNodePtr UDFCallExpressionNode::getUDFNameNode() const { return udfName; }
 
 std::vector<ExpressionNodePtr> UDFCallExpressionNode::getFunctionArguments() { return functionArguments; }
 
@@ -100,7 +100,7 @@ void UDFCallExpressionNode::setUDFDescriptorPtr(const Catalogs::UDF::UDFDescript
 }
 
 const std::string& UDFCallExpressionNode::getUDFName() const {
-    auto constantValue = std::dynamic_pointer_cast<BasicValue>(UDFName->getConstantValue());
+    auto constantValue = std::dynamic_pointer_cast<BasicValue>(udfName->getConstantValue());
     return constantValue->value;
 }
 
