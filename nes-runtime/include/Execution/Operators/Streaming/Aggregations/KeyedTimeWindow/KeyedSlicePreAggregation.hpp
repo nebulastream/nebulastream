@@ -46,6 +46,7 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
   private:
     const uint64_t operatorHandlerIndex;
     const Expressions::ExpressionPtr timestampExpression;

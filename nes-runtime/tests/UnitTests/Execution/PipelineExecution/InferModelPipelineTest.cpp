@@ -35,7 +35,6 @@
 namespace NES::Runtime::Execution {
 class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
-
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
