@@ -320,6 +320,12 @@ jobs:
           docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
           echo "Pushed the dev image"          
           docker logout
+      - name: KTM Use Case Regression Test
+        run: sh ./docker/regressionImage/KTM/run.sh
+      - name: Video Use Case Regression Test
+        run: sh ./docker/regressionImage/Video/run.sh
+      - name: Smart Meter Use Case Regression Test
+        run: sh ./docker/regressionImage/SmartMeter/run.sh
       - name: "Generate ChangeLogs"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
