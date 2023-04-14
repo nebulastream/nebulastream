@@ -39,4 +39,3 @@ const std::string& InferModelHandler::getModel() const { return model; }
 const TensorflowAdapterPtr& InferModelHandler::getTensorflowAdapter() const { return tfAdapter; }
 
 }// namespace NES::Runtime::Execution::Operators
-

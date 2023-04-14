@@ -89,15 +89,15 @@ class TestHarness {
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-          useNautilus(false), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess),
-          bufferSize(4096), physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
+          useNautilus(false), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
+          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
           testHarnessResourcePath(testHarnessResourcePath) {}
 
     /**
      * @brief Enable using nautilus compiler
      * @return self
      */
-    TestHarness& enableNautilus(){
+    TestHarness& enableNautilus() {
         useNautilus = true;
         return *this;
     }
