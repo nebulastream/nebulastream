@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: KTM use case
-        run: sh /docker/regressionImage/KTM/run.sh
+        run: sh ./docker/regressionImage/KTM/run.sh
       - name: Video use case
         run: ./docker/regressionImage/Video/run.sh
       - name: Smart Meter use case
