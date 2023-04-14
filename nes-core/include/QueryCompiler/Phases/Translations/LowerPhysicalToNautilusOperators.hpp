@@ -144,10 +144,25 @@ class LowerPhysicalToNautilusOperators {
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 #ifdef ENABLE_JNI
+    /**
+     * @brief Creates an executable operator for a Java UDF that performs a map operation.
+     * @param pipeline PhysicalOperatorPipeline object that contains the pipeline of physical operators.
+     * @param sharedPtr A shared pointer to a PhysicalOperator object.
+     * @param handlerIndex An unsigned 64-bit integer that represents the index of the handler.
+     * @return A shared pointer to an ExecutableOperator object that represents the executable Java UDF operator for a map operation.
+     */
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
+
+    /**
+     * @brief Creates an executable operator for a Java UDF that performs a flatmap operation.
+     * @param pipeline PhysicalOperatorPipeline object that contains the pipeline of physical operators.
+     * @param sharedPtr A shared pointer to a PhysicalOperator object.
+     * @param handlerIndex An unsigned 64-bit integer that represents the index of the handler.
+     * @return A shared pointer to an ExecutableOperator object that represents the executable Java UDF operator for a flatmap operation.
+     */
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,

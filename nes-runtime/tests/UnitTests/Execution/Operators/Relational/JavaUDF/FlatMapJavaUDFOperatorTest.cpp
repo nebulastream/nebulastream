@@ -38,8 +38,8 @@ class FlatMapJavaUDFOperatorTest : public Testing::NESBaseTest {
     }
 };
 
-std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData";
-std::string method = "flatMap";
+const std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData";
+const std::string method = "flatMap";
 std::unordered_map<std::string, std::vector<char>> byteCodeList;
 std::vector<char> serializedInstance;
 SchemaPtr input, output;

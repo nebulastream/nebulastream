@@ -223,7 +223,6 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto outputClassPtr = FunctionCall<>("findOutputClass", findOutputClass, handler);
     auto outputPojoPtr = FunctionCall<>("executeFlatMapUDF", executeFlatMapUDF, handler, inputPojoPtr);
 
-    // TODO: Needed?
     FunctionCall<>("freeObject", freeObject, handler, inputPojoPtr);
 
     // Create new record for result
