@@ -35,6 +35,7 @@
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -182,7 +183,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                 auto fieldRename = expression->as<FieldRenameExpressionNode>();
                 newFieldName = fieldRename->getNewFieldName();
                 fieldName = fieldRename->getOriginalField()->getFieldName();
-                NES_TRACE2("Renaming field {}", fieldName ," to {}", newFieldName);
+                NES_TRACE2("Renaming field {}", fieldName, " to {}", newFieldName);
             } else {
                 auto fieldAccess = expression->as<FieldAccessExpressionNode>();
                 newFieldName = fieldAccess->getFieldName();
@@ -676,7 +677,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     z3::expr windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
-    std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     std::map<std::string, z3::ExprPtr> windowExpression;
     NES_TRACE2("Create Window Signature");
@@ -704,11 +704,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         uint64_t length = 0;
         uint64_t slide = 0;
         if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
-            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindowType);
             length = tumblingWindow->getSize().getTime() * multiplier;
             slide = length;
         } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
-            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(timeBasedWindowType);
             length = slidingWindow->getSize().getTime() * multiplier;
             slide = slidingWindow->getSlide().getTime() * multiplier;
         } else {
@@ -780,7 +780,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         // Get the expression for on field and update the column values
         onFieldNames.push_back(windowAggregation->on()->as<FieldAccessExpressionNode>()->getFieldName());
         asFieldNames.push_back(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName());
-        aggregateTypes += (std::to_string(windowAggregation->getType()) + ".");
+        aggregateTypes += (std::to_string(magic_enum::enum_integer(windowAggregation->getType())) + ".");
         allAggregates.push_back(aggregate);
     }
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
@@ -807,12 +807,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
             } else if (Util::splitWithStringDelimiter<std::string>(originalAttributeName, "$")[1] == "count") {
                 NES_TRACE2("Count Attribute");
-                auto fieldAggregation = allAggregates[std::distance(asFieldNames.begin(),
-                                                                    std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
-                auto expr =std::make_shared<z3::expr>(context->int_const(originalAttributeName.c_str()));
-                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(
-                    *context,
-                    fieldAggregation(*expr)));
+                auto fieldAggregation =
+                    allAggregates[std::distance(asFieldNames.begin(),
+                                                std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
+                auto expr = std::make_shared<z3::expr>(context->int_const(originalAttributeName.c_str()));
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, fieldAggregation(*expr)));
                 NES_TRACE2("UpdatedFieldExpr: {}", updatedFieldExpr->to_string());
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
