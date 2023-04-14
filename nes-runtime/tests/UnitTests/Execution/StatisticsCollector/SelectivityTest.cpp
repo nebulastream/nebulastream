@@ -440,7 +440,7 @@ TEST_P(SelectivityTest, cacheMissesTest) {
 
     std::vector<TupleBuffer> bufferVector;
 
-    for (int i = 0; i < 1000; ++i){
+    for (int i = 0; i < 520000; ++i){
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
@@ -452,12 +452,11 @@ TEST_P(SelectivityTest, cacheMissesTest) {
         }
     }
 
-    const char *fileName = "CacheMissesTest.txt";
-    FILE* outputFile = fopen(fileName, "a+");
+    std::ofstream csvFile("CacheMissesTest.csv");
 
-    for (int j = 1; j < 21; ++j) {
+    for (int j = 1; j <= 20; ++j) {
 
-        fprintf(outputFile, "Selectivity\t%f\n", ((double)j / 20)) ;
+        csvFile << "Selectivity " << ((double) j / 20) << "\t";
 
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -490,20 +489,28 @@ TEST_P(SelectivityTest, cacheMissesTest) {
         // initialize statistics pipeline runtime
         auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperBranch), profiler, 1000);
 
+        std::vector<uint64_t> values;
+
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             cacheMisses->collect();
-            fprintf(outputFile, "%lu\n", std::any_cast<uint64_t>(cacheMisses->getStatisticValue())) ;
+            values.push_back(std::any_cast<uint64_t>(cacheMisses->getStatisticValue()));
         }
         executablePipelineStage->stop(pipelineContext);
+        uint64_t sum = 0;
+        for (auto value : values) {
+            sum += value;
+        }
+        double mean = (double) sum / (double) values.size();
+        csvFile << mean << "\n";
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
-        ASSERT_EQ(numberOfResultBuffers, 1000);
+        ASSERT_EQ(numberOfResultBuffers, 520000);
     }
 
-    fclose(outputFile);
+    csvFile.close();
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
