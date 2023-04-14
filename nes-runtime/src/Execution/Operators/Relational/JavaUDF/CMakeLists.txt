@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        FlatMapJavaUdf.cpp
-        MapJavaUdf.cpp
+        FlatMapJavaUDF.cpp
+        MapJavaUDF.cpp
         JVMContext.cpp
         JavaUDFUtils.cpp
         )

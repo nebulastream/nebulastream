@@ -59,8 +59,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Source
 
 namespace UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UdfCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
@@ -94,7 +94,7 @@ class RestServer {
                MonitoringServicePtr monitoringService,
                NES::Experimental::MaintenanceServicePtr maintenanceService,
                GlobalQueryPlanPtr globalQueryPlan,
-               Catalogs::UDF::UdfCatalogPtr udfCatalog,
+               Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
                LocationServicePtr locationServicePtr);
 
@@ -126,7 +126,7 @@ class RestServer {
     GlobalQueryPlanPtr globalQueryPlan;
     SourceCatalogServicePtr sourceCatalogService;
     TopologyManagerServicePtr topologyManagerService;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     LocationServicePtr locationService;
     Experimental::MaintenanceServicePtr maintenanceService;
     MonitoringServicePtr monitoringService;

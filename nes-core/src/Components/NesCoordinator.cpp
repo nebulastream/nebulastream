@@ -15,7 +15,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -118,7 +118,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   this->coordinatorConfiguration->optimizer,
                                                   udfCatalog);
 
-    udfCatalog = Catalogs::UDF::UdfCatalog::create();
+    udfCatalog = Catalogs::UDF::UDFCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, queryRequestQueue);
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
@@ -342,7 +342,7 @@ QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 
-Catalogs::UDF::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
+Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 

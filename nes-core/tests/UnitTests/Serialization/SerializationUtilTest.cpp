@@ -40,7 +40,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Nodes/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -69,7 +69,7 @@
 #include <API/Windowing.hpp>
 #include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -494,7 +494,7 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
     auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "1"));
     auto argument2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
     std::vector<ExpressionNodePtr> functionArguments = {argument1, argument2};
-    auto expression = UdfCallExpressionNode::create(udfName, functionArguments);
+    auto expression = UDFCallExpressionNode::create(udfName, functionArguments);
 
     auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
     auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(*serializedExpression);
@@ -504,11 +504,11 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
-        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
-        auto javaUdfMap = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfMap);
+        auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
+        auto javaUDFMap = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(javaUdfMap->equal(deserializedOperator));
+        EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
     }
 
     {
@@ -521,16 +521,16 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         uint64_t allowedLateness = 1000;
         OriginId originId = 42;
 
-        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
-        auto javaUdfWindow = LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(javaUdfDescriptor,
+        auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
+        auto javaUDFWindow = LogicalOperatorFactory::createWindowJavaUDFLogicalOperator(javaUDFDescriptor,
                                                                                         windowType,
                                                                                         distChar,
                                                                                         onKey,
                                                                                         allowedLateness,
                                                                                         originId);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfWindow);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(javaUdfWindow->equal(deserializedOperator));
+        EXPECT_TRUE(javaUDFWindow->equal(deserializedOperator));
     }
 
     {

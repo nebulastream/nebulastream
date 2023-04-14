@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/LocationController.hpp>
@@ -50,7 +50,7 @@ RestServer::RestServer(std::string host,
                        MonitoringServicePtr monitoringService,
                        NES::Experimental::MaintenanceServicePtr maintenanceService,
                        GlobalQueryPlanPtr globalQueryPlan,
-                       Catalogs::UDF::UdfCatalogPtr udfCatalog,
+                       Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
                        LocationServicePtr locationService)
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
@@ -121,7 +121,7 @@ void RestServer::run() {
                                                                      "/query",
                                                                      errorHandler);
     auto udfCatalogController =
-        REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
+        REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController =
         REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalogService, errorHandler, "/sourceCatalog");
     auto maintenanceController =

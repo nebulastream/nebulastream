@@ -18,7 +18,7 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -44,7 +44,7 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
   public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     //Vector with tuples containing two queries. The queries exhibit different containment relationships
     //We indicate the respective containment relationship above each tuple
@@ -121,7 +121,7 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
 

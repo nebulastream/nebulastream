@@ -23,7 +23,7 @@
 #include <Util/SourceLocation.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 // TODO Change this to general class
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {

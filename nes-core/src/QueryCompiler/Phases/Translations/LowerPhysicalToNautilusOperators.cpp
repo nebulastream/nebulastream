@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
+#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -29,9 +29,9 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdf.hpp>
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUdf.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUdfOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
+#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
@@ -60,8 +60,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -153,66 +153,66 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(map);
         return map;
 #ifdef ENABLE_JNI
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
-        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUDFOperator>()) {
+        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUDFOperator>();
         // We can't copy the descriptor because it is in nes-core and the MapJavaUdfOperatorHandler is in nes-runtime
         // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
-        auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
-        auto className = mapJavaUdfDescriptor->getClassName();
-        auto methodName = mapJavaUdfDescriptor->getMethodName();
-        auto byteCodeList = mapJavaUdfDescriptor->getByteCodeList();
-        auto inputClassName = mapJavaUdfDescriptor->getInputClassName();
-        auto outputClassName = mapJavaUdfDescriptor->getOutputClassName();
-        auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
-        auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
-        auto serializedInstance = mapJavaUdfDescriptor->getSerializedInstance();
-        auto returnType = mapJavaUdfDescriptor->getReturnType();
+        auto mapJavaUDFDescriptor = mapOperator->getJavaUDFDescriptor();
+        auto className = mapJavaUDFDescriptor->getClassName();
+        auto methodName = mapJavaUDFDescriptor->getMethodName();
+        auto byteCodeList = mapJavaUDFDescriptor->getByteCodeList();
+        auto inputClassName = mapJavaUDFDescriptor->getInputClassName();
+        auto outputClassName = mapJavaUDFDescriptor->getOutputClassName();
+        auto inputSchema = mapJavaUDFDescriptor->getInputSchema();
+        auto outputSchema = mapJavaUDFDescriptor->getOutputSchema();
+        auto serializedInstance = mapJavaUDFDescriptor->getSerializedInstance();
+        auto returnType = mapJavaUDFDescriptor->getReturnType();
 
-        auto handler = std::make_shared<Runtime::Execution::Operators::MapJavaUdfOperatorHandler>(className,
-                                                                                                  methodName,
-                                                                                                  inputClassName,
-                                                                                                  outputClassName,
-                                                                                                  byteCodeList,
-                                                                                                  serializedInstance,
-                                                                                                  inputSchema,
-                                                                                                  outputSchema,
-                                                                                                  std::nullopt);
+        auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className,
+                                                                                               methodName,
+                                                                                               inputClassName,
+                                                                                               outputClassName,
+                                                                                               byteCodeList,
+                                                                                               serializedInstance,
+                                                                                               inputSchema,
+                                                                                               outputSchema,
+                                                                                               std::nullopt);
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
-        auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(mapJavaUdf);
-        return mapJavaUdf;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapJavaUdfOperator>()) {
-        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapJavaUdfOperator>();
-        // We can't copy the descriptor because it is in nes-core and the PhysicalFlatMapJavaUdfOperator is in nes-runtime
+        auto mapJavaUDF = lowerMapJavaUDF(pipeline, operatorNode, indexForThisHandler);
+        parentOperator->setChild(mapJavaUDF);
+        return mapJavaUDF;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>()) {
+        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>();
+        // We can't copy the descriptor because it is in nes-core and the PhysicalFlatMapJavaUDFOperator is in nes-runtime
         // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
-        auto flatMapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
-        auto className = flatMapJavaUdfDescriptor->getClassName();
-        auto methodName = flatMapJavaUdfDescriptor->getMethodName();
-        auto byteCodeList = flatMapJavaUdfDescriptor->getByteCodeList();
-        auto inputClassName = flatMapJavaUdfDescriptor->getInputClassName();
-        auto outputClassName = flatMapJavaUdfDescriptor->getOutputClassName();
-        auto inputSchema = flatMapJavaUdfDescriptor->getInputSchema();
-        auto outputSchema = flatMapJavaUdfDescriptor->getOutputSchema();
-        auto serializedInstance = flatMapJavaUdfDescriptor->getSerializedInstance();
-        auto returnType = flatMapJavaUdfDescriptor->getReturnType();
+        auto flatMapJavaUDFDescriptor = mapOperator->getJavaUDFDescriptor();
+        auto className = flatMapJavaUDFDescriptor->getClassName();
+        auto methodName = flatMapJavaUDFDescriptor->getMethodName();
+        auto byteCodeList = flatMapJavaUDFDescriptor->getByteCodeList();
+        auto inputClassName = flatMapJavaUDFDescriptor->getInputClassName();
+        auto outputClassName = flatMapJavaUDFDescriptor->getOutputClassName();
+        auto inputSchema = flatMapJavaUDFDescriptor->getInputSchema();
+        auto outputSchema = flatMapJavaUDFDescriptor->getOutputSchema();
+        auto serializedInstance = flatMapJavaUDFDescriptor->getSerializedInstance();
+        auto returnType = flatMapJavaUDFDescriptor->getReturnType();
 
-        auto handler = std::make_shared<Runtime::Execution::Operators::MapJavaUdfOperatorHandler>(className,
-                                                                                                  methodName,
-                                                                                                  inputClassName,
-                                                                                                  outputClassName,
-                                                                                                  byteCodeList,
-                                                                                                  serializedInstance,
-                                                                                                  inputSchema,
-                                                                                                  outputSchema,
-                                                                                                  std::nullopt);
+        auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className,
+                                                                                               methodName,
+                                                                                               inputClassName,
+                                                                                               outputClassName,
+                                                                                               byteCodeList,
+                                                                                               serializedInstance,
+                                                                                               inputSchema,
+                                                                                               outputSchema,
+                                                                                               std::nullopt);
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
-        auto flatMapJavaUdf = lowerFlatMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(flatMapJavaUdf);
-        return flatMapJavaUdf;
+        auto flatMapJavaUDF = lowerFlatMapJavaUDF(pipeline, operatorNode, indexForThisHandler);
+        parentOperator->setChild(flatMapJavaUDF);
+        return flatMapJavaUDF;
 #endif// ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
@@ -562,27 +562,27 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 
 #ifdef ENABLE_JNI
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
+LowerPhysicalToNautilusOperators::lowerMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline&,
                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                   uint64_t handlerIndex) {
-    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
-    auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
-    auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
-    auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUDFOperator>();
+    auto mapJavaUDFDescriptor = mapOperator->getJavaUDFDescriptor();
+    auto inputSchema = mapJavaUDFDescriptor->getInputSchema();
+    auto outputSchema = mapJavaUDFDescriptor->getOutputSchema();
 
-    return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(handlerIndex, inputSchema, outputSchema);
+    return std::make_shared<Runtime::Execution::Operators::MapJavaUDF>(handlerIndex, inputSchema, outputSchema);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerFlatMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
+LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline&,
                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                   uint64_t handlerIndex) {
-    auto flatMapOperator = operatorPtr->as<PhysicalOperators::PhysicalFlatMapJavaUdfOperator>();
-    auto mapJavaUdfDescriptor = flatMapOperator->getJavaUdfDescriptor();
-    auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
-    auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+    auto flatMapOperator = operatorPtr->as<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>();
+    auto mapJavaUDFDescriptor = flatMapOperator->getJavaUDFDescriptor();
+    auto inputSchema = mapJavaUDFDescriptor->getInputSchema();
+    auto outputSchema = mapJavaUDFDescriptor->getOutputSchema();
 
-    return std::make_shared<Runtime::Execution::Operators::FlatMapJavaUdf>(handlerIndex, inputSchema, outputSchema);
+    return std::make_shared<Runtime::Execution::Operators::FlatMapJavaUDF>(handlerIndex, inputSchema, outputSchema);
 }
 #endif// ENABLE_JNI
 

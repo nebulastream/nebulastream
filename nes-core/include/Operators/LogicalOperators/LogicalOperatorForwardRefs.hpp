@@ -95,8 +95,8 @@ class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 namespace Catalogs::UDF {
-class JavaUdfDescriptor;
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
+class JavaUDFDescriptor;
+using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 }// namespace Catalogs::UDF
 
 class BroadcastLogicalOperatorNode;

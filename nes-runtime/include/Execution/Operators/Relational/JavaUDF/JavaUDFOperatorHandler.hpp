@@ -12,51 +12,50 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
 
 #ifdef ENABLE_JNI
 
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This handler stores states of a FlatMapJavaUdf operator during its execution.
+ * @brief This handler stores states of a MapJavaUDF operator during its execution.
  */
 class JavaUDFOperatorHandler : public OperatorHandler {
   public:
-
     /**
-     * @brief This creates a FlatMapJavaUdfOperatorHandler
+     * @brief This creates a JavaUDFOperatorHandler
      * @param className The java class name containing the java udf
      * @param methodName The java method name of the java udf
      * @param inputClassName The class name of the input type of the udf
      * @param outputClassName The class name of the output type of the udf
      * @param byteCodeList The byteCode containing serialized java objects to load into jvm
      * @param serializedInstance The serialized instance of the java java class
-     * @param inputSchema The input schema of the records of the flat map function
-     * @param outputSchema The output schema of the records of the flat map function
+     * @param inputSchema The input schema of the records of the map function
+     * @param outputSchema The output schema of the records of the map function
      * @param javaPath Optional: path to jar files to load classes from into JVM
      */
     explicit JavaUDFOperatorHandler(const std::string& className,
-                                       const std::string& methodName,
-                                       const std::string& inputClassName,
-                                       const std::string& outputClassName,
-                                       const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
-                                       const std::vector<char>& serializedInstance,
-                                       SchemaPtr inputSchema,
-                                       SchemaPtr outputSchema,
-                                       const std::optional<std::string>& javaPath)
+                                    const std::string& methodName,
+                                    const std::string& inputClassName,
+                                    const std::string& outputClassName,
+                                    const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
+                                    const std::vector<char>& serializedInstance,
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema,
+                                    const std::optional<std::string>& javaPath)
         : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
           byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
-          outputSchema(outputSchema), javaPath(javaPath), flatMapObject(nullptr), flatMapMethodId(nullptr) {}
+          outputSchema(outputSchema), javaPath(javaPath), flatMapMethodId(nullptr), flatMapObject(nullptr) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
@@ -167,5 +166,6 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jobject flatMapObject;
 };
 
+}// namespace NES::Runtime::Execution::Operators
 #endif//ENABLE_JNI
-#endif //NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_

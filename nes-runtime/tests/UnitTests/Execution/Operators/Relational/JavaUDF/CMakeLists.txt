@@ -11,5 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(runtime-mapjavaudf-operator-test "MapJavaUdfOperatorTest.cpp")
-add_nes_runtime_test(runtime-flatmapjavaudf-operator-test "FlatMapJavaUdfOperatorTest.cpp")
+add_nes_runtime_test(runtime-mapjavaudf-operator-test "MapJavaUDFOperatorTest.cpp")
+add_nes_runtime_test(runtime-flatmapjavaudf-operator-test "FlatMapJavaUDFOperatorTest.cpp")

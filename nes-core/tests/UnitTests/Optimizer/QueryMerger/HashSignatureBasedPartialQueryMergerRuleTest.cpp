@@ -44,7 +44,7 @@ class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErr
   public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {

@@ -16,7 +16,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -57,7 +57,7 @@ TopologyManagerServicePtr topologyManagerService;
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
-Catalogs::UDF::UdfCatalogPtr udfCatalog;
+Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
 class ErrorHandler : public Exceptions::ErrorListener {
   public:
@@ -390,7 +390,7 @@ int main(int argc, const char* argv[]) {
             cfg.set("model", false);
             cfg.set("type_check", false);
             auto z3Context = std::make_shared<z3::context>(cfg);
-            udfCatalog = Catalogs::UDF::UdfCatalog::create();
+            udfCatalog = Catalogs::UDF::UDFCatalog::create();
             Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
             auto globalQueryPlan = GlobalQueryPlan::create();

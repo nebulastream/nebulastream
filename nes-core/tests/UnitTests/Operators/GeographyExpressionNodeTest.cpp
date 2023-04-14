@@ -45,7 +45,7 @@ class GeographyExpressionNodeTest : public Testing::NESBaseTest {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     std::shared_ptr<QueryParsingService> queryParsingService;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -54,7 +54,7 @@ class GeographyExpressionNodeTest : public Testing::NESBaseTest {
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     static void SetUpTestCase() { setupLogging(); }

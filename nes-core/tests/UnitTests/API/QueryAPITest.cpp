@@ -17,7 +17,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -273,7 +273,7 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
                      .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
                      .sink(PrintSinkDescriptor::create());
 
-    Catalogs::UDF::UdfCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
+    Catalogs::UDF::UDFCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());

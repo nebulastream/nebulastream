@@ -25,5 +25,5 @@ add_source_files(nes-core
 add_subdirectory(LogicalExpressions)
 add_subdirectory(ArithmeticalExpressions)
 add_subdirectory(GeographyExpressions)
-add_subdirectory(UdfCallExpressions)
+add_subdirectory(UDFCallExpressions)
 add_subdirectory(Functions)

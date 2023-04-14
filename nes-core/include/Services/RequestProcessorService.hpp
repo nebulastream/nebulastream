@@ -77,8 +77,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Source
 
 namespace UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
@@ -97,7 +97,7 @@ class RequestProcessorService {
                                      RequestQueuePtr queryRequestQueue,
                                      const Configurations::OptimizerConfiguration optimizerConfiguration,
                                      bool queryReconfiguration,
-                                     const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
+                                     const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -130,7 +130,7 @@ class RequestProcessorService {
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

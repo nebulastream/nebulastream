@@ -49,8 +49,8 @@ class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 namespace Catalogs::UDF {
-class JavaUdfDescriptor;
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
+class JavaUDFDescriptor;
+using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 }// namespace Catalogs::UDF
 
 namespace WindowOperatorBuilder {
@@ -449,14 +449,14 @@ class Query {
      * @param descriptor java udf descriptor
      * @return query
      */
-    Query& mapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr descriptor);
+    Query& mapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr descriptor);
 
     /**
      * @brief: Create flat map java udf operator.
      * @param descriptor java udf descriptor
      * @return query
      */
-    Query& flatMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr descriptor);
+    Query& flatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr descriptor);
 
     /**
      * @brief: Map records according to a map expression. An

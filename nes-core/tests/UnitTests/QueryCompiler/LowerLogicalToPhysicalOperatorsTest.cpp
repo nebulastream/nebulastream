@@ -27,13 +27,13 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
+#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -43,7 +43,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -145,8 +145,8 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
-        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
-        mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
+        auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
+        mapJavaUDFOp = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
     }
 
   protected:
@@ -155,7 +155,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     LogicalOperatorNodePtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
-    LogicalOperatorNodePtr mapOp, mapJavaUdfOp;
+    LogicalOperatorNodePtr mapOp, mapJavaUDFOp;
     LogicalOperatorNodePtr projectPp;
     LogicalOperatorNodePtr iterationCEPOp;
     JoinLogicalOperatorNodePtr joinOp1;
@@ -731,9 +731,9 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
  * --- Physical Sink 1 --- Physical Map Java Udf Operator --- Physical Source 1
  *
  */
-TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUdfQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUDFQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(mapJavaUdfOp);
+    queryPlan->appendOperatorAsNewRoot(mapJavaUDFOp);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
     NES_DEBUG(queryPlan->toString());
@@ -747,7 +747,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUdfQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapJavaUdfOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapJavaUDFOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }

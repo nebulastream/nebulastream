@@ -34,8 +34,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Source
 
 namespace UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
@@ -58,7 +58,7 @@ class TypeInferencePhase {
      * @return TypeInferencePhasePtr
      */
     static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                        Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                                        Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -80,9 +80,9 @@ class TypeInferencePhase {
      * @return SourceDescriptorPtr
      */
     SourceDescriptorPtr createSourceDescriptor(std::string sourceName);
-    explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UdfCatalogPtr udfCatalog);
+    explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 }// namespace NES::Optimizer
 

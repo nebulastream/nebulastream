@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -97,11 +97,11 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
-        // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
+        // Initialize the typeInferencePhase with a dummy SourceCatalog & UDFCatalog
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }

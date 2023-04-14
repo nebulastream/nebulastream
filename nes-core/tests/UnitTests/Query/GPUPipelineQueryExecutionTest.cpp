@@ -81,7 +81,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     /* Will be called before a test is executed. */
@@ -99,7 +99,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     SchemaPtr testSchemaColumnLayout;
     Runtime::NodeEnginePtr nodeEngine;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 
 void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {

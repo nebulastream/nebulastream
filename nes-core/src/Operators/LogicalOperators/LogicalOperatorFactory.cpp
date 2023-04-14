@@ -20,8 +20,8 @@
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -30,7 +30,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -134,26 +134,26 @@ LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations,
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+LogicalOperatorFactory::createMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                         OperatorId id) {
-    return std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
+    return std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createFlatMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                         OperatorId id) {
-    return std::make_shared<FlatMapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
+    return std::make_shared<FlatMapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+LogicalOperatorFactory::createWindowJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                            Windowing::WindowTypePtr windowType,
                                                            Windowing::DistributionCharacteristicPtr distributionType,
                                                            std::vector<FieldAccessExpressionNodePtr> onKey,
                                                            uint64_t allowedLateness,
                                                            OriginId originId,
                                                            OperatorId id) {
-    return std::make_shared<WindowJavaUdfLogicalOperatorNode>(javaUdfDescriptor,
+    return std::make_shared<WindowJavaUDFLogicalOperatorNode>(javaUdfDescriptor,
                                                               windowType,
                                                               distributionType,
                                                               onKey,

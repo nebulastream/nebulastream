@@ -21,7 +21,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -66,7 +66,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing
         Catalogs::Source::SourceCatalogPtr sourceCatalog =
             std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UdfCatalog::create());
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = false;
         topologySpecificQueryRewritePhase =
