@@ -12,7 +12,15 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <Benchmarking/MicroBenchmarkASPUtil.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Synopses/Samples/SampleRandomWithoutReplacement.hpp>
@@ -22,27 +30,76 @@ namespace NES::ASP{
 
 void SampleRandomWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     // Here we just store all records and then perform the sampling in getApproximate()
-    storedRecords.emplace_back(record);
+
+    if (storedRecords.empty()) {
+        storedRecords.emplace_back(bufferManager->getBufferBlocking());
+    }
+
+    auto lastTupleBuffer = storedRecords[storedRecords.size() - 1];
+    auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(lastTupleBuffer, inputSchema);
+
+    auto recordIndex = dynamicTupleBuffer.getNumberOfTuples();
+
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto baseAddress = Nautilus::MemRef((int8_t*) (dynamicTupleBuffer.getBuffer().getBuffer() +
+                                       recordIndex * inputSchema->getSchemaSizeInBytes()));
+    Nautilus::Value<Nautilus::MemRef> entryMemRef(baseAddress);
+    for (auto& field : inputSchema->fields) {
+        auto const fieldName = field->getName();
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+
+        entryMemRef.store(record.read(fieldName));
+        entryMemRef = entryMemRef + fieldType->size();
+    }
+    ++numberOfTuples;
+
+    dynamicTupleBuffer.setNumberOfTuples(dynamicTupleBuffer.getNumberOfTuples() + 1);
+    if (dynamicTupleBuffer.getNumberOfTuples() >= dynamicTupleBuffer.getCapacity()) {
+        storedRecords.emplace_back(bufferManager->getBufferBlocking());
+    }
 }
 
 std::vector<Runtime::TupleBuffer>
 SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
     // First, we have to pick our sample
-    std::vector<Nautilus::Record> sample;
+    std::vector<Runtime::TupleBuffer> sample;
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
-    std::uniform_int_distribution<uint64_t> uniformIntDistribution(0, storedRecords.size());
-    while (sample.size() < sampleSize) {
+    std::uniform_int_distribution<uint64_t> uniformIntDistribution(0, numberOfTuples);
+    auto numberOfTuplesInSample = 0UL;
+    while (numberOfTuplesInSample < sampleSize && numberOfTuplesInSample < numberOfTuples) {
+        auto numberOfTuplesPerBuffer = bufferManager->getBufferSize() / inputSchema->getSchemaSizeInBytes();
         uint64_t pos = uniformIntDistribution(generator);
-        sample.emplace_back(storedRecords[pos]);
+        auto tupleBuffer = pos / numberOfTuplesPerBuffer;
+        auto tuplePosition = pos % numberOfTuplesPerBuffer;
+
+        if (sample.empty() || sample[sample.size() - 1].getNumberOfTuples() >= numberOfTuplesPerBuffer) {
+            sample.emplace_back(bufferManager->getBufferBlocking());
+        }
+        auto sampleBuffer = sample[sample.size() - 1];
+
+        auto srcMem = storedRecords[tupleBuffer].getBuffer() + tuplePosition * inputSchema->getSchemaSizeInBytes();
+        auto destMem = sampleBuffer.getBuffer() + sampleBuffer.getNumberOfTuples() * inputSchema->getSchemaSizeInBytes();
+        std::memcpy(destMem, srcMem, inputSchema->getSchemaSizeInBytes());
+        sampleBuffer.setNumberOfTuples(sampleBuffer.getNumberOfTuples() + 1);
+        ++numberOfTuplesInSample;
     }
 
     // Approximate over the sample and write the approximation into record
-    Nautilus::Record record;
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
-    for (auto& item : sample) {
-        aggregationFunction->lift(aggregationValueMemRef, item.read(fieldNameAggregation));
+    for (auto& buffer : sample) {
+        auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(buffer, inputSchema);
+        auto recordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
+        auto bufferAddress = recordBuffer.getBuffer();
+        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < dynamicTupleBuffer.getNumberOfTuples(); i = i + (uint64_t) 1) {
+            auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), inputSchema);
+            auto tmpRecord = memoryProvider->read({}, bufferAddress, i);
+            aggregationFunction->lift(aggregationValueMemRef, tmpRecord.read(fieldNameAggregation));
+        }
     }
+
+    // Lower the aggregation
+    Nautilus::Record record;
     auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
     record.write(fieldNameApproximate, approximatedValue);
 
@@ -64,6 +121,7 @@ SampleRandomWithoutReplacement::SampleRandomWithoutReplacement(size_t sampleSize
 
 void SampleRandomWithoutReplacement::initialize() {
     storedRecords.clear();
+    numberOfTuples = 0;
 }
 
 } // namespace NES::ASP

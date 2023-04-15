@@ -12,70 +12,85 @@
     limitations under the License.
 */
 
-#include <Synopses/AbstractSynopsis.hpp>
 #include <Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Benchmarking/MicroBenchmarkRun.hpp>
+#include <Execution/Operators/Scan.hpp>
+#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Operators/SynopsesOperator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Synopses/AbstractSynopsis.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::ASP::Benchmarking {
-
 void MicroBenchmarkRun::run() {
-
-    // Creating bufferManager for this run
-    auto bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, numberOfBuffers);
-
-    NES_INFO("Creating input buffer and accuracy buffer...");
-    auto allRecordBuffers = this->createInputRecords(bufferManager);
-    auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, bufferManager);
-
-    auto synopsis = AbstractSynopsis::create(synopsesArguments);
-    auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
-
-    synopsis->setAggregationFunction(aggregation.createAggregationFunction());
-    synopsis->setAggregationValue(aggregation.createAggregationValue());
-    synopsis->setFieldNameAggregation(aggregation.fieldNameAggregation);
-    synopsis->setFieldNameApproximate(aggregation.fieldNameApproximate);
-    synopsis->setOutputSchema(aggregation.outputSchema);
 
     Timer timer("benchmarkLoop");
     for (auto rep = 0UL; rep < reps; ++rep) {
+        // Creating bufferManager for this run
+        auto bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, numberOfBuffers);
+
+        NES_INFO("Creating input buffer...");
+        auto allRecordBuffers = this->createInputRecords(bufferManager);
+
+        NES_INFO("Creating accuracy buffer...");
+        auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, bufferManager);
+
+        // Create the synopsis, so we can call getApproximate after all buffers have been executed
+        NES_INFO("Creating the synopsis...");
+        auto synopsis = AbstractSynopsis::create(synopsesArguments);
+        auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
+
+        synopsis->setAggregationFunction(aggregation.createAggregationFunction());
+        synopsis->setAggregationValue(aggregation.createAggregationValue());
+        synopsis->setFieldNameAggregation(aggregation.fieldNameAggregation);
+        synopsis->setFieldNameApproximate(aggregation.fieldNameApproximate);
+        synopsis->setInputSchema(aggregation.inputSchema);
+        synopsis->setOutputSchema(aggregation.outputSchema);
+        synopsis->setBufferManager(bufferManager);
+
+        // Create and compile the pipeline and create a workerContext
+        NES_INFO("Create and compile the pipeline...");
+        auto [pipeline, pipelineContext] = createExecutablePipeline(synopsis);
+        auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
+        //    auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler").get();
+        auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineInterpreter").get();
+        auto executablePipeline = provider->create(pipeline);
+
         // Creating strings here for the snapshots
-        const std::string addToSynopsisSnapshotName = "addToSynopsis_loopIteration_" + std::to_string(rep + 1);
+        const std::string setupPipelineSnapshotName = "setupPipeline_loopIteration_" + std::to_string(rep + 1);
+        const std::string executePipelineSnapshotName = "executePipeline_loopIteration_" + std::to_string(rep + 1);
         const std::string getApproximateSnapshotName = "getApproximate_loopIteration_" + std::to_string(rep + 1);
 
-        // Starting the timer again
         timer.start();
-
-        // For now, we do not have to take care of windowing. This is fixed in issue #3628
-        synopsis->initialize();
+        executablePipeline->setup(*pipelineContext);
+        timer.snapshot(setupPipelineSnapshotName);
 
         for (auto& buffer : allRecordBuffers) {
-            auto numberOfRecords = buffer.getNumberOfTuples();
-            auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer));
-            for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-                auto record = memoryProvider->read({}, bufferAddress, i);
-                synopsis->addToSynopsis(record);
-
-            }
+            executablePipeline->execute(buffer, *pipelineContext, *workerContext);
         }
 
-        timer.snapshot(addToSynopsisSnapshotName);
+        timer.snapshot(executePipelineSnapshotName);
         auto allApproximateBuffers = synopsis->getApproximate(bufferManager);
 
         timer.snapshot(getApproximateSnapshotName);
         timer.pause();
-        auto duration = timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(addToSynopsisSnapshotName)) +
-                        timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(getApproximateSnapshotName));
 
+        executablePipeline->stop(*pipelineContext);
+        auto duration = timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(executePipelineSnapshotName)) +
+            timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(getApproximateSnapshotName));
 
         // Checking for the accuracy and calculating the throughput of this loop
         auto accuracy = this->compareAccuracy(allAccuracyBuffers, allApproximateBuffers);
 
-        auto throughputInTuples = allRecordBuffers.size() / (double)(duration / NANO_TO_SECONDS_MULTIPLIER);
+        auto throughputInTuples = windowSize / (double)(duration / NANO_TO_SECONDS_MULTIPLIER);
+        NES_DEBUG("accuracy: " << accuracy << " throughputInTuples: " << throughputInTuples)
         microBenchmarkResult.emplace_back(throughputInTuples, accuracy);
     }
 
@@ -92,7 +107,6 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
         NES_THROW_RUNTIME_ERROR("Could not parse " << yamlConfigFile << "!");
     }
 
-
     // Parsing all required members from the yaml file
     auto parsedReps = ASP::Util::parseReps(configFile["reps"]);
     auto parsedSynopsisArguments = ASP::Util::parseSynopsisArguments(configFile["synopsis"]);
@@ -100,7 +114,6 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     auto parsedWindowSizes = ASP::Util::parseWindowSizes(configFile["windowSize"]);
     auto parsedBufferSizes = ASP::Util::parseBufferSizes(configFile["bufferSize"]);
     auto parsedNumberOfBuffers = ASP::Util::parseNumberOfBuffers(configFile["numberOfBuffers"]);
-
 
     for (auto& synopsisArgument : parsedSynopsisArguments) {
         for (auto& aggregation : parsedAggregations) {
@@ -266,5 +279,27 @@ double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& all
     }
 
     return sumError / numTuples;
+}
+
+std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
+MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
+    using namespace Runtime::Execution;
+
+    // Scan Operator
+    auto scanMemoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
+    auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
+
+    // Synopses Operator
+    auto synopsesOperator = std::make_shared<Operators::SynopsesOperator>(synopsis);
+
+    auto pipelineId = -1, queryId = 0, noWorkerThreads = 1;
+    auto pipelineExecutionContext = std::make_shared<MockedPipelineExecutionContext>();
+    // Build Pipeline
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    scan->setChild(synopsesOperator);
+    pipeline->setRootOperator(scan);
+
+    return std::make_pair(pipeline, pipelineExecutionContext);
+
 }
 } // namespace NES::ASP::Benchmarking

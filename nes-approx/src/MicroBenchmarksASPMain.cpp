@@ -23,7 +23,7 @@ const std::string logo = "/*****************************************************
                          " *     _   _   ______    _____\n"
                          " *    | \\ | | |  ____|  / ____|\n"
                          " *    |  \\| | | |__    | (___\n"
-                         " *    |     | |  __|    \\___ \\     Micro-benchmark ASP \n"
+                         " *    |     | |  __|    \\___ \\     Micro-Benchmark ASP \n"
                          " *    | |\\  | | |____   ____) |\n"
                          " *    |_| \\_| |______| |_____/\n"
                          " *\n"
@@ -56,7 +56,7 @@ int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
     // Activating and installing error listener
-    Logger::setupLogging("main.log", NES::LogLevel::LOG_INFO);
+    Logger::setupLogging("main.log", NES::LogLevel::LOG_DEBUG);
     auto runner = std::make_shared<MicroBenchmarkRunner>();
     Exceptions::installGlobalErrorListener(runner);
 

@@ -20,21 +20,37 @@
 #include <Benchmarking/Parsing/MicroBenchmarkSchemas.hpp>
 #include <Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Synopses/AbstractSynopsis.hpp>
 
 namespace NES::ASP::Benchmarking {
 
 static constexpr auto NANO_TO_SECONDS_MULTIPLIER = 1 * 1000 * 1000 * 1000UL;
 
+
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+  public:
+    MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
+        : PipelineExecutionContext(
+            -1,// mock pipeline id
+            1,         // mock query id
+            nullptr,
+            1, //noWorkerThreads
+            {},
+            {},
+            handlers){};
+};
+
 /**
  * @brief This class encapsulates a single micro-benchmark run
  */
 class MicroBenchmarkRun {
-
   private:
     /**
      * @brief Constructor for a MicroBenchmarkRun
@@ -117,6 +133,9 @@ class MicroBenchmarkRun {
                            std::vector<Runtime::TupleBuffer>& allApproximateBuffers);
 
   private:
+    std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
+        createExecutablePipeline(AbstractSynopsesPtr synopsis);
+
     SynopsisArguments synopsesArguments;
     YamlAggregation aggregation;
     uint32_t bufferSize;

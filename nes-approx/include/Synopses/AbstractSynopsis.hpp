@@ -91,7 +91,19 @@ class AbstractSynopsis {
      * @brief Sets the outputSchema
      * @param outputSchema
      */
+    void setInputSchema(const SchemaPtr& inputSchema);
+
+    /**
+     * @brief Sets the outputSchema
+     * @param outputSchema
+     */
     void setOutputSchema(const SchemaPtr& outputSchema);
+
+    /**
+     * @brief Sets the bufferManager
+     * @param bufferManager
+     */
+    void setBufferManager(const Runtime::BufferManagerPtr& bufferManager);
 
     /**
      * @brief virtual deconstructor
@@ -103,7 +115,9 @@ class AbstractSynopsis {
     Benchmarking::AggregationValuePtr aggregationValue;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
+    SchemaPtr inputSchema;
     SchemaPtr outputSchema;
+    Runtime::BufferManagerPtr bufferManager;
 
 };
 } // namespace NES::ASP
