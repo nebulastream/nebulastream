@@ -92,10 +92,18 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
+        auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
+
         NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
+        // Log the start of a threshold window
+        if (FunctionCall("getIsWindowOpen", getIsWindowOpen, handler)) {
+            NES_DEBUG2("Threshold window starts: opening value={}", std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[0])
+                           ? aggregatedValue->toString()
+                           : aggregatedFieldAccessExpressions[0]->execute(record)->toString());
+        }
+
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
-            auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
             auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i]);
             // if the agg function is not a count, then get the aggregated value from the "onField" field
             // otherwise, just increment the count
@@ -126,6 +134,21 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                 FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
                 FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
+
+                // Log the closing of window and along with agg result
+                // e.g., Threshold window ends: closing value=<VALUE> aggVal= <AGG_FIELD_NAME>:<AGG_RESULT_2> <AGG_FIELD_NAME>:<AGG_RESULT_2>
+                auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
+                NES_DEBUG2("Threshold window ends: closing value={} aggVal={}",
+                           std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[0])
+                               ? aggregatedValue->toString()
+                               : aggregatedFieldAccessExpressions[0]->execute(record)->toString(),
+                           std::accumulate(aggregationResultFieldIdentifiers.begin(),
+                                           aggregationResultFieldIdentifiers.end(),
+                                           std::string{},
+                                           [&resultRecord](std::string acc, std::string s) {
+                                               return acc + " " + s + ":" + resultRecord.read(s)->toString();
+                                           }));
+
                 // crucial to release the handler here before we execute the rest of the pipeline
                 child->execute(ctx, resultRecord);
             } else {
