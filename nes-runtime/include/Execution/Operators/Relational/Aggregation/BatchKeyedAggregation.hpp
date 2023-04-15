@@ -38,7 +38,6 @@ class BatchKeyedAggregation : public ExecutableOperator {
     BatchKeyedAggregation(uint64_t operatorHandlerIndex,
                           const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                           const std::vector<PhysicalTypePtr>& keyDataTypes,
-                          const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
                           const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                           std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
@@ -49,7 +48,6 @@ class BatchKeyedAggregation : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::vector<Expressions::ExpressionPtr> aggregationExpressions;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     uint64_t keySize;

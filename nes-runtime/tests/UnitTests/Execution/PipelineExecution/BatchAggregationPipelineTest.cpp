@@ -92,12 +92,9 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto aggregationResultFieldName = "f1";
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF1};
-    std::vector<std::string> resultFields = {aggregationResultFieldName};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-    auto aggregationOp =
-        std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions);
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF1, aggregationResultFieldName)};
+    auto aggregationOp = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFunctions);
     scanOperator->setChild(aggregationOp);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -120,7 +117,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
 
-    auto aggScan = std::make_shared<Operators::BatchAggregationScan>(0 /*handler index*/, aggregationFunctions, resultFields);
+    auto aggScan = std::make_shared<Operators::BatchAggregationScan>(0 /*handler index*/, aggregationFunctions);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     aggScan->setChild(emitOperator);
     auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
@@ -161,15 +158,13 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
 
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> keyFields = {readF1};
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
     std::vector<PhysicalTypePtr> types = {integerType};
     auto aggregationOp =
         std::make_shared<Operators::BatchKeyedAggregation>(0 /*handler index*/,
                                                            keyFields,
                                                            types,
-                                                           aggregationFields,
                                                            aggregationFunctions,
                                                            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 

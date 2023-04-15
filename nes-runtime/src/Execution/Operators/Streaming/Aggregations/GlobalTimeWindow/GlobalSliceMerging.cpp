@@ -71,12 +71,10 @@ void* getDefaultMergingState(void* ss) {
 
 GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
                                        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                                       const std::vector<std::string>& aggregationResultExpressions,
                                        const std::string& startTsFieldName,
                                        const std::string& endTsFieldName,
                                        uint64_t resultOriginId)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
-      aggregationResultExpressions(aggregationResultExpressions), startTsFieldName(startTsFieldName),
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions), startTsFieldName(startTsFieldName),
       endTsFieldName(endTsFieldName), resultOriginId(resultOriginId) {}
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
@@ -146,11 +144,9 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);
     uint64_t stateOffset = 0;
-    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
-        auto function = aggregationFunctions[i];
+    for (const auto& function : aggregationFunctions) {
         auto valuePtr = globalSliceState + stateOffset;
-        auto finalAggregationValue = function->lower(valuePtr.as<MemRef>());
-        resultWindow.write(aggregationResultExpressions[i], finalAggregationValue);
+        function->lower(valuePtr.as<MemRef>(), resultWindow);
         stateOffset = stateOffset + function->getSize();
     }
     child->execute(ctx, resultWindow);

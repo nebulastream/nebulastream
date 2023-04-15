@@ -18,9 +18,14 @@
 #include <utility>
 
 namespace NES::Runtime::Execution::Aggregation {
-AggregationFunction::AggregationFunction(PhysicalTypePtr inputType, PhysicalTypePtr finalType)
-    : inputType(std::move(inputType)), finalType(std::move(finalType)) {}
-Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, PhysicalTypePtr physicalType) {
+AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
+                                         PhysicalTypePtr resultType,
+                                         Expressions::ExpressionPtr inputExpression,
+                                         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    : inputType(std::move(inputType)), resultType(std::move(resultType)), inputExpression(std::move(inputExpression)),
+      resultFieldIdentifier(std::move(resultFieldIdentifier)) {}
+Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref,
+                                                      const PhysicalTypePtr& physicalType) {
     if (physicalType->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicType->nativeType) {

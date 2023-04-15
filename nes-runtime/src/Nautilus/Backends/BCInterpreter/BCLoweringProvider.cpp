@@ -253,7 +253,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     auto resultReg = getResultRegister(cmpOp, frame);
     frame.setValue(cmpOp->getIdentifier(), resultReg);
 
-    if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::IEQ) {
+    if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::EQ) {
         auto type = cmpOp->getLeftInput()->getStamp();
         ByteCode bc;
         switch (getType(type)) {
@@ -274,7 +274,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::ISLT) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LT) {
         auto type = cmpOp->getLeftInput()->getStamp();
         ByteCode bc;
         switch (getType(type)) {
@@ -295,7 +295,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::ISGT) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GT) {
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {
@@ -316,7 +316,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::FOLT) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LT) {
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {
@@ -328,7 +328,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
         program.blocks[block].code.emplace_back(oc);
-    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::FOEQ) {
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::EQ) {
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {

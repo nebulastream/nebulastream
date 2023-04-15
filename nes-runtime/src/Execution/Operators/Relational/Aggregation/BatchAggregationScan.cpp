@@ -27,10 +27,8 @@ void* getStates(void* op, uint64_t workerId) {
 
 BatchAggregationScan::BatchAggregationScan(
     uint64_t operatorHandlerIndex,
-    const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions,
-    const std::vector<std::string>& aggregationResultFields)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
-      aggregationResultFields(aggregationResultFields) {}
+    const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions){}
 
 void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     Operators::Operator::open(ctx, rb);
@@ -43,9 +41,8 @@ void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
 
     // 3. perform final aggregation.
     Record result;
-    for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
-        auto finalAggregationValue = aggregationFunctions[aggIndex]->lower(state);
-        result.write(aggregationResultFields[aggIndex], finalAggregationValue);
+    for (const auto& aggregationFunction : aggregationFunctions) {
+        aggregationFunction->lower(state, result);
     }
     child->execute(ctx, result);
 }

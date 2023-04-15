@@ -90,26 +90,22 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     auto aggregationResultFieldName = "test$sum";
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> keyFields = {readKey};
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readValue};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
     std::vector<PhysicalTypePtr> types = {integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
                                                               readTsField,
                                                               keyFields,
                                                               types,
-                                                              aggregationFields,
                                                               aggregationFunctions,
                                                               std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    std::vector<std::string> aggregationResultExpressions = {aggregationResultFieldName};
     std::vector<std::string> resultKeyFields = {"k1"};
     auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/,
                                                                        aggregationFunctions,
-                                                                       aggregationResultExpressions,
                                                                        types,
                                                                        resultKeyFields,
                                                                        "start",
@@ -195,9 +191,8 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     std::vector<Expressions::ExpressionPtr> keyFields = {readKey1, readKey2};
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readValue};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readValue, aggregationResultFieldName)};
     PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<PhysicalTypePtr> keyTypes = {integerType, integerType};
     auto slicePreAggregation =
@@ -205,17 +200,14 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
                                                               readTsField,
                                                               keyFields,
                                                               keyTypes,
-                                                              aggregationFields,
                                                               aggregationFunctions,
                                                               std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    std::vector<std::string> aggregationResultExpressions = {aggregationResultFieldName};
     std::vector<std::string> resultKeyFields = {"k1", "k2"};
     auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/,
                                                                        aggregationFunctions,
-                                                                       aggregationResultExpressions,
                                                                        keyTypes,
                                                                        resultKeyFields,
                                                                        "start",

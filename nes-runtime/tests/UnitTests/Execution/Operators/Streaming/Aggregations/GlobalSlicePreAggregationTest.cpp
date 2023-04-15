@@ -90,11 +90,10 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-    auto slicePreAggregation =
-        GlobalSlicePreAggregation(0 /*handler index*/,
-                                  readTs,
-                                  {readF2},
-                                  {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType)});
+    auto slicePreAggregation = GlobalSlicePreAggregation(
+        0 /*handler index*/,
+        readTs,
+        {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType, readF2, "count")});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
@@ -141,11 +140,11 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
     PhysicalTypePtr i64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr ui64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto slicePreAggregation = GlobalSlicePreAggregation(0 /*handler index*/,
-                                                         readTs,
-                                                         {readF2, readF2},
-                                                         {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64),
-                                                          std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64)});
+    auto slicePreAggregation =
+        GlobalSlicePreAggregation(0 /*handler index*/,
+                                  readTs,
+                                  {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
+                                   std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};

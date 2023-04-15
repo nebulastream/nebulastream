@@ -91,8 +91,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
                                  readTs,
                                  {readKey},
                                  {integerType},
-                                 {readV1},
-                                 {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)},
+                                 {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},
                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
     auto sliceStaging = std::make_shared<KeyedSliceStaging>();

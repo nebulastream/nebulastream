@@ -79,15 +79,11 @@ KeyedSlicePreAggregation::KeyedSlicePreAggregation(
     Expressions::ExpressionPtr timestampExpression,
     const std::vector<Expressions::ExpressionPtr>& keyExpressions,
     const std::vector<PhysicalTypePtr>& keyDataTypes,
-    const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timestampExpression(std::move(timestampExpression)),
-      keyExpressions(keyExpressions), keyDataTypes(keyDataTypes), aggregationExpressions(aggregationExpressions),
-      aggregationFunctions(aggregationFunctions), hashFunction(std::move(hashFunction)), keySize(0), valueSize(0) {
-    NES_ASSERT(aggregationFunctions.size() == aggregationExpressions.size(),
-               "The number of aggregation expression and aggregation functions need to be equals");
-
+      keyExpressions(keyExpressions), keyDataTypes(keyDataTypes), aggregationFunctions(aggregationFunctions),
+      hashFunction(std::move(hashFunction)), keySize(0), valueSize(0) {
     for (auto& keyType : keyDataTypes) {
         keySize = keySize + keyType->size();
     }
@@ -150,10 +146,9 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 6. manipulate the current aggregate values
     auto valuePtr = entry.getValuePtr();
-    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
-        auto value = aggregationExpressions[i]->execute(record);
-        aggregationFunctions[i]->lift(valuePtr, value);
-        valuePtr = valuePtr + aggregationFunctions[i]->getSize();
+    for (const auto& aggregationFunction : aggregationFunctions) {
+        aggregationFunction->lift(valuePtr, record);
+        valuePtr = valuePtr + aggregationFunction->getSize();
     }
 }
 void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {

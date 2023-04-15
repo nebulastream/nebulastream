@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/Interface/Record.hpp"
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -19,8 +20,11 @@
 
 namespace NES::Runtime::Execution::Aggregation {
 
-MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
-    : AggregationFunction(inputType, finalType) {}
+MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType,
+                                               const PhysicalTypePtr& resultType,
+                                               const Expressions::ExpressionPtr& inputExpression,
+                                               const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
+    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
 template<class T>
 T min(T first, T second) {
@@ -57,26 +61,27 @@ Nautilus::Value<> callMin(const Nautilus::Value<>& leftValue, const Nautilus::Va
     throw Exceptions::NotImplementedException("Type not implemented");
 }
 
-void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
+void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> sate, Nautilus::Record& inputRecord) {
     // load
-    auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
+    auto oldValue = AggregationFunction::loadFromMemref(sate, inputType);
     // compare
     // TODO implement the function in nautilus if #3500 is fixed
-    auto result = callMin(value, oldValue);
-    memref.store(result);
+    auto inputValue = inputExpression->execute(inputRecord);
+    auto result = callMin(inputValue, oldValue);
+    sate.store(result);
 }
 
-void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
-    auto left = AggregationFunction::loadFromMemref(memref1, inputType);
-    auto right = AggregationFunction::loadFromMemref(memref2, inputType);
+void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
+    auto left = AggregationFunction::loadFromMemref(state1, inputType);
+    auto right = AggregationFunction::loadFromMemref(state2, inputType);
     // TODO implement the function in nautilus if #3500 is fixed
     auto result = callMin(left, right);
-    memref1.store(result);
+    state1.store(result);
 }
 
-Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = AggregationFunction::loadFromMemref(memref, finalType);
-    return finalVal;
+void MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) {
+    auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
+    resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {

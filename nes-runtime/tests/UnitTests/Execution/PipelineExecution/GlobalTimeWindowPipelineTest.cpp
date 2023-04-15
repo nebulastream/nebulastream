@@ -87,20 +87,15 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto aggregationResultFieldName = "test$sum";
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-    auto slicePreAggregation = std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
-                                                                                      readTsField,
-                                                                                      aggregationFields,
-                                                                                      aggregationFunctions);
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
+    auto slicePreAggregation =
+        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/, readTsField, aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    std::vector<std::string> resultFields = {aggregationResultFieldName};
     auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
                                                                         aggregationFunctions,
-                                                                        resultFields,
                                                                         "start",
                                                                         "end",
                                                                         /*origin id*/ 0);
@@ -182,26 +177,19 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2, readF2, readF2, readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType),
-        std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType),
-        std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType),
-        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType)};
-    auto slicePreAggregation = std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
-                                                                                      readTsField,
-                                                                                      aggregationFields,
-                                                                                      aggregationFunctions);
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName1),
+        std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName2),
+        std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName3),
+        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName4)};
+    auto slicePreAggregation =
+        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/, readTsField, aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    std::vector<std::string> resultFields = {aggregationResultFieldName1,
-                                             aggregationResultFieldName2,
-                                             aggregationResultFieldName3,
-                                             aggregationResultFieldName4};
     auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
                                                                         aggregationFunctions,
-                                                                        resultFields,
+
                                                                         "start",
                                                                         "end",
                                                                         /*origin id*/ 0);
