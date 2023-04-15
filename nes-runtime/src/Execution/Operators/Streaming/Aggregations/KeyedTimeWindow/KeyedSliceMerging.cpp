@@ -69,14 +69,12 @@ void setupKeyedSliceMergingHandler(void* ss, void* ctx, uint64_t keySize, uint64
 
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
                                      const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                                     const std::vector<std::string>& aggregationResultExpressions,
                                      const std::vector<PhysicalTypePtr>& keyDataTypes,
                                      const std::vector<std::string>& resultKeyFields,
                                      std::string startTsFieldName,
                                      std::string endTsFieldName,
                                      uint64_t resultOriginId)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
-      aggregationResultExpressions(aggregationResultExpressions), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
       startTsFieldName(std::move(startTsFieldName)), endTsFieldName(std::move(endTsFieldName)), keySize(0), valueSize(0),
       resultOriginId(resultOriginId) {
     for (auto& keyType : keyDataTypes) {
@@ -177,10 +175,9 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
         }
         // load values and write them to result record
         auto sliceValue = globalEntry.getValuePtr();
-        for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
-            auto finalAggregationValue = aggregationFunctions[i]->lower(sliceValue);
-            resultWindow.write(aggregationResultExpressions[i], finalAggregationValue);
-            sliceValue = sliceValue + aggregationFunctions[i]->getSize();
+        for (const auto& aggregationFunction : aggregationFunctions) {
+            aggregationFunction->lower(sliceValue, resultWindow);
+            sliceValue = sliceValue + aggregationFunction->getSize();
         }
         child->execute(ctx, resultWindow);
     }

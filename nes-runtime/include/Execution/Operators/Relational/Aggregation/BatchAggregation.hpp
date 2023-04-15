@@ -32,7 +32,6 @@ class BatchAggregation : public ExecutableOperator {
      * @param aggregationFunctions functions for the aggregations.
      */
     BatchAggregation(uint64_t operatorHandlerIndex,
-                     const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
                      const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -42,7 +41,6 @@ class BatchAggregation : public ExecutableOperator {
 
   private:
     const uint64_t operatorHandlerIndex;
-    const std::vector<Expressions::ExpressionPtr> aggregationExpressions;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 }// namespace NES::Runtime::Execution::Operators

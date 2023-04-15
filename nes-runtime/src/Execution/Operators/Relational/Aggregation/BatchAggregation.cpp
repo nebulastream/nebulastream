@@ -39,10 +39,8 @@ class ThreadLocalAggregationState : public OperatorState {
 
 BatchAggregation::BatchAggregation(
     uint64_t operatorHandlerIndex,
-    const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationExpressions(aggregationExpressions),
-      aggregationFunctions(aggregationFunctions) {}
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
 void BatchAggregation::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -70,9 +68,8 @@ void BatchAggregation::execute(ExecutionContext& ctx, Record& record) const {
     // 1. get local state
     auto aggregationState = (ThreadLocalAggregationState*) ctx.getLocalState(this);
     // 2. update aggregates
-    for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
-        auto inputValue = aggregationExpressions[aggIndex]->execute(record);
-        aggregationFunctions[aggIndex]->lift(aggregationState->stateReference, inputValue);
+    for (const auto& aggregationFunction : aggregationFunctions) {
+        aggregationFunction->lift(aggregationState->stateReference, record);
     }
 }
 

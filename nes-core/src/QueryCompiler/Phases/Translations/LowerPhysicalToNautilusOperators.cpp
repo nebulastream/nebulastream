@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
@@ -50,6 +49,7 @@
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
@@ -87,6 +87,7 @@
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <string_view>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -313,13 +314,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     operatorHandlers.emplace_back(handler);
     auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    std::vector<std::string> aggregationFields;
-    std::transform(aggregations.cbegin(),
-                   aggregations.cend(),
-                   std::back_inserter(aggregationFields),
-                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
-                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
-                   });
     // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
@@ -327,7 +321,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto sliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(operatorHandlers.size() - 1,
                                                                             aggregationFunctions,
-                                                                            aggregationFields,
                                                                             startTs,
                                                                             endTs,
                                                                             physicalGSMO->getWindowDefinition()->getOriginId());
@@ -344,13 +337,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedSliceMergingHandler>>(physicalGSMO->getWindowHandler());
     operatorHandlers.emplace_back(handler);
     auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
-    std::vector<std::string> resultAggregationFields;
-    std::transform(aggregations.cbegin(),
-                   aggregations.cend(),
-                   std::back_inserter(resultAggregationFields),
-                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
-                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
-                   });
     auto aggregationFunctions = lowerAggregations(aggregations);
     // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
@@ -367,7 +353,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto sliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
                                                                            aggregationFunctions,
-                                                                           resultAggregationFields,
                                                                            keyDataTypes,
                                                                            resultKeyFields,
                                                                            startTs,
@@ -390,17 +375,12 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
 
-    std::vector<Runtime::Execution::Expressions::ExpressionPtr> aggregationFields;
-    std::transform(aggregations.cbegin(), aggregations.cend(), std::back_inserter(aggregationFields), [&](auto& agg) {
-        return expressionProvider->lowerExpression(agg->on());
-    });
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
     auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
     auto sliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregation>(operatorHandlers.size() - 1,
                                                                                    timeStampField,
-                                                                                   aggregationFields,
                                                                                    aggregationFunctions);
     return sliceMergingOperator;
 }
@@ -417,11 +397,6 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = windowDefinition->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-
-    std::vector<Runtime::Execution::Expressions::ExpressionPtr> aggregationFields;
-    std::transform(aggregations.cbegin(), aggregations.cend(), std::back_inserter(aggregationFields), [&](auto& agg) {
-        return expressionProvider->lowerExpression(agg->on());
-    });
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
     auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
@@ -442,7 +417,6 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
         timeStampField,
         keyReadExpressions,
         keyDataTypes,
-        aggregationFields,
         aggregationFunctions,
         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
     return sliceMergingOperator;
@@ -521,8 +495,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
-    std::vector<Runtime::Execution::Aggregation::AggregationFunctionPtr> aggregationFunctions;
-
+    auto aggregationFunctions = lowerAggregations(aggregations);
     std::vector<std::string> aggregationResultFieldNames;
     std::transform(aggregations.cbegin(),
                    aggregations.cend(),
@@ -531,31 +504,9 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                        return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
                    });
 
-    std::vector<std::shared_ptr<Runtime::Execution::Expressions::Expression>> aggregatedFieldAccesses;
-    // iterate over all aggregation function and lower them
-    for (int64_t i = 0; i < (int64_t) aggregations.size(); ++i) {
-        auto aggregation = aggregations[i];// get the aggregation function
-        NES_INFO("lowerThresholdWindow Aggregations: " << aggregation->toString());
-        auto aggregationFunction = lowerAggregations(aggregations)[i];
-        aggregationFunctions.emplace_back(aggregationFunction);
-        /** check if the aggregation is not of type Count
-          *  count is treated different as does not agg onField but onTuple thus the onField for count should not be set to anything
-          *  and we want that all vectors, i.e., aggregationFunctions, aggregationResultFieldNames, and aggregatedFieldAccesses
-          *  have corresponding indexes. Thus, we add a null pointer as access field for count agg.
-          */
-        if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Type::Count) {
-            auto aggregatedFieldAccess = expressionProvider->lowerExpression(aggregation->on());
-            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
-        } else {
-            auto aggregatedFieldAccess = nullptr;
-            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
-        }
-    }
-
     return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
-                                                                            minCount,
-                                                                            aggregatedFieldAccesses,
                                                                             aggregationResultFieldNames,
+                                                                            minCount,
                                                                             aggregationFunctions,
                                                                             handlerIndex);
 }
@@ -590,40 +541,62 @@ std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
     NES_INFO("Lower Window Aggregations to Nautilus Operator");
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
-    std::transform(
-        aggs.cbegin(),
-        aggs.cend(),
-        std::back_inserter(aggregationFunctions),
-        [&](const auto& agg) -> std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction> {
-            DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    std::transform(aggs.cbegin(),
+                   aggs.cend(),
+                   std::back_inserter(aggregationFunctions),
+                   [&](const Windowing::WindowAggregationDescriptorPtr& agg)
+                       -> std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction> {
+                       DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
 
-            // lower the data types
-            auto physicalInputType = physicalTypeFactory.getPhysicalType(agg->getInputStamp());
-            auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
+                       // lower the data types
+                       auto physicalInputType = physicalTypeFactory.getPhysicalType(agg->getInputStamp());
+                       auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
 
-            switch (agg->getType()) {
-                case Windowing::WindowAggregationDescriptor::Type::Avg:
-                    return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(physicalInputType,
-                                                                                                     physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Type::Count:
-                    return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(physicalInputType,
-                                                                                                       physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Type::Max:
-                    return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(physicalInputType,
-                                                                                                     physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Type::Min:
-                    return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(physicalInputType,
-                                                                                                     physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Type::Median:
-                    // TODO 3331: add median aggregation function
-                    break;
-                case Windowing::WindowAggregationDescriptor::Type::Sum: {
-                    return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(physicalInputType,
-                                                                                                     physicalFinalType);
-                }
-            };
-            NES_NOT_IMPLEMENTED();
-        });
+                       auto aggregationInputExpression = expressionProvider->lowerExpression(agg->on());
+                       std::string aggregationResultFieldIdentifier;
+                       if (auto fieldAccessExpression = agg->as()->as_if<FieldAccessExpressionNode>()) {
+                           aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
+                       } else {
+                           NES_THROW_RUNTIME_ERROR("Currently complex expression in as fields are not supported");
+                       }
+                       switch (agg->getType()) {
+                           case Windowing::WindowAggregationDescriptor::Type::Avg:
+                               return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Count:
+                               return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Max:
+                               return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Min:
+                               return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Median:
+                               // TODO 3331: add median aggregation function
+                               break;
+                           case Windowing::WindowAggregationDescriptor::Type::Sum: {
+                               return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           }
+                       };
+                       NES_NOT_IMPLEMENTED();
+                   });
     return aggregationFunctions;
 }
 

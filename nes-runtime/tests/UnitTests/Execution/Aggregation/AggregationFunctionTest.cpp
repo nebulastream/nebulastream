@@ -21,8 +21,11 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+#include <memory>
 
 namespace NES::Runtime::Execution::Expressions {
 class AggregationFunctionTest : public Testing::NESBaseTest {
@@ -40,17 +43,18 @@ class AggregationFunctionTest : public Testing::NESBaseTest {
 /**
  * Tests the lift, combine, lower and reset functions of the Sum Aggregation
  */
-TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
+TEST_F(AggregationFunctionTest, sumAggregation) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-
-    auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType);
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto inputRecord = Record({{"value", incomingValue}});
     // test lift
-    sumAgg.lift(memref, incomingValue);
+    sumAgg.lift(memref, inputRecord);
     ASSERT_EQ(sumValue.sum, 1);
 
     // test combine
@@ -58,8 +62,9 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
     ASSERT_EQ(sumValue.sum, 2);
 
     // test lower
-    auto aggregationResult = sumAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2);
+    auto result = Record();
+    sumAgg.lower(memref, result);
+    ASSERT_EQ(result.read("result"), 2);
 
     // test reset
     sumAgg.reset(memref);
@@ -69,19 +74,21 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
 /**
  * Tests the lift, combine, lower and reset functions of the Count Aggregation
  */
-TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
+TEST_F(AggregationFunctionTest, countAggregation) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto unsignedIntegerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType);
+    auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType, readFieldExpression, "result");
 
     auto countValue = Aggregation::CountAggregationValue<uint64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
 
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     // test lift
-    countAgg.lift(memref, incomingValue);
+    Record inputRecord;
+    countAgg.lift(memref, inputRecord);
     ASSERT_EQ(countValue.count, (uint64_t) 1);
 
     // test combine
@@ -89,8 +96,9 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     ASSERT_EQ(countValue.count, (uint64_t) 2);
 
     // test lower
-    auto aggregationResult = countAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, (uint64_t) 2);
+    auto result = Record();
+    countAgg.lower(memref, result);
+    ASSERT_EQ(result.read("result"), (uint64_t) 2);
 
     // test reset
     countAgg.reset(memref);
@@ -101,16 +109,18 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
  * Tests the lift, combine, lower and reset functions of the Average Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
-    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
+    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType, readFieldExpression, "result");
     auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
     // test lift
-    avgAgg.lift(memref, incomingValue);
+    auto inputRecord = Record({{"value", incomingValue}});
+    avgAgg.lift(memref, inputRecord);
     EXPECT_EQ(avgValue.count, 1);
     EXPECT_EQ(avgValue.sum, 2);
 
@@ -120,8 +130,10 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     EXPECT_EQ(avgValue.sum, 4);
 
     // test lower
-    auto aggregationResult = avgAgg.lower(memref);
-    EXPECT_EQ(aggregationResult, 2);
+    auto result = Record();
+    avgAgg.lower(memref, result);
+
+    EXPECT_EQ(result.read("result"), 2);
 
     // test reset
     avgAgg.reset(memref);
@@ -133,10 +145,12 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
  * Tests the lift, combine, lower and reset functions of the Min Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
+    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto minValue = Aggregation::MinAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
@@ -145,25 +159,30 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
 
     // lift value in minAgg with an initial value of 5, thus the current min should be 5
-    minAgg.lift(memref, incomingValueFive);
+    auto inputRecord = Record({{"value", incomingValueFive}});
+    minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueFive);
 
     // lift value in minAgg with a higher value of 10, thus the current min should still be 5
-    minAgg.lift(memref, incomingValueTen);
+    inputRecord = Record({{"value", incomingValueTen}});
+    minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueFive);
 
     // lift value in minAgg with a lower value of 1, thus the current min should change to 1
-    minAgg.lift(memref, incomingValueOne);
+    inputRecord = Record({{"value", incomingValueOne}});
+    minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
     // lift value in minAgg with a higher value of 2, thus the current min should still be 1
-    minAgg.lift(memref, incomingValueTwo);
+    inputRecord = Record({{"value", incomingValueOne}});
+    minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
     // combine memrefs in minAgg
     auto anotherMinValue = Aggregation::MinAggregationValue<int64_t>();
     auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMinValue);
-    minAgg.lift(anotherMemref, incomingValueTen);
+    inputRecord = Record({{"value", incomingValueTen}});
+    minAgg.lift(anotherMemref, inputRecord);
 
     // test if memref1 < memref2
     minAgg.combine(memref, anotherMemref);
@@ -174,12 +193,14 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     ASSERT_EQ(anotherMinValue.min, incomingValueOne);
 
     // test if memref1 = memref2
-    minAgg.lift(anotherMemref, incomingValueOne);
+    inputRecord = Record({{"value", incomingValueOne}});
+    minAgg.lift(anotherMemref, inputRecord);
     ASSERT_EQ(anotherMinValue.min, incomingValueOne);
 
     // lower value in minAgg
-    auto aggregationResult = minAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 1);
+    auto result = Record();
+    minAgg.lower(memref, result);
+    ASSERT_EQ(result.read("result"), 1);
 
     // test reset
     minAgg.reset(memref);
@@ -190,10 +211,12 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
  * Tests the lift, combine, lower and reset functions of the Max Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
+    auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
@@ -202,25 +225,35 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>((int64_t) 15);
 
     // lift value in maxAgg with an initial value of 5, thus the current min should be 5
-    maxAgg.lift(memref, incomingValueFive);
+
+    auto inputRecord = Record({{"value", incomingValueFive}});
+    maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueFive);
 
     // lift value in maxAgg with a higher value of 10, thus the current min should change to 10
-    maxAgg.lift(memref, incomingValueTen);
+
+    inputRecord = Record({{"value", incomingValueTen}});
+    maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueTen);
 
     // lift value in maxAgg with a lower value of 1, thus the current min should still be 10
-    maxAgg.lift(memref, incomingValueOne);
+
+    inputRecord = Record({{"value", incomingValueOne}});
+    maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueTen);
 
     // lift value in maxAgg with a higher value of 15, thus the current min should change to 15
-    maxAgg.lift(memref, incomingValueFifteen);
+
+    inputRecord = Record({{"value", incomingValueFifteen}});
+    maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
     // combine memrefs in maxAgg
     auto anotherMaxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMaxValue);
-    maxAgg.lift(anotherMemref, incomingValueOne);
+
+    inputRecord = Record({{"value", incomingValueOne}});
+    maxAgg.lift(anotherMemref, inputRecord);
 
     // test if memref1 > memref2
     maxAgg.combine(memref, anotherMemref);
@@ -231,13 +264,16 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
     // test if memref1 = memref2
-    maxAgg.lift(anotherMemref, incomingValueFifteen);
+
+    inputRecord = Record({{"value", incomingValueFifteen}});
+    maxAgg.lift(anotherMemref, inputRecord);
     maxAgg.combine(memref, anotherMemref);
     ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
     // lower value in minAgg
-    auto aggregationResult = maxAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, incomingValueFifteen);
+    auto result = Record();
+    maxAgg.lower(memref, result);
+    ASSERT_EQ(result.read("result"), incomingValueFifteen);
 
     // test reset
     maxAgg.reset(memref);

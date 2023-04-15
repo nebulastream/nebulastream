@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include "Nautilus/Interface/Record.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
 
-AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
-    : AggregationFunction(inputType, finalType) {
+AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
+                                               const PhysicalTypePtr& resultType,
+                                               const Expressions::ExpressionPtr& inputExpression,
+                                               const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
+    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
 
     // assuming that the count is always of Int64
@@ -31,42 +35,43 @@ Nautilus::Value<Nautilus::MemRef> AvgAggregationFunction::loadSumMemRef(const Na
     return (memref + sizeOfCountInBytes).as<Nautilus::MemRef>();
 }
 
-void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
+void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) {
     // load memref
-    auto oldCount = AggregationFunction::loadFromMemref(memref, countType);
+    auto oldCount = AggregationFunction::loadFromMemref(state, countType);
     // calc the offset to get Memref of the count value
-    auto oldSumMemref = loadSumMemRef(memref);
+    auto oldSumMemref = loadSumMemRef(state);
     auto oldSum = AggregationFunction::loadFromMemref(oldSumMemref, inputType);
 
     // add the values
+    auto value = inputExpression->execute(record);
     auto newSum = oldSum + value;
     auto newCount = oldCount + 1;
     // put updated values back to the memref
-    memref.store(newCount);
+    state.store(newCount);
     oldSumMemref.store(newSum);
 }
 
-void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
+void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
     // load memref1
-    auto countLeft = AggregationFunction::loadFromMemref(memref1, countType);
+    auto countLeft = AggregationFunction::loadFromMemref(state1, countType);
     // calc the offset to get Memref of the count value
-    auto sumLeftMemref = loadSumMemRef(memref1);
+    auto sumLeftMemref = loadSumMemRef(state1);
     auto sumLeft = AggregationFunction::loadFromMemref(sumLeftMemref, inputType);
     // load memref2
-    auto countRight = AggregationFunction::loadFromMemref(memref2, countType);
+    auto countRight = AggregationFunction::loadFromMemref(state2, countType);
     // calc the offset to get Memref of the count value
-    auto sumRightMemref = loadSumMemRef(memref2);
+    auto sumRightMemref = loadSumMemRef(state2);
     auto sumRight = AggregationFunction::loadFromMemref(sumRightMemref, inputType);
 
     // add the values
     auto tmpSum = sumLeft + sumRight;
     auto tmpCount = countLeft + countRight;
     // put updated values back to the memref
-    memref1.store(tmpCount);
+    state1.store(tmpCount);
     sumLeftMemref.store(tmpSum);
 }
 
-Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
+void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) {
     // load memrefs
     auto count = AggregationFunction::loadFromMemref(memref, countType);
     auto sumMemref = loadSumMemRef(memref);
@@ -78,8 +83,8 @@ Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     auto finalVal = sum / count;
     sumMemref.store(finalVal);
 
-    // return the average
-    return finalVal;
+    // write the average
+    resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
 void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {

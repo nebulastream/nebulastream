@@ -44,8 +44,6 @@
 namespace NES::Runtime::Execution {
 class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
-    std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
-    std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     ExecutablePipelineProvider* provider;
@@ -96,16 +94,13 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
+
     aggVector.emplace_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -176,16 +171,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, unsignedIntegerType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType,
+                                                                            unsignedIntegerType,
+                                                                            readF2,
+                                                                            aggregationResultFieldName);
     aggVector.emplace_back(countAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -255,16 +246,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(minAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -334,16 +321,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(maxAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -413,16 +396,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -490,16 +469,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -569,16 +544,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, aggVector, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

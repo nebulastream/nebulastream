@@ -46,15 +46,10 @@ BatchKeyedAggregation::BatchKeyedAggregation(
     uint64_t operatorHandlerIndex,
     const std::vector<Expressions::ExpressionPtr>& keyExpressions,
     const std::vector<PhysicalTypePtr>& keyDataTypes,
-    const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
     : operatorHandlerIndex(operatorHandlerIndex), keyExpressions(keyExpressions), keyDataTypes(keyDataTypes),
-      aggregationExpressions(aggregationExpressions), aggregationFunctions(aggregationFunctions),
-      hashFunction(std::move(hashFunction)), keySize(0), valueSize(0) {
-    NES_ASSERT(aggregationFunctions.size() == aggregationExpressions.size(),
-               "The number of aggregation expression and aggregation functions need to be equals");
-
+      aggregationFunctions(aggregationFunctions), hashFunction(std::move(hashFunction)), keySize(0), valueSize(0) {
     for (auto& keyType : keyDataTypes) {
         keySize = keySize + keyType->size();
     }
@@ -116,8 +111,7 @@ void BatchKeyedAggregation::execute(NES::Runtime::Execution::ExecutionContext& c
     // 6. manipulate the current aggregate values
     auto valuePtr = entry.getValuePtr();
     for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
-        auto value = aggregationExpressions[i]->execute(record);
-        aggregationFunctions[i]->lift(valuePtr, value);
+        aggregationFunctions[i]->lift(valuePtr, record);
         valuePtr = valuePtr + aggregationFunctions[i]->getSize();
     }
 }

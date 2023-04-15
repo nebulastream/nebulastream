@@ -21,12 +21,15 @@ namespace NES::Runtime::Execution::Aggregation {
 class MinAggregationFunction : public AggregationFunction {
 
   public:
-    MinAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType);
+    MinAggregationFunction(const PhysicalTypePtr& inputType,
+                           const PhysicalTypePtr& resultType,
+                           const Expressions::ExpressionPtr& inputExpression,
+                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-    void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) override;
-    void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) override;
-    Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) override;
-    void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
+    void lift(Nautilus::Value<Nautilus::MemRef> sate, Nautilus::Record& record) override;
+    void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
+    void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
+    void reset(Nautilus::Value<Nautilus::MemRef> state) override;
     uint64_t getSize() override;
 };
 }// namespace NES::Runtime::Execution::Aggregation

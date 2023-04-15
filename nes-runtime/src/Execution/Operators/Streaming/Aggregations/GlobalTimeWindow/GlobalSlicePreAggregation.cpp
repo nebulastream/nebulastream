@@ -65,13 +65,9 @@ class LocalGlobalPreAggregationState : public Operators::OperatorState {
 GlobalSlicePreAggregation::GlobalSlicePreAggregation(
     uint64_t operatorHandlerIndex,
     Expressions::ExpressionPtr timestampExpression,
-    const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
     : operatorHandlerIndex(operatorHandlerIndex), timestampExpression(std::move(timestampExpression)),
-      aggregationExpressions(aggregationExpressions), aggregationFunctions(aggregationFunctions) {
-    NES_ASSERT(aggregationFunctions.size() == aggregationExpressions.size(),
-               "The number of aggregation expression and aggregation functions need to be equals");
-}
+      aggregationFunctions(aggregationFunctions) {}
 
 void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -114,11 +110,10 @@ void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContex
         Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
     // 3. manipulate the current aggregate values
     uint64_t stateOffset = 0;
-    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
-        auto value = aggregationExpressions[i]->execute(record);
+    for (const auto& aggregationFunction : aggregationFunctions) {
         auto state = sliceState + stateOffset;
-        stateOffset = stateOffset + aggregationFunctions[i]->getSize();
-        aggregationFunctions[i]->lift(state.as<MemRef>(), value);
+        stateOffset = stateOffset + aggregationFunction->getSize();
+        aggregationFunction->lift(state.as<MemRef>(), record);
     }
 }
 void GlobalSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
