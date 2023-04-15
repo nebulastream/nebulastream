@@ -28,10 +28,28 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+<<<<<<< HEAD:nes-asp/include/Experimental/Benchmarking/MicroBenchmarkRun.hpp
+=======
+#include <Synopses/AbstractSynopsis.hpp>
+>>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/include/Benchmarking/MicroBenchmarkRun.hpp
 
 namespace NES::ASP::Benchmarking {
 
 static constexpr auto NANO_TO_SECONDS_MULTIPLIER = 1 * 1000 * 1000 * 1000UL;
+
+
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+  public:
+    MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
+        : PipelineExecutionContext(
+            -1,// mock pipeline id
+            1,         // mock query id
+            nullptr,
+            1, //noWorkerThreads
+            {},
+            {},
+            handlers){};
+};
 
 /**
  * @brief MockedPipelineExecutionContext for our executable pipeline

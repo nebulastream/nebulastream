@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+<<<<<<< HEAD:nes-asp/src/Experimental/Benchmarking/MicroBenchmarkRun.cpp
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
@@ -19,10 +20,22 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+=======
+#include <Benchmarking/MicroBenchmarkASPUtil.hpp>
+#include <Benchmarking/MicroBenchmarkRun.hpp>
+#include <Execution/Operators/Scan.hpp>
+#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Operators/SynopsesOperator.hpp>
+>>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/src/Benchmarking/MicroBenchmarkRun.cpp
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+<<<<<<< HEAD:nes-asp/src/Experimental/Benchmarking/MicroBenchmarkRun.cpp
+=======
+#include <Synopses/AbstractSynopsis.hpp>
+>>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/src/Benchmarking/MicroBenchmarkRun.cpp
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
@@ -304,4 +317,5 @@ MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
 
     return std::make_pair(pipeline, pipelineExecutionContext);
 }
+
 } // namespace NES::ASP::Benchmarking

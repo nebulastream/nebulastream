@@ -15,7 +15,11 @@
 #ifndef NES_SIMPLERANDOMSAMPLEWITHOUTREPLACEMENT_HPP
 #define NES_SIMPLERANDOMSAMPLEWITHOUTREPLACEMENT_HPP
 
+<<<<<<< HEAD:nes-asp/include/Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
+=======
+#include <Synopses/AbstractSynopsis.hpp>
+>>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/include/Synopses/Samples/SampleRandomWithoutReplacement.hpp
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::ASP{

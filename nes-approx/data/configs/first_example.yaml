@@ -1,0 +1,28 @@
+synopsis:
+  - type: SRSWR
+    width: 100
+
+aggregation:
+  - type: MIN
+    inputFile: "some_input_file.csv"
+    fieldNameAgg: "value"
+    timestamp: "ts"
+    fieldNameApprox: "aggregation"
+
+  - type: AVERAGE
+    inputFile: "some_input_file.csv"
+    fieldNameAgg: "value"
+    timestamp: "ts"
+    fieldNameApprox: "aggregation"
+
+  - type: MAX
+    inputFile: "some_other_input_file.csv"
+    fieldNameAgg: "value1"
+    timestamp: "ts"
+    fieldNameApprox: "aggregation"
+
+windowSize: 50000
+bufferSize: 1024
+numberOfBuffers: 10240
+csvFile: "output_csvfile.csv"
+reps: 2
