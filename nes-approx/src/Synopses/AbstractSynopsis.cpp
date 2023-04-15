@@ -42,10 +42,20 @@ void AbstractSynopsis::setFieldNameApproximate(const std::string& fieldNameAppro
     AbstractSynopsis::fieldNameApproximate = fieldNameApproximate;
 }
 
-void AbstractSynopsis::setOutputSchema(const SchemaPtr& outputSchema) { AbstractSynopsis::outputSchema = outputSchema; }
+void AbstractSynopsis::setInputSchema(const SchemaPtr& inputSchema) {
+    AbstractSynopsis::inputSchema = inputSchema;
+}
+
+void AbstractSynopsis::setOutputSchema(const SchemaPtr& outputSchema) {
+    AbstractSynopsis::outputSchema = outputSchema;
+}
 
 void AbstractSynopsis::setAggregationValue(Benchmarking::AggregationValuePtr aggregationValue) {
     AbstractSynopsis::aggregationValue = std::move(aggregationValue);
+}
+
+void AbstractSynopsis::setBufferManager(const Runtime::BufferManagerPtr& bufferManager) {
+    AbstractSynopsis::bufferManager = bufferManager;
 }
 
 } // namespace NES::ASP

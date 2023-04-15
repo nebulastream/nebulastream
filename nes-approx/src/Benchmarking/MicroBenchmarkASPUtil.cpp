@@ -162,7 +162,8 @@ std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& cs
         ++tupleCount;
 
         // If we have read enough tuples from the csv file, then stop iterating over it
-        if (dynamicTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>() >= lastTimeStamp) {
+        auto curTimeStamp = dynamicTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
+        if (curTimeStamp >= lastTimeStamp) {
             break;
         }
 

@@ -16,6 +16,15 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+SynopsesOperator::SynopsesOperator(const ASP::AbstractSynopsesPtr& synopses)
+    : synopses(synopses) {}
+
+
+
+void SynopsesOperator::setup(ExecutionContext&) const {
+    synopses->initialize();
+}
+
 void SynopsesOperator::execute(ExecutionContext&, Record& record) const {
     synopses->addToSynopsis(record);
 }

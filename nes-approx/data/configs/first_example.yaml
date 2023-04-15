@@ -1,9 +1,15 @@
 synopsis:
   - type: SRSWR
-    width: 1000
+    width: 100
 
 aggregation:
   - type: MIN
+    inputFile: "some_input_file.csv"
+    fieldNameAgg: "value"
+    timestamp: "ts"
+    fieldNameApprox: "aggregation"
+
+  - type: AVERAGE
     inputFile: "some_input_file.csv"
     fieldNameAgg: "value"
     timestamp: "ts"
@@ -15,7 +21,8 @@ aggregation:
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
-windowSize: 1000
+windowSize: 50000
 bufferSize: 1024
+numberOfBuffers: 10240
 csvFile: "output_csvfile.csv"
-reps: 10
+reps: 2

@@ -16,6 +16,7 @@
 #define NES_SAMPLERANDOMWITHOUTREPLACEMENT_HPP
 
 #include <Synopses/AbstractSynopsis.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::ASP{
 
@@ -54,18 +55,12 @@ class SampleRandomWithoutReplacement : public AbstractSynopsis {
     virtual ~SampleRandomWithoutReplacement() = default;
 
 
-
-
   private:
     size_t sampleSize;
-    std::vector<Nautilus::Record> storedRecords;
+    std::vector<Runtime::TupleBuffer> storedRecords;
+    uint64_t numberOfTuples;
 
 };
-
-SynopsisArguments
-SRSWR(size_t sampleSize, std::string fieldName,
-                        Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction);
-
 } // namespace NES::ASP
 
 #endif//NES_SAMPLERANDOMWITHOUTREPLACEMENT_HPP

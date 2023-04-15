@@ -22,10 +22,14 @@ namespace NES::Runtime::Execution::Operators {
 
 class SynopsesOperator : public ExecutableOperator {
 
+  public:
+    SynopsesOperator(const ASP::AbstractSynopsesPtr& synopses);
+
+    void setup(ExecutionContext& executionCtx) const override;
+
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
-    uint64_t handlerIndex;
     ASP::AbstractSynopsesPtr synopses;
 };
 
