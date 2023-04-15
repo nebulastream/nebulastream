@@ -21,6 +21,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Benchmarking/Parsing/SynopsisArguments.hpp>
+#include <Synopses/AbstractSynopsis.hpp>
 
 namespace NES::ASP {
 
