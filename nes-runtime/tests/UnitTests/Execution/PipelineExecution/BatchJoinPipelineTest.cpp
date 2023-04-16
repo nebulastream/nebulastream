@@ -15,15 +15,8 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Execution/Aggregation/CountAggregation.hpp>
-#include <Execution/Aggregation/MaxAggregation.hpp>
-#include <Execution/Aggregation/MinAggregation.hpp>
-#include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -91,8 +84,6 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> keyFields = {readF1};
     std::vector<Expressions::ExpressionPtr> valueFields = {readF2};
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
     std::vector<PhysicalTypePtr> types = {integerType};
     auto joinOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
                                                               keyFields,

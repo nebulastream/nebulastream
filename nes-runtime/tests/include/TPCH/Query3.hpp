@@ -222,7 +222,7 @@ class TPCH_Query3 {
         auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
         auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
         auto revenueExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-        auto sumRevenue = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
+        auto sumRevenue = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
         auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
         std::vector<Expressions::ExpressionPtr> keyFields = {l_orderkey,
                                                              readO_orderdate,
@@ -236,7 +236,6 @@ class TPCH_Query3 {
             1 /*handler index*/,
             keyFields,
             std::vector<PhysicalTypePtr>{integerType, integerType, integerType},
-            aggregationExpressions,
             aggregationFunctions,
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 

@@ -21,6 +21,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
@@ -234,7 +235,9 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum) {
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "sum";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto sumAgg = Aggregation::SumAggregationFunction(dataType, dataType);
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
+    auto sumAgg = Aggregation::SumAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
     // create an aggregation value based on the aggregation function type and data type
     auto sumValue = getAggregationValue(aggFunctionType, testParam);
@@ -242,12 +245,13 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum) {
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
-
-    sumAgg.lift(memref, incomingValue);
+    auto inputRecord = Record({{"value", incomingValue}});
+    sumAgg.lift(memref, inputRecord);
     sumAgg.combine(memref, memref);
-    auto aggregationResult = sumAgg.lower(memref);
+    auto result = Record();
+    sumAgg.lower(memref, result);
 
-    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam);// Check if the type corresponds to the input type
 }
 
 /**
@@ -261,7 +265,9 @@ TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg) {
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "avg";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType);
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
+    auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
     // create an aggregation value based on the aggregation function type and data type
     auto avgValue = getAggregationValue(aggFunctionType, testParam);
@@ -269,12 +275,13 @@ TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg) {
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
-
-    avgAgg.lift(memref, incomingValue);
+    auto inputRecord = Record({{"value", incomingValue}});
+    avgAgg.lift(memref, inputRecord);
     avgAgg.combine(memref, memref);
-    auto aggregationResult = avgAgg.lower(memref);
+    auto result = Record();
+    avgAgg.lower(memref, result);
 
-    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam);// Check if the type corresponds to the input type
 }
 
 /**
@@ -286,7 +293,9 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin) {
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "min";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto minAgg = Aggregation::MinAggregationFunction(dataType, dataType);
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
+    auto minAgg = Aggregation::MinAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
     // create an aggregation value based on the aggregation function type and data type
     auto minValue = getAggregationValue(aggFunctionType, testParam);
@@ -295,11 +304,13 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin) {
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
 
-    minAgg.lift(memref, incomingValue);
+    auto inputRecord = Record({{"value", incomingValue}});
+    minAgg.lift(memref, inputRecord);
     minAgg.combine(memref, memref);
-    auto aggregationResult = minAgg.lower(memref);
+    auto result = Record();
+    minAgg.lower(memref, result);
 
-    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam);// Check if the type corresponds to the input type
 }
 
 /**
@@ -311,7 +322,9 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax) {
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "max";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto maxAgg = Aggregation::MaxAggregationFunction(dataType, dataType);
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
+    auto maxAgg = Aggregation::MaxAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
     // create an aggregation value based on the aggregation function type and data type
     auto maxValue = getAggregationValue(aggFunctionType, testParam);
@@ -319,12 +332,13 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax) {
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
-
-    maxAgg.lift(memref, incomingValue);
+    auto inputRecord = Record({{"value", incomingValue}});
+    maxAgg.lift(memref, inputRecord);
     maxAgg.combine(memref, memref);
-    auto aggregationResult = maxAgg.lower(memref);
+    auto result = Record();
+    maxAgg.lower(memref, result);
 
-    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam);// Check if the type corresponds to the input type
 }
 
 /**
@@ -338,7 +352,9 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount) {
     std::string aggFunctionType = "count";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
     PhysicalTypePtr unsignedIntegerType = this->getDataType(ui64, physicalDataTypeFactory);
-    auto countAgg = Aggregation::CountAggregationFunction(dataType, unsignedIntegerType);
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+
+    auto countAgg = Aggregation::CountAggregationFunction(dataType, unsignedIntegerType, readFieldExpression, "result");
 
     // create an aggregation value based on the aggregation function type and data type
     auto countValue = getAggregationValue(aggFunctionType, ui64);
@@ -346,13 +362,14 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount) {
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
-
-    countAgg.lift(memref, incomingValue);
+    auto inputRecord = Record({{"value", incomingValue}});
+    countAgg.lift(memref, inputRecord);
     countAgg.combine(memref, memref);
-    auto aggregationResult = countAgg.lower(memref);
+    auto result = Record();
+    countAgg.lower(memref, result);
 
     // Check if the type count agg is of ui64 type irrespective of the input type
-    EXPECT_EQ(aggregationResult->getType()->toString(), ui64);
+    EXPECT_EQ(result.read("result")->getType()->toString(), ui64);
 }
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
