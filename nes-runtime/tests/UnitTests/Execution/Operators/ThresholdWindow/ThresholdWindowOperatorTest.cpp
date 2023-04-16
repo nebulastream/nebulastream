@@ -540,22 +540,14 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipl
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr doubleType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, doubleType);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, sumAggregationResultFieldName );
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, doubleType, readF2, avgAggregationResultFieldName);
 
     aggVector.push_back(sumAgg);
     aggVector.push_back(avgAgg);
 
-    resultFieldVector.emplace_back(sumAggregationResultFieldName);
-    resultFieldVector.emplace_back(avgAggregationResultFieldName);
-
-    aggFieldAccessExpressionsVector.push_back(readF2);// for sum
-    aggFieldAccessExpressionsVector.push_back(readF2);// for avg
-
     auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression,
                                                                      0,
-                                                                     aggFieldAccessExpressionsVector,
-                                                                     resultFieldVector,
                                                                      aggVector,
                                                                      0);
 
