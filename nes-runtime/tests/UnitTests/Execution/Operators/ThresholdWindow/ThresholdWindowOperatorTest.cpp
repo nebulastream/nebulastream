@@ -602,8 +602,8 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipl
     resultFieldVector.emplace_back(sumAggregationResultFieldName);
     resultFieldVector.emplace_back(avgAggregationResultFieldName);
 
-    aggFieldAccessExpressionsVector.push_back(readF2); // for sum
-    aggFieldAccessExpressionsVector.push_back(readF2); // for avg
+    aggFieldAccessExpressionsVector.push_back(readF2);// for sum
+    aggFieldAccessExpressionsVector.push_back(readF2);// for avg
 
     auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression,
                                                                      0,
@@ -654,6 +654,5 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipl
     EXPECT_EQ(collector->records[1].read(avgAggregationResultFieldName), 4);
     thresholdWindowOperator->terminate(ctx);
 }
-
 
 }// namespace NES::Runtime::Execution::Operators
