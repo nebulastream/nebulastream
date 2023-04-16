@@ -166,8 +166,8 @@ elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
+    # add flounder backend
     target_compile_definitions(nes-runtime PUBLIC USE_FLOUNDER)
-
     include(FetchContent)
     FetchContent_Declare(
             flounder
@@ -183,7 +183,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
     target_link_libraries(nes-runtime PRIVATE flounder)
     target_include_directories(nes-runtime PRIVATE ${flounder_SOURCE_DIR}/src)
-
 endif ()
 
 if (NES_RUNTIME_BENCHMARKS)
