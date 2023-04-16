@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.51](https://github.com/nebulastream/nebulastream/tree/v0.5.51) (2023-04-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.50...v0.5.51)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add debug info for threshold window boundaries [\#3665](https://github.com/nebulastream/nebulastream/issues/3665)
+
 ## [v0.5.50](https://github.com/nebulastream/nebulastream/tree/v0.5.50) (2023-04-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.49...v0.5.50)
