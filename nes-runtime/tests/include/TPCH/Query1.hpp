@@ -14,6 +14,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 
+#include "Execution/Expressions/Expression.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -108,11 +109,13 @@ class TPCH_Query1 {
 
         //  sum(l_quantity) as sum_qty,
         auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
-        auto sumAggFunction1 = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+        auto sumAggFunction1 =
+            std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, l_quantityField, "sum_qty");
 
         // sum(l_extendedprice) as sum_base_price,
         auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-        auto sumAggFunction2 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
+        auto sumAggFunction2 =
+            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
 
         // disc_price = l_extendedprice * (1 - l_discount)
         auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
@@ -125,24 +128,23 @@ class TPCH_Query1 {
 
         //  sum(disc_price)
         auto disc_price = std::make_shared<ReadFieldExpression>("disc_price");
-        auto sumAggFunction3 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
+        auto sumAggFunction3 =
+            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
 
         //  sum(disc_price * (one + l_tax[i]))
         auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
         auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
         auto mulExpression2 = std::make_shared<AddExpression>(disc_price, addExpression);
-        auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
+        auto sumAggFunction4 =
+            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulExpression2, "sum_charge");
 
         //   count(*)
-        auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType, uintegerType);
+        auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType,
+                                                                                         uintegerType,
+                                                                                         Expressions::ExpressionPtr(),
+                                                                                         "count_order");
 
         std::vector<Expressions::ExpressionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
-        std::vector<Expressions::ExpressionPtr> aggregationExpressions = {l_quantityField,
-                                                                          l_extendedpriceField,
-                                                                          disc_price,
-                                                                          mulExpression2,
-                                                                          l_quantityField};
-        std::vector<std::string> resultFields = {"sum_qty", "sum_base_price", "sum_disc_price", "sum_charge", "count_order"};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumAggFunction1,
                                                                                                sumAggFunction2,
                                                                                                sumAggFunction3,
@@ -155,7 +157,6 @@ class TPCH_Query1 {
             std::make_shared<Operators::BatchKeyedAggregation>(0 /*handler index*/,
                                                                keyFields,
                                                                types,
-                                                               aggregationExpressions,
                                                                aggregationFunctions,
                                                                std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 

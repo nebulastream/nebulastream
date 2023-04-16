@@ -97,15 +97,11 @@ class TPCH_Query6 {
         auto l_extendedprice = std::make_shared<Expressions::ReadFieldExpression>("l_extendedprice");
         auto l_discount = std::make_shared<Expressions::ReadFieldExpression>("l_discount");
         auto revenue = std::make_shared<Expressions::MulExpression>(l_extendedprice, l_discount);
-        auto aggregationResultFieldName = "revenue";
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
-        std::vector<Expressions::ExpressionPtr> aggregationFields = {revenue};
-        std::vector<std::string> resultFields = {aggregationResultFieldName};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-            std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-        auto aggregation =
-            std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFields, aggregationFunctions);
+            std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, revenue, "revenue")};
+        auto aggregation = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFunctions);
         selection2->setChild(aggregation);
 
         // create aggregation pipeline
@@ -115,7 +111,7 @@ class TPCH_Query6 {
         auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(aggregationHandler);
         plan.appendPipeline(aggregationPipeline, pipeline1Context);
 
-        auto aggScan = std::make_shared<BatchAggregationScan>(0 /*handler index*/, aggregationFunctions, resultFields);
+        auto aggScan = std::make_shared<BatchAggregationScan>(0 /*handler index*/, aggregationFunctions);
         // emit operator
         auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         resultSchema->addField("revenue", BasicType::FLOAT32);
