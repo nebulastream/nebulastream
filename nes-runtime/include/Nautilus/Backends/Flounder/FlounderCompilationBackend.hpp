@@ -15,6 +15,10 @@
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERPIPELINECOMPILERBACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::Flounder {
+
+/**
+ * @brief Compilation Backend, which uses flounder.
+ */
 class FlounderCompilationBackend : public Nautilus::Backends::CompilationBackend {
   public:
     std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir) override;
