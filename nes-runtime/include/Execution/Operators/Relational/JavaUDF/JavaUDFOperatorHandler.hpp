@@ -55,10 +55,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
                                     const std::optional<std::string>& javaPath)
         : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
           byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
-          outputSchema(outputSchema), javaPath(javaPath), flatMapMethodId(nullptr), flatMapObject(nullptr) {}
-
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
-    void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
+          outputSchema(outputSchema), javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
 
     /**
      * @brief This method returns the class name of the java udf
@@ -130,26 +127,28 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @brief This method returns the java udf object state
      * @return jobject java udf object
      */
-    jobject getFlatMapObject() const { return flatMapObject; }
+    jobject getFlatMapUDFObject() const { return flatMapUDFObject; }
 
     /**
      * @brief This method sets the java udf object state
      * @param flatMapObject java udf object
      */
-    void setFlatMapObject(jobject flatMapObject) { this->flatMapObject = flatMapObject; }
+    void setFlatMapUDFObject(jobject flatMapObject) { this->flatMapUDFObject = flatMapObject; }
 
     /**
      * @brief This method returns the java udf method id
      * @return jmethodID java udf method id
      */
-    jmethodID getFlatMapMethodId() const { return flatMapMethodId; }
+    jmethodID getFlatMapUDFMethodId() const { return flatMapUDFMethodId; }
 
     /**
      * @brief This method sets the java udf method id
-     * @param flatMapMethodId java udf method id
+     * @param flatMapMethodUDFId java udf method id
      */
-    void setFlatMapMethodId(const jmethodID flatMapMethodId) { this->flatMapMethodId = flatMapMethodId; }
+    void setFlatMapUDFMethodId(const jmethodID flatMapUDFMethodId) { this->flatMapUDFMethodId = flatMapUDFMethodId; }
 
+    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
+    void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
   private:
     const std::string className;
     const std::string methodName;
@@ -161,8 +160,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const SchemaPtr outputSchema;
     JNIEnv* env;
     const std::optional<std::string> javaPath;
-    jmethodID flatMapMethodId;
-    jobject flatMapObject;
+    jmethodID flatMapUDFMethodId;
+    jobject flatMapUDFObject;
 };
 
 }// namespace NES::Runtime::Execution::Operators

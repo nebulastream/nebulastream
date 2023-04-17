@@ -21,7 +21,6 @@ namespace NES {
 namespace Catalogs::UDF {
 class JavaUDFDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
-
 }// namespace Catalogs::UDF
 namespace QueryCompilation::PhysicalOperators {
 
@@ -38,9 +37,9 @@ class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
      */
     PhysicalFlatMapJavaUDFOperator(OperatorId id,
-                                   SchemaPtr inputSchema,
-                                   SchemaPtr outputSchema,
-                                   Catalogs::UDF::JavaUDFDescriptorPtr javaUdfDescriptor);
+                                   const SchemaPtr& inputSchema,
+                                   const SchemaPtr& outputSchema,
+                                   const Catalogs::UDF::JavaUDFDescriptorPtr& javaUdfDescriptor);
     /**
      * @brief Creates a new instance of PhysicalFlatMapJavaUDFOperator
      * @param id The identifier of this operator
@@ -59,20 +58,8 @@ class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
      * @return A new instance of PhysicalFlatMapJavaUDFOperator
      */
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Catalogs::UDF::JavaUDFDescriptorPtr javaUdfDescriptor);
-
-    /**
-     * @brief Returns a string representation of this operator
-     * @return A string representation of this operator
-     */
-    std::string toString() const override;
-
-    /**
-     * @brief Creates a copy of this operator node
-     * @return A copy of this operator node
-     */
-    OperatorNodePtr copy() override;
+    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+                                      const Catalogs::UDF::JavaUDFDescriptorPtr& javaUdfDescriptor);
 
     /**
      * @brief Returns the java udf descriptor of this map operator
@@ -80,6 +67,8 @@ class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
      */
     Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor();
 
+    std::string toString() const override;
+    OperatorNodePtr copy() override;
   protected:
     const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor;
 };
