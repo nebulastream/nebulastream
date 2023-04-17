@@ -24,6 +24,7 @@
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -137,6 +138,20 @@ void fillBufferToMultiFieldSchema(TupleBuffer& buf, const Runtime::MemoryLayouts
         fields02[recordIndex] = recordIndex % 2;
     }
     buf.setNumberOfTuples(NUMBER_OF_TUPLE);
+}
+
+void fillBufferToWindowSchema(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, const size_t numTuples) {
+
+    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
+    auto fields0 = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, memoryLayout, buf);
+    auto fields1 = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, memoryLayout, buf);
+
+    for (uint64_t recordIndex = 0; recordIndex < numTuples; recordIndex++) {
+        recordIndexFields[recordIndex] = recordIndex;
+        fields0[recordIndex] = 1;
+        fields1[recordIndex] = recordIndex;
+    }
+    buf.setNumberOfTuples(numTuples);
 }
 
 void fillBufferColumnLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout) {
@@ -628,6 +643,213 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
             // id
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
             NES_DEBUG2("expected: {} actual: {}", (recordIndex % 2) + 42, resultRecordValueFields[recordIndex]);
+        }
+    } else {
+        FAIL();
+    }
+
+    cleanUpPlan(plan);
+    testSink->cleanupBuffers();
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+class WindowedAggregationGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
+public:
+    static constexpr uint32_t WINDOW_LENGTH = 8;
+    static constexpr uint32_t WINDOW_SLIDE = 8;
+    static constexpr size_t NUMBER_OF_INPUT_TUPLES = 32;
+    static constexpr size_t NUMBER_OF_OUTPUT_TUPLES = 4;
+
+    struct InputRecord {
+        [[maybe_unused]] int32_t id;
+        [[maybe_unused]] uint32_t value;
+        [[maybe_unused]] uint64_t timestamp;
+    };
+
+    struct OutputRecord {
+        [[maybe_unused]] int32_t id;
+        [[maybe_unused]] uint32_t value;
+    };
+
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+        const char* const header = R"(nes-core/tests/UnitTests/Query/GPUInputRecord.cuh
+            #ifndef NES_GPUINPUTRECORD_CUH
+            #define NES_GPUINPUTRECORD_CUH
+
+            #include <cstdint>
+
+            struct InputRecord {
+                int32_t id;
+                uint32_t value;
+                uint64_t timestamp;
+            };
+
+            struct OutputRecord {
+                int32_t id;
+                uint32_t value;
+            };
+
+            #endif // NES_GPUINPUTRECORD_CUH
+        )";
+
+        const char* const slidingWindowKernel_cu = R"(SlidingWindow.cu
+            #include "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh"
+            __global__ void slidingWindowKernel(
+                const InputRecord* records,
+                const int count,
+                OutputRecord* results,
+                const int32_t windowLength,
+                const int32_t windowSlide,
+                const uint64_t t_start,
+                const uint64_t t_end)
+            {
+                auto tid = blockIdx.x * blockDim.x + threadIdx.x;
+                if (tid < count) {
+                    auto record = records[tid];
+                    auto ts = record.timestamp;
+                    size_t i = 0;
+                    for (uint64_t t = t_start; t < t_end; t += windowSlide) {
+                        if (ts >= t && ts < t + windowLength) {
+                            results[i].id = 0x1;
+                            atomicAdd(&results[i].value, record.value);
+                        }
+                        i++;
+                    }
+                }
+            }
+        )";
+
+        cudaKernelWrapper.setup(slidingWindowKernel_cu, NUMBER_OF_INPUT_TUPLES * sizeof(InputRecord), {header});
+
+        return ExecutablePipelineStage::setup(pipelineExecutionContext);
+    }
+
+    ExecutionResult execute(Runtime::TupleBuffer& buffer,
+                            Runtime::Execution::PipelineExecutionContext& ctx,
+                            Runtime::WorkerContext& wc) override {
+        auto inputRecords = buffer.getBuffer<InputRecord>();
+        auto numberOfInputTuples = buffer.getNumberOfTuples();
+
+        // obtain an output buffer
+        auto outputBuffer = wc.allocateTupleBuffer();
+        auto outputRecords = outputBuffer.getBuffer<OutputRecord>();
+        outputBuffer.setNumberOfTuples(NUMBER_OF_OUTPUT_TUPLES);
+        auto numberOfOutputTuples = outputBuffer.getNumberOfTuples();
+
+        // Window definition and tuple buffer timestamp boundaries
+        auto t_start = inputRecords[0].timestamp;
+        auto t_end = inputRecords[numberOfInputTuples - 1].timestamp;
+
+        // Set threadsPerBlock to a multiple of the warp size (e.g. 32).
+        // Adapt this value in performance tuning.
+        dim3 threadsPerBlock(32);
+        dim3 numBlocks((numberOfInputTuples + threadsPerBlock.x - 1) / threadsPerBlock.x);
+        KernelDescriptor kernel = {
+            "slidingWindowKernel",
+            numBlocks,
+            threadsPerBlock
+        };
+        // execute the kernel
+        cudaKernelWrapper.execute(inputRecords,
+                                  numberOfInputTuples,
+                                  outputRecords,
+                                  numberOfOutputTuples,
+                                  kernel,
+                                  WINDOW_LENGTH,
+                                  WINDOW_SLIDE,
+                                  t_start,
+                                  t_end);
+
+        ctx.emitBuffer(outputBuffer, wc);
+        return ExecutionResult::Ok;
+    }
+
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
+        // deallocate GPU memory
+        cudaKernelWrapper.clean();
+
+        return ExecutablePipelineStage::stop(pipelineExecutionContext);
+    }
+
+    CUDAKernelWrapper<InputRecord, OutputRecord> cudaKernelWrapper;
+};
+
+TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
+    // creating query plan
+    SchemaPtr testSchemaWindowedAggregation = Schema::create()
+                                        ->addField("test$id", BasicType::INT32)
+                                        ->addField("test$value", BasicType::UINT32)
+                                        ->addField("test$timestamp", BasicType::UINT64);
+
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchemaWindowedAggregation,
+        [&](OperatorId id,
+            OriginId origin,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchemaWindowedAggregation,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 origin,
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
+
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT32)->addField("value", BasicType::UINT32);
+    auto numOutputTuples = WindowedAggregationGPUPipelineStage::NUMBER_OF_OUTPUT_TUPLES;
+    auto testSink = std::make_shared<TestSink>(numOutputTuples, outputSchema, nodeEngine);
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto query = TestQuery::from(testSourceDescriptor).sink(testSinkDescriptor);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    auto customPipelineStage = std::make_shared<WindowedAggregationGPUPipelineStage>();
+    auto externalOperator =
+        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+
+    auto sourceOperator = queryPlan->getOperatorByType<SourceLogicalOperatorNode>()[0];
+    sourceOperator->insertBetweenThisAndParentNodes(externalOperator);
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getPipelines().size(), 1u);
+
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchemaWindowedAggregation, nodeEngine->getBufferManager()->getBufferSize());
+        fillBufferToWindowSchema(buffer, memoryLayout, WindowedAggregationGPUPipelineStage::NUMBER_OF_INPUT_TUPLES);
+
+        plan->setup();
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+        ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+        ASSERT_EQ(plan->getPipelines()[0]->execute(buffer, workerContext), ExecutionResult::Ok);
+
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+
+        auto resultBuffer = testSink->get(0);
+
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), numOutputTuples);
+
+        auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto indexField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, resultMemoryLayout, resultBuffer);
+        auto valueField = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, resultMemoryLayout, resultBuffer);
+        for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples(); recordIndex++) {
+            EXPECT_EQ(indexField[recordIndex], 0x1);
+            EXPECT_EQ(valueField[recordIndex], 8);
         }
     } else {
         FAIL();
