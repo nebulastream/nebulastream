@@ -11,23 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/StorageHandles/LockStore.hpp>
-#include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
+#include <WorkQueues/StorageHandles/LockManager.hpp>
+#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
 
 namespace NES {
-std::unique_lock<std::mutex> LockStore::getLock(StorageHandleResourceType type) {
+std::unique_lock<std::mutex> LockManager::getLock(StorageHandlerResourceType type) {
     switch (type) {
-        case StorageHandleResourceType::Topology:
+        case StorageHandlerResourceType::Topology:
             return std::unique_lock(topologyMutex);
-        case StorageHandleResourceType::QueryCatalogService:
+        case StorageHandlerResourceType::QueryCatalogService:
             return std::unique_lock(queryCatalogMutex);
-        case StorageHandleResourceType::SourceCatalog:
+        case StorageHandlerResourceType::SourceCatalog:
             return std::unique_lock(sourceCatalogMutex);
-        case StorageHandleResourceType::GlobalExecutionPlan:
+        case StorageHandlerResourceType::GlobalExecutionPlan:
             return std::unique_lock(globalExecutionPlanMutex);
-        case StorageHandleResourceType::GlobalQueryPlan:
+        case StorageHandlerResourceType::GlobalQueryPlan:
             return std::unique_lock(globalQueryPlanMutex);
-        case StorageHandleResourceType::UdfCatalog:
+        case StorageHandlerResourceType::UdfCatalog:
             return std::unique_lock(udfCatalogMutex);
     }
 }

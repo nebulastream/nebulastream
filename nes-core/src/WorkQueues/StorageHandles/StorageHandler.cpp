@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <utility>
 
 namespace NES {
 
-StorageHandle::StorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+StorageHandler::StorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
                              TopologyPtr topology,
                              QueryCatalogServicePtr queryCatalogService,
                              GlobalQueryPlanPtr globalQueryPlan,

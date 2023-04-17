@@ -13,22 +13,22 @@
 */
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP
-#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 //todo #3588: This class is not not needed if we move the mutexes into the data structures itself
 /**
  * @brief This class hands out locks to different instances of the two phase locking
- * storage handle, This way each request can have its own storage handle but still have thread sage access.
+ * storage handle. This way each request can have its own storage handle but still have thread safe access.
  */
 namespace NES {
-class LockStore {
+class LockManager {
   public:
     /**
      * @brief Obtain a lock for a resource
      * @param type: The kind of resource that should be locked
      * @return a lock for the mutex corresponding to the resource specified in the 'type' parameter
      */
-    std::unique_lock<std::mutex> getLock(StorageHandleResourceType type);
+    std::unique_lock<std::mutex> getLock(StorageHandlerResourceType type);
 
   private:
     std::mutex topologyMutex;

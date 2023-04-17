@@ -12,32 +12,32 @@
     limitations under the License.
 */
 #include <Topology/Topology.hpp>
-#include <WorkQueues/StorageHandles/SerialStorageHandle.hpp>
+#include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
 #include <memory>
 #include <utility>
 
 namespace NES {
 
-SerialStorageHandle::SerialStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+SerialStorageHandler::SerialStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          QueryCatalogServicePtr queryCatalogService,
                                          GlobalQueryPlanPtr globalQueryPlan,
                                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                          Catalogs::UDF::UdfCatalogPtr udfCatalog)
-    : StorageHandle(std::move(globalExecutionPlan),
+    : StorageHandler(std::move(globalExecutionPlan),
                     std::move(topology),
                     std::move(queryCatalogService),
                     std::move(globalQueryPlan),
                     std::move(sourceCatalog),
                     std::move(udfCatalog)) {}
 
-std::shared_ptr<SerialStorageHandle> SerialStorageHandle::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+std::shared_ptr<SerialStorageHandler> SerialStorageHandler::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                  const TopologyPtr& topology,
                                                                  const QueryCatalogServicePtr& queryCatalogService,
                                                                  const GlobalQueryPlanPtr& globalQueryPlan,
                                                                  const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                                  const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
-    return std::make_shared<SerialStorageHandle>(globalExecutionPlan,
+    return std::make_shared<SerialStorageHandler>(globalExecutionPlan,
                                                  topology,
                                                  queryCatalogService,
                                                  globalQueryPlan,
@@ -45,21 +45,20 @@ std::shared_ptr<SerialStorageHandle> SerialStorageHandle::create(const GlobalExe
                                                  udfCatalog);
 }
 
-GlobalExecutionPlanHandle SerialStorageHandle::getGlobalExecutionPlanHandle() { return {&*globalExecutionPlan, UnlockDeleter()}; }
+GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle() { return {&*globalExecutionPlan, UnlockDeleter()}; }
 
-TopologyHandle SerialStorageHandle::getTopologyHandle() { return {&*topology, UnlockDeleter()}; }
+TopologyHandle SerialStorageHandler::getTopologyHandle() { return {&*topology, UnlockDeleter()}; }
 
-QueryCatalogServiceHandle SerialStorageHandle::getQueryCatalogHandle() { return {&*queryCatalogService, UnlockDeleter()}; }
+QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogHandle() { return {&*queryCatalogService, UnlockDeleter()}; }
 
-GlobalQueryPlanHandle SerialStorageHandle::getGlobalQueryPlanHandle() { return {&*globalQueryPlan, UnlockDeleter()}; }
+GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle() { return {&*globalQueryPlan, UnlockDeleter()}; }
 
-SourceCatalogHandle SerialStorageHandle::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter()}; }
+SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter()}; }
 
-UdfCatalogHandle SerialStorageHandle::getUdfCatalogHandle() {
+UdfCatalogHandle SerialStorageHandler::getUdfCatalogHandle() {
     return {&*udfCatalog, UnlockDeleter()};
 }
 
-void SerialStorageHandle::preExecution(std::vector<StorageHandleResourceType> requiredResources) {
-    (void) requiredResources;
+void SerialStorageHandler::acquireResources(std::vector<StorageHandlerResourceType>) {
 }
 }

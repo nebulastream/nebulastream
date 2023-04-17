@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_
 
-#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 namespace NES {
 
@@ -22,16 +22,27 @@ namespace NES {
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.
  * Not thread safe!
  */
-class SerialStorageHandle : public StorageHandle {
+class SerialStorageHandler : public StorageHandler {
   public:
-    SerialStorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+    SerialStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
                         TopologyPtr topology,
                         QueryCatalogServicePtr queryCatalogService,
                         GlobalQueryPlanPtr globalQueryPlan,
                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
                         Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
-    static std::shared_ptr<SerialStorageHandle> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    /**
+     * @brief factory to create a serial storage manager object
+     * @param globalExecutionPlan a pointer to the global execution plan
+     * @param topology a pointer to the topology
+     * @param queryCatalogService a pointer to the query catalog service
+     * @param globalQueryPlan a pointer to the global query plan
+     * @param sourceCatalog a pointer to the source catalog
+     * @param udfCatalog a pointer to the udf catalog
+     * @param lockManager a pointer to the lock manager which maintains the mutexes for all of the above data structures
+     * @return shared pointer to the serial storage manager
+     */
+    static std::shared_ptr<SerialStorageHandler> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                        const TopologyPtr& topology,
                                                        const QueryCatalogServicePtr& queryCatalogService,
                                                        const GlobalQueryPlanPtr& globalQueryPlan,
@@ -39,10 +50,10 @@ class SerialStorageHandle : public StorageHandle {
                                                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
-     * @brief This function does nothing because no special actions are needed before beginning serial execution
+     * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
      * @param requiredResources The resources required for request execution
      */
-    void preExecution(std::vector<StorageHandleResourceType> requiredResources) override;
+    void acquireResources(std::vector<StorageHandlerResourceType> requiredResources) override;
 
     /**
      * @brief Obtain a mutable topology handle.

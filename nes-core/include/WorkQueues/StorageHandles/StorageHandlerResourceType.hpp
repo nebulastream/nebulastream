@@ -20,7 +20,7 @@ namespace NES {
  * @brief This class is used by coordinator side requests to indicate which data structures they need to access to
  * perform an operation so they can acquire locks before starting to execute the request logic.
  */
-enum class StorageHandleResourceType : char {
+enum class StorageHandlerResourceType : char {
     Topology,
     QueryCatalogService,
     SourceCatalog,
