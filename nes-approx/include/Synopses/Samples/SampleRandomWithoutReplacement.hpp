@@ -56,10 +56,25 @@ class SampleRandomWithoutReplacement : public AbstractSynopsis {
 
 
   private:
+    /**
+     * @brief Calculates the scaling factor from the current number of samples and stored records
+     * @return Scaling factor
+     */
+    double getScalingFactor();
+
+    /**
+     * @brief Multiplies the approximatedValue with the scalingFactor
+     * @param approximatedValue
+     * @param scalingFactor
+     * @return Multiplied approximated value
+     */
+    Nautilus::Value<>
+    multiplyWithScalingFactor(Nautilus::Value<> approximatedValue, Nautilus::Value<Nautilus::Double> scalingFactor);
+
+
     size_t sampleSize;
     std::vector<Runtime::TupleBuffer> storedRecords;
     uint64_t numberOfTuples;
-
 };
 } // namespace NES::ASP
 

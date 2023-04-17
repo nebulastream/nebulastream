@@ -140,6 +140,13 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,
                               Runtime::MemoryLayouts::DynamicField& exactField);
 
+/**
+ * @brief Iterates through the buffers and sums the number of tuples over all buffers
+ * @param buffers
+ * @return Number of total tuples in all buffers
+ */
+uint64_t getNumberOfTuples(std::vector<Runtime::TupleBuffer> buffers);
+
 
 } // namespace NES::ASP
 

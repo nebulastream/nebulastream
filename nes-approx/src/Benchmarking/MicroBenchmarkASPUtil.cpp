@@ -218,4 +218,14 @@ double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,
         default: NES_THROW_RUNTIME_ERROR("Can not calculate relative error for " << approxField.getPhysicalType()->type);
     }
 }
+
+uint64_t getNumberOfTuples(std::vector<Runtime::TupleBuffer> buffers) {
+    uint64_t sum = 0;
+
+    for (auto& buf : buffers) {
+        sum += buf.getNumberOfTuples();
+    }
+
+    return sum;
+}
 }
