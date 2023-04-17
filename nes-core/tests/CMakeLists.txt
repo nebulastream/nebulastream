@@ -236,7 +236,7 @@ add_nes_unit_test(logical-operator-node-tests
         "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
 
 ### MapJavaUDFLogicalOperatorNodeTest ###
-dd_nes_unit_test(mapjavaudf-logical-operator-node-tests
+add_nes_unit_test(mapjavaudf-logical-operator-node-tests
         "UnitTests/Operators/MapJavaUDFLogicalOperatorNodeTest.cpp")
 
 

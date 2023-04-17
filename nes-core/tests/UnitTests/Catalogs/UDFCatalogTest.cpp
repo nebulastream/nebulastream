@@ -40,8 +40,9 @@ class UDFCatalogTest : public Testing::NESBaseTest {
     UDFCatalog udfCatalog{};
 };
 
-// Test behavior of RegisterJavaUdf
-
+/**
+ * @brief Test the behavior of registering and retrieving Java UDF descriptors.
+ */
 TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
     // given
     auto udfName = "my_udf"s;
@@ -53,19 +54,28 @@ TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
 }
 
 /**
- * @brief test behaviour of registerPythonUdf
+ * @brief Test the behavior of registering and retrieving Python UDF descriptors.
  */
 TEST_F(UDFCatalogTest, RetrieveRegisteredPythonUdfDescriptor) {
+    // given
     auto udfName = "py_udf"s;
     auto udfDescriptor = createPythonDescriptor();
+    // when
     udfCatalog.registerUDF(udfName, udfDescriptor);
+    // then
     ASSERT_EQ(udfDescriptor, udfCatalog.getUDFDescriptor(udfName));
 }
 
+/**
+ * @brief Test that a null UDF descriptor cannot be registered.
+ */
 TEST_F(UDFCatalogTest, RegisteredDescriptorMustNotBeNull) {
     EXPECT_THROW(udfCatalog.registerUDF("my_udf", nullptr), UDFException);
 }
 
+/**
+ * @brief Test that an attempt to register a UDF under an existing name results in an exception.
+ */
 TEST_F(UDFCatalogTest, CannotRegisterUdfUnderExistingName) {
     // given
     auto udfName = "my_udf"s;
@@ -76,14 +86,23 @@ TEST_F(UDFCatalogTest, CannotRegisterUdfUnderExistingName) {
     EXPECT_THROW(udfCatalog.registerUDF(udfName, udfDescriptor2), UDFException);
 }
 
-// Test behavior of GetUdfDescriptor
+/**
+ * @brief Test that a null UDF descriptor is returned when attempting to retrieve an unknown UDF.
+ */
+TEST_F(UDFCatalogTest, ReturnNullptrIfUdfIsNotKnown) {
+    ASSERT_EQ(udfCatalog.getUDFDescriptor("unknown_udf"), nullptr);
+}
 
-TEST_F(UDFCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getUDFDescriptor("unknown_udf"), nullptr); }
+/**
+ * @brief Test that an attempt to remove an unknown UDF does not result in any changes to the catalog.
+ */
+TEST_F(UDFCatalogTest, CannotRemoveUnknownUdf) {
+    ASSERT_EQ(udfCatalog.removeUDF("unknown_udf"), false);
+}
 
-// Test behavior of RemoveUdf
-
-TEST_F(UDFCatalogTest, CannotRemoveUnknownUdf) { ASSERT_EQ(udfCatalog.removeUDF("unknown_udf"), false); }
-
+/**
+ * @brief Test that removal of a registered UDF is signaled.
+ */
 TEST_F(UDFCatalogTest, SignalRemovalOfUdf) {
     // given
     auto udfName = "my_udf"s;
@@ -93,6 +112,9 @@ TEST_F(UDFCatalogTest, SignalRemovalOfUdf) {
     ASSERT_EQ(udfCatalog.removeUDF(udfName), true);
 }
 
+/**
+ * @brief Test that a UDF is removed from the catalog after removal.
+ */
 TEST_F(UDFCatalogTest, AfterRemovalTheUdfDoesNotExist) {
     // given
     auto udfName = "my_udf"s;
@@ -103,6 +125,9 @@ TEST_F(UDFCatalogTest, AfterRemovalTheUdfDoesNotExist) {
     ASSERT_EQ(udfCatalog.getUDFDescriptor(udfName), nullptr);
 }
 
+/**
+ * @brief Test that a UDF with the same name can be registered again after removal.
+ */
 TEST_F(UDFCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
     // given
     auto udfName = "my_udf"s;
@@ -114,8 +139,9 @@ TEST_F(UDFCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
     EXPECT_NO_THROW(udfCatalog.registerUDF(udfName, udfDescriptor2));
 }
 
-// Test behavior of RemoveUdf
-
+/**
+ * @brief Test that a list of known UDF names can be retrieved from the catalog.
+ */
 TEST_F(UDFCatalogTest, ReturnListOfKnownUds) {
     // given
     auto udfName = "my_udf"s;

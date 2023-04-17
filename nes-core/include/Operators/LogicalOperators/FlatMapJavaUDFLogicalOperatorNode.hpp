@@ -28,32 +28,15 @@ namespace NES {
 class FlatMapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
   public:
     /**
-     * Construct a FlatMapUdfLogicalOperatorNode.
+     * @brief Construct a FlatMapUdfLogicalOperatorNode.
      * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
      * @param id The ID of the operator.
      */
     FlatMapJavaUDFLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
 
-    /**
-     * @see Node#toString
-     */
     std::string toString() const override;
-
-    /**
-     * @see OperatorNode#copy
-     */
     OperatorNodePtr copy() override;
-
-    /**
-     * @see Node#equal
-     *
-     * Two MapUdfLogicalOperatorNode are equal when the wrapped JavaUDFDescriptor are equal.
-     */
     [[nodiscard]] bool equal(const NodePtr& other) const override;
-
-    /**
-     * @see Node#isIdentical
-     */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
 }// namespace NES
