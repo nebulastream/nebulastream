@@ -17,7 +17,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -40,7 +40,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
+    auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     auto serialAccessHandle = SerialStorageHandler::create(globalExecutionPlan,
                                                            topology,
                                                            queryCatalogService,
