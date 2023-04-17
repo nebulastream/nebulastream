@@ -31,40 +31,15 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
   public:
     /**
      * @brief Constructor
-     * @param globalExecutionPlan a pointer to the global execution plan
-     * @param topology a pointer to the topology
-     * @param queryCatalogService a pointer to the query catalog service
-     * @param globalQueryPlan a pointer to the global query plan
-     * @param sourceCatalog a pointer to the source catalog
-     * @param udfCatalog a pointer to the udf catalog
      * @param lockManager a pointer to the lock manager which maintains the mutexes for all of the above data structures
      */
-    TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                                  TopologyPtr topology,
-                                  QueryCatalogServicePtr queryCatalogService,
-                                  GlobalQueryPlanPtr globalQueryPlan,
-                                  Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                  Catalogs::UDF::UdfCatalogPtr udfCatalog,
-                                  TwoPhaseLockManagerPtr lockManager);
+    explicit TwoPhaseLockingStorageHandler(TwoPhaseLockManagerPtr lockManager);
 
     /**
      * @brief factory to create a two phase locking storage manager object
-     * @param globalExecutionPlan a pointer to the global execution plan
-     * @param topology a pointer to the topology
-     * @param queryCatalogService a pointer to the query catalog service
-     * @param globalQueryPlan a pointer to the global query plan
-     * @param sourceCatalog a pointer to the source catalog
-     * @param udfCatalog a pointer to the udf catalog
-     * @param lockManager a pointer to the lock manager which maintains the mutexes for all of the above data structures
      * @return shared pointer to the two phase locking storage manager
      */
-    static std::shared_ptr<TwoPhaseLockingStorageHandler> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                 const TopologyPtr& topology,
-                                                                 const QueryCatalogServicePtr& queryCatalogService,
-                                                                 const GlobalQueryPlanPtr& globalQueryPlan,
-                                                                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
-                                                                 const TwoPhaseLockManagerPtr& lockManager);
+    static std::shared_ptr<TwoPhaseLockingStorageHandler> create(const TwoPhaseLockManagerPtr& lockManager);
 
     /**
      * @brief Locks the specified resources ordered after the corresponding enum variants in StorageHandlerResourceType beginning
@@ -127,12 +102,12 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     TwoPhaseLockManagerPtr lockManager;
     bool resourcesLocked;
 
-    std::unique_lock<std::mutex> topologyLock;
-    std::unique_lock<std::mutex> queryCatalogLock;
-    std::unique_lock<std::mutex> sourceCatalogLock;
-    std::unique_lock<std::mutex> globalExecutionPlanLock;
-    std::unique_lock<std::mutex> globalQueryPlanLock;
-    std::unique_lock<std::mutex> udfCatalogLock;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    TopologyPtr topology;
+    QueryCatalogServicePtr queryCatalogService;
+    GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }// namespace NES
 

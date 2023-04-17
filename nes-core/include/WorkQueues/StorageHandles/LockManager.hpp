@@ -17,20 +17,62 @@
 
 //todo #3588: This class is not not needed if we move the mutexes into the data structures itself
 /**
- * @brief This class hands out locks to different instances of the two phase locking
+ * @brief This class locks resources and hands out resource handles to different instances of the two phase locking
  * storage handle. This way each request can have its own storage handle but still have thread safe access.
  */
 namespace NES {
 class LockManager {
   public:
+   LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
+                TopologyPtr topology,
+                QueryCatalogServicePtr queryCatalogService,
+                GlobalQueryPlanPtr globalQueryPlan,
+                Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                Catalogs::UDF::UdfCatalogPtr udfCatalog);
+
     /**
-     * @brief Obtain a lock for a resource
-     * @param type: The kind of resource that should be locked
-     * @return a lock for the mutex corresponding to the resource specified in the 'type' parameter
+     * @brief Obtain a mutable global execution plan handle.
+     * @return a handle to the global execution plan.
      */
-    std::unique_lock<std::mutex> getLock(StorageHandlerResourceType type);
+    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle();
+
+    /**
+     * @brief Obtain a mutable topology handle.
+     * @return a handle to the topology
+     */
+    TopologyHandle getTopologyHandle();
+
+    /**
+     * @brief Obtain a mutable query catalog handle.
+     * @return a handle to the query catalog.
+     */
+    QueryCatalogServiceHandle getQueryCatalogHandle();
+
+    /**
+     * @brief Obtain a mutable global query plan handle.
+     * @return a handle to the global query plan.
+     */
+    GlobalQueryPlanHandle getGlobalQueryPlanHandle();
+
+    /**
+     * @brief Obtain a mutable source catalog handle.
+     * @return a handle to the source catalog.
+     */
+    SourceCatalogHandle getSourceCatalogHandle();
+
+    /**
+     * @brief Obtain a mutable udf catalog handle.
+     * @return a handle to the udf catalog.
+     */
+    UdfCatalogHandle getUdfCatalogHandle();
 
   private:
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    TopologyPtr topology;
+    QueryCatalogServicePtr queryCatalogService;
+    GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     std::mutex topologyMutex;
     std::mutex queryCatalogMutex;
     std::mutex sourceCatalogMutex;
