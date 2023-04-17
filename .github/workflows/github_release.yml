@@ -151,3 +151,6 @@ jobs:
       - name: Smart Meter Use Case Regression Test
       - run: cp ./docker/regressionImage/run.sh ./docker/regressionImage/SmartMeter/
       - run: sh ./docker/regressionImage/SmartMeter/run.sh
+      - name: Medic Regression Test
+      - run: cp ./docker/regressionImage/run.sh ./docker/regressionImage/Med/
+      - run: sh ./docker/regressionImage/Med/run.sh
