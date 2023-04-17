@@ -18,7 +18,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -111,6 +112,10 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
     // Lower the aggregation
     Nautilus::Record record;
     auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
+    auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor());
+    approximatedValue = multiplyWithScalingFactor(approximatedValue, scalingFactor);
+
+
     record.write(fieldNameApproximate, approximatedValue);
 
     // Create an output buffer and write the approximation into it
@@ -133,6 +138,46 @@ void SampleRandomWithoutReplacement::initialize() {
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     storedRecords.clear();
     numberOfTuples = 0;
+}
+
+double SampleRandomWithoutReplacement::getScalingFactor(){
+    double retValue = 1;
+
+    if (std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction) ||
+        std::dynamic_pointer_cast<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregationFunction)) {
+        double numberOfTuplesInWindow = Util::getNumberOfTuples(storedRecords);
+        double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
+        retValue = ((double) numberOfTuplesInWindow / minSize);
+    }
+
+    return retValue;
+}
+Nautilus::Value<> SampleRandomWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
+                                                                            Nautilus::Value<Nautilus::Double> scalingFactor) {
+    auto tmpValue = Nautilus::Value<>(approximatedValue * scalingFactor);
+    double value = tmpValue.getValue().staticCast<Nautilus::Double>().getValue();
+
+    if (approximatedValue->isType<Nautilus::Int8>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::Int8>((int8_t)value);
+    } else if (approximatedValue->isType<Nautilus::Int32>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::Int32>((int32_t)value);
+    } else if (approximatedValue->isType<Nautilus::Int64>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::Int64>((int64_t)value);
+
+    } else if (approximatedValue->isType<Nautilus::UInt8>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::UInt8>((uint8_t)value);
+    } else if (approximatedValue->isType<Nautilus::UInt32>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::UInt32>((uint32_t)value);
+    } else if (approximatedValue->isType<Nautilus::UInt64>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::UInt64>((uint64_t)value);
+
+    } else if (approximatedValue->isType<Nautilus::Float>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::Float>((float)value);
+    } else if (approximatedValue->isType<Nautilus::Double>()) {
+        return approximatedValue = Nautilus::Value<Nautilus::Double>((double)value);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 } // namespace NES::ASP
