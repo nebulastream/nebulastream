@@ -187,11 +187,16 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
+        KernelDescriptor kernel = {
+            "simpleAdditionKernel",
+            dim3(1),
+            dim3(32)
+        };
         cudaKernelWrapper.execute(inputRecords,
                                   buffer.getNumberOfTuples(),
                                   outputRecords,
                                   numberOfOutputTuples,
-                                  "simpleAdditionKernel");
+                                  kernel);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
@@ -273,11 +278,16 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
+        KernelDescriptor kernel = {
+            "additionKernelMultipleFields",
+            dim3(1),
+            dim3(32)
+        };
         cudaKernelWrapper.execute(record,
                                   buffer.getNumberOfTuples(),
                                   outputRecords,
                                   numberOfOutputTuples,
-                                  "additionKernelMultipleFields");
+                                  kernel);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
@@ -364,11 +374,16 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
+        KernelDescriptor kernel = {
+            "additionKernelColumnLayout",
+            dim3(1),
+            dim3(32)
+        };
         cudaKernelWrapper.execute(valueBuffer,
                                   buffer.getNumberOfTuples(),
                                   outputRecords,
                                   numberOfOutputTuples,
-                                  "additionKernelColumnLayout");
+                                  kernel);
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;

@@ -17,6 +17,16 @@
 #include <Util/jitify/jitify.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <utility>
+
+struct KernelDescriptor {
+    std::string name;
+    dim3 grid;
+    dim3 block;
+    uint32_t smem = 0;
+    cudaStream_t stream = nullptr;
+};
+
 /**
  * @brief This class is a wrapper for executing CUDA kernel as part of ExecutablePipelineStage
  * @tparam InputRecord data type to be processed by the kernel
@@ -52,12 +62,15 @@ class CUDAKernelWrapper {
      * @param hostInputBuffer input buffer in the host memory. The kernel reads from this buffer and copy back the output to this buffer.
      * @param numberOfInputTuples number of tuple to be processed in this kernel call
      * @param kernelName name of the kernel function
+     * @param args additional arguments for the kernel
      */
+    template<typename... Args>
     void execute(InputRecord* hostInputBuffer,
                  uint64_t numberOfInputTuples,
                  OutputRecord* hostOutputBuffer,
                  uint64_t numberOfOutputTuples,
-                 std::string kernelName) {
+                 const KernelDescriptor& kernel,
+                 Args&&... args) {
         if (gpuBufferSize < numberOfInputTuples * sizeof(InputRecord)) {
             NES_ERROR2("Tuples to process exceed the allocated GPU buffer.");
             throw std::runtime_error("Tuples to process exceed the allocated GPU buffer.");
@@ -72,10 +85,10 @@ class CUDAKernelWrapper {
 
         // execute the kernel program
         using jitify::reflection::type_of;
-        kernelProgramPtr->kernel(std::move(kernelName))
+        kernelProgramPtr->kernel(std::move(kernel.name))
             .instantiate()
-            .configure(grid, block)                                             // the configuration
-            .launch(deviceInputBuffer, numberOfInputTuples, deviceOutputBuffer);// the parameter of the kernel program
+            .configure(kernel.grid, kernel.block, kernel.smem, kernel.stream)                                             // the configuration
+            .launch(deviceInputBuffer, numberOfInputTuples, deviceOutputBuffer, std::forward<Args>(args)...);// the parameter of the kernel program
 
         // copy the result of kernel execution back to the cpu
         cudaMemcpy(hostOutputBuffer, deviceOutputBuffer, numberOfOutputTuples * sizeof(OutputRecord), cudaMemcpyDeviceToHost);
