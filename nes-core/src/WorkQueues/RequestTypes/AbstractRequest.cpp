@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
-#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 #include <utility>
 
 namespace NES {
@@ -20,7 +20,7 @@ namespace NES {
 AbstractRequest::AbstractRequest(size_t maxRetries)
     : maxRetries(maxRetries), actualRetries(0) {}
 
-void AbstractRequest::handleError(std::exception ex, const StorageHandlePtr& storageHandle) {
+void AbstractRequest::handleError(std::exception ex, const StorageHandlerPtr& storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 
@@ -33,7 +33,7 @@ void AbstractRequest::handleError(std::exception ex, const StorageHandlePtr& sto
 
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
-void AbstractRequest::execute(const StorageHandlePtr& storageHandle) {
+void AbstractRequest::execute(const StorageHandlerPtr& storageHandle) {
     //acquire locks and perform other tasks to prepare for execution
     preExecution(storageHandle);
 
@@ -44,7 +44,6 @@ void AbstractRequest::execute(const StorageHandlePtr& storageHandle) {
     postExecution(storageHandle);
 }
 
-void AbstractRequest::preExecution(const StorageHandlePtr& storageHandle) {
-   storageHandle->preExecution(requiredResources);
+void AbstractRequest::preExecution(const StorageHandlerPtr& storageHandle) { storageHandle->acquireResources(requiredResources);
 }
 }// namespace NES

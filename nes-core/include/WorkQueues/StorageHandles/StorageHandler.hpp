@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 
-#include <WorkQueues/StorageHandles/StorageHandleResourceType.hpp>
+#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
 #include <vector>
@@ -56,34 +56,34 @@ using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs::UDF
 using UdfCatalogHandle = ResourceHandle<Catalogs::UDF::UdfCatalog>;
 
-class StorageHandle;
-using StorageHandlePtr = std::shared_ptr<StorageHandle>;
+class StorageHandler;
+using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
 /*
  * @brief This class provides handles to access the coordinator storage layer.
  * This is an abstract class and its subclasses will have to provide the implementation to warrant safe concurrent
  * access the storage layer.
  */
-class StorageHandle {
+class StorageHandler {
   public:
     /**
-     * @brief Constructs a new storage access handle.
+     * @brief Constructs a new storage handler.
      * @param topology
      */
-    StorageHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+    StorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
                   TopologyPtr topology,
                   QueryCatalogServicePtr queryCatalogService,
                   GlobalQueryPlanPtr globalQueryPlan,
                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
                   Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
-    virtual ~StorageHandle() = default;
+    virtual ~StorageHandler() = default;
 
     /**
      * Performs tasks necessary before request execution and locks resources if necessary
      * @param requiredResources The resources required for executing the request.
      */
-    virtual void preExecution(std::vector<StorageHandleResourceType> requiredResources) = 0;
+    virtual void acquireResources(std::vector<StorageHandlerResourceType> requiredResources) = 0;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
