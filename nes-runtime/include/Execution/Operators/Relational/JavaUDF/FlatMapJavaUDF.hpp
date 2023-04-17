@@ -41,6 +41,8 @@ class FlatMapJavaUDF : public ExecutableOperator {
     FlatMapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
         : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
 
+    void* executeFlatMapUDF(void* state, void* pojoObjectPtr);
+
     /**
      * Operator execution function
      * @param ctx operator context
