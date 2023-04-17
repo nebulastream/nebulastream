@@ -54,7 +54,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogHandle().get());
     ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle().get());
     ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle().get());
-    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUdfCatalogHandle().get());
+    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle().get());
 }
 
 }// namespace NES
