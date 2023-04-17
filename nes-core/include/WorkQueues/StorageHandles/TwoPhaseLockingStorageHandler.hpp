@@ -22,7 +22,6 @@ namespace NES {
 class LockManager;
 using TwoPhaseLockManagerPtr = std::shared_ptr<LockManager>;
 
-//todo #3674: creating one handler per request might degrade performance under the currenct design
 /**
  * @brief Resource handles created by this class ensure that the resource has been locked in the growing phase and stay locked
  * until the handle goes out of scope.
