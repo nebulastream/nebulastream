@@ -26,6 +26,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::ASP::Benchmarking {
@@ -89,7 +90,7 @@ void MicroBenchmarkRun::run() {
         // Checking for the accuracy and calculating the throughput of this loop
         auto accuracy = this->compareAccuracy(allAccuracyBuffers, allApproximateBuffers);
 
-        auto throughputInTuples = windowSize / (double)(duration / NANO_TO_SECONDS_MULTIPLIER);
+        auto throughputInTuples = windowSize / ((double)duration / NANO_TO_SECONDS_MULTIPLIER);
         NES_DEBUG("accuracy: " << accuracy << " throughputInTuples: " << throughputInTuples)
         microBenchmarkResult.emplace_back(throughputInTuples, accuracy);
     }
@@ -173,7 +174,6 @@ std::string MicroBenchmarkRun::getHeaderAsCsv() {
     std::stringstream stringStream;
     stringStream << synopsesArguments.getHeaderAsCsv()
                  << "," << aggregation.getHeaderAsCsv()
-                 << ",outputSchema"
                  << ",bufferSize"
                  << ",numberOfBuffers"
                  << ",windowSize"
@@ -202,11 +202,11 @@ std::string MicroBenchmarkRun::getRowsAsCsv() {
 std::string MicroBenchmarkRun::toString() {
     std::stringstream stringStream;
     stringStream << std::endl << " - synopsis arguments: " << synopsesArguments.toString()
-                 << std::endl << " - aggregation:" << aggregation.toString()
-                 << std::endl << " - bufferSize:" << bufferSize
-                 << std::endl << " - numberOfBuffers:" << numberOfBuffers
-                 << std::endl << " - windowSize:" << windowSize
-                 << std::endl << " - reps:" << reps;
+                 << std::endl << " - aggregation: " << aggregation.toString()
+                 << std::endl << " - bufferSize :" << bufferSize
+                 << std::endl << " - numberOfBuffers: " << numberOfBuffers
+                 << std::endl << " - windowSize: " << windowSize
+                 << std::endl << " - reps: " << reps;
 
 
     return stringStream.str();
@@ -227,19 +227,22 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
 
 
     // TODO for now we can ignore windows
+    aggregationFunction->reset(aggregationValueMemRef);
     for (auto& buffer : inputBuffers) {
+        NES_INFO("buffer: " << NES::Util::printTupleBufferAsCSV(buffer, aggregation.inputSchema));
         auto numberOfRecords = buffer.getNumberOfTuples();
-        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer));
+        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read({}, bufferAddress, i);
-            aggregationFunction->lift(aggregationValueMemRef, record.read(aggregation.fieldNameAggregation));
+            auto value = record.read(aggregation.fieldNameAggregation);
+            aggregationFunction->lift(aggregationValueMemRef, value);
         }
     }
 
     // Writes the output into a Nautilus::Record
     Nautilus::Record record;
-    auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
-    record.write(aggregation.fieldNameApproximate, approximatedValue);
+    auto exactValue = aggregationFunction->lower(aggregationValueMemRef);
+    record.write(aggregation.fieldNameApproximate, exactValue);
 
     // Create an output buffer and write the approximation into it
     auto outputMemoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
@@ -260,25 +263,24 @@ double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& all
 
     for (auto& accBuf : allAccuracyRecords) {
         auto dynamicAccBuf = ASP::Util::createDynamicTupleBuffer(accBuf, aggregation.outputSchema);
+        NES_DEBUG("dynamicAccBuf: " << NES::Util::printTupleBufferAsCSV(dynamicAccBuf.getBuffer(), aggregation.outputSchema));
         for (auto& approxBuf : allApproximateBuffers) {
             auto dynamicApproxBuf = ASP::Util::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
+            NES_DEBUG("dynamicApproxBuf: " << NES::Util::printTupleBufferAsCSV(dynamicApproxBuf.getBuffer(), aggregation.outputSchema));
             NES_ASSERT(dynamicAccBuf.getNumberOfTuples() == dynamicApproxBuf.getNumberOfTuples(),
                        "Approximate Buffer and Accuracy Buffer must have the same number of tuples");
 
             for (auto i = 0UL; i < dynamicApproxBuf.getNumberOfTuples(); ++i) {
-                auto accId = dynamicAccBuf[i][aggregation.fieldNameApproximate];
-                auto approxId = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
-                if (accId == approxId) {
-                    auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
-                    auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
-                    sumError += std::abs(exactAgg.read<double>() - approxAgg.read<double>());
-                    ++numTuples;
-                }
+                auto exactAgg = dynamicAccBuf[i][aggregation.fieldNameApproximate];
+                auto approxAgg = dynamicApproxBuf[i][aggregation.fieldNameApproximate];
+
+                sumError += Util::calculateRelativeError(approxAgg, exactAgg);
+                ++numTuples;
             }
         }
     }
 
-    return sumError / numTuples;
+    return 1.0 - (sumError / numTuples);
 }
 
 std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>

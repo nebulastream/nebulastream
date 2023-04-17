@@ -24,6 +24,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Synopses/Samples/SampleRandomWithoutReplacement.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <random>
 
 namespace NES::ASP{
@@ -64,13 +65,21 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
     // First, we have to pick our sample
     std::vector<Runtime::TupleBuffer> sample;
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
-    std::uniform_int_distribution<uint64_t> uniformIntDistribution(0, numberOfTuples);
+    std::uniform_int_distribution<uint64_t> uniformIntDistribution(0, numberOfTuples - 1);
     auto numberOfTuplesInSample = 0UL;
+    std::vector<uint64_t> alreadyDrawn;
     while (numberOfTuplesInSample < sampleSize && numberOfTuplesInSample < numberOfTuples) {
-        auto numberOfTuplesPerBuffer = bufferManager->getBufferSize() / inputSchema->getSchemaSizeInBytes();
         uint64_t pos = uniformIntDistribution(generator);
+        while (std::find(alreadyDrawn.begin(), alreadyDrawn.end(), pos) != alreadyDrawn.end()) {
+            pos = uniformIntDistribution(generator);
+        }
+        alreadyDrawn.emplace_back(pos);
+        NES_DEBUG("pos: " << pos);
+
+        auto numberOfTuplesPerBuffer = bufferManager->getBufferSize() / inputSchema->getSchemaSizeInBytes();
         auto tupleBuffer = pos / numberOfTuplesPerBuffer;
         auto tuplePosition = pos % numberOfTuplesPerBuffer;
+
 
         if (sample.empty() || sample[sample.size() - 1].getNumberOfTuples() >= numberOfTuplesPerBuffer) {
             sample.emplace_back(bufferManager->getBufferBlocking());
@@ -88,13 +97,14 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& buffer : sample) {
-        auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(buffer, inputSchema);
-        auto recordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
-        auto bufferAddress = recordBuffer.getBuffer();
-        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < dynamicTupleBuffer.getNumberOfTuples(); i = i + (uint64_t) 1) {
+        NES_DEBUG("buffer in SampleRandomWithoutReplacement::getApproximate: " << NES::Util::printTupleBufferAsCSV(buffer, inputSchema));
+        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
+        auto numberOfRecords = buffer.getNumberOfTuples();
+        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), inputSchema);
             auto tmpRecord = memoryProvider->read({}, bufferAddress, i);
-            aggregationFunction->lift(aggregationValueMemRef, tmpRecord.read(fieldNameAggregation));
+            auto tmpValue = tmpRecord.read(fieldNameAggregation);
+            aggregationFunction->lift(aggregationValueMemRef, tmpValue);
         }
     }
 
@@ -120,6 +130,7 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
 SampleRandomWithoutReplacement::SampleRandomWithoutReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
 
 void SampleRandomWithoutReplacement::initialize() {
+    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     storedRecords.clear();
     numberOfTuples = 0;
 }

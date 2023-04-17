@@ -65,12 +65,14 @@ std::string DynamicField::toString() {
 }
 
 bool DynamicField::equal(const DynamicField& rhs) const {
-    return memcmp(address, rhs.address, physicalType->size());
+    return std::memcmp(address, rhs.address, physicalType->size()) == 0;
 }
 
 bool DynamicField::operator==(const DynamicField& rhs) const { return equal(rhs); };
 
-bool DynamicField::operator!=(const DynamicField& rhs) const { return !equal(rhs); };
+bool DynamicField::operator!=(const DynamicField& rhs) const { return !equal(rhs); }
+
+const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalType; };
 
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }

@@ -124,6 +124,12 @@ class DynamicField {
      */
     bool operator!=(const DynamicField& rhs) const;
 
+    /**
+     * @brief Getter for the physical type
+     * @return Physical type
+     */
+    const PhysicalTypePtr& getPhysicalType() const;
+
   private:
     uint8_t* address;
     const PhysicalTypePtr physicalType;

@@ -15,10 +15,11 @@
 #ifndef NES_MICROBENCHMARKSCHEMAS_HPP
 #define NES_MICROBENCHMARKSCHEMAS_HPP
 
-#include "YamlAggregation.hpp"
 #include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Benchmarking/Parsing/YamlAggregation.hpp>
 
 namespace NES::ASP::Benchmarking {
 
@@ -35,21 +36,19 @@ static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
                     ->addField("value3", BasicType::BOOLEAN)
                     ->addField("ts", BasicType::UINT64)}};
 
-static inline std::map<AGGREGATION_TYPE, SchemaPtr> accuracyFileSchemas = {
-    {AGGREGATION_TYPE::MIN, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("aggregation", BasicType::FLOAT64)},
-
-    {AGGREGATION_TYPE::MAX, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("aggregation", BasicType::FLOAT64)},
-
-    {AGGREGATION_TYPE::SUM, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("aggregation", BasicType::FLOAT64)},
-
-    {AGGREGATION_TYPE::AVERAGE, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("aggregation", BasicType::FLOAT64)},
-
-    {AGGREGATION_TYPE::COUNT, Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("aggregation", BasicType::FLOAT64)}};
+static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(AGGREGATION_TYPE type, Schema& inputSchema,
+                                                              const std::string& fieldNameAgg) {
+    switch(type) {
+        case AGGREGATION_TYPE::NONE:
+        case AGGREGATION_TYPE::MIN:
+        case AGGREGATION_TYPE::MAX:
+        case AGGREGATION_TYPE::SUM:
+        case AGGREGATION_TYPE::COUNT: return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                                ->addField("aggregation", inputSchema.get(fieldNameAgg)->getDataType());
+        case AGGREGATION_TYPE::AVERAGE: return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                                ->addField("aggregation", BasicType::FLOAT64);
+    }
+}
 
 } // namespace NES::ASP::Benchmarking
 
