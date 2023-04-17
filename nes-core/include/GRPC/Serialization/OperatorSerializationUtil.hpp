@@ -21,7 +21,6 @@
 
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowJavaUDFLogicalOperatorNode.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
 
@@ -321,22 +320,6 @@ class OperatorSerializationUtil {
      */
     static LogicalUnaryOperatorNodePtr
     deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUDFDetails);
-
-    /**
-     * @brief Serializes a windowJavaUdf operator
-     * @param windowJavaUdfOperatorNode
-     * @param serializedOperator serialized instance of the operator
-     */
-    static void serializeWindowJavaUDFOperator(const WindowJavaUDFLogicalOperatorNode& windowJavaUDFOperatorNode,
-                                               SerializableOperator& serializedOperator);
-
-    /**
-     * @brief Deserializes a windowJavaUdf operator
-     * @param windowJavaUdfDetails
-     * @return WindowJavaUdfLogicalOperatorNodePtr
-     */
-    static LogicalUnaryOperatorNodePtr
-    deserializeWindowJavaUDFOperator(const SerializableOperator_JavaUdfWindowDetails& windowJavaUDFDetails);
 };
 }// namespace NES
 

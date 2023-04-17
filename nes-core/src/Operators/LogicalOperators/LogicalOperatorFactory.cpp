@@ -30,7 +30,6 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -143,23 +142,6 @@ LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                         OperatorId id) {
     return std::make_shared<FlatMapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
-}
-
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createWindowJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                                           Windowing::WindowTypePtr windowType,
-                                                           Windowing::DistributionCharacteristicPtr distributionType,
-                                                           std::vector<FieldAccessExpressionNodePtr> onKey,
-                                                           uint64_t allowedLateness,
-                                                           OriginId originId,
-                                                           OperatorId id) {
-    return std::make_shared<WindowJavaUDFLogicalOperatorNode>(javaUdfDescriptor,
-                                                              windowType,
-                                                              distributionType,
-                                                              onKey,
-                                                              allowedLateness,
-                                                              originId,
-                                                              id);
 }
 
 }// namespace NES
