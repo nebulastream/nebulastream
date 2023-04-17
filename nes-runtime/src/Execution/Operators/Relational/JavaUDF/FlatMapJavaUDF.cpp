@@ -32,7 +32,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* FlatMapJavaUDF::executeFlatMapUDF(void* state, void* pojoObjectPtr) {
+void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
