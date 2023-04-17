@@ -2,8 +2,6 @@
 ### General configuration
 ###
 logLevel: LOG_ERROR
-#logLevel: LOG_WARNING
-#logLevel: LOG_DEBUG
 
 # Disable distributed aggregation; work around for https://github.com/nebulastream/nebulastream/issues/2739
 #optimizer:
