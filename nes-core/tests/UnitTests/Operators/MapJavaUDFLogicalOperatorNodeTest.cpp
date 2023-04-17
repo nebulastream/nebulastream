@@ -39,13 +39,16 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
     // Create a JavaUDFDescriptor with a specific schema.
     auto outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean());
     auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}.setOutputSchema(outputSchema).build();
+
     // Create a MapUdfLogicalOperatorNode with the JavaUDFDescriptor.
     auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, 1);
+
     // Create a SourceLogicalOperatorNode with a source schema
     // and add it as a child to the MapUdfLogicalOperatorNode to infer the input schema.
     auto inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
     auto sourceDescriptor = std::make_shared<SchemaSourceDescriptor>(inputSchema);
     mapUdfLogicalOperatorNode->addChild(std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, 2));
+
     // After calling inferSchema on the MapUdfLogicalOperatorNode,
     // the output schema of the node should be the output schema of the JavaUDFDescriptor,
     // and the input schema should be the schema of the source.
@@ -65,10 +68,12 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferStringSignature) {
             std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
         2);
     mapUdfLogicalOperatorNode->addChild(child);
+
     // After calling inferStringSignature, the map returned by `getHashBasesStringSignature` contains an entry.
     mapUdfLogicalOperatorNode->inferStringSignature();
     auto hashBasedSignature = mapUdfLogicalOperatorNode->getHashBasedSignature();
     ASSERT_TRUE(hashBasedSignature.size() == 1);
+
     // The signature ends with the string signature of the child.
     auto& signature = *hashBasedSignature.begin()->second.begin();
     auto& childSignature = *child->getHashBasedSignature().begin()->second.begin();
@@ -88,11 +93,13 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, AddParentToCopy) {
         Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor());
     auto p1 = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
     n1->addParent(p1);
+
     // when: Create copies of n1 and p1 and add p2 as parent of n2. They should not be in a parent-child relationship.
     auto n2 = n1->copy();
     auto p2 = p1->copy();
     EXPECT_TRUE(p2->getChildren().empty());
     EXPECT_TRUE(n2->getParents().empty());
+
     // Check that we can add p2 as a parent of n2.
     n2->addParent(p2);
     EXPECT_TRUE(p2->getChildWithOperatorId(n1->getId()) == n2);

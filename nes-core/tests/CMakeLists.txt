@@ -231,9 +231,12 @@ if (CMAKE_USE_PAPI_PROFILER)
     add_nes_unit_test(papi-profiler-test "UnitTests/Runtime/PAPIProfilerTest.cpp")
 endif ()
 
-# LogicalOperatorPlanNodeTest
+### LogicalOperatorNodeTest ###
 add_nes_unit_test(logical-operator-node-tests
-        "UnitTests/Operators/LogicalOperatorNodeTest.cpp"
+        "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
+
+### MapJavaUDFLogicalOperatorNodeTest ###
+dd_nes_unit_test(mapjavaudf-logical-operator-node-tests
         "UnitTests/Operators/MapJavaUDFLogicalOperatorNodeTest.cpp")
 
 

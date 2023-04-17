@@ -512,28 +512,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        auto windowType =
-            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(10));
-        auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
-        auto f1 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key1")->as<FieldAccessExpressionNode>();
-        auto f2 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key2")->as<FieldAccessExpressionNode>();
-        std::vector<FieldAccessExpressionNodePtr> onKey = {f1, f2};
-        uint64_t allowedLateness = 1000;
-        OriginId originId = 42;
-
-        auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        auto javaUDFWindow = LogicalOperatorFactory::createWindowJavaUDFLogicalOperator(javaUDFDescriptor,
-                                                                                        windowType,
-                                                                                        distChar,
-                                                                                        onKey,
-                                                                                        allowedLateness,
-                                                                                        originId);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFWindow);
-        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(javaUDFWindow->equal(deserializedOperator));
-    }
-
-    {
         auto rename = LogicalOperatorFactory::createRenameSourceOperator("newSourceName");
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(rename);
         auto renameOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
