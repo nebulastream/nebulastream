@@ -40,6 +40,9 @@ class RowMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test>
     }
 };
 
+/**
+ * @brief Tests that we can construct a column layout.
+ */
 TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
@@ -49,6 +52,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest) {
     ASSERT_NE(rowLayout, nullptr);
 }
 
+/**
+ * @brief Tests that the field offsets are are calculated correctly using a DynamicTupleBuffer.
+ */
 TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -67,6 +73,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
     ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema->getSchemaSizeInBytes() * 4 + 0);
 }
 
+/**
+ * @brief Tests that we can write a single record to and read from a DynamicTupleBuffer correctly.
+ */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -88,6 +97,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord) {
     ASSERT_EQ(dynamicBuffer->getNumberOfTuples(), 1UL);
 }
 
+/**
+ * @brief Tests that we can write many records to and read from a DynamicTupleBuffer correctly.
+ */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -117,6 +129,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord) 
     ASSERT_EQ(dynamicBuffer->getNumberOfTuples(), NUM_TUPLES);
 }
 
+/**
+ * @brief Tests that we can access fields of a TupleBuffer that is used in a DynamicTupleBuffer correctly.
+ */
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -149,6 +164,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     }
 }
 
+/**
+ * @brief Tests whether whether an error is thrown if we try to access non-existing fields of a TupleBuffer.
+ */
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -193,6 +211,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     ASSERT_THROW(field2[i], NES::Exceptions::RuntimeException);
 }
 
+/**
+ * @brief Tests whether we can only access the correct fields.
+ */
 TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -212,6 +233,9 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout) {
     ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t6", rowLayout, tupleBuffer)), NES::Exceptions::RuntimeException);
 }
 
+/**
+ * @brief Tests if an error is thrown if more tuples are added to a TupleBuffer than the TupleBuffer can store.
+ */
 TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -232,6 +256,12 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout) {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
         dynamicBuffer->pushRecordToBuffer(writeRecord);
+    }
+
+    for (; i < NUM_TUPLES + 1; i++) {
+        std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
+        allTuples.emplace_back(writeRecord);
+        ASSERT_THROW(dynamicBuffer->pushRecordToBuffer(writeRecord), NES::Exceptions::RuntimeException);
     }
 
     for (size_t i = 0; i < NUM_TUPLES; i++) {
