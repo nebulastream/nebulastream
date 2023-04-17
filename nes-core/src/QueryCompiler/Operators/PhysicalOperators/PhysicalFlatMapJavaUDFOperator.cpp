@@ -17,15 +17,15 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
     PhysicalFlatMapJavaUDFOperator::PhysicalFlatMapJavaUDFOperator(OperatorId id,
-                                                                   SchemaPtr inputSchema,
-                                                                   SchemaPtr outputSchema,
-                                                                   Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor)
+                                                                   const SchemaPtr& inputSchema,
+                                                                   const SchemaPtr& outputSchema,
+                                                                   const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       javaUDFDescriptor(std::move(javaUDFDescriptor)) {}
 
-PhysicalOperatorPtr PhysicalFlatMapJavaUDFOperator::create(SchemaPtr inputSchema,
-                                                           SchemaPtr outputSchema,
-                                                           Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor) {
+PhysicalOperatorPtr PhysicalFlatMapJavaUDFOperator::create(const SchemaPtr& inputSchema,
+                                                           const SchemaPtr& outputSchema,
+                                                           const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, javaUDFDescriptor);
 }
 
