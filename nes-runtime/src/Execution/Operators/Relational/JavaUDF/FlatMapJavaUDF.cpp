@@ -32,20 +32,14 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-/**
- * Execute the java udf
- * @param state operator handler state
- * @param pojoObjectPtr pojo object
- * @return result of the udf
- */
-void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
+void* FlatMapJavaUDF::executeFlatMapUDF(void* state, void* pojoObjectPtr) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     jobject udf_result, instance;
     // Check if flat map object was created
-    if(handler->getFlatMapObject() == nullptr) {
+    if(handler->getFlatMapUDFObject() == nullptr) {
         // Find class implementing the map udf
         jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -75,7 +69,7 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
         }
 
         // Persist the method id
-        handler->setFlatMapMethodId(mid);
+        handler->setFlatMapUDFMethodId(mid);
 
         // Call udf function
         udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
@@ -88,10 +82,10 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
         // persist the udf state
-        handler->setFlatMapObject(instance);
+        handler->setFlatMapUDFObject(instance);
     } else {
-        jmethodID mid = handler->getFlatMapMethodId();
-        instance = handler->getFlatMapObject();
+        jmethodID mid = handler->getFlatMapUDFMethodId();
+        instance = handler->getFlatMapUDFObject();
         udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     }
