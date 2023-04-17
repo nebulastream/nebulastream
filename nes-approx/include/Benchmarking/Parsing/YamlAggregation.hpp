@@ -45,7 +45,6 @@ class YamlAggregation {
      * @param fieldNameAggregation
      * @param inputFile
      * @param inputSchema
-     * @param outputSchema
      */
     YamlAggregation(const AGGREGATION_TYPE& type,
                     const std::string& fieldNameAggregation,

@@ -45,12 +45,12 @@ SynopsisArguments SynopsisArguments::createArgumentsFromYamlNode(Yaml::Node& syn
 }
 
 std::string SynopsisArguments::getHeaderAsCsv() {
-    return "type,width,height,windowSize";
+    return "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize";
 }
 
 std::string SynopsisArguments::getValuesAsCsv() {
     std::stringstream stringStream;
-    stringStream << "," << magic_enum::enum_name(type)
+    stringStream << magic_enum::enum_name(type)
                  << "," << width
                  << "," << height
                  << "," << windowSize;

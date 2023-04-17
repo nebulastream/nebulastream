@@ -130,6 +130,16 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
                                                                             const std::string& timeStampFieldName,
                                                                             uint64_t lastTimeStamp);
 
+/**
+ * @brief Calculates the relative error of the two fields. It is expected that they are the same type, otherwise
+ * std::numeric_limits<double>::max is returned
+ * @param approxField
+ * @param exactField
+ * @return Relative error
+ */
+double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,
+                              Runtime::MemoryLayouts::DynamicField& exactField);
+
 
 } // namespace NES::ASP
 

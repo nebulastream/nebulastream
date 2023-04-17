@@ -43,20 +43,21 @@ YamlAggregation::YamlAggregation(const AGGREGATION_TYPE& type,
 
 std::string YamlAggregation::toString() {
     std::stringstream stringStream;
-    stringStream << std::endl << " - type: " << magic_enum::enum_name(type)
-                 << std::endl << " - fieldNameAggregation:" << fieldNameAggregation
-                 << std::endl << " - fieldNameAccuracy:" << fieldNameApproximate
-                 << std::endl << " - timeStampFieldName: " << timeStampFieldName
-                 << std::endl << " - inputFile:" << inputFile
-                 << std::endl << " - inputSchema:" << inputSchema->toString()
-                 << std::endl << " - outputSchema:" << outputSchema->toString();
+    stringStream << " type (" << magic_enum::enum_name(type) << ") "
+                 << "fieldNameAggregation (" << fieldNameAggregation << ") "
+                 << "fieldNameAccuracy (" << fieldNameApproximate << ") "
+                 << "timeStampFieldName (" << timeStampFieldName << ") "
+                 << "inputFile (" << inputFile << ") "
+                 << "inputSchema (" << inputSchema->toString() << ") "
+                 << "outputSchema (" << outputSchema->toString() << ")";
 
 
     return stringStream.str();
 }
 
 std::string YamlAggregation::getHeaderAsCsv() {
-    return "type,fieldNameAggregation,fieldNameApproximate,timeStampFieldName,inputFile,inputSchema,outputSchema";
+    return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
+           ",aggregation_inputFile,aggregation_inputSchema,aggregation_outputSchema";
 }
 
 std::string YamlAggregation::getValuesAsCsv() {
@@ -81,10 +82,7 @@ YamlAggregation YamlAggregation::createAggregationFromYamlNode(Yaml::Node& aggre
     auto timeStampFieldName = aggregationNode["timestamp"].As<std::string>();
 
     auto inputSchema = inputFileSchemas[inputFile.filename()];
-    auto outputSchema = accuracyFileSchemas[type];
-
-    NES_ASSERT(outputSchema->get(fieldNameApprox)->getDataType()->isEquals(DataTypeFactory::createDouble()),
-               "Currently we only support double as the output aggregation field data type!");
+    auto outputSchema = getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
 
     NES_ASSERT(inputSchema->get(timeStampFieldName)->getDataType()->isEquals(DataTypeFactory::createUInt64()),
                "The timestamp has to be a UINT64!");
@@ -101,10 +99,10 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr YamlAggregation::createA
 
     switch (type) {
         case AGGREGATION_TYPE::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType);
-        case AGGREGATION_TYPE::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);;
-        case AGGREGATION_TYPE::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);;
-        case AGGREGATION_TYPE::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);;
-        case AGGREGATION_TYPE::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);;
+        case AGGREGATION_TYPE::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);
+        case AGGREGATION_TYPE::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);
+        case AGGREGATION_TYPE::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);
+        case AGGREGATION_TYPE::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);
         case AGGREGATION_TYPE::NONE: NES_NOT_IMPLEMENTED();
     }
 }

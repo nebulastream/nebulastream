@@ -31,6 +31,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <fstream>
+#include <cmath>
 
 namespace NES::ASP::Util {
 
@@ -183,5 +184,38 @@ std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& cs
     }
 
     return recordBuffers;
+}
+double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,
+                              Runtime::MemoryLayouts::DynamicField& exactField) {
+    if (approxField.getPhysicalType()->type != exactField.getPhysicalType()->type) {
+        return std::numeric_limits<double>::max();
+    }
+
+    auto physicalField = DefaultPhysicalTypeFactory().getPhysicalType(approxField.getPhysicalType()->type);
+    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
+
+    switch (basicType->nativeType) {
+        case BasicPhysicalType::NativeType::UINT_8:
+            return (std::abs(approxField.read<uint8_t>() - exactField.read<uint8_t>()) / (double)exactField.read<uint8_t>());
+        case BasicPhysicalType::NativeType::UINT_16:
+            return (std::abs(approxField.read<uint16_t>() - exactField.read<uint16_t>()) / (double)exactField.read<uint16_t>());
+        case BasicPhysicalType::NativeType::UINT_32:
+            return (std::abs((double)(approxField.read<uint32_t>() - exactField.read<uint32_t>())) / exactField.read<uint32_t>());
+        case BasicPhysicalType::NativeType::UINT_64:
+            return (std::abs((double)(approxField.read<uint64_t>() - exactField.read<uint64_t>())) / exactField.read<uint64_t>());
+        case BasicPhysicalType::NativeType::INT_8:
+            return (std::abs(approxField.read<int8_t>() - exactField.read<int8_t>()) / (double)exactField.read<int8_t>());
+        case BasicPhysicalType::NativeType::INT_16:
+            return (std::abs(approxField.read<int16_t>() - exactField.read<int16_t>()) / (double)exactField.read<int16_t>());
+        case BasicPhysicalType::NativeType::INT_32:
+            return (std::abs(approxField.read<int32_t>() - exactField.read<int32_t>()) / (double)exactField.read<int32_t>());
+        case BasicPhysicalType::NativeType::INT_64:
+            return (std::abs(approxField.read<int64_t>() - exactField.read<int64_t>()) / (double)exactField.read<int64_t>());
+        case BasicPhysicalType::NativeType::FLOAT:
+            return (std::abs(approxField.read<float_t>() - exactField.read<float_t>()) / (double)exactField.read<float_t>());
+        case BasicPhysicalType::NativeType::DOUBLE:
+            return (std::abs(approxField.read<double_t>() - exactField.read<double_t>()) / (double)exactField.read<double_t>());
+        default: NES_THROW_RUNTIME_ERROR("Can not calculate relative error for " << approxField.getPhysicalType()->type);
+    }
 }
 }
