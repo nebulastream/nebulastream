@@ -66,17 +66,6 @@ using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
  */
 class StorageHandler {
   public:
-    /**
-     * @brief Constructs a new storage handler.
-     * @param topology
-     */
-    StorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                   TopologyPtr topology,
-                   QueryCatalogServicePtr queryCatalogService,
-                   GlobalQueryPlanPtr globalQueryPlan,
-                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                   Catalogs::UDF::UdfCatalogPtr udfCatalog);
-
     virtual ~StorageHandler() = default;
 
     /**
@@ -120,14 +109,6 @@ class StorageHandler {
      * @return a handle to the udf catalog.
      */
     virtual UdfCatalogHandle getUdfCatalogHandle() = 0;
-
-  protected:
-    GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    QueryCatalogServicePtr queryCatalogService;
-    GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_

@@ -90,6 +90,13 @@ class SerialStorageHandler : public StorageHandler {
      * @return a handle to the udf catalog.
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
+
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    TopologyPtr topology;
+    QueryCatalogServicePtr queryCatalogService;
+    GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_

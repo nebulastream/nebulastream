@@ -15,14 +15,35 @@
 #include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
 
 namespace NES {
-std::unique_lock<std::mutex> LockManager::getLock(StorageHandlerResourceType type) {
-    switch (type) {
-        case StorageHandlerResourceType::Topology: return std::unique_lock(topologyMutex);
-        case StorageHandlerResourceType::QueryCatalogService: return std::unique_lock(queryCatalogMutex);
-        case StorageHandlerResourceType::SourceCatalog: return std::unique_lock(sourceCatalogMutex);
-        case StorageHandlerResourceType::GlobalExecutionPlan: return std::unique_lock(globalExecutionPlanMutex);
-        case StorageHandlerResourceType::GlobalQueryPlan: return std::unique_lock(globalQueryPlanMutex);
-        case StorageHandlerResourceType::UdfCatalog: return std::unique_lock(udfCatalogMutex);
-    }
+LockManager::LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
+                         TopologyPtr topology,
+                         QueryCatalogServicePtr queryCatalogService,
+                         GlobalQueryPlanPtr globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr udfCatalog)
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
+
+GlobalExecutionPlanHandle LockManager::getGlobalExecutionPlanHandle() {
+    return {&*globalExecutionPlan, UnlockDeleter(globalExecutionPlanMutex)};
 }
+TopologyHandle LockManager::getTopologyHandle() {
+    return {&*topology, UnlockDeleter(topologyMutex)};
+}
+
+QueryCatalogServiceHandle LockManager::getQueryCatalogHandle() {
+    return {&*queryCatalogService, UnlockDeleter(queryCatalogMutex)};
+}
+
+GlobalQueryPlanHandle LockManager::getGlobalQueryPlanHandle() {
+    return {&*globalQueryPlan, UnlockDeleter(globalQueryPlanMutex)};
+}
+
+SourceCatalogHandle LockManager::getSourceCatalogHandle() {
+    return {&*sourceCatalog, UnlockDeleter(sourceCatalogMutex)};
+}
+
+UdfCatalogHandle LockManager::getUdfCatalogHandle() {
+    return {&*udfCatalog, UnlockDeleter(udfCatalogMutex)};
+}
+
 }// namespace NES
