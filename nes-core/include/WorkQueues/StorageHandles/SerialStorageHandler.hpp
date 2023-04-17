@@ -29,7 +29,7 @@ class SerialStorageHandler : public StorageHandler {
                          QueryCatalogServicePtr queryCatalogService,
                          GlobalQueryPlanPtr globalQueryPlan,
                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                         Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief factory to create a serial storage manager object
@@ -47,7 +47,7 @@ class SerialStorageHandler : public StorageHandler {
                                                         const QueryCatalogServicePtr& queryCatalogService,
                                                         const GlobalQueryPlanPtr& globalQueryPlan,
                                                         const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
+                                                        const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
 
     /**
      * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
@@ -89,14 +89,14 @@ class SerialStorageHandler : public StorageHandler {
      * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
-    UdfCatalogHandle getUdfCatalogHandle() override;
+    UDFCatalogHandle getUDFCatalogHandle() override;
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLE_HPP_

@@ -51,10 +51,10 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 using GlobalQueryPlanHandle = ResourceHandle<GlobalQueryPlan>;
 
 namespace Catalogs::UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
-using UdfCatalogHandle = ResourceHandle<Catalogs::UDF::UdfCatalog>;
+using UDFCatalogHandle = ResourceHandle<Catalogs::UDF::UDFCatalog>;
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
@@ -108,7 +108,7 @@ class StorageHandler {
      * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
-    virtual UdfCatalogHandle getUdfCatalogHandle() = 0;
+    virtual UDFCatalogHandle getUDFCatalogHandle() = 0;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_

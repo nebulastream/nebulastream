@@ -23,7 +23,7 @@ SerialStorageHandler::SerialStorageHandler(GlobalExecutionPlanPtr globalExecutio
                                            QueryCatalogServicePtr queryCatalogService,
                                            GlobalQueryPlanPtr globalQueryPlan,
                                            Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                           Catalogs::UDF::UdfCatalogPtr udfCatalog)
+                                           Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
@@ -33,7 +33,7 @@ std::shared_ptr<SerialStorageHandler> SerialStorageHandler::create(const GlobalE
                                                                    const QueryCatalogServicePtr& queryCatalogService,
                                                                    const GlobalQueryPlanPtr& globalQueryPlan,
                                                                    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                   const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
+                                                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog) {
     return std::make_shared<SerialStorageHandler>(globalExecutionPlan,
                                                   topology,
                                                   queryCatalogService,
@@ -54,7 +54,7 @@ GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle() { return 
 
 SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter()}; }
 
-UdfCatalogHandle SerialStorageHandler::getUdfCatalogHandle() { return {&*udfCatalog, UnlockDeleter()}; }
+UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle() { return {&*udfCatalog, UnlockDeleter()}; }
 
 void SerialStorageHandler::acquireResources(std::vector<StorageHandlerResourceType>) {}
 }// namespace NES
