@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        StorageHandler.cpp
         SerialStorageHandler.cpp
         UnlockDeleter.cpp
         TwoPhaseLockingStorageHandler.cpp

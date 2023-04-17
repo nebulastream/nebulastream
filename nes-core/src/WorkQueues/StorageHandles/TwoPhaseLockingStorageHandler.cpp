@@ -17,7 +17,8 @@
 
 namespace NES {
 
-TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(TwoPhaseLockManagerPtr lockManager) : lockManager(std::move(lockManager)), resourcesLocked(false) {}
+TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(TwoPhaseLockManagerPtr lockManager)
+    : lockManager(std::move(lockManager)), resourcesLocked(false) {}
 
 void TwoPhaseLockingStorageHandler::acquireResources(std::vector<StorageHandlerResourceType> requiredResources) {
     //do not allow performing resource acquisition more than once
@@ -40,27 +41,21 @@ void TwoPhaseLockingStorageHandler::acquireResources(std::vector<StorageHandlerR
 void TwoPhaseLockingStorageHandler::lockResource(StorageHandlerResourceType resourceType) {
     switch (resourceType) {
         case StorageHandlerResourceType::Topology:
-            //topologyLock = lockManager->getLock(resourceType);
             topology = lockManager->getTopologyHandle();
             break;
         case StorageHandlerResourceType::QueryCatalogService:
-            //queryCatalogLock = lockManager->getLock(resourceType);
             queryCatalogService = lockManager->getQueryCatalogHandle();
             break;
         case StorageHandlerResourceType::SourceCatalog:
-            //sourceCatalogLock = lockManager->getLock(resourceType);
             sourceCatalog = lockManager->getSourceCatalogHandle();
             break;
         case StorageHandlerResourceType::GlobalExecutionPlan:
-            //globalExecutionPlanLock = lockManager->getLock(resourceType);
             globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle();
             break;
         case StorageHandlerResourceType::GlobalQueryPlan:
-            //globalQueryPlanLock = lockManager->getLock(resourceType);
             globalQueryPlan = lockManager->getGlobalQueryPlanHandle();
             break;
         case StorageHandlerResourceType::UdfCatalog:
-            //udfCatalogLock = lockManager->getLock(resourceType);
             udfCatalog = lockManager->getUdfCatalogHandle();
             break;
     }
@@ -114,8 +109,7 @@ UdfCatalogHandle TwoPhaseLockingStorageHandler::getUdfCatalogHandle() {
     return udfCatalog;
 }
 
-std::shared_ptr<TwoPhaseLockingStorageHandler>
-TwoPhaseLockingStorageHandler::create(const TwoPhaseLockManagerPtr& lockManager) {
+std::shared_ptr<TwoPhaseLockingStorageHandler> TwoPhaseLockingStorageHandler::create(const TwoPhaseLockManagerPtr& lockManager) {
     return std::make_shared<TwoPhaseLockingStorageHandler>(lockManager);
 }
 }// namespace NES
