@@ -151,7 +151,6 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
             cfg.set("type_check", false);
             z3Context = std::make_shared<z3::context>(cfg);
             NES_INFO("AdaptiveActiveStandby: no z3Context was passed for ILP strategy, created a new one");
-            return false;
         }
 
         score = executeILPStrategy(pinnedUpStreamOperators);
@@ -215,7 +214,7 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
 
                 // get all nodes used for the primary's path to the sink
                 auto nodeIdsToExclude =
-                    getNodeIdsToExcludeToTarget(currentParent->as<OperatorNode>(),topology->getRoot());
+                    getNodeIdsToExcludeToTarget(currentParent->as<OperatorNode>(), pinnedOperatorsTopologyNode, topology->getRoot());
 
                 // a new node has to be deployed in any case, it will add 2 hops (see: at the end of this branch)
                 int currentLength = 2;
@@ -349,7 +348,10 @@ bool AdaptiveActiveStandby::separatePathExists(const OperatorNodePtr& primaryOpe
                                                const TopologyNodePtr& startTopologyNode,
                                                const TopologyNodePtr& targetTopologyNode) {
 
-    auto nodeIdsToExclude = getNodeIdsToExcludeToTarget(primaryOperator, targetTopologyNode);
+    auto nodeIdsToExclude = getNodeIdsToExcludeToTarget(primaryOperator, startTopologyNode, targetTopologyNode);
+
+    if (findNodeWherePinned(primaryOperator)->getId() != startTopologyNode->getId())
+        nodeIdsToExclude.erase(startTopologyNode->getId());
 
     nodeIdsToExclude.erase(targetTopologyNode->getId());
 
@@ -358,6 +360,7 @@ bool AdaptiveActiveStandby::separatePathExists(const OperatorNodePtr& primaryOpe
 }
 
 std::set<TopologyNodeId> AdaptiveActiveStandby::getNodeIdsToExcludeToTarget(const OperatorNodePtr& primaryOperator,
+                                                                            const TopologyNodePtr& startTopologyNode,
                                                                             const TopologyNodePtr& targetTopologyNode) {
     std::set<TopologyNodeId> nodeIds;
 
@@ -365,12 +368,29 @@ std::set<TopologyNodeId> AdaptiveActiveStandby::getNodeIdsToExcludeToTarget(cons
         // NOTE: this does exclude intermediate topology nodes that are used for transmitting data between the primaries,
         // works under the assumption that there is either only one path or the first path is used for connecting nodes
         auto nodeOfPrimary = findNodeWherePinned(primaryOperator);
-        auto startNodes = topology->findPathBetween({nodeOfPrimary}, {targetTopologyNode});
+
+        std::vector<TopologyNodePtr> startNodes;
+        TopologyNodePtr node;
+
+        // 1. nodes between start and primary
+        if (startTopologyNode->containAsParent(nodeOfPrimary)) {
+            startNodes = topology->findPathBetween({startTopologyNode}, {nodeOfPrimary});
+
+            node = startNodes[0];
+            while (!node->getParents().empty()) {
+                nodeIds.insert(node->getId());
+                node = node->getParents()[0]->as<TopologyNode>();
+            }
+            nodeIds.insert(node->getId());
+        }
+
+        // 2. nodes between primary and target
+        startNodes = topology->findPathBetween({nodeOfPrimary}, {targetTopologyNode});
 
         if (startNodes.empty())
             return nodeIds;
 
-        TopologyNodePtr node = startNodes[0];
+        node = startNodes[0];
         while (!node->getParents().empty()) {
             nodeIds.insert(node->getId());
             node = node->getParents()[0]->as<TopologyNode>();
@@ -1667,7 +1687,7 @@ double AdaptiveActiveStandby::executeILPStrategy(const std::vector<OperatorNodeP
         // 2.2 find path between pinned upstream and downstream topology node
         auto upstreamTopologyNode = findNodeWherePinned(pinnedUpStreamOperator);
 
-        auto nodeIdsToExclude = getNodeIdsToExcludeToTarget(pinnedUpStreamOperator, topology->getRoot());
+        auto nodeIdsToExclude = getNodeIdsToExcludeToTarget(pinnedUpStreamOperator, upstreamTopologyNode, topology->getRoot());
         for (const auto& [srcNodeId, srcNode]: sourceNodes) {
             if (nodeIdsToExclude.contains(srcNodeId))
                 nodeIdsToExclude.erase(srcNodeId);

@@ -195,6 +195,7 @@ class AdaptiveActiveStandby {
      * @return a set of the Ids of the result topology nodes
      */
     std::set<TopologyNodeId> getNodeIdsToExcludeToTarget(const OperatorNodePtr& primaryOperator,
+                                                         const TopologyNodePtr& startTopologyNode,
                                                          const TopologyNodePtr& targetTopologyNode);
 
     /**
