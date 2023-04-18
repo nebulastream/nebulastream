@@ -71,11 +71,11 @@ class StorageHandler {
      * @param topology
      */
     StorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                  TopologyPtr topology,
-                  QueryCatalogServicePtr queryCatalogService,
-                  GlobalQueryPlanPtr globalQueryPlan,
-                  Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                  Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                   TopologyPtr topology,
+                   QueryCatalogServicePtr queryCatalogService,
+                   GlobalQueryPlanPtr globalQueryPlan,
+                   Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                   Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     virtual ~StorageHandler() = default;
 
