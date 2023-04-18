@@ -14,6 +14,8 @@
 #include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <utility>
+#include <algorithm>
+
 namespace NES {
 
 TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(

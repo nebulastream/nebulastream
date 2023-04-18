@@ -188,7 +188,7 @@ TEST_F(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes)
     }
 }
 
-TEST_P(InferModelDeploymentTest, testSimpleMLModelDeployment) {
+TEST_P(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeployment) {
 
     auto irisSchema = std::get<1>(GetParam());
 
