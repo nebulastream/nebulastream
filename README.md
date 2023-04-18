@@ -29,7 +29,7 @@ The codebase is structured in the following components:
 | [nes-runtime](nes-runtime)       | This component contains all runtime components for the network stack and the memory managment                               |
 | [nes-core](nes-core)             | This component contains the main aspects of the overall system.                                                             |
 | [nes-client](nes-client)         | This component contains the C++ client to interact with NebulaStream from C++ applications.                                 |
-| [nes-approx](nes-approx)         | This component contains all C++ code related to approximate stream processing                                               |
+| [nes-asp](nes-asp)               | This component contains all C++ code related to approximate stream processing                                               |
 
 
 ### Dependencies:
