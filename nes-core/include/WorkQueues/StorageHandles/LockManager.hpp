@@ -38,5 +38,5 @@ class LockManager {
     std::mutex globalQueryPlanMutex;
     std::mutex udfCatalogMutex;
 };
-}
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKMANAGER_HPP

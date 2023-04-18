@@ -98,4 +98,4 @@ TEST_F(UnlockDeleterTest, TestTakingOwnershipNotLocked) {
     UnlockDeleter deleter;
     ASSERT_THROW(deleter = UnlockDeleter(std::move(lock)), std::exception);
 }
-}
+}// namespace NES

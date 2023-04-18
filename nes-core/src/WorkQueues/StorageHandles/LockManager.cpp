@@ -17,18 +17,12 @@
 namespace NES {
 std::unique_lock<std::mutex> LockManager::getLock(StorageHandlerResourceType type) {
     switch (type) {
-        case StorageHandlerResourceType::Topology:
-            return std::unique_lock(topologyMutex);
-        case StorageHandlerResourceType::QueryCatalogService:
-            return std::unique_lock(queryCatalogMutex);
-        case StorageHandlerResourceType::SourceCatalog:
-            return std::unique_lock(sourceCatalogMutex);
-        case StorageHandlerResourceType::GlobalExecutionPlan:
-            return std::unique_lock(globalExecutionPlanMutex);
-        case StorageHandlerResourceType::GlobalQueryPlan:
-            return std::unique_lock(globalQueryPlanMutex);
-        case StorageHandlerResourceType::UdfCatalog:
-            return std::unique_lock(udfCatalogMutex);
+        case StorageHandlerResourceType::Topology: return std::unique_lock(topologyMutex);
+        case StorageHandlerResourceType::QueryCatalogService: return std::unique_lock(queryCatalogMutex);
+        case StorageHandlerResourceType::SourceCatalog: return std::unique_lock(sourceCatalogMutex);
+        case StorageHandlerResourceType::GlobalExecutionPlan: return std::unique_lock(globalExecutionPlanMutex);
+        case StorageHandlerResourceType::GlobalQueryPlan: return std::unique_lock(globalQueryPlanMutex);
+        case StorageHandlerResourceType::UdfCatalog: return std::unique_lock(udfCatalogMutex);
     }
 }
 }// namespace NES

@@ -25,11 +25,11 @@ namespace NES {
 class SerialStorageHandler : public StorageHandler {
   public:
     SerialStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
-                        TopologyPtr topology,
-                        QueryCatalogServicePtr queryCatalogService,
-                        GlobalQueryPlanPtr globalQueryPlan,
-                        Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                        Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                         TopologyPtr topology,
+                         QueryCatalogServicePtr queryCatalogService,
+                         GlobalQueryPlanPtr globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr udfCatalog);
 
     /**
      * @brief factory to create a serial storage manager object
@@ -43,11 +43,11 @@ class SerialStorageHandler : public StorageHandler {
      * @return shared pointer to the serial storage manager
      */
     static std::shared_ptr<SerialStorageHandler> create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                       const TopologyPtr& topology,
-                                                       const QueryCatalogServicePtr& queryCatalogService,
-                                                       const GlobalQueryPlanPtr& globalQueryPlan,
-                                                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
+                                                        const TopologyPtr& topology,
+                                                        const QueryCatalogServicePtr& queryCatalogService,
+                                                        const GlobalQueryPlanPtr& globalQueryPlan,
+                                                        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                        const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
     /**
      * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
