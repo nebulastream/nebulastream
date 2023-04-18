@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-message(STATUS "Adding sources for approximate stream processing...")
+message(STATUS "Building approximate stream processing...")
 
 
 # Include dirs
@@ -24,7 +24,7 @@ get_source(nes-approx NES_APPROX_SOURCE_FILES)
 
 # Add nes-benchmark library
 add_library(nes-approx SHARED ${NES_APPROX_SOURCE_FILES})
-target_link_libraries(nes-approx PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+target_link_libraries(nes-approx PUBLIC nes-runtime)
 
 
 # Enabling test, if cmake flag is set

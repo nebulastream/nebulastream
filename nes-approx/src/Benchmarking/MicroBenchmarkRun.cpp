@@ -60,7 +60,9 @@ void MicroBenchmarkRun::run() {
         NES_INFO("Create and compile the pipeline...");
         auto [pipeline, pipelineContext] = createExecutablePipeline(synopsis);
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
-        //    auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler").get();
+
+        // TODO once we have a stack ref Nautilus then we can use the PipelineCompiler #3677
+        // auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler").get();
         auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineInterpreter").get();
         auto executablePipeline = provider->create(pipeline);
 
