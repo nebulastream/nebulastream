@@ -67,7 +67,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto timeAfterAAS = std::chrono::steady_clock::now();
         auto elapsedMillisecondsAAS =
             duration_cast<std::chrono::milliseconds>(timeAfterAAS - timeBeforeAAS);
-        NES_DEBUG("ILPStrategy::AAS total:: Time elapsed: " << elapsedMillisecondsAAS.count() << "ms");
+        NES_WARNING("BottomUpStrategy::AAS total:: Time elapsed: " << elapsedMillisecondsAAS.count() << "ms");
 
         // 4. Place all pinned operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

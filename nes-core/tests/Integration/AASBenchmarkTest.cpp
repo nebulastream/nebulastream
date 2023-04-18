@@ -1623,54 +1623,147 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityRuntime) {
     NES_INFO("AASBenchmarkTest: Test finished");
 }
 
-TEST_F(AASBenchmarkTest, testScalability) {
-    NES::PlacementStrategy::ValueAAS strategies[3] = {PlacementStrategy::Greedy_AAS, PlacementStrategy::LocalSearch_AAS, PlacementStrategy::ILP_AAS};
 
-    for (int i = 2; i <= 20; i += 2) {
+TEST_F(AASBenchmarkTest, testScalabilityGreedy) {
+    auto str = PlacementStrategy::Greedy_AAS;
+
+    for (int i = 2; i <= 24; i += 2) {
         for (int j = 0; j < 3; ++j) {
-            for (auto & str : strategies) {
-                if (str == PlacementStrategy::ILP_AAS && i > 10)
-                    continue;
+            TopologyPtr topology;
 
-                TopologyPtr topology;
-
-                if (j == 0) {
-                    NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
-                    topology = setupTopologyAndSourceCatalogSequential(i);
-                } else if (j == 1) {
-                    NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
-                    topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
-                } else {
-                    NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
-                    topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
-                }
-
-                GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-                auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-                auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                                  topology,
-                                                                                  typeInferencePhase,
-                                                                                  false /*query reconfiguration*/);
-
-                auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
-
-                QueryPlanPtr queryPlan = query->getQueryPlan();
-                queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
-
-                assignOperatorProperties(queryPlan);
-
-                auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-                auto queryId = sharedQueryPlan->getSharedQueryId();
-
-                auto topologySpecificQueryRewrite =
-                    Optimizer::TopologySpecificQueryRewritePhase::create(topology,
-                                                                         sourceCatalog,
-                                                                         Configurations::OptimizerConfiguration());
-                topologySpecificQueryRewrite->execute(queryPlan);
-                typeInferencePhase->execute(queryPlan);
-
-                queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan, str);
+            if (j == 0) {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
+                topology = setupTopologyAndSourceCatalogSequential(i);
+            } else if (j == 1) {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
+            } else {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
             }
+
+            GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              false /*query reconfiguration*/);
+
+            auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
+
+            QueryPlanPtr queryPlan = query->getQueryPlan();
+            queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+            assignOperatorProperties(queryPlan);
+
+            auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+            auto queryId = sharedQueryPlan->getSharedQueryId();
+
+            auto topologySpecificQueryRewrite =
+                Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                     sourceCatalog,
+                                                                     Configurations::OptimizerConfiguration());
+            topologySpecificQueryRewrite->execute(queryPlan);
+            typeInferencePhase->execute(queryPlan);
+
+            queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan, str);
+
+        }
+    }
+}
+
+TEST_F(AASBenchmarkTest, testScalabilityLocalSearch) {
+    auto str = PlacementStrategy::LocalSearch_AAS;
+
+    for (int i = 2; i <= 24; i += 2) {
+        for (int j = 0; j < 3; ++j) {
+            TopologyPtr topology;
+
+            if (j == 0) {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
+                topology = setupTopologyAndSourceCatalogSequential(i);
+            } else if (j == 1) {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
+            } else {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
+            }
+
+            GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              false /*query reconfiguration*/);
+
+            auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
+
+            QueryPlanPtr queryPlan = query->getQueryPlan();
+            queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+            assignOperatorProperties(queryPlan);
+
+            auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+            auto queryId = sharedQueryPlan->getSharedQueryId();
+
+            auto topologySpecificQueryRewrite =
+                Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                     sourceCatalog,
+                                                                     Configurations::OptimizerConfiguration());
+            topologySpecificQueryRewrite->execute(queryPlan);
+            typeInferencePhase->execute(queryPlan);
+
+            queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan, str);
+
+        }
+    }
+}
+
+TEST_F(AASBenchmarkTest, testScalabilityILP) {
+    auto str = PlacementStrategy::ILP_AAS;
+
+    for (int i = 2; i <= 12; i += 2) {
+        for (int j = 0; j < 3; ++j) {
+            TopologyPtr topology;
+
+            if (j == 0) {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
+                topology = setupTopologyAndSourceCatalogSequential(i);
+            } else if (j == 1) {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
+            } else {
+                NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
+                topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
+            }
+
+            GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              false /*query reconfiguration*/);
+
+            auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
+
+            QueryPlanPtr queryPlan = query->getQueryPlan();
+            queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+            assignOperatorProperties(queryPlan);
+
+            auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+            auto queryId = sharedQueryPlan->getSharedQueryId();
+
+            auto topologySpecificQueryRewrite =
+                Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                     sourceCatalog,
+                                                                     Configurations::OptimizerConfiguration());
+            topologySpecificQueryRewrite->execute(queryPlan);
+            typeInferencePhase->execute(queryPlan);
+
+            queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan, str);
+
         }
     }
 }
