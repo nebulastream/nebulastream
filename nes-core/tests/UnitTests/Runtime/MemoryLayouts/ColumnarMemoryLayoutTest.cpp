@@ -213,7 +213,6 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
     ASSERT_THROW(field2[i], NES::Exceptions::RuntimeException);
 }
 
-
 /**
  * @brief Tests whether we can only access the correct fields.
  */

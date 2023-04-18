@@ -15,10 +15,10 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {

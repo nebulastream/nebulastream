@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -49,6 +48,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>

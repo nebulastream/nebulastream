@@ -1122,7 +1122,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowIngesti
 /**
  * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
+TEST_F(WindowDeploymentTest,
+       DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     struct Test {
         uint64_t id;
         uint64_t value;

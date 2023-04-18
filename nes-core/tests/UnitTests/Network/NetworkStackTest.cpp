@@ -24,8 +24,8 @@
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
