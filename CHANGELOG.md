@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.54](https://github.com/nebulastream/nebulastream/tree/v0.5.54) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.53...v0.5.54)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add window containment [\#3494](https://github.com/nebulastream/nebulastream/issues/3494)
+
 ## [v0.5.53](https://github.com/nebulastream/nebulastream/tree/v0.5.53) (2023-04-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.52...v0.5.53)
