@@ -672,7 +672,7 @@ add_subdirectory(nes-client)
 
 if (NES_ENABLE_APPROXIMATE_STREAM_PROCESSING)
 # Add target for approximate stream processing
-add_subdirectory(nes-approx)
+add_subdirectory(nes-asp)
 endif(NES_ENABLE_APPROXIMATE_STREAM_PROCESSING)
 
 # Add targets for benchmarks
