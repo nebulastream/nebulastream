@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.52](https://github.com/nebulastream/nebulastream/tree/v0.5.52) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.51...v0.5.52)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve Row-ColumnLayoutTupleBuffer Design [\#3467](https://github.com/nebulastream/nebulastream/issues/3467)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Window operator doesn't work  [\#3640](https://github.com/nebulastream/nebulastream/issues/3640)
+
 ## [v0.5.51](https://github.com/nebulastream/nebulastream/tree/v0.5.51) (2023-04-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.50...v0.5.51)
