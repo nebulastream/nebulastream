@@ -347,7 +347,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                    sizeof(rightValue),
                    sizeof(InputTypeLeft),
                    sizeof(InputTypeRight));
-        NES_ASSERT(windowTupleLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Layout Type must be ROW");      
+        NES_ASSERT(windowTupleLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+                   "Layout Type must be ROW");
         // A struct can be packed which assures that the correct bytes are written to the TupleBuffer.
         // (Using a std::tuple here let to inconsistencies.)
         struct __attribute__((packed)) NewRecord {
@@ -362,7 +363,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         // We cannot use a DynamicTupleBuffer leftValue, because its 'write()' function does not support structs and
         // leftValue and rightValue can be structs.
         std::memcpy(tupleBuffer.getBuffer<NewRecord>() + index, &newRecordData, sizeof(NewRecord));
-        if(index + 1 > tupleBuffer.getNumberOfTuples()) {
+        if (index + 1 > tupleBuffer.getNumberOfTuples()) {
             tupleBuffer.setNumberOfTuples(index + 1);
         }
     }

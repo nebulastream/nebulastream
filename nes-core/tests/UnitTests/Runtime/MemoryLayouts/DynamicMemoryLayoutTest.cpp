@@ -15,16 +15,15 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 namespace NES::Runtime::MemoryLayouts {
 
-class DynamicMemoryLayoutTest
-    : public Testing::TestWithErrorHandling<testing::Test> {
+class DynamicMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     // We are not creating the dynamic buffer here, since we want to use different schemas for each test.
     BufferManagerPtr bufferManager;
@@ -38,15 +37,14 @@ class DynamicMemoryLayoutTest
     }
 };
 
-class DynamicMemoryLayoutTestParameterized
-    : public Testing::TestWithErrorHandling<testing::Test>,
-      public testing::WithParamInterface<Schema::MemoryLayoutType> {
+class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandling<testing::Test>,
+                                             public testing::WithParamInterface<Schema::MemoryLayoutType> {
   public:
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::unique_ptr<DynamicTupleBuffer> dynamicBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
-    
+
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
@@ -55,8 +53,11 @@ class DynamicMemoryLayoutTestParameterized
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
 
-        schema = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
-        if(GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        schema = Schema::create()
+                     ->addField("t1", BasicType::UINT16)
+                     ->addField("t2", BasicType::BOOLEAN)
+                     ->addField("t3", BasicType::FLOAT64);
+        if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             RowLayoutPtr layout;
             ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);

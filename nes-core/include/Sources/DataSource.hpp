@@ -17,12 +17,12 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
-#include <Common/Identifiers.hpp>
 #include <atomic>
 #include <chrono>
 #include <future>
@@ -30,9 +30,8 @@
 #include <optional>
 #include <thread>
 
-
 namespace NES::Runtime::MemoryLayouts {
-      class DynamicTupleBuffer;
+class DynamicTupleBuffer;
 }
 
 namespace NES {
