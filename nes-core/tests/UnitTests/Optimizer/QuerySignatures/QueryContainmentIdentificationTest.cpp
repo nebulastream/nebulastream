@@ -245,85 +245,111 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                       .filter(Attribute("value") < 5)
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(
+             Query::from("car")
+                 .joinWith(Query::from("bike"))
+                 .where(Attribute("id1"))
+                 .equalsTo(Attribute("id"))
+                 .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                 .sink(printSinkDescriptor),
+             Query::from("car")
+                 .joinWith(Query::from("bike"))
+                 .where(Attribute("id1"))
+                 .equalsTo(Attribute("id"))
+                 .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
+                 .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::EQUALITY},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10)))
+                                      .byKey(Attribute("id"))
+                                      .apply(Sum(Attribute("value")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(
+             Query::from("car")
+                 .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                 .apply(Sum(Attribute("value")))
+                 .sink(printSinkDescriptor),
+             Query::from("car")
+                 .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
+                 .apply(Sum(Attribute("value")))
+                 .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::EQUALITY},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value"))->as(Attribute("newValue")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")), Min(Attribute("value"))->as(Attribute("newValue")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value1")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")), Min(Attribute("value1")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value1")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")), Min(Attribute("value1")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count())
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Count())
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count())
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Count())
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::EQUALITY},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000)))
+                                      .apply(Min(Attribute("value")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::NO_CONTAINMENT},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000)))
+                                      .apply(Min(Attribute("value")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000))).apply(Max(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100)))
+                                      .apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000)))
+                                      .apply(Max(Attribute("value")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::NO_CONTAINMENT},
         {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000)))
+                                      .apply(Min(Attribute("value")))
                                       .sink(printSinkDescriptor),
                                   Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(100))).apply(Min(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .apply(Sum(Attribute("value")))
+                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(100)))
+                                      .apply(Min(Attribute("value")))
                                       .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED}};
 

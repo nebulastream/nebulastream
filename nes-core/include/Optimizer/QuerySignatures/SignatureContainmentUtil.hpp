@@ -186,9 +186,9 @@ class SignatureContainmentUtil {
      * @param rightQueryWindowFOL expression vector for right query
      */
     void combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
-                                              const QuerySignaturePtr& rightSignature,
-                                              z3::expr_vector& leftQueryWindowFOL,
-                                              z3::expr_vector& rightQueryWindowFOL);
+                                       const QuerySignaturePtr& rightSignature,
+                                       z3::expr_vector& leftQueryWindowFOL,
+                                       z3::expr_vector& rightQueryWindowFOL);
 
     /**
      * @brief checks if a smaller attribute list is contained in a larger attribute
@@ -196,7 +196,8 @@ class SignatureContainmentUtil {
      * @param containeeCandidateSignature signature of the containee candidate
      * @return true if order is retained, false otherwise
      */
-    bool checkAttributeOrder(const QuerySignaturePtr& containerCandidateSignature, const QuerySignaturePtr& containeeCandidateSignature) const;
+    bool checkAttributeOrder(const QuerySignaturePtr& containerCandidateSignature,
+                             const QuerySignaturePtr& containeeCandidateSignature) const;
 
     /**
      * @brief Reset z3 solver

@@ -101,7 +101,6 @@ class QuerySignature {
      */
     const std::vector<std::map<std::string, z3::ExprPtr>>& getWindowsExpressions();
 
-
   private:
     /**
      * @brief a query signature instance
