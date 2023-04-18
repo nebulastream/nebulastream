@@ -32,7 +32,7 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
     switch (placementStrategy) {
         case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase,
                                                                 placementStrategyAAS);
-        case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementStrategyAAS);
         case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::Manual:
             return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementStrategyAAS);

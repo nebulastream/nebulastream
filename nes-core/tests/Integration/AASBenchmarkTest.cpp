@@ -208,7 +208,7 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
 
         std::map<int, TopologyNodePtr> sourceNodes;
         for (int i = 0; i < n; ++i) {
-            TopologyNodePtr sourceNode = TopologyNode::create(i+4, ipAddress, 123, 124, 0);
+            TopologyNodePtr sourceNode = TopologyNode::create(i+4, ipAddress, 123, 124, 1);
             sourceNode->addNodeProperty("slots", 0);
             topology->addNewTopologyNodeAsChild(level3Node, sourceNode);
 
@@ -275,7 +275,7 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
 
         std::map<int, TopologyNodePtr> sourceNodes;
         for (int i = 0; i < n; ++i) {
-            TopologyNodePtr sourceNode = TopologyNode::create(2*n + i + 2, ipAddress, 123, 124, 0);
+            TopologyNodePtr sourceNode = TopologyNode::create(2*n + i + 2, ipAddress, 123, 124, 1);
             sourceNode->addNodeProperty("slots", 0);
             topology->addNewTopologyNodeAsChild(level3Nodes[i], sourceNode);
             sourceNodes[i] = sourceNode;
@@ -346,7 +346,7 @@ class AASBenchmarkTest : public Testing::NESBaseTest {
 
         std::map<int, TopologyNodePtr> sourceNodes;
         for (int i = 0; i < n; ++i) {
-            TopologyNodePtr sourceNode = TopologyNode::create(2*n + i + 2, ipAddress, 123, 124, 0);
+            TopologyNodePtr sourceNode = TopologyNode::create(2*n + i + 2, ipAddress, 123, 124, 1);
             sourceNode->addNodeProperty("slots", 0);
             topology->addNewTopologyNodeAsChild(level3Nodes[i], sourceNode);
             sourceNodes[i] = sourceNode;
@@ -1624,46 +1624,53 @@ TEST_F(AASBenchmarkTest, testFatHighConnectivityRuntime) {
 }
 
 TEST_F(AASBenchmarkTest, testScalability) {
-    for (int i = 2; i <= 8; i += 2) {
+    NES::PlacementStrategy::ValueAAS strategies[3] = {PlacementStrategy::Greedy_AAS, PlacementStrategy::LocalSearch_AAS, PlacementStrategy::ILP_AAS};
+
+    for (int i = 2; i <= 20; i += 2) {
         for (int j = 0; j < 3; ++j) {
-            TopologyPtr topology;
+            for (auto & str : strategies) {
+                if (str == PlacementStrategy::ILP_AAS && i > 10)
+                    continue;
 
-            if (j == 0) {
-                NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
-                topology = setupTopologyAndSourceCatalogSequential(i);
-            } else if (j == 1) {
-                NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
-                topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
-            } else {
-                NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
-                topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
+                TopologyPtr topology;
+
+                if (j == 0) {
+                    NES_DEBUG("AASBenchmarkTest::testScalability: Sequential " << i);
+                    topology = setupTopologyAndSourceCatalogSequential(i);
+                } else if (j == 1) {
+                    NES_DEBUG("AASBenchmarkTest::testScalability: Fat Low Connectivity " << i);
+                    topology = setupTopologyAndSourceCatalogFatLowConnectivity(i);
+                } else {
+                    NES_DEBUG("AASBenchmarkTest::testScalability: Fat High Connectivity " << i);
+                    topology = setupTopologyAndSourceCatalogFatHighConnectivity(i);
+                }
+
+                GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+                auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+                auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                                  topology,
+                                                                                  typeInferencePhase,
+                                                                                  false /*query reconfiguration*/);
+
+                auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
+
+                QueryPlanPtr queryPlan = query->getQueryPlan();
+                queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+                assignOperatorProperties(queryPlan);
+
+                auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+                auto queryId = sharedQueryPlan->getSharedQueryId();
+
+                auto topologySpecificQueryRewrite =
+                    Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                                         sourceCatalog,
+                                                                         Configurations::OptimizerConfiguration());
+                topologySpecificQueryRewrite->execute(queryPlan);
+                typeInferencePhase->execute(queryPlan);
+
+                queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan, str);
             }
-
-            GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              false /*query reconfiguration*/);
-
-            auto query = queryParsingService->createQueryFromCodeString(createQueryString("scalabilityAnalysis.out"));
-
-            QueryPlanPtr queryPlan = query->getQueryPlan();
-            queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
-
-            assignOperatorProperties(queryPlan);
-
-            auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-            auto queryId = sharedQueryPlan->getSharedQueryId();
-
-            auto topologySpecificQueryRewrite =
-                Optimizer::TopologySpecificQueryRewritePhase::create(topology,
-                                                                     sourceCatalog,
-                                                                     Configurations::OptimizerConfiguration());
-            topologySpecificQueryRewrite->execute(queryPlan);
-            typeInferencePhase->execute(queryPlan);
-
-            queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan, placementStrategyAAS);
         }
     }
 }

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Optimizer/QueryPlacement/AdaptiveActiveStandby.hpp"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -31,15 +32,19 @@ namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                                 TopologyPtr topology,
-                                                                TypeInferencePhasePtr typeInferencePhase) {
+                                                                TypeInferencePhasePtr typeInferencePhase,
+                                                                PlacementStrategy::ValueAAS placementStrategyAAS) {
     return std::make_unique<BottomUpStrategy>(
-        BottomUpStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
+        BottomUpStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase), placementStrategyAAS));
 }
 
 BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topology,
-                                   TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
+                                   TypeInferencePhasePtr typeInferencePhase,
+                                   PlacementStrategy::ValueAAS placementStrategyAAS)
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {
+    this->placementStrategyAAS = placementStrategyAAS;
+}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  FaultToleranceType::Value faultToleranceType,
@@ -54,13 +59,23 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 2. Pin all unpinned operators
         pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 2. Place all pinned operators
+        auto timeBeforeAAS = std::chrono::steady_clock::now();
+
+        // 3. Create and place secondary operators
+        executeAdaptiveActiveStandby(pinnedUpStreamOperators, placementStrategyAAS);
+
+        auto timeAfterAAS = std::chrono::steady_clock::now();
+        auto elapsedMillisecondsAAS =
+            duration_cast<std::chrono::milliseconds>(timeAfterAAS - timeBeforeAAS);
+        NES_DEBUG("ILPStrategy::AAS total:: Time elapsed: " << elapsedMillisecondsAAS.count() << "ms");
+
+        // 4. Place all pinned operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. add network source and sink operators
+        // 5. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 4. Perform type inference on all updated query plans
+        // 6. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (log4cxx::helpers::Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
@@ -185,6 +200,16 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
     }
 
     operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
+
+    int cost;
+
+    if (operatorNode->instanceOf<SourceLogicalOperatorNode>())
+        cost = 1;
+    else
+        cost = AdaptiveActiveStandby::getOperatorCost(operatorNode);
+
+    topology->reduceResources(candidateTopologyNode->getId(), cost);
+    candidateTopologyNode->reduceResources(cost);
 
     auto isOperatorAPinnedDownStreamOperator = std::find_if(pinnedDownStreamOperators.begin(),
                                                             pinnedDownStreamOperators.end(),

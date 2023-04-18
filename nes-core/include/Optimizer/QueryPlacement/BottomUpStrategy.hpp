@@ -32,11 +32,12 @@ namespace NES::Optimizer {
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
 class BottomUpStrategy : public BasePlacementStrategy {
+    PlacementStrategy::ValueAAS placementStrategyAAS;
   public:
     ~BottomUpStrategy() override = default;
 
     static std::unique_ptr<BasePlacementStrategy>
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase, PlacementStrategy::ValueAAS placementStrategyAAS);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType::Value faultToleranceType,
@@ -47,7 +48,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase);
+                              TypeInferencePhasePtr typeInferencePhase,
+                              PlacementStrategy::ValueAAS placementStrategyAAS);
 
     /**
      * This method is responsible for pinning the operators to the worker nodes.
