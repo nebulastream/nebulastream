@@ -58,7 +58,7 @@ class SelectivityTest : public testing::Test, public AbstractPipelineExecutionTe
     void SetUp() override {
         std::cout << "Setup SelectivityTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
+        bm = std::make_shared<Runtime::BufferManager>((8*1024), 1048576);
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
@@ -70,7 +70,7 @@ class SelectivityTest : public testing::Test, public AbstractPipelineExecutionTe
 };
 
 /**
-* @brief collect runtime of multiple selectivities with multiple buffers
+* @brief collect runtime for selectivities from 0.05 to 1.0 on multiple buffers with randomly generated values
 */
 TEST_P(SelectivityTest, runtimeTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -163,7 +163,7 @@ TEST_P(SelectivityTest, runtimeTest) {
 }
 
 /**
-* @brief collect branch misses of multiple selectivities with multiple buffers
+* @brief collect runtime for selectivities from 0.01 to 1.0 on multiple buffers with randomly shuffled values [1,100]
 */
 TEST_P(SelectivityTest, runtimeTest2) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -229,20 +229,15 @@ TEST_P(SelectivityTest, runtimeTest2) {
         // initialize statistics pipeline runtime
         auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 1000);
 
-        std::vector<uint64_t> values;
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             runtime->collect();
-            values.push_back(std::any_cast<uint64_t>(runtime->getStatisticValue()));
+            csvFile << "," << std::any_cast<uint64_t>(runtime->getStatisticValue());
         }
         executablePipelineStage->stop(pipelineContext);
 
-        for (auto value : values) {
-            csvFile << "," << value;
-        }
         csvFile << "\n";
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
@@ -253,7 +248,7 @@ TEST_P(SelectivityTest, runtimeTest2) {
 }
 
 /**
-* @brief collect branch misses of multiple selectivities with multiple buffers
+* @brief collect branch misses for selectivities from 0.05 to 1.0 on multiple buffers with randomly generated values
 */
 TEST_P(SelectivityTest, branchMissesTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -335,9 +330,9 @@ TEST_P(SelectivityTest, branchMissesTest) {
 }
 
 /**
-* @brief collect branch misses of multiple selectivities with multiple buffers
+* @brief collect branch misses for selectivities from 0.01 to 1.0 on multiple buffers with randomly shuffled values [1,100]
 */
-TEST_P(SelectivityTest, branchMissesTest3) {
+TEST_P(SelectivityTest, branchMissesTest2) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -401,20 +396,15 @@ TEST_P(SelectivityTest, branchMissesTest3) {
         // initialize statistics pipeline runtime
         auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
 
-        std::vector<uint64_t> values;
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             branchMisses->collect();
-            values.push_back(std::any_cast<uint64_t>(branchMisses->getStatisticValue()));
+            csvFile << "," << std::any_cast<uint64_t>(branchMisses->getStatisticValue());
         }
         executablePipelineStage->stop(pipelineContext);
 
-        for (auto value : values) {
-            csvFile << "," << value;
-        }
         csvFile << "\n";
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
@@ -425,7 +415,7 @@ TEST_P(SelectivityTest, branchMissesTest3) {
 }
 
 /**
-* @brief collect cache misses of multiple selectivities with multiple buffers
+* @brief collect cache misses for selectivities from 0.01 to 1.0 on multiple buffers with randomly shuffled values [1,100]
 */
 TEST_P(SelectivityTest, cacheMissesTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -433,30 +423,32 @@ TEST_P(SelectivityTest, cacheMissesTest) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    // generate values in random order
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    std::uniform_int_distribution<int64_t> dist(0, 20);
+    // generate list of values 0 til 100
+    std::vector<int64_t> fieldValues(100);
+    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+    auto rng = std::default_random_engine {};
 
     std::vector<TupleBuffer> bufferVector;
 
-    for (int i = 0; i < 520000; ++i){
+    for (int i = 0; i < 260000; ++i){
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t j = 0; j < 500; j++) {
-            int64_t randomNumber = dist(rng);
-            dynamicBuffer[j]["f1"].write(randomNumber);
-            dynamicBuffer[j]["f2"].write((int64_t) 1);
-            dynamicBuffer.setNumberOfTuples(j + 1);
+        for (int k = 0; k < 5; k++) {
+            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+            for (uint64_t j = 0; j < 100; j++) {
+                dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                dynamicBuffer[j]["f2"].write((int64_t) 1);
+                dynamicBuffer.setNumberOfTuples(j + 1);
+            }
         }
     }
 
     std::ofstream csvFile("CacheMissesTest.csv");
 
-    for (int j = 1; j <= 20; ++j) {
+    for (int j = 10; j <= 10; ++j) {
 
-        csvFile << "Selectivity " << ((double) j / 20) << "\t";
+        csvFile << "Selectivity " << ((double) j / 20) << "\n";
 
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -489,25 +481,28 @@ TEST_P(SelectivityTest, cacheMissesTest) {
         // initialize statistics pipeline runtime
         auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperBranch), profiler, 1000);
 
-        std::vector<uint64_t> values;
+        //std::vector<uint64_t> values;
 
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             cacheMisses->collect();
-            values.push_back(std::any_cast<uint64_t>(cacheMisses->getStatisticValue()));
+            //values.push_back(std::any_cast<uint64_t>(cacheMisses->getStatisticValue()));
+            csvFile << std::any_cast<uint64_t>(cacheMisses->getStatisticValue()) << "\n";
         }
         executablePipelineStage->stop(pipelineContext);
-        uint64_t sum = 0;
+
+        // print mean only
+        /*uint64_t sum = 0;
         for (auto value : values) {
             sum += value;
         }
         double mean = (double) sum / (double) values.size();
-        csvFile << mean << "\n";
+        csvFile << mean << "\n";*/
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
-        ASSERT_EQ(numberOfResultBuffers, 520000);
+        ASSERT_EQ(numberOfResultBuffers, 260000);
     }
 
     csvFile.close();
