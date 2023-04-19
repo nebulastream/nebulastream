@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.55](https://github.com/nebulastream/nebulastream/tree/v0.5.55) (2023-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.54...v0.5.55)
+
+### Bug Fixes 🐛
+
+- \[BUG\] testMovingDeviceSimulatedStartTimeInPast [\#3318](https://github.com/nebulastream/nebulastream/issues/3318)
+
+### Miscellaneous Issues ✌️
+
+- Replace cpprestsdk  [\#668](https://github.com/nebulastream/nebulastream/issues/668)
+
 ## [v0.5.54](https://github.com/nebulastream/nebulastream/tree/v0.5.54) (2023-04-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.53...v0.5.54)
