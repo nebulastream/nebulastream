@@ -241,6 +241,7 @@ register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runt
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayout.hpp Runtime/MemoryLayout/MemoryLayout.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/fsst.h Runtime/MemoryLayout/Compression/fsst.h)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/libfsst.hpp Runtime/MemoryLayout/Compression/libfsst.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/brle.h Runtime/MemoryLayout/Compression/brle.h)
 
 #Add the nes common and headers to cpack
 install(TARGETS nes-runtime
