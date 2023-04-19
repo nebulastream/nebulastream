@@ -29,6 +29,7 @@ MicroBenchmarkResult::MicroBenchmarkResult(double throughput, double accuracy)  
     this->setAccuracy(accuracy);
     this->setThroughput(throughput);
 }
+
 std::string MicroBenchmarkResult::getHeaderAsCsv() {
     std::stringstream stringStream;
     for (auto& pair : params) {
@@ -40,6 +41,7 @@ std::string MicroBenchmarkResult::getHeaderAsCsv() {
 
     return string;
 }
+
 std::string MicroBenchmarkResult::getRowAsCsv() {
     std::stringstream stringStream;
     for (auto& pair : params) {

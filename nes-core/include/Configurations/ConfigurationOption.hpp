@@ -348,7 +348,7 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 
-// Synopsis Configurations
+// Synopses Configurations
 const std::string SYNOPSIS_CONFIG_TYPE = "synopsisType";
 const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";

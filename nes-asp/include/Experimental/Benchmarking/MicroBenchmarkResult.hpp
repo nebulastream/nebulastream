@@ -20,6 +20,9 @@
 
 namespace NES::ASP::Benchmarking {
 
+/**
+ * @brief This class stores the result of a single microbenchmark run. It operators on a hashmap to be able to support custom params.
+ */
 class MicroBenchmarkResult {
   public:
     /**

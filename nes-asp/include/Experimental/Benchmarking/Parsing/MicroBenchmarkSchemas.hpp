@@ -23,6 +23,9 @@
 
 namespace NES::ASP::Benchmarking {
 
+/**
+ * @brief This map is used for mapping from input files to schema. We do not put the whole path, but stick with the file name.
+ */
 static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
     {"some_input_file.csv", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                     ->addField("id", BasicType::UINT64)
@@ -36,6 +39,14 @@ static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
                     ->addField("value3", BasicType::BOOLEAN)
                     ->addField("ts", BasicType::UINT64)}};
 
+/**
+ * @brief Retrieves the output schema from the aggregation type and input schema. The data type of the output field is the same
+ * as of the input schema, except for AGGREGATION_TYPE::AVERAGE, where it is a BasicType::FLOAT64
+ * @param type
+ * @param inputSchema
+ * @param fieldNameAgg
+ * @return Output schema
+ */
 static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(AGGREGATION_TYPE type, Schema& inputSchema,
                                                               const std::string& fieldNameAgg) {
     switch(type) {

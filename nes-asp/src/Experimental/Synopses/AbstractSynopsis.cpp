@@ -14,7 +14,7 @@
 
 #include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
-#include <Experimental/Synopses/Samples/SampleRandomWithoutReplacement.hpp>
+#include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
@@ -22,7 +22,7 @@ namespace NES::ASP {
 AbstractSynopsesPtr AbstractSynopsis::create(SynopsisConfiguration arguments) {
 
     if (arguments.type.getValue() == SynopsisConfiguration::SYNOPSIS_TYPE::SRSWR) {
-        return std::make_shared<SampleRandomWithoutReplacement>(arguments.width.getValue());
+        return std::make_shared<SimpleRandomSampleWithoutReplacement>(arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }

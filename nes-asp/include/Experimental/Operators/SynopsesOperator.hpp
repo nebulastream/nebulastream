@@ -20,13 +20,29 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief Nautilus Operator for a specific synopsis. For now, it also takes care of windowing, but this can change later on
+ */
 class SynopsesOperator : public ExecutableOperator {
 
   public:
+    /**
+     * @brief Constructor for the nautilus operator corresponding to a synopses
+     * @param synopses
+     */
     SynopsesOperator(const ASP::AbstractSynopsesPtr& synopses);
 
+    /**
+     * @brief Sets up the synopses and the operator, e.g., initializing the underlying synopsis
+     * @param executionCtx
+     */
     void setup(ExecutionContext& executionCtx) const override;
 
+    /**
+     * @brief Passes the record to the synopsis so that it can see and act upon it
+     * @param ctx
+     * @param record
+     */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:

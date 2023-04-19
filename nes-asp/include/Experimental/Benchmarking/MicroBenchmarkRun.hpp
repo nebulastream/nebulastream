@@ -33,7 +33,9 @@ namespace NES::ASP::Benchmarking {
 
 static constexpr auto NANO_TO_SECONDS_MULTIPLIER = 1 * 1000 * 1000 * 1000UL;
 
-
+/**
+ * @brief MockedPipelineExecutionContext for our executable pipeline
+ */
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
@@ -48,7 +50,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 };
 
 /**
- * @brief This class encapsulates a single micro-benchmark run
+ * @brief This class encapsulates a single micro-benchmark run, so that means it takes care of creating input buffers, running the
+ * operations and then storing the metrics of each repetition.
  */
 class MicroBenchmarkRun {
   private:
@@ -69,9 +72,21 @@ class MicroBenchmarkRun {
                       const size_t reps);
 
   public:
+    /**
+     * @brief Default constructor
+     */
     MicroBenchmarkRun() = default;
 
+    /**
+     * @brief Copy constructor
+     * @param other
+     */
     MicroBenchmarkRun(const MicroBenchmarkRun& other);
+
+    /**
+     * @brief Assignment operator
+     * @param other
+     */
     MicroBenchmarkRun& operator=(const MicroBenchmarkRun& other);
 
     /**
@@ -82,7 +97,6 @@ class MicroBenchmarkRun {
      */
     static std::vector<MicroBenchmarkRun> parseMicroBenchmarksFromYamlFile(const std::string& yamlConfigFile,
                                                                            const std::filesystem::path& absoluteDataPath);
-
 
     /**
      * @brief Runs this Microbenchmark and then writes the result to microBenchmarkResult
@@ -133,6 +147,11 @@ class MicroBenchmarkRun {
                            std::vector<Runtime::TupleBuffer>& allApproximateBuffers);
 
   private:
+    /**
+     * @brief Creates an executable pipeline and the pipeline context from the synopsis for this benchmark run
+     * @param synopsis
+     * @return Executable pipeline and its context
+     */
     std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
         createExecutablePipeline(AbstractSynopsesPtr synopsis);
 

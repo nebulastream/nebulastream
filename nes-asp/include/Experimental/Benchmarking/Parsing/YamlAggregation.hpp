@@ -26,18 +26,29 @@
 namespace NES::ASP::Benchmarking {
 
 using AggregationValuePtr = std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>;
-
 enum class AGGREGATION_TYPE : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
+
+/**
+ * @brief This class encapsulates the necessary stuff for parsing the aggregation from a yaml file.
+ */
 class YamlAggregation {
-
-
   public:
     /**
      * @brief Default constructor
      */
     YamlAggregation() = default;
 
+    /**
+     * @brief Copy constructor
+     * @param other
+     */
     YamlAggregation(const YamlAggregation& other);
+
+    /**
+     * @brief Assignment operator
+     * @param other
+     * @return
+     */
     YamlAggregation& operator=(const YamlAggregation& other);
 
     /**
