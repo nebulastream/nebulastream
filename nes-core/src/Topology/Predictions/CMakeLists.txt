@@ -12,7 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        TopologyNode.cpp
-        Topology.cpp
-)
-add_subdirectory(Predictions)
+        TopologyVersionTimeline.cpp
+        AggregatedTopologyChangeLog.cpp
+        TopologyDelta.cpp
+        TopologyChangeLog.cpp
+        )
