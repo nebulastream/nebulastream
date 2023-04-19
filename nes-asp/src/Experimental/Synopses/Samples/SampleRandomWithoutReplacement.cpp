@@ -37,7 +37,7 @@ void SampleRandomWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     }
 
     auto lastTupleBuffer = storedRecords[storedRecords.size() - 1];
-    auto dynamicTupleBuffer = ASP::Util::createDynamicTupleBuffer(lastTupleBuffer, inputSchema);
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(lastTupleBuffer, inputSchema);
 
     auto recordIndex = dynamicTupleBuffer.getNumberOfTuples();
 
@@ -101,7 +101,7 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
         auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
         auto numberOfRecords = buffer.getNumberOfTuples();
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-            auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), inputSchema);
+            auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), inputSchema);
             auto tmpRecord = memoryProvider->read({}, bufferAddress, i);
             auto tmpValue = tmpRecord.read(fieldNameAggregation);
             aggregationFunction->lift(aggregationValueMemRef, tmpValue);
@@ -118,7 +118,7 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
     record.write(fieldNameApproximate, approximatedValue);
 
     // Create an output buffer and write the approximation into it
-    auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), outputSchema);
+    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), outputSchema);
     auto outputBuffer = bufferManager->getBufferBlocking();
     auto outputRecordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer)));
 
@@ -144,7 +144,7 @@ double SampleRandomWithoutReplacement::getScalingFactor(){
 
     if (std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction) ||
         std::dynamic_pointer_cast<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregationFunction)) {
-        double numberOfTuplesInWindow = Util::getNumberOfTuples(storedRecords);
+        double numberOfTuplesInWindow = NES::Util::getNumberOfTuples(storedRecords);
         double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);
     }

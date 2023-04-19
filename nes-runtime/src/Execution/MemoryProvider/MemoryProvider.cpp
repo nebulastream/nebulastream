@@ -12,8 +12,14 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -121,5 +127,17 @@ bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFie
 }
 
 MemoryProvider::~MemoryProvider() {}
+
+MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
+        return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+        auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+        return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
 
 }// namespace NES::Runtime::Execution::MemoryProvider

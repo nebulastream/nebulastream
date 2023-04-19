@@ -15,5 +15,5 @@ add_source_files(nes-asp
         MicroBenchmarkResult.cpp
         MicroBenchmarkRun.cpp
         Parsing/YamlAggregation.cpp
-        Parsing/SynopsisArguments.cpp
+        Parsing/SynopsisConfiguration.cpp
         )

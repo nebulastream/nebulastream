@@ -19,10 +19,10 @@
 
 namespace NES::ASP {
 
-AbstractSynopsesPtr AbstractSynopsis::create(SynopsisArguments arguments) {
+AbstractSynopsesPtr AbstractSynopsis::create(SynopsisConfiguration arguments) {
 
-    if (arguments.getType() == SynopsisArguments::Type::SRSWR) {
-        return std::make_shared<SampleRandomWithoutReplacement>(arguments.getWidth());
+    if (arguments.type.getValue() == SynopsisConfiguration::SYNOPSIS_TYPE::SRSWR) {
+        return std::make_shared<SampleRandomWithoutReplacement>(arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }

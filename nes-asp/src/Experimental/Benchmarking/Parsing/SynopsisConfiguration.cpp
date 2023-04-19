@@ -12,45 +12,40 @@
     limitations under the License.
 */
 
-#include <Util/yaml/Yaml.hpp>
+#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisArguments.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::ASP {
 
-SynopsisArguments::SynopsisArguments(Type type, size_t width, size_t height, size_t windowSize)
-    : type(type), width(width), height(height), windowSize(windowSize) {}
-
-SynopsisArguments SynopsisArguments::createArguments(Type type, size_t width, size_t height,
-                                                     size_t windowSize) {
-    return SynopsisArguments(type, width, height, windowSize);
+SynopsisConfigurationPtr SynopsisConfiguration::create(SYNOPSIS_TYPE type, size_t width,
+                                                                     size_t height, size_t windowSize) {
+    auto configurationOptions = std::make_shared<SynopsisConfiguration>();
+    configurationOptions->type = type;
+    configurationOptions->width = width;
+    configurationOptions->height = height;
+    configurationOptions->windowSize = windowSize;
+    return configurationOptions;
 }
 
-size_t SynopsisArguments::getWidth() const { return width; }
 
-size_t SynopsisArguments::getHeight() const { return height; }
+SynopsisConfigurationPtr SynopsisConfiguration::createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode) {
 
-size_t SynopsisArguments::getWindowSize() const { return windowSize; }
-
-SynopsisArguments::Type SynopsisArguments::getType() const { return type; }
-
-SynopsisArguments SynopsisArguments::createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode) {
-
-    auto type = magic_enum::enum_cast<Type>(synopsisArgumentsNode["type"].As<std::string>()).value();
+    auto type = magic_enum::enum_cast<SYNOPSIS_TYPE>(synopsisArgumentsNode["type"].As<std::string>()).value();
     auto width = synopsisArgumentsNode["width"].IsNone() ? 1 : synopsisArgumentsNode["width"].As<size_t>();
     auto height = synopsisArgumentsNode["height"].IsNone() ? 1 : synopsisArgumentsNode["height"].As<size_t>();
     auto windowSize = synopsisArgumentsNode["windowSize"].IsNone() ? 1 : synopsisArgumentsNode["windowSize"].As<size_t>();
 
-    return SynopsisArguments::createArguments(type, width, height, windowSize);
+    return SynopsisConfiguration::create(type, width, height, windowSize);
 }
 
-std::string SynopsisArguments::getHeaderAsCsv() {
+std::string SynopsisConfiguration::getHeaderAsCsv() {
     return "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize";
 }
 
-std::string SynopsisArguments::getValuesAsCsv() {
+std::string SynopsisConfiguration::getValuesAsCsv() {
     std::stringstream stringStream;
-    stringStream << magic_enum::enum_name(type)
+    stringStream << magic_enum::enum_name(type.getValue())
                  << "," << width
                  << "," << height
                  << "," << windowSize;
@@ -58,9 +53,9 @@ std::string SynopsisArguments::getValuesAsCsv() {
     return stringStream.str();
 }
 
-std::string SynopsisArguments::toString() {
+std::string SynopsisConfiguration::toString() {
     std::stringstream stringStream;
-    stringStream << "type (" << magic_enum::enum_name(type) << ") "
+    stringStream << "type (" << magic_enum::enum_name(type.getValue()) << ") "
                  << "width (" << width << ") "
                  << "height (" << height << ") "
                  << "windowSize (" << windowSize << ")";
