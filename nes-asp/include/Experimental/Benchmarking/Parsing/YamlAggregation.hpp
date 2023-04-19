@@ -16,6 +16,7 @@
 #define NES_YAMLAGGREGATION_HPP
 
 #include <API/Schema.hpp>
+#include <Configurations/BaseConfiguration.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Util/yaml/Yaml.hpp>

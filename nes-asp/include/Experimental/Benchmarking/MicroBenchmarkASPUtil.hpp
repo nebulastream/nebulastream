@@ -15,31 +15,17 @@
 #ifndef NES_MICROBENCHMARKASPUTIL_HPP
 #define NES_MICROBENCHMARKASPUTIL_HPP
 
-#include <Experimental/Benchmarking/MicroBenchmarkResult.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisArguments.hpp>
-#include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkResult.hpp>
+#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
+#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
+#include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <string>
 
 namespace NES::ASP::Util {
-
-/**
- * @brief Truncates the file and then writes the header string as is to the file
- * @param csvFileName
- * @param header
- */
-void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header);
-
-/**
- * @brief Appends the row as is to the csv file
- * @param csvFileName
- * @param row
- */
-void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
 
 /**
  * @brief Parses the csv file from the yamlFile
@@ -53,7 +39,7 @@ std::string parseCsvFileFromYaml(const std::string& yamlFileName);
  * @param synopsesNode
  * @return Vector of synopsis arguments
  */
-std::vector<SynopsisArguments> parseSynopsisArguments(const Yaml::Node& synopsesNode);
+std::vector<SynopsisConfigurationPtr> parseSynopsisArguments(const Yaml::Node& synopsesNode);
 
 /**
  * @brief Parses the yaml node and creates YamlAggregation (wrapper for the aggregation, e.g., input and accuracy file)
@@ -94,43 +80,6 @@ std::vector<uint32_t> parseBufferSizes(const Yaml::Node& bufferSizesNode);
 uint64_t parseReps(const Yaml::Node& repsNode);
 
 /**
- * @brief Helper function for creating a memory provider from the buffer size and the schema
- * @param bufferSize
- * @param schema
- * @return MemoryProvider
- */
-Runtime::Execution::MemoryProvider::MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
-
-/**
- * @brief Creates a DynamicTupleBuffer from the TupleBuffer and the schema
- * @param buffer
- * @param schema
- * @return DynamicTupleBuffer
- */
-Runtime::MemoryLayouts::DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
-
-/**
- * @brief Returns the physical types of all fields of the schema
- * @param schema
- * @return PhysicalTypes of the schema's field
- */
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
-
-/**
- * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
- * @param csvFile
- * @param schema
- * @param timeStampFieldName
- * @param lastTimeStamp
- * @param bufferManager
- * @return Vector of TupleBuffers
- */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
-                                                                            Runtime::BufferManagerPtr bufferManager,
-                                                                            const std::string& timeStampFieldName,
-                                                                            uint64_t lastTimeStamp);
-
-/**
  * @brief Calculates the relative error of the two fields. It is expected that they are the same type, otherwise
  * std::numeric_limits<double>::max is returned
  * @param approxField
@@ -139,14 +88,6 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
  */
 double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,
                               Runtime::MemoryLayouts::DynamicField& exactField);
-
-/**
- * @brief Iterates through the buffers and sums the number of tuples over all buffers
- * @param buffers
- * @return Number of total tuples in all buffers
- */
-uint64_t getNumberOfTuples(std::vector<Runtime::TupleBuffer> buffers);
-
 
 } // namespace NES::ASP
 

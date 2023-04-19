@@ -163,4 +163,16 @@ DynamicTuple DynamicTupleBuffer::TupleIterator::operator*() const { return buffe
 
 MemoryLayoutPtr DynamicTupleBuffer::getMemoryLayout() const { return memoryLayout; }
 
+DynamicTupleBuffer DynamicTupleBuffer::createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
 }// namespace NES::Runtime::MemoryLayouts

@@ -15,13 +15,13 @@
 #ifndef NES_ABSTRACTSYNOPSIS_HPP
 #define NES_ABSTRACTSYNOPSIS_HPP
 
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisArguments.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
+#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::ASP {
 
@@ -62,7 +62,7 @@ class AbstractSynopsis {
      * @param arguments
      * @return AbstractSynopsesPtr
      */
-    static AbstractSynopsesPtr create(SynopsisArguments arguments);
+    static AbstractSynopsesPtr create(SynopsisConfiguration arguments);
 
     /**
      * @brief Sets the aggregation function for this synopsis

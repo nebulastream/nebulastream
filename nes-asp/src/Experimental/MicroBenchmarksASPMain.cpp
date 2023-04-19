@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
-#include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
-#include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 
 const std::string logo = "/********************************************************\n"
@@ -93,11 +94,11 @@ int main(int argc, const char* argv[]) {
     }
 
     NES_INFO("Writing the header to the csv file: " << csvFileName);
-    ASP::Util::writeHeaderToCsvFile(csvFileName, allMicroBenchmarks[0].getHeaderAsCsv());
+    NES::Util::writeHeaderToCsvFile(csvFileName, allMicroBenchmarks[0].getHeaderAsCsv());
 
     NES_INFO("Writing all micro-benchmarks results to csv file: " << csvFileName);
     for (auto& microBenchmark : allMicroBenchmarks) {
-        ASP::Util::writeRowToCsvFile(csvFileName, microBenchmark.getRowsAsCsv());
+        NES::Util::writeRowToCsvFile(csvFileName, microBenchmark.getRowsAsCsv());
     }
 
     NES_INFO("Done running micro-benchmarks!");

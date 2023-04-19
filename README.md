@@ -45,4 +45,7 @@ graph TD;
   runtime-->core;
   common-->core;
   core-->client;
+  asp-->core;
+  asp-->runtime;
+  common-->asp;
 ```

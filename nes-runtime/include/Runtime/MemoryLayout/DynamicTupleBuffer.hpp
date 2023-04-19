@@ -224,6 +224,14 @@ class DynamicTupleBuffer {
     explicit DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer);
 
     /**
+     * @brief Creates a DynamicTupleBuffer from the TupleBuffer and the schema
+     * @param buffer
+     * @param schema
+     * @return DynamicTupleBuffer
+     */
+    static DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
+
+    /**
     * @brief Gets the number of tuples a tuple buffer with this memory layout could occupy.
     * @return number of tuples a tuple buffer can occupy.
     */

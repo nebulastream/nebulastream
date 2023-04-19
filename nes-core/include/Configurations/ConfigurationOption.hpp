@@ -208,7 +208,7 @@ using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>
 using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode>>;
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
-//Coordinator Configuration Names
+// Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
 const std::string RPC_PORT_CONFIG = "rpcPort";//used to be coordinator port, renamed to uniform naming
 const std::string DATA_PORT_CONFIG = "dataPort";
@@ -232,7 +232,7 @@ const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
 const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 
-//Optimizer Configurations
+// Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
 const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
@@ -244,7 +244,7 @@ const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributed
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
-//Worker Configuration Names
+// Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
 const std::string PARENT_ID_CONFIG = "parentId";
@@ -266,7 +266,7 @@ const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
-//worker mobility config names
+// worker mobility config names
 const std::string MOBILITY_CONFIG_CONFIG = "mobility";
 const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";
 const std::string PATH_PREDICTION_UPDATE_INTERVAL_CONFIG = "pathPredictionUpdateInterval";
@@ -288,7 +288,7 @@ const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimula
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 
-//Configuration names for source types
+// Configuration names for source types
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
@@ -326,7 +326,7 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 const std::string TENSORFLOW_SUPPORTED_CONFIG = "tensorflowSupported";
 
-//TCPSourceType configs
+// TCPSourceType configs
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
@@ -336,7 +336,7 @@ const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
-//Runtine configuration
+// Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
 const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
@@ -347,6 +347,12 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
+
+// Synopsis Configurations
+const std::string SYNOPSIS_CONFIG_TYPE = "synopsisType";
+const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
+const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
+const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
 

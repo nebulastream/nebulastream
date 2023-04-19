@@ -12,20 +12,29 @@
     limitations under the License.
 */
 
-#ifndef NES_SYNOPSISARGUMENTS_HPP
-#define NES_SYNOPSISARGUMENTS_HPP
+#ifndef NES_SYNOPSISCONFIGURATION_HPP
+#define NES_SYNOPSISCONFIGURATION_HPP
 
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/EnumOption.hpp>
+#include <Configurations/ScalarOption.hpp>
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <cstddef>
 #include <stdint.h>
-#include <Execution/Aggregation/AggregationFunction.hpp>
-#include <Util/yaml/Yaml.hpp>
 
 namespace NES::ASP {
 
-class SynopsisArguments {
+class SynopsisConfiguration;
+using SynopsisConfigurationPtr = std::shared_ptr<SynopsisConfiguration>;
+
+class SynopsisConfiguration : public Configurations::BaseConfiguration {
 
   public:
-    enum class Type : uint8_t {
+    enum class SYNOPSIS_TYPE : uint8_t {
         SRSWR,  // Simple Random Sampling With Replacement
         SRSWoR, // Simple Random Sampling Without Replacement
         Poisson, // Poisson sampling
@@ -41,12 +50,13 @@ class SynopsisArguments {
         CM,         // Count-Min Sketch
         ECM,        // Exponential Count-Min Sketch
         HLL,        // HyperLogLog
+        NONE        // NONE
     };
 
-    /**
-     * @brief Default constructor
-     */
-    SynopsisArguments() = default;
+    Configurations::EnumOption<SYNOPSIS_TYPE> type = {Configurations::SYNOPSIS_CONFIG_TYPE, SYNOPSIS_TYPE::NONE, "Type of synopsis."};
+    Configurations::SizeTOption width = {Configurations::SYNOPSIS_CONFIG_WIDTH, 1, "Width of the synopsis."};
+    Configurations::SizeTOption height = {Configurations::SYNOPSIS_CONFIG_HEIGHT, 1, "Height of the synopsis."};
+    Configurations::SizeTOption windowSize = {Configurations::SYNOPSIS_CONFIG_WINDOWSIZE, 1, "WindowSize of the synopsis."};
 
     /**
      * @brief Factory method for creating a synopsis argument
@@ -56,15 +66,15 @@ class SynopsisArguments {
      * @param windowSize
      * @return SynopsisArguments
      */
-    static SynopsisArguments createArguments(Type type, size_t width, size_t height = 1,
-                                             size_t windowSize = 1);
+    static SynopsisConfigurationPtr create(SYNOPSIS_TYPE type, size_t width, size_t height = 1,
+                                                         size_t windowSize = 1);
 
     /**
      * @brief Factory method for creating a synopsis argument from a yaml node
      * @param synopsisArgumentsNode
-     * @return SynopsisArguments
+     * @return SynopsisConfiguration
      */
-    static SynopsisArguments createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode);
+    static SynopsisConfigurationPtr createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode);
 
     /**
      * @brief Creates a header for the output csv file from this SynopsisArguments
@@ -79,52 +89,23 @@ class SynopsisArguments {
     std::string getValuesAsCsv();
 
     /**
-     * @brief Getter for the width of a synopsis
-     * @return Synopsis width
-     */
-    size_t getWidth() const;
-
-    /**
-     * @brief Getter for the height of a synopsis
-     * @return Synopsis height
-     */
-    size_t getHeight() const;
-
-    /**
-     * @brief Getter for the window size of a synopsis
-     * @return Synopsis window size
-     */
-    size_t getWindowSize() const;
-
-    /**
-     * @brief Getter for the type of a synopsis
-     * @return Synopsis type
-     */
-    Type getType() const;
-
-    /**
      * @brief Creates a string representation
      * @return String representation
      */
-    std::string toString();
+    std::string toString() override
+        ;
 
   private:
-    /**
-     * @brief Private constructor for a SynopsisArguments object. For creating an object, the factory method should be used
-     * @param type
-     * @param width
-     * @param height
-     * @param windowSize
-     */
-    SynopsisArguments(Type type, size_t width, size_t height, size_t windowSize);
-
-    Type type;
-    size_t width;
-    size_t height;
-    size_t windowSize;
+    std::vector<Configurations::BaseOption*> getOptions() override {
+        return {&type,
+                &width,
+                &height,
+                &windowSize};
+    }
 
 };
 
+
 } // namespace NES::ASP
 
-#endif//NES_SYNOPSISARGUMENTS_HPP
+#endif//NES_SYNOPSISCONFIGURATION_HPP

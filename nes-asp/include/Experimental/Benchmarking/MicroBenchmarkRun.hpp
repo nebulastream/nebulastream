@@ -61,7 +61,7 @@ class MicroBenchmarkRun {
      * @param windowSize
      * @param reps
      */
-    MicroBenchmarkRun(const SynopsisArguments& synopsesArguments,
+    MicroBenchmarkRun(SynopsisConfigurationPtr synopsesArguments,
                       const YamlAggregation& yamlAggregation,
                       const uint32_t bufferSize,
                       const uint32_t numberOfBuffers,
@@ -136,7 +136,7 @@ class MicroBenchmarkRun {
     std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
         createExecutablePipeline(AbstractSynopsesPtr synopsis);
 
-    SynopsisArguments synopsesArguments;
+    SynopsisConfigurationPtr synopsesArguments;
     YamlAggregation aggregation;
     uint32_t bufferSize;
     uint32_t numberOfBuffers;

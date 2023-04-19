@@ -30,6 +30,14 @@ class MemoryProvider {
     virtual ~MemoryProvider();
 
     /**
+     * @brief Helper function for creating a memory provider from the buffer size and the schema
+     * @param bufferSize
+     * @param schema
+     * @return MemoryProvider
+     */
+    static MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
+
+    /**
      * @brief Return the memory layout pointer used by the MemoryProvider.
      * @return MemoryLayouts::MemoryLayoutPtr: Pointer to the memory layout.
      */

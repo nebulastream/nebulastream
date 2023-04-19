@@ -230,7 +230,6 @@ OperatorId getNextOperatorId();
 uint64_t getNextPipelineId();
 
 /**
- *
  * @brief This function replaces the first occurrence of search term in a string with the replace term.
  * @param origin - The original string that is to be manipulated
  * @param search - The substring/term which we want to have replaced
@@ -254,6 +253,48 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  * @return string with new source name
  */
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
+
+/**
+ * @brief Truncates the file and then writes the header string as is to the file
+ * @param csvFileName
+ * @param header
+ */
+void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header);
+
+/**
+ * @brief Appends the row as is to the csv file
+ * @param csvFileName
+ * @param row
+ */
+void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
+
+/**
+ * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
+ * @param csvFile
+ * @param schema
+ * @param timeStampFieldName
+ * @param lastTimeStamp
+ * @param bufferManager
+ * @return Vector of TupleBuffers
+ */
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
+                                                                            Runtime::BufferManagerPtr bufferManager,
+                                                                            const std::string& timeStampFieldName,
+                                                                            uint64_t lastTimeStamp);
+
+/**
+ * @brief Returns the physical types of all fields of the schema
+ * @param schema
+ * @return PhysicalTypes of the schema's field
+ */
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
+
+/**
+ * @brief Iterates through the buffers and sums the number of tuples over all buffers
+ * @param buffers
+ * @return Number of total tuples in all buffers
+ */
+uint64_t getNumberOfTuples(std::vector<Runtime::TupleBuffer> buffers);
 
 /**
  * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
@@ -290,6 +331,8 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
         vector.push_back(newValue);
     }
 }
+
+
 
 };// namespace Util
 }// namespace NES

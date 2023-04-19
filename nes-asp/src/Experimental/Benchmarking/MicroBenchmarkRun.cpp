@@ -45,8 +45,8 @@ void MicroBenchmarkRun::run() {
 
         // Create the synopsis, so we can call getApproximate after all buffers have been executed
         NES_INFO("Creating the synopsis...");
-        auto synopsis = AbstractSynopsis::create(synopsesArguments);
-        auto memoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
+        auto synopsis = AbstractSynopsis::create(*synopsesArguments);
+        auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferSize, aggregation.inputSchema);
 
         synopsis->setAggregationFunction(aggregation.createAggregationFunction());
         synopsis->setAggregationValue(aggregation.createAggregationValue());
@@ -134,13 +134,13 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     return retVector;
 }
 
-MicroBenchmarkRun::MicroBenchmarkRun(const SynopsisArguments& synopsesArguments,
+MicroBenchmarkRun::MicroBenchmarkRun(SynopsisConfigurationPtr synopsesArguments,
                                      const YamlAggregation& aggregation,
                                      const uint32_t bufferSize,
                                      const uint32_t numberOfBuffers,
                                      const size_t windowSize,
                                      const size_t reps)
-    : synopsesArguments(synopsesArguments), aggregation(aggregation), bufferSize(bufferSize),
+    : synopsesArguments(std::move(synopsesArguments)), aggregation(aggregation), bufferSize(bufferSize),
       numberOfBuffers(numberOfBuffers), windowSize(windowSize), reps(reps){}
 
 MicroBenchmarkRun& MicroBenchmarkRun::operator=(const MicroBenchmarkRun& other) {
@@ -174,7 +174,7 @@ MicroBenchmarkRun::MicroBenchmarkRun(const MicroBenchmarkRun& other) {
 
 std::string MicroBenchmarkRun::getHeaderAsCsv() {
     std::stringstream stringStream;
-    stringStream << synopsesArguments.getHeaderAsCsv()
+    stringStream << synopsesArguments->getHeaderAsCsv()
                  << "," << aggregation.getHeaderAsCsv()
                  << ",bufferSize"
                  << ",numberOfBuffers"
@@ -189,7 +189,7 @@ std::string MicroBenchmarkRun::getRowsAsCsv() {
     std::stringstream stringStream;
 
     for (auto& benchmarkResult : microBenchmarkResult) {
-        stringStream << synopsesArguments.getValuesAsCsv()
+        stringStream << synopsesArguments->getValuesAsCsv()
                      << "," << aggregation.getValuesAsCsv()
                      << "," << bufferSize
                      << "," << numberOfBuffers
@@ -203,7 +203,7 @@ std::string MicroBenchmarkRun::getRowsAsCsv() {
 
 std::string MicroBenchmarkRun::toString() {
     std::stringstream stringStream;
-    stringStream << std::endl << " - synopsis arguments: " << synopsesArguments.toString()
+    stringStream << std::endl << " - synopsis arguments: " << synopsesArguments->toString()
                  << std::endl << " - aggregation: " << aggregation.toString()
                  << std::endl << " - bufferSize :" << bufferSize
                  << std::endl << " - numberOfBuffers: " << numberOfBuffers
@@ -215,7 +215,7 @@ std::string MicroBenchmarkRun::toString() {
 }
 
 std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
-    return ASP::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager,
+    return NES::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager,
                                                aggregation.timeStampFieldName, windowSize);
 }
 
@@ -225,7 +225,7 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
     auto aggregationValue = aggregation.createAggregationValue();
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
 
-    auto memoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
+    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
 
 
     // TODO for now we can ignore windows
@@ -247,7 +247,7 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
     record.write(aggregation.fieldNameApproximate, exactValue);
 
     // Create an output buffer and write the approximation into it
-    auto outputMemoryProvider = ASP::Util::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
+    auto outputMemoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
     auto outputBuffer = bufferManager->getBufferBlocking();
     auto outputRecordBuffer = Nautilus::Value<Nautilus::MemRef>((int8_t*) outputBuffer.getBuffer());
     Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
@@ -264,10 +264,10 @@ double MicroBenchmarkRun::compareAccuracy(std::vector<Runtime::TupleBuffer>& all
     auto numTuples = 0UL;
 
     for (auto& accBuf : allAccuracyRecords) {
-        auto dynamicAccBuf = ASP::Util::createDynamicTupleBuffer(accBuf, aggregation.outputSchema);
+        auto dynamicAccBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(accBuf, aggregation.outputSchema);
         NES_DEBUG("dynamicAccBuf: " << NES::Util::printTupleBufferAsCSV(dynamicAccBuf.getBuffer(), aggregation.outputSchema));
         for (auto& approxBuf : allApproximateBuffers) {
-            auto dynamicApproxBuf = ASP::Util::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
+            auto dynamicApproxBuf = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approxBuf, aggregation.outputSchema);
             NES_DEBUG("dynamicApproxBuf: " << NES::Util::printTupleBufferAsCSV(dynamicApproxBuf.getBuffer(), aggregation.outputSchema));
             NES_ASSERT(dynamicAccBuf.getNumberOfTuples() == dynamicApproxBuf.getNumberOfTuples(),
                        "Approximate Buffer and Accuracy Buffer must have the same number of tuples");
@@ -290,7 +290,7 @@ MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
     using namespace Runtime::Execution;
 
     // Scan Operator
-    auto scanMemoryProvider = ASP::Util::createMemoryProvider(bufferSize, aggregation.inputSchema);
+    auto scanMemoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferSize, aggregation.inputSchema);
     auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
 
     // Synopses Operator
