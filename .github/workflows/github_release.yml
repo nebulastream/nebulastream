@@ -143,14 +143,18 @@ jobs:
           echo "Pushed the execution image"
           docker logout
       - name: KTM Use Case Regression Test
-      - run: cp ./docker/regressionImage/run.sh ./docker/regressionImage/KTM/
-      - run: sh ./docker/regressionImage/KTM/run.sh
+        run: | 
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/KTM/
+          sh ./docker/regressionImage/KTM/run.sh
       - name: Video Use Case Regression Test
-      - run: cp ./docker/regressionImage/run.sh ./docker/regressionImage/Video/
-      - run: sh ./docker/regressionImage/Video/run.sh
+        run: | 
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Video/
+          sh ./docker/regressionImage/Video/run.sh      
       - name: Smart Meter Use Case Regression Test
-      - run: cp ./docker/regressionImage/run.sh ./docker/regressionImage/SmartMeter/
-      - run: sh ./docker/regressionImage/SmartMeter/run.sh
+        run: | 
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/SmartMeter/
+          sh ./docker/regressionImage/SmartMeter/run.sh            
       - name: Medic Regression Test
-      - run: cp ./docker/regressionImage/run.sh ./docker/regressionImage/Med/
-      - run: sh ./docker/regressionImage/Med/run.sh
+        run: | 
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Med/
+          sh ./docker/regressionImage/Med/run.sh      
