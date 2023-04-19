@@ -13,6 +13,7 @@
 */
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLERESOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLERESOURCETYPE_HPP_
+#include <cstdint>
 
 namespace NES {
 
@@ -20,7 +21,7 @@ namespace NES {
  * @brief This class is used by coordinator side requests to indicate which data structures they need to access to
  * perform an operation so they can acquire locks before starting to execute the request logic.
  */
-enum class StorageHandlerResourceType : char {
+enum class StorageHandlerResourceType : uint8_t {
     Topology,
     QueryCatalogService,
     SourceCatalog,
