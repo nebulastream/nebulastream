@@ -19,7 +19,7 @@ namespace NES {
 
 AbstractRequest::AbstractRequest(size_t maxRetries) : maxRetries(maxRetries), actualRetries(0) {}
 
-void AbstractRequest::handleError(std::exception ex, const StorageHandlerPtr& storageHandle) {
+void AbstractRequest::handleError(std::exception ex, StorageHandler& storageHandle) {
     //error handling to be performed before rolling back
     preRollbackHandle(ex, storageHandle);
 
@@ -32,7 +32,7 @@ void AbstractRequest::handleError(std::exception ex, const StorageHandlerPtr& st
 
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
-void AbstractRequest::execute(const StorageHandlerPtr& storageHandle) {
+void AbstractRequest::execute(StorageHandler& storageHandle) {
     //acquire locks and perform other tasks to prepare for execution
     preExecution(storageHandle);
 
@@ -43,5 +43,5 @@ void AbstractRequest::execute(const StorageHandlerPtr& storageHandle) {
     postExecution(storageHandle);
 }
 
-void AbstractRequest::preExecution(const StorageHandlerPtr& storageHandle) { storageHandle->acquireResources(requiredResources); }
+void AbstractRequest::preExecution(StorageHandler& storageHandle) { storageHandle.acquireResources(requiredResources); }
 }// namespace NES
