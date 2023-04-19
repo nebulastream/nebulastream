@@ -137,6 +137,9 @@ add_nes_unit_test(topology-property-tests "UnitTests/Topology/TopologyPropertyTe
 ### NES TopologyIterator Test ###
 add_nes_unit_test(topology-iterator-tests "UnitTests/Topology/TopologyIterationTest.cpp")
 
+### NES Topology Version Timeling Test ###
+add_nes_unit_test(topology-version-timeline-tests "UnitTests/Topology/Prediction/TopologyVersionTimelineTest.cpp")
+
 ### Lineage Manager Test ###
 add_nes_unit_test(lineage-manager-tests "UnitTests/Runtime/LineageManagerTest.cpp")
 
