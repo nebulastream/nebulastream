@@ -19,7 +19,7 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
-#include <Experimental/Synopses/Samples/SampleRandomWithoutReplacement.hpp>
+#include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -29,7 +29,7 @@
 
 namespace NES::ASP{
 
-void SampleRandomWithoutReplacement::addToSynopsis(Nautilus::Record record) {
+void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     // Here we just store all records and then perform the sampling in getApproximate()
 
     if (storedRecords.empty()) {
@@ -60,8 +60,7 @@ void SampleRandomWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     }
 }
 
-std::vector<Runtime::TupleBuffer>
-SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
     // First, we have to pick our sample
     std::vector<Runtime::TupleBuffer> sample;
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
@@ -131,15 +130,15 @@ SampleRandomWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferM
     return {outputBuffer};
 }
 
-SampleRandomWithoutReplacement::SampleRandomWithoutReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
+SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
 
-void SampleRandomWithoutReplacement::initialize() {
+void SimpleRandomSampleWithoutReplacement::initialize() {
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     storedRecords.clear();
     numberOfTuples = 0;
 }
 
-double SampleRandomWithoutReplacement::getScalingFactor(){
+double SimpleRandomSampleWithoutReplacement::getScalingFactor(){
     double retValue = 1;
 
     if (std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction) ||
@@ -151,7 +150,8 @@ double SampleRandomWithoutReplacement::getScalingFactor(){
 
     return retValue;
 }
-Nautilus::Value<> SampleRandomWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
+Nautilus::Value<>
+SimpleRandomSampleWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
                                                                             Nautilus::Value<Nautilus::Double> scalingFactor) {
     auto tmpValue = Nautilus::Value<>(approximatedValue * scalingFactor);
     double value = tmpValue.getValue().staticCast<Nautilus::Double>().getValue();
