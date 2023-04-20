@@ -1426,18 +1426,16 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
 
-TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
-    // Full pass: 52 tuples in a buffer, 2*52 = 104 in total
-    // file is 52 + 48 but it loops, so 1st: 52, 2nd: also 52
-    // expectedNumberOfBuffers set 0 in c-tor, looping
-    uint64_t expectedNumberOfTuples = 104;
+TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
+    // Full pass: 52 tuples in first buffer, 48 in second
+    // expectedNumberOfBuffers in c-tor, no looping
+    uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(this->path_to_file);
-    sourceConfig->setNumberOfBuffersToProduce(0);
+    sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setGatheringInterval(this->gatheringInterval);
-
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1450,10 +1448,18 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {
+    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(buffer);
+        EXPECT_NE(buf->getNumberOfTuples(), 0u);
+        EXPECT_TRUE(buf.has_value());
+        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
+            auto tuple = buf->getBuffer<ysbRecord>();
+            EXPECT_STREQ(tuple->ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
+                         || !strcmp(tuple->event_type, "purchase")));
+        }
     }
-    EXPECT_FALSE(csvDataSource.fileEnded);
+    EXPECT_TRUE(csvDataSource.fileEnded);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
