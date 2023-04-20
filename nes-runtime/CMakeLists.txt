@@ -241,6 +241,28 @@ register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runt
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/fsst.h Runtime/MemoryLayout/Compression/fsst.h)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/libfsst.hpp Runtime/MemoryLayout/Compression/libfsst.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/brle.h Runtime/MemoryLayout/Compression/brle.h)
+# Sprintz
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/bitpack.h Runtime/MemoryLayout/Compression/Sprintz/bitpack.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/debug_utils.hpp Runtime/MemoryLayout/Compression/Sprintz/debug_utils.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/delta.h Runtime/MemoryLayout/Compression/Sprintz/delta.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/entropy.hpp Runtime/MemoryLayout/Compression/Sprintz/entropy.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/format.h Runtime/MemoryLayout/Compression/Sprintz/format.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/macros.h Runtime/MemoryLayout/Compression/Sprintz/macros.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/nn_search.hpp Runtime/MemoryLayout/Compression/Sprintz/nn_search.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/nn_utils.hpp Runtime/MemoryLayout/Compression/Sprintz/nn_utils.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/online.hpp Runtime/MemoryLayout/Compression/Sprintz/online.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/predict.h Runtime/MemoryLayout/Compression/Sprintz/predict.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/query.hpp Runtime/MemoryLayout/Compression/Sprintz/query.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/search.hpp Runtime/MemoryLayout/Compression/Sprintz/search.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/sprintz.h Runtime/MemoryLayout/Compression/Sprintz/sprintz.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/sprintz_delta.h Runtime/MemoryLayout/Compression/Sprintz/sprintz_delta.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/sprintz_delta_rle_query.hpp Runtime/MemoryLayout/Compression/Sprintz/sprintz_delta_rle_query.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/sprintz_xff.h Runtime/MemoryLayout/Compression/Sprintz/sprintz_xff.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/sprintz_xff_rle_query.hpp Runtime/MemoryLayout/Compression/Sprintz/sprintz_xff_rle_query.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/traits.hpp Runtime/MemoryLayout/Compression/Sprintz/traits.hpp)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/transpose.h Runtime/MemoryLayout/Compression/Sprintz/transpose.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/univariate_8b.h Runtime/MemoryLayout/Compression/Sprintz/univariate_8b.h)
+register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/Compression/Sprintz/util.h Runtime/MemoryLayout/Compression/Sprintz/util.h)
 
 #Add the nes common and headers to cpack
 install(TARGETS nes-runtime

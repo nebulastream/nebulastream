@@ -1,6 +1,7 @@
 #include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
 #include "API/Schema.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
+#include "Runtime/MemoryLayout/Compression/Sprintz/sprintz.h"
 #include "Runtime/MemoryLayout/Compression/brle.h"
 #include "Runtime/MemoryLayout/Compression/fsst.h"
 #include "Runtime/MemoryLayout/Compression/libfsst.hpp"
@@ -125,6 +126,7 @@ void CompressedDynamicTupleBuffer::compressHorizontal(CompressionAlgorithm targe
             case CompressionAlgorithm::SNAPPY: compressSnappyHorizontal(); break;
             case CompressionAlgorithm::FSST: compressFsstHorizontal(); break;
             case CompressionAlgorithm::RLE: compressRleHorizontal(); break;
+            case CompressionAlgorithm::SPRINTZ: compressSprintzHorizontal(); break;
         }
     } else {
         NES_THROW_RUNTIME_ERROR(printf("Cannot compress from %s to %s.",
@@ -141,6 +143,7 @@ void CompressedDynamicTupleBuffer::compressVertical(CompressionAlgorithm targetC
             case CompressionAlgorithm::SNAPPY: compressSnappyVertical(); break;
             case CompressionAlgorithm::FSST: compressFsstVertical(); break;
             case CompressionAlgorithm::RLE: compressRleVertical(); break;
+            case CompressionAlgorithm::SPRINTZ: NES_NOT_IMPLEMENTED(); break;
         }
     } else {
         NES_THROW_RUNTIME_ERROR(printf("Cannot compress from %s to %s.",
@@ -186,6 +189,7 @@ void CompressedDynamicTupleBuffer::decompressHorizontal() {
         case CompressionAlgorithm::SNAPPY: decompressSnappyHorizontal(); break;
         case CompressionAlgorithm::FSST: decompressFsstHorizontal(); break;
         case CompressionAlgorithm::RLE: decompressRleHorizontal(); break;
+        case CompressionAlgorithm::SPRINTZ: NES_NOT_IMPLEMENTED(); break;
     }
 }
 
@@ -196,6 +200,7 @@ void CompressedDynamicTupleBuffer::decompressVertical() {
         case CompressionAlgorithm::SNAPPY: decompressSnappyVertical(); break;
         case CompressionAlgorithm::FSST: decompressFsstVertical(); break;
         case CompressionAlgorithm::RLE: decompressRleVertical(); break;
+        case CompressionAlgorithm::SPRINTZ: NES_NOT_IMPLEMENTED(); break;
     }
 }
 
@@ -702,6 +707,25 @@ void CompressedDynamicTupleBuffer::decompressRleVertical() {
     compressedSizes = {};
     compressionAlgorithm = CompressionAlgorithm::NONE;
     free(baseDstPointer);
+}
+
+// ===================================
+// Sprintz
+// ===================================
+void CompressedDynamicTupleBuffer::compressSprintzHorizontal() {
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    size_t srcSize = strlen(reinterpret_cast<const char*>(baseSrcPointer));
+    auto* baseDstPointer = (uint8_t*) malloc(srcSize);// TODO? new TupleBuffer instead?
+    for (size_t i = 0; i < srcSize; i++) {            // TODO src content exists but without gibberish
+        baseDstPointer[i] = '\0';
+    }
+    uint16_t nDimensions = 1;
+    int64_t res = sprintz_compress_delta_8b(baseSrcPointer, srcSize, reinterpret_cast<int8_t*>(baseDstPointer), nDimensions);
+    clearBuffer();
+    size_t compressedSize = strlen(reinterpret_cast<const char*>(baseDstPointer));//473
+    compressedSizes.push_back(compressedSize);
+    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
+    this->compressionAlgorithm = CompressionAlgorithm::SPRINTZ;
 }
 
 }// namespace NES::Runtime::MemoryLayouts
