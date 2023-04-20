@@ -44,7 +44,7 @@ class WindowDeploymentTest : public Testing::NESBaseTest {
         NES_INFO("Setup WindowDeploymentTest test class.");
     }
 };
-file
+
 /**
  * @brief test central tumbling window and event time
  */
