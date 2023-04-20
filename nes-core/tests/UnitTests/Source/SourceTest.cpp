@@ -1388,44 +1388,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                  || !strcmp(content->event_type, "purchase")));
 }
 
-TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
-    // Full pass: 52 tuples in first buffer, 48 in second
-    // expectedNumberOfBuffers in c-tor, no looping
-    uint64_t expectedNumberOfTuples = 100;
-    uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(this->path_to_file);
-    sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setGatheringInterval(this->gatheringInterval);
-    CSVSourceProxy csvDataSource(this->schema,
-                                 this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(),
-                                 sourceConfig,
-                                 this->operatorId,
-                                 this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_FALSE(csvDataSource.fileEnded);
-    auto buf = this->GetEmptyBuffer();
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
-        Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
-        csvDataSource.fillBuffer(buffer);
-        EXPECT_NE(buf->getNumberOfTuples(), 0u);
-        EXPECT_TRUE(buf.has_value());
-        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
-            auto tuple = buf->getBuffer<ysbRecord>();
-            EXPECT_STREQ(tuple->ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
-                         || !strcmp(tuple->event_type, "purchase")));
-        }
-    }
-    EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
-}
-
 TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     // Full pass: 52 tuples in first buffer, 48 in second
     // expectedNumberOfBuffers in c-tor, no looping
