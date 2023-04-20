@@ -57,7 +57,7 @@ jobs:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-    timeout-minutes: 90
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
