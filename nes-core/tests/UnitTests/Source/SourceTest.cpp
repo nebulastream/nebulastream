@@ -453,6 +453,36 @@ class LambdaSourceProxy : public LambdaSource {
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeIngestion);
 };
 
+class AdaptiveLambdaSourceProxy : public LambdaSource {
+public:
+    AdaptiveLambdaSourceProxy(
+            SchemaPtr schema,
+            Runtime::BufferManagerPtr bufferManager,
+            Runtime::QueryManagerPtr queryManager,
+            uint64_t numbersOfBufferToProduce,
+            uint64_t gatheringValue,
+            std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+            OperatorId operatorId,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+            : LambdaSource(schema,
+                           bufferManager,
+                           queryManager,
+                           numbersOfBufferToProduce,
+                           gatheringValue,
+                           std::move(generationFunction),
+                           operatorId,
+                           0,
+                           numSourceLocalBuffers,
+                           GatheringMode::ADAPTIVE_MODE,
+                           0,
+                           0,
+                           successors){};
+
+private:
+    FRIEND_TEST(SourceTest, testAdaptiveSource);
+};
+
 class MonitoringSourceProxy : public MonitoringSource {
   public:
     MonitoringSourceProxy(const Monitoring::MetricCollectorPtr& metricCollector,
@@ -547,6 +577,11 @@ class SourceTest : public Testing::BaseIntegrationTest {
                                    ->addField("positive_with_decimal", BasicType::FLOAT32)
                                    ->addField("negative_with_decimal", BasicType::FLOAT32)
                                    ->addField("longer_precision_decimal", BasicType::FLOAT32);
+        this->sensorValSchema = Schema::create()
+                                    ->addField("id", BasicType::UINT64)
+                                    ->addField("value", BasicType::FLOAT64)
+                                    ->addField("payload", BasicType::UINT64)
+                                    ->addField("timestamp", BasicType::UINT64);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -610,7 +645,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_decimals_file;
-    SchemaPtr schema, lambdaSchema, decimalsSchema;
+    SchemaPtr schema, lambdaSchema, decimalsSchema, sensorValSchema;
     uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
         numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
@@ -1864,6 +1899,14 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 
     EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedTuples(), numBuffers * lambdaDataSource.numberOfTuplesToProduce);
+}
+
+TEST_F(SourceTest, testAdaptiveSource) {
+    // TODO: test adaptive mode here
+    // create func with buffers with Sensor values, use as lambda
+    // consume buffers from the source
+    // assume no errors are thrown
+    FAIL();
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
