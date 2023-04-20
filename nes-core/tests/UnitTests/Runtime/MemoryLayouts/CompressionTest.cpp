@@ -630,4 +630,40 @@ TEST_F(CompressionTest, rleColumnLayoutVerticalMultiColumnUint8) {
     verifyDecompressed(bufferOrig, buffer);
 }
 
+// ====================================================================================================
+// Sprintz
+// ====================================================================================================
+TEST_F(CompressionTest, sprintzRowLayoutVerticalSingleColumnUint8) {
+    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+
+    RowLayoutPtr rowLayout;
+    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(rowLayout, nullptr);
+
+    // generate data
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
+    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
+    int i = 0;
+    for (; i < 3; i++) {
+        buffer[i][0].write<uint8_t>(70);
+    }
+    for (; i < 6; i++) {
+        buffer[i][0].write<uint8_t>(71);
+    }
+    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+        buffer[i][0].write<uint8_t>(71);
+    }
+
+    // compress
+    try {
+        buffer.compress(CompressionAlgorithm::SPRINTZ, CompressionMode::VERTICAL);
+    } catch (Exceptions::RuntimeException const& err) {
+        using ::testing::HasSubstr;
+        EXPECT_THAT(err.what(), HasSubstr("Vertical compression cannot be performed on row layout."));
+    } catch (...) {
+        FAIL();
+    }
+}
 }// namespace NES::Runtime::MemoryLayouts

@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, FSST, RLE };
+enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, FSST, RLE, SPRINTZ };
 enum class CompressionMode { HORIZONTAL, VERTICAL };
 
 const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
@@ -20,6 +20,7 @@ const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
         case CompressionAlgorithm::SNAPPY: return "Snappy";
         case CompressionAlgorithm::FSST: return "FSST";
         case CompressionAlgorithm::RLE: return "RLE";
+        case CompressionAlgorithm::SPRINTZ: return "Sprintz";
     }
 }
 
@@ -89,6 +90,7 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     void decompressRleHorizontal();
     void compressRleVertical();
     void decompressRleVertical();
+    void compressSprintzHorizontal();
 };
 
 }// namespace NES::Runtime::MemoryLayouts

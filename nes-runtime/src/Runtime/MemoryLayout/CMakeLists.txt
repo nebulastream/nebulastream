@@ -21,4 +21,20 @@ add_source_files(nes-runtime
         BufferAccessException.cpp
         Compression/libfsst.cpp
         Compression/fsst_avx512.cpp
+        #Compression/Sprintz/delta.cpp
+        #Compression/Sprintz/entropy.cpp
+        #Compression/Sprintz/format.cpp
+        #Compression/Sprintz/main.cpp
+        #Compression/Sprintz/online.cpp
+        #Compression/Sprintz/predict.cpp
+        Compression/Sprintz/sprintz.cpp
+        #Compression/Sprintz/sprintz_delta.cpp
+        #Compression/Sprintz/sprintz_delta_lowdim.cpp
+        #Compression/Sprintz/sprintz_delta_rle.cpp
+        #Compression/Sprintz/sprintz_delta_rle_query.cpp
+        Compression/Sprintz/sprintz_xff.cpp
+        #Compression/Sprintz/sprintz_xff_lowdim.cpp
+        #Compression/Sprintz/sprintz_xff_rle.cpp
+        #Compression/Sprintz/sprintz_xff_rle_query.cpp
+        #Compression/Sprintz/univariate_8b.cpp
 )
