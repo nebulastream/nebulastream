@@ -53,4 +53,8 @@ const std::string MicroBenchmarkResult::getRowAsCsv() const {
 
     return string;
 }
+
+std::string MicroBenchmarkResult::getParam(const std::string& paramString) {
+    return params[paramString];
+}
 } // namespace NES::ASP::Benchmarking

@@ -125,7 +125,7 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
 
     // Parsing all required members from the yaml file
     auto parsedReps = ASP::Util::parseReps(configFile["reps"]);
-    auto parsedSynopsisArguments = ASP::Util::parseSynopsisArguments(configFile["synopsis"]);
+    auto parsedSynopsisArguments = ASP::Util::parseSynopsisConfigurations(configFile["synopsis"]);
     auto parsedAggregations = ASP::Util::parseAggregations(configFile["aggregation"], absoluteDataPath);
     auto parsedWindowSizes = ASP::Util::parseWindowSizes(configFile["windowSize"]);
     auto parsedBufferSizes = ASP::Util::parseBufferSizes(configFile["bufferSize"]);

@@ -93,8 +93,7 @@ class SynopsisConfiguration : public Configurations::BaseConfiguration {
      * @brief Creates a string representation
      * @return String representation
      */
-    std::string toString() override
-        ;
+    std::string toString() override;
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

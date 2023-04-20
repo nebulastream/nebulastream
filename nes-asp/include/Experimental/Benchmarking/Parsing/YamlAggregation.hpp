@@ -52,21 +52,6 @@ class YamlAggregation {
     YamlAggregation& operator=(const YamlAggregation& other);
 
     /**
-     * @brief Custom constructor
-     * @param type
-     * @param fieldNameAggregation
-     * @param inputFile
-     * @param inputSchema
-     */
-    YamlAggregation(const Aggregation_Type& type,
-                    const std::string& fieldNameAggregation,
-                    const std::string& fieldNameApproximate,
-                    const std::string& timestampFieldName,
-                    const std::string& inputFile,
-                    const SchemaPtr& inputSchema,
-                    const SchemaPtr& outputSchema);
-
-    /**
      * @brief Creates an YamlAggregation object from a yaml node
      * @param aggregationNode
      * @param data is needed for providing an absolute path to the input file
@@ -107,6 +92,22 @@ class YamlAggregation {
 
 
   private:
+
+    /**
+     * @brief Custom constructor
+     * @param type
+     * @param fieldNameAggregation
+     * @param inputFile
+     * @param inputSchema
+     */
+    YamlAggregation(const Aggregation_Type& type,
+                    const std::string& fieldNameAggregation,
+                    const std::string& fieldNameApproximate,
+                    const std::string& timestampFieldName,
+                    const std::string& inputFile,
+                    const SchemaPtr& inputSchema,
+                    const SchemaPtr& outputSchema);
+
     /**
      * @brief Creates an aggregation value from the current parameters for a min aggregation function
      * @return AggregationValue
