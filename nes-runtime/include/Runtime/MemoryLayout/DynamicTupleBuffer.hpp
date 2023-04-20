@@ -412,6 +412,7 @@ class DynamicTupleBuffer {
         }
     }
 
+  protected:
     /**
      * @brief Gets the memoryLayout.
      * @return MemoryLayoutPtr
