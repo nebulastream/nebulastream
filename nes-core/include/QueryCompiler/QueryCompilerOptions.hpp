@@ -68,7 +68,12 @@ class QueryCompilerOptions {
         // Creates debug output i.e., source code files and applies formatting. No code optimizations.
         DEBUG,
         // Applies all compiler optimizations.
-        OPTIMIZE
+        OPTIMIZE,
+        // Applies all compiler optimizations and inlines proxy functions.
+        // TODO with this we couple optimizations and inlining
+        // -> reason: when inlining, we want to optimize the LLVM IR with O3 anyway (?)
+        // --> potentially O1 would be sufficient -> we could set this in the optimization pass (in any case we want to optimize)
+        PROXY_INLINING
     };
 
     enum class PipeliningStrategy : uint8_t {

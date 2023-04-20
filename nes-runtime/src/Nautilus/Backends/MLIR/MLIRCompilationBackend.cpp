@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Nautilus/Backends/CompilationBackend.hpp"
+#include "Nautilus/Util/CompilationOptions.hpp"
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>

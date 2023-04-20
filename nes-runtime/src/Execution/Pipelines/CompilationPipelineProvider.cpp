@@ -15,6 +15,7 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 
 namespace NES::Runtime::Execution {
 
