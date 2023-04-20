@@ -35,11 +35,11 @@ namespace NES::ASP::Util {
 std::string parseCsvFileFromYaml(const std::string& yamlFileName);
 
 /**
- * @brief Parses the yaml node and creates synopsis arguments to later on create synopsis from them
+ * @brief Parses the yaml node and creates synopsis configurations to later on create synopsis from them
  * @param synopsesNode
  * @return Vector of synopsis arguments
  */
-std::vector<SynopsisConfigurationPtr> parseSynopsisArguments(const Yaml::Node& synopsesNode);
+std::vector<SynopsisConfigurationPtr> parseSynopsisConfigurations(const Yaml::Node& synopsesNode);
 
 /**
  * @brief Parses the yaml node and creates YamlAggregation (wrapper for the aggregation, e.g., input and accuracy file)

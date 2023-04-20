@@ -63,6 +63,13 @@ class MicroBenchmarkResult {
      */
     const std::string getRowAsCsv() const;
 
+    /**
+     * @brief Getter for the params
+     * @param paramString
+     * @return Reference to params
+     */
+    std::string getParam(const std::string& paramString);
+
   private:
     const std::string THROUGHPUT = "throughput";
     const std::string ACCURACY = "accuracy";

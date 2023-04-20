@@ -27,7 +27,7 @@
 
 namespace NES::ASP::Util {
 
-std::vector<SynopsisConfigurationPtr> parseSynopsisArguments(const Yaml::Node& synopsesNode) {
+std::vector<SynopsisConfigurationPtr> parseSynopsisConfigurations(const Yaml::Node& synopsesNode) {
     std::vector<SynopsisConfigurationPtr> retVector;
     for (auto entry = synopsesNode.Begin(); entry != synopsesNode.End(); entry++) {
         auto node = (*entry).second;
