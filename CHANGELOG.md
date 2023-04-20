@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.56](https://github.com/nebulastream/nebulastream/tree/v0.5.56) (2023-04-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.55...v0.5.56)
+
+### Bug Fixes 🐛
+
+- \[BUG\] CSV Source not reading the whole file by default [\#3663](https://github.com/nebulastream/nebulastream/issues/3663)
+
 ## [v0.5.55](https://github.com/nebulastream/nebulastream/tree/v0.5.55) (2023-04-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.54...v0.5.55)
