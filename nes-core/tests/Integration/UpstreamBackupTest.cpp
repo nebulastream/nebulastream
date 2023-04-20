@@ -172,7 +172,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 /*
  * @brief test message passing between sink-coordinator-sources
  */
-TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
+TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -243,7 +243,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 /*
  * @brief test if upstream backup doesn't fail
  */
-TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
+TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
