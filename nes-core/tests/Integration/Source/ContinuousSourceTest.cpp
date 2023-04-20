@@ -69,6 +69,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(1);
     auto physicalSource1 = PhysicalSource::create("exdra", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));

@@ -44,7 +44,7 @@ class WindowDeploymentTest : public Testing::NESBaseTest {
         NES_INFO("Setup WindowDeploymentTest test class.");
     }
 };
-
+file
 /**
  * @brief test central tumbling window and event time
  */
@@ -67,6 +67,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     workerConfig->coordinatorPort = port;
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
     auto windowSource = PhysicalSource::create("exdra", "test_stream", sourceConfig);
     workerConfig->physicalSources.add(windowSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
