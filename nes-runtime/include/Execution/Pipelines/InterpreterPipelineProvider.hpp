@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
 
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 namespace NES::Runtime::Execution {
 

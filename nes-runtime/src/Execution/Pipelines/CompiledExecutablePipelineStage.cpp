@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Nautilus/Util/CompilationOptions.hpp"
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
