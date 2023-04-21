@@ -23,7 +23,7 @@
 namespace NES {
 class LockManager {
   public:
-   LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
+    LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
                 TopologyPtr topology,
                 QueryCatalogServicePtr queryCatalogService,
                 GlobalQueryPlanPtr globalQueryPlan,
