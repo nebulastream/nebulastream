@@ -40,24 +40,14 @@ void TwoPhaseLockingStorageHandler::acquireResources(std::vector<StorageHandlerR
 
 void TwoPhaseLockingStorageHandler::lockResource(StorageHandlerResourceType resourceType) {
     switch (resourceType) {
-        case StorageHandlerResourceType::Topology:
-            topology = lockManager->getTopologyHandle();
-            break;
-        case StorageHandlerResourceType::QueryCatalogService:
-            queryCatalogService = lockManager->getQueryCatalogHandle();
-            break;
-        case StorageHandlerResourceType::SourceCatalog:
-            sourceCatalog = lockManager->getSourceCatalogHandle();
-            break;
+        case StorageHandlerResourceType::Topology: topology = lockManager->getTopologyHandle(); break;
+        case StorageHandlerResourceType::QueryCatalogService: queryCatalogService = lockManager->getQueryCatalogHandle(); break;
+        case StorageHandlerResourceType::SourceCatalog: sourceCatalog = lockManager->getSourceCatalogHandle(); break;
         case StorageHandlerResourceType::GlobalExecutionPlan:
             globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle();
             break;
-        case StorageHandlerResourceType::GlobalQueryPlan:
-            globalQueryPlan = lockManager->getGlobalQueryPlanHandle();
-            break;
-        case StorageHandlerResourceType::UdfCatalog:
-            udfCatalog = lockManager->getUdfCatalogHandle();
-            break;
+        case StorageHandlerResourceType::GlobalQueryPlan: globalQueryPlan = lockManager->getGlobalQueryPlanHandle(); break;
+        case StorageHandlerResourceType::UdfCatalog: udfCatalog = lockManager->getUdfCatalogHandle(); break;
     }
 }
 

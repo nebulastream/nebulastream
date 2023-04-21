@@ -21,29 +21,23 @@ LockManager::LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
                          GlobalQueryPlanPtr globalQueryPlan,
                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
                          Catalogs::UDF::UdfCatalogPtr udfCatalog)
-    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
+      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
+      sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
 GlobalExecutionPlanHandle LockManager::getGlobalExecutionPlanHandle() {
     return {&*globalExecutionPlan, UnlockDeleter(globalExecutionPlanMutex)};
 }
-TopologyHandle LockManager::getTopologyHandle() {
-    return {&*topology, UnlockDeleter(topologyMutex)};
-}
+TopologyHandle LockManager::getTopologyHandle() { return {&*topology, UnlockDeleter(topologyMutex)}; }
 
 QueryCatalogServiceHandle LockManager::getQueryCatalogHandle() {
     return {&*queryCatalogService, UnlockDeleter(queryCatalogMutex)};
 }
 
-GlobalQueryPlanHandle LockManager::getGlobalQueryPlanHandle() {
-    return {&*globalQueryPlan, UnlockDeleter(globalQueryPlanMutex)};
-}
+GlobalQueryPlanHandle LockManager::getGlobalQueryPlanHandle() { return {&*globalQueryPlan, UnlockDeleter(globalQueryPlanMutex)}; }
 
-SourceCatalogHandle LockManager::getSourceCatalogHandle() {
-    return {&*sourceCatalog, UnlockDeleter(sourceCatalogMutex)};
-}
+SourceCatalogHandle LockManager::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter(sourceCatalogMutex)}; }
 
-UdfCatalogHandle LockManager::getUdfCatalogHandle() {
-    return {&*udfCatalog, UnlockDeleter(udfCatalogMutex)};
-}
+UdfCatalogHandle LockManager::getUdfCatalogHandle() { return {&*udfCatalog, UnlockDeleter(udfCatalogMutex)}; }
 
 }// namespace NES
