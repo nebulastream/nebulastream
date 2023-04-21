@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.57](https://github.com/nebulastream/nebulastream/tree/v0.5.57) (2023-04-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.56...v0.5.57)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve performance of storage handlers by avoiding pointer copies where possible [\#3674](https://github.com/nebulastream/nebulastream/issues/3674)
+- \[TASK\] Include projection order in containment identification [\#3495](https://github.com/nebulastream/nebulastream/issues/3495)
+
 ## [v0.5.56](https://github.com/nebulastream/nebulastream/tree/v0.5.56) (2023-04-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.55...v0.5.56)
