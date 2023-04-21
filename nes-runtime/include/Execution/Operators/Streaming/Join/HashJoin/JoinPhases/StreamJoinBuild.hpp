@@ -15,7 +15,7 @@
 #define NES_STREAMJOINBUILD_HPP
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinOperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
