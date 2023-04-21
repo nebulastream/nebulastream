@@ -13,9 +13,10 @@ limitations under the License.
 */
 
 #include <NesBaseTest.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Util/Logger/LogLevel.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::ASP {
     class SimpleRandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
@@ -24,4 +25,11 @@ namespace NES::Runtime::Execution::Operators {
             NES_INFO("Setup SimpleRandomSampleWithoutReplacementTest test class.");
         }
     };
-}
+
+
+    TEST_F(SimpleRandomSampleWithoutReplacementTest, testWithSmallNumberOfTuplesMin) {
+        auto inputSchema = Schema::create(). hier weiter machen
+        auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(Parsing::AGGREGATION_TYPE::MIN,
+                                                                            )
+    }
+} // namespace NES::ASP

@@ -47,7 +47,9 @@ namespace NES::ASP::Parsing {
             aggregationNode["inputFile"] = inputFile;
             aggregationNode["timestamp"] = timeStampFieldName;
 
-            synopsisAggregationConfig = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
+            auto synopsisConfig = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
+            synopsisAggregationConfig = synopsisConfig.first;
+            inputFile = synopsisConfig.second;
         }
 
         AGGREGATION_TYPE type = AGGREGATION_TYPE::MAX;
@@ -56,7 +58,7 @@ namespace NES::ASP::Parsing {
         std::string inputFile = "some_input_file.csv";
         std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
         std::string timeStampFieldName = "timeStampFieldName1234123";
-        synopsisAggregationConfig yamlAggregation;
+        Parsing::SynopsisAggregationConfig synopsisAggregationConfig;
     };
 
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregation) {
@@ -69,8 +71,8 @@ namespace NES::ASP::Parsing {
         auto data = std::filesystem::path("some_folder") / "test" / "test123";
         auto timeStampFieldName = "timeStampFieldName1234123";
 
-        auto inputSchema = inputFileSchemas[inputFile];
-        auto outputSchema = getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
+        auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
+        auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
 
 
         Yaml::Node aggregationNode;
@@ -80,24 +82,24 @@ namespace NES::ASP::Parsing {
         aggregationNode["inputFile"] = inputFile;
         aggregationNode["timestamp"] = timeStampFieldName;
 
-        auto yamlAggregation = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
-        EXPECT_EQ(yamlAggregation.type, type);
-        EXPECT_EQ(yamlAggregation.fieldNameAggregation, fieldNameAggregation);
-        EXPECT_EQ(yamlAggregation.fieldNameApproximate, fieldNameApprox);
-        EXPECT_EQ(yamlAggregation.timeStampFieldName, timeStampFieldName);
-        EXPECT_EQ(yamlAggregation.inputFile, data / inputFile);
-        EXPECT_TRUE(yamlAggregation.inputSchema->equals(inputSchema));
-        EXPECT_TRUE(yamlAggregation.outputSchema->equals(outputSchema));
+        auto synopsisAggregation = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
+        EXPECT_EQ(synopsisAggregation.first.type, type);
+        EXPECT_EQ(synopsisAggregation.first.fieldNameAggregation, fieldNameAggregation);
+        EXPECT_EQ(synopsisAggregation.first.fieldNameApproximate, fieldNameApprox);
+        EXPECT_EQ(synopsisAggregation.first.timeStampFieldName, timeStampFieldName);
+        EXPECT_EQ(synopsisAggregation.second, data / inputFile);
+        EXPECT_TRUE(synopsisAggregation.first.inputSchema->equals(inputSchema));
+        EXPECT_TRUE(synopsisAggregation.first.outputSchema->equals(outputSchema));
     }
 
     TEST_F(SynopsisAggregationConfigTest, testgetHeaderCsvAndValuesCsvAndToString) {
-        auto inputSchema = inputFileSchemas[inputFile];
-        auto inputSchemaStr = inputFileSchemas[inputFile]->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation)->toString();
+        auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
+        auto inputSchemaStr = Benchmarking::inputFileSchemas[inputFile]->toString();
+        auto outputSchemaStr = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation)->toString();
 
-        auto headerCsv = yamlAggregation.getHeaderAsCsv();
-        auto valuesCsv = yamlAggregation.getValuesAsCsv();
-        auto toString = yamlAggregation.toString();
+        auto headerCsv = synopsisAggregationConfig.getHeaderAsCsv();
+        auto valuesCsv = synopsisAggregationConfig.getValuesAsCsv();
+        auto toString = synopsisAggregationConfig.toString();
 
         EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
                              "aggregation_timeStampFieldName,aggregation_inputFile,aggregation_inputSchema,"
@@ -112,10 +114,10 @@ namespace NES::ASP::Parsing {
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregationFunction) {
 
         for (auto& type : magic_enum::enum_values<AGGREGATION_TYPE>()) {
-            yamlAggregation.type = type;
-            auto aggregationFunction = yamlAggregation.createAggregationFunction();
+            synopsisAggregationConfig.type = type;
+            auto aggregationFunction = synopsisAggregationConfig.createAggregationFunction();
 
-            switch (yamlAggregation.type) {
+            switch (synopsisAggregationConfig.type) {
                 case AGGREGATION_TYPE::MIN:
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::MinAggregationFunction>(aggregationFunction), nullptr);
                 case AGGREGATION_TYPE::MAX:
@@ -133,33 +135,33 @@ namespace NES::ASP::Parsing {
 
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregationValue) {
         for (auto& type : magic_enum::enum_values<AGGREGATION_TYPE>()) {
-            switch (yamlAggregation.type) {
+            switch (synopsisAggregationConfig.type) {
                 case AGGREGATION_TYPE::MIN: {
-                    yamlAggregation.type = type;
-                    auto aggregationValue = yamlAggregation.createAggregationValue();
+                    synopsisAggregationConfig.type = type;
+                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
                 }
                 case AGGREGATION_TYPE::MAX: {
-                    yamlAggregation.type = type;
-                    auto aggregationValue = yamlAggregation.createAggregationValue();
+                    synopsisAggregationConfig.type = type;
+                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
                 }
                 case AGGREGATION_TYPE::SUM: {
-                    yamlAggregation.type = type;
-                    auto aggregationValue = yamlAggregation.createAggregationValue();
+                    synopsisAggregationConfig.type = type;
+                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
                 }
                 case AGGREGATION_TYPE::AVERAGE: {
-                    yamlAggregation.type = type;
-                    auto aggregationValue = yamlAggregation.createAggregationValue();
+                    synopsisAggregationConfig.type = type;
+                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::AvgAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
                 }
                 case AGGREGATION_TYPE::COUNT: {
-                    yamlAggregation.type = type;
-                    auto aggregationValue = yamlAggregation.createAggregationValue();
+                    synopsisAggregationConfig.type = type;
+                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
                 }
-                case AGGREGATION_TYPE::NONE: EXPECT_ANY_THROW(yamlAggregation.createAggregationValue());
+                case AGGREGATION_TYPE::NONE: EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue());
             }
         }
     }

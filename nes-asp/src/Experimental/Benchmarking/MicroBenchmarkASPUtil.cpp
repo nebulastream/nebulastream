@@ -36,9 +36,9 @@ std::vector<Parsing::SynopsisConfigurationPtr> parseSynopsisConfigurations(const
     return retVector;
 }
 
-std::vector<Parsing::SynopsisAggregationConfig> parseAggregations(const Yaml::Node& aggregationsNode,
-                                                             const std::filesystem::path& data) {
-    std::vector<Parsing::SynopsisAggregationConfig> parsedAggregations;
+std::vector<std::pair<Parsing::SynopsisAggregationConfig, std::string>>
+parseAggregations(const Yaml::Node& aggregationsNode, const std::filesystem::path& data) {
+    std::vector<std::pair<Parsing::SynopsisAggregationConfig, std::string>> parsedAggregations;
     for (auto entry = aggregationsNode.Begin(); entry != aggregationsNode.End(); entry++) {
         auto node = (*entry).second;
         parsedAggregations.emplace_back(Parsing::SynopsisAggregationConfig::createAggregationFromYamlNode(node, data));

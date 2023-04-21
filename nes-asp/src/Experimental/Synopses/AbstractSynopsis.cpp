@@ -19,42 +19,24 @@
 
 namespace NES::ASP {
 
-AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration arguments,
-                                             Parsing::SynopsisAggregationConfig aggregationConfig) {
+AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arguments,
+                                             Parsing::SynopsisAggregationConfig& aggregationConfig) {
 
-    if (arguments.type.getValue() == Parsing::SYNOPSIS_TYPE::SRSWoR) {
-        return std::make_shared<SimpleRandomSampleWithoutReplacement>(arguments.width.getValue());
+    if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
+        return std::make_shared<SimpleRandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }
 }
 
-void AbstractSynopsis::setAggregationFunction(
-    const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction) {
-    AbstractSynopsis::aggregationFunction = aggregationFunction;
-}
-
-void AbstractSynopsis::setFieldNameAggregation(const std::string& fieldNameAggregation) {
-    AbstractSynopsis::fieldNameAggregation = fieldNameAggregation;
-}
-
-void AbstractSynopsis::setFieldNameApproximate(const std::string& fieldNameApproximate) {
-    AbstractSynopsis::fieldNameApproximate = fieldNameApproximate;
-}
-
-void AbstractSynopsis::setInputSchema(const SchemaPtr& inputSchema) {
-    AbstractSynopsis::inputSchema = inputSchema;
-}
-
-void AbstractSynopsis::setOutputSchema(const SchemaPtr& outputSchema) {
-    AbstractSynopsis::outputSchema = outputSchema;
-}
-
-void AbstractSynopsis::setAggregationValue(Parsing::Benchmarking::AggregationValuePtr aggregationValue) {
-    AbstractSynopsis::aggregationValue = std::move(aggregationValue);
-}
-
 void AbstractSynopsis::setBufferManager(const Runtime::BufferManagerPtr& bufferManager) {
     AbstractSynopsis::bufferManager = bufferManager;
 }
+
+AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
+    : aggregationFunction(aggregationConfig.createAggregationFunction()),
+      aggregationValue(aggregationConfig.createAggregationValue()), fieldNameAggregation(aggregationConfig.fieldNameAggregation),
+      fieldNameApproximate(aggregationConfig.fieldNameApproximate), inputSchema(aggregationConfig.inputSchema),
+      outputSchema(aggregationConfig.outputSchema) {}
+
 } // namespace NES::ASP
