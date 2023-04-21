@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinUtil.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
