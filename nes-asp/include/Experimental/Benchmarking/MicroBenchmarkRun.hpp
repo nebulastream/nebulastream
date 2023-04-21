@@ -77,6 +77,7 @@ class MicroBenchmarkRun {
      * @param bufferSize
      * @param numberOfBuffers
      * @param windowSize
+     * @param inputFile
      * @param reps
      */
     MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesConfig,
@@ -84,6 +85,7 @@ class MicroBenchmarkRun {
                       const uint32_t bufferSize,
                       const uint32_t numberOfBuffers,
                       const size_t windowSize,
+                      const std::string& inputFile,
                       const size_t reps);
 
   public:
@@ -170,11 +172,12 @@ class MicroBenchmarkRun {
     std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
         createExecutablePipeline(AbstractSynopsesPtr synopsis);
 
-    SynopsisConfigurationPtr synopsesArguments;
-    SynopsisAggregationConfig aggregation;
+    Parsing::SynopsisConfigurationPtr synopsesArguments;
+    Parsing::SynopsisAggregationConfig aggregation;
     uint32_t bufferSize;
     uint32_t numberOfBuffers;
     size_t windowSize;
+    std::string inputFile;
     uint64_t reps;
     std::vector<MicroBenchmarkResult> microBenchmarkResult;
 };

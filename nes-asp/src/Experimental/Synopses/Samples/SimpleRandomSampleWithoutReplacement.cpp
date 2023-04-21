@@ -29,6 +29,10 @@
 
 namespace NES::ASP{
 
+SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(
+    Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
+                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize) {}
+
 void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     // Here we just store all records and then perform the sampling in getApproximate()
     if (storedRecords.empty()) {
@@ -123,8 +127,6 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
 
     return {outputBuffer};
 }
-
-SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(size_t sampleSize) : sampleSize(sampleSize) {}
 
 void SimpleRandomSampleWithoutReplacement::initialize() {
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());

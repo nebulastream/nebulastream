@@ -34,11 +34,10 @@ SynopsisAggregationConfig::SynopsisAggregationConfig(const Aggregation_Type& typ
                                  const std::string& fieldNameAggregation,
                                  const std::string& fieldNameApproximate,
                                  const std::string& timeStampFieldName,
-                                 const std::string& inputFile,
                                  const SchemaPtr& inputSchema,
                                  const SchemaPtr& outputSchema)
     : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate),
-      timeStampFieldName(timeStampFieldName), inputFile(inputFile), inputSchema(inputSchema), outputSchema(outputSchema) {}
+      timeStampFieldName(timeStampFieldName), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
 std::string SynopsisAggregationConfig::toString() {
     std::stringstream stringStream;
@@ -46,7 +45,6 @@ std::string SynopsisAggregationConfig::toString() {
                  << "fieldNameAggregation (" << fieldNameAggregation << ") "
                  << "fieldNameAccuracy (" << fieldNameApproximate << ") "
                  << "timeStampFieldName (" << timeStampFieldName << ") "
-                 << "inputFile (" << inputFile << ") "
                  << "inputSchema (" << inputSchema->toString() << ") "
                  << "outputSchema (" << outputSchema->toString() << ")";
 
@@ -56,7 +54,7 @@ std::string SynopsisAggregationConfig::toString() {
 
 std::string SynopsisAggregationConfig::getHeaderAsCsv() {
     return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
-           ",aggregation_inputFile,aggregation_inputSchema,aggregation_outputSchema";
+           ",aggregation_inputSchema,aggregation_outputSchema";
 }
 
 std::string SynopsisAggregationConfig::getValuesAsCsv() {
@@ -65,14 +63,14 @@ std::string SynopsisAggregationConfig::getValuesAsCsv() {
                  << fieldNameAggregation << ","
                  << fieldNameApproximate << ","
                  << timeStampFieldName << ","
-                 << inputFile << ","
                  << inputSchema->toString() << ","
                  << outputSchema->toString();
 
     return stringStream.str();
 }
 
-SynopsisAggregationConfig SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregationNode,
+std::pair<SynopsisAggregationConfig, std::string>
+SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregationNode,
                                                                const std::filesystem::path& data) {
     auto type = magic_enum::enum_cast<Aggregation_Type>(aggregationNode["type"].As<std::string>()).value();
     auto fieldNameAggregation = aggregationNode["fieldNameAgg"].As<std::string>();
@@ -80,14 +78,14 @@ SynopsisAggregationConfig SynopsisAggregationConfig::createAggregationFromYamlNo
     auto inputFile = data / std::filesystem::path(aggregationNode["inputFile"].As<std::string>());
     auto timeStampFieldName = aggregationNode["timestamp"].As<std::string>();
 
-    auto inputSchema = inputFileSchemas[inputFile.filename()];
-    auto outputSchema = getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
+    auto inputSchema = Benchmarking::inputFileSchemas[inputFile.filename()];
+    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
 
     NES_ASSERT(inputSchema->get(timeStampFieldName)->getDataType()->isEquals(DataTypeFactory::createUInt64()),
                "The timestamp has to be a UINT64!");
 
-    return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
-                           inputFile, inputSchema, outputSchema);
+    return {SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
+                           inputSchema, outputSchema), inputFile};
 }
 
 Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfig::createAggregationFunction() {
@@ -271,7 +269,6 @@ SynopsisAggregationConfig::SynopsisAggregationConfig(const SynopsisAggregationCo
     fieldNameApproximate = other.fieldNameApproximate;
     fieldNameAggregation = other.fieldNameAggregation;
     timeStampFieldName = other.timeStampFieldName;
-    inputFile = other.inputFile;
     inputSchema = other.inputSchema;
     outputSchema = other.outputSchema;
 }
@@ -286,7 +283,6 @@ SynopsisAggregationConfig& SynopsisAggregationConfig::operator=(const SynopsisAg
     fieldNameApproximate = other.fieldNameApproximate;
     fieldNameAggregation = other.fieldNameAggregation;
     timeStampFieldName = other.timeStampFieldName;
-    inputFile = other.inputFile;
     inputSchema = other.inputSchema;
     outputSchema = other.outputSchema;
 
@@ -297,10 +293,9 @@ SynopsisAggregationConfig SynopsisAggregationConfig::create(const AGGREGATION_TY
                                                             const std::string& fieldNameAggregation,
                                                             const std::string& fieldNameApproximate,
                                                             const std::string& timestampFieldName,
-                                                            const std::string& inputFile,
                                                             const SchemaPtr& inputSchema,
                                                             const SchemaPtr& outputSchema) {
-    return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApproximate, timestampFieldName, inputFile,
+    return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApproximate, timestampFieldName,
                                      inputSchema, outputSchema);
 }
 

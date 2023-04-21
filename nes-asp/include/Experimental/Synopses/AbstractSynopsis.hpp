@@ -38,6 +38,13 @@ class AbstractSynopsis {
 
   public:
     /**
+     * @brief Creating an AbstractSynopsis
+     * @param aggregationConfig
+     * @param bufferManager
+     */
+    explicit AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig);
+
+    /**
      * @brief This is the first step of receiving an approximation. This method adds the record to the underlying synopsis
      * @param record
      */
@@ -63,42 +70,8 @@ class AbstractSynopsis {
      * @param aggregationConfig
      * @return AbstractSynopsesPtr
      */
-    static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration arguments, Parsing::SynopsisAggregationConfig aggregationConfig);
-
-    /**
-     * @brief Sets the aggregation function for this synopsis
-     * @param aggregationFunction
-     */
-    void setAggregationFunction(const Runtime::Execution::Aggregation::AggregationFunctionPtr& aggregationFunction);
-
-    /**
-     * @brief Sets the aggregation value for this synopsis
-     */
-    void setAggregationValue(Parsing::AggregationValuePtr aggregationValue);
-
-    /**
-     * @brief Sets the fieldname for this aggregation
-     * @param fieldNameAggregation
-     */
-    void setFieldNameAggregation(const std::string& fieldNameAggregation);
-
-    /**
-     * @brief Sets the fieldname of the output
-     * @param fieldNameOutput
-     */
-    void setFieldNameApproximate(const std::string& fieldNameOutput);
-
-    /**
-     * @brief Sets the outputSchema
-     * @param outputSchema
-     */
-    void setInputSchema(const SchemaPtr& inputSchema);
-
-    /**
-     * @brief Sets the outputSchema
-     * @param outputSchema
-     */
-    void setOutputSchema(const SchemaPtr& outputSchema);
+    static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration& arguments,
+                                      Parsing::SynopsisAggregationConfig& aggregationConfig);
 
     /**
      * @brief Sets the bufferManager

@@ -34,7 +34,8 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
      * @brief Constructor for a SampleRandomWithReplacement
      * @param sampleSize
      */
-    explicit SimpleRandomSampleWithoutReplacement(size_t sampleSize);
+    explicit SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
+                                                  size_t sampleSize);
 
     /**
      * @brief Adds the record to this sample

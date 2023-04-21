@@ -54,25 +54,25 @@ namespace NES::ASP::Util {
         auto parsedAggregations = parseAggregations(aggregationNode, data);
 
         ASSERT_EQ(parsedAggregations.size(), 3);
-        EXPECT_EQ(parsedAggregations[0].type, Benchmarking::AGGREGATION_TYPE::MIN);
-        EXPECT_EQ(parsedAggregations[1].type, Benchmarking::AGGREGATION_TYPE::SUM);
-        EXPECT_EQ(parsedAggregations[2].type, Benchmarking::AGGREGATION_TYPE::MAX);
+        EXPECT_EQ(parsedAggregations[0].first.type, Parsing::AGGREGATION_TYPE::MIN);
+        EXPECT_EQ(parsedAggregations[1].first.type, Parsing::AGGREGATION_TYPE::SUM);
+        EXPECT_EQ(parsedAggregations[2].first.type, Parsing::AGGREGATION_TYPE::MAX);
 
-        EXPECT_EQ(parsedAggregations[0].inputFile, "some_input_file.csv");
-        EXPECT_EQ(parsedAggregations[1].inputFile, "some_input_file_2.csv");
-        EXPECT_EQ(parsedAggregations[2].inputFile, "some_other_input_file.csv");
+        EXPECT_EQ(parsedAggregations[0].second, "some_input_file.csv");
+        EXPECT_EQ(parsedAggregations[1].second, "some_input_file_2.csv");
+        EXPECT_EQ(parsedAggregations[2].second, "some_other_input_file.csv");
 
-        EXPECT_EQ(parsedAggregations[0].fieldNameAggregation, "value");
-        EXPECT_EQ(parsedAggregations[1].fieldNameAggregation, "value");
-        EXPECT_EQ(parsedAggregations[2].fieldNameAggregation, "value1");
+        EXPECT_EQ(parsedAggregations[0].first.fieldNameAggregation, "value");
+        EXPECT_EQ(parsedAggregations[1].first.fieldNameAggregation, "value");
+        EXPECT_EQ(parsedAggregations[2].first.fieldNameAggregation, "value1");
 
-        EXPECT_EQ(parsedAggregations[0].fieldNameApproximate, "aggregation");
-        EXPECT_EQ(parsedAggregations[1].fieldNameApproximate, "aggregation421");
-        EXPECT_EQ(parsedAggregations[2].fieldNameApproximate, "aggregation123");
+        EXPECT_EQ(parsedAggregations[0].first.fieldNameApproximate, "aggregation");
+        EXPECT_EQ(parsedAggregations[1].first.fieldNameApproximate, "aggregation421");
+        EXPECT_EQ(parsedAggregations[2].first.fieldNameApproximate, "aggregation123");
 
-        EXPECT_EQ(parsedAggregations[0].timeStampFieldName, "ts");
-        EXPECT_EQ(parsedAggregations[1].timeStampFieldName, "ts123");
-        EXPECT_EQ(parsedAggregations[2].timeStampFieldName, "ts451");
+        EXPECT_EQ(parsedAggregations[0].first.timeStampFieldName, "ts");
+        EXPECT_EQ(parsedAggregations[1].first.timeStampFieldName, "ts123");
+        EXPECT_EQ(parsedAggregations[2].first.timeStampFieldName, "ts451");
     }
 
     TEST_F(MicroBenchmarkASPUtilTest, testParseNoBuffersBuffer) {

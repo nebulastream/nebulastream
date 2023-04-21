@@ -45,10 +45,10 @@ std::vector<Parsing::SynopsisConfigurationPtr> parseSynopsisConfigurations(const
  * @brief Parses the yaml node and creates SynopsisAggregationConfig (wrapper for the aggregation, e.g., input and accuracy file)
  * @param aggregationsNode
  * @param data folder to the data files
- * @return Vector of SynopsisAggregationConfig objects
+ * @return Vector of {SynopsisAggregationConfig, input file} objects
  */
-std::vector<Parsing::SynopsisAggregationConfig> parseAggregations(const Yaml::Node& aggregationsNode,
-                                                                  const std::filesystem::path& data);
+std::vector<std::pair<Parsing::SynopsisAggregationConfig, std::string>>
+ parseAggregations(const Yaml::Node& aggregationsNode, const std::filesystem::path& data);
 
 /**
  * @brief Parses the window size

@@ -14,7 +14,7 @@
 
 #include <NesBaseTest.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
-#include <Experimental/Benchmarking/Parsing/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Util/Logger/LogLevel.hpp>
 
 namespace NES::ASP::Benchmarking {
@@ -34,30 +34,30 @@ namespace NES::ASP::Benchmarking {
 
         auto inputSchema = inputFileSchemas["some_input_file.csv"];
         auto inputSchemaStr = inputSchema->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(AGGREGATION_TYPE::MIN, *inputSchema, "aggregation")->toString();
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "aggregation")->toString();
 
         std::stringstream expectedToStringStream;
         expectedToStringStream << std::endl << " - synopsis arguments: "
-                                       << "type (SRSWR) "
-                                       << "width (10) height (1) windowSize (1)"
+                                   << "type (SRSWR) "
+                                   << "width (10) height (1) windowSize (1)"
                                << std::endl << " - aggregation: "
-                                       << " type (" << magic_enum::enum_name(AGGREGATION_TYPE::MIN) << ") "
-                                       << "fieldNameAggregation (value) "
-                                       << "fieldNameAccuracy (aggregation) "
-                                       << "timeStampFieldName (ts) "
-                                       << "inputFile (some_input_file.csv) "
-                                       << "inputSchema (" << inputSchemaStr << ") "
-                                       << "outputSchema (" << outputSchemaStr << ")"
+                                   << " type (" << magic_enum::enum_name(Parsing::AGGREGATION_TYPE::MIN) << ") "
+                                   << "fieldNameAggregation (value) "
+                                   << "fieldNameAccuracy (aggregation) "
+                                   << "timeStampFieldName (ts) "
+                                   << "inputSchema (" << inputSchemaStr << ") "
+                                   << "outputSchema (" << outputSchemaStr << ")"
                                << std::endl << " - bufferSize :" << 1024
                                << std::endl << " - numberOfBuffers: " << 1234
                                << std::endl << " - windowSize: " << 11
+                               << std::endl << " - inputFile (some_input_file.csv) "
                                << std::endl << " - reps: " << 234;
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
         EXPECT_EQ(parsedMicroBenchmarks[0].getHeaderAsCsv(), "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize,"
                                                              "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
-                                                             ",aggregation_inputFile,aggregation_inputSchema,aggregation_outputSchema"
-                                                             ",bufferSize,numberOfBuffers,windowSize,reps,"
+                                                             ",aggregation_inputSchema,aggregation_outputSchema"
+                                                             ",bufferSize,numberOfBuffers,windowSize,inputFile,reps,"
                                                              "");
         EXPECT_EQ(parsedMicroBenchmarks[0].getRowsAsCsv(), "SRSWR,10,1,1,"
                                                            "MIN,value,aggregation,ts,some_input_file.csv," +
@@ -76,24 +76,7 @@ namespace NES::ASP::Benchmarking {
 
         auto inputSchema = inputFileSchemas["some_input_file.csv"];
         auto inputSchemaStr = inputSchema->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(AGGREGATION_TYPE::MIN, *inputSchema, "aggregation")->toString();
-
-        std::stringstream expectedToStringStream;
-        expectedToStringStream << std::endl << " - synopsis arguments: "
-                               << "type (SRSWR) "
-                               << "width (10) height (1) windowSize (1)"
-                               << std::endl << " - aggregation: "
-                               << " type (" << magic_enum::enum_name(AGGREGATION_TYPE::MIN) << ") "
-                               << "fieldNameAggregation (value) "
-                               << "fieldNameAccuracy (aggregation) "
-                               << "timeStampFieldName (ts) "
-                               << "inputFile (some_input_file.csv) "
-                               << "inputSchema (" << inputSchemaStr << ") "
-                               << "outputSchema (" << outputSchemaStr << ")"
-                               << std::endl << " - bufferSize :" << 1024
-                               << std::endl << " - numberOfBuffers: " << 1234
-                               << std::endl << " - windowSize: " << 11
-                               << std::endl << " - reps: " << 234;
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "aggregation")->toString();
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
 

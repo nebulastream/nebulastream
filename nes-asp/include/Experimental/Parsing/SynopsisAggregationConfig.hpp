@@ -52,13 +52,13 @@ class SynopsisAggregationConfig {
     SynopsisAggregationConfig& operator=(const SynopsisAggregationConfig& other);
 
     /**
-     * @brief Creates an YamlAggregation object from a yaml node
+     * @brief Creates an SynopsisAggregationConfig object from a yaml node
      * @param aggregationNode
      * @param data is needed for providing an absolute path to the input file
-     * @return YamlAggregation
+     * @return SynopsisAggregationConfig and input file
      */
-    static SynopsisAggregationConfig createAggregationFromYamlNode(Yaml::Node& aggregationNode,
-                                                         const std::filesystem::path& data);
+    static std::pair<SynopsisAggregationConfig, std::string> createAggregationFromYamlNode(Yaml::Node& aggregationNode,
+                                                                                           const std::filesystem::path& data);
 
     /**
      * @brief Creates an aggregation config for a synopsis
@@ -66,7 +66,6 @@ class SynopsisAggregationConfig {
      * @param fieldNameAggregation
      * @param fieldNameApproximate
      * @param timestampFieldName
-     * @param inputFile
      * @param inputSchema
      * @param outputSchema
      * @return SynopsisAggregationConfig
@@ -75,7 +74,6 @@ class SynopsisAggregationConfig {
                                             const std::string& fieldNameAggregation,
                                             const std::string& fieldNameApproximate,
                                             const std::string& timestampFieldName,
-                                            const std::string& inputFile,
                                             const SchemaPtr& inputSchema,
                                             const SchemaPtr& outputSchema);
 
@@ -124,7 +122,6 @@ class SynopsisAggregationConfig {
                     const std::string& fieldNameAggregation,
                     const std::string& fieldNameApproximate,
                     const std::string& timestampFieldName,
-                    const std::string& inputFile,
                     const SchemaPtr& inputSchema,
                     const SchemaPtr& outputSchema);
 
@@ -163,7 +160,6 @@ class SynopsisAggregationConfig {
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     std::string timeStampFieldName;
-    std::string inputFile;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 };

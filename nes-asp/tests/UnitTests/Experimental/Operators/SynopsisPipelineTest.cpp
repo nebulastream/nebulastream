@@ -79,11 +79,11 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
 
 std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
 createExecutablePipeline(ASP::AbstractSynopsesPtr synopsis, SchemaPtr inputSchema,
-                         BufferManagerPtr bufferManager, size_t bufferSize) {
+                         BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
     // Scan Operator
-    auto scanMemoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferSize, inputSchema);
+    auto scanMemoryProvider = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),inputSchema);
     auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
 
     // Synopses Operator
@@ -100,22 +100,27 @@ createExecutablePipeline(ASP::AbstractSynopsesPtr synopsis, SchemaPtr inputSchem
 }
 
 TEST_P(SynopsisPipelineTest, synopsisPipeline) {
-    auto synopsisConfig = ASP::SynopsisConfiguration::create(ASP::SYNOPSIS_TYPE::SRSWoR, 1000);
-    auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig);
-    auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                           ->addField("id", BasicType::INT64)
-                           ->addField("value", BasicType::INT64);
-    auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("aggregation", BasicType::INT64);
+    auto fieldNameAggregation = "value";
+    auto fieldNameApproximate = "aggregation";
+    auto timestampFieldName = "ts";
 
-    synopsis->setAggregationFunction(aggregationFunction);
-    synopsis->setAggregationValue(std::move(aggregationValue));
-    synopsis->setFieldNameAggregation(fieldNameAggregation);
-    synopsis->setFieldNameApproximate(fieldNameApproximate);
-    synopsis->setInputSchema(inputSchema);
-    synopsis->setOutputSchema(outputSchema);
+    auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+        ->addField("id", BasicType::INT64)
+        ->addField(fieldNameAggregation, BasicType::INT64)
+        ->addField(timestampFieldName, BasicType::UINT64);
+    auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(fieldNameApproximate, BasicType::INT64);
+
+    auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::SYNOPSIS_TYPE::SRSWoR, 1000);
+    auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(ASP::Parsing::AGGREGATION_TYPE::MIN,
+                                                                             fieldNameAggregation,
+                                                                             fieldNameApproximate,
+                                                                             timestampFieldName,
+                                                                             inputSchema,
+                                                                             outputSchema);
+    auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig, aggregationConfig);
     synopsis->setBufferManager(bufferManager);
 
-    auto [pipeline, pipelineContext] = createExecutablePipeline(synopsis);
+    auto [pipeline, pipelineContext] = createExecutablePipeline(synopsis, inputSchema, bufferManager);
     auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
 
 }

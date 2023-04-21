@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-<<<<<<< HEAD:nes-asp/src/Experimental/Benchmarking/MicroBenchmarkRun.cpp
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
@@ -20,22 +19,11 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-=======
-#include <Benchmarking/MicroBenchmarkASPUtil.hpp>
-#include <Benchmarking/MicroBenchmarkRun.hpp>
-#include <Execution/Operators/Scan.hpp>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Operators/SynopsesOperator.hpp>
->>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/src/Benchmarking/MicroBenchmarkRun.cpp
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-<<<<<<< HEAD:nes-asp/src/Experimental/Benchmarking/MicroBenchmarkRun.cpp
-=======
 #include <Synopses/AbstractSynopsis.hpp>
->>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/src/Benchmarking/MicroBenchmarkRun.cpp
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
@@ -61,12 +49,6 @@ void MicroBenchmarkRun::run() {
         auto synopsis = AbstractSynopsis::create(*synopsesArguments);
         auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferSize, aggregation.inputSchema);
 
-        synopsis->setAggregationFunction(aggregation.createAggregationFunction());
-        synopsis->setAggregationValue(aggregation.createAggregationValue());
-        synopsis->setFieldNameAggregation(aggregation.fieldNameAggregation);
-        synopsis->setFieldNameApproximate(aggregation.fieldNameApproximate);
-        synopsis->setInputSchema(aggregation.inputSchema);
-        synopsis->setOutputSchema(aggregation.outputSchema);
         synopsis->setBufferManager(bufferManager);
 
         // Create and compile the pipeline and create a workerContext
@@ -131,13 +113,14 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     auto parsedBufferSizes = ASP::Util::parseBufferSizes(configFile["bufferSize"]);
     auto parsedNumberOfBuffers = ASP::Util::parseNumberOfBuffers(configFile["numberOfBuffers"]);
 
+<<<<<<< HEAD
     for (const auto& synopsisArgument : parsedSynopsisArguments) {
         for (const auto& aggregation : parsedAggregations) {
             for (const auto& windowSize : parsedWindowSizes) {
                 for (const auto& bufferSize : parsedBufferSizes) {
                     for (const auto& numberOfBuffers : parsedNumberOfBuffers) {
                         retVector.push_back(MicroBenchmarkRun(synopsisArgument, aggregation, bufferSize, numberOfBuffers,
-                                                             windowSize, parsedReps));
+                                                             windowSize, inputFile, parsedReps));
                     }
                 }
             }
@@ -147,14 +130,15 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     return retVector;
 }
 
-MicroBenchmarkRun::MicroBenchmarkRun(SynopsisConfigurationPtr synopsesArguments,
-                                     const SynopsisAggregationConfig& aggregation,
+MicroBenchmarkRun::MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesArguments,
+                                     const Parsing::SynopsisAggregationConfig& aggregation,
                                      const uint32_t bufferSize,
                                      const uint32_t numberOfBuffers,
                                      const size_t windowSize,
+                                     const std::string& inputFile,
                                      const size_t reps)
     : synopsesArguments(std::move(synopsesArguments)), aggregation(aggregation), bufferSize(bufferSize),
-      numberOfBuffers(numberOfBuffers), windowSize(windowSize), reps(reps){}
+      numberOfBuffers(numberOfBuffers), windowSize(windowSize), inputFile(inputFile), reps(reps){}
 
 MicroBenchmarkRun& MicroBenchmarkRun::operator=(const MicroBenchmarkRun& other) {
     // If this is the same object, then return it
@@ -168,6 +152,7 @@ MicroBenchmarkRun& MicroBenchmarkRun::operator=(const MicroBenchmarkRun& other) 
     bufferSize = other.bufferSize;
     numberOfBuffers = other.numberOfBuffers;
     windowSize = other.windowSize;
+    inputFile = other.inputFile;
     reps = other.reps;
     microBenchmarkResult = std::vector(other.microBenchmarkResult);
 
@@ -181,6 +166,7 @@ MicroBenchmarkRun::MicroBenchmarkRun(const MicroBenchmarkRun& other) {
     bufferSize = other.bufferSize;
     numberOfBuffers = other.numberOfBuffers;
     windowSize = other.windowSize;
+    inputFile = other.inputFile;
     reps = other.reps;
     microBenchmarkResult = std::vector(other.microBenchmarkResult);
 }
@@ -192,6 +178,7 @@ const std::string MicroBenchmarkRun::getHeaderAsCsv() const {
                  << ",bufferSize"
                  << ",numberOfBuffers"
                  << ",windowSize"
+                 << ",inputFile"
                  << ",reps"
                  << "," << microBenchmarkResult[0].getHeaderAsCsv();
 
@@ -207,6 +194,7 @@ const std::string MicroBenchmarkRun::getRowsAsCsv() const {
                      << "," << bufferSize
                      << "," << numberOfBuffers
                      << "," << windowSize
+                     << "," << inputFile
                      << "," << reps
                      << "," << benchmarkResult.getRowAsCsv()
                      << std::endl;
@@ -221,6 +209,7 @@ const std::string MicroBenchmarkRun::toString() const {
                  << std::endl << " - bufferSize :" << bufferSize
                  << std::endl << " - numberOfBuffers: " << numberOfBuffers
                  << std::endl << " - windowSize: " << windowSize
+                 << std::endl << " - inputFile: " << inputFile
                  << std::endl << " - reps: " << reps;
 
 
@@ -228,7 +217,7 @@ const std::string MicroBenchmarkRun::toString() const {
 }
 
 std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
-    return NES::Util::createBuffersFromCSVFile(aggregation.inputFile, aggregation.inputSchema, bufferManager,
+    return NES::Util::createBuffersFromCSVFile(inputFile, aggregation.inputSchema, bufferManager,
                                                aggregation.timeStampFieldName, windowSize);
 }
 
