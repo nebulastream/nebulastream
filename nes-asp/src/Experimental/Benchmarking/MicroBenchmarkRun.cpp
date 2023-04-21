@@ -148,7 +148,7 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
 }
 
 MicroBenchmarkRun::MicroBenchmarkRun(SynopsisConfigurationPtr synopsesArguments,
-                                     const YamlAggregation& aggregation,
+                                     const SynopsisAggregationConfig& aggregation,
                                      const uint32_t bufferSize,
                                      const uint32_t numberOfBuffers,
                                      const size_t windowSize,

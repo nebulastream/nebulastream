@@ -13,6 +13,7 @@
 add_subdirectory(Synopses)
 add_subdirectory(Benchmarking)
 add_subdirectory(Operators)
+add_subdirectory(Parsing)
 
 add_executable(micro-benchmarks-approx "MicroBenchmarksASPMain.cpp")
 target_link_libraries(micro-benchmarks-approx nes-asp)

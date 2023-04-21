@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
+#include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 
-namespace NES::ASP {
+namespace NES::ASP::Parsing {
 
 SynopsisConfigurationPtr SynopsisConfiguration::create(Synopsis_Type type, size_t width, size_t height, size_t windowSize) {
     auto configurationOptions = std::make_shared<SynopsisConfiguration>();
@@ -62,4 +62,4 @@ std::string SynopsisConfiguration::toString() {
     return stringStream.str();
 }
 
-} // namespace NES::ASP
+} // namespace NES::ASP::Parsing

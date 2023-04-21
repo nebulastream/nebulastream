@@ -16,22 +16,19 @@
 #define NES_MICROBENCHMARKRUN_HPP
 
 #include <API/Schema.hpp>
-#include <Experimental/Benchmarking/MicroBenchmarkResult.hpp>
-#include <Experimental/Benchmarking/Parsing/MicroBenchmarkSchemas.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
-#include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkResult.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
+#include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-<<<<<<< HEAD:nes-asp/include/Experimental/Benchmarking/MicroBenchmarkRun.hpp
-=======
-#include <Synopses/AbstractSynopsis.hpp>
->>>>>>> b77760a39f ([3620] almost done with it. Next step is to add a scaling factor and check if the values in the csv file are correct. Afterwards, add a scaling factor to the Sampling for SUM and COUNT, followed by creating a draft PR so that Ankit and Philipp can take a look.):nes-approx/include/Benchmarking/MicroBenchmarkRun.hpp
 
 namespace NES::ASP::Benchmarking {
 
@@ -75,15 +72,15 @@ class MicroBenchmarkRun {
   private:
     /**
      * @brief Constructor for a MicroBenchmarkRun
-     * @param synopsesArguments
+     * @param synopsesConfig
      * @param yamlAggregation
      * @param bufferSize
      * @param numberOfBuffers
      * @param windowSize
      * @param reps
      */
-    MicroBenchmarkRun(SynopsisConfigurationPtr synopsesArguments,
-                      const YamlAggregation& yamlAggregation,
+    MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesConfig,
+                      const Parsing::SynopsisAggregationConfig& yamlAggregation,
                       const uint32_t bufferSize,
                       const uint32_t numberOfBuffers,
                       const size_t windowSize,
@@ -174,7 +171,7 @@ class MicroBenchmarkRun {
         createExecutablePipeline(AbstractSynopsesPtr synopsis);
 
     SynopsisConfigurationPtr synopsesArguments;
-    YamlAggregation aggregation;
+    SynopsisAggregationConfig aggregation;
     uint32_t bufferSize;
     uint32_t numberOfBuffers;
     size_t windowSize;

@@ -18,8 +18,8 @@
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkResult.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
+#include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -39,16 +39,16 @@ std::string parseCsvFileFromYaml(const std::string& yamlFileName);
  * @param synopsesNode
  * @return Vector of synopsis arguments
  */
-std::vector<SynopsisConfigurationPtr> parseSynopsisConfigurations(const Yaml::Node& synopsesNode);
+std::vector<Parsing::SynopsisConfigurationPtr> parseSynopsisConfigurations(const Yaml::Node& synopsesNode);
 
 /**
- * @brief Parses the yaml node and creates YamlAggregation (wrapper for the aggregation, e.g., input and accuracy file)
+ * @brief Parses the yaml node and creates SynopsisAggregationConfig (wrapper for the aggregation, e.g., input and accuracy file)
  * @param aggregationsNode
  * @param data folder to the data files
- * @return Vector of YamlAggregation objects
+ * @return Vector of SynopsisAggregationConfig objects
  */
-std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode,
-                                                             const std::filesystem::path& data);
+std::vector<Parsing::SynopsisAggregationConfig> parseAggregations(const Yaml::Node& aggregationsNode,
+                                                                  const std::filesystem::path& data);
 
 /**
  * @brief Parses the window size

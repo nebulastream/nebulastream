@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_YAMLAGGREGATION_HPP
-#define NES_YAMLAGGREGATION_HPP
+#ifndef NES_SYNOPSISAGGREGATIONCONFIG_HPP
+#define NES_SYNOPSISAGGREGATIONCONFIG_HPP
 
 #include <API/Schema.hpp>
 #include <Configurations/BaseConfiguration.hpp>
@@ -23,7 +23,7 @@
 #include <filesystem>
 #include <string>
 
-namespace NES::ASP::Benchmarking {
+namespace NES::ASP::Parsing {
 
 using AggregationValuePtr = std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>;
 enum class Aggregation_Type : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
@@ -31,25 +31,25 @@ enum class Aggregation_Type : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
 /**
  * @brief This class encapsulates the necessary stuff for parsing the aggregation from a yaml file.
  */
-class YamlAggregation {
+class SynopsisAggregationConfig {
   public:
     /**
      * @brief Default constructor
      */
-    YamlAggregation() = default;
+    SynopsisAggregationConfig() = default;
 
     /**
      * @brief Copy constructor
      * @param other
      */
-    YamlAggregation(const YamlAggregation& other);
+    SynopsisAggregationConfig(const SynopsisAggregationConfig& other);
 
     /**
      * @brief Assignment operator
      * @param other
      * @return
      */
-    YamlAggregation& operator=(const YamlAggregation& other);
+    SynopsisAggregationConfig& operator=(const SynopsisAggregationConfig& other);
 
     /**
      * @brief Creates an YamlAggregation object from a yaml node
@@ -57,8 +57,28 @@ class YamlAggregation {
      * @param data is needed for providing an absolute path to the input file
      * @return YamlAggregation
      */
-    static YamlAggregation createAggregationFromYamlNode(Yaml::Node& aggregationNode,
+    static SynopsisAggregationConfig createAggregationFromYamlNode(Yaml::Node& aggregationNode,
                                                          const std::filesystem::path& data);
+
+    /**
+     * @brief Creates an aggregation config for a synopsis
+     * @param type
+     * @param fieldNameAggregation
+     * @param fieldNameApproximate
+     * @param timestampFieldName
+     * @param inputFile
+     * @param inputSchema
+     * @param outputSchema
+     * @return SynopsisAggregationConfig
+     */
+    static SynopsisAggregationConfig create(const AGGREGATION_TYPE& type,
+                                            const std::string& fieldNameAggregation,
+                                            const std::string& fieldNameApproximate,
+                                            const std::string& timestampFieldName,
+                                            const std::string& inputFile,
+                                            const SchemaPtr& inputSchema,
+                                            const SchemaPtr& outputSchema);
+
 
     /**
      * @brief Creates a string representation
@@ -147,7 +167,7 @@ class YamlAggregation {
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 };
-} // namespace NES::ASP::Benchmarking
+} // namespace NES::ASP::Parsing
 
 
-#endif//NES_YAMLAGGREGATION_HPP
+#endif//NES_SYNOPSISAGGREGATIONCONFIG_HPP
