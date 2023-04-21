@@ -12,356 +12,52 @@
     limitations under the License.
 */
 
-// clang-format off
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-// clang-format on
+#include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedQueryContainmentRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
+#include <memory>
+#include <tuple>
+#include <vector>
 #include <z3++.h>
 
 using namespace NES;
 
-class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryContainmentIdentificationTest
+    : public Testing::TestWithErrorHandling<testing::Test>,
+      public testing::WithParamInterface<
+          std::vector<std::tuple<std::tuple<std::string, std::string>, NES::Optimizer::ContainmentType>>> {
 
   public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    std::vector<std::tuple<std::tuple<Query, Query>, NES::Optimizer::ContainmentType>> containmentCasesMixed = {
-        //Equal
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .map(Attribute("value") = 40)
-                                      .filter(Attribute("id") < 45)
-                                      .filter(Attribute("id") < 45)
-                                      .filter(Attribute("id") < 45)
-                                      .filter(Attribute("id") < 45)
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .map(Attribute("value") = 40)
-                                      .filter(Attribute("id") < 45)
-                                      .filter(Attribute("id") < 45)
-                                      .filter(Attribute("id") < 45)
-                                      .filter(Attribute("id") < 45)
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        //Sig2 contains Sig1
-        {std::tuple<Query, Query>(
-             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
-             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
-        //Sig1 contains Sig2
-        {std::tuple<Query, Query>(
-             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
-             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        //Sig2 contains Sig1 but containment cannot be detected
-        {std::tuple<Query, Query>(
-             Query::from("car").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(printSinkDescriptor),
-             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        //Sig2 contains Sig1
-        {std::tuple<Query, Query>(
-             Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
-             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
-        //Sig1 contains Sig2
-        {std::tuple<Query, Query>(
-             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor),
-             Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        //No containment due to different transformations
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .map(Attribute("value") = 40)
-                                      .map(Attribute("value") = Attribute("value") + 10)
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        //No containment due to different transformations
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .filter(Attribute("value") < 40)
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
-                                      .apply(Sum(Attribute("value1")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20)))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        //No containment because different join attributes
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20)))
-                                      .filter(Attribute("value") < 10)
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .filter(Attribute("value") < 5)
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .filter(Attribute("value") < 5)
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20)))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .filter(Attribute("value") < 5)
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .filter(Attribute("value") < 5)
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .joinWith(Query::from("bike"))
-                                      .where(Attribute("id1"))
-                                      .equalsTo(Attribute("id"))
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .filter(Attribute("value") < 5)
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(
-             Query::from("car")
-                 .joinWith(Query::from("bike"))
-                 .where(Attribute("id1"))
-                 .equalsTo(Attribute("id"))
-                 .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                 .sink(printSinkDescriptor),
-             Query::from("car")
-                 .joinWith(Query::from("bike"))
-                 .where(Attribute("id1"))
-                 .equalsTo(Attribute("id"))
-                 .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
-                 .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10)))
-                                      .byKey(Attribute("id"))
-                                      .apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(
-             Query::from("car")
-                 .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                 .apply(Sum(Attribute("value")))
-                 .sink(printSinkDescriptor),
-             Query::from("car")
-                 .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
-                 .apply(Sum(Attribute("value")))
-                 .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")), Min(Attribute("value"))->as(Attribute("newValue")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")), Min(Attribute("value1")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")), Min(Attribute("value1")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Count())
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Count())
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::EQUALITY},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000)))
-                                      .apply(Min(Attribute("value")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000)))
-                                      .apply(Min(Attribute("value")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100)))
-                                      .apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000)))
-                                      .apply(Max(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT},
-        {std::tuple<Query, Query>(Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000)))
-                                      .apply(Min(Attribute("value")))
-                                      .sink(printSinkDescriptor),
-                                  Query::from("car")
-                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                                      .apply(Sum(Attribute("value")))
-                                      .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(100)))
-                                      .apply(Min(Attribute("value")))
-                                      .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED}};
+    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case.");
+        NES::Logger::setupLogging("QueryContainmentIdentificationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup QueryContainmentIdentificationTest test case.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -370,10 +66,342 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-        sourceCatalog->addLogicalSource("car", schema);
-        sourceCatalog->addLogicalSource("bike", schema);
-        sourceCatalog->addLogicalSource("truck", schema);
-        udfCatalog = Catalogs::UDF::UDFCatalog::create();
+        sourceCatalog->addLogicalSource("windTurbines", schema);
+        sourceCatalog->addLogicalSource("solarPanels", schema);
+        sourceCatalog->addLogicalSource("households", schema);
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(QueryParsingService::create(jitCompiler));
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override {
+        NES_DEBUG("QueryContainmentIdentificationTest: Tear down QueryContainmentIdentificationTest test case.");
+    }
+
+    static auto createEqualityCases() {
+        std::vector<std::tuple<std::tuple<std::string, std::string>, NES::Optimizer::ContainmentType>> equality = {
+            //Equal
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45))"
+                 R"(.filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45))"
+                 R"(.filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY},
+            //No containment due to different transformations
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.filter(Attribute("value") < 5))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.filter(Attribute("value") < 5))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY},
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines"))"
+                     R"(.joinWith(Query::from("solarPanels")))"
+                     R"(.where(Attribute("id1")))"
+                     R"(.equalsTo(Attribute("id")))"
+                     R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                     R"(.sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines"))"
+                     R"(.joinWith(Query::from("solarPanels")))"
+                     R"(.where(Attribute("id1")))"
+                     R"(.equalsTo(Attribute("id")))"
+                     R"(.window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))))"
+                     R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY},
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines"))"
+                     R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                     R"(.apply(Sum(Attribute("value"))))"
+                     R"(.sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines"))"
+                     R"(.window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))))"
+                     R"(.apply(Sum(Attribute("value"))))"
+                     R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Count()))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Count()))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::EQUALITY}};
+        return equality;
+    }
+
+    static auto createNoContainmentCases() {
+        std::vector<std::tuple<std::tuple<std::string, std::string>, NES::Optimizer::ContainmentType>> noContainment = {
+            //Sig2 contains Sig1 but containment cannot be detected
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.map(Attribute("value") = 40))"
+                                          R"(.project(Attribute("value").as("newValue")))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},//No containment due to different transformations
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.map(Attribute("value") = 40))"
+                                          R"(.map(Attribute("value") = Attribute("value") + 10))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.filter(Attribute("value") < 40))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},
+            //No containment because different join attributes
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))))"
+                                          R"(.filter(Attribute("value") < 10))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.filter(Attribute("value") < 5))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines"))"
+                     R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                     R"(.apply(Sum(Attribute("value"))))"
+                     R"(.sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines"))"
+                     R"(.window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10))))"
+                     R"(.byKey(Attribute("id")))"
+                     R"(.apply(Sum(Attribute("value"))))"
+                     R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))))"
+                                          R"(.apply(Min(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))))"
+                                          R"(.apply(Min(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000))))"
+                                          R"(.apply(Max(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::NO_CONTAINMENT}};
+        return noContainment;
+    }
+
+    static auto createFilterContainmentCases() {
+        std::vector<std::tuple<std::tuple<std::string, std::string>, NES::Optimizer::ContainmentType>> noContainment = {
+            //Sig2 contains Sig1
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+            //Sig1 contains Sig2
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.filter(Attribute("value") < 5))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.filter(Attribute("value") < 5))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+        };
+        return noContainment;
+    }
+
+    static auto createProjectionContainmentCases() {
+        std::vector<std::tuple<std::tuple<std::string, std::string>, NES::Optimizer::ContainmentType>> noContainment = {
+            //Sig2 contains Sig1
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value")).sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+            //Sig1 contains Sig2
+            {std::tuple<std::string, std::string>(
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)",
+                 R"(Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value")).sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+        };
+        return noContainment;
+    }
+
+    static auto createWindowContainmentCases() {
+        std::vector<std::tuple<std::tuple<std::string, std::string>, NES::Optimizer::ContainmentType>> noContainment = {
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create()::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20))))"
+                                          R"(.apply(Sum(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines")"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.joinWith(Query::from("solarPanels")))"
+                                          R"(.where(Attribute("id1")))"
+                                          R"(.equalsTo(Attribute("id")))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value")), Min(Attribute("value"))->as(Attribute("newValue"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                     R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value")), Min(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value")), Min(Attribute("value1"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+            {std::tuple<std::string, std::string>(R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))))"
+                                          R"(.apply(Min(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)",
+                                      R"(Query::from("windTurbines"))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))))"
+                                          R"(.apply(Sum(Attribute("value"))))"
+                                          R"(.window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(100))))"
+                                          R"(.apply(Min(Attribute("value"))))"
+                                          R"(.sink(PrintSinkDescriptor::create());)"),
+             Optimizer::ContainmentType::RIGHT_SIG_CONTAINED}};
+        return noContainment;
     }
 };
 
@@ -381,12 +409,15 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
 /**
  * @brief tests if the correct containment relationship is returned by the signature containment util
  */
-TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
+TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
+
+    auto containmentCases = GetParam();
+
     uint16_t counter = 0;
-    for (auto entry : containmentCasesMixed) {
+    for (auto entry : containmentCases) {
         auto queries = get<0>(entry);
-        QueryPlanPtr queryPlanSQPQuery = get<0>(queries).getQueryPlan();
-        QueryPlanPtr queryPlanNewQuery = get<1>(queries).getQueryPlan();
+        QueryPlanPtr queryPlanSQPQuery = syntacticQueryValidation->validate(get<0>(queries));
+        QueryPlanPtr queryPlanNewQuery = syntacticQueryValidation->validate(get<1>(queries));
         //typ inference face
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         typeInferencePhase->execute(queryPlanSQPQuery);
@@ -412,3 +443,11 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         counter++;
     }
 }
+
+INSTANTIATE_TEST_CASE_P(testContainment,
+                        QueryContainmentIdentificationTest,
+                        ::testing::Values(QueryContainmentIdentificationTest::createEqualityCases()),
+                        [](const testing::TestParamInfo<QueryContainmentIdentificationTest::ParamType>& info) {
+                            std::string name = std::to_string(info.param.size());
+                            return name;
+                        });
