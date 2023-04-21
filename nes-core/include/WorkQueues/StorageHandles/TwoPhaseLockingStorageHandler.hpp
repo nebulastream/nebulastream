@@ -101,6 +101,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     TwoPhaseLockManagerPtr lockManager;
     bool resourcesLocked;
 
+    //resource pointers
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
