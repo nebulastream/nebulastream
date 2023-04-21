@@ -37,7 +37,9 @@ const std::string MicroBenchmarkResult::getHeaderAsCsv() const {
     }
 
     auto string = stringStream.str();
-    string.pop_back();
+    if (!string.empty()) {
+        string.pop_back();
+    }
 
     return string;
 }
@@ -49,7 +51,9 @@ const std::string MicroBenchmarkResult::getRowAsCsv() const {
     }
 
     auto string = stringStream.str();
-    string.pop_back();
+    if (!string.empty()) {
+        string.pop_back();
+    }
 
     return string;
 }

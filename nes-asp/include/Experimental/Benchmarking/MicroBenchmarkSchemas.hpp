@@ -15,11 +15,11 @@
 #ifndef NES_MICROBENCHMARKSCHEMAS_HPP
 #define NES_MICROBENCHMARKSCHEMAS_HPP
 
-#include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
+#include <API/Schema.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 
 namespace NES::ASP::Benchmarking {
 

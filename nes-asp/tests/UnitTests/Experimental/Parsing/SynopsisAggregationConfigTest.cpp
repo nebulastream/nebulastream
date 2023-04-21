@@ -12,33 +12,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Aggregation/AggregationValue.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
-#include <Experimental/Benchmarking/Parsing/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <memory>
 
-namespace NES::ASP::Benchmarking {
-    class YamlAggregationTest : public Testing::NESBaseTest {
+namespace NES::ASP::Parsing {
+    class SynopsisAggregationConfigTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
-            NES::Logger::setupLogging("SynopsisConfigurationTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup SynopsisConfigurationTest test class.");
+            NES::Logger::setupLogging("SynopsisAggregationConfigTest.log", NES::LogLevel::LOG_DEBUG);
+            NES_INFO("Setup SynopsisAggregationConfigTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO("Setup SynopsisConfigurationTest test case.");
+            NES_INFO("Setup SynopsisAggregationConfigTest test case.");
 
             Yaml::Node aggregationNode;
             aggregationNode["type"] = std::string(magic_enum::enum_name(type));
@@ -47,7 +47,7 @@ namespace NES::ASP::Benchmarking {
             aggregationNode["inputFile"] = inputFile;
             aggregationNode["timestamp"] = timeStampFieldName;
 
-            yamlAggregation = YamlAggregation::createAggregationFromYamlNode(aggregationNode, data);
+            synopsisAggregationConfig = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
         }
 
         AGGREGATION_TYPE type = AGGREGATION_TYPE::MAX;
@@ -56,10 +56,10 @@ namespace NES::ASP::Benchmarking {
         std::string inputFile = "some_input_file.csv";
         std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
         std::string timeStampFieldName = "timeStampFieldName1234123";
-        YamlAggregation yamlAggregation;
+        synopsisAggregationConfig yamlAggregation;
     };
 
-    TEST_F(YamlAggregationTest, testCreateAggregation) {
+    TEST_F(SynopsisAggregationConfigTest, testCreateAggregation) {
         /* Creating values */
         auto numberOfTypes = magic_enum::enum_values<AGGREGATION_TYPE>().size();
         auto type = magic_enum::enum_cast<AGGREGATION_TYPE>(rand() % numberOfTypes).value();
@@ -80,7 +80,7 @@ namespace NES::ASP::Benchmarking {
         aggregationNode["inputFile"] = inputFile;
         aggregationNode["timestamp"] = timeStampFieldName;
 
-        auto yamlAggregation = YamlAggregation::createAggregationFromYamlNode(aggregationNode, data);
+        auto yamlAggregation = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
         EXPECT_EQ(yamlAggregation.type, type);
         EXPECT_EQ(yamlAggregation.fieldNameAggregation, fieldNameAggregation);
         EXPECT_EQ(yamlAggregation.fieldNameApproximate, fieldNameApprox);
@@ -90,7 +90,7 @@ namespace NES::ASP::Benchmarking {
         EXPECT_TRUE(yamlAggregation.outputSchema->equals(outputSchema));
     }
 
-    TEST_F(YamlAggregationTest, testgetHeaderCsvAndValuesCsvAndToString) {
+    TEST_F(SynopsisAggregationConfigTest, testgetHeaderCsvAndValuesCsvAndToString) {
         auto inputSchema = inputFileSchemas[inputFile];
         auto inputSchemaStr = inputFileSchemas[inputFile]->toString();
         auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation)->toString();
@@ -109,7 +109,7 @@ namespace NES::ASP::Benchmarking {
                             "inputSchema (" + inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
     }
 
-    TEST_F(YamlAggregationTest, testCreateAggregationFunction) {
+    TEST_F(SynopsisAggregationConfigTest, testCreateAggregationFunction) {
 
         for (auto& type : magic_enum::enum_values<AGGREGATION_TYPE>()) {
             yamlAggregation.type = type;
@@ -131,7 +131,7 @@ namespace NES::ASP::Benchmarking {
         }
     }
 
-    TEST_F(YamlAggregationTest, testCreateAggregationValue) {
+    TEST_F(SynopsisAggregationConfigTest, testCreateAggregationValue) {
         for (auto& type : magic_enum::enum_values<AGGREGATION_TYPE>()) {
             switch (yamlAggregation.type) {
                 case AGGREGATION_TYPE::MIN: {

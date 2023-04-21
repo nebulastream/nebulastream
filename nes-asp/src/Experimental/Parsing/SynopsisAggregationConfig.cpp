@@ -13,8 +13,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Experimental/Benchmarking/Parsing/MicroBenchmarkSchemas.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -23,14 +21,16 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <filesystem>
 #include <sstream>
 
-namespace NES::ASP::Benchmarking {
+namespace NES::ASP::Parsing {
 
-YamlAggregation::YamlAggregation(const Aggregation_Type& type,
+SynopsisAggregationConfig::SynopsisAggregationConfig(const Aggregation_Type& type,
                                  const std::string& fieldNameAggregation,
                                  const std::string& fieldNameApproximate,
                                  const std::string& timeStampFieldName,
@@ -40,7 +40,7 @@ YamlAggregation::YamlAggregation(const Aggregation_Type& type,
     : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate),
       timeStampFieldName(timeStampFieldName), inputFile(inputFile), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
-const std::string YamlAggregation::toString() const {
+std::string SynopsisAggregationConfig::toString() {
     std::stringstream stringStream;
     stringStream << " type (" << magic_enum::enum_name(type) << ") "
                  << "fieldNameAggregation (" << fieldNameAggregation << ") "
@@ -54,12 +54,12 @@ const std::string YamlAggregation::toString() const {
     return stringStream.str();
 }
 
-const std::string YamlAggregation::getHeaderAsCsv() const {
+std::string SynopsisAggregationConfig::getHeaderAsCsv() {
     return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
            ",aggregation_inputFile,aggregation_inputSchema,aggregation_outputSchema";
 }
 
-const std::string YamlAggregation::getValuesAsCsv() const {
+std::string SynopsisAggregationConfig::getValuesAsCsv() {
     std::stringstream stringStream;
     stringStream << magic_enum::enum_name(type) << ","
                  << fieldNameAggregation << ","
@@ -72,7 +72,7 @@ const std::string YamlAggregation::getValuesAsCsv() const {
     return stringStream.str();
 }
 
-YamlAggregation YamlAggregation::createAggregationFromYamlNode(Yaml::Node& aggregationNode,
+SynopsisAggregationConfig SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregationNode,
                                                                const std::filesystem::path& data) {
     auto type = magic_enum::enum_cast<Aggregation_Type>(aggregationNode["type"].As<std::string>()).value();
     auto fieldNameAggregation = aggregationNode["fieldNameAgg"].As<std::string>();
@@ -86,11 +86,11 @@ YamlAggregation YamlAggregation::createAggregationFromYamlNode(Yaml::Node& aggre
     NES_ASSERT(inputSchema->get(timeStampFieldName)->getDataType()->isEquals(DataTypeFactory::createUInt64()),
                "The timestamp has to be a UINT64!");
 
-    return YamlAggregation(type, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
+    return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
                            inputFile, inputSchema, outputSchema);
 }
 
-Runtime::Execution::Aggregation::AggregationFunctionPtr YamlAggregation::createAggregationFunction() {
+Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfig::createAggregationFunction() {
     // Converting the DataType into a PhysicalDataType
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
     auto inputType = defaultPhysicalTypeFactory.getPhysicalType(inputSchema->get(fieldNameAggregation)->getDataType());
@@ -106,7 +106,7 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr YamlAggregation::createA
     }
 }
 
-AggregationValuePtr YamlAggregation::createAggregationValue() {
+AggregationValuePtr SynopsisAggregationConfig::createAggregationValue() {
     switch(type) {
         case Aggregation_Type::NONE: NES_THROW_RUNTIME_ERROR("Can not create aggregation value for the AGGREGATION_TYPE::NONE!");
         case Aggregation_Type::MIN: return createAggregationValueMin();
@@ -116,7 +116,7 @@ AggregationValuePtr YamlAggregation::createAggregationValue() {
         case Aggregation_Type::COUNT: return createAggregationValueCount();
     }
 }
-AggregationValuePtr YamlAggregation::createAggregationValueMin() {
+AggregationValuePtr SynopsisAggregationConfig::createAggregationValueMin() {
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
@@ -146,7 +146,7 @@ AggregationValuePtr YamlAggregation::createAggregationValueMin() {
     }
 }
 
-AggregationValuePtr YamlAggregation::createAggregationValueMax() {
+AggregationValuePtr SynopsisAggregationConfig::createAggregationValueMax() {
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
@@ -176,7 +176,7 @@ AggregationValuePtr YamlAggregation::createAggregationValueMax() {
     }
 }
 
-AggregationValuePtr YamlAggregation::createAggregationValueCount() {
+AggregationValuePtr SynopsisAggregationConfig::createAggregationValueCount() {
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
@@ -206,7 +206,7 @@ AggregationValuePtr YamlAggregation::createAggregationValueCount() {
     }
 }
 
-AggregationValuePtr YamlAggregation::createAggregationValueAverage() {
+AggregationValuePtr SynopsisAggregationConfig::createAggregationValueAverage() {
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
@@ -236,7 +236,7 @@ AggregationValuePtr YamlAggregation::createAggregationValueAverage() {
     }
 }
 
-AggregationValuePtr YamlAggregation::createAggregationValueSum() {
+AggregationValuePtr SynopsisAggregationConfig::createAggregationValueSum() {
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
@@ -266,7 +266,7 @@ AggregationValuePtr YamlAggregation::createAggregationValueSum() {
     }
 }
 
-YamlAggregation::YamlAggregation(const YamlAggregation& other) {
+SynopsisAggregationConfig::SynopsisAggregationConfig(const SynopsisAggregationConfig& other) {
     type = other.type;
     fieldNameApproximate = other.fieldNameApproximate;
     fieldNameAggregation = other.fieldNameAggregation;
@@ -276,7 +276,7 @@ YamlAggregation::YamlAggregation(const YamlAggregation& other) {
     outputSchema = other.outputSchema;
 }
 
-YamlAggregation& YamlAggregation::operator=(const YamlAggregation& other) {
+SynopsisAggregationConfig& SynopsisAggregationConfig::operator=(const SynopsisAggregationConfig& other) {
     // If this is the same object, then return it
     if (this == &other) {
         return *this;
@@ -293,4 +293,15 @@ YamlAggregation& YamlAggregation::operator=(const YamlAggregation& other) {
     return *this;
 }
 
-} // namespace NES::ASP::Benchmarking
+SynopsisAggregationConfig SynopsisAggregationConfig::create(const AGGREGATION_TYPE& type,
+                                                            const std::string& fieldNameAggregation,
+                                                            const std::string& fieldNameApproximate,
+                                                            const std::string& timestampFieldName,
+                                                            const std::string& inputFile,
+                                                            const SchemaPtr& inputSchema,
+                                                            const SchemaPtr& outputSchema) {
+    return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApproximate, timestampFieldName, inputFile,
+                                     inputSchema, outputSchema);
+}
+
+} // namespace NES::ASP::Parsing

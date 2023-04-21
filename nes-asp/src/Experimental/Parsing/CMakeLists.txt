@@ -11,7 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-asp
-        MicroBenchmarkASPUtil.cpp
-        MicroBenchmarkResult.cpp
-        MicroBenchmarkRun.cpp
-        )
+        SynopsisConfiguration.cpp
+        SynopsisAggregationConfig.cpp )

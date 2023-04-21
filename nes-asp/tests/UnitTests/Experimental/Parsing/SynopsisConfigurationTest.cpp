@@ -13,10 +13,10 @@
 */
 
 #include <NesBaseTest.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
+#include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Util/Logger/LogLevel.hpp>
 
-namespace NES::ASP {
+namespace NES::ASP::Parsing {
     class SynopsisConfigurationTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
@@ -34,8 +34,8 @@ namespace NES::ASP {
 
     TEST_F(SynopsisConfigurationTest, testCreate) {
         /* Creating random values */
-        auto numberOfTypes = magic_enum::enum_values<SynopsisConfiguration::SYNOPSIS_TYPE>().size();
-        auto type = magic_enum::enum_cast<SynopsisConfiguration::SYNOPSIS_TYPE>(rand() % numberOfTypes).value();
+        auto numberOfTypes = magic_enum::enum_values<SYNOPSIS_TYPE>().size();
+        auto type = magic_enum::enum_cast<SYNOPSIS_TYPE>(rand() % numberOfTypes).value();
         size_t width = rand();
         size_t height = rand();
         size_t windowSize = rand();
@@ -60,7 +60,7 @@ namespace NES::ASP {
     }
 
     TEST_F(SynopsisConfigurationTest, testingGetHeaderAndRowCSVAndToString) {
-        auto type = SynopsisConfiguration::SYNOPSIS_TYPE::ECM;
+        auto type = SYNOPSIS_TYPE::ECM;
         size_t width = 42;
         size_t height = 43;
         size_t windowSize = 44;
@@ -74,4 +74,4 @@ namespace NES::ASP {
         EXPECT_EQ(valuesCsvString, "ECM,42,43,44");
         EXPECT_EQ(toString, "type (ECM) width (42) height (43) windowSize (44)");
     }
-}
+} // namespace NES::ASP:Parsing

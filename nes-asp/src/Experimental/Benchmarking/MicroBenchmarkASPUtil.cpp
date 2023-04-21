@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
+#include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,21 +27,21 @@
 
 namespace NES::ASP::Util {
 
-std::vector<SynopsisConfigurationPtr> parseSynopsisConfigurations(const Yaml::Node& synopsesNode) {
-    std::vector<SynopsisConfigurationPtr> retVector;
+std::vector<Parsing::SynopsisConfigurationPtr> parseSynopsisConfigurations(const Yaml::Node& synopsesNode) {
+    std::vector<Parsing::SynopsisConfigurationPtr> retVector;
     for (auto entry = synopsesNode.Begin(); entry != synopsesNode.End(); entry++) {
         auto node = (*entry).second;
-        retVector.emplace_back(SynopsisConfiguration::createArgumentsFromYamlNode(node));
+        retVector.emplace_back(Parsing::SynopsisConfiguration::createArgumentsFromYamlNode(node));
     }
     return retVector;
 }
 
-std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& aggregationsNode,
+std::vector<Parsing::SynopsisAggregationConfig> parseAggregations(const Yaml::Node& aggregationsNode,
                                                              const std::filesystem::path& data) {
-    std::vector<Benchmarking::YamlAggregation> parsedAggregations;
+    std::vector<Parsing::SynopsisAggregationConfig> parsedAggregations;
     for (auto entry = aggregationsNode.Begin(); entry != aggregationsNode.End(); entry++) {
         auto node = (*entry).second;
-        parsedAggregations.emplace_back(Benchmarking::YamlAggregation::createAggregationFromYamlNode(node, data));
+        parsedAggregations.emplace_back(Parsing::SynopsisAggregationConfig::createAggregationFromYamlNode(node, data));
     }
     return parsedAggregations;
 }

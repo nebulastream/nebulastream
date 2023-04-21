@@ -18,8 +18,8 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Experimental/Benchmarking/Parsing/SynopsisConfiguration.hpp>
-#include <Experimental/Benchmarking/Parsing/YamlAggregation.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
+#include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -60,9 +60,10 @@ class AbstractSynopsis {
     /**
      * @brief Creates the synopsis from the SynopsisArguments
      * @param arguments
+     * @param aggregationConfig
      * @return AbstractSynopsesPtr
      */
-    static AbstractSynopsesPtr create(SynopsisConfiguration arguments);
+    static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration arguments, Parsing::SynopsisAggregationConfig aggregationConfig);
 
     /**
      * @brief Sets the aggregation function for this synopsis
@@ -73,7 +74,7 @@ class AbstractSynopsis {
     /**
      * @brief Sets the aggregation value for this synopsis
      */
-    void setAggregationValue(Benchmarking::AggregationValuePtr aggregationValue);
+    void setAggregationValue(Parsing::AggregationValuePtr aggregationValue);
 
     /**
      * @brief Sets the fieldname for this aggregation
@@ -112,7 +113,7 @@ class AbstractSynopsis {
 
   protected:
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    Benchmarking::AggregationValuePtr aggregationValue;
+    Parsing::AggregationValuePtr aggregationValue;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     SchemaPtr inputSchema;

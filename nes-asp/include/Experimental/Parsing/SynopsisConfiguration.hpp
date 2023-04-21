@@ -26,35 +26,33 @@
 #include <cstddef>
 #include <stdint.h>
 
-namespace NES::ASP {
+namespace NES::ASP::Parsing {
 
 class SynopsisConfiguration;
 using SynopsisConfigurationPtr = std::shared_ptr<SynopsisConfiguration>;
 
+enum class Synopsis_Type : uint8_t {
+    SRSWR,  // Simple Random Sampling With Replacement
+    SRSWoR, // Simple Random Sampling Without Replacement
+    Poisson, // Poisson sampling
+    Stratified, // Stratified Sampling
+    ResSamp,    // Reservoir Sampling
+
+    EqWdHist, // Equi-Width Histogram,
+    EqDpHist, // Equi-Depth Histogram,
+    vOptHist, // v-Optimal Histograms
+
+    HaarWave, // Haar Wavelet
+
+    CM,         // Count-Min Sketch
+    ECM,        // Exponential Count-Min Sketch
+    HLL,        // HyperLogLog
+    NONE        // NONE
+};
 class SynopsisConfiguration : public Configurations::BaseConfiguration {
 
   public:
-    enum class Synopsis_Type : uint8_t {
-        SRSWR,  // Simple Random Sampling With Replacement
-        SRSWoR, // Simple Random Sampling Without Replacement
-        Poisson, // Poisson sampling
-        Stratified, // Stratified Sampling
-        ResSamp,    // Reservoir Sampling
-
-        EqWdHist, // Equi-Width Histogram,
-        EqDpHist, // Equi-Depth Histogram,
-        vOptHist, // v-Optimal Histograms
-
-        HaarWave, // Haar Wavelet
-
-        CM,         // Count-Min Sketch
-        ECM,        // Exponential Count-Min Sketch
-        HLL,        // HyperLogLog
-        NONE        // NONE
-    };
-
-    Configurations::EnumOption<Synopsis_Type> type = {Configurations::SYNOPSIS_CONFIG_TYPE,
-                                                      Synopsis_Type::NONE, "Type of synopsis."};
+    Configurations::EnumOption<Synopsis_Type> type = {Configurations::SYNOPSIS_CONFIG_TYPE, SYNOPSIS_TYPE::NONE, "Type of synopsis."};
     Configurations::SizeTOption width = {Configurations::SYNOPSIS_CONFIG_WIDTH, 1, "Width of the synopsis."};
     Configurations::SizeTOption height = {Configurations::SYNOPSIS_CONFIG_HEIGHT, 1, "Height of the synopsis."};
     Configurations::SizeTOption windowSize = {Configurations::SYNOPSIS_CONFIG_WINDOWSIZE, 1, "WindowSize of the synopsis."};
@@ -106,6 +104,6 @@ class SynopsisConfiguration : public Configurations::BaseConfiguration {
 };
 
 
-} // namespace NES::ASP
+} // namespace NES::ASP::Parsing
 
 #endif//NES_SYNOPSISCONFIGURATION_HPP
