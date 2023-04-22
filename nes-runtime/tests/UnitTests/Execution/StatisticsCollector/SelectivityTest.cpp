@@ -446,7 +446,7 @@ TEST_P(SelectivityTest, cacheMissesTest) {
 
     std::ofstream csvFile("CacheMissesTest.csv");
 
-    for (int j = 10; j <= 10; ++j) {
+    for (int j = 1; j <= 20; ++j) {
 
         csvFile << "Selectivity " << ((double) j / 20) << "\n";
 

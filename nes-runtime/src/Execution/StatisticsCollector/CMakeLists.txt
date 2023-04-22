@@ -21,4 +21,5 @@ add_source_files(nes-runtime
                 BranchMisses.cpp
                 CacheMisses.cpp
                 OutOfOrderRatio.cpp
-                Normalizer.cpp)
+                Normalizer.cpp
+                ChangeDataGenerator.cpp)
