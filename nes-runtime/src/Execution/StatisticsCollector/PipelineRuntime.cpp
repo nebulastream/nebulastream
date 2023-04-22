@@ -26,12 +26,13 @@ PipelineRuntime::PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDe
       normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)),
       runtime(0){}
 
-void PipelineRuntime::collect() {
+bool PipelineRuntime::collect() {
     runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();
 
     if (runtime != 0){
-        normalizer.normalizeValue(runtime);
+        return normalizer.normalizeValue(runtime);
     }
+    return false;
 }
 std::any PipelineRuntime::getStatisticValue() {
     return runtime;

@@ -35,14 +35,16 @@ class Normalizer {
     /**
     * @brief Normalize the value.
     * @param value to be normalized.
+    * @return true if change was detected.
     */
-    void normalizeValue(uint64_t value);
+    bool normalizeValue(uint64_t value);
 
   private:
     /**
     * @brief Normalize the values in the window and add them to the change detector.
+    * @return true if change was detected.
     */
-    void addNormalizedValuesToChangeDetection();
+    bool addNormalizedValuesToChangeDetection();
 
     size_t windowSize;
     std::vector<uint64_t> window;

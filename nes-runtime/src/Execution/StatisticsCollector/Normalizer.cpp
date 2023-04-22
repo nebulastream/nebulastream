@@ -21,15 +21,17 @@ namespace NES::Runtime::Execution {
 Normalizer::Normalizer(uint64_t windowSize, std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper) :
         windowSize(windowSize), window(0), changeDetectorWrapper(std::move(changeDetectorWrapper)), max(0) {}
 
-void Normalizer::normalizeValue(uint64_t value){
+bool Normalizer::normalizeValue(uint64_t value){
     std::lock_guard<std::mutex> lock(changeDetectorWrapper->mutex);
     if (window.size() < windowSize) {
         window.push_back(value);
+
         if (window.size() == windowSize) {
             max = *max_element(window.begin(), window.end());
-            auto a = std::async(std::launch::async, &Normalizer::addNormalizedValuesToChangeDetection, this);
+            auto change = std::async(std::launch::async, &Normalizer::addNormalizedValuesToChangeDetection, this);
+            return change.get();
         }
-        return ;
+        return false;
     }
 
     double normalizedValue = (double) value /(double) max;
@@ -39,18 +41,18 @@ void Normalizer::normalizeValue(uint64_t value){
         normalizedValue = (double) value /(double) max;
     }
 
-    if (changeDetectorWrapper->insertValue(normalizedValue)) {
-        std::cout << "Change detected" << std::endl;
-    }
+    return changeDetectorWrapper->insertValue(normalizedValue);
 }
 
-void Normalizer::addNormalizedValuesToChangeDetection(){
+bool Normalizer::addNormalizedValuesToChangeDetection(){
+    bool change = false;
     for (auto value : window) {
         auto normalizedValue = (double) value / (double) max ;
         if (changeDetectorWrapper->insertValue(normalizedValue)) {
-            std::cout << "Change detected" << std::endl;
+            change = true;
         }
     }
+    return change;
 }
 
 } // namespace NES::Runtime::Execution

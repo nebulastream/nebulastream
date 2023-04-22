@@ -26,12 +26,13 @@ BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetector
     eventId = profiler->addEvent(PERF_COUNT_HW_BRANCH_MISSES);
 }
 
-void BranchMisses::collect(){
+bool BranchMisses::collect(){
     branchMisses = profiler->getCount(eventId);
 
     if (branchMisses != 0){
-        normalizer.normalizeValue(branchMisses);
+        return normalizer.normalizeValue(branchMisses);
     }
+    return false;
 }
 
 std::any BranchMisses::getStatisticValue() {

@@ -26,8 +26,9 @@ class Statistic {
   public:
     /**
      * @brief Collects the statistic when called from the StatisticsCollector.
+     * @return true if change was detected.
      */
-    virtual void collect() = 0;
+    virtual bool collect() = 0;
 
     /**
      * @brief Returns the value of the collected statistic.

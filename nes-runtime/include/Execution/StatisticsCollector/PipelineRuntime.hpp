@@ -33,7 +33,7 @@ class PipelineRuntime : public Statistic {
     PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
                     std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                     uint64_t normalizationWindowSize);
-    void collect() override;
+    bool collect() override;
     std::any getStatisticValue() override;
 
   private:

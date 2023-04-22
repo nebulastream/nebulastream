@@ -22,15 +22,13 @@ CacheMisses::CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWr
                          uint64_t normalizationWindowSize)
     : profiler(profiler),
       normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)) {
-    eventId = profiler->addEvent(PERF_COUNT_HW_CACHE_MISSES);
+      eventId = profiler->addEvent(PERF_COUNT_HW_CACHE_MISSES);
 }
 
-void CacheMisses::collect(){
+bool CacheMisses::collect(){
     cacheMisses = profiler->getCount(eventId);
 
-    if (cacheMisses != 0){
-        normalizer.normalizeValue(cacheMisses);
-    }
+    return normalizer.normalizeValue(cacheMisses);
 }
 
 std::any CacheMisses::getStatisticValue() {

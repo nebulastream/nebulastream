@@ -32,13 +32,13 @@ class OutOfOrderRatio : public Statistic {
     */
     OutOfOrderRatio(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
                     std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler);
-    void collect() override;
+    bool collect() override;
     std::any getStatisticValue() override;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler;
-    double outOfOrderRatio;
+    double outOfOrderRatio{};
 };
 
 }// namespace NES::Runtime::Execution

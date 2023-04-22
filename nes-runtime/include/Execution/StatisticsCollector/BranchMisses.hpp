@@ -34,7 +34,7 @@ class BranchMisses : public Statistic {
     BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
                  const std::shared_ptr<Profiler>& profiler,
                  uint64_t normalizationWindowSize);
-    void collect() override;
+    bool collect() override;
 
     std::any getStatisticValue() override;
 

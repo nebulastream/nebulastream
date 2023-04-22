@@ -20,20 +20,18 @@ namespace NES::Runtime::Execution {
 OutOfOrderRatio::OutOfOrderRatio(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
                                  std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler)
     : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      outOfOrderOperatorHandler(outOfOrderOperatorHandler) {}
+      outOfOrderOperatorHandler(std::move(outOfOrderOperatorHandler)) {}
 
-void OutOfOrderRatio::collect() {
+bool OutOfOrderRatio::collect() {
     auto numRecords = outOfOrderOperatorHandler->numberOfRecords;
     auto numOutOfOrderRecords = outOfOrderOperatorHandler->numberOfOutOfOrderRecords;
 
     if(numRecords != 0){
         outOfOrderRatio = (double) numOutOfOrderRecords / numRecords;
 
-        if (changeDetectorWrapper->insertValue(outOfOrderRatio)){
-            std::cout << "Change detected" << std::endl;
-        }
+        return changeDetectorWrapper->insertValue(outOfOrderRatio);
     }
-
+    return false;
 }
 
 std::any OutOfOrderRatio::getStatisticValue() {
