@@ -30,7 +30,7 @@ SeqDrift2::SeqDrift2(double significanceLevel, int blockSize):
   epsilon(0.0)
 {}
 
-bool SeqDrift2::insertValue(double &inputValue) {
+bool SeqDrift2::insertValue(double& inputValue) {
     instanceCount++;
 
     addToRightReservoir(inputValue); // add new value to right sub-window

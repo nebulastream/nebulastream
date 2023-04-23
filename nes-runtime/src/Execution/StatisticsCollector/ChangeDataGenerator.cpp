@@ -28,7 +28,7 @@ ChangeDataGenerator::ChangeDataGenerator(std::shared_ptr<Runtime::BufferManager>
       noChangePeriod(noChangePeriod),
       noChangeRemain(noChangePeriod){
 
-    if (changeType == INCREMENTAL) {
+    if (changeType == INCREMENTAL || changeType == REOCCURRING) {
         distributionStart = 5;
     } else if (changeType == GRADUAL) {
         distributionStart = 1;
@@ -94,11 +94,20 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesIncremental(){
 }
 
 std::vector<int64_t> ChangeDataGenerator::getNextValuesReoccurring(){
-    noChangeRemain = noChangePeriod;
     std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
-    std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-    distributionStart -= incrementSteps;
+    if(!reoccur) {
+        noChangeRemain = noChangePeriod;
+        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
+        std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+        distributionStart += incrementSteps;
+        if (distributionStart == 50) reoccur = true;
+    } else {
+        noChangeRemain = noChangePeriod;
+        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
+        std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+        distributionStart -= incrementSteps;
+        if (distributionStart == 0) distributionStart = 1;
+    }
     return fieldValues;
 }
 

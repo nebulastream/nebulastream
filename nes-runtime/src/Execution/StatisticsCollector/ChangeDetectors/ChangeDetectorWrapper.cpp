@@ -18,7 +18,7 @@ namespace NES::Runtime::Execution {
 
 ChangeDetectorWrapper::ChangeDetectorWrapper(std::unique_ptr<ChangeDetector> changeDetector) : changeDetector(std::move(changeDetector)) {}
 
-bool ChangeDetectorWrapper::insertValue(double &value) {
+bool ChangeDetectorWrapper::insertValue(double& value) {
     return changeDetector->insertValue(value);
 }
 
