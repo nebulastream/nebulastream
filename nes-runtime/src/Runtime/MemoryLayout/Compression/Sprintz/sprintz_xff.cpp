@@ -290,7 +290,7 @@ int64_t compress8b_rowmajor_xff(const uint8_t* src, uint64_t len, int8_t* dest,
         } // for each block
     } // for each group
 
-main_loop_end:
+[[maybe_unused]] main_loop_end:
 
     free(stripe_bitwidths);
     free(stripe_bitoffsets);

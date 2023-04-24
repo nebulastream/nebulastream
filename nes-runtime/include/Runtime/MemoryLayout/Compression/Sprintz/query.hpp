@@ -138,7 +138,7 @@ static inline void accumulate(
 static inline void accumulate(
     Packet<32, uint16_t, CpuCtx> x,
     Packet<32, uint32_t, CpuCtx>& accum0, Packet<32, uint32_t, CpuCtx>& accum1,
-    Packet<32, uint32_t, CpuCtx>& accum2, Packet<32, uint32_t, CpuCtx>& accum3,
+    [[maybe_unused]] Packet<32, uint32_t, CpuCtx>& accum2, [[maybe_unused]] Packet<32, uint32_t, CpuCtx>& accum3,
     uint32_t nrepeats=1)
 {
     auto x_low = _mm256_extracti128_si256(x.vec, 0);
@@ -182,9 +182,9 @@ class NoopQuery {
 public:
     using vec_t = typename scalar_traits<DataT>::vector_type;
     using state_t = std::vector<DataT>;
-    explicit NoopQuery(int64_t ndims) {}
-    void operator()(uint32_t vstripe, const vec_t& prev_vals,
-        const vec_t& vals, uint32_t nrepeats=1) { }
+    explicit NoopQuery([[maybe_unused]] int64_t ndims) {}
+    void operator()([[maybe_unused]] uint32_t vstripe, [[maybe_unused]] const vec_t& prev_vals,
+                    [[maybe_unused]] const vec_t& vals, [[maybe_unused]] uint32_t nrepeats=1) { }
     state_t result() { return state_t{}; }
 };
 
@@ -224,8 +224,8 @@ public:
     //     // delete state;
     // }
 
-    void operator()(uint32_t vstripe, const vec_t& prev_vals,
-        const vec_t& vals, uint32_t nrepeats=1)
+    void operator()(uint32_t vstripe, [[maybe_unused]] const vec_t& prev_vals,
+        const vec_t& vals, [[maybe_unused]] uint32_t nrepeats=1)
     {
         // state[vstripe] = max(state[vstripe], vals);
         state[0] = max(state[vstripe], vals); // TODO rm
@@ -280,7 +280,7 @@ public:
         // This segfaults:
         // state(round_up_to_multiple(div_round_up(ndims, elems_per_vec), 4)) {}
 
-    void operator()(uint32_t vstripe, const vec_t& prev_vals,
+    void operator()(uint32_t vstripe, [[maybe_unused]] const vec_t& prev_vals,
         const vec_t& vals, uint32_t nrepeats=1)
     {
         uint32_t start_idx = vstripe * 4 / sizeof(DataT);  // XXX 64bit DataT

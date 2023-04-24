@@ -38,7 +38,7 @@ SPRINTZ_FORCE_INLINE int64_t query_rowmajor_xff_rle(const int_t* src,
     static const uint8_t elem_sz_nbits = 8 * elem_sz;
     static const uint8_t nbits_sz_bits = elem_sz == 1 ? 3 : 4; // XXX {8,16}b
     typedef typename ElemSzTraits<elem_sz>::bitwidth_t bitwidth_t;
-    typedef typename ElemSzTraits<elem_sz>::counter_t counter_t;
+    [[maybe_unused]] typedef typename ElemSzTraits<elem_sz>::counter_t counter_t;
     // xff constants
     // static const uint8_t learning_shift = elem_sz == 1 ? 1 : 3;
     static const uint8_t learning_shift = 1;

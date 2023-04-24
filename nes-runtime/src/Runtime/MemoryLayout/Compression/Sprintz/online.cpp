@@ -79,7 +79,7 @@ len_t dynamic_delta_zigzag_encode_u16(
 
     // zero out choices buffer; it's a bitfield so length/8 bytes, rounded up
     auto nheader_bytes = (length + 7) / 8;
-    for (int i = 0; i < nheader_bytes; i++) {
+    for (uint i = 0; i < nheader_bytes; i++) {
         choices_out[i] = 0;
     }
     if (nheader_bytes % 2) { // ensure deterministic last byte if odd nbytes
@@ -138,7 +138,7 @@ len_t dynamic_delta_zigzag_encode_u16(
     // just delta code the tail
     // printf("enc enc0 next prediction: %d\n", enc0._predictor.predict());
     // printf("enc *in_ptr, *(in_ptr+1): %d, %d\n", *in_ptr, *(in_ptr + 1));
-    for (int i = 0; i < tail_len; i++) {
+    for (len_t i = 0; i < tail_len; i++) {
         // auto val = enc0.encode_next(*in_ptr++);
         // printf("enc writing tail val: %d\n", val);
         // *out_ptr++ = val;
@@ -188,7 +188,7 @@ len_t dynamic_delta_zigzag_decode_u16(
 
     const int_t* in_ptr = data_in + 1;
     uint_t* out_ptr = data_out + 1;
-    for (int b = 0; b < nblocks; b++) {
+    for (len_t b = 0; b < nblocks; b++) {
         // read the next predictor choice
         len_t choices_byte_offset = b / 8;
         uint8_t choices_bit_offset = (uint8_t)(b % 8);
@@ -241,7 +241,7 @@ len_t dynamic_delta_zigzag_decode_u16(
     // printf("dec enc0 next prediction: %d\n", enc0._predictor.predict());
     // printf("dec *in_ptr, *(in_ptr+1): %d, %d\n", *in_ptr, *(in_ptr + 1));
     // just delta code the tail
-    for (int i = 0; i < tail_len; i++) {
+    for (len_t i = 0; i < tail_len; i++) {
         // auto val = enc0.decode_next(*in_ptr++);
         // printf("dec writing tail val: %d\n", val);
         // *out_ptr++ = val;
@@ -482,7 +482,7 @@ len_t _sprintzpack_encode_u16(
 
     // handle trailing elems; note that end of block always byte aligned
     // if (shift > 0) { data_out++; }  // just ignore trailing bits
-    for (int i = 0; i < tail_len; i++) {
+    for (len_t i = 0; i < tail_len; i++) {
         *data_out++ = *data_in++;
     }
 
@@ -611,7 +611,7 @@ len_t _sprintzpack_decode_u16(
     }
 
     // handle trailing elems; note that end of block always byte aligned
-    for (int i = 0; i < tail_len; i++) {
+    for (len_t i = 0; i < tail_len; i++) {
         // printf("copying tail value %d\n", *data_in);
         *data_out++ = *data_in++;
     }

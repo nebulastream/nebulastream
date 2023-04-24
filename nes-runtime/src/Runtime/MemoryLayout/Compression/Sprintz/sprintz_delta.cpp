@@ -113,7 +113,7 @@ int64_t compress_rowmajor(const uint_t* src, uint32_t len, int_t* dest,
     // }
 
     if (debug > 0) {
-        printf("-------- compression (len = %lld)\n", (int64_t)len);
+        printf("-------- compression (len = %lld)\n", (long long)len);
         if (debug > 2) {
             printf("saw original data:\n"); dump_elements(src, len, ndims);
         }
@@ -456,7 +456,7 @@ int64_t decompress_rowmajor(const int_t* src, uint_t* dest) {
     }
 
     if (debug > 0) {
-        printf("-------- decompression (orig_len = %lld)\n", (int64_t)orig_len);
+        printf("-------- decompression (orig_len = %lld)\n", (long long)orig_len);
         if (debug > 3) {
             printf("saw compressed data (with possible extra at end):\n");
             dump_bytes(src, orig_len + 8, ndims * elem_sz);
@@ -815,7 +815,7 @@ int64_t compress_rowmajor_delta(const uint_t* src, uint32_t len, int_t* dest,
     }
 
     if (debug > 0) {
-        printf("-------- compression (len = %lld)\n", (int64_t)len);
+        printf("-------- compression (len = %lld)\n", (long long)len);
         if (debug > 2) {
             printf("saw original data:\n"); dump_elements(src, len, ndims);
         }
@@ -1077,7 +1077,7 @@ int64_t decompress_rowmajor_delta(const int_t* src, uint_t* dest) {
         return 0;
     }
     if (debug > 0) {
-        printf("-------- decompression (orig_len = %lld)\n", (int64_t)orig_len);
+        printf("-------- decompression (orig_len = %lld)\n", (long long)orig_len);
         if (debug > 3) {
             printf("saw compressed data (with possible extra at end):\n");
             // dump_bytes(src, orig_len + 8, ndims * elem_sz);

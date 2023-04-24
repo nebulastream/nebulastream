@@ -215,7 +215,7 @@ inline void memrep(void* dest_, const void* src_, int32_t in_nbytes,
         size_t nvectors = (in_nbytes / vector_sz) + ((in_nbytes % vector_sz) > 0);
         size_t trailing_nbytes = in_nbytes % vector_sz;
         trailing_nbytes += trailing_nbytes == 0 ? vector_sz : 0;
-        for (size_t i = 0; i < ncopies - 1; i++) {
+        for (int i = 0; i < ncopies - 1; i++) {
             for (size_t v = 0; v < nvectors - 1; v++) {
                 __m256i x = _mm256_loadu_si256(
                     (const __m256i*)(src + v * vector_sz));
@@ -240,7 +240,7 @@ inline void memrep(void* dest_, const void* src_, int32_t in_nbytes,
     // if (total_nvectors <= (1 << 30)) { // TODO rm after debug
     // if (total_nvectors <= 2) { // TODO uncomment after debug
     if (total_nvectors < 1) {
-        for (size_t i = 0; i < ncopies; i++) {
+        for (int i = 0; i < ncopies; i++) {
             memcpy(dest, src, in_nbytes);
             dest += in_nbytes;
         }

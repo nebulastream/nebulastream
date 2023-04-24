@@ -319,7 +319,7 @@ static inline int16_t zigzag_decode_16b(uint16_t x) {
 // __attribute__((always_inline)) + static in header is only thing that seems
 // to actually force it to get inlined
 // extern inline __m256i mm256_zigzag_encode_epi8(const __m256i& x) {
-SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_encode_epi8(const __m256i& x) {
+SPRINTZ_FORCE_INLINE [[maybe_unused]] static __m256i mm256_zigzag_encode_epi8(const __m256i& x) {
     static const __m256i zeros = _mm256_setzero_si256();
     static const __m256i ones = _mm256_set1_epi8(1);
     __m256i invert_mask = _mm256_cmpgt_epi8(zeros, x);
@@ -328,7 +328,7 @@ SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_encode_epi8(const __m256i& x) {
 }
 
 // extern inline __m256i mm256_zigzag_decode_epi8(const __m256i& x) {
-SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_decode_epi8(const __m256i& x) {
+[[maybe_unused]] SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_decode_epi8(const __m256i& x) {
     static const __m256i zeros = _mm256_setzero_si256();
     static const __m256i high_bits_one = _mm256_set1_epi8(-128);
     __m256i shifted = _mm256_andnot_si256(
@@ -338,7 +338,7 @@ SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_decode_epi8(const __m256i& x) {
 }
 
 // TODO uncomment and impl these functions
-SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_encode_epi16(const __m256i& x)
+SPRINTZ_FORCE_INLINE [[maybe_unused]] static __m256i mm256_zigzag_encode_epi16(const __m256i& x)
 {
     static const __m256i zeros = _mm256_setzero_si256();
     static const __m256i ones = _mm256_set1_epi16(1);
@@ -347,7 +347,7 @@ SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_encode_epi16(const __m256i& x)
     return _mm256_xor_si256(invert_mask, shifted);
 }
 
-SPRINTZ_FORCE_INLINE static __m256i mm256_zigzag_decode_epi16(const __m256i& x)
+SPRINTZ_FORCE_INLINE [[maybe_unused]] static __m256i mm256_zigzag_decode_epi16(const __m256i& x)
 {
     static const __m256i zeros = _mm256_setzero_si256();
     static const __m256i high_bits_one = _mm256_set1_epi16(-128*256);

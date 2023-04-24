@@ -84,7 +84,7 @@ int64_t compress_rowmajor_xff_rle_lowdim(const uint_t* src, uint32_t len,
     // ------------------------ handle edge cases
 
     if (debug > 0) {
-        printf("-------- compression (len = %lld)\n", (int64_t)len);
+        printf("-------- compression (len = %lld)\n", (long long)len);
         if (debug > 2) {
             // printf("saw original data:\n"); dump_elements(src, len, ndims);
             // printf("saw original data:\n"); dump_elements(src, 16, ndims);
@@ -419,7 +419,7 @@ SPRINTZ_FORCE_INLINE int64_t decompress_rowmajor_xff_rle_lowdim(
     static const uint8_t elem_sz = sizeof(uint_t);
     static const uint8_t elem_sz_nbits = 8 * elem_sz;
     static const uint8_t nbits_sz_bits = elem_sz == 1 ? 3 : 4; // XXX {8,16}b
-    typedef typename ElemSzTraits<elem_sz>::bitwidth_t bitwidth_t;
+    [[maybe_unused]] typedef typename ElemSzTraits<elem_sz>::bitwidth_t bitwidth_t;
     typedef typename ElemSzTraits<elem_sz>::counter_t counter_t;
     // xff constants
     static const uint8_t log2_learning_downsample = 1;
@@ -469,7 +469,7 @@ SPRINTZ_FORCE_INLINE int64_t decompress_rowmajor_xff_rle_lowdim(
 
     if (debug) {
         int64_t min_orig_len = ngroups * group_sz_blocks * block_sz * ndims;
-        printf("-------- decompression (orig_len = %lld)\n", (int64_t)min_orig_len);
+        printf("-------- decompression (orig_len = %lld)\n", (long long)min_orig_len);
         if (debug > 3) {
             printf("saw compressed data (with possible missing data if runs):\n");
             // dump_bytes(src, min_orig_len + 8, ndims * elem_sz);

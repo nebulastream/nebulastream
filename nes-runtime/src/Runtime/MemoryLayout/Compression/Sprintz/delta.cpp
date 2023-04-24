@@ -81,7 +81,7 @@ uint32_t encode_delta_rowmajor(const uint_t* src, uint32_t len,
 
     // nblocks = 0;
 
-    for (int32_t b = 0; b < nblocks; b++) { // for each block
+    for (uint32_t b = 0; b < nblocks; b++) { // for each block
         for (int32_t v = nvectors - 1; v >= 0; v--) { // for each stripe
             __m256i* prev_vals_ptr = (__m256i*)(prev_vals_ar + v * vector_sz);
             __m256i prev_vals = _mm256_loadu_si256(prev_vals_ptr);
@@ -437,7 +437,7 @@ inline int64_t encode_doubledelta_serial(const uint_t* src, uint32_t len,
 
     // main loop
     uint32_t nrows = remaining_len / lag;
-    for (int32_t i = 0; i < nrows; i++) {
+    for (uint32_t i = 0; i < nrows; i++) {
         for (uint16_t j = 0; j < lag; j++) {
             int_t delta = *src - *(src - lag);
             int_t err = delta - prev_deltas[j];
@@ -498,7 +498,7 @@ inline int32_t decode_doubledelta_serial(const int_t* src, uint32_t len,
 
     // main loop
     uint32_t nrows = remaining_len / lag;
-    for (int32_t i = 0; i < nrows; i++) {
+    for (uint32_t i = 0; i < nrows; i++) {
         for (uint16_t j = 0; j < lag; j++) {
             int_t err = *src;
             int_t delta = err + prev_deltas[j];
@@ -564,7 +564,7 @@ uint32_t encode_doubledelta_rowmajor(const uint_t* src, uint32_t len,
     uint32_t trailing_nelements = len % block_sz_elems;
     if (nblocks > 1 && overrun_ndims > trailing_nelements) { nblocks -= 1; }
 
-    for (int32_t b = 0; b < nblocks; b++) { // for each block
+    for (uint32_t b = 0; b < nblocks; b++) { // for each block
         for (int32_t v = nvectors - 1; v >= 0; v--) { // for each stripe
             __m256i* prev_vals_ptr = (__m256i*)(prev_vals_ar + v * vector_sz);
             __m256i* prev_deltas_ptr = (__m256i*)(prev_deltas_ar + v * vector_sz);
