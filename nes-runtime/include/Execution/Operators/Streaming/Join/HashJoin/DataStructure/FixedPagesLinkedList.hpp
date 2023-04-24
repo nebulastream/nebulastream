@@ -14,7 +14,7 @@
 #ifndef NES_FIXEDPAGESLINKEDLIST_HPP
 #define NES_FIXEDPAGESLINKEDLIST_HPP
 
-#include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <vector>
 

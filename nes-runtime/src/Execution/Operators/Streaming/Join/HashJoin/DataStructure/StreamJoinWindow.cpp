@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/StreamJoinWindow.hpp>
 
 namespace NES::Runtime::Execution {
 Operators::LocalHashTable* StreamJoinWindow::getLocalHashTable(size_t index, bool leftSide) {

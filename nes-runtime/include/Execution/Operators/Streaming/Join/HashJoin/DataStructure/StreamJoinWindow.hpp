@@ -15,8 +15,8 @@
 #ifndef NES_STREAMJOINWINDOW_HPP
 #define NES_STREAMJOINWINDOW_HPP
 
-#include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/SharedJoinHashTable.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <vector>
