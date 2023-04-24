@@ -196,19 +196,16 @@ void CompressedDynamicTupleBuffer::concatColumns() {
         return;
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
     size_t bufferSize = this->getBuffer().getBufferSize();
-    int srcSize = this->getMemoryLayout()->getTupleSize() * this->getNumberOfTuples();
-    auto src = (uint8_t*) malloc(srcSize);
-    std::vector<uint64_t> newOffsets{0};
+    std::vector<uint64_t> newOffsets{};
     // create one string to be compressed (could increase chances of better compression)
-    size_t newOffset = this->getNumberOfTuples();
-    for (size_t i = 1; i < this->offsets.size(); i++) {
-        memcpy(baseSrcPointer + newOffset, baseSrcPointer + this->offsets[i], this->getNumberOfTuples());
-        newOffset += this->getNumberOfTuples();
+    size_t newOffset = 0;
+    for (unsigned long offset : this->offsets) {
+        memcpy(baseSrcPointer + newOffset, baseSrcPointer + offset, this->getNumberOfTuples());
         newOffsets.push_back(newOffset);
+        newOffset += this->getNumberOfTuples();
     }
     clearBuffer(newOffset);
     this->offsets = newOffsets;
-    free(src);
 }
 
 // ===================================
@@ -228,7 +225,7 @@ void CompressedDynamicTupleBuffer::compressLz4Horizontal() {
     // free up memory
     if (compressedSize > maxBufferSize)
         maxBufferSize = compressedSize;
-    compressed = (char*) realloc(compressed, (size_t) compressedSize);
+    compressed = (char*) realloc(compressed, compressedSize);
     // TODO could overwrite allocated boundaries
     clearBuffer();
     memcpy(baseSrcPointer, compressed, compressedSize);
@@ -278,7 +275,7 @@ void CompressedDynamicTupleBuffer::compressLz4Vertical() {
             NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
         compressedSizes.push_back(compressedSize);
         // free up memory
-        compressed = (char*) realloc(compressed, (size_t) compressedSize);
+        compressed = (char*) realloc(compressed, compressedSize);
         dstLength += compressedSize;
         memcpy(baseDstPointer + offset, compressed, compressedSize);
     }
@@ -592,9 +589,11 @@ void CompressedDynamicTupleBuffer::compressRleVertical() {
 void CompressedDynamicTupleBuffer::decompressRleVertical() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
     auto* baseDstPointer = (uint8_t*) calloc(1, maxBufferSize);
+    auto dst = (uint8_t*) calloc(1, this->getNumberOfTuples());
     for (size_t i = 0; i < this->offsets.size(); i++) {
         auto src = baseSrcPointer + offsets[i];
-        auto end = pg::brle::decode(src, src + compressedSizes[i], baseDstPointer + offsets[i]);
+        auto end = pg::brle::decode(src, src + compressedSizes[i], dst);
+        memcpy(baseDstPointer + offsets[i], dst, this->getNumberOfTuples());
     }
     clearBuffer();
     memcpy(baseSrcPointer, baseDstPointer, maxBufferSize);
