@@ -89,7 +89,7 @@ int64_t compress_rowmajor_delta_rle(const uint_t* src, uint64_t len,
     // ------------------------ store data size and number of dimensions
 
     if (debug > 0) {
-        printf("-------- compression (len = %lld)\n", (int64_t)len);
+        printf("-------- compression (len = %lld)\n", (long long)len);
         if (debug > 2) {
             printf("saw original data:\n"); dump_elements(src, len, ndims);
         }

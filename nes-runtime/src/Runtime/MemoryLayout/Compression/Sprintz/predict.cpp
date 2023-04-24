@@ -92,7 +92,7 @@ uint32_t encode_xff_rowmajor(const uint_t* src, uint32_t len, int_t* dest,
     }
 
     if (debug > 2) {
-        printf("-------- compression (len = %lld, ndims = %d)\n", (int64_t)len, ndims);
+        printf("-------- compression (len = %lld, ndims = %d)\n", (long long)len, ndims);
         printf("saw original data:\n"); dump_bytes(src, len, ndims);
         // printf("saw original data:\n"); dump_bytes(src, ndims * 8, ndims);
     }
@@ -368,7 +368,7 @@ uint32_t decode_xff_rowmajor(const int_t* src, uint32_t len, uint_t* dest,
     //     2, 4, 8, 16, 32, 64, 128, 256);
     const __m256i low_mask = _mm256_set1_epi16(0xff);
 
-    for (uint32_t b = 0; b < nblocks; b++) { // for each block
+    for (int32_t b = 0; b < nblocks; b++) { // for each block
         // printf("==== %d\n", b);
         for (int32_t v = nvectors - 1; v >= 0; v--) { // for each stripe
             uint32_t v_offset = v * vector_sz;

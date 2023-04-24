@@ -123,7 +123,7 @@ struct DeltaPredictor_u16 {
         _prev = initial_val;
     }
 
-    void jump(data_t prev0, data_t prev1, data_t prev2) {
+    void jump(data_t prev0, [[maybe_unused]] data_t prev1, [[maybe_unused]] data_t prev2) {
         _prev = prev0;
     }
 
@@ -132,7 +132,7 @@ struct DeltaPredictor_u16 {
         return _prev;
     }
 
-    void train(err_t err, data_t true_val) {
+    void train([[maybe_unused]] err_t err, data_t true_val) {
         _prev = true_val;
     }
 
@@ -158,7 +158,7 @@ struct DoubleDeltaPredictor_u16 {
         // _prev1 = initial_val; // make it equivalent to delta coding at first
     }
 
-    void jump(data_t prev0, data_t prev1, data_t prev2) {
+    void jump(data_t prev0, data_t prev1, [[maybe_unused]] data_t prev2) {
         _prev_val = prev0;
         _prev_diff = _sub_with_wraparound(prev0, prev1);
     }
@@ -171,7 +171,7 @@ struct DoubleDeltaPredictor_u16 {
         return _add_with_wraparound(_prev_val, _prev_diff);
     }
 
-    void train(err_t err, data_t true_val) {
+    void train([[maybe_unused]] err_t err, data_t true_val) {
         _prev_diff = _sub_with_wraparound(true_val, _prev_val);
         _prev_val = true_val;
         // _prev1 = _prev0;
@@ -228,7 +228,7 @@ struct TripleDeltaPredictor_u16 {
         // return _add_with_wraparound(linear_prediciton, ddiff);
     }
 
-    void train(err_t err, data_t true_val) {
+    void train([[maybe_unused]] err_t err, data_t true_val) {
         err_t diff = _sub_with_wraparound(true_val, _prev_val);
         _prev_ddiff = _sub_with_wraparound(diff, _prev_diff);
         _prev_diff = diff;
@@ -258,7 +258,7 @@ struct MovingAvgPredictor_u16 {
         _accumulator = initial_val << _shift;
     }
 
-    void jump(data_t prev0, data_t prev1, data_t prev2) {
+    void jump([[maybe_unused]] data_t prev0, [[maybe_unused]] data_t prev1, [[maybe_unused]] data_t prev2) {
         assert(false); // finite history invalid for IIR filter
     }
 
@@ -266,7 +266,7 @@ struct MovingAvgPredictor_u16 {
         return _accumulator >> _shift;
     }
 
-    void train(err_t err, data_t true_val) {
+    void train(err_t err, [[maybe_unused]] data_t true_val) {
         // this implements a moving average in a nice way that uses extremely
         // few instructions and also keeps the low bits; derivation:
         //

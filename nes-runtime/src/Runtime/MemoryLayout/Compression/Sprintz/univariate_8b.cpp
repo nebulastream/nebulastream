@@ -108,7 +108,7 @@ int64_t compress8b_delta_simple(uint8_t* src, size_t len, int8_t* dest,
     uint8_t prev_val = 0;
 
     // for each pair of 2 blocks
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         for (int i = 0; i < group_sz; i++) {
             delta_buff[i] = (*src - prev_val);
             prev_val = *src;
@@ -172,7 +172,7 @@ int64_t decompress8b_delta_simple(int8_t* src, uint8_t* dest, uint64_t orig_len)
     src += nblocks / 2;
 
     int8_t prev_val = 0;
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint8_t header = *header_src;
         header_src++;
@@ -207,7 +207,7 @@ int64_t decompress8b_delta_simple(int8_t* src, uint8_t* dest, uint64_t orig_len)
     size_t remaining_len = orig_len % group_sz;
     memcpy(dest, src, remaining_len);
 
-    assert(orig_len == (dest + remaining_len - orig_dest));
+    assert(orig_len == (uint64_t) (dest + remaining_len - orig_dest));
     return dest + remaining_len - orig_dest;
 }
 
@@ -244,7 +244,7 @@ int64_t compress8b_online(uint8_t* src, size_t len, int8_t* dest,
 
     // for each group of blocks
     size_t ngroups = len / group_sz;
-    for (int g = 0; g < ngroups; g++) { // for each group
+    for (size_t g = 0; g < ngroups; g++) { // for each group
         int8_t* header_dest = dest;
         dest += stripe_header_sz;
 
@@ -293,7 +293,7 @@ int64_t decompress8b_online(int8_t* src, uint8_t* dest) {
     orig_len -= cpy_len;
 
     size_t ngroups = orig_len / group_sz;
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)src;
         src += stripe_header_sz;
@@ -366,7 +366,7 @@ int64_t compress8b_delta_online(uint8_t* src, size_t len, int8_t* dest,
 
     // for each group of blocks
     size_t ngroups = len / group_sz;
-    for (int g = 0; g < ngroups; g++) { // for each group
+    for (size_t g = 0; g < ngroups; g++) { // for each group
         int8_t* header_dest = dest;
         dest += stripe_header_sz;
         // *(uint32_t*)header_dest = 0; // zero this so we can OR at the bottom
@@ -437,7 +437,7 @@ int64_t decompress8b_delta_online(int8_t* src, uint8_t* dest) {
     // int8_t prev_val = 0;
     // int8_t prev_val = header_src[-1]; // use header_src since src got increased
     int8_t prev_val = src[-1];
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)src;
         // uint32_t header = (*(uint32_t*)src) & 0x00ffffff;
@@ -511,7 +511,7 @@ int64_t compress8b_delta2_online(uint8_t* src, size_t len, int8_t* dest,
 
     // for each group of blocks
     size_t ngroups = len / group_sz;
-    for (int g = 0; g < ngroups; g++) { // for each group
+    for (size_t g = 0; g < ngroups; g++) { // for each group
         int8_t* header_dest = dest;
         dest += stripe_header_sz;
         // *(uint32_t*)header_dest = 0; // zero this so we can OR at the bottom
@@ -566,7 +566,7 @@ int64_t decompress8b_delta2_online(int8_t* src, uint8_t* dest) {
 
     size_t ngroups = orig_len / group_sz;
     int8_t prev_val = src[-delta_delay];
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)src;
         src += stripe_header_sz;
@@ -833,7 +833,7 @@ int64_t decompress8b_delta_rle(int8_t* src, uint8_t* dest) {
     // size_t ngroups = orig_len / group_sz; // TODO might need to restore this
 
     int8_t prev_val = src[-1];
-    for (int g = 0; g < ngroups; g++) {
+    for (uint32_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)src;
         src += stripe_header_sz;
@@ -1138,7 +1138,7 @@ int64_t decompress8b_delta_rle2(int8_t* src, uint8_t* dest) {
     src += cpy_len;
 
     int8_t prev_val = src[-1];
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)src;
         src += stripe_header_sz;
@@ -1253,7 +1253,7 @@ int64_t compress8b_delta(uint8_t* src, size_t len, int8_t* dest,
 
     // for each group of blocks
      // uint8_t prev_val = 0;
-    for (int g = 0; g < ngroups; g++) { // for each group
+    for (size_t g = 0; g < ngroups; g++) { // for each group
 
         for (int b = 0; b < group_sz_blocks; b++) { // for each block
             for (int i = block_sz - 1; i >= 0; i--) {
@@ -1345,7 +1345,7 @@ int64_t decompress8b_delta(int8_t* src, uint8_t* dest) {
 
     // int8_t prev_val = 0;
     int8_t prev_val = header_src[-1]; // because src just got increased
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)header_src;
         header_src += (group_sz_blocks * nbits_sz_bits) / 8;
@@ -1426,7 +1426,7 @@ int64_t compress8b_doubledelta(uint8_t* src, size_t len, int8_t* dest,
     // for each group of blocks
     uint8_t prev_val = 0;
     int8_t prev_delta = 0;
-    for (int g = 0; g < ngroups; g++) { // for each group
+    for (size_t g = 0; g < ngroups; g++) { // for each group
 
         for (int b = 0; b < group_sz_blocks; b++) { // for each block
             for (int i = 0; i < block_sz; i++) { // for each sample
@@ -1487,7 +1487,7 @@ int64_t decompress8b_doubledelta(int8_t* src, uint8_t* dest) {
 
     int8_t prev_val = 0;
     int8_t prev_delta = 0;
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)header_src;
         header_src += (group_sz_blocks * nbits_sz_bits) / 8;
@@ -1514,7 +1514,7 @@ int64_t decompress8b_doubledelta(int8_t* src, uint8_t* dest) {
     size_t remaining_orig_len = orig_len % group_sz;
     memcpy(dest, src, remaining_orig_len);
 
-    assert(orig_len == (dest + remaining_orig_len - orig_dest));
+    assert(orig_len == (uint64_t) (dest + remaining_orig_len - orig_dest));
     return dest + remaining_orig_len - orig_dest;
 }
 
@@ -1558,7 +1558,7 @@ int64_t compress8b_dyndelta(uint8_t* src, size_t len, int8_t* dest,
     // for each group of blocks
     uint8_t prev_val = 0;
     int8_t prev_delta = 0;
-    for (int g = 0; g < ngroups; g++) { // for each group
+    for (size_t g = 0; g < ngroups; g++) { // for each group
         for (int b = 0; b < group_sz_blocks; b++) { // for each block
             for (int i = 0; i < block_sz; i++) { // for each sample
                 int8_t delta = (*src - prev_val);
@@ -1635,7 +1635,7 @@ int64_t decompress8b_dyndelta(int8_t* src, uint8_t* dest) {
 
     int8_t prev_val = 0;
     int8_t prev_delta = 0;
-    for (int g = 0; g < ngroups; g++) {
+    for (size_t g = 0; g < ngroups; g++) {
         // read header to get nbits for each block
         uint32_t header = *(uint32_t*)header_src;
         header_src += (group_sz_blocks * block_header_sz_bits) / 8;
@@ -1672,6 +1672,6 @@ int64_t decompress8b_dyndelta(int8_t* src, uint8_t* dest) {
     size_t remaining_orig_len = orig_len % group_sz;
     memcpy(dest, src, remaining_orig_len);
 
-    assert(orig_len == (dest + remaining_orig_len - orig_dest));
+    assert(orig_len == (uint64_t) (dest + remaining_orig_len - orig_dest));
     return dest + remaining_orig_len - orig_dest;
 }

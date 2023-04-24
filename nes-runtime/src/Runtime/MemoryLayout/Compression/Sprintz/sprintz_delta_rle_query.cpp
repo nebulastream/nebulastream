@@ -37,7 +37,7 @@ int64_t dispatch_query(const IntT* src, UintT* dest,
             auto ptr = (uint8_t*)q.result().data();                 \
             auto elemsz = sizeof(ptr[0]);                           \
             volatile uint8_t max = 0;                               \
-            for (int i = 0; i < q.result().size() * elemsz; i++) {  \
+            for (unsigned long i = 0; i < q.result().size() * elemsz; i++) {  \
                 if (ptr[i] > max) { max = ptr[i]; }                 \
             }                                                       \
         } while (0)

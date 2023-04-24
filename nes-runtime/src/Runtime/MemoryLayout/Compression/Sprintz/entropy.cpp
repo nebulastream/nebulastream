@@ -44,16 +44,16 @@ static const EncodeInfo kDistanceEncode_256_10b[256] {
 // };
 
 template<int NumCodes, int MaxBits>
-static inline constexpr EncodeInfo lookup_encode(uint16_t index) {
+static inline constexpr EncodeInfo lookup_encode([[maybe_unused]] uint16_t index) {
     return EncodeInfo{};
 }
 
 template<>
-inline constexpr EncodeInfo lookup_encode<128, 10>(uint16_t index) {
+[[maybe_unused]] inline constexpr EncodeInfo lookup_encode<128, 10>(uint16_t index) {
     return kDistanceEncode_128_10b[index];
 }
 template<>
-inline constexpr EncodeInfo lookup_encode<256, 10>(uint16_t index) {
+[[maybe_unused]] inline constexpr EncodeInfo lookup_encode<256, 10>(uint16_t index) {
     return kDistanceEncode_256_10b[index];
 }
 
