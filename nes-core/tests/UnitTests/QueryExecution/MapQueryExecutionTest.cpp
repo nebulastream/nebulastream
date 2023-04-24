@@ -174,6 +174,46 @@ TEST_P(MapQueryExecutionTest, TwoMapQuery) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+TEST_P(MapQueryExecutionTest, MapAbsFunctions) {
+    auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
+
+    auto resultSchema = Schema::create()
+                            ->addField("test$id", BasicType::FLOAT64)
+                            ->addField("test$abs", BasicType::FLOAT64);
+    auto testSink = executionEngine->createDataSink(resultSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .map(Attribute("abs") = ABS(Attribute("id")))
+                     .sink(testSinkDescriptor);
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto source = executionEngine->getDataSource(plan, 0);
+    ASSERT_TRUE(!!source);
+    // add buffer
+    auto inputBuffer = executionEngine->getBuffer(schema);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        inputBuffer[recordIndex]["test$id"].write<double>((double)recordIndex);
+    }
+    inputBuffer[1]["test$id"].write<double>(-1);
+    inputBuffer[2]["test$id"].write<double>(-0.54);
+    inputBuffer[3]["test$id"].write<double>(-3.14);
+    inputBuffer.setNumberOfTuples(10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    // compare results
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex]["test$abs"].read<double>(), std::fabs(recordIndex));
+    }
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
 INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
