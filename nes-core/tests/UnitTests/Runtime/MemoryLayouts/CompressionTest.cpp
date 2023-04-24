@@ -12,7 +12,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include "API/AttributeField.hpp"
 #include "API/Schema.hpp"
+#include "Common/DataTypes/DataType.hpp"
 #include "NesBaseTest.hpp"
 #include "Runtime/BufferManager.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
@@ -48,7 +50,6 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
 // Horizontal
 // ===================================
 TEST_F(CompressionTest, lz4RowLayoutHorizontaltSingleColumnUint8) {
-    // compressDecompressLZ4FullBufferRowLayoutSingleColumnUint8
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
 
@@ -65,7 +66,7 @@ TEST_F(CompressionTest, lz4RowLayoutHorizontaltSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -98,7 +99,6 @@ TEST_F(CompressionTest, lz4RowLayoutHorizontaltSingleColumnUint8) {
 }
 
 TEST_F(CompressionTest, lz4RowLayoutHorizontalMultiColumnUint8) {
-    // compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
@@ -119,9 +119,9 @@ TEST_F(CompressionTest, lz4RowLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -175,7 +175,7 @@ TEST_F(CompressionTest, lz4ColumnLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -202,7 +202,7 @@ TEST_F(CompressionTest, lz4ColumnLayoutHorizontalSingleColumnUint8) {
     contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
@@ -228,9 +228,12 @@ TEST_F(CompressionTest, lz4ColumnLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
-    for (int i = 0; i < 6; i++) {
+    // second column: 4B2'0'4C
+    for (int i = 0; i < 4; i++) {
         buffer[i][1].write<uint8_t>(offset + 1);
+    }
+    for (int i = 4; i < 6; i++) {
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -287,7 +290,7 @@ TEST_F(CompressionTest, lz4RowLayoutVertical) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(71);
@@ -305,7 +308,6 @@ TEST_F(CompressionTest, lz4RowLayoutVertical) {
 }
 
 TEST_F(CompressionTest, lz4ColumnLayoutVerticalSingleColumnUint8) {
-    // compressDecompressLZ4FullBufferColumnLayoutSingleColumnUint8
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
 
@@ -323,7 +325,7 @@ TEST_F(CompressionTest, lz4ColumnLayoutVerticalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -356,7 +358,6 @@ TEST_F(CompressionTest, lz4ColumnLayoutVerticalSingleColumnUint8) {
 }
 
 TEST_F(CompressionTest, lz4ColumnLayoutVerticalMultiColumnUint8) {
-    // compressDecompressLZ4FullBufferColumnLayoutMultiColumnUint8
     int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
@@ -378,9 +379,12 @@ TEST_F(CompressionTest, lz4ColumnLayoutVerticalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
-    for (int i = 0; i < 6; i++) {
+    // second column: 4B2'0'4C
+    for (int i = 0; i < 4; i++) {
         buffer[i][1].write<uint8_t>(offset + 1);
+    }
+    for (int i = 4; i < 6; i++) {
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -440,7 +444,7 @@ TEST_F(CompressionTest, snappyRowLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -493,9 +497,9 @@ TEST_F(CompressionTest, snappyRowLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -550,7 +554,7 @@ TEST_F(CompressionTest, snappyColumnLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -603,9 +607,9 @@ TEST_F(CompressionTest, snappyColumnLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -662,7 +666,7 @@ TEST_F(CompressionTest, snappyRowLayoutVertical) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(71);
@@ -696,7 +700,7 @@ TEST_F(CompressionTest, snappyColumnLayoutVerticalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -723,7 +727,7 @@ TEST_F(CompressionTest, snappyColumnLayoutVerticalSingleColumnUint8) {
     contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
@@ -749,9 +753,12 @@ TEST_F(CompressionTest, snappyColumnLayoutVerticalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
-    for (int i = 0; i < 6; i++) {
+    // second column: 4B2'0'4C
+    for (int i = 0; i < 4; i++) {
         buffer[i][1].write<uint8_t>(offset + 1);
+    }
+    for (int i = 4; i < 6; i++) {
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -789,10 +796,6 @@ TEST_F(CompressionTest, snappyColumnLayoutVerticalMultiColumnUint8) {
 }
 
 // ====================================================================================================
-// ====================================================================================================
-// ====================================================================================================
-
-// ====================================================================================================
 // FSST
 // ====================================================================================================
 // ===================================
@@ -815,7 +818,7 @@ TEST_F(CompressionTest, fsstRowLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -868,9 +871,9 @@ TEST_F(CompressionTest, fsstRowLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -925,7 +928,7 @@ TEST_F(CompressionTest, fsstColumnLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -978,9 +981,9 @@ TEST_F(CompressionTest, fsstColumnLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -1037,7 +1040,7 @@ TEST_F(CompressionTest, fsstRowLayoutVerticalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(71);
@@ -1071,7 +1074,7 @@ TEST_F(CompressionTest, fsstColumnLayoutVerticalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -1098,7 +1101,7 @@ TEST_F(CompressionTest, fsstColumnLayoutVerticalSingleColumnUint8) {
     contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
@@ -1124,9 +1127,12 @@ TEST_F(CompressionTest, fsstColumnLayoutVerticalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
-    for (int i = 0; i < 6; i++) {
+    // second column: 4B2'0'4C
+    for (int i = 0; i < 4; i++) {
         buffer[i][1].write<uint8_t>(offset + 1);
+    }
+    for (int i = 4; i < 6; i++) {
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -1164,10 +1170,6 @@ TEST_F(CompressionTest, fsstColumnLayoutVerticalMultiColumnUint8) {
 }
 
 // ====================================================================================================
-// ====================================================================================================
-// ====================================================================================================
-
-// ====================================================================================================
 // RLE
 // ====================================================================================================
 // ===================================
@@ -1190,7 +1192,7 @@ TEST_F(CompressionTest, rleRowLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -1243,9 +1245,9 @@ TEST_F(CompressionTest, rleRowLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -1300,7 +1302,7 @@ TEST_F(CompressionTest, rleColumnLayoutHorizontalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -1353,9 +1355,9 @@ TEST_F(CompressionTest, rleColumnLayoutHorizontalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
+    // second column: 6'0'4C
     for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);
@@ -1412,7 +1414,7 @@ TEST_F(CompressionTest, rleRowLayoutVerticalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(71);
@@ -1446,7 +1448,7 @@ TEST_F(CompressionTest, rleColumnLayoutVerticalSingleColumnUint8) {
         buffer[i][0].write<uint8_t>(70);
     }
     for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
+        buffer[i][0].write<uint8_t>(0);
     }
     for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][0].write<uint8_t>(72);
@@ -1473,7 +1475,7 @@ TEST_F(CompressionTest, rleColumnLayoutVerticalSingleColumnUint8) {
     contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
     // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
     }
 }
@@ -1499,9 +1501,12 @@ TEST_F(CompressionTest, rleColumnLayoutVerticalMultiColumnUint8) {
     buffer[6][0].write<uint8_t>(offset + 1);
     buffer[7][0].write<uint8_t>(offset + 1);
 
-    // second column: 6B4C
-    for (int i = 0; i < 6; i++) {
+    // second column: 4B2'0'4C
+    for (int i = 0; i < 4; i++) {
         buffer[i][1].write<uint8_t>(offset + 1);
+    }
+    for (int i = 4; i < 6; i++) {
+        buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
         buffer[i][1].write<uint8_t>(offset + 2);

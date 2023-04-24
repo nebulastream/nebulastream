@@ -67,10 +67,11 @@ std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayou
     NES_NOT_IMPLEMENTED();
 }
 
-void CompressedDynamicTupleBuffer::clearBuffer() {
-    //auto dynTupleBuffer = *this;
+void CompressedDynamicTupleBuffer::clearBuffer() { clearBuffer(0); }
+
+void CompressedDynamicTupleBuffer::clearBuffer(size_t start) {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    for (size_t i = 0; i < this->getBuffer().getBufferSize(); i++) {
+    for (size_t i = start; i < this->getBuffer().getBufferSize(); i++) {
         baseSrcPointer[i] = '\0';
     }
 }
@@ -191,101 +192,39 @@ void CompressedDynamicTupleBuffer::decompressVertical() {
 }
 
 void CompressedDynamicTupleBuffer::concatColumns() {
+    if (this->offsets.size() == 1)
+        return;
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
     size_t bufferSize = this->getBuffer().getBufferSize();
-    char* src = new char[bufferSize];
+    int srcSize = this->getMemoryLayout()->getTupleSize() * this->getNumberOfTuples();
+    auto src = (uint8_t*) malloc(srcSize);
     std::vector<uint64_t> newOffsets{0};
-    // create one string to be compressed (increases chances of better compression) // TODO move outside
-    strcpy(src, reinterpret_cast<const char*>(baseSrcPointer));
-    size_t newOffset = 0;
+    // create one string to be compressed (could increase chances of better compression)
+    size_t newOffset = this->getNumberOfTuples();
     for (size_t i = 1; i < this->offsets.size(); i++) {
-        const char* tmp = reinterpret_cast<const char*>(baseSrcPointer + this->offsets[i]);
-        strcat(src, tmp);
-        newOffset += strlen(tmp);
+        memcpy(baseSrcPointer + newOffset, baseSrcPointer + this->offsets[i], this->getNumberOfTuples());
+        newOffset += this->getNumberOfTuples();
         newOffsets.push_back(newOffset);
     }
-    clearBuffer();
-    memcpy(baseSrcPointer, src, strlen(src));
+    clearBuffer(newOffset);
     this->offsets = newOffsets;
+    free(src);
 }
 
 // ===================================
 // LZ4
 // ===================================
-void CompressedDynamicTupleBuffer::compressLz4Vertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
-    size_t dstLength = 0;
-    for (auto offset : this->offsets) {
-        const char* src = reinterpret_cast<const char*>(baseSrcPointer + offset);
-        const int srcSize = strlen(src);
-        const int maxDstSize = LZ4_compressBound(srcSize);// TODO handle if > buffer size
-        char* compressed = (char*) malloc((size_t) maxDstSize);
-        if (compressed == nullptr)
-            NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
-        const int compressedSize = LZ4_compress_default(src, compressed, srcSize, maxDstSize);
-        if (compressedSize <= 0)
-            NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
-        compressedSizes.push_back(compressedSize);
-        // free up memory
-        compressed = (char*) realloc(compressed, (size_t) compressedSize);
-        dstLength += compressedSize;
-        memcpy(baseDstPointer + offset, compressed, compressedSize);
-        //free(compressed);
-    }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    // TODO reduce buffer to `dstLength`
-    if (dstLength > maxBufferSize)
-        maxBufferSize = dstLength;
-    this->compressionAlgorithm = CompressionAlgorithm::LZ4;
-    //free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::decompressLz4Vertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
-    int i = 0;
-    size_t dstLength = 0;
-    for (auto offset : this->offsets) {
-        const char* compressed = reinterpret_cast<const char*>(baseSrcPointer + offset);
-        const int compressedSize = this->compressedSizes[i];
-        const int dstCapacity = 3 * compressedSize;// TODO magic number
-        char* const decompressed = (char*) malloc(dstCapacity);
-        if (decompressed == nullptr)
-            NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
-        const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, compressedSize, dstCapacity);
-        if (decompressedSize < 0)
-            NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
-        memcpy(baseDstPointer + offset, decompressed, decompressedSize);
-        dstLength += decompressedSize;
-        i++;
-        //free(decompressed);
-    }
-    if (dstLength > maxBufferSize)
-        maxBufferSize = dstLength;
-    clearBuffer();
-    // TODO could overwrite allocated boundaries
-    memcpy(baseSrcPointer, baseDstPointer, maxBufferSize);
-    // TODO adjust buffer to `dstLength`
-    this->compressedSizes = {};
-    this->compressionAlgorithm = CompressionAlgorithm::NONE;
-    //free(baseDstPointer);
-}
-
 void CompressedDynamicTupleBuffer::compressLz4Horizontal() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    size_t bufferSize = this->getBuffer().getBufferSize();
-    char* src = new char[bufferSize];
-    strcpy(src, reinterpret_cast<const char*>(baseSrcPointer));
-    int srcSize = strlen(src);
+    auto src = reinterpret_cast<const char*>(baseSrcPointer);
+    int srcSize = this->getMemoryLayout()->getTupleSize() * this->getNumberOfTuples();
     const int maxDstSize = LZ4_compressBound(srcSize);// TODO handle if > buffer size
-    char* compressed = (char*) malloc((size_t) maxDstSize);
+    char* compressed = (char*) calloc(1, maxDstSize);
     if (compressed == nullptr)
         NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
     const size_t compressedSize = LZ4_compress_default(src, compressed, srcSize, maxDstSize);
     if (compressedSize <= 0)
-        NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
+        NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
     // free up memory
     if (compressedSize > maxBufferSize)
         maxBufferSize = compressedSize;
@@ -295,8 +234,7 @@ void CompressedDynamicTupleBuffer::compressLz4Horizontal() {
     memcpy(baseSrcPointer, compressed, compressedSize);
     this->compressedSizes = {compressedSize};
     this->compressionAlgorithm = CompressionAlgorithm::LZ4;
-    //delete[] src;
-    //free(compressed);
+    free(compressed);
 }
 
 void CompressedDynamicTupleBuffer::decompressLz4Horizontal() {
@@ -306,7 +244,7 @@ void CompressedDynamicTupleBuffer::decompressLz4Horizontal() {
     const size_t dstCapacity = 3 * compressedSize;// TODO magic number
     char* const decompressed = (char*) malloc(dstCapacity);
     if (decompressed == nullptr)
-        NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");// TODO
+        NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
     const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, compressedSize, dstCapacity);
     if (decompressedSize < 0)
         NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
@@ -321,7 +259,68 @@ void CompressedDynamicTupleBuffer::decompressLz4Horizontal() {
         this->offsets = newOffsets;
     }
     this->compressionAlgorithm = CompressionAlgorithm::NONE;
-    //free(decompressed);
+    free(decompressed);
+}
+
+void CompressedDynamicTupleBuffer::compressLz4Vertical() {
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
+    size_t dstLength = 0;
+    const int srcSize = this->getNumberOfTuples();
+    const int maxDstSize = LZ4_compressBound(srcSize);// TODO handle if > buffer size
+    char* compressed = (char*) malloc((size_t) maxDstSize);
+    if (compressed == nullptr)
+        NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
+    for (auto offset : this->offsets) {
+        auto src = reinterpret_cast<const char*>(baseSrcPointer + offset);
+        const int compressedSize = LZ4_compress_default(src, compressed, srcSize, maxDstSize);
+        if (compressedSize <= 0)
+            NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
+        compressedSizes.push_back(compressedSize);
+        // free up memory
+        compressed = (char*) realloc(compressed, (size_t) compressedSize);
+        dstLength += compressedSize;
+        memcpy(baseDstPointer + offset, compressed, compressedSize);
+    }
+    clearBuffer();
+    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
+    // TODO reduce buffer to `dstLength`
+    if (dstLength > maxBufferSize)
+        maxBufferSize = dstLength;
+    this->compressionAlgorithm = CompressionAlgorithm::LZ4;
+    free(compressed);
+}
+
+void CompressedDynamicTupleBuffer::decompressLz4Vertical() {
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    auto baseDstPointer = (uint8_t*) malloc(maxBufferSize);
+    int i = 0;
+    size_t dstLength = 0;
+    char* decompressed = nullptr;
+    for (auto offset : this->offsets) {
+        const char* compressed = reinterpret_cast<const char*>(baseSrcPointer + offset);
+        const int compressedSize = this->compressedSizes[i];
+        const int dstCapacity = 3 * compressedSize;// TODO magic number
+        decompressed = (char*) malloc(dstCapacity);
+        if (decompressed == nullptr)
+            NES_THROW_RUNTIME_ERROR("Invalid destination pointer.");
+        const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, compressedSize, dstCapacity);
+        if (decompressedSize < 0)
+            NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
+        memcpy(baseDstPointer + offset, decompressed, decompressedSize);
+        dstLength += decompressedSize;
+        i++;
+    }
+    if (dstLength > maxBufferSize)
+        maxBufferSize = dstLength;
+    clearBuffer();
+    // TODO could overwrite allocated boundaries
+    memcpy(baseSrcPointer, baseDstPointer, maxBufferSize);
+    // TODO adjust buffer to `dstLength`
+    this->compressedSizes = {};
+    this->compressionAlgorithm = CompressionAlgorithm::NONE;
+    free(decompressed);
+    free(baseDstPointer);
 }
 
 // ===================================
@@ -330,32 +329,36 @@ void CompressedDynamicTupleBuffer::decompressLz4Horizontal() {
 void CompressedDynamicTupleBuffer::compressSnappyHorizontal() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
     size_t bufferSize = this->getBuffer().getBufferSize();
-    char* src = new char[bufferSize];
-    strcpy(src, reinterpret_cast<const char*>(baseSrcPointer));
-    size_t srcSize = strlen(src);
-    std::string compressed;
-    size_t compressedSize = snappy::Compress(src, srcSize, &compressed);
+    auto src = reinterpret_cast<char*>(baseSrcPointer);
+    const int srcSize = this->getNumberOfTuples() * this->getMemoryLayout()->getTupleSize();
+    size_t maxDstSize = snappy::MaxCompressedLength(srcSize);
+    auto compressed = (char*) malloc(maxDstSize);
+    size_t compressedSize;
+    snappy::RawCompress(src, srcSize, compressed, &compressedSize);
     compressedSizes.push_back(compressedSize);
     clearBuffer();
-    memcpy(baseSrcPointer, compressed.c_str(), compressedSize);
+    memcpy(baseSrcPointer, compressed, compressedSize);
     this->compressionAlgorithm = CompressionAlgorithm::SNAPPY;
 }
 
 void CompressedDynamicTupleBuffer::decompressSnappyHorizontal() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
     const char* compressed = reinterpret_cast<const char*>(baseSrcPointer);
-    std::string uncompressed;
-    bool success = snappy::Uncompress(compressed, compressedSizes[0], &uncompressed);
+    size_t decompressedSize;
+    auto success = snappy::GetUncompressedLength(compressed, compressedSizes[0], &decompressedSize);
+    if (!success)
+        NES_THROW_RUNTIME_ERROR("Could not get decompressed length.");
+    auto decompressed = (char*) malloc(decompressedSize);
+    success = snappy::RawUncompress(compressed, compressedSizes[0], decompressed);
     if (!success)
         NES_THROW_RUNTIME_ERROR("Snappy decompression failed.");
     clearBuffer();
     if (this->offsets.size() == 1) {
-        memcpy(baseSrcPointer, uncompressed.c_str(), uncompressed.size());
+        memcpy(baseSrcPointer, decompressed, decompressedSize);
     } else {
         auto newOffsets = getOffsets(this->getMemoryLayout());
         for (size_t i = 0; i < this->offsets.size(); i++) {
-            auto src = uncompressed.substr(this->offsets[i], this->offsets[i] + this->getBuffer().getNumberOfTuples());
-            memcpy(baseSrcPointer + newOffsets[i], src.c_str(), this->getBuffer().getNumberOfTuples());
+            memcpy(baseSrcPointer + newOffsets[i], decompressed + this->offsets[i], this->getBuffer().getNumberOfTuples());
         }
         this->offsets = newOffsets;
     }
@@ -364,33 +367,39 @@ void CompressedDynamicTupleBuffer::decompressSnappyHorizontal() {
 
 void CompressedDynamicTupleBuffer::compressSnappyVertical() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
-    std::string compressed;
+    auto* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
     size_t dstLength = 0;
+    const size_t srcSize = this->getNumberOfTuples();
+    size_t maxDstSize = snappy::MaxCompressedLength(srcSize);
+    auto compressed = (char*) malloc(maxDstSize);
+    size_t compressedSize;
     for (auto offset : this->offsets) {
-        const char* src = reinterpret_cast<const char*>(baseSrcPointer + offset);
-        size_t srcSize = strlen(src);
-        size_t compressedSize = snappy::Compress(src, srcSize, &compressed);
+        auto src = reinterpret_cast<char*>(baseSrcPointer + offset);
+        snappy::RawCompress(src, srcSize, compressed, &compressedSize);
         dstLength += compressedSize;
-        memcpy(baseDstPointer + offset, compressed.c_str(), compressedSize);
+        memcpy(baseDstPointer + offset, compressed, compressedSize);
         compressedSizes.push_back(compressedSize);
     }
     clearBuffer();
     memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
     this->compressionAlgorithm = CompressionAlgorithm::SNAPPY;
-    //free(baseDstPointer);
+    free(baseDstPointer);
 }
 
 void CompressedDynamicTupleBuffer::decompressSnappyVertical() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
+    auto* baseDstPointer = (uint8_t*) calloc(1, maxBufferSize);
     for (size_t i = 0; i < this->offsets.size(); i++) {
         const char* compressed = reinterpret_cast<const char*>(baseSrcPointer + offsets[i]);
-        std::string uncompressed;
-        bool success = snappy::Uncompress(compressed, compressedSizes[i], &uncompressed);
+        size_t decompressedSize;
+        auto success = snappy::GetUncompressedLength(compressed, compressedSizes[i], &decompressedSize);
+        if (!success)
+            NES_THROW_RUNTIME_ERROR("Could not get decompressed length.");
+        auto decompressed = (char*) malloc(decompressedSize);
+        success = snappy::RawUncompress(compressed, compressedSizes[i], decompressed);
         if (!success)
             NES_THROW_RUNTIME_ERROR("Snappy decompression failed.");
-        memcpy(baseDstPointer + offsets[i], uncompressed.c_str(), uncompressed.size());
+        memcpy(baseDstPointer + offsets[i], decompressed, decompressedSize);
     }
     clearBuffer();
     memcpy(baseSrcPointer, baseDstPointer, maxBufferSize);
@@ -406,7 +415,7 @@ void CompressedDynamicTupleBuffer::compressFsstHorizontal() {
     uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
 
     // prepare encoder and input data
-    size_t srcLength = strlen(reinterpret_cast<const char*>(baseSrcPointer));
+    size_t srcLength = this->getNumberOfTuples() * this->getMemoryLayout()->getTupleSize();
     unsigned char* input = baseSrcPointer;
     encoder = fsst_create(1, &srcLength, &input, false);
 
@@ -443,13 +452,10 @@ void CompressedDynamicTupleBuffer::decompressFsstHorizontal() {
 
     // prepare decompression
     fsst_decoder_t decoder = fsst_decoder(encoder);
-    auto* output = (unsigned char*) malloc(fsstOutSize);
-    for (size_t i = 0; i < fsstOutSize; i++) {// TODO src content exists but without gibberish
-        output[i] = '\0';
-    }
+    auto* output = (unsigned char*) calloc(1, fsstOutSize);
 
     // decompress
-    size_t bytesOut = fsst_decompress(&decoder, compressedSizes[0], baseSrcPointer + offsets[0], fsstOutSize, output);
+    size_t bytesOut = fsst_decompress(&decoder, compressedSizes[0], baseSrcPointer, fsstOutSize, output);
     if (bytesOut < 1)
         NES_THROW_RUNTIME_ERROR("FSST decompression failed.");
     if (this->offsets.size() == 1) {
@@ -457,9 +463,7 @@ void CompressedDynamicTupleBuffer::decompressFsstHorizontal() {
     } else {
         auto oldOffsets = getOffsets(this->getMemoryLayout());
         for (size_t i = 0; i < offsets.size(); i++) {
-            char* src = (char*) calloc(1, this->getNumberOfTuples());
-            auto tmp = strncpy(src, reinterpret_cast<const char*>(output + offsets[i]), this->getNumberOfTuples());
-            memcpy(baseDstPointer + oldOffsets[i], tmp, this->getNumberOfTuples());
+            memcpy(baseDstPointer + oldOffsets[i], output + offsets[i], this->getNumberOfTuples());
         }
         this->offsets = oldOffsets;
     }
@@ -479,7 +483,7 @@ void CompressedDynamicTupleBuffer::compressFsstVertical() {
     std::vector<unsigned char*> input;
     input.reserve(numStrings);
     for (size_t offset : offsets) {
-        srcLengths.push_back(strlen(reinterpret_cast<const char*>(baseSrcPointer + offset)));
+        srcLengths.push_back(this->getNumberOfTuples());
         input.push_back(baseSrcPointer + offset);
     }
     encoder = fsst_create(numStrings, srcLengths.data(), input.data(), false);
@@ -516,18 +520,12 @@ void CompressedDynamicTupleBuffer::compressFsstVertical() {
 
 void CompressedDynamicTupleBuffer::decompressFsstVertical() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
-    for (size_t i = 0; i < this->getBuffer().getBufferSize(); i++) {// TODO src content exists but without gibberish
-        baseDstPointer[i] = '\0';
-    }
+    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
 
     // prepare decompression
     fsst_decoder_t decoder = fsst_decoder(encoder);
     size_t outSize = fsstOutSize / offsets.size();
-    auto* output = (unsigned char*) malloc(outSize);
-    for (size_t i = 0; i < outSize; i++) {// TODO src content exists but without gibberish
-        output[i] = '\0';
-    }
+    auto* output = (unsigned char*) calloc(1, outSize);
 
     // decompress
     for (size_t i = 0; i < offsets.size(); i++) {
@@ -546,15 +544,11 @@ void CompressedDynamicTupleBuffer::decompressFsstVertical() {
 // ===================================
 void CompressedDynamicTupleBuffer::compressRleHorizontal() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    size_t srcSize = std::ceil(1.2 * strlen(reinterpret_cast<const char*>(baseSrcPointer)));
-    auto* baseDstPointer = (uint8_t*) malloc(srcSize);// TODO? new TupleBuffer instead?
-    for (size_t i = 0; i < srcSize; i++) {            // TODO src content exists but without gibberish
-        baseDstPointer[i] = '\0';
-    }
-    //srcSize = std::ceil(1.2 * bufferSize);
-    auto end = pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer);// works
+    size_t srcSize = std::ceil(1.2 * (this->getNumberOfTuples() * this->getMemoryLayout()->getTupleSize()));
+    auto* baseDstPointer = (uint8_t*) calloc(1, srcSize);// TODO? new TupleBuffer instead?
+    auto end = pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer);
     clearBuffer();
-    size_t compressedSize = strlen(reinterpret_cast<const char*>(baseDstPointer));//473
+    size_t compressedSize = std::distance(baseDstPointer, end);
     compressedSizes.push_back(compressedSize);
     memcpy(baseSrcPointer, baseDstPointer, compressedSize);
     this->compressionAlgorithm = CompressionAlgorithm::RLE;
@@ -562,22 +556,17 @@ void CompressedDynamicTupleBuffer::compressRleHorizontal() {
 
 void CompressedDynamicTupleBuffer::decompressRleHorizontal() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
-    for (size_t i = 0; i < this->getBuffer().getBufferSize(); i++) {// TODO src content exists but without gibberish
-        baseDstPointer[i] = '\0';
-    }
+    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());// TODO? new TupleBuffer instead?
     auto end = pg::brle::decode(baseSrcPointer, baseSrcPointer + compressedSizes[0], baseDstPointer);
     clearBuffer();
-    size_t uncompressedSize = strlen(reinterpret_cast<const char*>(baseDstPointer));
+    size_t uncompressedSize = std::distance(baseDstPointer, end);
     compressedSizes = {0};
     if (this->offsets.size() == 1) {
         memcpy(baseSrcPointer, baseDstPointer, uncompressedSize);
     } else {
         auto oldOffsets = getOffsets(this->getMemoryLayout());
         for (size_t i = 0; i < offsets.size(); i++) {
-            char* src = (char*) calloc(1, this->getNumberOfTuples());
-            auto tmp = strncpy(src, reinterpret_cast<const char*>(baseDstPointer + offsets[i]), this->getNumberOfTuples());
-            memcpy(baseSrcPointer + oldOffsets[i], tmp, this->getNumberOfTuples());
+            memcpy(baseSrcPointer + oldOffsets[i], baseDstPointer + offsets[i], this->getNumberOfTuples());
         }
         this->offsets = oldOffsets;
     }
@@ -586,17 +575,14 @@ void CompressedDynamicTupleBuffer::decompressRleHorizontal() {
 
 void CompressedDynamicTupleBuffer::compressRleVertical() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    auto* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
-    for (size_t i = 0; i < maxBufferSize; i++) {// TODO src content exists but without gibberish
-        baseDstPointer[i] = '\0';
-    }
+    auto* baseDstPointer = (uint8_t*) calloc(1, maxBufferSize);
     std::string compressed;
     size_t dstLength = 0;
     for (auto offset : this->offsets) {
-        size_t srcSize = strlen(reinterpret_cast<const char*>(baseSrcPointer + offset));
+        size_t srcSize = this->getNumberOfTuples();
         auto src = baseSrcPointer + offset;
         auto end = pg::brle::encode(src, src + srcSize, baseDstPointer + offset);// works
-        compressedSizes.push_back(strlen(reinterpret_cast<const char*>(baseDstPointer + offset)));
+        compressedSizes.push_back(std::distance(src, end));
     }
     clearBuffer();
     memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
@@ -605,7 +591,7 @@ void CompressedDynamicTupleBuffer::compressRleVertical() {
 
 void CompressedDynamicTupleBuffer::decompressRleVertical() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    auto* baseDstPointer = (uint8_t*) malloc(maxBufferSize);
+    auto* baseDstPointer = (uint8_t*) calloc(1, maxBufferSize);
     for (size_t i = 0; i < this->offsets.size(); i++) {
         auto src = baseSrcPointer + offsets[i];
         auto end = pg::brle::decode(src, src + compressedSizes[i], baseDstPointer + offsets[i]);
