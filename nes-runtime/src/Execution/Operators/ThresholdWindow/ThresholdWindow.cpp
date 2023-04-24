@@ -96,7 +96,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
 
         NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
         // Log the start of a threshold window
-        if (FunctionCall("getIsWindowOpen", getIsWindowOpen, handler)) {
+        if (!FunctionCall("getIsWindowOpen", getIsWindowOpen, handler)) {
             NES_DEBUG2("Threshold window starts: opening value={}",
                        std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[0])
                            ? aggregatedValue->toString()
