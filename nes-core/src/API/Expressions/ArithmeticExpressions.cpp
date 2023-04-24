@@ -60,7 +60,9 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
 }
 
 // calls of unary operators with ExpressionNode
-ExpressionNodePtr ABS(const ExpressionNodePtr& exp) { return AbsExpressionNode::create(exp); }
+ExpressionNodePtr ABS(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "abs", {exp});
+}
 
 ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode::create(exp); }
 

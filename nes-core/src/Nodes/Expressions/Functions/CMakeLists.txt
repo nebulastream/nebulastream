@@ -17,4 +17,5 @@ add_source_files(nes-core
         LnFunction.cpp
         Log2Function.cpp
         Log10Function.cpp
+        AbsFuntion.cpp
         )
