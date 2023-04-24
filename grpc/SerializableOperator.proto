@@ -314,6 +314,7 @@ message SerializableOperator{
       uint64 waitTime = 3;
       uint32 retryTimes = 4;
       uint64 uniqueNetworkSinkDescriptorId = 5;
+      bool isBuffering = 6;
     }
 
     message SerializableMaterializedViewSinkDescriptor {

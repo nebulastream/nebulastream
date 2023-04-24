@@ -49,7 +49,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType);
 
         // 2. Pin all unpinned operators
         pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -67,6 +67,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         throw QueryPlacementException(queryId, ex.what());
     }
 }
+
 
 void BottomUpStrategy::pinOperators(QueryId queryId,
                                     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,

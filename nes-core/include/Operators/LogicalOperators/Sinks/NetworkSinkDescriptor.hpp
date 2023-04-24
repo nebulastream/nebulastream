@@ -46,6 +46,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     uint32_t retryTimes,
                                     FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1,
+                                    bool isBuffering = false,
                                     uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
 
     /**
@@ -103,6 +104,12 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     void setFaultToleranceType(FaultToleranceType::Value faultToleranceType);
 
+    /**
+     * @brief checks if sink is buffering
+     * @return true if it is buffering
+     */
+    bool getIsBuffering() const;
+
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
@@ -110,12 +117,14 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    uint32_t retryTimes,
                                    FaultToleranceType::Value faultToleranceType,
                                    uint64_t numberOfOrigins,
+                                   bool isBuffering,
                                    uint64_t uniqueNetworkSinkDescriptorId);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
+    bool isBuffering;
     uint64_t uniqueNetworkSinkDescriptorId;
 };
 

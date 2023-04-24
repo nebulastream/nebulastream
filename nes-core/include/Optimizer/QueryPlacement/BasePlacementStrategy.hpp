@@ -139,7 +139,7 @@ class BasePlacementStrategy {
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
     void performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
-                              const std::vector<OperatorNodePtr>& downStreamPinnedOperators);
+                              const std::vector<OperatorNodePtr>& downStreamPinnedOperators, FaultToleranceType::Value faultToleranceType);
 
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the
@@ -216,7 +216,7 @@ class BasePlacementStrategy {
      * @return the instance of network sink operator
      */
     static OperatorNodePtr
-    createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
+    createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode, const TopologyNodePtr& currentNode);
 
     /**
      * @brief create a new network source operator
@@ -240,6 +240,12 @@ class BasePlacementStrategy {
     void placeNetworkOperator(QueryId queryId,
                               const OperatorNodePtr& upStreamOperator,
                               const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+
+    /**
+     * @brief place fault tolerance
+     * @param availablePaths : available paths between pinned operators
+     */
+    uint64_t placeFaultTolerance(const std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType);
 
     /**
      * Check if operator present in the given collection

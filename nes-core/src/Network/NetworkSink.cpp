@@ -34,7 +34,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType::Value faultToleranceType,
-                         uint64_t numberOfOrigins)
+                         uint64_t numberOfOrigins,
+                         bool isBuffering)
     : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
                  nodeEngine,
                  numOfProducers,
@@ -49,12 +50,17 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+    if ((faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::AT_MOST_ONCE) && isBuffering) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
+        deleteFromStorageCallback = [this](EpochMessage epochMessage, Runtime::WorkerContext& workerContext) {
+            workerContext.trimStorage(this->nesPartition, epochMessage.getTimestamp(), epochMessage.getReplicationLevel());
+        };
     } else {
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
+        };
+        deleteFromStorageCallback = [](EpochMessage, Runtime::WorkerContext&) {
         };
     }
 }
@@ -147,7 +153,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::PropagateEpoch: {
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto epochMessage = task.getUserData<EpochMessage>();
-            workerContext.trimStorage(nesPartition, epochMessage.getTimestamp(), epochMessage.getReplicationLevel());
+            deleteFromStorageCallback(epochMessage, workerContext);
             break;
         }
         default: {

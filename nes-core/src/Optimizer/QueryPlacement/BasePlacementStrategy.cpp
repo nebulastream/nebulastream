@@ -64,7 +64,8 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
 }
 
 void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
-                                                 const std::vector<OperatorNodePtr>& downStreamPinnedOperators) {
+                                                 const std::vector<OperatorNodePtr>& downStreamPinnedOperators,
+                                                 FaultToleranceType::Value faultToleranceType) {
 
     //1. Find the topology nodes that will host upstream operators
 
@@ -104,24 +105,61 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
                                       topologyNodesWithUpStreamPinnedOperators.end());
     std::vector downstreamTopologyNodes(topologyNodesWithDownStreamPinnedOperators.begin(),
                                         topologyNodesWithDownStreamPinnedOperators.end());
-    std::vector<TopologyNodePtr> selectedTopologyForPlacement =
-        topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
-    if (selectedTopologyForPlacement.empty()) {
+    std::optional<TopologyNodePtr> topologiesForPlacement;
+    for (auto upstreamTopologyNode: upstreamTopologyNodes) {
+        for (auto downstreamTopologyNode: downstreamTopologyNodes) {
+            topologiesForPlacement =
+                topology->findAllPathBetween(upstreamTopologyNode, downstreamTopologyNode);
+        }
+    }
+    if (!topologiesForPlacement.has_value()) {
         throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
     }
+    std::vector<std::vector<TopologyNodePtr>> availablePaths;
+    auto rootNode = topologiesForPlacement.value()->getAllRootNodes()[0];
+    for (auto child : rootNode->getChildren()) {
+        std::vector<TopologyNodePtr> path;
+        path.emplace_back(rootNode->as<TopologyNode>());
+        auto topologyIterator = NES::DepthFirstNodeIterator(child).begin();
+        while (topologyIterator != DepthFirstNodeIterator::end()) {
+            // get the ExecutionNode for the current topology Node
+            auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+            path.emplace_back(currentTopologyNode);
+            ++topologyIterator;
+        }
+        availablePaths.emplace_back(path);
+    }
 
+    uint64_t chosenPathId = placeFaultTolerance(availablePaths, faultToleranceType);
     //4. Map nodes in the selected topology by their ids.
 
     topologyMap.clear();
     // fetch root node from the identified path
-    auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
-    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
-    while (topologyIterator != DepthFirstNodeIterator::end()) {
+    auto topologyIterator = availablePaths[chosenPathId].begin();
+    while (topologyIterator != availablePaths[chosenPathId].end()) {
         // get the ExecutionNode for the current topology Node
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
         ++topologyIterator;
     }
+}
+
+uint64_t BasePlacementStrategy::placeFaultTolerance(const std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType) {
+    for (auto path: availablePaths) {
+        if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+            auto endNodeIterator = --path.end();
+            auto currentTopologyNode = (*endNodeIterator)->as<TopologyNode>();
+            currentTopologyNode->addNodeProperty("isBuffering", 1);
+        } else {
+            auto topologyIterator = path.begin();
+            while (topologyIterator != path.end()) {
+                auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+                currentTopologyNode->addNodeProperty("isBuffering", 1);
+                ++topologyIterator;
+            }
+        }
+    }
+    return 0;
 }
 
 void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
@@ -298,15 +336,22 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
                                                                  uint64_t sourceOperatorId,
-                                                                 const TopologyNodePtr& sourceTopologyNode) {
+                                                                 const TopologyNodePtr& sourceTopologyNode,
+                                                                 const TopologyNodePtr& currentNode) {
 
     NES_TRACE("BasePlacementStrategy: create Network Sink operator");
     Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
                                        sourceTopologyNode->getIpAddress(),
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
-    return LogicalOperatorFactory::createSinkOperator(
-        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES));
+    if (currentNode->hasNodeProperty("isBuffering")) {
+        return LogicalOperatorFactory::createSinkOperator(
+            Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES, FaultToleranceType::NONE, 1, true));
+    }
+    else {
+        return LogicalOperatorFactory::createSinkOperator(
+            Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES));
+    }
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
@@ -436,7 +481,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                       "query plan with child "
                                       "operator.");
                             OperatorNodePtr networkSink =
-                                createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                                createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1], nodesBetween[i]);
                             targetUpStreamOperator->addParent(networkSink);
                             querySubPlan->removeAsRootOperator(targetUpStreamOperator);
                             querySubPlan->addRootOperator(networkSink);
@@ -498,7 +543,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
 
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: add network sink operator");
                     sourceOperatorId = Util::getNextOperatorId();
-                    OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
+                    OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1], nodesBetween[i]);
                     querySubPlan->appendOperatorAsNewRoot(networkSink);
                     operatorToSubPlan[networkSink->getId()] = querySubPlan;
 

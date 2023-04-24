@@ -43,6 +43,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     std::string ipAddress = "127.0.0.1";
     CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr workerConfig1;
+    WorkerConfigurationPtr workerConfig2;
+    WorkerConfigurationPtr workerConfig3;
     CSVSourceTypePtr csvSourceTypeInfinite;
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
@@ -73,9 +75,30 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
-        workerConfig1->sourceGatheringInterval = 1;
+        workerConfig1->sourceGatheringInterval = 100;
         workerConfig1->numWorkerThreads = 4;
+        workerConfig1->numberOfBuffersPerEpoch = 4;
         workerConfig1->bufferSizeInBytes = 131072;
+
+        workerConfig2 = WorkerConfiguration::create();
+        workerConfig2->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig2->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig2->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig2->enableStatisticOutput = true;
+        workerConfig2->numberOfBuffersToProduce = 5000000;
+        workerConfig2->numWorkerThreads = 4;
+        workerConfig2->numberOfBuffersPerEpoch = 4;
+        workerConfig2->bufferSizeInBytes = 131072;
+
+        workerConfig3 = WorkerConfiguration::create();
+        workerConfig3->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig3->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig3->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig3->enableStatisticOutput = true;
+        workerConfig3->numberOfBuffersToProduce = 5000000;
+        workerConfig3->numWorkerThreads = 4;
+        workerConfig3->numberOfBuffersPerEpoch = 4;
+        workerConfig3->bufferSizeInBytes = 131072;
 
 
         csvSourceTypeInfinite = CSVSourceType::create();
@@ -296,49 +319,28 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
-//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig1));
-//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart2);
-//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
-//    crd->getTopologyManagerService()->removeParent(4,1);
-//    crd->getTopologyManagerService()->removeParent(3,1);
-//    crd->getTopologyManagerService()->addParent(3,2);
-    crd->getTopologyManagerService()->addParent(2,1);
+
+    crd->getTopologyManagerService()->removeParent(2,1);
+    crd->getTopologyManagerService()->addParent(2,3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
-
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query =
-        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp2\")), Seconds(1))).byKey(Attribute(\"d\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
-
-    query =
-        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"d\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
-
-    queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
-
-    query =
-        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp2\")), Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
-
-    queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
-
-    query =
-        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"c\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
-
-    queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_MOST_ONCE, LineageType::IN_MEMORY);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

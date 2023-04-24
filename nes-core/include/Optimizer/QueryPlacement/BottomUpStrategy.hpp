@@ -60,6 +60,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
                       const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
+
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
      * @param queryId :  the query id

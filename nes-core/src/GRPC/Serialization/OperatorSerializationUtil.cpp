@@ -1610,6 +1610,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         //set unique network sink partition id. Take care to ue this value during deserialization as well!
         serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueNetworkSinkDescriptorId());
+        serializedSinkDescriptor.set_isbuffering(networkSinkDescriptor->getIsBuffering());
         //pack to output
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails->set_faulttolerancemode(static_cast<uint64_t>(networkSinkDescriptor->getFaultToleranceType()));
@@ -1742,6 +1743,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                                                       serializedSinkDescriptor.retrytimes(),
                                                       FaultToleranceType::Value(deserializedFaultTolerance),
                                                       deserializedNumberOfOrigins,
+                                                      serializedSinkDescriptor.isbuffering(),
                                                       serializedSinkDescriptor.uniquenetworksinkdescriptorid());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor

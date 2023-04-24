@@ -51,7 +51,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
 
     try {
         // 1. Find the path where operators need to be placed
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType);
 
         // 2. Place the operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

@@ -61,7 +61,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
     // 1. Find the path where operators need to be placed
-    performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+    performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType);
 
     z3::optimize opt(*z3Context);
     std::map<std::string, z3::expr> placementVariables;
