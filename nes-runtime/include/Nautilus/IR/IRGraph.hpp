@@ -41,6 +41,7 @@ class IRGraph {
         void setOptimize(bool optimize);
         bool isDebug() const;
         void setDebug(bool debug);
+
       private:
         std::string dumpOutputPath;
         bool dumpToFile = false;

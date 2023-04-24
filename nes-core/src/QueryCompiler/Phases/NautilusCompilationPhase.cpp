@@ -55,7 +55,7 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
         case QueryCompilerOptions::NautilusBackend::BC_INTERPRETER: {
             return "BCInterpreter";
         };
-        default:{
+        default: {
             NES_THROW_RUNTIME_ERROR("No pipeline compiler implemented for this backend");
         }
     }

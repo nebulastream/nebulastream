@@ -29,9 +29,8 @@
 
 namespace NES::Nautilus::Backends::MLIR {
 
-llvm::function_ref<llvm::Error(llvm::Module*)>
-LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions,
-                                          const CompilationOptions&) {
+llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions,
+                                                                                         const CompilationOptions&) {
     // Return LLVM optimizer pipeline.
     if (linkProxyFunctions) {
         return [](llvm::Module* llvmIRModule) mutable {

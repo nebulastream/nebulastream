@@ -34,9 +34,7 @@
 #include <mlir/Transforms/Passes.h>
 namespace NES::Nautilus::Backends::MLIR {
 
-void dumpLLVMIR(mlir::ModuleOp mlirModule,
-               const CompilationOptions& compilerOptions,
-               const DumpHelper& dumpHelper) {
+void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOptions, const DumpHelper& dumpHelper) {
 
     // Convert the module to LLVM IR in a new LLVM IR context.
     llvm::LLVMContext llvmContext;
@@ -71,11 +69,9 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
                               const CompilationOptions& compilerOptions,
                               const DumpHelper& dumpHelper) {
 
-
     // Initialize information about the local machine in LLVM.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
-
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*mlirModule->getContext());
