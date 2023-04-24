@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.58](https://github.com/nebulastream/nebulastream/tree/v0.5.58) (2023-04-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.57...v0.5.58)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Migrate Sliding Window Aggregation implementation from legacy to the new Nautilus compiler [\#3205](https://github.com/nebulastream/nebulastream/issues/3205)
+
 ## [v0.5.57](https://github.com/nebulastream/nebulastream/tree/v0.5.57) (2023-04-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.56...v0.5.57)
