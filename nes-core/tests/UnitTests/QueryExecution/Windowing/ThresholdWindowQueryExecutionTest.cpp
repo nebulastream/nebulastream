@@ -26,7 +26,6 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 

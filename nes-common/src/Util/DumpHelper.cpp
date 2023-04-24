@@ -19,10 +19,8 @@
 
 namespace NES {
 
-DumpHelper DumpHelper::create(const std::string& contextIdentifier,
-                                               bool dumpToConsole,
-                                               bool dumpToFile,
-                                               const std::string& outputPath) {
+DumpHelper
+DumpHelper::create(const std::string& contextIdentifier, bool dumpToConsole, bool dumpToFile, const std::string& outputPath) {
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
@@ -57,10 +55,8 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
         NES_INFO2("DUMP {} {} to path file://{}", contextIdentifier, name, path);
     }
 }
-DumpHelper::DumpHelper(std::string  contextIdentifier,
-                       bool dumpToConsole,
-                       bool dumpToFile,
-                       std::string  outputPath)
-    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), dumpToFile(dumpToFile), outputPath(std::move(outputPath)) {}
+DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath)
+    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), dumpToFile(dumpToFile),
+      outputPath(std::move(outputPath)) {}
 
 }// namespace NES

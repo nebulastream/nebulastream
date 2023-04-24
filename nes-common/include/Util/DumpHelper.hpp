@@ -30,8 +30,10 @@ class DumpHelper {
      * @param outputPath output path if content is dumped to a file
      * @return DumpHelper
      */
-    static DumpHelper
-    create(const std::string& contextIdentifier, bool dumpToConsole, bool dumpToFile, const std::string& outputPath = std::string());
+    static DumpHelper create(const std::string& contextIdentifier,
+                             bool dumpToConsole,
+                             bool dumpToFile,
+                             const std::string& outputPath = std::string());
 
     /**
      * @brief Function to dump a specific entity using this context.
@@ -41,7 +43,7 @@ class DumpHelper {
     void dump(const std::string_view& name, const std::string_view& output) const;
 
   private:
-    explicit DumpHelper(std::string  contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string  outputPath);
+    explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);
     const std::string contextIdentifier;
     const bool dumpToConsole;
     const bool dumpToFile;

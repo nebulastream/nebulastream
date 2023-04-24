@@ -67,7 +67,8 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     EnumOption<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend = {
         QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG,
         QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER,
-        "Indicates the nautilus backend for the nautilus query compiler [MLIR_COMPILER|INTERPRETER|BC_INTERPRETER|FLOUNDER_COMPILER]."};
+        "Indicates the nautilus backend for the nautilus query compiler "
+        "[MLIR_COMPILER|INTERPRETER|BC_INTERPRETER|FLOUNDER_COMPILER]."};
 
     /**
      * @brief Sets the pipelining strategy. We differentiate between an OPERATOR_FUSION and OPERATOR_AT_A_TIME strategy.

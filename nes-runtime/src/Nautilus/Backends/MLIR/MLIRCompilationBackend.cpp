@@ -59,7 +59,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
                                                       optPipeline,
                                                       loweringProvider->getJitProxyFunctionSymbols(),
                                                       loweringProvider->getJitProxyTargetAddresses(),
-                                                      options, dumpHelper);
+                                                      options,
+                                                      dumpHelper);
 
     // 5. Get execution function from engine. Create and return execution context.
     timer.snapshot("MLIRGeneration");
