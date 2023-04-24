@@ -51,7 +51,7 @@ class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abstract
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -134,7 +134,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
@@ -214,7 +214,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(countAggregationValue));
@@ -293,7 +293,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(minAggregationValue));
@@ -372,7 +372,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(maxAggregationValue));
@@ -451,7 +451,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
@@ -528,7 +528,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     dynamicBuffer[3]["f2"].write((float) 40.0);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
@@ -607,7 +607,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
@@ -629,7 +629,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

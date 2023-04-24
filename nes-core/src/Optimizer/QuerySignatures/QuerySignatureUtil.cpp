@@ -35,6 +35,7 @@
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -79,7 +80,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         }
         if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
             NES_TRACE2("QuerySignatureUtil: Computing Signature for Sink operator");
-            NES_ASSERT(!children.empty(), "Sink operator should have atleast one children.");
+            NES_ASSERT(!children.empty(), "Sink operator should have at least one child.");
             return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
         } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
             NES_TRACE2("QuerySignatureUtil: Computing Signature for filter operator");
@@ -182,10 +183,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
                 auto fieldRename = expression->as<FieldRenameExpressionNode>();
                 newFieldName = fieldRename->getNewFieldName();
                 fieldName = fieldRename->getOriginalField()->getFieldName();
+                NES_TRACE2("Renaming field {}", fieldName, " to {}", newFieldName);
             } else {
                 auto fieldAccess = expression->as<FieldAccessExpressionNode>();
                 newFieldName = fieldAccess->getFieldName();
                 fieldName = newFieldName;
+                NES_TRACE2("Projecting field {}", fieldName);
             }
 
             auto found = schemaFieldToExprMap.find(fieldName);
@@ -419,8 +422,11 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
         auto allowedLatenessExpr = to_expr(*context, Z3_mk_eq(*context, allowedLatenessVar, allowedLatenessVal));
 
         //Compute equality conditions for event time field
-        auto eventTimeFieldVar = context->constant(context->str_symbol("eventTimeField"), context->string_sort());
         auto eventTimeFieldName = eventTimeWatermarkStrategy->getOnField()->as<FieldAccessExpressionNode>()->getFieldName();
+        auto eventTimeFieldNameAndSource =
+            Util::splitWithStringDelimiter<std::string>(eventTimeFieldName, "$")[0] + "." + "eventTimeField";
+        auto eventTimeFieldVar =
+            context->constant(context->str_symbol(eventTimeFieldNameAndSource.c_str()), context->string_sort());
         auto eventTimeFieldVal = context->string_val(eventTimeFieldName);
         auto eventTimeFieldExpr = to_expr(*context, Z3_mk_eq(*context, eventTimeFieldVar, eventTimeFieldVal));
 
@@ -487,14 +493,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
     }
 
     //Merge the window definitions together
-    std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
-    for (const auto& [windowKey, windowExpression] : rightSignature->getWindowsExpressions()) {
-        if (windowExpressions.find(windowKey) != windowExpressions.end()) {
-            //FIXME: when we receive more than one window expressions for same window in issue #1272
-            NES_NOT_IMPLEMENTED();
-        } else {
-            windowExpressions[windowKey] = windowExpression;
-        }
+    std::vector<std::map<std::string, z3::ExprPtr>> combinedWindowExpressions;
+    for (auto leftWindow : leftSignature->getWindowsExpressions()) {
+        combinedWindowExpressions.push_back(leftWindow);
+    }
+    for (auto rightWindow : rightSignature->getWindowsExpressions()) {
+        combinedWindowExpressions.push_back(rightWindow);
     }
 
     //Add condition to the array
@@ -507,7 +511,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
     return QuerySignature::create(std::move(conditions),
                                   std::move(leftColumns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowExpressions));
+                                  std::move(combinedWindowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::ContextPtr& context,
@@ -610,8 +614,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     z3::expr windowTimeSizeVal = context->int_val(length);
     auto windowTimeSlideVar = context->int_const("window-time-slide");
     z3::expr windowTimeSlideVal = context->int_val(slide);
-    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSizeVar, windowTimeSizeVal));
+    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSlideVar, windowTimeSlideVal));
 
     //Compute join window key expression
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
@@ -621,29 +625,28 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
 
     //Compute the CNF based on the window-key, window-size, and window-slide
     Z3_ast expressionArray[] = {windowKeyExpression, windowTimeSlideExpression, windowTimeSizeExpression};
-
-    std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
-
-    for (const auto& [rightWindowKey, rightWindowExpr] : rightSignature->getWindowsExpressions()) {
-        if (windowExpressions.find(rightWindowKey) == windowExpressions.end()) {
-            windowExpressions[rightWindowKey] = rightWindowExpr;
-        } else {
-            //TODO: as part of #1377
-            NES_NOT_IMPLEMENTED();
-        }
+    //Add the window expressions from both children
+    std::vector<std::map<std::string, z3::ExprPtr>> combinedWindowExpressions;
+    for (const auto& leftWindow : leftSignature->getWindowsExpressions()) {
+        combinedWindowExpressions.push_back(leftWindow);
     }
-
-    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)));
-    } else {
-        //TODO: as part of #1377
-        NES_NOT_IMPLEMENTED();
+    for (const auto& rightWindow : rightSignature->getWindowsExpressions()) {
+        combinedWindowExpressions.push_back(rightWindow);
     }
+    //Add the join window expression
+    std::map<std::string, z3::ExprPtr> joinWindowExpression;
+    joinWindowExpression.insert(
+        {"z3-window-expressions", std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)))});
+    // Need number of aggregates, aggregate type, and window id for heuristic checks for query containment identification
+    joinWindowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(0))});
+    joinWindowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(""))});
+    joinWindowExpression.insert({"window-id", std::make_shared<z3::expr>(context->string_val(windowKey))});
+    combinedWindowExpressions.push_back(joinWindowExpression);
 
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowExpressions));
+                                  std::move(combinedWindowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::ContextPtr& context,
@@ -651,7 +654,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = windowOperator->getChildren();
-    NES_ASSERT(children.size() == 1 && children[0], "Window operator should only have one non null children.");
+    NES_ASSERT(children.size() == 1 && children[0], "Window operator should only have one non null child.");
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
 
@@ -663,20 +666,20 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Compute the expression for window key
     std::string windowKey;
     if (windowDefinition->isKeyed()) {
-        if (windowDefinition->getKeys().size() != 1) {
-            NES_NOT_IMPLEMENTED();
+        windowKey = windowOperator->getInputSchema()->getSourceNameQualifier() + "$";
+        for (const auto& key : windowDefinition->getKeys()) {
+            windowKey += key->getFieldName();
         }
-        FieldAccessExpressionNodePtr key = windowDefinition->getKeys()[0];
-        windowKey = key->getFieldName();
     } else {
-        windowKey = "non-keyed";
+        windowKey = windowOperator->getInputSchema()->getSourceNameQualifier() + "$non-keyed";
     }
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
     z3::expr windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
-    std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    std::map<std::string, z3::ExprPtr> windowExpression;
+    NES_TRACE2("Create Window Signature");
     //Compute the expression for window time key
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -691,6 +694,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         }
         auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
         auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
+
+        z3::expr windowId = context->string_val(windowKey + "." + windowTimeKeyVal.to_string());
+        // window id for heuristic checks for query containment identification
+        windowExpression.insert({"window-id", std::make_shared<z3::expr>(windowId)});
 
         //Compute the expression for window size and slide
         auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
@@ -711,8 +718,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         z3::expr windowTimeSizeVal = context->int_val(length);
         auto windowTimeSlideVar = context->int_const("window-time-slide");
         z3::expr windowTimeSlideVal = context->int_val(slide);
-        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSizeVar, windowTimeSizeVal));
+        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSlideVar, windowTimeSlideVal));
 
         //FIXME: when count based window is implemented #1383
         //    auto windowCountSizeVar = context->int_const("window-count-size");
@@ -722,83 +729,99 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                                     windowTimeKeyExpression,
                                     windowTimeSlideExpression,
                                     windowTimeSizeExpression};
-
-        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-            windowExpressions[windowKey] =
-                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
-        } else {
-            //TODO: as part of #1377
-            NES_NOT_IMPLEMENTED();
-        }
+        windowExpression.insert({"z3-window-expressions",
+                                 std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)))});
+        NES_TRACE2("Time based window signature created.");
     } else {// for Threshold Window
         Z3_ast expressionArray[] = {windowKeyExpression};
-
-        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-            windowExpressions[windowKey] =
-                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 1, expressionArray)));
-        } else {
-            //TODO: as part of #1377
-            NES_NOT_IMPLEMENTED();
-        }
+        windowExpression.insert({"z3-window-expressions",
+                                 std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 1, expressionArray)))});
     }
 
+    std::vector<std::basic_string<char>> onFieldNames;
+    std::vector<std::basic_string<char>> asFieldNames;
     //FIXME: change the logic here as part of #1377
     //Compute expression for aggregation method
     z3::func_decl aggregate(*context);
+    std::vector<z3::func_decl> allAggregates;
     z3::sort sort = context->int_sort();
-    assert(windowDefinition->getWindowAggregation().size() == 1);
-    auto windowAggregation = windowDefinition->getWindowAggregation()[0];
-    switch (windowAggregation->getType()) {
-        case Windowing::WindowAggregationDescriptor::Type::Count: {
-            aggregate = z3::function("Count", sort, sort);
-            break;
+    std::string aggregateTypes = "";
+    for (auto windowAggregation : windowDefinition->getWindowAggregation()) {
+        NES_TRACE2("Current window aggregation: {}", windowAggregation->toString());
+        switch (windowAggregation->getType()) {
+            case Windowing::WindowAggregationDescriptor::Type::Count: {
+                aggregate = z3::function("Count", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Max: {
+                aggregate = z3::function("Max", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Min: {
+                aggregate = z3::function("Min", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Sum: {
+                aggregate = z3::function("Sum", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Avg: {
+                aggregate = z3::function("Avg", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Median: {
+                aggregate = z3::function("Median", sort, sort);
+                break;
+            }
+            default: {
+                NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
+            }
         }
-        case Windowing::WindowAggregationDescriptor::Type::Max: {
-            aggregate = z3::function("Max", sort, sort);
-            break;
-        }
-        case Windowing::WindowAggregationDescriptor::Type::Min: {
-            aggregate = z3::function("Min", sort, sort);
-            break;
-        }
-        case Windowing::WindowAggregationDescriptor::Type::Sum: {
-            aggregate = z3::function("Sum", sort, sort);
-            break;
-        }
-        case Windowing::WindowAggregationDescriptor::Type::Avg: {
-            aggregate = z3::function("Avg", sort, sort);
-            break;
-        }
-        default: NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
+        // Get the expression for on field and update the column values
+        onFieldNames.push_back(windowAggregation->on()->as<FieldAccessExpressionNode>()->getFieldName());
+        asFieldNames.push_back(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName());
+        aggregateTypes += (std::to_string(magic_enum::enum_integer(windowAggregation->getType())) + ".");
+        allAggregates.push_back(aggregate);
     }
-
-    // Get the expression for on field and update the column values
-    auto onField = windowAggregation->on();
-    auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
-    auto asField = windowAggregation->as();
-    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
-
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
     auto outputSchema = windowOperator->getOutputSchema();
+    // number of aggregates, and aggregate type for heuristic checks for query containment identification
+    uint64_t numberOfAggregates = allAggregates.size();
+    windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(numberOfAggregates))});
+    windowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(aggregateTypes))});
 
     //Compute new schemas for this operator
     std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaFieldToExprMaps;
     //Iterate over all child schemas
     for (auto& schemaFieldToExprMap : schemaFieldToExprMaps) {
         std::map<std::string, z3::ExprPtr> updatedSchemaMap;
+        NES_TRACE2("Output Schema: {}", outputSchema->toString());
         for (auto& outputField : outputSchema->fields) {
+            NES_TRACE2("Current outputField: {}", outputField->toString());
+            NES_TRACE2("Current outputField: {}", outputField->getName());
             auto originalAttributeName = outputField->getName();
             if (originalAttributeName.find("start") != std::string ::npos
                 || originalAttributeName.find("end") != std::string::npos
                 || originalAttributeName.find("cnt") != std::string::npos) {
                 updatedSchemaMap[originalAttributeName] =
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
-            } else if (originalAttributeName == "count") {
-                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate()));
+            } else if (Util::splitWithStringDelimiter<std::string>(originalAttributeName, "$")[1] == "count") {
+                NES_TRACE2("Count Attribute");
+                auto fieldAggregation =
+                    allAggregates[std::distance(asFieldNames.begin(),
+                                                std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
+                auto expr = std::make_shared<z3::expr>(context->int_const(originalAttributeName.c_str()));
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, fieldAggregation(*expr)));
+                NES_TRACE2("UpdatedFieldExpr: {}", updatedFieldExpr->to_string());
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
-            } else if (originalAttributeName == asFieldName) {
-                auto fieldExpr = schemaFieldToExprMap[onFieldName];
-                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
+            } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
+                auto fieldExpr = schemaFieldToExprMap[onFieldNames[std::distance(
+                    asFieldNames.begin(),
+                    std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))]];
+                auto fieldAggregation =
+                    allAggregates[std::distance(asFieldNames.begin(),
+                                                std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName))];
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, fieldAggregation(*fieldExpr)));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else {
                 updatedSchemaMap[originalAttributeName] = schemaFieldToExprMap[originalAttributeName];
@@ -812,9 +835,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         columns.emplace_back(outputField->getName());
     }
     auto conditions = childQuerySignature->getConditions();
+    auto combinedWindowExpressions = childQuerySignature->getWindowsExpressions();
+    combinedWindowExpressions.push_back(windowExpression);
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowExpressions));
+                                  std::move(combinedWindowExpressions));
 }
 }// namespace NES::Optimizer

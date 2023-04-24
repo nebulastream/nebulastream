@@ -20,7 +20,7 @@ namespace NES::Optimizer {
 QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions,
                                          std::vector<std::string>&& columns,
                                          std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions) {
+                                         std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions) {
     return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions),
                                                            std::move(columns),
                                                            std::move(schemaFieldToExprMaps),
@@ -30,7 +30,7 @@ QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions,
 QuerySignature::QuerySignature(z3::ExprPtr&& conditions,
                                std::vector<std::string>&& columns,
                                std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                               std::map<std::string, z3::ExprPtr>&& windowsExpressions)
+                               std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions)
     : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
       windowsExpressions(std::move(windowsExpressions)) {}
 
@@ -38,9 +38,10 @@ z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
 const std::vector<std::string>& QuerySignature::getColumns() { return columns; }
 
-const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
+const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
 
 const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
     return schemaFieldToExprMaps;
 }
+
 }// namespace NES::Optimizer

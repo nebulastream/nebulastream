@@ -132,9 +132,13 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
  */
 class TestExecutionEngine {
   public:
-    TestExecutionEngine(QueryCompilation::QueryCompilerOptions::QueryCompiler compiler) {
+    TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
+                        const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode =
+                            QueryCompilation::QueryCompilerOptions::DumpMode::NONE) {
         auto workerConfiguration = WorkerConfiguration::create();
+
         workerConfiguration->queryCompiler.queryCompilerType = compiler;
+        workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
         workerConfiguration->queryCompiler.compilationStrategy =

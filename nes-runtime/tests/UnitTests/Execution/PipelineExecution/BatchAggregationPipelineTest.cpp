@@ -49,6 +49,7 @@ namespace NES::Runtime::Execution {
 
 class BatchAggregationPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
+    Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -115,7 +116,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto preAggExecutablePipeline = provider->create(pipeline);
+    auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
 
@@ -125,7 +126,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
     pipeline2->setRootOperator(aggScan);
     auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler});
-    auto aggExecutablePipeline = provider->create(pipeline2);
+    auto aggExecutablePipeline = provider->create(pipeline2, options);
 
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
@@ -194,7 +195,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto preAggExecutablePipeline = provider->create(pipeline);
+    auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);

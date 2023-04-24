@@ -1,0 +1,63 @@
+version: "3"
+services:
+  node-red:
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    networks:
+      nebulastream-network-1:
+       ipv4_address: 172.32.0.151
+    volumes:
+      - node-red-data:/data
+      - ./:/demo
+
+  coordinator:
+    image: nebulastream/nes-executable-image:latest
+    entrypoint: ["bash", "-c", "nesCoordinator --configPath=/demo/conf/coordinator.yml"]
+    ports:
+      - 8085:8085
+    volumes:
+      - ./:/demo
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.32.0.21
+
+  worker-1:
+    image: nebulastream/nes-executable-image:latest
+    entrypoint: ["bash", "-c", "sleep 3 && nesWorker --configPath=/demo/conf/worker-1.yml"]
+    volumes:
+      - ./:/demo
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.32.0.31
+
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - 1882:1882
+      - 9008:9008
+      - 9014:9014
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.32.0.111
+
+  ui:
+    image: nebulastream/nes-ui-image:latest
+    ports:
+      - 9005:9005
+    networks:
+      nebulastream-network-1:
+        ipv4_address: 172.32.0.141
+
+volumes:
+  node-red-data:
+
+networks:
+  nebulastream-network-1:
+    ipam:
+      config:
+        - subnet: 172.32.0.0/24

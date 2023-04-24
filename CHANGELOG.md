@@ -1,8 +1,113 @@
 # Changelog
 
-## [v0.5.45](https://github.com/nebulastream/nebulastream/tree/v0.5.45) (2023-04-06)
+## [v0.5.58](https://github.com/nebulastream/nebulastream/tree/v0.5.58) (2023-04-24)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.45)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.57...v0.5.58)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Migrate Sliding Window Aggregation implementation from legacy to the new Nautilus compiler [\#3205](https://github.com/nebulastream/nebulastream/issues/3205)
+
+## [v0.5.57](https://github.com/nebulastream/nebulastream/tree/v0.5.57) (2023-04-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.56...v0.5.57)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve performance of storage handlers by avoiding pointer copies where possible [\#3674](https://github.com/nebulastream/nebulastream/issues/3674)
+- \[TASK\] Include projection order in containment identification [\#3495](https://github.com/nebulastream/nebulastream/issues/3495)
+
+## [v0.5.56](https://github.com/nebulastream/nebulastream/tree/v0.5.56) (2023-04-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.55...v0.5.56)
+
+### Bug Fixes 🐛
+
+- \[BUG\] CSV Source not reading the whole file by default [\#3663](https://github.com/nebulastream/nebulastream/issues/3663)
+
+## [v0.5.55](https://github.com/nebulastream/nebulastream/tree/v0.5.55) (2023-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.54...v0.5.55)
+
+### Bug Fixes 🐛
+
+- \[BUG\] testMovingDeviceSimulatedStartTimeInPast [\#3318](https://github.com/nebulastream/nebulastream/issues/3318)
+
+### Miscellaneous Issues ✌️
+
+- Replace cpprestsdk  [\#668](https://github.com/nebulastream/nebulastream/issues/668)
+
+## [v0.5.54](https://github.com/nebulastream/nebulastream/tree/v0.5.54) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.53...v0.5.54)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add window containment [\#3494](https://github.com/nebulastream/nebulastream/issues/3494)
+
+## [v0.5.53](https://github.com/nebulastream/nebulastream/tree/v0.5.53) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.52...v0.5.53)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add conservative two phase locking storage handle [\#3643](https://github.com/nebulastream/nebulastream/issues/3643)
+
+## [v0.5.52](https://github.com/nebulastream/nebulastream/tree/v0.5.52) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.51...v0.5.52)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve Row-ColumnLayoutTupleBuffer Design [\#3467](https://github.com/nebulastream/nebulastream/issues/3467)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Window operator doesn't work  [\#3640](https://github.com/nebulastream/nebulastream/issues/3640)
+
+## [v0.5.51](https://github.com/nebulastream/nebulastream/tree/v0.5.51) (2023-04-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.50...v0.5.51)
+
+## [v0.5.50](https://github.com/nebulastream/nebulastream/tree/v0.5.50) (2023-04-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.49...v0.5.50)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate infer model operator to Nautilus [\#3624](https://github.com/nebulastream/nebulastream/issues/3624)
+
+## [v0.5.49](https://github.com/nebulastream/nebulastream/tree/v0.5.49) (2023-04-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.48...v0.5.49)
+
+**Implemented enhancements:**
+
+- \[TASK\] create new Coordinator AbstractRequest and StorageAccessHandle classes [\#3601](https://github.com/nebulastream/nebulastream/issues/3601)
+
+## [v0.5.48](https://github.com/nebulastream/nebulastream/tree/v0.5.48) (2023-04-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.47...v0.5.48)
+
+**Implemented enhancements:**
+
+- \[TASK\]\[Nautilus\] Improve Bytecode interpreter [\#3466](https://github.com/nebulastream/nebulastream/issues/3466)
+
+## [v0.5.47](https://github.com/nebulastream/nebulastream/tree/v0.5.47) (2023-04-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.46...v0.5.47)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Infer comparison stamp in compiler backend [\#3631](https://github.com/nebulastream/nebulastream/issues/3631)
+
+## [v0.5.46](https://github.com/nebulastream/nebulastream/tree/v0.5.46) (2023-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.46)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add ExecutionTest for MapJavaUdf operator [\#3585](https://github.com/nebulastream/nebulastream/issues/3585)
 
 ### Bug Fixes 🐛
 

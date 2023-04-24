@@ -16,6 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>

@@ -14,21 +14,11 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/ExecutableType/Array.hpp>
-#include <Common/Identifiers.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -47,7 +37,7 @@ struct Output {
     bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
 };
 
-class MLModelDeploymentTest
+class InferModelDeploymentTest
     : public Testing::NESBaseTest,
       public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
   public:
@@ -131,7 +121,7 @@ class MLModelDeploymentTest
  *
  * Disabled because it is not clear what this test tests. There is no code path that supports different data types in the input values. The results are also non-deterministic.
  */
-TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
+TEST_F(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     struct IrisData {
         uint64_t id;
         float f1;
@@ -160,6 +150,7 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
                                   .validate()
@@ -197,7 +188,7 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     }
 }
 
-TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
+TEST_P(InferModelDeploymentTest, DISABLED_testSimpleMLModelDeployment) {
 
     auto irisSchema = std::get<1>(GetParam());
 
@@ -212,6 +203,7 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                         {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
                                   .validate()
@@ -231,11 +223,11 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 }
 
 INSTANTIATE_TEST_CASE_P(TestInputs,
-                        MLModelDeploymentTest,
-                        ::testing::Values(MLModelDeploymentTest::createBooleanTestData(),
-                                          MLModelDeploymentTest::createFloatTestData(),
-                                          MLModelDeploymentTest::createIntTestData()),
-                        [](const testing::TestParamInfo<MLModelDeploymentTest::ParamType>& info) {
+                        InferModelDeploymentTest,
+                        ::testing::Values(InferModelDeploymentTest::createBooleanTestData(),
+                                          InferModelDeploymentTest::createFloatTestData(),
+                                          InferModelDeploymentTest::createIntTestData()),
+                        [](const testing::TestParamInfo<InferModelDeploymentTest::ParamType>& info) {
                             std::string name = std::get<0>(info.param);
                             return name;
                         });

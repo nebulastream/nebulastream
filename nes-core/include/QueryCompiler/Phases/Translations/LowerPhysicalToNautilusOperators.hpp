@@ -83,40 +83,50 @@ class LowerPhysicalToNautilusOperators {
           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
           size_t bufferSize,
           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
               size_t bufferSize);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerEmit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
               size_t bufferSize);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
              const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                  const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerKeyedThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
@@ -139,6 +149,12 @@ class LowerPhysicalToNautilusOperators {
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
 #endif// ENABLE_JIN
+
+#ifdef TFDEF
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                            std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+#endif
 
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;

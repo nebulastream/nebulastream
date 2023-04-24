@@ -43,15 +43,15 @@ CSVSourceType::CSVSourceType()
                                                                    "delimiter for distinguishing between values in a file")),
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
-                                                                1,
+                                                                0,
                                                                 "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
-                                                                1,
+                                                                0,
                                                                 "Number of tuples to produce per buffer.")),
       sourceGatheringInterval(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
-                                                                1,
+                                                                0,
                                                                 "Gathering interval of the source.")),
       gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
                                                                                GatheringMode::INTERVAL_MODE,

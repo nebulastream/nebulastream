@@ -42,7 +42,7 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapJavaUDFPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -159,7 +159,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("IntegerMapFunction", "map", "java/lang/Integer", "java/lang/Integer", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -180,7 +180,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("ShortMapFunction", "map", "java/lang/Short", "java/lang/Short", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -201,7 +201,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("ByteMapFunction", "map", "java/lang/Byte", "java/lang/Byte", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -222,7 +222,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("LongMapFunction", "map", "java/lang/Long", "java/lang/Long", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -243,7 +243,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("DoubleMapFunction", "map", "java/lang/Double", "java/lang/Double", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -269,7 +269,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
         dynamicBuffer[i][variableName].write((bool) true);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("BooleanMapFunction", "map", "java/lang/Boolean", "java/lang/Boolean", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -309,7 +309,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("StringMapFunction", "map", "java/lang/String", "java/lang/String", schema, testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -368,7 +368,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("ComplexPojoMapFunction", "map", "ComplexPojo", "ComplexPojo", schema, testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});

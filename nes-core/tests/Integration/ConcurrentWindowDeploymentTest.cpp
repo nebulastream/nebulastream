@@ -73,6 +73,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfBuffersToProduce(1);
     auto physicalSource = PhysicalSource::create("exdra", "test_stream", csvSourceType);
     workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -1786,14 +1787,14 @@ TEST_F(ConcurrentWindowDeploymentTest,
 TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     struct Car {
         uint64_t key;
-        uint64_t value1;
+        double value1;
         uint64_t value2;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
                          ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value1", DataTypeFactory::createUInt64())
+                         ->addField("value1", DataTypeFactory::createDouble())
                          ->addField("value2", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
 

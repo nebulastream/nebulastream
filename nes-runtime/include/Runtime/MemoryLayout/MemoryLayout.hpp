@@ -22,6 +22,7 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
+using FIELD_SIZE = uint64_t;
 class MemoryLayoutTupleBuffer;
 
 /**
@@ -30,7 +31,6 @@ class MemoryLayoutTupleBuffer;
  * Currently. we support a RowLayout and a ColumnLayout.
  */
 class MemoryLayout {
-
   public:
     /**
      * @brief Constructor for MemoryLayout.

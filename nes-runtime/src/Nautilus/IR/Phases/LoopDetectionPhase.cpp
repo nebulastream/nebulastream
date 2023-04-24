@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp"
-#include "Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
@@ -24,6 +22,8 @@
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -199,14 +199,14 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                     // and check whether it's second to last operation is a valid
                     // candidate for the loop-count-operation (the operation that increments the induction variable).
                     auto countOp = priorBlock->getOperations().at(priorBlock->getOperations().size() - 2);
-                    if (compareOp->getComparator() != Operations::CompareOperation::Comparator::IEQ
+                    if (compareOp->getComparator() != Operations::CompareOperation::EQ
                         && (countOp->getOperationType() == Operations::Operation::OperationType::AddOp)
-                        && compareOp->getComparator() < Operations::CompareOperation::Comparator::FOLT
                         && priorBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::BranchOp
                         && std::static_pointer_cast<Operations::BranchOperation>(priorBlock->getTerminatorOp())
                                 ->getNextBlockInvocation()
                                 .getOperationArgIndex(countOp)
-                            != -1) {
+                            != -1
+                        && !compareOp->getLeftInput()->getStamp()->isFloat()) {
                         // A loop-count-operation, contains the loop-induction-variable, and the step size as inputs.
                         // The result of the loop-count-operation is passed to the loop-header as the new value
                         // of the induction variable. This allows us to figure out which input to the compare-operation

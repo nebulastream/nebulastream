@@ -17,6 +17,7 @@
 #include <any>
 #include <array>
 #include <cstdint>
+#include <ostream>
 #include <variant>
 #include <vector>
 
@@ -24,9 +25,10 @@ namespace NES::Nautilus::Backends::BC {
 
 /**
  * @brief This defines the central register file for the byte-code interpreter.
- * In the current version we only support 256 registers at max.
+ * In the current version we only support 1024 registers at max.
  */
-using RegisterFile = std::array<int64_t, 256>;
+constexpr short REGISTERS = 1024;
+using RegisterFile = std::array<int64_t, REGISTERS>;
 
 /**
  * @brief Defines an enum of all byte codes.
@@ -139,6 +141,46 @@ enum class ByteCode : short {
     AND_b,
     // OR
     OR_b,
+    // Negate
+    NOT_b,
+    // Cast
+    CAST_i8_i16,
+    CAST_i8_i32,
+    CAST_i8_i64,
+    CAST_i16_i32,
+    CAST_i16_i64,
+    CAST_i32_i64,
+    CAST_ui8_i16,
+    CAST_ui8_i32,
+    CAST_ui8_i64,
+    CAST_ui16_i32,
+    CAST_ui16_i64,
+    CAST_ui32_i64,
+    CAST_ui8_ui16,
+    CAST_ui8_ui32,
+    CAST_ui8_ui64,
+    CAST_ui16_ui32,
+    CAST_ui16_ui64,
+    CAST_ui32_ui64,
+    CAST_i8_ui8,
+    CAST_i8_ui16,
+    CAST_i8_ui32,
+    CAST_i8_ui64,
+    CAST_i16_ui16,
+    CAST_i16_ui32,
+    CAST_i16_ui64,
+    CAST_i32_ui32,
+    CAST_i32_ui64,
+    CAST_i64_ui64,
+    CAST_f_d,
+    CAST_i8_f,
+    CAST_i8_d,
+    CAST_i16_f,
+    CAST_i16_d,
+    CAST_i32_f,
+    CAST_i32_d,
+    CAST_i64_f,
+    CAST_i64_d,
     // Function calls
     // TODO #3466 come up with a better approach to call dynamically into runtime functions
     // functions with void return
@@ -149,6 +191,9 @@ enum class ByteCode : short {
     CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64,
     // functions with ui64 return
     CALL_ui64_ptr,
+    CALL_ui64_ui64_i8,
+    CALL_ui64_ui64_i32,
+    CALL_ui64_ui64_i64,
     // functions with i64 return
     CALL_i64,
     CALL_i64_i64,
@@ -158,6 +203,23 @@ enum class ByteCode : short {
     CALL_ptr_ptr_ptr,
     CALL_ptr_ptr_i64,
     CALL_ptr_ptr_ui64,
+    // dynamic function calls using dyncall.h
+    DYNCALL_reset,
+    DYNCALL_arg_b,
+    DYNCALL_arg_i8,
+    DYNCALL_arg_i16,
+    DYNCALL_arg_i32,
+    DYNCALL_arg_i64,
+    DYNCALL_arg_f,
+    DYNCALL_arg_d,
+    DYNCALL_arg_ptr,
+    DYNCALL_call_v,
+    DYNCALL_call_b,
+    DYNCALL_call_i8,
+    DYNCALL_call_i16,
+    DYNCALL_call_i32,
+    DYNCALL_call_i64,
+    DYNCALL_call_ptr
 };
 
 enum class Type : uint8_t { v, i8, i16, i32, i64, ui8, ui16, ui32, ui64, d, f, b, ptr };
@@ -176,10 +238,12 @@ class FunctionCallTarget {
  * @brief The general definition of opcode, that contains a bytecode, at max two input registers and a result register.
  */
 struct OpCode {
+    OpCode(ByteCode op, short reg1, short reg2, short output) : op(op), reg1(reg1), reg2(reg2), output(output){};
     ByteCode op;
     short reg1;
     short reg2;
     short output;
+    friend std::ostream& operator<<(std::ostream& os, const OpCode& code);
 };
 
 typedef void Operation(const OpCode&, RegisterFile& regs);
@@ -282,6 +346,18 @@ void orOp(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l || r);
+}
+
+/**
+ * @brief Defines an not in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
+template<class RegisterType>
+void notOp(const OpCode& c, RegisterFile& regs) {
+    auto value = readReg<RegisterType>(regs, c.reg1);
+    writeReg(regs, c.output, !value);
 }
 
 /**
@@ -402,6 +478,19 @@ void store(const OpCode& c, RegisterFile& regs) {
 }
 
 /**
+ * @brief Defines a cast in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
+template<class SrcRegisterType, class TargetRegisterType>
+void cast(const OpCode& c, RegisterFile& regs) {
+    auto src = readReg<SrcRegisterType>(regs, c.reg1);
+    TargetRegisterType value = src;
+    writeReg<TargetRegisterType>(regs, c.output, value);
+}
+
+/**
  * @brief Defines a final branch terminator operation
  */
 struct BranchOp {
@@ -429,6 +518,7 @@ class CodeBlock {
     CodeBlock() = default;
     std::vector<OpCode> code = std::vector<OpCode>();
     std::variant<BranchOp, ConditionalJumpOp, ReturnOp> terminatorOp = ReturnOp{0};
+    friend std::ostream& operator<<(std::ostream& os, const CodeBlock& block);
 };
 
 class Code {
@@ -437,6 +527,7 @@ class Code {
     std::vector<short> arguments = std::vector<short>();
     std::vector<CodeBlock> blocks = std::vector<CodeBlock>();
     Type returnType = Type::v;
+    friend std::ostream& operator<<(std::ostream& os, const Code& code);
 };
 
 }// namespace NES::Nautilus::Backends::BC

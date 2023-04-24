@@ -12,6 +12,10 @@
 
 add_subdirectory(Aggregations)
 add_subdirectory(Join)
+if (NES_USE_TF)
+    add_subdirectory(InferModel)
+endif ()
+
 add_source_files(nes-runtime
         MultiOriginWatermarkProcessor.cpp
         SlidingWindowAssigner.cpp

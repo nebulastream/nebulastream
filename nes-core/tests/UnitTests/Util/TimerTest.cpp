@@ -45,8 +45,7 @@ TEST(UtilFunctionTest, startAndPause) {
     sleep(1);
     timer.pause();
 
-    //std::cout << timer.getRuntime();
-    EXPECT_TRUE((timer.getRuntime() >= 2000000000 - 100000000) && (timer.getRuntime() <= 2000000000 + 100000000));
+    EXPECT_NEAR(timer.getRuntime(), 2000000000, 100000000);
 }
 
 /**
@@ -62,9 +61,9 @@ TEST(UtilFunctionTest, snapshotTaking) {
 
     //std::cout << timer.getRuntime();
     auto snapshots = timer.getSnapshots();
-    EXPECT_TRUE((timer.getRuntime() >= 1000000000 - 50000000) && (timer.getRuntime() <= 1000000000 + 50000000));
+    EXPECT_NEAR(timer.getRuntime(), 1000000000, 50000000);
     EXPECT_TRUE(snapshots[0].name == "testComponent_test");
-    EXPECT_TRUE((snapshots[0].getRuntime() >= 1000000000 - 50000000) && (snapshots[0].getRuntime() <= 1000000000 + 50000000));
+    EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 50000000);
 }
 
 /**
@@ -88,14 +87,13 @@ TEST(UtilFunctionTest, mergeTimers) {
 
     //std::cout << timer1;
     auto snapshots = timer1.getSnapshots();
-    EXPECT_TRUE((timer1.getRuntime() >= 2000000000 - 100000000) && (timer1.getRuntime() <= 2000000000 + 100000000));
-    EXPECT_TRUE(snapshots[0].name == "testComponent1_test1");
-    EXPECT_TRUE((snapshots[0].getRuntime() >= 1000000000 - 50000000) && (snapshots[0].getRuntime() <= 1000000000 + 50000000));
-    EXPECT_TRUE(snapshots[1].name == "testComponent1_testComponent2");
-    EXPECT_TRUE((snapshots[1].getRuntime() >= 1000000000 - 50000000) && (snapshots[1].getRuntime() <= 1000000000 + 50000000));
-    EXPECT_TRUE(snapshots[1].children[0].name == "testComponent2_test2");
-    EXPECT_TRUE((snapshots[1].children[0].getRuntime() >= 1000000000 - 50000000)
-                && (snapshots[1].children[0].getRuntime() <= 1000000000 + 50000000));
+    EXPECT_NEAR(timer1.getRuntime(), 2000000000, 1000000000);
+    EXPECT_EQ(snapshots[0].name, "testComponent1_test1");
+    EXPECT_NEAR(snapshots[0].getRuntime(), 1000000000, 500000000);
+    EXPECT_EQ(snapshots[1].name, "testComponent1_testComponent2");
+    EXPECT_NEAR(snapshots[1].getRuntime(), 1000000000, 500000000);
+    EXPECT_EQ(snapshots[1].children[0].name, "testComponent2_test2");
+    EXPECT_NEAR(snapshots[1].children[0].getRuntime(), 1000000000, 500000000);
 }
 
 /**
@@ -119,8 +117,9 @@ TEST(UtilFunctionTest, differentTimeUnits) {
     timer2.snapshot("test");
     timer2.pause();
 
-    EXPECT_TRUE(timer1.getRuntime() == 1);// runtime returned in int64_t, so expect no precision
-    EXPECT_TRUE((timer2.getRuntime() >= 1300 - 50) && (timer2.getRuntime() <= 1300 + 50));
+    // runtime returned in int64_t, so expect no precision
+    EXPECT_NEAR(timer1.getPrintTime(), 1000, 100);
+    EXPECT_NEAR(timer2.getPrintTime(), 1300, 100);
 }
 
 /**
@@ -137,7 +136,7 @@ TEST(UtilFunctionTest, differentMeasurePrecision) {
     timer1.pause();
 
     // need to use print time, as runtime will round to full seconds
-    EXPECT_TRUE((timer1.getPrintTime() >= 1.3 - 0.05) && (timer1.getPrintTime() <= 1.3 + 0.05));
+    EXPECT_NEAR(timer1.getPrintTime(), 1.3, 0.1);
 }
 
 /**
@@ -159,8 +158,8 @@ TEST(UtilFunctionTest, differentPrintPrecision) {
     timer2.snapshot("test");
     timer2.pause();
 
-    EXPECT_TRUE(timer1.getPrintTime() == 1);
-    EXPECT_TRUE((timer2.getPrintTime() >= 1.3 - 0.05) && (timer2.getPrintTime() <= 1.3 + 0.05));
+    EXPECT_NEAR(timer1.getPrintTime(), 1, 0.1);
+    EXPECT_NEAR(timer2.getPrintTime(), 1.3, 0.1);
 }
 
 }// namespace NES

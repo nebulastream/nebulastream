@@ -26,7 +26,8 @@ FetchContent_Declare(tpch-dbgen
         )
 
 FetchContent_MakeAvailable(tpch-dbgen)
-
+# The tpch-dbgen target causes warnings on recent compilers. Thus we disable the warning for this target.
+target_compile_options(tpch-dbgen PUBLIC "-Wno-deprecated-non-prototype")
 
 function(add_nes_runtime_test)
     add_executable(${ARGN})

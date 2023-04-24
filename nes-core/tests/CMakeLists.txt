@@ -491,6 +491,15 @@ add_nes_unit_test(location-provider-csv-unit-tests "UnitTests/Spatial/LocationPr
 
 ### Reconnect Schedule Predictor Test ###
 add_nes_unit_test(reconnect-schedule-predictor-tests "UnitTests/Spatial/ReconnectSchedulePredictorTest.cpp")
+
+### Serial Storage Handler Test ###
+add_nes_unit_test(serial-access-handle-tests "UnitTests/StorageHandles/SerialStorageHandlerTest.cpp")
+
+### 2 Phase Lcoking Storage Handler Test ###
+add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/StorageHandles/TwoPhaseLockingStorageHandlerTest.cpp")
+
+### Unlock Deleter Test ###
+add_nes_unit_test(unlock-deleter-tests "UnitTests/StorageHandles/UnlockDeleterTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")
@@ -567,8 +576,8 @@ add_dependencies(tcp-source-integration-test nesCoordinator nesWorker)
 add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp")
 
 if (NES_USE_TF)
-### MLModelDeploymentTest ###
-add_nes_integration_test(ml-model-deployment-test "Integration/Operators/MLModelDeploymentTest.cpp")
+### InferModelDeploymentTest ###
+add_nes_integration_test(infer-model-deployment-test "Integration/Operators/InferModelDeploymentTest.cpp")
 endif()
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###

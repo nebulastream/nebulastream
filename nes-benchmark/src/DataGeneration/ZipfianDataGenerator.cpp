@@ -17,7 +17,6 @@
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/ZipfianGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {
@@ -57,16 +56,16 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
         if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
-            auto rowLayoutBuffer = rowLayout->bind(bufferRef);
+            auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, bufferRef);
 
             /*
                  * Iterating over all tuples of the current buffer and insert the tuples according to the schema.
                  * The value is drawn from the zipfianGenerator and thus has a zipfian shape.
                  * As we do know the memory layout, we can use the custom pushRecord() method to
                  */
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer->getCapacity(); ++curRecord) {
                 uint64_t value = zipfianGenerator(generator);
-                rowLayoutBuffer->pushRecord<false>(
+                dynamicBuffer->pushRecordToBuffer(
                     std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
             }
 

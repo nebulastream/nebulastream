@@ -22,15 +22,16 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 namespace NES::QueryCompilation {
 
-NautilusCompilationPhase::NautilusCompilationPhase(QueryCompilerOptions::CompilationStrategy compilationStrategy)
-    : compilationStrategy(compilationStrategy) {}
+NautilusCompilationPhase::NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
+    : compilerOptions(compilerOptions) {}
 
 std::shared_ptr<NautilusCompilationPhase>
-NautilusCompilationPhase::create(QueryCompilerOptions::CompilationStrategy compilationStrategy) {
-    return std::make_shared<NautilusCompilationPhase>(compilationStrategy);
+NautilusCompilationPhase::create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
+    return std::make_shared<NautilusCompilationPhase>(compilerOptions);
 }
 
 PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan) {
@@ -43,15 +44,46 @@ PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryP
     return queryPlan;
 }
 
-OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline) {
-    auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler");
+std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
+    switch (compilerOptions->getNautilusBackend()) {
+        case QueryCompilerOptions::NautilusBackend::INTERPRETER: {
+            return "PipelineInterpreter";
+        };
+        case QueryCompilerOptions::NautilusBackend::MLIR_COMPILER: {
+            return "PipelineCompiler";
+        };
+        case QueryCompilerOptions::NautilusBackend::BC_INTERPRETER: {
+            return "BCInterpreter";
+        };
+        default: {
+            NES_THROW_RUNTIME_ERROR("No pipeline compiler implemented for this backend");
+        }
+    }
+}
 
+OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline) {
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
-
     auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
-    auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline());
+    Nautilus::CompilationOptions options;
+    auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
+                                  pipeline->getQueryPlan()->getQueryId(),
+                                  pipeline->getQueryPlan()->getQuerySubPlanId(),
+                                  pipeline->getPipelineId());
+    options.setIdentifier(identifier);
+
+    // enable dump to console if the compiler options are set
+    options.setDumpToConsole(compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::CONSOLE
+                             || compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE);
+
+    // enable dump to file if the compiler options are set
+    options.setDumpToFile(compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE
+                          || compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE);
+
+    auto providerName = getPipelineProviderIdentifier(compilerOptions);
+    auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);
+    auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline(), options);
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.
     auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());

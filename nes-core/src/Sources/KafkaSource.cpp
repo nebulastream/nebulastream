@@ -39,7 +39,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          bool autoCommit,
                          uint64_t kafkaConsumerTimeout,
                          std::string offsetMode,
-                         const KafkaSourceTypePtr& sourceConfig,
+                         const KafkaSourceTypePtr& kafkaSourceType,
                          OperatorId operatorId,
                          OriginId originId,
                          size_t numSourceLocalBuffers,
@@ -62,7 +62,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
               // Disable auto commit
               {"enable.auto.commit", false}};
 
-    this->numBuffersToProcess = numbersOfBufferToProduce;
+    this->numberOfBuffersToProduce = numbersOfBufferToProduce;
 
     numberOfTuplesPerBuffer =
         std::floor(double(localBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
@@ -81,7 +81,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
 
-    switch (sourceConfig->getInputFormat()->getValue()) {
+    switch (kafkaSourceType->getInputFormat()->getValue()) {
         case Configurations::InputFormat::JSON:
             inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
             break;
@@ -96,8 +96,7 @@ KafkaSource::~KafkaSource() {
 }
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
-    NES_DEBUG2("TCPSource receiveData.");
-    NES_DEBUG2("TCPSource buffer allocated.");
+    NES_DEBUG2("Kafka Source receiveData.");
     if (!connect()) {
         return std::nullopt;
     }
@@ -126,7 +125,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
     bool flushIntervalPassed = false;
 
     while (tupleCount < tupleBufferCapacity && !flushIntervalPassed) {
-        NES_DEBUG2("KAFKASOURCE tries to receive data...");
+        NES_DEBUG2("KafkaSource tries to receive data...");
         //poll a batch of messages and put it into a vector
         messages = consumer->poll_batch(batchSize);
         consumer->async_commit();
@@ -141,7 +140,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
 
                     if (message.get_error()) {
                         if (!message.is_eof()) {
-                            NES_ERROR("KAFKASOURCE received error notification: " << message.get_error());
+                            NES_ERROR("KafkaSource received error notification: " << message.get_error());
                             throw message.get_error();
                         }
                         NES_WARNING2("KafkaSource reached end of topic");
@@ -170,7 +169,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= bufferFlushIntervalMs)) {
-            NES_DEBUG2("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG2("KafkaSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }
@@ -202,7 +201,7 @@ bool KafkaSource::connect() {
             std::stringstream s;
             s << partitions;
             std::string partitionsAsString = s.str();
-            NES_DEBUG2("Got assigned {}", partitionsAsString);
+            NES_DEBUG2("KafkaSource Got assigned {}", partitionsAsString);
         });
 
         // Print the revoked partitions on revocation
@@ -211,7 +210,7 @@ bool KafkaSource::connect() {
             std::stringstream s;
             s << partitions;
             std::string partitionsAsString = s.str();
-            NES_DEBUG2("Got revoked {}", partitionsAsString);
+            NES_DEBUG2("KafkaSource Got revoked {}", partitionsAsString);
         });
 
         // Subscribe to the topic

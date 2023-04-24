@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        MLIRUtility.cpp
         MLIRLoweringProvider.cpp
         MLIRCompilationBackend.cpp
         MLIRExecutable.cpp

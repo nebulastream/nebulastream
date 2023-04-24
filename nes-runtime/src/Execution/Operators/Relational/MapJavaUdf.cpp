@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <jni.h>
 #include <utility>
 #if not(defined(__APPLE__))
@@ -65,10 +66,16 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
-    for (auto entry : byteCodeList) {
-        auto bufLen = entry.second.size();
-        const auto byteCode = reinterpret_cast<jbyte*>(entry.second.data());
-        handler->getEnvironment()->DefineClass(entry.first.c_str(), nullptr, byteCode, (jsize) bufLen);
+    for (auto& [className, byteCode] : byteCodeList) {
+        jbyteArray jData = handler->getEnvironment()->NewByteArray(byteCode.size());
+        jniErrorCheck(handler->getEnvironment());
+        jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
+        jniErrorCheck(handler->getEnvironment());
+        std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
+        handler->getEnvironment()->DefineClass(className.c_str(), nullptr, jCode, (jint) byteCode.size());
+        jniErrorCheck(handler->getEnvironment());
+        handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
+        jniErrorCheck(handler->getEnvironment());
     }
 }
 
@@ -107,19 +114,19 @@ extern "C" void startOrAttachVMWithJarFile(void* state) {
         exit(EXIT_FAILURE);
     }
 
-    JavaVMInitArgs vmArgs;
-    auto* options = new JavaVMOption[3];
-    std::string classPathOpt = std::string("-Djava.class.path=") + javaPath;
-    options[0].optionString = (char*) classPathOpt.c_str();
-    options[1].optionString = (char*) "-verbose:jni";
-    options[2].optionString = (char*) "-verbose:class";
-    vmArgs.nOptions = 3;
-    vmArgs.options = options;
-    vmArgs.version = JNI_VERSION_1_2;
-    vmArgs.ignoreUnrecognized = false;// invalid options make the JVM init fail
+    JavaVMInitArgs args{};
+    std::vector<std::string> opt{"-verbose:jni", "-verbose:class", "-Djava.class.path=" + javaPath};
+    std::vector<JavaVMOption> options;
+    for (const auto& s : opt) {
+        options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
+    }
+    args.version = JNI_VERSION_1_2;
+    args.ignoreUnrecognized = false;
+    args.options = options.data();
+    args.nOptions = std::size(options);
 
     auto env = handler->getEnvironment();
-    JVMContext::instance().createOrAttachToJVM(&env, vmArgs);
+    JVMContext::instance().createOrAttachToJVM(&env, args);
     handler->setEnvironment(env);
 }
 
@@ -131,15 +138,25 @@ extern "C" void startOrAttachVMWithByteList(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
-    JavaVMInitArgs vmArgs;
-    vmArgs.version = JNI_VERSION_1_2;
-    vmArgs.ignoreUnrecognized = false;// invalid options make the JVM init fail
+    std::string utilsPath = std::string(JAVA_UDF_UTILS);
+    JavaVMInitArgs args{};
+    std::vector<std::string> opt{"-verbose:jni", "-verbose:class", "-Djava.class.path=" + utilsPath};
+    std::vector<JavaVMOption> options;
+    for (const auto& s : opt) {
+        options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
+    }
+    args.version = JNI_VERSION_1_2;
+    args.ignoreUnrecognized = false;
+    args.options = options.data();
+    args.nOptions = std::size(options);
 
-    JVMContext& context = JVMContext::instance();
+    bool created = JVMContext::instance().isJVMCreated();
     auto env = handler->getEnvironment();
-    context.createOrAttachToJVM(&env, vmArgs);
+    JVMContext::instance().createOrAttachToJVM(&env, args);
     handler->setEnvironment(env);
-    loadClassesFromByteList(handler, handler->getByteCodeList());
+    if (!created) {
+        loadClassesFromByteList(handler, handler->getByteCodeList());
+    }
 }
 
 /**
@@ -798,7 +815,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto inputPojoPtr = FunctionCall("allocateObject", allocateObject, handler, inputClassPtr);
 
     // Loading record values into java input class
-    // We derive the types of the values from the schema. The type can be complex of simple.
+    // We derive the types of the values from the schema. The type can be complex or simple.
     // 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
     // 2. Complex: plain old java object containing the multiple primitive types
     if (inputSchema->fields.size() == 1) {

@@ -81,7 +81,7 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
 include(cmake/ImportLLVM.cmake)
-project(NES C CXX)
+project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 

@@ -24,13 +24,17 @@ namespace NES::QueryCompilation {
  */
 class NautilusCompilationPhase {
   public:
-    NautilusCompilationPhase(QueryCompilerOptions::CompilationStrategy compilationStrategy);
+    /**
+     * @brief Constructor to create a new NautilusCompilationPhase with a set of compilerOptions
+     * @param compilerOptions
+     */
+    explicit NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions);
 
     /**
      * @brief Creates the compilation phase for nautilus pipelines.
      * @return CompilationStrategy
      */
-    static std::shared_ptr<NautilusCompilationPhase> create(QueryCompilerOptions::CompilationStrategy compilationStrategy);
+    static std::shared_ptr<NautilusCompilationPhase> create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions);
 
     /**
      * @brief Generates code for all pipelines in a pipelined query plan.
@@ -47,7 +51,7 @@ class NautilusCompilationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    [[maybe_unused]] QueryCompilerOptions::CompilationStrategy compilationStrategy;
+    const QueryCompilation::QueryCompilerOptionsPtr compilerOptions;
 };
 };// namespace NES::QueryCompilation
 

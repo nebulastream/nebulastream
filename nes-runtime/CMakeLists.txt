@@ -34,8 +34,45 @@ target_include_directories(nes-runtime PUBLIC
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable bytecode interpreter")
+
+
+    # We use the dyncall lib to call arbitrary runtime function.
+    # Set the path to the dyncall directory
+    set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
+
+    # Create the include directory for dyncall
+    file(MAKE_DIRECTORY ${dyncall_dir}/include)
+
+    # Download and build the external project
+    ExternalProject_Add(dyncallProject
+            GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
+            GIT_TAG "origin/main"
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> # Specify installation directory
+            BUILD_IN_SOURCE true # Build the project in the source directory
+            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
+            INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
+            UPDATE_DISCONNECTED 1
+            )
+
+    # Create a static imported library for the external project
+    add_library(dyncall STATIC IMPORTED)
+    add_dependencies(dyncall dyncallProject)
+
+    # Get the installation directory of the external project
+    ExternalProject_Get_Property(dyncallProject install_dir)
+
+    # Add the include directory of the external project to the interface of extLib
+    target_include_directories(dyncall INTERFACE ${install_dir}/include)
+
+    # Set the imported location of the external library to the installation directory
+    set_target_properties(dyncall PROPERTIES IMPORTED_LOCATION ${install_dir}/lib/libdyncall_s.a)
+
+    # Link the external library to nes-runtime
+    target_link_libraries(nes-runtime PRIVATE dyncall)
+
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
@@ -162,14 +199,14 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+# Define map java udf utils class file
+add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/test_data/JavaUdfTestData/")
 
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayout.hpp Runtime/MemoryLayout/RowLayout.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayoutField.hpp Runtime/MemoryLayout/RowLayoutField.hpp)
-register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/ColumnLayout.hpp Runtime/MemoryLayout/ColumnLayout.hpp)
-register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/BufferManager.hpp Runtime/BufferManager.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/AbstractBufferProvider.hpp Runtime/AbstractBufferProvider.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Allocator/NesDefaultMemoryAllocator.hpp Runtime/Allocator/NesDefaultMemoryAllocator.hpp)

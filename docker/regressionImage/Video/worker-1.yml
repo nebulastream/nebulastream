@@ -1,0 +1,28 @@
+###
+### General configuration
+###
+#logLevel: LOG_ERROR
+#logLevel: LOG_WARNING
+logLevel: LOG_DEBUG
+
+
+
+###
+### Network configuration
+###
+localWorkerIp: 172.33.0.30
+coordinatorIp: coordinator
+
+
+###
+### Physical source configuration
+###
+physicalSources:
+        - logicalSourceName: Transc_stream 
+          physicalSourceName: nes_worker1 
+          type: CSV_SOURCE
+          configuration:
+                  filePath: /tutorial/transc_data_1.csv 
+                  numberOfBuffersToProduce: 1024
+                  numberOfTuplesToProducePerBuffer: 0
+                  skipHeader: true

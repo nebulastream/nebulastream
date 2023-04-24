@@ -16,4 +16,5 @@ add_source_files(nes-runtime
         BCInterpreterBackend.cpp
         BCInterpreter.cpp
         BCLoweringProvider.cpp
+        Dyncall.cpp
         )

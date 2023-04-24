@@ -20,7 +20,6 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-
 /**
  * @brief Implements a row layout, that maps all tuples in a tuple buffer to a row-wise layout.
  * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
@@ -66,15 +65,6 @@ class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLa
      * @return offset in the tuple buffer.
      */
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
-
-    /**
-     * This method binds a tuple buffer to this specific memory layout.
-     * This enables to access the underling data very efficiently, buf requires to fix the memory layout at compilation time.
-     * If this is not practical consider to use the DynamicTupleBuffer.
-     * @param tupleBuffer for that we want to bind the layout
-     * @return shared_ptr to RowLayoutTupleBuffer
-     */
-    std::shared_ptr<RowLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
 
   private:
     std::vector<uint64_t> fieldOffSets;

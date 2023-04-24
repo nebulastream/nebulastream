@@ -34,7 +34,6 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -804,7 +803,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::INTERVAL_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
@@ -851,7 +850,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::INGESTION_RATE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 11;
@@ -897,7 +896,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 1;
@@ -943,7 +942,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
@@ -991,7 +990,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->setGatheringInterval(std::chrono::milliseconds{1000});
@@ -1389,46 +1388,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                  || !strcmp(content->event_type, "purchase")));
 }
 
-TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
-    // Full pass: 52 tuples in first buffer, 48 in second
-    // expectedNumberOfBuffers in c-tor, no looping
-    uint64_t expectedNumberOfTuples = 100;
-    uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(this->path_to_file);
-    sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setGatheringInterval(this->gatheringInterval);
-    CSVSourceProxy csvDataSource(this->schema,
-                                 this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(),
-                                 sourceConfig,
-                                 this->operatorId,
-                                 this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_FALSE(csvDataSource.loopOnFile);
-    auto buf = this->GetEmptyBuffer();
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
-        Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
-        csvDataSource.fillBuffer(buffer);
-        EXPECT_NE(buf->getNumberOfTuples(), 0u);
-        EXPECT_TRUE(buf.has_value());
-        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
-            auto tuple = buf->getBuffer<ysbRecord>();
-            EXPECT_STREQ(tuple->ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
-                         || !strcmp(tuple->event_type, "purchase")));
-        }
-    }
-    EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
-}
-
 TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     // Full pass: 52 tuples in first buffer, 48 in second
     // expectedNumberOfBuffers in c-tor, no looping
@@ -1447,7 +1406,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1464,23 +1422,20 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
         }
     }
     EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
 
-TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
-    // Full pass: 52 tuples in a buffer, 2*52 = 104 in total
-    // file is 52 + 48 but it loops, so 1st: 52, 2nd: also 52
-    // expectedNumberOfBuffers set 0 in c-tor, looping
-    uint64_t expectedNumberOfTuples = 104;
+TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
+    // Full pass: 52 tuples in first buffer, 48 in second
+    // expectedNumberOfBuffers in c-tor, no looping
+    uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(this->path_to_file);
-    sourceConfig->setNumberOfBuffersToProduce(0);
+    sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setGatheringInterval(this->gatheringInterval);
-
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1489,16 +1444,22 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {
+    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(buffer);
+        EXPECT_NE(buf->getNumberOfTuples(), 0u);
+        EXPECT_TRUE(buf.has_value());
+        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
+            auto tuple = buf->getBuffer<ysbRecord>();
+            EXPECT_STREQ(tuple->ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
+                         || !strcmp(tuple->event_type, "purchase")));
+        }
     }
-    EXPECT_FALSE(csvDataSource.fileEnded);
-    EXPECT_TRUE(csvDataSource.loopOnFile);
+    EXPECT_TRUE(csvDataSource.fileEnded);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }

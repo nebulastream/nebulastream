@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <future>
 
 namespace NES::Nautilus::Backends {
@@ -24,12 +25,13 @@ namespace NES::Runtime::Execution {
 class PhysicalOperatorPipeline;
 
 /**
- * @brief A compiled executable pipeline stage uses nautilus to compile a pipeline to a code snippit.
+ * @brief A compiled executable pipeline stage uses nautilus to compile a pipeline to a code snippet.
  */
 class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
   public:
-    CompiledExecutablePipelineStage(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                    std::string compilationBackend);
+    CompiledExecutablePipelineStage(const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
+                                    const std::string& compilationBackend,
+                                    const Nautilus::CompilationOptions& options);
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     ExecutionResult execute(TupleBuffer& inputTupleBuffer,
                             PipelineExecutionContext& pipelineExecutionContext,
@@ -38,6 +40,7 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
   private:
     std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
     std::string compilationBackend;
+    const Nautilus::CompilationOptions options;
     std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
 };
 

@@ -200,8 +200,6 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    // NES_DEBUG(aggregates[sliceIndex]);
-    // ASSERT_EQ(buffers_count, buffers_managed);
     ASSERT_EQ(aggregates[sliceIndex], 2);
 }
 
@@ -248,7 +246,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
         0);
     windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
@@ -285,7 +282,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     aggregates[sliceIndex].addToCount();
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
-    //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0, 2, ctx);
@@ -300,7 +296,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     ASSERT_EQ(aggregates[sliceIndex].getSum(), 5UL);
     ASSERT_EQ(aggregates[sliceIndex].getCount(), 1L);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-
     auto windowAction = std::dynamic_pointer_cast<
         Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, AVGPartialType<uint64_t>, AVGResultType>>(
         windowHandler->getWindowAction());
@@ -318,7 +313,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     ASSERT_EQ(tuples[0], 0UL);
     ASSERT_EQ(tuples[1], 10UL);
     ASSERT_EQ(tuples[2], 10UL);
-    //    ASSERT_EQ(tuples[3], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
@@ -344,12 +338,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
         0);
     windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
                                   ->addField("key", DataTypeFactory::createFixedChar(32))
-                                  ->addField("value", BasicType::UINT32);
+                                  ->addField("value", BasicType::UINT64);
 
     auto windowHandler = createWindowHandler<NES::ExecutableTypes::Array<char, 32>,
                                              uint64_t,
@@ -378,7 +371,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
-    //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0, 2, ctx);
@@ -442,7 +434,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
         0);
     windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
@@ -474,7 +465,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
-    //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0, 2, ctx);
@@ -529,8 +519,6 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
         triggerAction,
         0);
     windowDef->setNumberOfInputEdges(1);
-
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
@@ -560,7 +548,6 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
-    //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0, 1, ctx);
@@ -615,8 +602,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
         0);
     windowDef->setNumberOfInputEdges(1);
     auto exec = ExecutableSumAggregation<int64_t>::create();
-
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
@@ -649,7 +634,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
-    //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0, 2, ctx);
@@ -706,8 +690,6 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
         0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     windowDef->setNumberOfInputEdges(1);
-
-    auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
@@ -795,7 +777,6 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
         triggerAction,
         0);
     windowDef->setNumberOfInputEdges(1);
-
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", BasicType::UINT64))
                                   ->addField(createField("end", BasicType::UINT64))
@@ -826,7 +807,6 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     aggregates[sliceIndex]++;
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
-    //    store->setLastWatermark(7);
 
     ts = 14;
     windowHandler->updateMaxTs(ts, 0, 2, ctx);

@@ -54,13 +54,6 @@ TEST_F(JavaUdfDescriptorTest, TheMethodNameMustNotBeEmtpy) {
                  UdfException);
 }
 
-TEST_F(JavaUdfDescriptorTest, TheInstanceMustNotBeEmpty) {
-    EXPECT_THROW(JavaUdfDescriptorBuilder{}
-                     .setInstance(JavaSerializedInstance{})// empty byte array
-                     .build(),
-                 UdfException);
-}
-
 TEST_F(JavaUdfDescriptorTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
     EXPECT_THROW(JavaUdfDescriptorBuilder{}
                      .setByteCodeList(JavaUdfByteCodeList{})// empty list

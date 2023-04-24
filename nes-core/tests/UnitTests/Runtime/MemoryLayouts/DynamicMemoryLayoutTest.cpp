@@ -17,22 +17,15 @@
 #include <Common/ExecutableType/Array.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <cstdlib>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <vector>
-
+#include <Util/magicenum/magic_enum.hpp>
 namespace NES::Runtime::MemoryLayouts {
+
 class DynamicMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
+    // We are not creating the dynamic buffer here, since we want to use different schemas for each test.
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
@@ -41,6 +34,44 @@ class DynamicMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::T
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
+    }
+};
+
+class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandling<testing::Test>,
+                                             public testing::WithParamInterface<Schema::MemoryLayoutType> {
+  public:
+    BufferManagerPtr bufferManager;
+    SchemaPtr schema;
+    std::unique_ptr<DynamicTupleBuffer> dynamicBuffer;
+    Schema::MemoryLayoutType memoryLayoutType = GetParam();
+
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup DynamicMemoryLayoutTest test class.");
+    }
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        bufferManager = std::make_shared<BufferManager>(4096, 10);
+
+        schema = Schema::create()
+                     ->addField("t1", BasicType::UINT16)
+                     ->addField("t2", BasicType::BOOLEAN)
+                     ->addField("t3", BasicType::FLOAT64);
+        if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+            RowLayoutPtr layout;
+            ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
+            ASSERT_NE(layout, nullptr);
+
+            auto tupleBuffer = bufferManager->getBufferBlocking();
+            dynamicBuffer = std::make_unique<DynamicTupleBuffer>(layout, tupleBuffer);
+        } else {
+            ColumnLayoutPtr layout;
+            ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
+            ASSERT_NE(layout, nullptr);
+
+            auto tupleBuffer = bufferManager->getBufferBlocking();
+            dynamicBuffer = std::make_unique<DynamicTupleBuffer>(layout, tupleBuffer);
+        }
     }
 };
 
@@ -70,78 +101,20 @@ TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {
     ASSERT_ANY_THROW(buffer[0][0].read<uint8_t*>());
 }
 
-TEST_F(DynamicMemoryLayoutTest, readWriteColumnarDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()
-                           ->addField("t1", BasicType::UINT16)
-                           ->addField("t2", BasicType::BOOLEAN)
-                           ->addField("t3", BasicType::FLOAT64);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
-
+TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnarDynamicBufferTest) {
     for (int i = 0; i < 10; i++) {
-        buffer[i][0].write<uint16_t>(i);
-        buffer[i]["t2"].write<bool>(true);
-        buffer[i][2].write<double>(i * 2.0);
-    }
-
-    for (int i = 0; i < 10; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint16_t>(), i);
-        ASSERT_EQ(buffer[i]["t2"].read<bool>(), true);
-        ASSERT_EQ(buffer[i]["t3"].read<double>(), i * 2.0);
+        auto testTuple = std::make_tuple((uint16_t) i, true, i * 2.0);
+        dynamicBuffer->pushRecordToBuffer(testTuple);
+        ASSERT_EQ((dynamicBuffer->readRecordFromBuffer<uint16_t, bool, double>(i)), testTuple);
     }
 }
 
-TEST_F(DynamicMemoryLayoutTest, readWriteRowDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()
-                           ->addField("t1", BasicType::UINT16)
-                           ->addField("t2", BasicType::BOOLEAN)
-                           ->addField("t3", BasicType::FLOAT64);
-
-    RowLayoutPtr layout;
-    ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(layout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(layout, tupleBuffer);
-
+TEST_P(DynamicMemoryLayoutTestParameterized, iterateDynamicBufferTest) {
     for (int i = 0; i < 10; i++) {
-        buffer[i][0].write<uint16_t>(i);
-        buffer[i]["t2"].write<bool>(true);
-        buffer[i][2].write<double>(i * 2.0);
+        dynamicBuffer->pushRecordToBuffer(std::make_tuple((uint16_t) 42, true, 42 * 2.0));
     }
 
-    for (int i = 0; i < 10; i++) {
-        ASSERT_EQ(buffer[i][0].read<uint16_t>(), i);
-        ASSERT_EQ(buffer[i]["t2"].read<bool>(), true);
-        ASSERT_EQ(buffer[i]["t3"].read<double>(), i * 2.0);
-    }
-}
-
-TEST_F(DynamicMemoryLayoutTest, iterateDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()
-                           ->addField("t1", BasicType::UINT16)
-                           ->addField("t2", BasicType::BOOLEAN)
-                           ->addField("t3", BasicType::FLOAT64);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
-
-    for (int i = 0; i < 10; i++) {
-        buffer[i][0].write<uint16_t>(42);
-        buffer[i]["t2"].write<bool>(true);
-        buffer[i][2].write<double>(42 * 2.0);
-    }
-
-    for (auto tuple : buffer) {
+    for (auto tuple : *dynamicBuffer) {
         ASSERT_EQ(tuple[0].read<uint16_t>(), 42);
         ASSERT_EQ(tuple["t2"].read<bool>(), true);
         ASSERT_EQ(tuple["t3"].read<double>(), 42 * 2.0);
@@ -219,27 +192,9 @@ TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
     }
 }
 
-TEST_F(DynamicMemoryLayoutTest, toStringTestRowLayout) {
-    const uint32_t NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    const auto schema = Schema::create()
-                            ->addField("t1", BasicType::UINT16)
-                            ->addField("t2", BasicType::BOOLEAN)
-                            ->addField("t3", BasicType::FLOAT64);
-
-    RowLayoutPtr layout;
-    ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(layout, nullptr);
-    schema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(layout, tupleBuffer);
-
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    for (uint32_t i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint16_t>(i);
-        buffer[i]["t2"].write<bool>(true);
-        buffer[i][2].write<double>(i * 2.0);
+TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout) {
+    for (uint32_t i = 0; i < 10; i++) {
+        dynamicBuffer->pushRecordToBuffer(std::tuple<uint16_t, bool, double>{i, true, i * 2.0});
     }
 
     std::string expectedOutput = "+----------------------------------------------------+\n"
@@ -257,48 +212,13 @@ TEST_F(DynamicMemoryLayoutTest, toStringTestRowLayout) {
                                  "|9|1|18.000000|\n"
                                  "+----------------------------------------------------+";
 
-    EXPECT_EQ(buffer.toString(schema), expectedOutput);
+    EXPECT_EQ(dynamicBuffer->toString(schema), expectedOutput);
 }
 
-TEST_F(DynamicMemoryLayoutTest, toStringTestColumnLayout) {
-    const uint32_t NUMBER_OF_TUPLES_IN_BUFFER = 10;
-    const auto schema = Schema::create()
-                            ->addField("t1", BasicType::UINT16)
-                            ->addField("t2", BasicType::BOOLEAN)
-                            ->addField("t3", BasicType::FLOAT64);
-
-    ColumnLayoutPtr layout;
-    ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(layout, nullptr);
-    schema->setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(layout, tupleBuffer);
-
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    for (uint32_t i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint16_t>(i);
-        buffer[i]["t2"].write<bool>(true);
-        buffer[i][2].write<double>(i * 2.0);
-    }
-
-    std::string expectedOutput = "+----------------------------------------------------+\n"
-                                 "|t1:UINT16|t2:BOOLEAN|t3:FLOAT64|\n"
-                                 "+----------------------------------------------------+\n"
-                                 "|0|1|0.000000|\n"
-                                 "|1|1|2.000000|\n"
-                                 "|2|1|4.000000|\n"
-                                 "|3|1|6.000000|\n"
-                                 "|4|1|8.000000|\n"
-                                 "|5|1|10.000000|\n"
-                                 "|6|1|12.000000|\n"
-                                 "|7|1|14.000000|\n"
-                                 "|8|1|16.000000|\n"
-                                 "|9|1|18.000000|\n"
-                                 "+----------------------------------------------------+";
-
-    EXPECT_EQ(buffer.toString(schema), expectedOutput);
-}
-
+INSTANTIATE_TEST_CASE_P(TestInputs,
+                        DynamicMemoryLayoutTestParameterized,
+                        ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
+                        [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info) {
+                            return std::string(magic_enum::enum_name(info.param));
+                        });
 }// namespace NES::Runtime::MemoryLayouts

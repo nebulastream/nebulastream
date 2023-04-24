@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalSourceConfig.hpp>
 #include <NesBaseTest.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>

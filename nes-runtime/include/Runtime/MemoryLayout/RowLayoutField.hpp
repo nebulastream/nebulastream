@@ -16,12 +16,12 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-
 /**
  * @brief The RowLayoutField enables assesses to a specific field in a row layout.
  * It overrides the operator[] for a more user friendly access of tuples for a predefined field.
@@ -32,7 +32,6 @@ namespace NES::Runtime::MemoryLayouts {
  */
 template<class T, bool boundaryChecks = true>
 class RowLayoutField {
-
   public:
     /**
      *  Factory to create a RowLayoutField for a specific memory layout and a specific tuple buffer.

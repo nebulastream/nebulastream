@@ -15,8 +15,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::MemoryLayouts {
 
@@ -30,11 +30,6 @@ RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(buffe
 
 std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize) {
     return std::make_shared<RowLayout>(schema, bufferSize);
-}
-
-std::shared_ptr<RowLayoutTupleBuffer> RowLayout::bind(const TupleBuffer& tupleBuffer) {
-    uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
-    return std::make_shared<RowLayoutTupleBuffer>(tupleBuffer, capacity, this->shared_from_this());
 }
 
 const std::vector<FIELD_SIZE>& RowLayout::getFieldOffSets() const { return fieldOffSets; }

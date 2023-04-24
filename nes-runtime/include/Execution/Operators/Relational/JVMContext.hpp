@@ -51,18 +51,60 @@ class JVMContext {
      */
     void destroyJVM();
 
+    /**
+     * @brief Returns true if the JVM has been created.
+     */
+    bool isJVMCreated() const { return created; }
+
   private:
-    JVMContext(){};
+    /**
+     * @brief Default constructor for JVMContext.
+     */
+    JVMContext() = default;
+
+    /**
+     * @brief Destructor for JVMContext.
+     */
     ~JVMContext();
+
+    /**
+     * @brief Copy constructor for JVMContext, which is deleted.
+     */
     JVMContext(JVMContext const&) = delete;
+
+    /**
+     * @brief Copy assignment operator for JVMContext, which is deleted.
+     */
     void operator=(JVMContext const&) = delete;
+
+    /**
+     * @brief Move constructor for JVMContext, which is deleted.
+     */
     JVMContext(JVMContext const&&) = delete;
+
+    /**
+     * @brief Move assignment operator for JVMContext, which is deleted.
+     */
     void operator=(JVMContext const&&) = delete;
 
+    /**
+     * @brief Boolean flag indicating whether Jvm is attached.
+     */
     bool attached = false;
+
+    /**
+     * @brief Boolean flag indicating whether Jvm is created.
+     */
     bool created = false;
 
+    /**
+     * @brief Mutex for thread safety.
+     */
     std::mutex mutex;
+
+    /**
+     * @brief Pointer to JavaVM instance.
+     */
     JavaVM* jvm;
 };
 

@@ -83,7 +83,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     input.seekg(0, input.beg);
 
     numTuplesPerBuffer = bufferSize / tupleSizeInBytes;
-    numBuffersToProcess = numTuples / numTuplesPerBuffer + (numTuples % numTuplesPerBuffer != 0);
+    numberOfBuffersToProduce = numTuples / numTuplesPerBuffer + (numTuples % numTuplesPerBuffer != 0);
 
     // setup file parser
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -100,11 +100,11 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
         operatorId,
         eagerLoading,
         numTuples,
-        numBuffersToProcess,
+        numberOfBuffersToProduce,
         numTuplesPerBuffer);
 
     if (eagerLoading) {
-        this->numSourceLocalBuffers = this->numBuffersToProcess;
+        this->numSourceLocalBuffers = this->numberOfBuffersToProduce;
         preloadBuffers();
     }
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
@@ -159,7 +159,7 @@ void StaticDataSource::open() {
     // but we might want to wait for the preloading to finish, for benchmarking reasons:
     if (eagerLoading && this->bufferManager != nullptr// <- has previously been opened
         && onlySendDataWhenLoadingIsFinished) {
-        while (filledBuffers.size() < numBuffersToProcess) {
+        while (filledBuffers.size() < numberOfBuffersToProduce) {
             // this will stall the start of runningRouting()
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -171,7 +171,7 @@ void StaticDataSource::preloadBuffers() {
     DataSource::open();
 
     // preload buffers:
-    for (size_t i = 0; i < numBuffersToProcess; ++i) {
+    for (size_t i = 0; i < numberOfBuffersToProduce; ++i) {
         auto dynamicBuffer = DataSource::allocateBuffer();
         fillBuffer(dynamicBuffer);
         filledBuffers.push_back(dynamicBuffer.getBuffer());
@@ -180,7 +180,7 @@ void StaticDataSource::preloadBuffers() {
 
 std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
     NES_DEBUG2("StaticDataSource::receiveData called on {}", operatorId);
-    if (numBuffersToProcess == numBuffersEmitted || numTuples == numTuplesEmitted) {
+    if (numberOfBuffersToProduce == numBuffersEmitted || numTuples == numTuplesEmitted) {
         NES_DEBUG2("StaticDataSource::receiveData: All data emitted, return nullopt");
         return std::nullopt;
     }
@@ -241,7 +241,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
 std::string StaticDataSource::toString() const {
     std::stringstream ss;
     ss << "STATIC_DATA_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << pathTableFile << " numTuples=" << this->numTuples
-       << " numBuff=" << this->numBuffersToProcess << ")";
+       << " numBuff=" << this->numberOfBuffersToProduce << ")";
     return ss.str();
 }
 

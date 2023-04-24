@@ -67,6 +67,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     workerConfig->coordinatorPort = port;
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
     auto windowSource = PhysicalSource::create("exdra", "test_stream", sourceConfig);
     workerConfig->physicalSources.add(windowSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -1168,7 +1169,6 @@ TEST_F(WindowDeploymentTest,
         }
     };
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
-
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -1662,14 +1662,14 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     struct Car {
         uint64_t key;
-        uint64_t value1;
+        double value1;
         uint64_t value2;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
                          ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value1", DataTypeFactory::createUInt64())
+                         ->addField("value1", DataTypeFactory::createDouble())
                          ->addField("value2", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
 
@@ -2021,14 +2021,14 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
     struct Car {
         uint64_t key;
-        uint64_t value;
+        double value;
         uint64_t value2;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
                          ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("value", DataTypeFactory::createDouble())
                          ->addField("value2", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
 

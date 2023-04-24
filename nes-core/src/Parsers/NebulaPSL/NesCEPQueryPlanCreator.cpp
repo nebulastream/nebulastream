@@ -400,7 +400,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
 
     if (operaterName == "OR") {
         NES_DEBUG2("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: addUnionOperator")
-        leftQueryPlan = QueryPlanBuilder::addUnionOperator(leftQueryPlan, rightQueryPlan);
+        leftQueryPlan = QueryPlanBuilder::addUnion(leftQueryPlan, rightQueryPlan);
     } else {
         // Seq and And require a window, so first we create and check the window operator
         auto timeMeasurements = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
@@ -423,12 +423,12 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
             auto leftKeyFieldAccess = onLeftKey.getExpressionNode()->as<FieldAccessExpressionNode>();
             auto rightKeyFieldAccess = onRightKey.getExpressionNode()->as<FieldAccessExpressionNode>();
 
-            leftQueryPlan = QueryPlanBuilder::addJoinOperator(leftQueryPlan,
-                                                              rightQueryPlan,
-                                                              onLeftKey,
-                                                              onRightKey,
-                                                              windowType,
-                                                              Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
+            leftQueryPlan = QueryPlanBuilder::addJoin(leftQueryPlan,
+                                                      rightQueryPlan,
+                                                      onLeftKey,
+                                                      onRightKey,
+                                                      windowType,
+                                                      Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
 
             if (operaterName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time
