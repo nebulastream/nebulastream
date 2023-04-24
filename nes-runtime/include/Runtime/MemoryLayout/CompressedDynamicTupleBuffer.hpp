@@ -65,6 +65,7 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
 
     std::vector<uint64_t> getOffsets(const MemoryLayoutPtr& memoryLayout);
     void clearBuffer();
+    void clearBuffer(size_t start);
     void compressHorizontal(CompressionAlgorithm targetCa);
     void compressVertical(CompressionAlgorithm targetCa);
     void decompressHorizontal();
