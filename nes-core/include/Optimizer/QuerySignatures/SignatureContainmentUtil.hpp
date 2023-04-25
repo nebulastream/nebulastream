@@ -192,12 +192,12 @@ class SignatureContainmentUtil {
 
     /**
      * @brief checks if a smaller attribute list is contained in a larger attribute
-     * @param containerCandidateSignature signature of the container candidate
-     * @param containeeCandidateSignature signature of the containee candidate
+     * @param leftSignature signature of the container candidate
+     * @param rightSignature signature of the containee candidate
      * @return true if order is retained, false otherwise
      */
-    bool checkAttributeOrder(const QuerySignaturePtr& containerCandidateSignature,
-                             const QuerySignaturePtr& containeeCandidateSignature) const;
+    bool checkAttributeOrder(const QuerySignaturePtr& leftSignature,
+                             const QuerySignaturePtr& rightSignature) const;
 
     /**
      * @brief Reset z3 solver
