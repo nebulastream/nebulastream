@@ -138,7 +138,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
     std::set<size_t> sameTupleIndices;
     for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
         bool idxFoundInBuffer2 = false;
-        for (auto idxBuffer2 = 0UL; buffer2.getNumberOfTuples(); ++idxBuffer2) {
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2) {
             if (sameTupleIndices.contains(idxBuffer2)) {
                 continue;
             }

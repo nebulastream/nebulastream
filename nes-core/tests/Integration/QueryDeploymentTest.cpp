@@ -1689,7 +1689,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
  * Test deploying join query with source on two different worker node using top down strategy.
  */
 //TODO: this test will be enabled once we have the renaming function using as
-//TODO: prevent self join
+//TODO: prevent self join #3686
 TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 
     struct Window {
