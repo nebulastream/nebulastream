@@ -12,4 +12,27 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
+
+namespace NES::Benchmark::DataGeneration {
+
+SchemaPtr PersonGenerator::getSchema() {
+    return Schema::create()
+        ->addField(createField("id", BasicType::UINT64))
+        ->addField(createField("value", BasicType::UINT64))
+        ->addField(createField("payload", BasicType::UINT64))
+        ->addField(createField("timestamp", BasicType::UINT64));
+}
+
+std::string PersonGenerator::getName() { return "NEXMarkPerson"; }
+
+std::string PersonGenerator::toString() {
+    std::ostringstream oss;
+
+    oss << getName();
+
+    return oss.str();
+}
+
+} // namespace NES::Benchmark::DataGeneration

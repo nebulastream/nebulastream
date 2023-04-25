@@ -12,4 +12,33 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
+
+namespace NES::Benchmark::DataGeneration {
+
+SchemaPtr OpenAuctionGenerator::getSchema() {
+    return Schema::create()
+        ->addField(createField("id", BasicType::UINT64))
+        ->addField(createField("seller", BasicType::UINT64))
+        ->addField(createField("category", BasicType::UINT16))
+        ->addField(createField("quantity", BasicType::UINT8))
+        ->addField(createField("type", BasicType::TEXT))
+        ->addField(createField("startTime", BasicType::UINT64))
+        ->addField(createField("endTime", BasicType::UINT64))
+        ->addField(createField("payload", BasicType::UINT64))
+        ->addField(createField("payload", BasicType::UINT64))
+        ->addField(createField("timestamp", BasicType::UINT64));
+}
+
+std::string OpenAuctionGenerator::getName() { return "NEXMarkOpenAuction"; }
+
+std::string OpenAuctionGenerator::toString() {
+    std::ostringstream oss;
+
+    oss << getName();
+
+    return oss.str();
+}
+
+} // namespace NES::Benchmark::DataGeneration
