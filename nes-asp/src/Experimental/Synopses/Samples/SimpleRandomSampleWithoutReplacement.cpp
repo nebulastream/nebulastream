@@ -31,9 +31,13 @@ namespace NES::ASP{
 
 SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(
     Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
-                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize) {}
+                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize) {
+    SimpleRandomSampleWithoutReplacement::initialize();
+}
 
 void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record) {
+    NES_ASSERT(bufferManager != nullptr, "BufferManager is null!");
+
     // Here we just store all records and then perform the sampling in getApproximate()
     if (storedRecords.empty()) {
         storedRecords.emplace_back(bufferManager->getBufferBlocking());
@@ -96,7 +100,7 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& buffer : sample) {
-        NES_DEBUG2("buffer in SampleRandomWithoutReplacement::getApproximate: {}", NES::Util::printTupleBufferAsCSV(buffer, inputSchema));
+        NES_TRACE2("buffer in SampleRandomWithoutReplacement::getApproximate: {}", NES::Util::printTupleBufferAsCSV(buffer, inputSchema));
         auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
         auto numberOfRecords = buffer.getNumberOfTuples();
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {

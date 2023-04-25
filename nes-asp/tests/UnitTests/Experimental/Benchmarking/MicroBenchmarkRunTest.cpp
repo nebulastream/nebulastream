@@ -34,53 +34,48 @@ namespace NES::ASP::Benchmarking {
 
         auto inputSchema = inputFileSchemas["some_input_file.csv"];
         auto inputSchemaStr = inputSchema->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "aggregation")->toString();
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "value")->toString();
 
         std::stringstream expectedToStringStream;
         expectedToStringStream << std::endl << " - synopsis arguments: "
-                                   << "type (SRSWR) "
-                                   << "width (10) height (1) windowSize (1)"
+                                   << "type (SRSWoR) width (10) height (1) windowSize (1)"
                                << std::endl << " - aggregation: "
-                                   << " type (" << magic_enum::enum_name(Parsing::AGGREGATION_TYPE::MIN) << ") "
+                                   << "type (MIN) "
                                    << "fieldNameAggregation (value) "
                                    << "fieldNameAccuracy (aggregation) "
                                    << "timeStampFieldName (ts) "
                                    << "inputSchema (" << inputSchemaStr << ") "
                                    << "outputSchema (" << outputSchemaStr << ")"
-                               << std::endl << " - bufferSize :" << 1024
+                               << std::endl << " - bufferSize : " << 1024
                                << std::endl << " - numberOfBuffers: " << 1234
                                << std::endl << " - windowSize: " << 11
-                               << std::endl << " - inputFile (some_input_file.csv) "
+                               << std::endl << " - inputFile: data/some_input_file.csv"
                                << std::endl << " - reps: " << 234;
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
         EXPECT_EQ(parsedMicroBenchmarks[0].getHeaderAsCsv(), "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize,"
                                                              "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
                                                              ",aggregation_inputSchema,aggregation_outputSchema"
-                                                             ",bufferSize,numberOfBuffers,windowSize,inputFile,reps,"
-                                                             "");
-        EXPECT_EQ(parsedMicroBenchmarks[0].getRowsAsCsv(), "SRSWR,10,1,1,"
-                                                           "MIN,value,aggregation,ts,some_input_file.csv," +
-                                                           inputSchemaStr + "," + outputSchemaStr + ",1024,1234,11,234");
+                                                             ",bufferSize,numberOfBuffers,windowSize,inputFile,reps");
+        EXPECT_EQ(parsedMicroBenchmarks[0].getRowsAsCsv(), "");
         EXPECT_EQ(parsedMicroBenchmarks[0].toString(), expectedToStringStream.str());
     }
 
     /**
      * @brief This does not test the correctness of run, as it would not be possible to know on what system it is run and
-     * therefore, the values for the throughput and accuracy. It just checkes that run() does not throw an error
+     * therefore, the values for the throughput and accuracy. It just checks that run() does not throw an error
      */
     TEST_F(MicroBenchmarkRunTest, testParseFromYAMLAndRun) {
         auto yamlFile = std::filesystem::path(TEST_CONFIGS_DIRECTORY) / "some_other_example.yaml";
-        auto data = std::filesystem::path(TEST_CONFIGS_DIRECTORY) / "../../../nes-asp" / "data";
+        auto data = std::filesystem::path(TEST_CONFIGS_DIRECTORY) / "../../../../nes-asp" / "data";
         auto parsedMicroBenchmarks = MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFile, data);
 
         auto inputSchema = inputFileSchemas["some_input_file.csv"];
-        auto inputSchemaStr = inputSchema->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "aggregation")->toString();
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "value")->toString();
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
 
-        parsedMicroBenchmarks[0].run();
+        EXPECT_NO_THROW(parsedMicroBenchmarks[0].run());
     }
 
 }
