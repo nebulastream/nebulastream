@@ -196,6 +196,8 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                     && checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                     NES_TRACE2("Left window contained.");
                     containmentRelationship = ContainmentType::RIGHT_SIG_CONTAINED;
+                    // checks if the number of aggregates for the left signature is larger than the number of aggregates for the right
+                    // signature
                 } else {
                     containmentRelationship = ContainmentType::NO_CONTAINMENT;
                 }
