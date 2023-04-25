@@ -19,14 +19,16 @@ limitations under the License.
 #include "Runtime/BufferManager.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
 #include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
-#include "Runtime/MemoryLayout/MemoryLayout.hpp"
 #include "Runtime/MemoryLayout/RowLayout.hpp"
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <lz4.h>
-#include <snappy.h>
 #include <vector>
+
+// ======================================================================
+// NOTE: tests work when executed individually
+// TODO: fix bug when executing all tests at once
+// ======================================================================
 
 namespace NES::Runtime::MemoryLayouts {
 class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
@@ -40,9 +42,71 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
+
+  protected:
+    void fillBufferSingleColumn(CompressedDynamicTupleBuffer& buffer);
+    void fillBufferMultiColumn(CompressedDynamicTupleBuffer& buffer);
+    void verifyCompressed(DynamicTupleBuffer& orig, DynamicTupleBuffer& compressed);
+    void verifyDecompressed(DynamicTupleBuffer& orig, DynamicTupleBuffer& decompressed);
 };
 
-// TODO: tests always have the same layout → refactor such that we simply have to set the compression method in the test (setup and validation somewhere else)
+void CompressionTest::fillBufferSingleColumn(CompressedDynamicTupleBuffer& buffer) {
+    const int numTuples = 10;
+    buffer.setNumberOfTuples(numTuples);
+    const int character = 70;// == 'F'
+    int i = 0;
+    for (; i < 3; i++) {
+        buffer[i][0].write<uint8_t>(character);
+    }
+    for (; i < 6; i++) {
+        buffer[i][0].write<uint8_t>(0);
+    }
+    for (; i < numTuples; i++) {
+        buffer[i][0].write<uint8_t>(character + 2);
+    }
+}
+void CompressionTest::fillBufferMultiColumn(CompressedDynamicTupleBuffer& buffer) {
+    const int numTuples = 10;
+    buffer.setNumberOfTuples(numTuples);
+    const int character = 65;// == 'A'
+    // first column: 6A2B2A
+    for (int i = 0; i < numTuples; i++) {
+        buffer[i][0].write<uint8_t>(character);
+    }
+    buffer[6][0].write<uint8_t>(character + 1);
+    buffer[7][0].write<uint8_t>(character + 1);
+    // second column: 3B4'0'3C
+    for (int i = 0; i < 3; i++) {
+        buffer[i][1].write<uint8_t>(character + 1);
+    }
+    for (int i = 3; i < 7; i++) {
+        buffer[i][1].write<uint8_t>(0);
+    }
+    for (int i = 7; i < numTuples; i++) {
+        buffer[i][1].write<uint8_t>(character + 2);
+    }
+    // third column: 10D
+    for (int i = 0; i < numTuples; i++) {
+        buffer[i][2].write<uint8_t>(character + 3);
+    }
+}
+
+void CompressionTest::verifyCompressed(DynamicTupleBuffer& orig, DynamicTupleBuffer& compressed) {
+    const char* contentOrig = reinterpret_cast<const char*>(orig.getBuffer().getBuffer());
+    const char* contentCompressed = reinterpret_cast<const char*>(compressed.getBuffer().getBuffer());
+    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
+    ASSERT_FALSE(contentIsEqual);
+}
+void CompressionTest::verifyDecompressed(DynamicTupleBuffer& orig, DynamicTupleBuffer& decompressed) {
+    auto contentOrig = reinterpret_cast<const char*>(orig.getBuffer().getBuffer());
+    auto contentCompressed = reinterpret_cast<const char*>(decompressed.getBuffer().getBuffer());
+    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
+    ASSERT_TRUE(contentIsEqual);
+    for (size_t i = 0; i < orig.getNumberOfTuples(); i++) {
+        ASSERT_EQ(orig[i][0].read<uint8_t>(), decompressed[i][0].read<uint8_t>());
+    }
+}
+
 // ====================================================================================================
 // LZ4
 // ====================================================================================================
@@ -50,251 +114,84 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
 // Horizontal
 // ===================================
 TEST_F(CompressionTest, lz4RowLayoutHorizontaltSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, lz4RowLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
 
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, lz4ColumnLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, lz4ColumnLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 4B2'0'4C
-    for (int i = 0; i < 4; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
-    }
-    for (int i = 4; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ===================================
 // Vertical
 // ===================================
 TEST_F(CompressionTest, lz4RowLayoutVertical) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     try {
@@ -308,117 +205,38 @@ TEST_F(CompressionTest, lz4RowLayoutVertical) {
 }
 
 TEST_F(CompressionTest, lz4ColumnLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-    auto offsets = columnLayout->getColumnOffsets();
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, lz4ColumnLayoutVerticalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-    auto offsets = columnLayout->getColumnOffsets();
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 4B2'0'4C
-    for (int i = 0; i < 4; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
-    }
-    for (int i = 4; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::LZ4);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ====================================================================================================
@@ -428,249 +246,83 @@ TEST_F(CompressionTest, lz4ColumnLayoutVerticalMultiColumnUint8) {
 // Horizontal
 // ===================================
 TEST_F(CompressionTest, snappyRowLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, snappyRowLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, snappyColumnLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-    auto offsets = columnLayout->getColumnOffsets();
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, snappyColumnLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ===================================
 // Vertical
 // ===================================
 TEST_F(CompressionTest, snappyRowLayoutVertical) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     try {
@@ -684,115 +336,38 @@ TEST_F(CompressionTest, snappyRowLayoutVertical) {
 }
 
 TEST_F(CompressionTest, snappyColumnLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, snappyColumnLayoutVerticalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 4B2'0'4C
-    for (int i = 0; i < 4; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
-    }
-    for (int i = 4; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SNAPPY);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ====================================================================================================
@@ -802,249 +377,83 @@ TEST_F(CompressionTest, snappyColumnLayoutVerticalMultiColumnUint8) {
 // Horizontal
 // ===================================
 TEST_F(CompressionTest, fsstRowLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::FSST);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, fsstRowLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::FSST);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, fsstColumnLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-    auto offsets = columnLayout->getColumnOffsets();
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::FSST, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, fsstColumnLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::FSST, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ===================================
 // Vertical
 // ===================================
 TEST_F(CompressionTest, fsstRowLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     try {
@@ -1058,115 +467,38 @@ TEST_F(CompressionTest, fsstRowLayoutVerticalSingleColumnUint8) {
 }
 
 TEST_F(CompressionTest, fsstColumnLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::FSST);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, fsstColumnLayoutVerticalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 4B2'0'4C
-    for (int i = 0; i < 4; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
-    }
-    for (int i = 4; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::FSST);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ====================================================================================================
@@ -1176,249 +508,83 @@ TEST_F(CompressionTest, fsstColumnLayoutVerticalMultiColumnUint8) {
 // Horizontal
 // ===================================
 TEST_F(CompressionTest, rleRowLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::RLE);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, rleRowLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::RLE);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, rleColumnLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-    auto offsets = columnLayout->getColumnOffsets();
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::RLE, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, rleColumnLayoutHorizontalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 6'0'4C
-    for (int i = 0; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::RLE, CompressionMode::HORIZONTAL);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ===================================
 // Vertical
 // ===================================
 TEST_F(CompressionTest, rleRowLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     try {
@@ -1432,115 +598,38 @@ TEST_F(CompressionTest, rleRowLayoutVerticalSingleColumnUint8) {
 }
 
 TEST_F(CompressionTest, rleColumnLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(0);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::RLE);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 TEST_F(CompressionTest, rleColumnLayoutVerticalMultiColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    const int offset = 65;// == 'A'
-    // first column: 6A2B2A
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(offset);
-    }
-    buffer[6][0].write<uint8_t>(offset + 1);
-    buffer[7][0].write<uint8_t>(offset + 1);
-
-    // second column: 4B2'0'4C
-    for (int i = 0; i < 4; i++) {
-        buffer[i][1].write<uint8_t>(offset + 1);
-    }
-    for (int i = 4; i < 6; i++) {
-        buffer[i][1].write<uint8_t>(0);
-    }
-    for (int i = 6; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][1].write<uint8_t>(offset + 2);
-    }
-
-    // third column: 10D
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][2].write<uint8_t>(offset + 3);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferManager->getBufferSize());
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::RLE);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
-
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (int i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 }// namespace NES::Runtime::MemoryLayouts
