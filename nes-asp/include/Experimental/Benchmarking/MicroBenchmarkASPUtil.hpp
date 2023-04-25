@@ -48,7 +48,7 @@ std::vector<Parsing::SynopsisConfigurationPtr> parseSynopsisConfigurations(const
  * @return Vector of {SynopsisAggregationConfig, input file} objects
  */
 std::vector<std::pair<Parsing::SynopsisAggregationConfig, std::string>>
- parseAggregations(const Yaml::Node& aggregationsNode, const std::filesystem::path& data);
+parseAggregations(const Yaml::Node& aggregationsNode, const std::filesystem::path& data);
 
 /**
  * @brief Parses the window size

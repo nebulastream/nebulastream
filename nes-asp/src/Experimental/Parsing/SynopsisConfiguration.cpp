@@ -45,9 +45,9 @@ std::string SynopsisConfiguration::getHeaderAsCsv() {
 std::string SynopsisConfiguration::getValuesAsCsv() {
     std::stringstream stringStream;
     stringStream << magic_enum::enum_name(type.getValue())
-                 << "," << width
-                 << "," << height
-                 << "," << windowSize;
+                 << "," << width.getValue()
+                 << "," << height.getValue()
+                 << "," << windowSize.getValue();
 
     return stringStream.str();
 }
@@ -55,9 +55,9 @@ std::string SynopsisConfiguration::getValuesAsCsv() {
 std::string SynopsisConfiguration::toString() {
     std::stringstream stringStream;
     stringStream << "type (" << magic_enum::enum_name(type.getValue()) << ") "
-                 << "width (" << width << ") "
-                 << "height (" << height << ") "
-                 << "windowSize (" << windowSize << ")";
+                 << "width (" << width.getValue() << ") "
+                 << "height (" << height.getValue() << ") "
+                 << "windowSize (" << windowSize.getValue() << ")";
 
     return stringStream.str();
 }

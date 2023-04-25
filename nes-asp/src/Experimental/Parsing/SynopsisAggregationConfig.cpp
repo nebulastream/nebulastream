@@ -41,7 +41,7 @@ SynopsisAggregationConfig::SynopsisAggregationConfig(const Aggregation_Type& typ
 
 std::string SynopsisAggregationConfig::toString() {
     std::stringstream stringStream;
-    stringStream << " type (" << magic_enum::enum_name(type) << ") "
+    stringStream << "type (" << magic_enum::enum_name(type) << ") "
                  << "fieldNameAggregation (" << fieldNameAggregation << ") "
                  << "fieldNameAccuracy (" << fieldNameApproximate << ") "
                  << "timeStampFieldName (" << timeStampFieldName << ") "

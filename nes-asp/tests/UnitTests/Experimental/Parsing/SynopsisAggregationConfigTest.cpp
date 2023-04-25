@@ -49,15 +49,14 @@ namespace NES::ASP::Parsing {
 
             auto synopsisConfig = SynopsisAggregationConfig::createAggregationFromYamlNode(aggregationNode, data);
             synopsisAggregationConfig = synopsisConfig.first;
-            inputFile = synopsisConfig.second;
         }
 
         AGGREGATION_TYPE type = AGGREGATION_TYPE::MAX;
-        std::string fieldNameAggregation = "fieldName123";
-        std::string fieldNameApprox = "fieldNameApprox123";
+        std::string fieldNameAggregation = "value";
+        std::string fieldNameApprox = "aggregation";
         std::string inputFile = "some_input_file.csv";
         std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
-        std::string timeStampFieldName = "timeStampFieldName1234123";
+        std::string timeStampFieldName = "ts";
         Parsing::SynopsisAggregationConfig synopsisAggregationConfig;
     };
 
@@ -65,11 +64,6 @@ namespace NES::ASP::Parsing {
         /* Creating values */
         auto numberOfTypes = magic_enum::enum_values<AGGREGATION_TYPE>().size();
         auto type = magic_enum::enum_cast<AGGREGATION_TYPE>(rand() % numberOfTypes).value();
-        auto fieldNameAggregation = "fieldName123";
-        auto fieldNameApprox = "fieldNameApprox123";
-        auto inputFile = "some_input_file.csv";
-        auto data = std::filesystem::path("some_folder") / "test" / "test123";
-        auto timeStampFieldName = "timeStampFieldName1234123";
 
         auto inputSchema = Benchmarking::inputFileSchemas[inputFile];
         auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
@@ -102,66 +96,82 @@ namespace NES::ASP::Parsing {
         auto toString = synopsisAggregationConfig.toString();
 
         EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
-                             "aggregation_timeStampFieldName,aggregation_inputFile,aggregation_inputSchema,"
-                             "aggregation_outputSchema");
-        EXPECT_EQ(valuesCsv, "COUNT,fieldName123,fieldNameApprox123,timeStampFieldName1234123," + (data/inputFile).string() +
-                             "," + inputSchemaStr + "," + outputSchemaStr);
-        EXPECT_EQ(toString, "type (MAX) fieldNameAggregation (fieldName123) fieldNameAccuracy (fieldNameApprox123) "
-                            "timeStampFieldName (timeStampFieldName1234123) inputFile (" + (data/inputFile).string() + ") " +
-                            "inputSchema (" + inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
+                             "aggregation_timeStampFieldName,aggregation_inputSchema,aggregation_outputSchema");
+        EXPECT_EQ(valuesCsv, "MAX,value,aggregation,ts," + inputSchemaStr + "," + outputSchemaStr);
+        EXPECT_EQ(toString, "type (MAX) fieldNameAggregation (value) fieldNameAccuracy (aggregation) "
+                            "timeStampFieldName (ts) inputSchema (" +
+                            inputSchemaStr + ") outputSchema (" + outputSchemaStr + ")");
     }
 
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregationFunction) {
 
         for (auto& type : magic_enum::enum_values<AGGREGATION_TYPE>()) {
+            if (type == AGGREGATION_TYPE::NONE) {
+                // We do not do anything for NONE
+                continue;
+            }
+
             synopsisAggregationConfig.type = type;
             auto aggregationFunction = synopsisAggregationConfig.createAggregationFunction();
 
             switch (synopsisAggregationConfig.type) {
                 case AGGREGATION_TYPE::MIN:
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::MinAggregationFunction>(aggregationFunction), nullptr);
+                    break;
                 case AGGREGATION_TYPE::MAX:
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::MaxAggregationFunction>(aggregationFunction), nullptr);
+                    break;
                 case AGGREGATION_TYPE::SUM:
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregationFunction), nullptr);
+                    break;
                 case AGGREGATION_TYPE::AVERAGE:
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::AvgAggregationFunction>(aggregationFunction), nullptr);
+                    break;
                 case AGGREGATION_TYPE::COUNT:
                     EXPECT_NE(std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction), nullptr);
-                case AGGREGATION_TYPE::NONE: ASSERT_TRUE(true);
+                    break;
+                case AGGREGATION_TYPE::NONE: ASSERT_TRUE(false);
             }
         }
     }
 
     TEST_F(SynopsisAggregationConfigTest, testCreateAggregationValue) {
         for (auto& type : magic_enum::enum_values<AGGREGATION_TYPE>()) {
-            switch (synopsisAggregationConfig.type) {
+            switch (type) {
                 case AGGREGATION_TYPE::MIN: {
                     synopsisAggregationConfig.type = type;
                     auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
+                    break;
                 }
                 case AGGREGATION_TYPE::MAX: {
                     synopsisAggregationConfig.type = type;
                     auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
+                    break;
                 }
                 case AGGREGATION_TYPE::SUM: {
                     synopsisAggregationConfig.type = type;
                     auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
+                    break;
                 }
                 case AGGREGATION_TYPE::AVERAGE: {
                     synopsisAggregationConfig.type = type;
                     auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::AvgAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
+                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::AvgAggregationValue<double>*>(aggregationValue.get()), nullptr);
+                    break;
                 }
                 case AGGREGATION_TYPE::COUNT: {
                     synopsisAggregationConfig.type = type;
                     auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
                     EXPECT_NE(static_cast<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
+                    break;
                 }
-                case AGGREGATION_TYPE::NONE: EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue());
+                case AGGREGATION_TYPE::NONE: {
+                    synopsisAggregationConfig.type = type;
+                    EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue()); break;
+                }
             }
         }
     }

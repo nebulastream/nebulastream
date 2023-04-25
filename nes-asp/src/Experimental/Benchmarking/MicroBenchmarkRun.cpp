@@ -23,7 +23,6 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Synopses/AbstractSynopsis.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
@@ -48,7 +47,6 @@ void MicroBenchmarkRun::run() {
         NES_INFO2("Creating the synopsis...");
         auto synopsis = AbstractSynopsis::create(*synopsesArguments);
         auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferSize, aggregation.inputSchema);
-
         synopsis->setBufferManager(bufferManager);
 
         // Create and compile the pipeline and create a workerContext
@@ -113,7 +111,6 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     auto parsedBufferSizes = ASP::Util::parseBufferSizes(configFile["bufferSize"]);
     auto parsedNumberOfBuffers = ASP::Util::parseNumberOfBuffers(configFile["numberOfBuffers"]);
 
-<<<<<<< HEAD
     for (const auto& synopsisArgument : parsedSynopsisArguments) {
         for (const auto& aggregation : parsedAggregations) {
             for (const auto& windowSize : parsedWindowSizes) {
@@ -179,8 +176,11 @@ const std::string MicroBenchmarkRun::getHeaderAsCsv() const {
                  << ",numberOfBuffers"
                  << ",windowSize"
                  << ",inputFile"
-                 << ",reps"
-                 << "," << microBenchmarkResult[0].getHeaderAsCsv();
+                 << ",reps";
+    if (!microBenchmarkResult.empty()) {
+        stringStream << "," << microBenchmarkResult[0].getHeaderAsCsv();
+    }
+
 
     return stringStream.str();
 }
@@ -206,7 +206,7 @@ const std::string MicroBenchmarkRun::toString() const {
     std::stringstream stringStream;
     stringStream << std::endl << " - synopsis arguments: " << synopsesArguments->toString()
                  << std::endl << " - aggregation: " << aggregation.toString()
-                 << std::endl << " - bufferSize :" << bufferSize
+                 << std::endl << " - bufferSize : " << bufferSize
                  << std::endl << " - numberOfBuffers: " << numberOfBuffers
                  << std::endl << " - windowSize: " << windowSize
                  << std::endl << " - inputFile: " << inputFile
