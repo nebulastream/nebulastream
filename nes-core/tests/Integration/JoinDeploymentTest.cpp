@@ -126,10 +126,10 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
  * @param buffer1
  * @param buffer2
  * @param schema
- * @return boolean if the buffers contain the same tuples
+ * @return True if the buffers contain the same tuples
  */
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
-    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples");
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
         NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
@@ -142,9 +142,10 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
             if (sameTupleIndices.contains(idxBuffer2)) {
                 continue;
             }
+
             auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
             auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
-            auto equalTuple = (memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0);
+            auto equalTuple = (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0);
             if (equalTuple) {
                 sameTupleIndices.insert(idxBuffer2);
                 idxFoundInBuffer2 = true;
@@ -153,7 +154,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
         }
 
         if (!idxFoundInBuffer2) {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: " << idxBuffer1);
             return false;
         }
     }
