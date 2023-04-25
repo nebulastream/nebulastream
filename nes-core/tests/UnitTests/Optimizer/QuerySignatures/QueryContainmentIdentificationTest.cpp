@@ -165,7 +165,6 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
                                                Optimizer::ContainmentType::EQUALITY)};
     }
-    //todo: add tests with different sources
     static auto createNoContainmentCases() {
         return std::vector<
             QueryContainmentTestEntry>{QueryContainmentTestEntry(
@@ -414,6 +413,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                 Optimizer::ContainmentType::RIGHT_SIG_CONTAINED)};
     }
 };
+
 /**
  * @brief tests if the correct containment relationship is returned by the signature containment util
  */
