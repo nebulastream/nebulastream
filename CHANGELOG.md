@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.59](https://github.com/nebulastream/nebulastream/tree/v0.5.59) (2023-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.58...v0.5.59)
+
+**Implemented enhancements:**
+
+- \[TASK\] Port Join Tests to Querycompiler Nautilus [\#3568](https://github.com/nebulastream/nebulastream/issues/3568)
+
 ## [v0.5.58](https://github.com/nebulastream/nebulastream/tree/v0.5.58) (2023-04-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.57...v0.5.58)
