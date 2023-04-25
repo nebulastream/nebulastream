@@ -96,8 +96,8 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
  * @param bufferManager
  * @return merged TupleBuffer
  */
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
-                                  const SchemaPtr schema, BufferManagerPtr bufferManager) {
+Runtime::TupleBuffer
+mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, BufferManagerPtr bufferManager) {
 
     auto retBuffer = bufferManager->getBufferBlocking();
     auto retBufferPtr = retBuffer.getBuffer();
@@ -154,7 +154,8 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
         }
 
         if (!idxFoundInBuffer2) {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: " << idxBuffer1);
+            NES_DEBUG(
+                "Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: " << idxBuffer1);
             return false;
         }
     }
@@ -460,12 +461,13 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
     auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
 
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
-                     .sink(testSinkDescriptor);
+    auto query =
+        TestQuery::from(testSourceDescriptorLeft)
+            .joinWith(TestQuery::from(testSourceDescriptorRight))
+            .where(Attribute(joinFieldNameLeft))
+            .equalsTo(Attribute(joinFieldNameRight))
+            .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
+            .sink(testSinkDescriptor);
 
     NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
@@ -526,12 +528,13 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
     auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
 
-    auto query = TestQuery::from(testSourceDescriptorLeft)
-                     .joinWith(TestQuery::from(testSourceDescriptorRight))
-                     .where(Attribute(joinFieldNameLeft))
-                     .equalsTo(Attribute(joinFieldNameRight))
-                     .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
-                     .sink(testSinkDescriptor);
+    auto query =
+        TestQuery::from(testSourceDescriptorLeft)
+            .joinWith(TestQuery::from(testSourceDescriptorRight))
+            .where(Attribute(joinFieldNameLeft))
+            .equalsTo(Attribute(joinFieldNameRight))
+            .window(SlidingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize), Milliseconds(windowSlide)))
+            .sink(testSinkDescriptor);
 
     NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
@@ -595,7 +598,10 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
                      .where(Attribute(joinFieldNameLeft))
                      .equalsTo(Attribute(joinFieldNameRight))
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-                     .project(Attribute("test1test2$start"),Attribute("test1test2$end"), Attribute("test1test2$key"),  Attribute(timeStampField))
+                     .project(Attribute("test1test2$start"),
+                              Attribute("test1test2$end"),
+                              Attribute("test1test2$key"),
+                              Attribute(timeStampField))
                      .sink(testSinkDescriptor);
 
     NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
