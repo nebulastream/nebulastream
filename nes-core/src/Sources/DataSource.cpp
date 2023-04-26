@@ -71,7 +71,7 @@ DataSource::DataSource(SchemaPtr pSchema,
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
       sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName), kFilter(std::make_unique<KalmanFilter>()),
-      lastValuesBuf(lastValuesSize), lastValuesVec(lastValuesSize), lastIntervalBuf(lastValuesSize) {
+      lastValuesBuf(lastValuesSize), lastIntervalBuf(lastValuesSize) {
     this->kFilter->init();
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
@@ -508,11 +508,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
-<<<<<<< HEAD
-                    NES_TRACE("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
-=======
                     // TODO: fix performance here?
-                    // TODO: perform a single run for correctness
                     auto numOfTuples = buf.getNumberOfTuples();
                     auto records = buf.getBuffer<Sensors::SingleSensor>();
                     double currentIntervalInSeconds = this->gatheringInterval.count() / 1000.;
@@ -520,20 +516,19 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                         this->lastValuesBuf.emplace(records[i].value);
                         this->lastIntervalBuf.emplace(currentIntervalInSeconds);
                     }
+                    // TODO: wait for buffer to populate fully first?
                     // use a vector, find mean interval at the same time
                     double totalIntervalInseconds = 0;
                     for (uint64_t idx=0; idx < this->lastValuesBuf.size(); ++idx) {
-                        this->lastValuesVec.emplace_back(this->lastValuesBuf.at(idx));
                         totalIntervalInseconds += this->lastIntervalBuf.at(idx);
                     }
                     totalIntervalInseconds /= this->lastValuesBuf.size();
                     double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
-                    std::tuple<bool, double> res = Util::computeNyquistAndEnergy(lastValuesVec, skewedIntervalInseconds);
+                    std::tuple<bool, double> res = Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
                     if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
                         this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
                     }
                     NES_TRACE2("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
->>>>>>> 7d4de80f03 (Add Chameleon in datasource)
                     this->kFilter->updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter->getNewGatheringInterval();
                     NES_TRACE("DataSource new sourceGatheringInterval = {}ms", this->gatheringInterval.count());

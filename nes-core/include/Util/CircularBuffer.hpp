@@ -207,6 +207,14 @@ class CircularBuffer {
         return std::move(elt);
     }
 
+    std::vector<T> toVector() {
+        std::vector<T> intermediateVector(currentSize);
+        for (uint64_t idx = 0; idx < currentSize; ++idx) {
+            intermediateVector[idx] = this->at(idx);
+        }
+        return std::move(intermediateVector);
+    }
+
   private:
     // indicates writes
     uint64_t head{0};

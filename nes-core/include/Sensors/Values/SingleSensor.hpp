@@ -49,6 +49,11 @@ struct __attribute__((packed)) SingleSensor {
         payload = rhs.payload;
         timestamp = rhs.timestamp;
     }
+
+    [[nodiscard]] std::string toString() const {
+        return "SingleSensor(id=" + std::to_string(id) + ", value=" + std::to_string(value) + ", payload="
+               + std::to_string(payload) + ", timestamp=" + std::to_string(timestamp);
+    }
 };
 
 }// namespace Sensors

@@ -158,4 +158,29 @@ TEST_F(CircularBufferTest, popOnEmpty) {
     EXPECT_EQ(val, 0);
 }
 
+TEST_F(CircularBufferTest, toVector) {
+    CircularBuffer<int> circularBuffer(testCapacity);
+    circularBuffer.push(testValue + 1);
+    auto retVec = circularBuffer.toVector();
+    EXPECT_FALSE(retVec.empty());
+    EXPECT_EQ(retVec.capacity(), retVec.size());
+    EXPECT_EQ(retVec.size(), 1);
+    EXPECT_EQ(retVec.capacity(), circularBuffer.size());
+    EXPECT_EQ(retVec.size(), circularBuffer.size());
+    for (uint64_t itemIdx = 0; itemIdx < retVec.size(); ++itemIdx) {
+        ASSERT_EQ(retVec[itemIdx], circularBuffer.at(itemIdx));
+    }
+    circularBuffer.push(testValue);
+    EXPECT_NE(retVec.capacity(), circularBuffer.size());
+    EXPECT_NE(retVec.size(), circularBuffer.size());
+    retVec = circularBuffer.toVector();
+    EXPECT_EQ(retVec.capacity(), circularBuffer.size());
+    EXPECT_EQ(retVec.size(), 2);
+    EXPECT_EQ(retVec.capacity(), circularBuffer.size());
+    EXPECT_EQ(retVec.size(), circularBuffer.size());
+    for (uint64_t itemIdx = 0; itemIdx < retVec.size(); ++itemIdx) {
+        ASSERT_EQ(retVec[itemIdx], circularBuffer.at(itemIdx));
+    }
+}
+
 }// namespace NES

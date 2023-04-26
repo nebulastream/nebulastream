@@ -38,6 +38,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryService.hpp>
+#include <Sensors/Values/SingleSensor.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
@@ -349,6 +350,29 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
 };
 
+class AdaptiveCSVSourceProxy : public CSVSource {
+public:
+    AdaptiveCSVSourceProxy(SchemaPtr schema,
+                   Runtime::BufferManagerPtr bufferManager,
+                   Runtime::QueryManagerPtr queryManager,
+                   CSVSourceTypePtr sourceConfig,
+                   OperatorId operatorId,
+                   size_t numSourceLocalBuffers,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+            : CSVSource(schema,
+                        bufferManager,
+                        queryManager,
+                        sourceConfig,
+                        operatorId,
+                        0,
+                        numSourceLocalBuffers,
+                        GatheringMode::ADAPTIVE_MODE,
+                        successors){};
+
+private:
+    FRIEND_TEST(SourceTest, testAdaptiveSource);
+};
+
 class TCPSourceProxy : public TCPSource {
   public:
     TCPSourceProxy(SchemaPtr schema,
@@ -453,36 +477,6 @@ class LambdaSourceProxy : public LambdaSource {
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeIngestion);
 };
 
-class AdaptiveLambdaSourceProxy : public LambdaSource {
-public:
-    AdaptiveLambdaSourceProxy(
-            SchemaPtr schema,
-            Runtime::BufferManagerPtr bufferManager,
-            Runtime::QueryManagerPtr queryManager,
-            uint64_t numbersOfBufferToProduce,
-            uint64_t gatheringValue,
-            std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-            OperatorId operatorId,
-            size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-            : LambdaSource(schema,
-                           bufferManager,
-                           queryManager,
-                           numbersOfBufferToProduce,
-                           gatheringValue,
-                           std::move(generationFunction),
-                           operatorId,
-                           0,
-                           numSourceLocalBuffers,
-                           GatheringMode::ADAPTIVE_MODE,
-                           0,
-                           0,
-                           successors){};
-
-private:
-    FRIEND_TEST(SourceTest, testAdaptiveSource);
-};
-
 class MonitoringSourceProxy : public MonitoringSource {
   public:
     MonitoringSourceProxy(const Monitoring::MetricCollectorPtr& metricCollector,
@@ -553,6 +547,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
         this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
         this->path_to_decimals_file = std::string(TEST_DATA_DIRECTORY) + "decimals.csv";
+        this->path_to_chameleon_file = std::string(TEST_DATA_DIRECTORY) + "chameleon-test.csv";
         this->schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -644,7 +639,8 @@ class SourceTest : public Testing::BaseIntegrationTest {
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
-    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_decimals_file;
+    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head,
+        path_to_decimals_file, path_to_chameleon_file;
     SchemaPtr schema, lambdaSchema, decimalsSchema, sensorValSchema;
     uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
@@ -1902,11 +1898,23 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 }
 
 TEST_F(SourceTest, testAdaptiveSource) {
-    // TODO: test adaptive mode here
-    // create func with buffers with Sensor values, use as lambda
-    // consume buffers from the source
-    // assume no errors are thrown
-    FAIL();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(this->path_to_chameleon_file);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
+    csvSourceType->setGatheringInterval(this->gatheringInterval);
+
+    AdaptiveCSVSourceProxy csvDataSource(this->sensorValSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 csvSourceType,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    csvDataSource.running = true;
+    csvDataSource.runningRoutine();
+    // TODO: add assertion for changing interval
+    SUCCEED();
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
