@@ -67,6 +67,7 @@ class QueryContainmentIdentificationTest
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64)
                      ->addField("value2", BasicType::UINT64);
+
         schemaHouseholds = Schema::create()
                                ->addField("ts", BasicType::UINT32)
                                ->addField("type", DataTypeFactory::createFixedChar(8))
@@ -76,6 +77,7 @@ class QueryContainmentIdentificationTest
                                ->addField("value1", BasicType::FLOAT32)
                                ->addField("value2", BasicType::FLOAT64)
                                ->addField("value3", BasicType::UINT64);
+
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         sourceCatalog->addLogicalSource("windTurbines", schema);
         sourceCatalog->addLogicalSource("solarPanels", schema);
