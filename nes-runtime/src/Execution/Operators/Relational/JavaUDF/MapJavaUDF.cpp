@@ -14,15 +14,15 @@
 #ifdef ENABLE_JNI
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <cstring>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 #include <jni.h>
 #include <utility>
 #if not(defined(__APPLE__))

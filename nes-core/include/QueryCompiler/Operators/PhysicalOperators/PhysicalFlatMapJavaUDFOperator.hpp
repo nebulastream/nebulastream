@@ -48,7 +48,9 @@ class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
      * @return A new instance of PhysicalFlatMapJavaUDFOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
                                       const Catalogs::UDF::JavaUDFDescriptorPtr& javaUdfDescriptor);
 
     /**
@@ -58,7 +60,8 @@ class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUdfDescriptor The UDF descriptor for the Java-based UDF
      * @return A new instance of PhysicalFlatMapJavaUDFOperator
      */
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
                                       const Catalogs::UDF::JavaUDFDescriptorPtr& javaUdfDescriptor);
 
     /**
@@ -69,6 +72,7 @@ class PhysicalFlatMapJavaUDFOperator : public PhysicalUnaryOperator {
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
+
   protected:
     const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor;
 };

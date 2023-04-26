@@ -165,8 +165,8 @@ class LowerPhysicalToNautilusOperators {
      */
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                    const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
-                    uint64_t handlerIndex);
+                        const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
+                        uint64_t handlerIndex);
 #endif// ENABLE_JNI
 
 #ifdef TFDEF

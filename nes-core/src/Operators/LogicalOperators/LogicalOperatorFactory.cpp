@@ -17,11 +17,11 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -140,7 +140,7 @@ LogicalOperatorFactory::createMapJavaUDFLogicalOperator(const Catalogs::UDF::Jav
 
 LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                                        OperatorId id) {
+                                                            OperatorId id) {
     return std::make_shared<FlatMapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
 }
 

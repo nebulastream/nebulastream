@@ -149,6 +149,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
+
   private:
     const std::string className;
     const std::string methodName;

@@ -89,16 +89,12 @@ TEST_F(UDFCatalogTest, CannotRegisterUdfUnderExistingName) {
 /**
  * @brief Test that a null UDF descriptor is returned when attempting to retrieve an unknown UDF.
  */
-TEST_F(UDFCatalogTest, ReturnNullptrIfUdfIsNotKnown) {
-    ASSERT_EQ(udfCatalog.getUDFDescriptor("unknown_udf"), nullptr);
-}
+TEST_F(UDFCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getUDFDescriptor("unknown_udf"), nullptr); }
 
 /**
  * @brief Test that an attempt to remove an unknown UDF does not result in any changes to the catalog.
  */
-TEST_F(UDFCatalogTest, CannotRemoveUnknownUdf) {
-    ASSERT_EQ(udfCatalog.removeUDF("unknown_udf"), false);
-}
+TEST_F(UDFCatalogTest, CannotRemoveUnknownUdf) { ASSERT_EQ(udfCatalog.removeUDF("unknown_udf"), false); }
 
 /**
  * @brief Test that removal of a registered UDF is signaled.

@@ -31,7 +31,6 @@ namespace PhysicalOperators {
  */
 class PhysicalMapJavaUDFOperator : public PhysicalUnaryOperator {
   public:
-
     /**
      * @brief Constructor for PhysicalMapJavaUDFOperator
      * @param id The identifier of this operator
@@ -39,7 +38,9 @@ class PhysicalMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param outputSchema The schema of the output data
      * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
      */
-    PhysicalMapJavaUDFOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    PhysicalMapJavaUDFOperator(OperatorId id,
+                               SchemaPtr inputSchema,
+                               SchemaPtr outputSchema,
                                Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor);
     /**
      * @brief Creates a new instance of PhysicalMapJavaUDFOperator
@@ -49,7 +50,9 @@ class PhysicalMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
      * @return A new instance of PhysicalMapJavaUDFOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
                                       const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor);
 
     /**
@@ -59,8 +62,8 @@ class PhysicalMapJavaUDFOperator : public PhysicalUnaryOperator {
      * @param javaUDFDescriptor The UDF descriptor for the Java-based UDF
      * @return A new instance of PhysicalMapJavaUDFOperator
      */
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor);
 
     /**
      * @brief Returns a string representation of this operator

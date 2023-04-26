@@ -20,8 +20,8 @@
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
-#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <NesBaseTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

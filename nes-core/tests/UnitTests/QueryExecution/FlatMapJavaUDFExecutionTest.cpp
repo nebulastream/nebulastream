@@ -15,14 +15,14 @@
 #ifdef ENABLE_JNI
 
 #include <API/Schema.hpp>
+#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <NesBaseTest.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Util/JavaUDFDescriptorBuilder.hpp>
-#include <jni.h>
 #include <iostream>
+#include <jni.h>
 #include <utility>
 
 using namespace NES;
@@ -37,7 +37,8 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        executionEngine = std::make_shared<TestExecutionEngine>(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+        executionEngine =
+            std::make_shared<TestExecutionEngine>(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     }
 
     /* Will be called before a test is executed. */
@@ -71,8 +72,8 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
  * This helper function creates a JVM and returns the JNIEnv.
  */
 void createJVM(JavaVM* jvm, JNIEnv** env) {
-    JavaVMInitArgs args {};
-    std::vector<std::string> opt {"-verbose:jni", "-verbose:class"};
+    JavaVMInitArgs args{};
+    std::vector<std::string> opt{"-verbose:jni", "-verbose:class"};
     std::vector<JavaVMOption> options;
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
@@ -122,7 +123,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto methodName = "map";
     std::vector<char> serializedInstance = {};
     auto byteCodeList = std::unordered_map<std::string, std::vector<char>>();
-    for (const auto &className : classNames) {
+    for (const auto& className : classNames) {
         auto buffer = loadClassFileIntoBuffer(testDataPath, className);
         byteCodeList.insert(std::make_pair(className, buffer));
     }
@@ -163,4 +164,4 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-#endif // ENABLE_JNI
+#endif// ENABLE_JNI
