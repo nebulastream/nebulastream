@@ -29,12 +29,10 @@ namespace NES::ASP::Util {
 
 std::vector<SynopsisConfigurationPtr> parseSynopsisArguments(const Yaml::Node& synopsesNode) {
     std::vector<SynopsisConfigurationPtr> retVector;
-
     for (auto entry = synopsesNode.Begin(); entry != synopsesNode.End(); entry++) {
         auto node = (*entry).second;
         retVector.emplace_back(SynopsisConfiguration::createArgumentsFromYamlNode(node));
     }
-
     return retVector;
 }
 
@@ -45,7 +43,6 @@ std::vector<Benchmarking::YamlAggregation> parseAggregations(const Yaml::Node& a
         auto node = (*entry).second;
         parsedAggregations.emplace_back(Benchmarking::YamlAggregation::createAggregationFromYamlNode(node, data));
     }
-
     return parsedAggregations;
 }
 
@@ -55,7 +52,6 @@ std::string parseCsvFileFromYaml(const std::string& yamlFileName) {
     if (configFile.IsNone() || configFile["csvFile"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("Could not get csv file from yaml file!");
     }
-
     return configFile["csvFile"].As<std::string>();
 }
 
@@ -69,7 +65,6 @@ std::vector<uint32_t> parseNumberOfBuffers(const Yaml::Node& numberOfBuffersNode
     if (numberOfBuffersNode.IsNone()) {
         return {defaultValue};
     }
-
     return NES::Util::splitWithStringDelimiter<uint32_t>(numberOfBuffersNode.As<std::string>(), ",");
 }
 
@@ -85,7 +80,6 @@ double calculateRelativeError(Runtime::MemoryLayouts::DynamicField& approxField,
 
     auto physicalField = DefaultPhysicalTypeFactory().getPhysicalType(approxField.getPhysicalType()->type);
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
-
     switch (basicType->nativeType) {
         case BasicPhysicalType::NativeType::UINT_8:
             return (std::abs(approxField.read<uint8_t>() - exactField.read<uint8_t>()) / (double)exactField.read<uint8_t>());

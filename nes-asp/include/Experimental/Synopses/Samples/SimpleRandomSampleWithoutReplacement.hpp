@@ -71,7 +71,7 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
     Nautilus::Value<>
     multiplyWithScalingFactor(Nautilus::Value<> approximatedValue, Nautilus::Value<Nautilus::Double> scalingFactor);
 
-    size_t sampleSize;
+    const size_t sampleSize;
     std::vector<Runtime::TupleBuffer> storedRecords;
     uint64_t numberOfTuples;
 };

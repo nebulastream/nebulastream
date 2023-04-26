@@ -317,18 +317,14 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         retVector.push_back(physicalField);
     }
-
     return retVector;
 }
 
-uint64_t Util::getNumberOfTuples(std::vector<Runtime::TupleBuffer> buffers) {
+uint64_t Util::getNumberOfTuples(const std::vector<Runtime::TupleBuffer>& buffers) {
     uint64_t sum = 0;
-
-    for (auto& buf : buffers) {
+    for (const auto& buf : buffers) {
         sum += buf.getNumberOfTuples();
     }
-
     return sum;
 }
-
 }// namespace NES

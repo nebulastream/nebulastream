@@ -20,13 +20,11 @@
 namespace NES::ASP {
 
 AbstractSynopsesPtr AbstractSynopsis::create(SynopsisConfiguration arguments) {
-
-    if (arguments.type.getValue() == SynopsisConfiguration::SYNOPSIS_TYPE::SRSWR) {
+    if (arguments.type.getValue() == SynopsisConfiguration::Synopsis_Type::SRSWoR) {
         return std::make_shared<SimpleRandomSampleWithoutReplacement>(arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }
-
 }
 
 void AbstractSynopsis::setAggregationFunction(
@@ -57,5 +55,4 @@ void AbstractSynopsis::setAggregationValue(Benchmarking::AggregationValuePtr agg
 void AbstractSynopsis::setBufferManager(const Runtime::BufferManagerPtr& bufferManager) {
     AbstractSynopsis::bufferManager = bufferManager;
 }
-
 } // namespace NES::ASP

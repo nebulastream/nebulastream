@@ -30,7 +30,7 @@
 
 namespace NES::ASP::Benchmarking {
 
-YamlAggregation::YamlAggregation(const AGGREGATION_TYPE& type,
+YamlAggregation::YamlAggregation(const Aggregation_Type& type,
                                  const std::string& fieldNameAggregation,
                                  const std::string& fieldNameApproximate,
                                  const std::string& timeStampFieldName,
@@ -40,7 +40,7 @@ YamlAggregation::YamlAggregation(const AGGREGATION_TYPE& type,
     : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate),
       timeStampFieldName(timeStampFieldName), inputFile(inputFile), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
-std::string YamlAggregation::toString() {
+const std::string YamlAggregation::toString() const {
     std::stringstream stringStream;
     stringStream << " type (" << magic_enum::enum_name(type) << ") "
                  << "fieldNameAggregation (" << fieldNameAggregation << ") "
@@ -54,12 +54,12 @@ std::string YamlAggregation::toString() {
     return stringStream.str();
 }
 
-std::string YamlAggregation::getHeaderAsCsv() {
+const std::string YamlAggregation::getHeaderAsCsv() const {
     return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
            ",aggregation_inputFile,aggregation_inputSchema,aggregation_outputSchema";
 }
 
-std::string YamlAggregation::getValuesAsCsv() {
+const std::string YamlAggregation::getValuesAsCsv() const {
     std::stringstream stringStream;
     stringStream << magic_enum::enum_name(type) << ","
                  << fieldNameAggregation << ","
@@ -74,7 +74,7 @@ std::string YamlAggregation::getValuesAsCsv() {
 
 YamlAggregation YamlAggregation::createAggregationFromYamlNode(Yaml::Node& aggregationNode,
                                                                const std::filesystem::path& data) {
-    auto type = magic_enum::enum_cast<AGGREGATION_TYPE>(aggregationNode["type"].As<std::string>()).value();
+    auto type = magic_enum::enum_cast<Aggregation_Type>(aggregationNode["type"].As<std::string>()).value();
     auto fieldNameAggregation = aggregationNode["fieldNameAgg"].As<std::string>();
     auto fieldNameApprox = aggregationNode["fieldNameApprox"].As<std::string>();
     auto inputFile = data / std::filesystem::path(aggregationNode["inputFile"].As<std::string>());
@@ -97,23 +97,23 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr YamlAggregation::createA
     auto finalType = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
 
     switch (type) {
-        case AGGREGATION_TYPE::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType);
-        case AGGREGATION_TYPE::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);
-        case AGGREGATION_TYPE::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);
-        case AGGREGATION_TYPE::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);
-        case AGGREGATION_TYPE::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);
-        case AGGREGATION_TYPE::NONE: NES_NOT_IMPLEMENTED();
+        case Aggregation_Type::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType);
+        case Aggregation_Type::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);
+        case Aggregation_Type::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);
+        case Aggregation_Type::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);
+        case Aggregation_Type::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);
+        case Aggregation_Type::NONE: NES_NOT_IMPLEMENTED();
     }
 }
 
 AggregationValuePtr YamlAggregation::createAggregationValue() {
     switch(type) {
-        case AGGREGATION_TYPE::NONE: NES_THROW_RUNTIME_ERROR("Can not create aggregation value for the AGGREGATION_TYPE::NONE!");
-        case AGGREGATION_TYPE::MIN: return createAggregationValueMin();
-        case AGGREGATION_TYPE::MAX: return createAggregationValueMax();
-        case AGGREGATION_TYPE::SUM: return createAggregationValueSum();
-        case AGGREGATION_TYPE::AVERAGE: return createAggregationValueAverage();
-        case AGGREGATION_TYPE::COUNT: return createAggregationValueCount();
+        case Aggregation_Type::NONE: NES_THROW_RUNTIME_ERROR("Can not create aggregation value for the AGGREGATION_TYPE::NONE!");
+        case Aggregation_Type::MIN: return createAggregationValueMin();
+        case Aggregation_Type::MAX: return createAggregationValueMax();
+        case Aggregation_Type::SUM: return createAggregationValueSum();
+        case Aggregation_Type::AVERAGE: return createAggregationValueAverage();
+        case Aggregation_Type::COUNT: return createAggregationValueCount();
     }
 }
 AggregationValuePtr YamlAggregation::createAggregationValueMin() {

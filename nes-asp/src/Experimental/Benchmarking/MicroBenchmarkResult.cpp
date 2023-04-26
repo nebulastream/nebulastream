@@ -17,6 +17,11 @@
 
 namespace NES::ASP::Benchmarking {
 
+MicroBenchmarkResult::MicroBenchmarkResult(double throughput, double accuracy)  {
+    this->setAccuracy(accuracy);
+    this->setThroughput(throughput);
+}
+
 void MicroBenchmarkResult::setThroughput(double throughput) { addToParams(THROUGHPUT, std::to_string(throughput)); }
 
 void MicroBenchmarkResult::setAccuracy(double accuracy) {  addToParams(ACCURACY, std::to_string(accuracy)); }
@@ -25,12 +30,7 @@ void MicroBenchmarkResult::addToParams(const std::string& paramKey, const std::s
     params[paramKey] = paramValue;
 }
 
-MicroBenchmarkResult::MicroBenchmarkResult(double throughput, double accuracy)  {
-    this->setAccuracy(accuracy);
-    this->setThroughput(throughput);
-}
-
-std::string MicroBenchmarkResult::getHeaderAsCsv() {
+const std::string MicroBenchmarkResult::getHeaderAsCsv() const {
     std::stringstream stringStream;
     for (auto& pair : params) {
         stringStream << pair.first << ",";
@@ -42,7 +42,7 @@ std::string MicroBenchmarkResult::getHeaderAsCsv() {
     return string;
 }
 
-std::string MicroBenchmarkResult::getRowAsCsv() {
+const std::string MicroBenchmarkResult::getRowAsCsv() const {
     std::stringstream stringStream;
     for (auto& pair : params) {
         stringStream << pair.second << ",";
@@ -53,5 +53,4 @@ std::string MicroBenchmarkResult::getRowAsCsv() {
 
     return string;
 }
-
 } // namespace NES::ASP::Benchmarking

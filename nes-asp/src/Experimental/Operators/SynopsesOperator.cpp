@@ -26,5 +26,4 @@ void SynopsesOperator::setup(ExecutionContext&) const {
 void SynopsesOperator::execute(ExecutionContext&, Record& record) const {
     synopses->addToSynopsis(record);
 }
-}
-// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -27,12 +27,12 @@ namespace NES::ASP::Benchmarking {
  * @brief This map is used for mapping from input files to schema. We do not put the whole path, but stick with the file name.
  */
 static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
-    {"some_input_file.csv", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+    {"uniform_key_value_timestamp.csv", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                     ->addField("id", BasicType::UINT64)
                     ->addField("value", BasicType::INT64)
                     ->addField("ts", BasicType::UINT64)},
 
-    {"some_other_input_file.csv", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+    {"uniform_key_multiple_values_timestamp.csv", Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                     ->addField("id", BasicType::UINT64)
                     ->addField("value1", BasicType::INT64)
                     ->addField("value2", BasicType::FLOAT32)
@@ -47,16 +47,16 @@ static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
  * @param fieldNameAgg
  * @return Output schema
  */
-static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(AGGREGATION_TYPE type, Schema& inputSchema,
+static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(Aggregation_Type type, Schema& inputSchema,
                                                               const std::string& fieldNameAgg) {
     switch(type) {
-        case AGGREGATION_TYPE::NONE:
-        case AGGREGATION_TYPE::MIN:
-        case AGGREGATION_TYPE::MAX:
-        case AGGREGATION_TYPE::SUM:
-        case AGGREGATION_TYPE::COUNT: return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+        case Aggregation_Type::NONE:
+        case Aggregation_Type::MIN:
+        case Aggregation_Type::MAX:
+        case Aggregation_Type::SUM:
+        case Aggregation_Type::COUNT: return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                                 ->addField("aggregation", inputSchema.get(fieldNameAgg)->getDataType());
-        case AGGREGATION_TYPE::AVERAGE: return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+        case Aggregation_Type::AVERAGE: return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                                 ->addField("aggregation", BasicType::FLOAT64);
     }
 }

@@ -18,8 +18,7 @@
 
 namespace NES::ASP {
 
-SynopsisConfigurationPtr SynopsisConfiguration::create(SYNOPSIS_TYPE type, size_t width,
-                                                                     size_t height, size_t windowSize) {
+SynopsisConfigurationPtr SynopsisConfiguration::create(Synopsis_Type type, size_t width, size_t height, size_t windowSize) {
     auto configurationOptions = std::make_shared<SynopsisConfiguration>();
     configurationOptions->type = type;
     configurationOptions->width = width;
@@ -31,7 +30,7 @@ SynopsisConfigurationPtr SynopsisConfiguration::create(SYNOPSIS_TYPE type, size_
 
 SynopsisConfigurationPtr SynopsisConfiguration::createArgumentsFromYamlNode(Yaml::Node& synopsisArgumentsNode) {
 
-    auto type = magic_enum::enum_cast<SYNOPSIS_TYPE>(synopsisArgumentsNode["type"].As<std::string>()).value();
+    auto type = magic_enum::enum_cast<Synopsis_Type>(synopsisArgumentsNode["type"].As<std::string>()).value();
     auto width = synopsisArgumentsNode["width"].IsNone() ? 1 : synopsisArgumentsNode["width"].As<size_t>();
     auto height = synopsisArgumentsNode["height"].IsNone() ? 1 : synopsisArgumentsNode["height"].As<size_t>();
     auto windowSize = synopsisArgumentsNode["windowSize"].IsNone() ? 1 : synopsisArgumentsNode["windowSize"].As<size_t>();
