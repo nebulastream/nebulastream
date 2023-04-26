@@ -294,7 +294,7 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
  * @param buffers
  * @return Number of total tuples in all buffers
  */
-uint64_t getNumberOfTuples(std::vector<Runtime::TupleBuffer> buffers);
+uint64_t getNumberOfTuples(const std::vector<Runtime::TupleBuffer>& buffers);
 
 /**
  * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]

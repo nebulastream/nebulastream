@@ -55,13 +55,13 @@ class MicroBenchmarkResult {
      * @brief Creates a header from the params that is deterministic
      * @return Header as a string with comma separated values
      */
-    std::string getHeaderAsCsv();
+    const std::string getHeaderAsCsv() const;
 
     /**
      * @brief Creates a row from the params that is deterministic and corresponds with the header
      * @return Row as a string with comma separated values
      */
-    std::string getRowAsCsv();
+    const std::string getRowAsCsv() const;
 
   private:
     const std::string THROUGHPUT = "throughput";

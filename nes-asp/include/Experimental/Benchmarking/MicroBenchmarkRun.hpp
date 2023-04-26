@@ -107,19 +107,19 @@ class MicroBenchmarkRun {
      * @brief Creates a string representation of this MicroBenchmarkRun
      * @return String representation
      */
-    std::string toString();
+    const std::string toString() const;
 
     /**
      * @brief Creates a header for the output csv file from this MicroBenchmarkRun
      * @return Header as a string with comma separated values
      */
-    std::string getHeaderAsCsv();
+    const std::string getHeaderAsCsv() const;
 
     /**
      * @brief Creates one or more rows for the output csv file from this MicroBenchmarkRun
      * @return Rows as a string with comma separated values
      */
-    std::string getRowsAsCsv();
+    const std::string getRowsAsCsv() const;
 
   private:
     /**

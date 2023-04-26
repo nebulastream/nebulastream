@@ -37,7 +37,7 @@ class MicroBenchmarkRunner : public NES::Exceptions::ErrorListener {
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
                           << callStack;
 
-        NES_FATAL_ERROR(fatalErrorMessage.str());
+        NES_FATAL_ERROR2("{}", fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
     }
 
@@ -45,7 +45,7 @@ class MicroBenchmarkRunner : public NES::Exceptions::ErrorListener {
         std::ostringstream fatalExceptionMessage;
         fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
 
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
+        NES_FATAL_ERROR2("{}", fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
 };
@@ -82,24 +82,24 @@ int main(int argc, const char* argv[]) {
     auto yamlFileName = argMap["configPath"];
     auto absoluteDataPath = std::filesystem::absolute(std::filesystem::path(argMap["dataPath"]));
 
-    NES_INFO("Parsing all micro-benchmarks...");
+    NES_INFO2("Parsing all micro-benchmarks...");
     auto csvFileName = ASP::Util::parseCsvFileFromYaml(yamlFileName);
     auto allMicroBenchmarks = ASP::Benchmarking::MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFileName,
                                                                                                      absoluteDataPath);
 
-    NES_INFO("Running all micro-benchmarks...");
+    NES_INFO2("Running all micro-benchmarks...");
     for (auto& microBenchmark : allMicroBenchmarks) {
         NES_INFO("Running current micro-benchmark: " << microBenchmark.toString());
         microBenchmark.run();
     }
 
-    NES_INFO("Writing the header to the csv file: " << csvFileName);
+    NES_INFO2("Writing the header to the csv file: {}", csvFileName);
     NES::Util::writeHeaderToCsvFile(csvFileName, allMicroBenchmarks[0].getHeaderAsCsv());
 
-    NES_INFO("Writing all micro-benchmarks results to csv file: " << csvFileName);
+    NES_INFO2("Writing all micro-benchmarks results to csv file: {}", csvFileName);
     for (auto& microBenchmark : allMicroBenchmarks) {
         NES::Util::writeRowToCsvFile(csvFileName, microBenchmark.getRowsAsCsv());
     }
 
-    NES_INFO("Done running micro-benchmarks!");
+    NES_INFO2("Done running micro-benchmarks!");
 }

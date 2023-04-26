@@ -31,7 +31,6 @@ namespace NES::ASP{
 
 void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record) {
     // Here we just store all records and then perform the sampling in getApproximate()
-
     if (storedRecords.empty()) {
         storedRecords.emplace_back(bufferManager->getBufferBlocking());
     }
@@ -40,7 +39,6 @@ void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(lastTupleBuffer, inputSchema);
 
     auto recordIndex = dynamicTupleBuffer.getNumberOfTuples();
-
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto baseAddress = Nautilus::MemRef((int8_t*) (dynamicTupleBuffer.getBuffer().getBuffer() +
                                        recordIndex * inputSchema->getSchemaSizeInBytes()));
@@ -73,12 +71,10 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
             pos = uniformIntDistribution(generator);
         }
         alreadyDrawn.emplace_back(pos);
-        NES_DEBUG("pos: " << pos);
 
         auto numberOfTuplesPerBuffer = bufferManager->getBufferSize() / inputSchema->getSchemaSizeInBytes();
         auto tupleBuffer = pos / numberOfTuplesPerBuffer;
         auto tuplePosition = pos % numberOfTuplesPerBuffer;
-
 
         if (sample.empty() || sample[sample.size() - 1].getNumberOfTuples() >= numberOfTuplesPerBuffer) {
             sample.emplace_back(bufferManager->getBufferBlocking());
@@ -96,7 +92,7 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& buffer : sample) {
-        NES_DEBUG("buffer in SampleRandomWithoutReplacement::getApproximate: " << NES::Util::printTupleBufferAsCSV(buffer, inputSchema));
+        NES_DEBUG2("buffer in SampleRandomWithoutReplacement::getApproximate: {}", NES::Util::printTupleBufferAsCSV(buffer, inputSchema));
         auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
         auto numberOfRecords = buffer.getNumberOfTuples();
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
@@ -112,8 +108,6 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
     auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor());
     approximatedValue = multiplyWithScalingFactor(approximatedValue, scalingFactor);
-
-
     record.write(fieldNameApproximate, approximatedValue);
 
     // Create an output buffer and write the approximation into it
@@ -150,30 +144,33 @@ double SimpleRandomSampleWithoutReplacement::getScalingFactor(){
 
     return retValue;
 }
+
 Nautilus::Value<>
 SimpleRandomSampleWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
-                                                                            Nautilus::Value<Nautilus::Double> scalingFactor) {
+                                                                Nautilus::Value<Nautilus::Double> scalingFactor) {
     auto tmpValue = Nautilus::Value<>(approximatedValue * scalingFactor);
     double value = tmpValue.getValue().staticCast<Nautilus::Double>().getValue();
 
     if (approximatedValue->isType<Nautilus::Int8>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::Int8>((int8_t)value);
+        return Nautilus::Value<Nautilus::Int8>((int8_t)value);
+    } else if (approximatedValue->isType<Nautilus::Int16>()) {
+        return Nautilus::Value<Nautilus::Int16>((int16_t)value);
     } else if (approximatedValue->isType<Nautilus::Int32>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::Int32>((int32_t)value);
+        return Nautilus::Value<Nautilus::Int32>((int32_t)value);
     } else if (approximatedValue->isType<Nautilus::Int64>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::Int64>((int64_t)value);
-
+        return Nautilus::Value<Nautilus::Int64>((int64_t)value);
     } else if (approximatedValue->isType<Nautilus::UInt8>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::UInt8>((uint8_t)value);
+        return Nautilus::Value<Nautilus::UInt8>((uint8_t)value);
+    } else if (approximatedValue->isType<Nautilus::UInt16>()) {
+        return Nautilus::Value<Nautilus::UInt16>((uint16_t)value);
     } else if (approximatedValue->isType<Nautilus::UInt32>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::UInt32>((uint32_t)value);
+        return Nautilus::Value<Nautilus::UInt32>((uint32_t)value);
     } else if (approximatedValue->isType<Nautilus::UInt64>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::UInt64>((uint64_t)value);
-
+        return Nautilus::Value<Nautilus::UInt64>((uint64_t)value);
     } else if (approximatedValue->isType<Nautilus::Float>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::Float>((float)value);
+        return Nautilus::Value<Nautilus::Float>((float)value);
     } else if (approximatedValue->isType<Nautilus::Double>()) {
-        return approximatedValue = Nautilus::Value<Nautilus::Double>((double)value);
+        return Nautilus::Value<Nautilus::Double>((double)value);
     } else {
         NES_NOT_IMPLEMENTED();
     }

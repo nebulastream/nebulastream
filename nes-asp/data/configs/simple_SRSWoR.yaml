@@ -1,34 +1,34 @@
 synopsis:
-  - type: SRSWR
+  - type: SRSWoR
     width: 10
 
 aggregation:
   - type: MIN
-    inputFile: "some_input_file.csv"
+    inputFile: "uniform_key_value_timestamp.csv"
     fieldNameAgg: "value"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: SUM
-    inputFile: "some_input_file.csv"
+    inputFile: "uniform_key_value_timestamp.csv"
     fieldNameAgg: "value"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: MAX
-    inputFile: "some_other_input_file.csv"
+    inputFile: "uniform_key_multiple_values_timestamp.csv"
     fieldNameAgg: "value1"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: COUNT
-    inputFile: "some_other_input_file.csv"
+    inputFile: "uniform_key_multiple_values_timestamp.csv"
     fieldNameAgg: "value1"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
 
   - type: AVERAGE
-    inputFile: "some_other_input_file.csv"
+    inputFile: "uniform_key_multiple_values_timestamp.csv"
     fieldNameAgg: "value1"
     timestamp: "ts"
     fieldNameApprox: "aggregation"

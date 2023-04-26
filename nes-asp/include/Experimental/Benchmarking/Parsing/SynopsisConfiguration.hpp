@@ -34,7 +34,7 @@ using SynopsisConfigurationPtr = std::shared_ptr<SynopsisConfiguration>;
 class SynopsisConfiguration : public Configurations::BaseConfiguration {
 
   public:
-    enum class SYNOPSIS_TYPE : uint8_t {
+    enum class Synopsis_Type : uint8_t {
         SRSWR,  // Simple Random Sampling With Replacement
         SRSWoR, // Simple Random Sampling Without Replacement
         Poisson, // Poisson sampling
@@ -53,7 +53,8 @@ class SynopsisConfiguration : public Configurations::BaseConfiguration {
         NONE        // NONE
     };
 
-    Configurations::EnumOption<SYNOPSIS_TYPE> type = {Configurations::SYNOPSIS_CONFIG_TYPE, SYNOPSIS_TYPE::NONE, "Type of synopsis."};
+    Configurations::EnumOption<Synopsis_Type> type = {Configurations::SYNOPSIS_CONFIG_TYPE,
+                                                      Synopsis_Type::NONE, "Type of synopsis."};
     Configurations::SizeTOption width = {Configurations::SYNOPSIS_CONFIG_WIDTH, 1, "Width of the synopsis."};
     Configurations::SizeTOption height = {Configurations::SYNOPSIS_CONFIG_HEIGHT, 1, "Height of the synopsis."};
     Configurations::SizeTOption windowSize = {Configurations::SYNOPSIS_CONFIG_WINDOWSIZE, 1, "WindowSize of the synopsis."};
@@ -66,7 +67,7 @@ class SynopsisConfiguration : public Configurations::BaseConfiguration {
      * @param windowSize
      * @return SynopsisArguments
      */
-    static SynopsisConfigurationPtr create(SYNOPSIS_TYPE type, size_t width, size_t height = 1,
+    static SynopsisConfigurationPtr create(Synopsis_Type type, size_t width, size_t height = 1,
                                                          size_t windowSize = 1);
 
     /**

@@ -137,12 +137,13 @@ class Timer {
      * @return Runtime
      */
     int64_t getRuntimeFromSnapshot(const std::string& snapShotName) {
-        for (auto& snapShot : snapshots) {
-            if (snapShot.name == snapShotName) {
-                return snapShot.getRuntime();
-            }
+        auto it = std::find_if(snapshots.begin(), snapshots.end(),
+                               [&](Snapshot const& snapshot) {return (snapshot.name == snapShotName);});
+        if (it != snapshots.end()) {
+            return it->getRuntime();
+        } else {
+            return -1;
         }
-        return -1;
     }
 
     /**

@@ -26,7 +26,7 @@
 namespace NES::ASP::Benchmarking {
 
 using AggregationValuePtr = std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>;
-enum class AGGREGATION_TYPE : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
+enum class Aggregation_Type : uint8_t { NONE, MIN, MAX, SUM, AVERAGE, COUNT };
 
 /**
  * @brief This class encapsulates the necessary stuff for parsing the aggregation from a yaml file.
@@ -58,7 +58,7 @@ class YamlAggregation {
      * @param inputFile
      * @param inputSchema
      */
-    YamlAggregation(const AGGREGATION_TYPE& type,
+    YamlAggregation(const Aggregation_Type& type,
                     const std::string& fieldNameAggregation,
                     const std::string& fieldNameApproximate,
                     const std::string& timestampFieldName,
@@ -79,19 +79,19 @@ class YamlAggregation {
      * @brief Creates a string representation
      * @return String representation
      */
-    std::string toString();
+    const std::string toString() const;
 
     /**
      * @brief Creates a header for the output csv file from this SynopsisArguments
      * @return Header as a string with comma separated values
      */
-    std::string getHeaderAsCsv();
+    const std::string getHeaderAsCsv() const;
 
     /**
      * @brief Creates a csv string for all values from this SynopsisArguments
      * @return Header as a string with comma separated values
      */
-    std::string getValuesAsCsv();
+    const std::string getValuesAsCsv() const;
 
     /**
      * @brief Creates an aggregation function from the current parameters
@@ -138,7 +138,7 @@ class YamlAggregation {
     AggregationValuePtr createAggregationValueSum();
 
   public:
-    AGGREGATION_TYPE type;
+    Aggregation_Type type;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     std::string timeStampFieldName;
