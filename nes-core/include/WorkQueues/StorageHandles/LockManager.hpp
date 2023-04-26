@@ -28,7 +28,7 @@ class LockManager {
                 QueryCatalogServicePtr queryCatalogService,
                 GlobalQueryPlanPtr globalQueryPlan,
                 Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Obtain a mutable global execution plan handle.
@@ -64,7 +64,7 @@ class LockManager {
      * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
-    UdfCatalogHandle getUdfCatalogHandle();
+    UDFCatalogHandle getUDFCatalogHandle();
 
   private:
     GlobalExecutionPlanPtr globalExecutionPlan;
@@ -72,7 +72,7 @@ class LockManager {
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     std::mutex topologyMutex;
     std::mutex queryCatalogMutex;
     std::mutex sourceCatalogMutex;

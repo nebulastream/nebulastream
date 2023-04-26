@@ -89,7 +89,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * acquireResources function
      * @return a handle to the udf catalog.
      */
-    UdfCatalogHandle getUdfCatalogHandle() override;
+    UDFCatalogHandle getUDFCatalogHandle() override;
 
   private:
     /**
@@ -107,7 +107,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 }// namespace NES
 

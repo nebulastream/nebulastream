@@ -48,7 +48,7 @@ void TwoPhaseLockingStorageHandler::lockResource(StorageHandlerResourceType reso
             globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle();
             break;
         case StorageHandlerResourceType::GlobalQueryPlan: globalQueryPlan = lockManager->getGlobalQueryPlanHandle(); break;
-        case StorageHandlerResourceType::UdfCatalog: udfCatalog = lockManager->getUdfCatalogHandle(); break;
+        case StorageHandlerResourceType::UdfCatalog: udfCatalog = lockManager->getUDFCatalogHandle(); break;
     }
 }
 
@@ -92,7 +92,7 @@ SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle() {
     return sourceCatalog;
 }
 
-UdfCatalogHandle TwoPhaseLockingStorageHandler::getUdfCatalogHandle() {
+UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle() {
     if (!udfCatalog) {
         //todo #3611: write custom exception for this case
         throw std::exception();

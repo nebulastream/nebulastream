@@ -111,7 +111,9 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     if (inputSchema->fields.size() == 1) {
         // 1. Simple, the input schema contains only one field
         auto field = inputSchema->fields[0];
-        auto fieldName = field->getName();
+        // Record should contain only one field
+        assert(record.getAllFields().size() == 1);
+        auto fieldName = record.getAllFields()[0];
 
         if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
             inputPojoPtr =
