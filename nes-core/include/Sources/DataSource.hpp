@@ -336,7 +336,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     const static uint64_t lastValuesSize{20};
     CircularBuffer<double> lastValuesBuf;
-    std::vector<double> lastValuesVec;
 
 
     /**
