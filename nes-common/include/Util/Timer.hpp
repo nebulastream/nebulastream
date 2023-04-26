@@ -83,9 +83,7 @@ class Timer {
      * @param snapshotName
      * @return Fully qualified name as string
      */
-    std::string createFullyQualifiedSnapShotName(const std::string& snapshotName) {
-        return componentName + '_' + snapshotName;
-    }
+    std::string createFullyQualifiedSnapShotName(const std::string& snapshotName) { return componentName + '_' + snapshotName; }
 
     /**
      * @brief saves current runtime as a snapshot. Useful for
@@ -137,8 +135,9 @@ class Timer {
      * @return Runtime
      */
     int64_t getRuntimeFromSnapshot(const std::string& snapShotName) {
-        auto it = std::find_if(snapshots.begin(), snapshots.end(),
-                               [&](Snapshot const& snapshot) {return (snapshot.name == snapShotName);});
+        auto it = std::find_if(snapshots.begin(), snapshots.end(), [&](Snapshot const& snapshot) {
+            return (snapshot.name == snapShotName);
+        });
         if (it != snapshots.end()) {
             return it->getRuntime();
         } else {

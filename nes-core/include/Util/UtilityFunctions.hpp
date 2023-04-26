@@ -277,7 +277,8 @@ void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
  * @param bufferManager
  * @return Vector of TupleBuffers
  */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile, const SchemaPtr& schema,
+[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
+                                                                            const SchemaPtr& schema,
                                                                             Runtime::BufferManagerPtr bufferManager,
                                                                             const std::string& timeStampFieldName,
                                                                             uint64_t lastTimeStamp);
