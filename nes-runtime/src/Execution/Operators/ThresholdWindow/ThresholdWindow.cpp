@@ -96,11 +96,15 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
 
         NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
         // Log the start of a threshold window
+        auto allFieldNames = record.getAllFields();
         if (!FunctionCall("getIsWindowOpen", getIsWindowOpen, handler)) {
-            NES_DEBUG2("Threshold window starts: opening value={}",
-                       std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[0])
-                           ? aggregatedValue->toString()
-                           : aggregatedFieldAccessExpressions[0]->execute(record)->toString());
+            NES_DEBUG2("Threshold window starts, opening value:{}",
+                       std::accumulate(allFieldNames.begin(),
+                                       allFieldNames.end(),
+                                       std::string{},
+                                       [&record](std::string acc, std::string s) {
+                                           return acc + s + "="+ record.read(s)->toString() + ",";
+                                       }));
         }
 
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
@@ -137,17 +141,20 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
 
                 // Log the closing of window and along with agg result
-                // e.g., Threshold window ends: closing value=<VALUE> aggVal= <AGG_FIELD_NAME>:<AGG_RESULT_2> <AGG_FIELD_NAME>:<AGG_RESULT_2>
                 auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
-                NES_DEBUG2("Threshold window ends: closing value={} aggVal={}",
-                           std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[0])
-                               ? aggregatedValue->toString()
-                               : aggregatedFieldAccessExpressions[0]->execute(record)->toString(),
+                auto allFieldNames = record.getAllFields();
+                NES_DEBUG2("Threshold window ends, closing value:{} | aggVal:{}",
+                           std::accumulate(allFieldNames.begin(),
+                                           allFieldNames.end(),
+                                           std::string{},
+                                           [&record](std::string acc, std::string s) {
+                                               return acc + s + "="+ record.read(s)->toString() + ",";
+                                           }),
                            std::accumulate(aggregationResultFieldIdentifiers.begin(),
                                            aggregationResultFieldIdentifiers.end(),
                                            std::string{},
                                            [&resultRecord](std::string acc, std::string s) {
-                                               return acc + " " + s + ":" + resultRecord.read(s)->toString();
+                                               return acc + " " + s + "=" + resultRecord.read(s)->toString();
                                            }));
 
                 // crucial to release the handler here before we execute the rest of the pipeline
