@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.62](https://github.com/nebulastream/nebulastream/tree/v0.5.62) (2023-04-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.61...v0.5.62)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add flatMap Java UDFs [\#3609](https://github.com/nebulastream/nebulastream/issues/3609)
+
 ## [v0.5.61](https://github.com/nebulastream/nebulastream/tree/v0.5.61) (2023-04-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.60...v0.5.61)
