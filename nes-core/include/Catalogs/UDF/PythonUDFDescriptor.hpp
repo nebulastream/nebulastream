@@ -23,13 +23,13 @@
 namespace NES::Catalogs::UDF {
 
 class PythonUDFDescriptor;
-using PythonUdfDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
+using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
 class PythonUDFDescriptor : public UDFDescriptor {
   public:
     PythonUDFDescriptor(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType);
 
-    static PythonUdfDescriptorPtr create(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType) {
+    static PythonUDFDescriptorPtr create(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType) {
         return std::make_shared<PythonUDFDescriptor>(methodName, numberOfArgs, returnType);
     }
 
