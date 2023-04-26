@@ -29,7 +29,7 @@ class UDFCatalogTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 
-    static PythonUdfDescriptorPtr createPythonDescriptor() {
+    static PythonUDFDescriptorPtr createPythonDescriptor() {
         auto methodName = "python_udf_method"s;
         int numberOfArgs = 2;
         DataTypePtr returnType = DataTypeFactory::createInt32();
