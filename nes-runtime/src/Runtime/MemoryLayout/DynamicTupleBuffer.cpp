@@ -16,8 +16,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -64,16 +64,13 @@ std::string DynamicField::toString() {
     return ss.str();
 }
 
-bool DynamicField::equal(const DynamicField& rhs) const {
-    return std::memcmp(address, rhs.address, physicalType->size()) == 0;
-}
+bool DynamicField::equal(const DynamicField& rhs) const { return std::memcmp(address, rhs.address, physicalType->size()) == 0; }
 
 bool DynamicField::operator==(const DynamicField& rhs) const { return equal(rhs); };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const { return !equal(rhs); }
 
 const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalType; };
-
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 

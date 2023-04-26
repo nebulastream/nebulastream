@@ -26,8 +26,8 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -273,7 +273,6 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::stri
     const std::string delimiter = ",";
     auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
 
-
     // Do-while loop for checking, if we have another line to parse from the inputFile
     const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
     auto it = beginIt;
@@ -291,7 +290,6 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::stri
             break;
         }
 
-
         if (tupleCount >= maxTuplesPerBuffer) {
             buffer.setNumberOfTuples(tupleCount);
             recordBuffers.emplace_back(buffer);
@@ -299,7 +297,7 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::stri
             tupleCount = 0UL;
         }
         ++it;
-    } while(it != endIt);
+    } while (it != endIt);
 
     if (tupleCount > 0) {
         buffer.setNumberOfTuples(tupleCount);
