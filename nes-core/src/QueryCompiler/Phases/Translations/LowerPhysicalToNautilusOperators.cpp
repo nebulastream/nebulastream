@@ -27,11 +27,11 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
+#include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
@@ -59,9 +59,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -198,10 +198,14 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto serializedInstance = flatMapJavaUDFDescriptor->getSerializedInstance();
         auto returnType = flatMapJavaUDFDescriptor->getReturnType();
 
-        auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className, methodName,
-                                                                                               inputClassName, outputClassName,
-                                                                                               byteCodeList, serializedInstance,
-                                                                                               inputSchema, outputSchema,
+        auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(className,
+                                                                                               methodName,
+                                                                                               inputClassName,
+                                                                                               outputClassName,
+                                                                                               byteCodeList,
+                                                                                               serializedInstance,
+                                                                                               inputSchema,
+                                                                                               outputSchema,
                                                                                                std::nullopt);
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
@@ -571,8 +575,8 @@ LowerPhysicalToNautilusOperators::lowerMapJavaUDF(Runtime::Execution::PhysicalOp
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-                                                  uint64_t handlerIndex) {
+                                                      const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                                      uint64_t handlerIndex) {
     auto flatMapOperator = operatorPtr->as<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>();
     auto mapJavaUDFDescriptor = flatMapOperator->getJavaUDFDescriptor();
     auto inputSchema = mapJavaUDFDescriptor->getInputSchema();

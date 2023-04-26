@@ -13,11 +13,11 @@
 */
 #ifdef ENABLE_JNI
 
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -39,7 +39,7 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
 
     jobject udf_result, instance;
     // Check if flat map object was created
-    if(handler->getFlatMapUDFObject() == nullptr) {
+    if (handler->getFlatMapUDFObject() == nullptr) {
         // Find class implementing the map udf
         jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -78,7 +78,7 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
         instance = handler->getEnvironment()->NewGlobalRef(instance);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
-        pojoObjectPtr = handler->getEnvironment()->NewGlobalRef((jobject)pojoObjectPtr);
+        pojoObjectPtr = handler->getEnvironment()->NewGlobalRef((jobject) pojoObjectPtr);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
         // persist the udf state

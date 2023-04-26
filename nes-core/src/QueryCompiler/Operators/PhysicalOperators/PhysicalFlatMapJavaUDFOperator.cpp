@@ -16,10 +16,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
-    PhysicalFlatMapJavaUDFOperator::PhysicalFlatMapJavaUDFOperator(OperatorId id,
-                                                                   const SchemaPtr& inputSchema,
-                                                                   const SchemaPtr& outputSchema,
-                                                                   const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor)
+PhysicalFlatMapJavaUDFOperator::PhysicalFlatMapJavaUDFOperator(OperatorId id,
+                                                               const SchemaPtr& inputSchema,
+                                                               const SchemaPtr& outputSchema,
+                                                               const Catalogs::UDF::JavaUDFDescriptorPtr& javaUDFDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       javaUDFDescriptor(std::move(javaUDFDescriptor)) {}
 

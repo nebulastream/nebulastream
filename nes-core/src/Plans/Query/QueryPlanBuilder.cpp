@@ -78,7 +78,8 @@ NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescript
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan) {
+NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
+                                                      NES::QueryPlanPtr queryPlan) {
     NES_DEBUG2("QueryPlanBuilder: add flat map java udf operator to query plan");
     auto op = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);

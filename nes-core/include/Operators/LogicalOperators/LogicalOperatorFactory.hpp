@@ -221,7 +221,7 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr
     createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
-                                    OperatorId id = Util::getNextOperatorId());
+                                        OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES

@@ -18,9 +18,9 @@
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>

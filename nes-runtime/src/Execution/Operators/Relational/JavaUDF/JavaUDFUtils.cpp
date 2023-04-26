@@ -15,13 +15,13 @@
 #ifdef ENABLE_JNI
 
 #include <API/Schema.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
+#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -184,25 +184,17 @@ void* createObjectType(void* state, T value, std::string className, std::string 
     return object;
 }
 
-void* createBooleanObject(void* state, bool value) {
-    return createObjectType(state, value, "java/lang/Boolean", "(Z)V");
-}
+void* createBooleanObject(void* state, bool value) { return createObjectType(state, value, "java/lang/Boolean", "(Z)V"); }
 
 void* createFloatObject(void* state, float value) { return createObjectType(state, value, "java/lang/Float", "(F)V"); }
 
-void* createDoubleObject(void* state, double value) {
-    return createObjectType(state, value, "java/lang/Double", "(D)V");
-}
+void* createDoubleObject(void* state, double value) { return createObjectType(state, value, "java/lang/Double", "(D)V"); }
 
-void* createIntegerObject(void* state, int32_t value) {
-    return createObjectType(state, value, "java/lang/Integer", "(I)V");
-}
+void* createIntegerObject(void* state, int32_t value) { return createObjectType(state, value, "java/lang/Integer", "(I)V"); }
 
 void* createLongObject(void* state, int64_t value) { return createObjectType(state, value, "java/lang/Long", "(J)V"); }
 
-void* createShortObject(void* state, int16_t value) {
-    return createObjectType(state, value, "java/lang/Short", "(S)V");
-}
+void* createShortObject(void* state, int16_t value) { return createObjectType(state, value, "java/lang/Short", "(S)V"); }
 
 void* createByteObject(void* state, int8_t value) { return createObjectType(state, value, "java/lang/Byte", "(B)V"); }
 
@@ -422,5 +414,5 @@ void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex
     return setField(state, classPtr, objectPtr, fieldIndex, value, "Ljava/lang/String;");
 }
 
-} // namespace NES::Runtime::Execution::Operators
-#endif // ENABLE_JNI
+}// namespace NES::Runtime::Execution::Operators
+#endif// ENABLE_JNI

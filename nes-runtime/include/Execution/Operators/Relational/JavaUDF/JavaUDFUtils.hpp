@@ -17,13 +17,13 @@
 
 #ifdef ENABLE_JNI
 
-#include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
-#include <jni.h>
-#include <Util/SourceLocation.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+#include <API/Schema.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JVMContext.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Util/SourceLocation.hpp>
+#include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -43,8 +43,8 @@ inline void jniErrorCheck(JNIEnv* env, const char* func_name, int line_number) {
         auto toString = env->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
         auto string = (jstring) env->CallObjectMethod(exception, toString);
         const char* utf = env->GetStringUTFChars(string, &isCopy);
-        NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function "
-                                        << func_name << " at line " << line_number << ": " << utf);
+        NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function " << func_name << " at line "
+                                                                                                 << line_number << ": " << utf);
     }
 }
 
@@ -415,7 +415,7 @@ void setDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int32_t value) ;
+void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int32_t value);
 
 /**
  * Set the value of a long field of an object.
@@ -425,7 +425,7 @@ void setIntegerField(void* state, void* classPtr, void* objectPtr, int fieldInde
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int64_t value) ;
+void setLongField(void* state, void* classPtr, void* objectPtr, int fieldIndex, int64_t value);
 
 /**
  * Set the value of a short field of an object.

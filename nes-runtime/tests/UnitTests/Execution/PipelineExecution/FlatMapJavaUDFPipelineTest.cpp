@@ -14,11 +14,11 @@
 
 #ifdef ENABLE_JNI
 
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -163,7 +163,8 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("IntegerMapFunction", "flatMap", "java/lang/Integer", "java/lang/Integer", schema, testDataPath);
+    auto handler =
+        initMapHandler("IntegerMapFunction", "flatMap", "java/lang/Integer", "java/lang/Integer", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
