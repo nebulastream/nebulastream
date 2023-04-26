@@ -20,7 +20,7 @@ LockManager::LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
                          QueryCatalogServicePtr queryCatalogService,
                          GlobalQueryPlanPtr globalQueryPlan,
                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                         Catalogs::UDF::UdfCatalogPtr udfCatalog)
+                         Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
@@ -38,6 +38,6 @@ GlobalQueryPlanHandle LockManager::getGlobalQueryPlanHandle() { return {&*global
 
 SourceCatalogHandle LockManager::getSourceCatalogHandle() { return {&*sourceCatalog, UnlockDeleter(sourceCatalogMutex)}; }
 
-UdfCatalogHandle LockManager::getUdfCatalogHandle() { return {&*udfCatalog, UnlockDeleter(udfCatalogMutex)}; }
+UDFCatalogHandle LockManager::getUDFCatalogHandle() { return {&*udfCatalog, UnlockDeleter(udfCatalogMutex)}; }
 
 }// namespace NES

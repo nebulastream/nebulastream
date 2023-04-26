@@ -41,6 +41,7 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
+    Nautilus::CompilationOptions options;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -161,7 +162,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("IntegerMapFunction", "flatMap", "java/lang/Integer", "java/lang/Integer", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -182,7 +183,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineShortMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("ShortMapFunction", "flatMap", "java/lang/Short", "java/lang/Short", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -203,7 +204,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineByteMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("ByteMapFunction", "flatMap", "java/lang/Byte", "java/lang/Byte", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -224,7 +225,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("LongMapFunction", "flatMap", "java/lang/Long", "java/lang/Long", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -245,7 +246,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("DoubleMapFunction", "flatMap", "java/lang/Double", "java/lang/Double", schema, testDataPath);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
@@ -278,7 +279,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("StringMapFunction", "flatMap", "java/lang/String", "java/lang/String", schema, testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -338,7 +339,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler("ComplexPojoMapFunction", "flatMap", "ComplexPojo", "ComplexPojo", schema, testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
