@@ -23,6 +23,7 @@
 #include <optional>
 #include <thread>
 #include <vector>
+#include <unordered_map>
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>

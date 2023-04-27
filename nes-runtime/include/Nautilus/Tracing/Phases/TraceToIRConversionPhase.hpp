@@ -28,6 +28,7 @@
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Nautilus/Util/Frame.hpp>
+#include <memory>
 namespace NES::Nautilus::Tracing {
 
 /**

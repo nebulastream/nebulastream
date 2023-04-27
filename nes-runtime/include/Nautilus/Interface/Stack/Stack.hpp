@@ -15,8 +15,8 @@
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACK_HPP_
 #include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
-#include <list>
 #include <memory>
+#include <vector>
 namespace NES::Nautilus::Interface {
 class StackRef;
 
