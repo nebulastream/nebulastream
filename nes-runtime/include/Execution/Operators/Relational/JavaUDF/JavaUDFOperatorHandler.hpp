@@ -19,12 +19,12 @@
 
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <jni.h>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
 
