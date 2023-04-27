@@ -351,26 +351,30 @@ class CSVSourceProxy : public CSVSource {
 };
 
 class AdaptiveCSVSourceProxy : public CSVSource {
-public:
-    AdaptiveCSVSourceProxy(SchemaPtr schema,
-                   Runtime::BufferManagerPtr bufferManager,
-                   Runtime::QueryManagerPtr queryManager,
-                   CSVSourceTypePtr sourceConfig,
-                   OperatorId operatorId,
-                   size_t numSourceLocalBuffers,
-                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-            : CSVSource(schema,
-                        bufferManager,
-                        queryManager,
-                        sourceConfig,
-                        operatorId,
-                        0,
-                        numSourceLocalBuffers,
-                        GatheringMode::ADAPTIVE_MODE,
-                        successors){};
-
-private:
-    FRIEND_TEST(SourceTest, testAdaptiveSource);
+    public:
+        AdaptiveCSVSourceProxy(SchemaPtr schema,
+                       Runtime::BufferManagerPtr bufferManager,
+                       Runtime::QueryManagerPtr queryManager,
+                       CSVSourceTypePtr sourceConfig,
+                       OperatorId operatorId,
+                       size_t numSourceLocalBuffers,
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                : CSVSource(schema,
+                            bufferManager,
+                            queryManager,
+                            sourceConfig,
+                            operatorId,
+                            0,
+                            numSourceLocalBuffers,
+                            GatheringMode::ADAPTIVE_MODE,
+                            successors){
+            ON_CALL(*this, close()).WillByDefault(Return());
+            ON_CALL(*this, emitWorkFromSource(_)).WillByDefault(Return());
+        };
+        MOCK_METHOD(void, close, ());
+        MOCK_METHOD(void, emitWorkFromSource, (Runtime::TupleBuffer & buffer));
+    private:
+        FRIEND_TEST(SourceTest, testAdaptiveSource);
 };
 
 class TCPSourceProxy : public TCPSource {
@@ -1900,7 +1904,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 TEST_F(SourceTest, testAdaptiveSource) {
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(this->path_to_chameleon_file);
-    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setNumberOfBuffersToProduce(2);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType->setGatheringInterval(this->gatheringInterval);
 
@@ -1912,8 +1916,9 @@ TEST_F(SourceTest, testAdaptiveSource) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     csvDataSource.running = true;
+    auto originalInterval = csvDataSource.gatheringInterval;
     csvDataSource.runningRoutine();
-    // TODO: add assertion for changing interval
+    ASSERT_NE(originalInterval, csvDataSource.gatheringInterval);
     SUCCEED();
 }
 
