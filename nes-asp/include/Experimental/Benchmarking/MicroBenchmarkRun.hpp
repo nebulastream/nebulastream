@@ -66,13 +66,13 @@ class MicroBenchmarkRun {
      * @param inputFile
      * @param reps
      */
-    MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesConfig,
-                      const Parsing::SynopsisAggregationConfig& yamlAggregation,
-                      const uint32_t bufferSize,
-                      const uint32_t numberOfBuffers,
-                      const size_t windowSize,
-                      const std::string& inputFile,
-                      const size_t reps);
+    explicit MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesConfig,
+                               const Parsing::SynopsisAggregationConfig& yamlAggregation,
+                               const uint32_t bufferSize,
+                               const uint32_t numberOfBuffers,
+                               const size_t windowSize,
+                               const std::string& inputFile,
+                               const size_t reps);
 
   public:
     /**
