@@ -118,12 +118,12 @@ class SynopsisAggregationConfig {
      * @param inputFile
      * @param inputSchema
      */
-    SynopsisAggregationConfig(const Aggregation_Type& type,
-                              const std::string& fieldNameAggregation,
-                              const std::string& fieldNameApproximate,
-                              const std::string& timestampFieldName,
-                              const SchemaPtr& inputSchema,
-                              const SchemaPtr& outputSchema);
+    explicit SynopsisAggregationConfig(const Aggregation_Type& type,
+                                       const std::string& fieldNameAggregation,
+                                       const std::string& fieldNameApproximate,
+                                       const std::string& timestampFieldName,
+                                       const SchemaPtr& inputSchema,
+                                       const SchemaPtr& outputSchema);
 
     /**
      * @brief Creates an aggregation value from the current parameters for a min aggregation function
