@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.5.63](https://github.com/nebulastream/nebulastream/tree/v0.5.63) (2023-04-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.62...v0.5.63)
+
 ## [v0.5.62](https://github.com/nebulastream/nebulastream/tree/v0.5.62) (2023-04-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.61...v0.5.62)
