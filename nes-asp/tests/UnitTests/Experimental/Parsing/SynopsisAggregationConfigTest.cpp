@@ -54,7 +54,7 @@ namespace NES::ASP::Parsing {
         Aggregation_Type type = Aggregation_Type::MAX;
         std::string fieldNameAggregation = "value";
         std::string fieldNameApprox = "aggregation";
-        std::string inputFile = "some_input_file.csv";
+        std::string inputFile = "uniform_key_value_timestamp.csv";
         std::filesystem::path data = std::filesystem::path("some_folder") / "test" / "test123";
         std::string timeStampFieldName = "ts";
         Parsing::SynopsisAggregationConfig synopsisAggregationConfig;
@@ -95,7 +95,7 @@ namespace NES::ASP::Parsing {
         auto valuesCsv = synopsisAggregationConfig.getValuesAsCsv();
         auto toString = synopsisAggregationConfig.toString();
 
-        EXPECT_EQ(headerCsv, "Aggregation_Type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
+        EXPECT_EQ(headerCsv, "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,"
                              "aggregation_timeStampFieldName,aggregation_inputSchema,aggregation_outputSchema");
         EXPECT_EQ(valuesCsv, "MAX,value,aggregation,ts," + inputSchemaStr + "," + outputSchemaStr);
         EXPECT_EQ(toString, "type (MAX) fieldNameAggregation (value) fieldNameAccuracy (aggregation) "

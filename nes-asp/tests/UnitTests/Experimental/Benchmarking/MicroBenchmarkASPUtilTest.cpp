@@ -61,9 +61,9 @@ namespace NES::ASP::Util {
         EXPECT_EQ(parsedAggregations[1].first.type, Parsing::Aggregation_Type::SUM);
         EXPECT_EQ(parsedAggregations[2].first.type, Parsing::Aggregation_Type::MAX);
 
-        EXPECT_EQ(parsedAggregations[0].second, data / "some_input_file.csv");
-        EXPECT_EQ(parsedAggregations[1].second, data / "some_input_file.csv");
-        EXPECT_EQ(parsedAggregations[2].second, data / "some_other_input_file.csv");
+        EXPECT_EQ(parsedAggregations[0].second, data / "uniform_key_value_timestamp.csv");
+        EXPECT_EQ(parsedAggregations[1].second, data / "uniform_key_value_timestamp.csv");
+        EXPECT_EQ(parsedAggregations[2].second, data / "uniform_key_multiple_values_timestamp.csv");
 
         EXPECT_EQ(parsedAggregations[0].first.fieldNameAggregation, "value");
         EXPECT_EQ(parsedAggregations[1].first.fieldNameAggregation, "value");
