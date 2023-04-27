@@ -103,7 +103,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                                        allFieldNames.end(),
                                        std::string{},
                                        [&record](std::string acc, std::string s) {
-                                           return acc + s + "="+ record.read(s)->toString() + ",";
+                                           return acc + s + "=" + record.read(s)->toString() + ",";
                                        }));
         }
 
@@ -148,7 +148,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                                            allFieldNames.end(),
                                            std::string{},
                                            [&record](std::string acc, std::string s) {
-                                               return acc + s + "="+ record.read(s)->toString() + ",";
+                                               return acc + s + "=" + record.read(s)->toString() + ",";
                                            }),
                            std::accumulate(aggregationResultFieldIdentifiers.begin(),
                                            aggregationResultFieldIdentifiers.end(),
