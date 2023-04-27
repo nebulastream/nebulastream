@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCONTAINMENTBASEDCOMPLETEQUERYMERGERRULE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCONTAINMENTBASEDCOMPLETEQUERYMERGERRULE_HPP_
 
+#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
 namespace z3 {
@@ -62,7 +63,27 @@ class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
      */
     explicit Z3SignatureBasedQueryContainmentRule(const z3::ContextPtr& context);
 
+    /**
+     * @brief identify if the query plans are equal or not
+     * @param targetQueryPlan : target query plan
+     * @param hostQueryPlan : host query plan
+     * @return Map containing matching pair of target and host operators
+     */
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> areQueryPlansContained(const QueryPlanPtr& targetQueryPlan,
+                                                                                const QueryPlanPtr& hostQueryPlan);
+
+    /**
+     * @brief This method compares two operator signatures using Z3
+     * @param targetOperator : the target operator to compare
+     * @param hostOperator : the host operator to compare with
+     * @return bool true if equal else false
+     */
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> areOperatorsContained(const LogicalOperatorNodePtr& targetOperator,
+                                                                              const LogicalOperatorNodePtr& hostOperator);
+
     SignatureContainmentUtilPtr signatureContainmentUtil;
+    bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& targetOperator,
+                                        const LogicalOperatorNodePtr& hostOperator) const;
 };
 }// namespace NES::Optimizer
 

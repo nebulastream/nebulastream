@@ -24,6 +24,9 @@ using SolverPtr = std::shared_ptr<solver>;
 
 class context;
 using ContextPtr = std::shared_ptr<context>;
+
+class expr;
+using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
 namespace NES::Optimizer {

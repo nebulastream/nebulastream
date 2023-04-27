@@ -19,6 +19,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -43,6 +44,8 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
 
   public:
     SchemaPtr schema;
+    SchemaPtr schemaHouseholds;
+
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -50,14 +53,14 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
     //We indicate the respective containment relationship above each tuple
     std::vector<std::tuple<Query, Query>> containmentCasesTrue = {
         //Equal
-        std::tuple<Query, Query>(Query::from("car")
+        std::tuple<Query, Query>(Query::from("windTurbines")
                                      .map(Attribute("value") = 40)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
                                      .sink(printSinkDescriptor),
-                                 Query::from("car")
+                                 Query::from("windTurbines")
                                      .map(Attribute("value") = 40)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
@@ -66,28 +69,28 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
                                      .sink(printSinkDescriptor)),
         //Sig2 contains Sig1
         std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
         //Sig1 contains Sig2
         std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
         //Sig2 contains Sig1
         std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor))};
+            Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
+            Query::from("windTurbines").map(Attribute("value") = 40).sink(printSinkDescriptor))};
 
     //Vector with tuples containing two queries. The queries do not exhibit containment relationships but are for testing
     //that our algorithm correctly identifies these cases as NO_CONTAINMENT
     std::vector<std::tuple<Query, Query>> noContainmentCases = {
-        std::tuple<Query, Query>(Query::from("car")
+        std::tuple<Query, Query>(Query::from("windTurbines")
                                      .map(Attribute("value") = 40)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
                                      .sink(printSinkDescriptor),
-                                 Query::from("car")
+                                 Query::from("windTurbines")
                                      .map(Attribute("value") = 40)
                                      .filter(Attribute("id") > 45)
                                      .filter(Attribute("id") > 45)
@@ -95,15 +98,15 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
                                      .filter(Attribute("id") > 45)
                                      .sink(printSinkDescriptor)),
         std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") > 60).sink(printSinkDescriptor)),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") > 60).sink(printSinkDescriptor)),
         std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") > 60).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor))};
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") > 60).sink(printSinkDescriptor),
+            Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor))};
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case.");
     }
 
@@ -116,11 +119,23 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
                      ->addField("id", BasicType::UINT32)
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
-                     ->addField("value1", BasicType::UINT64);
+                     ->addField("value1", BasicType::UINT64)
+                     ->addField("value2", BasicType::UINT64);
+
+        schemaHouseholds = Schema::create()
+                               ->addField("ts", BasicType::UINT32)
+                               ->addField("type", DataTypeFactory::createFixedChar(8))
+                               ->addField("id", BasicType::UINT32)
+                               ->addField("value", BasicType::UINT64)
+                               ->addField("id1", BasicType::UINT32)
+                               ->addField("value1", BasicType::FLOAT32)
+                               ->addField("value2", BasicType::FLOAT64)
+                               ->addField("value3", BasicType::UINT64);
+
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-        sourceCatalog->addLogicalSource("car", schema);
-        sourceCatalog->addLogicalSource("bike", schema);
-        sourceCatalog->addLogicalSource("truck", schema);
+        sourceCatalog->addLogicalSource("windTurbines", schema);
+        sourceCatalog->addLogicalSource("solarPanels", schema);
+        sourceCatalog->addLogicalSource("households", schemaHouseholds);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
