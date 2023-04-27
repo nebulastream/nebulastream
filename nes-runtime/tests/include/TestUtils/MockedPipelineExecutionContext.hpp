@@ -21,7 +21,7 @@
 namespace NES {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
+    explicit MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
