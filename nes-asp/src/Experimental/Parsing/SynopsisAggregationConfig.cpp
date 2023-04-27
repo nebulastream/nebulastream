@@ -52,7 +52,7 @@ const std::string SynopsisAggregationConfig::toString() const {
 }
 
 const std::string SynopsisAggregationConfig::getHeaderAsCsv() const {
-    return "Aggregation_Type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
+    return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
            ",aggregation_inputSchema,aggregation_outputSchema";
 }
 

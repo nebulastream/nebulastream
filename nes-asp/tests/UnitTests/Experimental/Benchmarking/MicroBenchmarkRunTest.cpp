@@ -32,7 +32,7 @@ namespace NES::ASP::Benchmarking {
         auto data = "data";
         auto parsedMicroBenchmarks = MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFile, data);
 
-        auto inputSchema = inputFileSchemas["some_input_file.csv"];
+        auto inputSchema = inputFileSchemas["uniform_key_value_timestamp.csv"];
         auto inputSchemaStr = inputSchema->toString();
         auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type::MIN, *inputSchema, "value")->toString();
 
@@ -49,12 +49,12 @@ namespace NES::ASP::Benchmarking {
                                << std::endl << " - bufferSize : " << 1024
                                << std::endl << " - numberOfBuffers: " << 1234
                                << std::endl << " - windowSize: " << 11
-                               << std::endl << " - inputFile: data/some_input_file.csv"
+                               << std::endl << " - inputFile: data/uniform_key_value_timestamp.csv"
                                << std::endl << " - reps: " << 234;
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
         EXPECT_EQ(parsedMicroBenchmarks[0].getHeaderAsCsv(), "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize,"
-                                                             "Aggregation_Type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
+                                                             "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
                                                              ",aggregation_inputSchema,aggregation_outputSchema"
                                                              ",bufferSize,numberOfBuffers,windowSize,inputFile,reps");
         EXPECT_EQ(parsedMicroBenchmarks[0].getRowsAsCsv(), "");
@@ -70,11 +70,7 @@ namespace NES::ASP::Benchmarking {
         auto data = std::filesystem::path(TEST_CONFIGS_DIRECTORY) / "../../../../nes-asp" / "data";
         auto parsedMicroBenchmarks = MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFile, data);
 
-        auto inputSchema = inputFileSchemas["some_input_file.csv"];
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type::MIN, *inputSchema, "value")->toString();
-
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
-
         EXPECT_NO_THROW(parsedMicroBenchmarks[0].run());
     }
 

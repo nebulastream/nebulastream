@@ -1,10 +1,10 @@
 synopsis:
-  - type: SRSWR
+  - type: SRSWoR
     width: 10
 
 aggregation:
   - type: MIN
-    inputFile: "some_input_file.csv"
+    inputFile: "uniform_key_value_timestamp.csv"
     fieldNameAgg: "value"
     timestamp: "ts"
     fieldNameApprox: "aggregation"
