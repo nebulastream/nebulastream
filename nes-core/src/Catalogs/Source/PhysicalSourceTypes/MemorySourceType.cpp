@@ -14,6 +14,8 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+
 namespace NES {
 
 using namespace Configurations;

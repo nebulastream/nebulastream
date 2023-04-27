@@ -22,9 +22,9 @@ TestSink::TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runti
                    SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
                            nodeEngine, numOfProducers, 0, 0), expectedBuffer(expectedBuffer) {
         auto bufferManager = nodeEngine->getBufferManager(0);
-        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+        } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
             memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         }
 };

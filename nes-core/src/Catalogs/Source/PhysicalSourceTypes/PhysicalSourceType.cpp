@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 

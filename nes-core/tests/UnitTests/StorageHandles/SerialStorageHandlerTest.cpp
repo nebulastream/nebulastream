@@ -24,7 +24,7 @@
 #include <Topology/TopologyNode.hpp>
 
 namespace NES {
-class SerialStorageHandlerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SerialStorageHandlerTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SerialStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);

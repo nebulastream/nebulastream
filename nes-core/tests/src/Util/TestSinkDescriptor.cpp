@@ -19,7 +19,7 @@ TestSinkDescriptor::TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(st
 
 DataSinkPtr TestSinkDescriptor::getSink() { return sink; }
 
-std::string TestSinkDescriptor::toString() { return std::string(); }
+std::string TestSinkDescriptor::toString() const { return std::string(); }
 
 bool TestSinkDescriptor::equal(const SinkDescriptorPtr&) { return false; }
 

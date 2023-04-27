@@ -38,9 +38,9 @@ DataSourcePtr TestSourceDescriptor::create(OperatorId operatorId,
                                 std::move(std::move(successors)));
 }
 
-std::string TestSourceDescriptor::toString() { return std::string(); }
+std::string TestSourceDescriptor::toString() const { return std::string(); }
 
-bool TestSourceDescriptor::equal(const SourceDescriptorPtr&) { return false; }
+bool TestSourceDescriptor::equal(const SourceDescriptorPtr&) const { return false; }
 
 SourceDescriptorPtr TestSourceDescriptor::copy() { return NES::SourceDescriptorPtr(); }
 

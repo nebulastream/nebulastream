@@ -55,7 +55,7 @@ class TestSinkDescriptor : public SinkDescriptor {
      * @brief Creates a string representation
      * @return String representation
      */
-    std::string toString() override;
+    std::string toString() const override;
 
     /**
      * @brief Checks if two SinkDescriptors are equal

@@ -15,6 +15,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Views/MaterializedView.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Experimental::MaterializedView {
 

@@ -65,13 +65,13 @@ class TestSourceDescriptor : public SourceDescriptor {
      * @brief Creates a string representation
      * @return String representation
      */
-    [[nodiscard]] std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Checks if two SourceDescriptors are equal
      * @return True, if equal otherwise false
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const&) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const&) const override;
 
     /**
      * @brief Copies this SourceDescriptors

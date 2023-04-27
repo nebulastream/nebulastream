@@ -17,6 +17,7 @@
 #include <Configurations/TypedBaseOption.hpp>
 #include <string>
 #include <type_traits>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Configurations {
 /**
@@ -47,7 +48,6 @@ class EnumOption : public TypedBaseOption<EnumType> {
     void parseFromYAMLNode(Yaml::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 };
-
 
 }// namespace NES::Configurations
 

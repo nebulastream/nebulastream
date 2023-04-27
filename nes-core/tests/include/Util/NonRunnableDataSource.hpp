@@ -14,6 +14,8 @@
 
 #ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
 #define NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 namespace NES::Testing {

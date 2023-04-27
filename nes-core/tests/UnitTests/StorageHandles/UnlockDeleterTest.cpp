@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-class UnlockDeleterTest : public Testing::TestWithErrorHandling<testing::Test> {
+class UnlockDeleterTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UnlockDeleterTest.log", NES::LogLevel::LOG_DEBUG);

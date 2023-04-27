@@ -117,7 +117,7 @@ add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC nes)
+target_link_libraries(nesWorker PUBLIC nes )
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

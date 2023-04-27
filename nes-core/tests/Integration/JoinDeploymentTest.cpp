@@ -16,11 +16,11 @@
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <Util/TestUtils.hpp>
+#include <Util/TestSinkDescriptor.hpp>
 
 namespace NES::Runtime::Execution {
 
-class JoinDeploymentTest : public Testing::TestWithErrorHandling<testing::Test>,
+class JoinDeploymentTest : public Testing::TestWithErrorHandling,
                            public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -30,22 +30,22 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling<testing::Test>,
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_INFO("QueryExecutionTest: Tear down JoinDeploymentTest test case.");
         EXPECT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down JoinDeploymentTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {

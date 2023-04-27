@@ -17,7 +17,7 @@
 
 #include <Util/TestUtils.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
-
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <filesystem>
@@ -168,22 +168,7 @@ class TestHarness {
     TestHarness&
     attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalSourceName,
                                                uint32_t parentId,
-                                               WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
-        workerConfiguration->parentId = parentId;
-#ifdef TFDEF
-        workerConfiguration->isTensorflowSupported = true;
-#endif// TFDEF
-        std::string physicalSourceName = getNextPhysicalSourceName();
-        auto workerId = getNextTopologyId();
-        auto testHarnessWorkerConfiguration =
-            TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                   logicalSourceName,
-                                                   physicalSourceName,
-                                                   TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource,
-                                                   workerId);
-        testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
-        return *this;
-    }
+                                               WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create());
 
     /**
      * @brief add a memory source to be used in the test
@@ -201,21 +186,7 @@ class TestHarness {
      */
     TestHarness& attachWorkerWithLambdaSourceToCoordinator(const std::string& logicalSourceName,
                                                            PhysicalSourceTypePtr physicalSource,
-                                                           WorkerConfigurationPtr workerConfiguration) {
-        //We are assuming coordinator will start with id 1
-        workerConfiguration->parentId = 1;
-        std::string physicalSourceName = getNextPhysicalSourceName();
-        auto workerId = getNextTopologyId();
-        auto testHarnessWorkerConfiguration =
-            TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                   logicalSourceName,
-                                                   physicalSourceName,
-                                                   TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource,
-                                                   workerId);
-        testHarnessWorkerConfiguration->setPhysicalSourceType(physicalSource);
-        testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
-        return *this;
-    }
+                                                           WorkerConfigurationPtr workerConfiguration);
 
     /**
      * @brief add a csv source to be used in the test and connect to parent with specific parent id
@@ -224,23 +195,8 @@ class TestHarness {
      * @param parentId id of the parent to connect
      */
     TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
-                                                         const CSVSourceTypePtr& csvSourceType,
-                                                         uint64_t parentId) {
-        auto workerConfiguration = WorkerConfiguration::create();
-        std::string physicalSourceName = getNextPhysicalSourceName();
-        auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
-        workerConfiguration->physicalSources.add(physicalSource);
-        workerConfiguration->parentId = parentId;
-        uint32_t workerId = getNextTopologyId();
-        auto testHarnessWorkerConfiguration =
-            TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                   logicalSourceName,
-                                                   physicalSourceName,
-                                                   TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::CSVSource,
-                                                   workerId);
-        testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
-        return *this;
-    }
+                                                         CSVSourceTypePtr csvSourceType,
+                                                         uint64_t parentId);
 
     /**
       * @brief add a csv source to be used in the test
@@ -274,8 +230,7 @@ class TestHarness {
      * @param crdConfigFunctor A function pointer to specify the config changes of the CoordinatorConfiguration
      * @return the TestHarness
      */
-    TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor =
-                                   [](CoordinatorConfigurationPtr);
+    TestHarness& setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor = [](CoordinatorConfigurationPtr) {});
 
     /**
      * @brief execute the test based on the given operator, pushed elements, and number of workers,
