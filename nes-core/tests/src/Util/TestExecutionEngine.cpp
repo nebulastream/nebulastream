@@ -18,20 +18,24 @@
 
 namespace NES::Testing {
 
-TestExecutionEngine::TestExecutionEngine(QueryCompilation::QueryCompilerOptions::QueryCompiler compiler) {
+TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
+                                         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode) {
     auto workerConfiguration = WorkerConfiguration::create();
+
     workerConfiguration->queryCompiler.queryCompilerType = compiler;
+    workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy =
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
-    workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration->queryCompiler.compilationStrategy =
+            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     auto defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
     workerConfiguration->physicalSources.add(sourceConf);
     auto phaseProvider = std::make_shared<TestUtils::TestPhaseProvider>();
     nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                     .setPhaseFactory(phaseProvider)
-                     .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                     .build();
+            .setPhaseFactory(phaseProvider)
+            .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+            .build();
 
     // enable distributed window optimization
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
@@ -41,8 +45,8 @@ TestExecutionEngine::TestExecutionEngine(QueryCompilation::QueryCompilerOptions:
     distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
     originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
-    // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
-    Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
+    // Initialize the typeInferencePhase with a dummy SourceCatalog & UDFCatalog
+    Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     // We inject an invalid query parsing service as it is not used in the tests.
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);

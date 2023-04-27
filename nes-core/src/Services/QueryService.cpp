@@ -34,6 +34,7 @@
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 

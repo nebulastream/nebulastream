@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 #include <sstream>
 

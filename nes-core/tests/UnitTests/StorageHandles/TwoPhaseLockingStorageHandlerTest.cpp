@@ -25,7 +25,7 @@
 #include <Topology/TopologyNode.hpp>
 
 namespace NES {
-class TwoPhaseLockingStorageHandlerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class TwoPhaseLockingStorageHandlerTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TwoPhaseLockingStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);

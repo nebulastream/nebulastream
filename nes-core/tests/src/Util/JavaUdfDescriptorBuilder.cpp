@@ -12,55 +12,56 @@
     limitations under the License.
 */
 
-#include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 namespace NES::Catalogs::UDF {
 
-    JavaUdfDescriptorPtr JavaUdfDescriptorBuilder::build() {
-        return JavaUdfDescriptor::create(className,
+    JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() {
+        return JavaUDFDescriptor::create(className,
                                          methodName,
                                          instance,
                                          byteCodeList,
+                                         inputSchema,
                                          outputSchema,
                                          inputClassName,
                                          outputClassName);
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setClassName(const std::string& newClassName) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(const std::string& newClassName) {
         this->className = newClassName;
         return *this;
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setMethodName(const std::string& newMethodName) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(const std::string& newMethodName) {
         this->methodName = newMethodName;
         return *this;
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setInstance(const JavaSerializedInstance& newInstance) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(const JavaSerializedInstance& newInstance) {
         this->instance = newInstance;
         return *this;
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setByteCodeList(const JavaUdfByteCodeList& newByteCodeList) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(const JavaUDFByteCodeList& newByteCodeList) {
         this->byteCodeList = newByteCodeList;
         return *this;
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
         this->outputSchema = newOutputSchema;
         return *this;
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setInputClassName(const std::string newInputClassName) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(const std::string newInputClassName) {
         this->inputClassName = newInputClassName;
         return *this;
     }
 
-    JavaUdfDescriptorBuilder& JavaUdfDescriptorBuilder::setOutputClassName(const std::string newOutputClassName) {
+    JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(const std::string newOutputClassName) {
         this->outputClassName = newOutputClassName;
         return *this;
     }
 
-    JavaUdfDescriptorPtr JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor() { return JavaUdfDescriptorBuilder().build(); }
+    JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor() { return JavaUDFDescriptorBuilder().build(); }
 
 } // namespace NES::Catalogs::UDF

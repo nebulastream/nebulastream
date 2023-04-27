@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Experimental {
 

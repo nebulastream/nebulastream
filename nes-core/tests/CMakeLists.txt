@@ -22,6 +22,7 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 #-------------------------------##############----------------------------------
 #------------------------------- # Nes Utils for Test Suite --------------------------------
 
+include_directories(include)
 add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
         "src/Util/TestHarness/TestHarness.cpp"
         "src/Util/TestHarness/TestHarnessWorkerConfiguration.cpp"

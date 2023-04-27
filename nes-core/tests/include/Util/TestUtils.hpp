@@ -153,7 +153,7 @@ template<typename T>
  * @param sourceType
 * @return Command line argument
  */
-[[nodiscard]] std::string sourceType(std::string sourceType);
+[[nodiscard]] std::string sourceType(SourceType sourceType);
 
 /**
  * @brief Creates the command line argument for the csv source file path
@@ -269,7 +269,11 @@ template<typename T>
  */
 [[nodiscard]] std::string enableThreadLocalWindowing(bool prefix = false);
 
-std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
+/**
+ * @brief Enables the usage of Nautilus
+ * @return Command line argument
+ */
+std::string enableNautilus();
 
 /**
  * @brief start a new instance of a nes coordinator with a set of configuration flags

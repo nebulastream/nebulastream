@@ -64,7 +64,9 @@ class TestSourceDescriptor;
  */
 class TestExecutionEngine {
   public:
-    TestExecutionEngine(QueryCompilation::QueryCompilerOptions::QueryCompiler compiler);
+    TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
+                        const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode =
+                        QueryCompilation::QueryCompilerOptions::DumpMode::NONE);
 
     std::shared_ptr<TestSink> createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1);
 

@@ -46,6 +46,8 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
+
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;

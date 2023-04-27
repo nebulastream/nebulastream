@@ -18,7 +18,7 @@ namespace NES {
 TestHarnessWorkerConfigurationPtr TestHarnessWorkerConfiguration::create(WorkerConfigurationPtr workerConfiguration,
                                                                          uint32_t workerId) {
     return std::make_shared<TestHarnessWorkerConfiguration>(
-        TestHarnessWorkerConfiguration(std::move(workerConfiguration), NonSource, workerId));
+        TestHarnessWorkerConfiguration(std::move(workerConfiguration), TestHarnessWorkerSourceType::NonSource, workerId));
 }
 
 TestHarnessWorkerConfigurationPtr TestHarnessWorkerConfiguration::create(WorkerConfigurationPtr workerConfiguration,

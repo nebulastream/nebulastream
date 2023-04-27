@@ -31,7 +31,7 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext()
         // nop
     };
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(OperatorHandlerPtr handler)
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
     : PipelineExecutionContext(
         -1,// mock pipeline id
         0, // mock query id
@@ -43,7 +43,7 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(OperatorHandlerPt
         [this](TupleBuffer& buffer) {
             this->buffers.emplace_back(std::move(buffer));
         },
-        {std::move(handler)}){
+        handler){
         // nop
     };
 

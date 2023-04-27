@@ -16,15 +16,15 @@
 
 namespace NES {
     bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MetricPtr metric) {
-        if (metric->getMetricType() == Monitoring::DiskMetric) {
+        if (metric->getMetricType() == Monitoring::MetricType::DiskMetric) {
             return isValid(reader, metric->getValue<Monitoring::DiskMetrics>());
-        } else if (metric->getMetricType() == Monitoring::MemoryMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::MemoryMetric) {
             return isValid(reader, metric->getValue<Monitoring::MemoryMetrics>());
-        } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::RegistrationMetric) {
             return isValid(reader, metric->getValue<Monitoring::RegistrationMetrics>());
-        } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedCpuMetrics) {
             return isValid(reader, metric->getValue<Monitoring::CpuMetricsWrapper>());
-        } else if (metric->getMetricType() == Monitoring::WrappedNetworkMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedNetworkMetrics) {
             return isValid(reader, metric->getValue<Monitoring::NetworkMetricsWrapper>());
         } else {
             return false;
@@ -230,50 +230,50 @@ namespace NES {
             return true;
         }
 
-        if (!json.contains("registration")) {
+        if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::RegistrationMetric)))) {
             NES_ERROR("MetricValidator: Missing field registration");
             check = false;
         } else {
-            check = isValidRegistrationMetrics(reader, json["registration"]);
+            check = isValidRegistrationMetrics(reader, json[std::string(magic_enum::enum_name(Monitoring::MetricType::RegistrationMetric))]);
         }
 
-        if (!json.contains("disk")) {
+        if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::DiskMetric)))) {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
-            if (!(json["disk"].size() == 6U)) {
+            if (!(json[std::string(magic_enum::enum_name(Monitoring::MetricType::DiskMetric))].size() == 6U)) {
                 NES_ERROR("MetricValidator: Values for disk missing");
                 check = false;
             }
         }
 
-        if (!json.contains("wrapped_cpu")) {
+        if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedCpuMetrics)))) {
             NES_ERROR("MetricValidator: Missing field wrapped cpu");
             check = false;
         } else {
-            auto numCpuFields = json["wrapped_cpu"].size();
+            auto numCpuFields = json[std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedCpuMetrics))].size();
             if (numCpuFields <= 1) {
                 NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
                 check = false;
             }
         }
 
-        if (!json.contains("wrapped_network")) {
+        if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedNetworkMetrics)))) {
             NES_ERROR("MetricValidator: Missing field wrapped network");
             check = false;
         } else {
-            auto numFields = json["wrapped_network"].size();
+            auto numFields = json[std::string(magic_enum::enum_name(Monitoring::MetricType::WrappedNetworkMetrics))].size();
             if (numFields < 1) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
             }
         }
 
-        if (!json.contains("memory")) {
+        if (!json.contains(std::string(magic_enum::enum_name(Monitoring::MetricType::MemoryMetric)))) {
             NES_ERROR("MetricValidator: Missing field memory");
             check = false;
         } else {
-            auto numFields = json["memory"].size();
+            auto numFields = json[std::string(magic_enum::enum_name(Monitoring::MetricType::MemoryMetric))].size();
             if (numFields < 13) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
@@ -436,16 +436,16 @@ namespace NES {
     }
 
     bool MetricValidator::checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId) {
-        if (metric->getMetricType() == Monitoring::DiskMetric) {
+        if (metric->getMetricType() == Monitoring::MetricType::DiskMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::DiskMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == Monitoring::MemoryMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::MemoryMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::MemoryMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::RegistrationMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::RegistrationMetrics>();
             return parsedMetrics.nodeId == nodeId;
-        } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedCpuMetrics) {
             auto parsedMetrics = metric->getValue<Monitoring::CpuMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
                 if (parsedMetrics.getValue(i).nodeId != nodeId) {
@@ -453,7 +453,7 @@ namespace NES {
                 }
             }
             return parsedMetrics.getNodeId() == nodeId;
-        } else if (metric->getMetricType() == Monitoring::WrappedNetworkMetrics) {
+        } else if (metric->getMetricType() == Monitoring::MetricType::WrappedNetworkMetrics) {
             auto parsedMetrics = metric->getValue<Monitoring::NetworkMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
                 if (parsedMetrics.getNetworkValue(i).nodeId != nodeId) {
