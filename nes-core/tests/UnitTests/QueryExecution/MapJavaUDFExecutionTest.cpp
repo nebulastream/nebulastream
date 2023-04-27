@@ -20,6 +20,7 @@
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <jni.h>
@@ -41,8 +42,8 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         executionEngine =
-            std::make_shared<TestExecutionEngine>(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
-                                                  dumpMode);
+            std::make_shared<NES::Testing::TestExecutionEngine>(
+                    QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER, dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -55,7 +56,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("MapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
 };
 
