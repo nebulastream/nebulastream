@@ -39,7 +39,7 @@ SynopsisAggregationConfig::SynopsisAggregationConfig(const Aggregation_Type& typ
     : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate),
       timeStampFieldName(timeStampFieldName), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
-std::string SynopsisAggregationConfig::toString() {
+const std::string SynopsisAggregationConfig::toString() const {
     std::stringstream stringStream;
     stringStream << "type (" << magic_enum::enum_name(type) << ") "
                  << "fieldNameAggregation (" << fieldNameAggregation << ") "
@@ -48,16 +48,15 @@ std::string SynopsisAggregationConfig::toString() {
                  << "inputSchema (" << inputSchema->toString() << ") "
                  << "outputSchema (" << outputSchema->toString() << ")";
 
-
     return stringStream.str();
 }
 
-std::string SynopsisAggregationConfig::getHeaderAsCsv() {
-    return "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
+const std::string SynopsisAggregationConfig::getHeaderAsCsv() const {
+    return "Aggregation_Type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
            ",aggregation_inputSchema,aggregation_outputSchema";
 }
 
-std::string SynopsisAggregationConfig::getValuesAsCsv() {
+const std::string SynopsisAggregationConfig::getValuesAsCsv() const {
     std::stringstream stringStream;
     stringStream << magic_enum::enum_name(type) << ","
                  << fieldNameAggregation << ","
@@ -106,7 +105,7 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfi
 
 AggregationValuePtr SynopsisAggregationConfig::createAggregationValue() {
     switch(type) {
-        case Aggregation_Type::NONE: NES_THROW_RUNTIME_ERROR("Can not create aggregation value for the AGGREGATION_TYPE::NONE!");
+        case Aggregation_Type::NONE: NES_THROW_RUNTIME_ERROR("Can not create aggregation value for the Aggregation_Type::NONE!");
         case Aggregation_Type::MIN: return createAggregationValueMin();
         case Aggregation_Type::MAX: return createAggregationValueMax();
         case Aggregation_Type::SUM: return createAggregationValueSum();
@@ -289,7 +288,7 @@ SynopsisAggregationConfig& SynopsisAggregationConfig::operator=(const SynopsisAg
     return *this;
 }
 
-SynopsisAggregationConfig SynopsisAggregationConfig::create(const AGGREGATION_TYPE& type,
+SynopsisAggregationConfig SynopsisAggregationConfig::create(const Aggregation_Type& type,
                                                             const std::string& fieldNameAggregation,
                                                             const std::string& fieldNameApproximate,
                                                             const std::string& timestampFieldName,

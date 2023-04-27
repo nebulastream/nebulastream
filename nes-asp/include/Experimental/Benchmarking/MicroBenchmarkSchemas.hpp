@@ -47,17 +47,17 @@ static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
  * @param fieldNameAgg
  * @return Output schema
  */
-static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE type, Schema& inputSchema,
+static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type type, Schema& inputSchema,
                                                               const std::string& fieldNameAgg) {
     switch(type) {
-        case Parsing::AGGREGATION_TYPE::NONE:
-        case Parsing::AGGREGATION_TYPE::MIN:
-        case Parsing::AGGREGATION_TYPE::MAX:
-        case Parsing::AGGREGATION_TYPE::SUM:
-        case Parsing::AGGREGATION_TYPE::COUNT:
+        case Parsing::Aggregation_Type::NONE:
+        case Parsing::Aggregation_Type::MIN:
+        case Parsing::Aggregation_Type::MAX:
+        case Parsing::Aggregation_Type::SUM:
+        case Parsing::Aggregation_Type::COUNT:
             return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                 ->addField("aggregation", inputSchema.get(fieldNameAgg)->getDataType());
-        case Parsing::AGGREGATION_TYPE::AVERAGE:
+        case Parsing::Aggregation_Type::AVERAGE:
             return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                 ->addField("aggregation", BasicType::FLOAT64);
     }

@@ -34,7 +34,7 @@ namespace NES::ASP::Benchmarking {
 
         auto inputSchema = inputFileSchemas["some_input_file.csv"];
         auto inputSchemaStr = inputSchema->toString();
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "value")->toString();
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type::MIN, *inputSchema, "value")->toString();
 
         std::stringstream expectedToStringStream;
         expectedToStringStream << std::endl << " - synopsis arguments: "
@@ -54,7 +54,7 @@ namespace NES::ASP::Benchmarking {
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
         EXPECT_EQ(parsedMicroBenchmarks[0].getHeaderAsCsv(), "synopsis_type,synopsis_width,synopsis_height,synopsis_windowSize,"
-                                                             "aggregation_type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
+                                                             "Aggregation_Type,aggregation_fieldNameAggregation,aggregation_fieldNameApproximate,aggregation_timeStampFieldName"
                                                              ",aggregation_inputSchema,aggregation_outputSchema"
                                                              ",bufferSize,numberOfBuffers,windowSize,inputFile,reps");
         EXPECT_EQ(parsedMicroBenchmarks[0].getRowsAsCsv(), "");
@@ -71,7 +71,7 @@ namespace NES::ASP::Benchmarking {
         auto parsedMicroBenchmarks = MicroBenchmarkRun::parseMicroBenchmarksFromYamlFile(yamlFile, data);
 
         auto inputSchema = inputFileSchemas["some_input_file.csv"];
-        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::AGGREGATION_TYPE::MIN, *inputSchema, "value")->toString();
+        auto outputSchemaStr = getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type::MIN, *inputSchema, "value")->toString();
 
         EXPECT_EQ(parsedMicroBenchmarks.size(), 1);
 

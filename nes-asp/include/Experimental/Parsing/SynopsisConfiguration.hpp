@@ -52,7 +52,7 @@ enum class Synopsis_Type : uint8_t {
 class SynopsisConfiguration : public Configurations::BaseConfiguration {
 
   public:
-    Configurations::EnumOption<Synopsis_Type> type = {Configurations::SYNOPSIS_CONFIG_TYPE, SYNOPSIS_TYPE::NONE, "Type of synopsis."};
+    Configurations::EnumOption<Synopsis_Type> type = {Configurations::SYNOPSIS_CONFIG_TYPE, Synopsis_Type::NONE, "Type of synopsis."};
     Configurations::SizeTOption width = {Configurations::SYNOPSIS_CONFIG_WIDTH, 1, "Width of the synopsis."};
     Configurations::SizeTOption height = {Configurations::SYNOPSIS_CONFIG_HEIGHT, 1, "Height of the synopsis."};
     Configurations::SizeTOption windowSize = {Configurations::SYNOPSIS_CONFIG_WINDOWSIZE, 1, "WindowSize of the synopsis."};

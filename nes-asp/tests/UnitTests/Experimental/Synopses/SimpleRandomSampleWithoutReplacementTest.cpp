@@ -25,7 +25,7 @@ limitations under the License.
 
 namespace NES::ASP {
     class SimpleRandomSampleWithoutReplacementTest : public Testing::NESBaseTest,
-                                                     public ::testing::WithParamInterface<Parsing::AGGREGATION_TYPE> {
+                                                     public ::testing::WithParamInterface<Parsing::Aggregation_Type> {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -42,7 +42,7 @@ namespace NES::ASP {
         }
 
         Runtime::BufferManagerPtr bufferManager;
-        Parsing::AGGREGATION_TYPE aggregationType;
+        Parsing::Aggregation_Type aggregationType;
     };
 
 
@@ -61,7 +61,7 @@ namespace NES::ASP {
     }
 
     TEST_P(SimpleRandomSampleWithoutReplacementTest, testWithSmallNumberOfTuples) {
-        if (aggregationType == Parsing::AGGREGATION_TYPE::NONE) {
+        if (aggregationType == Parsing::Aggregation_Type::NONE) {
             // We do not check anything for the aggregation type none
             ASSERT_TRUE(true);
         }
@@ -110,15 +110,15 @@ namespace NES::ASP {
         }
     }
 
-    double getScalingFactor(Parsing::AGGREGATION_TYPE& type, size_t sampleSize, size_t numberOfTuples) {
-        if (type == Parsing::AGGREGATION_TYPE::SUM || type == Parsing::AGGREGATION_TYPE::COUNT) {
+    double getScalingFactor(Parsing::Aggregation_Type& type, size_t sampleSize, size_t numberOfTuples) {
+        if (type == Parsing::Aggregation_Type::SUM || type == Parsing::Aggregation_Type::COUNT) {
             return (double)numberOfTuples / sampleSize;
         }
         return 1;
     }
 
     TEST_P(SimpleRandomSampleWithoutReplacementTest, testWithSmallerSampleSizeThan) {
-        if (aggregationType == Parsing::AGGREGATION_TYPE::NONE) {
+        if (aggregationType == Parsing::Aggregation_Type::NONE) {
             // We do not check anything for the aggregation type none
             ASSERT_TRUE(true);
         }
@@ -191,9 +191,9 @@ namespace NES::ASP {
 
     INSTANTIATE_TEST_SUITE_P(SimpleTest,
                             SimpleRandomSampleWithoutReplacementTest,
-                            ::testing::Values( Parsing::AGGREGATION_TYPE::MIN, Parsing::AGGREGATION_TYPE::MAX,
-                                               Parsing::AGGREGATION_TYPE::SUM, Parsing::AGGREGATION_TYPE::AVERAGE,
-                                               Parsing::AGGREGATION_TYPE::COUNT),
+                            ::testing::Values( Parsing::Aggregation_Type::MIN, Parsing::Aggregation_Type::MAX,
+                                               Parsing::Aggregation_Type::SUM, Parsing::Aggregation_Type::AVERAGE,
+                                               Parsing::Aggregation_Type::COUNT),
                             [](const testing::TestParamInfo<SimpleRandomSampleWithoutReplacementTest::ParamType>& info) {
                                 return std::string(magic_enum::enum_name(info.param));
                             });

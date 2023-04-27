@@ -34,20 +34,6 @@ namespace NES::ASP::Benchmarking {
 
 static constexpr auto NANO_TO_SECONDS_MULTIPLIER = 1 * 1000 * 1000 * 1000UL;
 
-
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
-        : PipelineExecutionContext(
-            -1,// mock pipeline id
-            1,         // mock query id
-            nullptr,
-            1, //noWorkerThreads
-            {},
-            {},
-            handlers){};
-};
-
 /**
  * @brief MockedPipelineExecutionContext for our executable pipeline
  */

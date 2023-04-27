@@ -34,8 +34,8 @@ namespace NES::ASP::Parsing {
 
     TEST_F(SynopsisConfigurationTest, testCreate) {
         /* Creating random values */
-        auto numberOfTypes = magic_enum::enum_values<SYNOPSIS_TYPE>().size();
-        auto type = magic_enum::enum_cast<SYNOPSIS_TYPE>(rand() % numberOfTypes).value();
+        auto numberOfTypes = magic_enum::enum_values<Synopsis_Type>().size();
+        auto type = magic_enum::enum_cast<Synopsis_Type>(rand() % numberOfTypes).value();
         size_t width = rand();
         size_t height = rand();
         size_t windowSize = rand();
@@ -60,7 +60,7 @@ namespace NES::ASP::Parsing {
     }
 
     TEST_F(SynopsisConfigurationTest, testingGetHeaderAndRowCSVAndToString) {
-        auto type = SYNOPSIS_TYPE::ECM;
+        auto type = Synopsis_Type::ECM;
         size_t width = 42;
         size_t height = 43;
         size_t windowSize = 44;

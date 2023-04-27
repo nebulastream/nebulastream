@@ -57,9 +57,9 @@ namespace NES::ASP::Util {
         auto parsedAggregations = parseAggregations(configFile["aggregation"], data);
 
         ASSERT_EQ(parsedAggregations.size(), 3);
-        EXPECT_EQ(parsedAggregations[0].first.type, Parsing::AGGREGATION_TYPE::MIN);
-        EXPECT_EQ(parsedAggregations[1].first.type, Parsing::AGGREGATION_TYPE::SUM);
-        EXPECT_EQ(parsedAggregations[2].first.type, Parsing::AGGREGATION_TYPE::MAX);
+        EXPECT_EQ(parsedAggregations[0].first.type, Parsing::Aggregation_Type::MIN);
+        EXPECT_EQ(parsedAggregations[1].first.type, Parsing::Aggregation_Type::SUM);
+        EXPECT_EQ(parsedAggregations[2].first.type, Parsing::Aggregation_Type::MAX);
 
         EXPECT_EQ(parsedAggregations[0].second, data / "some_input_file.csv");
         EXPECT_EQ(parsedAggregations[1].second, data / "some_input_file.csv");

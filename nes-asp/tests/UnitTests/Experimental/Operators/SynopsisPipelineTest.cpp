@@ -149,8 +149,8 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     dynamicExpectedBuffer[0][outputSchema->get(0)->getName()].write(101L);
     dynamicExpectedBuffer.setNumberOfTuples(1);
 
-    auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::SYNOPSIS_TYPE::SRSWoR, numberOfTuplesToProduce);
-    auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(ASP::Parsing::AGGREGATION_TYPE::MIN,
+    auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::Synopsis_Type::SRSWoR, numberOfTuplesToProduce);
+    auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(ASP::Parsing::Aggregation_Type::MIN,
                                                                              fieldNameAggregation,
                                                                              fieldNameApproximate,
                                                                              timestampFieldName,
@@ -161,7 +161,7 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
 
     auto [pipeline, pipelineContext] = createExecutableSynopsisPipeline(synopsis, inputSchema, bufferManager);
     auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, CompilationOptions());
 
     executablePipeline->setup(*pipelineContext);
     for (auto& buffer : allBuffers) {
