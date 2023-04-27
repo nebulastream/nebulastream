@@ -546,7 +546,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     NES_TRACE2("DataSource produced buffer content= {}", buffer.toString(schema));
                 }
 
-                emitWorkFromSource(buf);
+                 emitWorkFromSource(buf);
                 ++numberOfBuffersProduced;
             } else {
                 NES_ERROR2("DataSource {}: stopping cause of invalid buffer", operatorId);
@@ -563,7 +563,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         }
         NES_TRACE2("DataSource  {} : Data Source finished processing iteration  {}", operatorId, numberOfBuffersProduced);
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
-        if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+        if (running && getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
