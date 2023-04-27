@@ -70,7 +70,7 @@ class SynopsisAggregationConfig {
      * @param outputSchema
      * @return SynopsisAggregationConfig
      */
-    static SynopsisAggregationConfig create(const AGGREGATION_TYPE& type,
+    static SynopsisAggregationConfig create(const Aggregation_Type& type,
                                             const std::string& fieldNameAggregation,
                                             const std::string& fieldNameApproximate,
                                             const std::string& timestampFieldName,
@@ -118,12 +118,12 @@ class SynopsisAggregationConfig {
      * @param inputFile
      * @param inputSchema
      */
-    YamlAggregation(const Aggregation_Type& type,
-                    const std::string& fieldNameAggregation,
-                    const std::string& fieldNameApproximate,
-                    const std::string& timestampFieldName,
-                    const SchemaPtr& inputSchema,
-                    const SchemaPtr& outputSchema);
+    SynopsisAggregationConfig(const Aggregation_Type& type,
+                              const std::string& fieldNameAggregation,
+                              const std::string& fieldNameApproximate,
+                              const std::string& timestampFieldName,
+                              const SchemaPtr& inputSchema,
+                              const SchemaPtr& outputSchema);
 
     /**
      * @brief Creates an aggregation value from the current parameters for a min aggregation function

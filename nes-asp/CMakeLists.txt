@@ -12,7 +12,6 @@
 
 message(STATUS "Building approximate stream processing...")
 
-
 # Include dirs
 include_directories("include/")
 

@@ -45,8 +45,7 @@ void MicroBenchmarkRun::run() {
 
         // Create the synopsis, so we can call getApproximate after all buffers have been executed
         NES_INFO2("Creating the synopsis...");
-        auto synopsis = AbstractSynopsis::create(*synopsesArguments);
-        auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferSize, aggregation.inputSchema);
+        auto synopsis = AbstractSynopsis::create(*synopsesArguments, aggregation);
         synopsis->setBufferManager(bufferManager);
 
         // Create and compile the pipeline and create a workerContext
@@ -57,7 +56,7 @@ void MicroBenchmarkRun::run() {
         // TODO once we have a stack ref Nautilus then we can use the PipelineCompiler #3677
         // auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler").get();
         auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineInterpreter").get();
-        auto executablePipeline = provider->create(pipeline);
+        auto executablePipeline = provider->create(pipeline, Nautilus::CompilationOptions());
 
         // Creating strings here for the snapshots
         const std::string setupPipelineSnapshotName = "setupPipeline_loopIteration_" + std::to_string(rep + 1);
@@ -112,7 +111,7 @@ std::vector<MicroBenchmarkRun> MicroBenchmarkRun::parseMicroBenchmarksFromYamlFi
     auto parsedNumberOfBuffers = ASP::Util::parseNumberOfBuffers(configFile["numberOfBuffers"]);
 
     for (const auto& synopsisArgument : parsedSynopsisArguments) {
-        for (const auto& aggregation : parsedAggregations) {
+        for (const auto& [aggregation, inputFile] : parsedAggregations) {
             for (const auto& windowSize : parsedWindowSizes) {
                 for (const auto& bufferSize : parsedBufferSizes) {
                     for (const auto& numberOfBuffers : parsedNumberOfBuffers) {
