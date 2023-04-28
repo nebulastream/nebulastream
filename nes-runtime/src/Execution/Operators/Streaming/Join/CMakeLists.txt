@@ -13,3 +13,6 @@
 
 add_subdirectory(HashJoin)
 add_subdirectory(NestedLoopJoin)
+
+add_source(nes-runtime
+        StreamJoinUtil.cpp)

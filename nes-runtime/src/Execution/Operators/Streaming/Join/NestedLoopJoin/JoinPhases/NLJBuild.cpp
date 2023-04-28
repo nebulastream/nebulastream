@@ -36,11 +36,11 @@ void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t times
     return opHandler->insertNewTuple(timestampRecord, isLeftSide);
 }
 
-bool updateStateOfNLJWindows(void* ptrOpHandler, uint64_t timestampRecord) {
+bool updateStateOfNLJWindows(void* ptrOpHandler, uint64_t timestampRecord, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->updateStateOfNLJWindows(timestampRecord);
+    return opHandler->updateStateOfNLJWindows(timestampRecord, isLeftSide);
 }
 
 void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx) {
@@ -77,7 +77,9 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowsTriggeredMemRef = Nautilus::FunctionCall("updateStateOfNLJWindows", updateStateOfNLJWindows,
-                                                 operatorHandlerMemRef, record.read(timeStampField).as<UInt64>());
+                                                         operatorHandlerMemRef,
+                                                         record.read(timeStampField).as<UInt64>(),
+                                                         Value<Boolean>(isLeftSide));
 
     // Check if window is done
     if (windowsTriggeredMemRef == Value<Boolean>(true)) {

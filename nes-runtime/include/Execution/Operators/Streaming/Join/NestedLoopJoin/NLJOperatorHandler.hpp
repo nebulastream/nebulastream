@@ -26,25 +26,41 @@ public:
 
     uint8_t* insertNewTuple(uint64_t timestamp, bool isLeftSide);
 
-    void createNewWindow(bool isLeftSide);
-
     void deleteWindow(uint64_t timestamp);
-
-    void incrementLastTupleTimestamp(bool isLeftSide);
 
     bool updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide);
 
     std::list<NLJWindow>& getAllNLJWindows();
 
+    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
+
+    uint8_t* getFirstTuple(uint64_t windowIdentifier, bool isLeftSide);
+
+    SchemaPtr getSchema(bool isLeftSide);
+
+    uint64_t getPositionOfJoinKey(bool isLeftSide);
+
+    std::pair<uint64_t, uint64_t> getWindowStartEnd(uint64_t windowIdentifier);
+
+    const std::string &getJoinFieldNameLeft() const;
+
+    const std::string &getJoinFieldNameRight() const;
+
 private:
-    NLJWindow& getWindow(uint64_t timestamp);
+    void createNewWindow();
+
+    std::optional<NLJWindow*> getWindowByTimestamp(uint64_t timestamp);
+
+    std::optional<NLJWindow*> getWindowByWindowIdentifier(uint64_t windowIdentifier);
 
 
     std::list<NLJWindow> nljWindows;
     size_t windowSize;
-    uint64_t counterFinishedBuildingStart;
+    uint64_t windowStart = 0;
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
+    std::string joinFieldNameLeft;
+    std::string joinFieldNameRight;
 };
 } // namespace NES::Runtime::Execution::Operators
 

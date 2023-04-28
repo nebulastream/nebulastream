@@ -27,6 +27,12 @@ public:
 
     enum class WindowState : uint8_t { BOTH_SIDES_FILLING, ONLY_LEFT_FILLING, ONLY_RIGHT_FILLING, DONE_FILLING,
             EMITTED_TO_NLJ_SINK};
+
+    explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd);
+
+    bool operator==(const NLJWindow &rhs) const;
+    bool operator!=(const NLJWindow &rhs) const;
+
     /**
      * @brief Makes sure that enough space is available for writing the tuple. This method returns a pointer to the start
      * of the newly space
@@ -56,8 +62,6 @@ public:
 
     uint64_t getWindowEnd() const;
 
-    uint64_t fetch_add(uint64_t add);
-
     std::atomic<WindowState> windowState;
 
 private:
@@ -65,7 +69,6 @@ private:
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;
     std::mutex rightTuplesMutex;
-    std::atomic<uint64_t> counterFinishedBuilding;
     uint64_t windowStart;
     uint64_t windowEnd;
 
