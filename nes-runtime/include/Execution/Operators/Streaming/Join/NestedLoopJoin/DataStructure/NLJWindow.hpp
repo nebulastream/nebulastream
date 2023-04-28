@@ -15,13 +15,18 @@
 #ifndef NES_NLJWINDOW_HPP
 #define NES_NLJWINDOW_HPP
 
+#include <atomic>
 #include <cstdint>
 #include <mutex>
 #include <vector>
 
 namespace NES::Runtime::Execution {
-class NLJWindow {
 
+class NLJWindow {
+public:
+
+    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, ONLY_LEFT_FILLING, ONLY_RIGHT_FILLING, DONE_FILLING,
+            EMITTED_TO_NLJ_SINK};
     /**
      * @brief Makes sure that enough space is available for writing the tuple. This method returns a pointer to the start
      * of the newly space
@@ -30,11 +35,40 @@ class NLJWindow {
      */
     uint8_t* insertNewTuple(size_t sizeOfTupleInByte, bool leftSide);
 
+    /**
+     * @brief Returns the
+     * @param sizeOfTupleInByte
+     * @param tuplePos
+     * @param leftSide
+     * @return Pointer to the start of the memory for the
+     */
+    uint8_t* getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide);
+
+    /**
+     * @brief Returns the number of tuples in this window
+     * @param sizeOfTupleInByte
+     * @param leftSide
+     * @return size_t
+     */
+    size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide);
+
+    uint64_t getWindowStart() const;
+
+    uint64_t getWindowEnd() const;
+
+    uint64_t fetch_add(uint64_t add);
+
+    std::atomic<WindowState> windowState;
+
 private:
     std::vector<uint8_t> leftTuples;
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;
     std::mutex rightTuplesMutex;
+    std::atomic<uint64_t> counterFinishedBuilding;
+    uint64_t windowStart;
+    uint64_t windowEnd;
+
 };
 } // namespace NES::Runtime::Execution
 

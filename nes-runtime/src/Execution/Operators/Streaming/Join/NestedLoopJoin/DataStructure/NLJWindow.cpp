@@ -28,4 +28,32 @@ namespace NES::Runtime::Execution {
             return &rightTuples[currentSize];
         }
     }
+
+    uint8_t* NLJWindow::getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide) {
+        if (leftSide) {
+            return &leftTuples[sizeOfTupleInByte * tuplePos];
+        } else {
+            return &rightTuples[sizeOfTupleInByte * tuplePos];
+        }
+    }
+
+    size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
+        if (leftSide) {
+            return leftTuples.size() / sizeOfTupleInByte;
+        } else {
+            return rightTuples.size() / sizeOfTupleInByte;
+        }
+    }
+
+    uint64_t NLJWindow::getWindowStart() const {
+        return windowStart;
+    }
+
+    uint64_t NLJWindow::getWindowEnd() const {
+        return windowEnd;
+    }
+
+    uint64_t NLJWindow::fetch_add(uint64_t add) {
+        return counterFinishedBuilding.fetch_add(add);
+    }
 }

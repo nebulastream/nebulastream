@@ -19,10 +19,51 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+
 
 namespace NES::Runtime::Execution::Operators {
 
+void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t timestampRecord) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+
+    NLJOperatorHandler* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    return opHandler->insertNewTuple(timestampRecord, isLeftSide);
+}
+
+bool updateStateOfNLJWindows(void* ptrOpHandler, uint64_t timestampRecord) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    return opHandler->updateStateOfNLJWindows(timestampRecord);
+}
+
+void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+    NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
+
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
+
+    auto& allNLJWindows = opHandler->getAllNLJWindows();
+    for (auto& nljWindow : allNLJWindows) {
+        auto expected = NLJWindow::WindowState::DONE_FILLING;
+        if (nljWindow.windowState.compare_exchange_strong(expected, NLJWindow::WindowState::EMITTED_TO_NLJ_SINK)) {
+            auto buffer = workerCtx->allocateTupleBuffer();
+            auto windowEnd = nljWindow.getWindowEnd();
+            std::memcpy(buffer.getBuffer(), &windowEnd, sizeof(uint64_t));
+            buffer.setNumberOfTuples(1);
+            pipelineCtx->emitBuffer(buffer, *workerCtx);
+        }
+    }
+}
 
 
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
@@ -35,22 +76,23 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto lastTupleWindowRef =
-            Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef, Value<Boolean>(isLeftSide));
+    auto windowsTriggeredMemRef = Nautilus::FunctionCall("updateStateOfNLJWindows", updateStateOfNLJWindows,
+                                                 operatorHandlerMemRef, record.read(timeStampField).as<UInt64>());
 
     // Check if window is done
-    if (record.read(timeStampField) > lastTupleWindowRef) {
-        Nautilus::FunctionCall("triggerJoinSink",
-                               triggerJoinSink,
+    if (windowsTriggeredMemRef == Value<Boolean>(true)) {
+        Nautilus::FunctionCall("triggerJoinSinkProxy",
+                               triggerJoinSinkProxy,
                                operatorHandlerMemRef,
                                ctx.getPipelineContext(),
-                               ctx.getWorkerContext(),
-                               Value<Boolean>(isLeftSide));
+                               ctx.getWorkerContext());
     }
 
-    // Get the pointer/memref to the new entry
-    auto entryMemRef = Nautilus::FunctionCall();
-
+    // Get the memRef to the new entry
+    auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy", insertEntryMemRefProxy,
+                                              operatorHandlerMemRef,
+                                              Value<Boolean>(isLeftSide),
+                                              record.read(timeStampField).as<UInt64>());
 
     // Write Record at entryMemRef
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

@@ -22,13 +22,27 @@
 namespace NES::Runtime::Execution::Operators {
 class NLJOperatorHandler : public OperatorHandler {
 
+public:
+
+    uint8_t* insertNewTuple(uint64_t timestamp, bool isLeftSide);
+
+    void createNewWindow(bool isLeftSide);
+
+    void deleteWindow(uint64_t timestamp);
+
+    void incrementLastTupleTimestamp(bool isLeftSide);
+
+    bool updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide);
+
+    std::list<NLJWindow>& getAllNLJWindows();
+
 private:
+    NLJWindow& getWindow(uint64_t timestamp);
+
+
     std::list<NLJWindow> nljWindows;
     size_t windowSize;
     uint64_t counterFinishedBuildingStart;
-    uint64_t counterFinishedSinkStart;
-    uint64_t lastTupleTimeStampLeft;
-    uint64_t lastTupleTimeStampRight;
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
 };
