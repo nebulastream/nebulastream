@@ -26,6 +26,11 @@ void allocateNewPageProxy(void* stackPtr) {
     stack->appendPage();
 }
 
+uint64_t getTotalNumberOfEntriesProxy(void* stackPtr) {
+    auto* stack = (Stack*) stackPtr;
+    return stack->getNumberOfEntries();
+}
+
 Value<MemRef> StackRef::allocateEntry() {
     // check if we should allocate a new page
     if (getNumberOfEntries() >= entriesPerPage) {
@@ -41,6 +46,11 @@ Value<MemRef> StackRef::allocateEntry() {
 Value<MemRef> StackRef::getCurrentPage() { return getMember(stackRef, Stack, currentPage).load<MemRef>(); }
 
 Value<UInt64> StackRef::getNumberOfEntries() { return getMember(stackRef, Stack, numberOfEntries).load<UInt64>(); }
+
+Value<UInt64> StackRef::getTotalNumberOfEntries() {
+    return FunctionCall("getTotalNumberOfEntriesProxy", getTotalNumberOfEntriesProxy, stackRef);
+}
+
 void StackRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
 
 }// namespace NES::Nautilus::Interface
