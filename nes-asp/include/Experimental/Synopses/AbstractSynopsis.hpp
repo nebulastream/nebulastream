@@ -73,12 +73,6 @@ class AbstractSynopsis {
                                       Parsing::SynopsisAggregationConfig& aggregationConfig);
 
     /**
-     * @brief Sets the bufferManager
-     * @param bufferManager
-     */
-    void setBufferManager(const Runtime::BufferManagerPtr& bufferManager);
-
-    /**
      * @brief virtual deconstructor
      */
     virtual ~AbstractSynopsis() = default;
@@ -90,7 +84,6 @@ class AbstractSynopsis {
     std::string fieldNameApproximate;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
-    Runtime::BufferManagerPtr bufferManager;
 
 };
 } // namespace NES::ASP

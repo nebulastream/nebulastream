@@ -188,7 +188,7 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SynopsisPipelineTest,
-                        ::testing::Values("PipelineInterpreter"), //, "PipelineCompiler"), This will be enabled in #3677
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<SynopsisPipelineTest::ParamType>& info) {
                             return info.param;
                         });

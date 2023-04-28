@@ -53,7 +53,7 @@ TEST_F(StackTest, appendValue) {
     for (auto i = 0; i < 1000; i++) {
         stackRef.allocateEntry();
     }
-    auto entries = stack.getNumberOfEntries();
+
     ASSERT_EQ(stack.getNumberOfEntries(), 1000);
     ASSERT_EQ(stack.getNumberOfPages(), 8);
 }

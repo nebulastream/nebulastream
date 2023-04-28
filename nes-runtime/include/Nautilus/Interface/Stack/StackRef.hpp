@@ -48,6 +48,12 @@ class StackRef {
      */
     void setNumberOfEntries(const Value<>& entries);
 
+    /**
+     * @brief Returns the total number of entries for this stack.
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getTotalNumberOfEntries();
+
   private:
     Value<MemRef> getCurrentPage();
     Value<MemRef> stackRef;

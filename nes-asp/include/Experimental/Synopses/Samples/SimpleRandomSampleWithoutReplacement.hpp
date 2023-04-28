@@ -17,11 +17,14 @@
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/Stack/Stack.hpp>
 
 namespace NES::ASP{
 
 /**
- * @brief Implementation of a Simple Random Sample Without Replacement, as explained in https://www.statisticshowto.com/sampling-with-replacement-without/
+ * @brief Implementation of a Simple Random Sample Without Replacement, as explained
+ * in https://www.statisticshowto.com/sampling-with-replacement-without/
  */
 class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
 
@@ -74,8 +77,8 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
     multiplyWithScalingFactor(Nautilus::Value<> approximatedValue, Nautilus::Value<Nautilus::Double> scalingFactor);
 
     const size_t sampleSize;
-    std::vector<Runtime::TupleBuffer> storedRecords;
-    uint64_t numberOfTuples;
+    const size_t recordSize;
+    std::unique_ptr<Nautilus::Interface::Stack> stack;
 };
 } // namespace NES::ASP
 
