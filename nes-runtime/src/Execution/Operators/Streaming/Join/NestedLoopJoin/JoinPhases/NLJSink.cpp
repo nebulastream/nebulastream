@@ -12,4 +12,19 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+
+namespace NES::Runtime::Execution::Operators {
+
+void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
+
+    Nautilus::FunctionCall("performNLJProxy", performNLJProxy, operatorHandlerMemRef, joinPartitionTimestampPtr);
+}
+
+} // namespace NES::Runtime::Execution::Operators

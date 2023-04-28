@@ -16,4 +16,41 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+bool NLJOperatorHandler::updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide) {
+    bool atLeastOneDoneFilling = false;
+
+    for (auto& curWindow : nljWindows) {
+        if (curWindow.windowState == NLJWindow::WindowState::DONE_FILLING) {
+            atLeastOneDoneFilling = true;
+            continue;
+        }
+        if (curWindow.windowState == NLJWindow::WindowState::EMITTED_TO_NLJ_SINK ||
+            (isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING) ||
+            (!isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_LEFT_FILLING)) {
+            continue;
+        }
+
+        if (timestamp > curWindow.getWindowEnd()) {
+            if ((isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING) ||
+                (!isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_LEFT_FILLING)) {
+                curWindow.windowState = NLJWindow::WindowState::DONE_FILLING;
+                atLeastOneDoneFilling = true;
+            }
+
+            if (curWindow.windowState == NLJWindow::WindowState::BOTH_SIDES_FILLING) {
+                if (isLeftSide) {
+                    curWindow.windowState = NLJWindow::WindowState::ONLY_RIGHT_FILLING;
+                } else {
+                    curWindow.windowState = NLJWindow::WindowState::ONLY_LEFT_FILLING;
+                }
+            }
+        }
+    }
+
+    return atLeastOneDoneFilling;
+}
+
+std::list<NLJWindow> &NLJOperatorHandler::getAllNLJWindows() {
+    return nljWindows;
+}
 } // namespace NES::Runtime::Execution::Operators
