@@ -340,7 +340,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
         "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_MOST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
