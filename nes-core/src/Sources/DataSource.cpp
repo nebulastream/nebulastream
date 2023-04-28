@@ -476,6 +476,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
 }
 
 void DataSource::runningRoutineAdaptiveGatheringInterval() {
+    NES_TRACE2("Running in Adaptive Mode");
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
