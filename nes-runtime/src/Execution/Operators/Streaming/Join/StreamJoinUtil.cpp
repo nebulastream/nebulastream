@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
 

@@ -13,7 +13,7 @@
 */
 #ifndef NES_NLJSINK_HPP
 #define NES_NLJSINK_HPP
-#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class NLJSink : public ExecutableOperator {

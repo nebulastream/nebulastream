@@ -134,7 +134,7 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = Util::murmurHash(joinKey);
         auto hashTable =
-            streamJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
+                streamJoinOpHandler->getWindowByTimestamp(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 
         bool correctlyInserted = false;

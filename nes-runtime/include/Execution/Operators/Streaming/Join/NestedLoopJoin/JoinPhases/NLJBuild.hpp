@@ -23,7 +23,6 @@ namespace NES::Runtime::Execution::Operators {
 class NLJBuild : public ExecutableOperator {
 
 public:
-
     void execute(ExecutionContext &ctx, Record &record) const override;
 
 private:

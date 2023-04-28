@@ -53,7 +53,17 @@ namespace NES::Runtime::Execution {
         return windowEnd;
     }
 
-    uint64_t NLJWindow::fetch_add(uint64_t add) {
-        return counterFinishedBuilding.fetch_add(add);
+    NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd) {}
+
+    bool NLJWindow::operator==(const NLJWindow &rhs) const {
+        return windowState == rhs.windowState &&
+               leftTuples == rhs.leftTuples &&
+               rightTuples == rhs.rightTuples &&
+               windowStart == rhs.windowStart &&
+               windowEnd == rhs.windowEnd;
+    }
+
+    bool NLJWindow::operator!=(const NLJWindow &rhs) const {
+        return !(rhs == *this);
     }
 }
