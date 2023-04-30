@@ -32,7 +32,7 @@ class E2EChameleonTest : public Testing::NESBaseTest {
 };
 
 TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
-    std::string pathQuery1 = getTestResourceFolder() / "query1.out";
+    std::string pathQuery1 = "query1.out";
     remove(pathQuery1.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
@@ -40,7 +40,7 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"sensors\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
+    schema << "{\"logicalSourceName\" : \"sensors\",\"schema\" : \"Schema::create()->addField(createField(\\\"value\\\", "
               "BasicType::UINT64))->addField(createField(\\\"value\\\", "
               "BasicType::FLOAT64))->addField(createField(\\\"payload\\\", "
               "BasicType::FLOAT64))->addField(createField(\\\"timestamp\\\", BasicType::FLOAT64));\"}";
@@ -58,10 +58,28 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
                        TestUtils::logicalSourceName("sensors"),
                        TestUtils::physicalSourceName("sensor1"),
                        TestUtils::numberOfBuffersToProduce(1),
-                       TestUtils::sourceGatheringInterval(1000)};
+                       TestUtils::sourceGatheringInterval(4000)};
     auto worker = TestUtils::startWorker(workerConf);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    // TODO: add select * query
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"sensors\"))";
+    ss << R"(.sink(FileSinkDescriptor::create(\")";
+    ss << pathQuery1;
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
+    ss << R"(;","placement" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    // TODO: dump stats
 }
 }
