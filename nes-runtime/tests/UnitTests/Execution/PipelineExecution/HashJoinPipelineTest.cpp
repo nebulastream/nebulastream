@@ -15,8 +15,8 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinSink.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
@@ -37,12 +37,12 @@
 
 namespace NES::Runtime::Execution {
 
-class StreamJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    StreamJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager,
-                                             uint64_t noWorkerThreads,
-                                             OperatorHandlerPtr streamJoinOpHandler,
-                                             uint64_t pipelineId)
+    HashJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager,
+                                           uint64_t noWorkerThreads,
+                                           OperatorHandlerPtr hashJoinOpHandler,
+                                           uint64_t pipelineId)
         : PipelineExecutionContext(
             pipelineId,// mock pipeline id
             1,         // mock query id
@@ -54,12 +54,12 @@ class StreamJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipe
             [this](TupleBuffer& buffer) {
                 this->emittedBuffers.emplace_back(std::move(buffer));
             },
-            {streamJoinOpHandler}){};
+            {hashJoinOpHandler}){};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class HashJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
 
   public:
     ExecutablePipelineProvider* provider;
@@ -68,14 +68,14 @@ class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("StreamJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup StreamJoinPipelineTest test class.");
+        NES::Logger::setupLogging("HashJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup HashJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO("Setup StreamJoinPipelineTest test case.");
+        NES_INFO("Setup HashJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -86,12 +86,12 @@ class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipel
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_INFO("Tear down StreamJoinPipelineTest test case.");
+        NES_INFO("Tear down HashJoinPipelineTest test case.");
         NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down StreamJoinPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashJoinPipelineTest test class."); }
 };
 
 void buildLeftAndRightHashTable(std::vector<TupleBuffer>& allBuffersLeft,
@@ -218,7 +218,7 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
     }
 }
 
-TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
+TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
@@ -258,18 +258,18 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     auto numberOfTuplesToProduce = windowSize * 20;
 
     auto handlerIndex = 0;
-    auto joinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex,
+    auto joinBuildLeft = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
                                                                       /*isLeftSide*/ true,
                                                                       joinFieldNameLeft,
                                                                       timeStampField,
                                                                       leftSchema);
-    auto joinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex,
+    auto joinBuildRight = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
                                                                        /*isLeftSide*/ false,
                                                                        joinFieldNameRight,
                                                                        timeStampField,
                                                                        rightSchema);
-    auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
-    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(leftSchema,
+    auto joinSink = std::make_shared<Operators::HashJoinSink>(handlerIndex);
+    auto hashJoinOpHandler = Operators::HashJoinOperatorHandler::create(leftSchema,
                                                                             rightSchema,
                                                                             joinFieldNameLeft,
                                                                             joinFieldNameRight,
@@ -289,11 +289,11 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
 
     auto curPipelineId = 0;
     auto pipelineExecCtxLeft =
-        StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+        HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, curPipelineId++);
     auto pipelineExecCtxRight =
-        StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+        HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, curPipelineId++);
     auto pipelineExecCtxSink =
-        StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+        HashJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, hashJoinOpHandler, curPipelineId++);
 
     auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
     auto executablePipelineRight = provider->create(pipelineBuildRight, options);
@@ -361,15 +361,15 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     EXPECT_EQ(sortNLJBuffers.size(), sortedMergedEmittedBuffers.size());
     for (auto i = 0UL; i < sortNLJBuffers.size(); ++i) {
         auto nljBuffer = sortNLJBuffers[i];
-        auto streamJoinBuf = sortedMergedEmittedBuffers[i];
+        auto hashJoinBuf = sortedMergedEmittedBuffers[i];
 
         NES_DEBUG("Comparing nljBuffer\n"
-                  << Util::printTupleBufferAsCSV(nljBuffer, joinSchema) << "\n and streamJoinBuf\n"
-                  << Util::printTupleBufferAsCSV(streamJoinBuf, joinSchema));
+                  << Util::printTupleBufferAsCSV(nljBuffer, joinSchema) << "\n and hashJoinBuf\n"
+                  << Util::printTupleBufferAsCSV(hashJoinBuf, joinSchema));
 
-        EXPECT_EQ(nljBuffer.getNumberOfTuples(), streamJoinBuf.getNumberOfTuples());
-        EXPECT_EQ(nljBuffer.getBufferSize(), streamJoinBuf.getBufferSize());
-        EXPECT_TRUE(memcmp(nljBuffer.getBuffer(), streamJoinBuf.getBuffer(), streamJoinBuf.getBufferSize()) == 0);
+        EXPECT_EQ(nljBuffer.getNumberOfTuples(), hashJoinBuf.getNumberOfTuples());
+        EXPECT_EQ(nljBuffer.getBufferSize(), hashJoinBuf.getBufferSize());
+        EXPECT_TRUE(memcmp(nljBuffer.getBuffer(), hashJoinBuf.getBuffer(), hashJoinBuf.getBufferSize()) == 0);
     }
 
     // Stopping all executable pipelines
@@ -379,9 +379,9 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        StreamJoinPipelineTest,
+                        HashJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<StreamJoinPipelineTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });
 

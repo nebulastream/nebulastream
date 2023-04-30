@@ -17,13 +17,12 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -33,35 +32,35 @@
 
 namespace NES::Runtime::Execution {
 
-class StreamJoinOperatorTest : public Testing::NESBaseTest {
+class HashJoinOperatorTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<Runtime::BufferManager> bm;
     std::vector<TupleBuffer> emittedBuffers;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("StreamJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup StreamJoinOperatorTest test class.");
+        NES::Logger::setupLogging("HashJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup HashJoinOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO("Setup StreamJoinOperatorTest test case.");
+        NES_INFO("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_INFO("Tear down StreamJoinOperatorTest test case.");
+        NES_INFO("Tear down HashJoinOperatorTest test case.");
         NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down StreamJoinOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down HashJoinOperatorTest test class."); }
 };
 
-struct StreamJoinBuildHelper {
+struct HashJoinBuildHelper {
     size_t pageSize;
     size_t numPartitions;
     size_t numberOfTuplesToProduce;
@@ -70,71 +69,71 @@ struct StreamJoinBuildHelper {
     size_t totalNumSources;
     size_t joinSizeInByte;
     size_t windowSize;
-    Operators::StreamJoinBuildPtr streamJoinBuild;
+    Operators::HashJoinBuildPtr hashJoinBuild;
     std::string joinFieldName;
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::string timeStampField;
-    StreamJoinOperatorTest* streamJoinOperatorTest;
+    HashJoinOperatorTest* hashJoinOperatorTest;
     bool isLeftSide;
 
-    StreamJoinBuildHelper(Operators::StreamJoinBuildPtr streamJoinBuild,
+    HashJoinBuildHelper(Operators::HashJoinBuildPtr hashJoinBuild,
                           const std::string& joinFieldName,
                           BufferManagerPtr bufferManager,
                           SchemaPtr schema,
                           const std::string& timeStampField,
-                          StreamJoinOperatorTest* streamJoinOperatorTest,
+                          HashJoinOperatorTest* hashJoinOperatorTest,
                           bool isLeftSide)
         : pageSize(CHUNK_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
           noWorkerThreads(1), totalNumSources(2), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
-          streamJoinBuild(streamJoinBuild), joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema),
-          timeStampField(timeStampField), streamJoinOperatorTest(streamJoinOperatorTest), isLeftSide(isLeftSide) {}
+          hashJoinBuild(hashJoinBuild), joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema),
+          timeStampField(timeStampField), hashJoinOperatorTest(hashJoinOperatorTest), isLeftSide(isLeftSide) {}
 };
 
-bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
+bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
-    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(buildHelper.schema,
-                                                                            buildHelper.schema,
-                                                                            buildHelper.joinFieldName,
-                                                                            buildHelper.joinFieldName,
-                                                                            buildHelper.totalNumSources,
-                                                                            buildHelper.windowSize,
-                                                                            buildHelper.joinSizeInByte,
-                                                                            buildHelper.pageSize,
-                                                                            buildHelper.numPartitions);
+    auto hashJoinOpHandler = Operators::HashJoinOperatorHandler::create(buildHelper.schema,
+                                                                        buildHelper.schema,
+                                                                        buildHelper.joinFieldName,
+                                                                        buildHelper.joinFieldName,
+                                                                        buildHelper.totalNumSources,
+                                                                        buildHelper.windowSize,
+                                                                        buildHelper.joinSizeInByte,
+                                                                        buildHelper.pageSize,
+                                                                        buildHelper.numPartitions);
 
-    auto streamJoinOperatorTest = buildHelper.streamJoinOperatorTest;
+    auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
         -1,// mock pipeline id
         0, // mock query id
         nullptr,
         buildHelper.noWorkerThreads,
-        [&streamJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-            streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+        [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+            hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
         },
-        [&streamJoinOperatorTest](TupleBuffer& buffer) {
-            streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+        [&hashJoinOperatorTest](TupleBuffer& buffer) {
+            hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
         },
-        {streamJoinOpHandler});
+        {hashJoinOpHandler});
 
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
-    buildHelper.streamJoinBuild->setup(executionContext);
+    buildHelper.hashJoinBuild->setup(executionContext);
 
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i) {
         auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
                                         {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 1)},
                                         {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
-        buildHelper.streamJoinBuild->execute(executionContext, record);
+        buildHelper.hashJoinBuild->execute(executionContext, record);
 
         uint64_t joinKey = record.read(buildHelper.joinFieldName).as<UInt64>().getValue().getValue();
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = Util::murmurHash(joinKey);
         auto hashTable =
-                streamJoinOpHandler->getWindowByTimestamp(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
+                hashJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 
         bool correctlyInserted = false;
@@ -161,7 +160,7 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
     return true;
 }
 
-struct StreamJoinSinkHelper {
+struct HashJoinSinkHelper {
     size_t pageSize;
     size_t numPartitions;
     size_t numberOfTuplesToProduce;
@@ -174,20 +173,20 @@ struct StreamJoinSinkHelper {
     BufferManagerPtr bufferManager;
     SchemaPtr leftSchema, rightSchema;
     std::string timeStampField;
-    StreamJoinOperatorTest* streamJoinOperatorTest;
+    HashJoinOperatorTest* hashJoinOperatorTest;
 
-    StreamJoinSinkHelper(const std::string& joinFieldNameLeft,
+    HashJoinSinkHelper(const std::string& joinFieldNameLeft,
                          const std::string& joinFieldNameRight,
                          BufferManagerPtr bufferManager,
                          SchemaPtr leftSchema,
                          SchemaPtr rightSchema,
                          const std::string& timeStampField,
-                         StreamJoinOperatorTest* streamJoinOperatorTest)
+                         HashJoinOperatorTest* hashJoinOperatorTest)
         : pageSize(CHUNK_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
           noWorkerThreads(1), numSourcesLeft(1), numSourcesRight(1), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
           joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager),
           leftSchema(leftSchema), rightSchema(rightSchema), timeStampField(timeStampField),
-          streamJoinOperatorTest(streamJoinOperatorTest) {}
+          hashJoinOperatorTest(hashJoinOperatorTest) {}
 };
 
 bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffers,
@@ -215,140 +214,140 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
     return foundBuffer;
 }
 
-bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
+bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
-    if (!streamJoinSinkHelper.leftSchema->contains(streamJoinSinkHelper.joinFieldNameLeft)) {
-        NES_ERROR("JoinFieldNameLeft " << streamJoinSinkHelper.joinFieldNameLeft << " is not in leftSchema!");
+    if (!hashJoinSinkHelper.leftSchema->contains(hashJoinSinkHelper.joinFieldNameLeft)) {
+        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameLeft << " is not in leftSchema!");
         return false;
     }
-    if (!streamJoinSinkHelper.rightSchema->contains(streamJoinSinkHelper.joinFieldNameRight)) {
-        NES_ERROR("JoinFieldNameLeft " << streamJoinSinkHelper.joinFieldNameRight << " is not in leftSchema!");
+    if (!hashJoinSinkHelper.rightSchema->contains(hashJoinSinkHelper.joinFieldNameRight)) {
+        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameRight << " is not in leftSchema!");
         return false;
     }
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
-                                                         streamJoinSinkHelper.bufferManager,
-                                                         streamJoinSinkHelper.numberOfBuffersPerWorker);
-    auto streamJoinOpHandler =
-        Operators::StreamJoinOperatorHandler::create(streamJoinSinkHelper.leftSchema,
-                                                     streamJoinSinkHelper.rightSchema,
-                                                     streamJoinSinkHelper.joinFieldNameLeft,
-                                                     streamJoinSinkHelper.joinFieldNameRight,
-                                                     streamJoinSinkHelper.numSourcesLeft + streamJoinSinkHelper.numSourcesRight,
-                                                     streamJoinSinkHelper.windowSize,
-                                                     streamJoinSinkHelper.joinSizeInByte,
-                                                     streamJoinSinkHelper.pageSize,
-                                                     streamJoinSinkHelper.numPartitions);
+                                                         hashJoinSinkHelper.bufferManager,
+                                                         hashJoinSinkHelper.numberOfBuffersPerWorker);
+    auto hashJoinOpHandler =
+        Operators::HashJoinOperatorHandler::create(hashJoinSinkHelper.leftSchema,
+                                                   hashJoinSinkHelper.rightSchema,
+                                                   hashJoinSinkHelper.joinFieldNameLeft,
+                                                   hashJoinSinkHelper.joinFieldNameRight,
+                                                   hashJoinSinkHelper.numSourcesLeft + hashJoinSinkHelper.numSourcesRight,
+                                                   hashJoinSinkHelper.windowSize,
+                                                   hashJoinSinkHelper.joinSizeInByte,
+                                                   hashJoinSinkHelper.pageSize,
+                                                   hashJoinSinkHelper.numPartitions);
 
-    auto streamJoinOperatorTest = streamJoinSinkHelper.streamJoinOperatorTest;
+    auto hashJoinOperatorTest = hashJoinSinkHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
         0,// mock pipeline id
         1,// mock query id
-        streamJoinSinkHelper.bufferManager,
-        streamJoinSinkHelper.noWorkerThreads,
-        [&streamJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-            streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+        hashJoinSinkHelper.bufferManager,
+        hashJoinSinkHelper.noWorkerThreads,
+        [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+            hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
         },
-        [&streamJoinOperatorTest](TupleBuffer& buffer) {
-            streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+        [&hashJoinOperatorTest](TupleBuffer& buffer) {
+            hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
         },
-        {streamJoinOpHandler});
+        {hashJoinOpHandler});
 
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
     auto handlerIndex = 0UL;
-    auto streamJoinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex,
+    auto hashJoinBuildLeft = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
                                                                             /*isLeftSide*/ true,
-                                                                            streamJoinSinkHelper.joinFieldNameLeft,
-                                                                            streamJoinSinkHelper.timeStampField,
-                                                                            streamJoinSinkHelper.leftSchema);
-    auto streamJoinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex,
+                                                                            hashJoinSinkHelper.joinFieldNameLeft,
+                                                                            hashJoinSinkHelper.timeStampField,
+                                                                            hashJoinSinkHelper.leftSchema);
+    auto hashJoinBuildRight = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
                                                                              /*isLeftSide*/ false,
-                                                                             streamJoinSinkHelper.joinFieldNameRight,
-                                                                             streamJoinSinkHelper.timeStampField,
-                                                                             streamJoinSinkHelper.rightSchema);
-    auto streamJoinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
+                                                                             hashJoinSinkHelper.joinFieldNameRight,
+                                                                             hashJoinSinkHelper.timeStampField,
+                                                                             hashJoinSinkHelper.rightSchema);
+    auto hashJoinSink = std::make_shared<Operators::HashJoinSink>(handlerIndex);
 
-    streamJoinBuildLeft->setup(executionContext);
-    streamJoinBuildRight->setup(executionContext);
+    hashJoinBuildLeft->setup(executionContext);
+    hashJoinBuildRight->setup(executionContext);
 
     std::vector<std::vector<Nautilus::Record>> leftRecords;
     std::vector<std::vector<Nautilus::Record>> rightRecords;
 
-    uint64_t lastTupleTimeStampWindow = streamJoinSinkHelper.windowSize - 1;
+    uint64_t lastTupleTimeStampWindow = hashJoinSinkHelper.windowSize - 1;
     std::vector<Nautilus::Record> tmpRecordsLeft, tmpRecordsRight;
 
-    for (auto i = 0UL; i < streamJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
+    for (auto i = 0UL; i < hashJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
         auto recordLeft =
-            Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                              {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
-                              {streamJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+            Nautilus::Record({{hashJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
+                              {hashJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
+                              {hashJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
 
         auto recordRight =
-            Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
-                              {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
-                              {streamJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+            Nautilus::Record({{hashJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
+                              {hashJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
+                              {hashJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
 
-        if (recordRight.read(streamJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
+        if (recordRight.read(hashJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
             leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
             rightRecords.push_back(std::vector(tmpRecordsRight.begin(), tmpRecordsRight.end()));
 
             tmpRecordsLeft = std::vector<Nautilus::Record>();
             tmpRecordsRight = std::vector<Nautilus::Record>();
 
-            lastTupleTimeStampWindow += streamJoinSinkHelper.windowSize;
+            lastTupleTimeStampWindow += hashJoinSinkHelper.windowSize;
         }
 
         tmpRecordsLeft.emplace_back(recordLeft);
         tmpRecordsRight.emplace_back(recordRight);
 
-        streamJoinBuildLeft->execute(executionContext, recordLeft);
-        streamJoinBuildRight->execute(executionContext, recordRight);
+        hashJoinBuildLeft->execute(executionContext, recordLeft);
+        hashJoinBuildRight->execute(executionContext, recordRight);
     }
 
-    auto numberOfEmittedBuffersBuild = streamJoinOperatorTest->emittedBuffers.size();
+    auto numberOfEmittedBuffersBuild = hashJoinOperatorTest->emittedBuffers.size();
     for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
-        auto tupleBuffer = streamJoinOperatorTest->emittedBuffers[cnt];
+        auto tupleBuffer = hashJoinOperatorTest->emittedBuffers[cnt];
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
-        streamJoinSink->open(executionContext, recordBuffer);
+        hashJoinSink->open(executionContext, recordBuffer);
     }
 
     // Delete all buffers that have been emitted from the build phase
-    streamJoinOperatorTest->emittedBuffers.erase(streamJoinOperatorTest->emittedBuffers.begin(),
-                                                 streamJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
+    hashJoinOperatorTest->emittedBuffers.erase(hashJoinOperatorTest->emittedBuffers.begin(),
+                                                 hashJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
-    auto joinSchema = Util::createJoinSchema(streamJoinSinkHelper.leftSchema,
-                                             streamJoinSinkHelper.rightSchema,
-                                             streamJoinSinkHelper.joinFieldNameLeft);
+    auto joinSchema = Util::createJoinSchema(hashJoinSinkHelper.leftSchema,
+                                             hashJoinSinkHelper.rightSchema,
+                                             hashJoinSinkHelper.joinFieldNameLeft);
 
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
-    if (streamJoinOpHandler->getNumActiveWindows() != 1) {
+    if (hashJoinOpHandler->getNumActiveWindows() != 1) {
         NES_ERROR("Not exactly one active window!");
         return false;
     }
 
     uint64_t removedBuffer = 0UL;
     auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
-    auto buffer = streamJoinSinkHelper.bufferManager->getBufferBlocking();
-    auto tuplePerBuffer = streamJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
-    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(streamJoinOperatorTest->emittedBuffers,
+    auto buffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
+    auto tuplePerBuffer = hashJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
+    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(hashJoinOperatorTest->emittedBuffers,
                                                              joinSchema,
-                                                             streamJoinSinkHelper.timeStampField,
-                                                             streamJoinSinkHelper.bufferManager,
-                                                             streamJoinSinkHelper.windowSize);
+                                                             hashJoinSinkHelper.timeStampField,
+                                                             hashJoinSinkHelper.bufferManager,
+                                                             hashJoinSinkHelper.windowSize);
     auto sortedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers,
                                                                joinSchema,
-                                                               streamJoinSinkHelper.timeStampField,
-                                                               streamJoinSinkHelper.bufferManager);
-    streamJoinOperatorTest->emittedBuffers.clear();
+                                                               hashJoinSinkHelper.timeStampField,
+                                                               hashJoinSinkHelper.bufferManager);
+    hashJoinOperatorTest->emittedBuffers.clear();
     mergedEmittedBuffers.clear();
 
     // Window start and end is always an ui64
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto const timeStampFieldType = physicalDataTypeFactory.getPhysicalType(
-        streamJoinSinkHelper.leftSchema->get(streamJoinSinkHelper.timeStampField)->getDataType());
+        hashJoinSinkHelper.leftSchema->get(hashJoinSinkHelper.timeStampField)->getDataType());
     const auto sizeOfWindowStart = timeStampFieldType->size();
     const auto sizeOfWindowEnd = timeStampFieldType->size();
 
@@ -356,8 +355,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
         auto numberOfTuplesInBuffer = 0UL;
         for (auto& leftRecord : leftRecords[curWindow]) {
             for (auto& rightRecord : rightRecords[curWindow]) {
-                if (leftRecord.read(streamJoinSinkHelper.joinFieldNameLeft)
-                    == rightRecord.read(streamJoinSinkHelper.joinFieldNameRight)) {
+                if (leftRecord.read(hashJoinSinkHelper.joinFieldNameLeft)
+                    == rightRecord.read(hashJoinSinkHelper.joinFieldNameRight)) {
                     // We expect to have at least one more buffer that was created by our join
                     if (sortedEmittedBuffers.size() == 0) {
                         NES_ERROR("Expected at least one buffer!");
@@ -366,8 +365,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
 
                     int8_t* bufferPtr = (int8_t*) buffer.getBuffer() + numberOfTuplesInBuffer * sizeJoinedTuple;
                     // Writing window start and end
-                    uint64_t windowStart = curWindow * streamJoinSinkHelper.windowSize;
-                    uint64_t windowEnd = ((curWindow + 1) * streamJoinSinkHelper.windowSize);
+                    uint64_t windowStart = curWindow * hashJoinSinkHelper.windowSize;
+                    uint64_t windowEnd = ((curWindow + 1) * hashJoinSinkHelper.windowSize);
 
                     memcpy(bufferPtr, &windowStart, sizeOfWindowStart);
                     memcpy(bufferPtr + sizeOfWindowStart, &windowEnd, sizeOfWindowEnd);
@@ -375,22 +374,22 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                     // Writing the key
                     bufferPtr += sizeOfWindowStart + sizeOfWindowEnd;
                     auto keyRef = Nautilus::Value<Nautilus::MemRef>(bufferPtr);
-                    keyRef.store(leftRecord.read(streamJoinSinkHelper.joinFieldNameLeft));
+                    keyRef.store(leftRecord.read(hashJoinSinkHelper.joinFieldNameLeft));
                     auto const fieldType = physicalDataTypeFactory.getPhysicalType(
-                        streamJoinSinkHelper.leftSchema->get(streamJoinSinkHelper.joinFieldNameLeft)->getDataType());
+                        hashJoinSinkHelper.leftSchema->get(hashJoinSinkHelper.joinFieldNameLeft)->getDataType());
                     bufferPtr += fieldType->size();
 
                     // Writing the left and right
                     Util::writeNautilusRecord(0,
                                               bufferPtr,
                                               leftRecord,
-                                              streamJoinSinkHelper.leftSchema,
-                                              streamJoinSinkHelper.bufferManager);
+                                              hashJoinSinkHelper.leftSchema,
+                                              hashJoinSinkHelper.bufferManager);
                     Util::writeNautilusRecord(0,
-                                              bufferPtr + streamJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
+                                              bufferPtr + hashJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
                                               rightRecord,
-                                              streamJoinSinkHelper.rightSchema,
-                                              streamJoinSinkHelper.bufferManager);
+                                              hashJoinSinkHelper.rightSchema,
+                                              hashJoinSinkHelper.bufferManager);
                     numberOfTuplesInBuffer += 1;
                     buffer.setNumberOfTuples(numberOfTuplesInBuffer);
 
@@ -398,8 +397,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                         std::vector<Runtime::TupleBuffer> bufVec({buffer});
                         auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec,
                                                                            joinSchema,
-                                                                           streamJoinSinkHelper.timeStampField,
-                                                                           streamJoinSinkHelper.bufferManager);
+                                                                           hashJoinSinkHelper.timeStampField,
+                                                                           hashJoinSinkHelper.bufferManager);
 
                         bool foundBuffer =
                             checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
@@ -411,7 +410,7 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                         }
 
                         numberOfTuplesInBuffer = 0;
-                        buffer = streamJoinSinkHelper.bufferManager->getBufferBlocking();
+                        buffer = hashJoinSinkHelper.bufferManager->getBufferBlocking();
                     }
                 }
             }
@@ -421,8 +420,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
             std::vector<Runtime::TupleBuffer> bufVec({buffer});
             auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec,
                                                                joinSchema,
-                                                               streamJoinSinkHelper.timeStampField,
-                                                               streamJoinSinkHelper.bufferManager);
+                                                               hashJoinSinkHelper.timeStampField,
+                                                               hashJoinSinkHelper.bufferManager);
             bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
             if (!foundBuffer) {
                 NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema) << " in emittedBuffers!");
@@ -460,7 +459,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
     }
 };
 
-TEST_F(StreamJoinOperatorTest, joinBuildTest) {
+TEST_F(HashJoinOperatorTest, joinBuildTest) {
     // Activating and installing error listener
     auto runner = std::make_shared<TestRunner>();
     NES::Exceptions::installGlobalErrorListener(runner);
@@ -475,16 +474,16 @@ TEST_F(StreamJoinOperatorTest, joinBuildTest) {
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto streamJoinBuild =
-        std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
+    auto hashJoinBuild =
+        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
-TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
+TEST_F(HashJoinOperatorTest, joinBuildTestRight) {
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("f1_right", BasicType::UINT64)
                                  ->addField("f2_right", BasicType::UINT64)
@@ -495,16 +494,16 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
     const auto isLeftSide = false;
 
     auto handlerIndex = 0;
-    auto streamJoinBuild =
-        std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight, timeStampField, rightSchema);
-    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
+    auto hashJoinBuild =
+        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight, timeStampField, rightSchema);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
 
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
-TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
+TEST_F(HashJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -515,19 +514,19 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto streamJoinBuild =
-        std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
+    auto hashJoinBuild =
+        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2;
     buildHelper.numPartitions = 1;
 
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
-TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
+TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -538,19 +537,19 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto handlerIndex = 0;
     const auto isLeftSide = true;
 
-    auto streamJoinBuild =
-        std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
+    auto hashJoinBuild =
+        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2, buildHelper.numPartitions = 1;
     buildHelper.windowSize = 5;
 
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
-TEST_F(StreamJoinOperatorTest, joinSinkTest) {
+TEST_F(HashJoinOperatorTest, joinSinkTest) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -563,15 +562,15 @@ TEST_F(StreamJoinOperatorTest, joinSinkTest) {
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
-    streamJoinSinkHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
-    streamJoinSinkHelper.numPartitions = 2;
-    streamJoinSinkHelper.windowSize = 20;
+    HashJoinSinkHelper hashJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
+    hashJoinSinkHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
+    hashJoinSinkHelper.numPartitions = 2;
+    hashJoinSinkHelper.windowSize = 20;
 
-    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
+    ASSERT_TRUE(hashJoinSinkAndCheck(hashJoinSinkHelper));
 }
 
-TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
+TEST_F(HashJoinOperatorTest, joinSinkTestMultipleBuckets) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -584,13 +583,13 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
-    streamJoinSinkHelper.windowSize = 10;
+    HashJoinSinkHelper hashJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
+    hashJoinSinkHelper.windowSize = 10;
 
-    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
+    ASSERT_TRUE(hashJoinSinkAndCheck(hashJoinSinkHelper));
 }
 
-TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
+TEST_F(HashJoinOperatorTest, joinSinkTestMultipleWindows) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
@@ -604,11 +603,11 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
-    streamJoinSinkHelper.numPartitions = 1;
-    streamJoinSinkHelper.windowSize = 10;
+    HashJoinSinkHelper hashJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
+    hashJoinSinkHelper.numPartitions = 1;
+    hashJoinSinkHelper.windowSize = 10;
 
-    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
+    ASSERT_TRUE(hashJoinSinkAndCheck(hashJoinSinkHelper));
 }
 
 }// namespace NES::Runtime::Execution

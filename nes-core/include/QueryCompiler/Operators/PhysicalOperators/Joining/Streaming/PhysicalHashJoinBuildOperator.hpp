@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_PHYSICALSTREAMJOINBUILDOPERATOR_HPP
-#define NES_PHYSICALSTREAMJOINBUILDOPERATOR_HPP
+#ifndef NES_PHYSICALHASHJOINBUILDOPERATOR_HPP
+#define NES_PHYSICALHASHJOINBUILDOPERATOR_HPP
 
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -23,10 +23,10 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical stream join build operator and gets translated to a StreamJoinBuild operator
  */
-class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, public PhysicalUnaryOperator {
+class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public PhysicalUnaryOperator {
   public:
     /**
-     * @brief creates a PhysicalStreamJoinSinkOperator with a provided operatorId
+     * @brief creates a PhysicalHashJoinBuildOperator with a provided operatorId
      * @param id
      * @param leftSchema
      * @param rightSchema
@@ -39,12 +39,12 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName);
 
     /**
-     * @brief creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
+     * @brief creates a PhysicalHashJoinBuildOperator that retrieves a new operatorId by calling method
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -55,12 +55,12 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
      */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName);
 
     /**
-     * @brief Constructor for PhysicalStreamJoinBuildOperator
+     * @brief Constructor for PhysicalHashJoinBuildOperator
      * @param id
      * @param inputSchema
      * @param outputSchema
@@ -68,14 +68,14 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
      * @param buildSide
      * @param timeStampFieldName
      */
-    explicit PhysicalStreamJoinBuildOperator(OperatorId id,
-                                             SchemaPtr inputSchema,
-                                             SchemaPtr outputSchema,
-                                             Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
-                                             JoinBuildSideType buildSide,
-                                             std::string timeStampFieldName);
+    explicit PhysicalHashJoinBuildOperator(OperatorId id,
+                                           SchemaPtr inputSchema,
+                                           SchemaPtr outputSchema,
+                                           Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler,
+                                           JoinBuildSideType buildSide,
+                                           std::string timeStampFieldName);
 
-    ~PhysicalStreamJoinBuildOperator() noexcept override = default;
+    ~PhysicalHashJoinBuildOperator() noexcept override = default;
 
     [[nodiscard]] std::string toString() const override;
 
@@ -92,4 +92,4 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif//NES_PHYSICALSTREAMJOINBUILDOPERATOR_HPP
+#endif//NES_PHYSICALHASHJOINBUILDOPERATOR_HPP

@@ -14,7 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

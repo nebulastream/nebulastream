@@ -12,63 +12,63 @@
     limitations under the License.
 */
 
-#ifndef NES_PHYSICALSTREAMJOINSINKOPERATOR_HPP
-#define NES_PHYSICALSTREAMJOINSINKOPERATOR_HPP
+#ifndef NES_PHYSICALHASHJOINSINKOPERATOR_HPP
+#define NES_PHYSICALHASHJOINSINKOPERATOR_HPP
 
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 /**
- * @brief This class represents the physical stream join sink operator and gets translated to a StreamJoinSink operator
+ * @brief This class represents the physical hash stream join sink operator and gets translated to a HashJoinSink operator
  */
-class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator,
-                                       public PhysicalBinaryOperator,
-                                       public AbstractScanOperator {
+class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator,
+                                     public PhysicalBinaryOperator,
+                                     public AbstractScanOperator {
 
   public:
     /**
-     * @brief creates a PhysicalStreamJoinSinkOperator with a provided operatorId
+     * @brief creates a PhysicalHashJoinSinkOperator with a provided operatorId
      * @param id
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
      * @param operatorHandler
-     * @return PhysicalStreamJoinSinkOperator
+     * @return PhysicalHashJoinSinkOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
+                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
-     * @brief creates a PhysicalStreamJoinSinkOperator that retrieves a new operatorId by calling method
+     * @brief creates a PhysicalHashJoinSinkOperator that retrieves a new operatorId by calling method
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
      * @param operatorHandler
-     * @return PhysicalStreamJoinSinkOperator
+     * @return PhysicalHashJoinSinkOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
+                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
-     * @brief Constructor for a PhysicalStreamJoinSinkOperator
+     * @brief Constructor for a PhysicalHashJoinSinkOperator
      * @param id
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
      * @param operatorHandler
      */
-    PhysicalStreamJoinSinkOperator(OperatorId id,
-                                   SchemaPtr leftSchema,
-                                   SchemaPtr rightSchema,
-                                   SchemaPtr outputSchema,
-                                   Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler);
+    PhysicalHashJoinSinkOperator(OperatorId id,
+                                 SchemaPtr leftSchema,
+                                 SchemaPtr rightSchema,
+                                 SchemaPtr outputSchema,
+                                 Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler);
 
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
@@ -76,4 +76,4 @@ class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator,
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif//NES_PHYSICALSTREAMJOINSINKOPERATOR_HPP
+#endif//NES_PHYSICALHASHJOINSINKOPERATOR_HPP

@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STREAMJOINOPERATORHANDLER_HPP
-#define NES_STREAMJOINOPERATORHANDLER_HPP
+#ifndef NES_HASHJOINOPERATORHANDLER_HPP
+#define NES_HASHJOINOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/SharedJoinHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/StreamJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/HashJoinWindow.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -40,9 +40,9 @@ namespace NES::Runtime::Execution::Operators {
  * thus, the StreamJoin only has to allocate memory once.
  * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
  */
-class StreamJoinOperatorHandler;
-using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
-class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
+class HashJoinOperatorHandler;
+using HashJoinOperatorHandlerPtr = std::shared_ptr<HashJoinOperatorHandler>;
+class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
   public:
     /**
@@ -57,15 +57,15 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param pageSize
      * @param numPartitions
      */
-    explicit StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
-                                       SchemaPtr joinSchemaRight,
-                                       std::string joinFieldNameLeft,
-                                       std::string joinFieldNameRight,
-                                       uint64_t counterFinishedBuildingStart,
-                                       size_t windowSize,
-                                       size_t totalSizeForDataStructures,
-                                       size_t pageSize,
-                                       size_t numPartitions);
+    explicit HashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
+                                     SchemaPtr joinSchemaRight,
+                                     std::string joinFieldNameLeft,
+                                     std::string joinFieldNameRight,
+                                     uint64_t counterFinishedBuildingStart,
+                                     size_t windowSize,
+                                     size_t totalSizeForDataStructures,
+                                     size_t pageSize,
+                                     size_t numPartitions);
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
@@ -80,7 +80,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param numPartitions
      * @return StreamJoinOperatorHandlerPtr
      */
-    static StreamJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
+    static HashJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
                                                const SchemaPtr& joinSchemaRight,
                                                const std::string& joinFieldNameLeft,
                                                const std::string& joinFieldNameRight,
@@ -163,7 +163,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param timeStamp
      * @return Reference to the Window
      */
-    StreamJoinWindow& getWindow(uint64_t timeStamp);
+    HashJoinWindow& getWindow(uint64_t timeStamp);
 
     /**
      * @brief Returning the number of active windows
@@ -176,7 +176,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param isLeftSide
      * @return Reference to the current window that gets filled
      */
-    StreamJoinWindow& getWindowToBeFilled(bool isLeftSide);
+    HashJoinWindow& getWindowToBeFilled(bool isLeftSide);
 
     /**
      * @brief Increments the timeStamp of either the left or right side
@@ -228,7 +228,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
-    std::list<StreamJoinWindow> streamJoinWindows;
+    std::list<HashJoinWindow> hashJoinWindows;
     size_t numberOfWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
@@ -242,4 +242,4 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_STREAMJOINOPERATORHANDLER_HPP
+#endif//NES_HASHJOINOPERATORHANDLER_HPP
