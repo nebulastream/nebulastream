@@ -20,6 +20,7 @@ add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
 add_nes_runtime_test(runtime-flatmapjavaudf-pipeline-test "FlatMapJavaUDFPipelineTest.cpp")
 add_nes_runtime_test(runtime-mapjavaudf-pipeline-test "MapJavaUDFPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-hash-join-pipeline-test "HashJoinPipelineTest.cpp")
+add_nes_runtime_test(runtime-stream-nested-loop-join-pipeline-test "NestedLoopJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
 
