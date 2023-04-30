@@ -13,25 +13,20 @@
 */
 #include <API/Schema.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
-#include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstring>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 
 namespace NES::Runtime::Execution {
 
