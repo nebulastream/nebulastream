@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STREAMJOINSINK_HPP
-#define NES_STREAMJOINSINK_HPP
+#ifndef NES_HASHJOINSINK_HPP
+#define NES_HASHJOINSINK_HPP
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -23,14 +23,14 @@ namespace NES::Runtime::Execution::Operators {
  * through both buckets and check via the BloomFilter if a given key is in the bucket. If this is the case, the corresponding
  * tuples will be joined together and emitted.
  */
-class StreamJoinSink : public Operator {
+class HashJoinSink : public Operator {
 
   public:
     /**
      * @brief Constructor for a StreamJoinSink
      * @param handlerIndex
      */
-    explicit StreamJoinSink(uint64_t handlerIndex);
+    explicit HashJoinSink(uint64_t handlerIndex);
 
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket. Currently, this method emits a buffer
@@ -44,4 +44,4 @@ class StreamJoinSink : public Operator {
 };
 
 }//namespace NES::Runtime::Execution::Operators
-#endif//NES_STREAMJOINSINK_HPP
+#endif//NES_HASHJOINSINK_HPP

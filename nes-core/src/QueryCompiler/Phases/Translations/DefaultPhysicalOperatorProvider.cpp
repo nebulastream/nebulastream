@@ -19,7 +19,7 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -47,8 +47,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
@@ -390,7 +390,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
 
-        auto joinOperatorHandler = StreamJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+        auto joinOperatorHandler = HashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
                                                                      joinOperator->getRightInputSchema(),
                                                                      joinFieldNameLeft,
                                                                      joinFieldNameRight,
@@ -403,22 +403,22 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
 
         auto leftJoinBuildOperator =
-            PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                       joinOperator->getOutputSchema(),
-                                                                       joinOperatorHandler,
-                                                                       JoinBuildSideType::Left,
-                                                                       timeStampFieldNameLeft);
+            PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                     joinOperator->getOutputSchema(),
+                                                                     joinOperatorHandler,
+                                                                     JoinBuildSideType::Left,
+                                                                     timeStampFieldNameLeft);
         auto rightJoinBuildOperator =
-            PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                       joinOperator->getOutputSchema(),
-                                                                       joinOperatorHandler,
-                                                                       JoinBuildSideType::Right,
-                                                                       timeStampFieldNameRight);
+            PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                     joinOperator->getOutputSchema(),
+                                                                     joinOperatorHandler,
+                                                                     JoinBuildSideType::Right,
+                                                                     timeStampFieldNameRight);
 
-        auto joinSinkOperator = PhysicalOperators::PhysicalStreamJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                                          joinOperator->getRightInputSchema(),
-                                                                                          joinOperator->getOutputSchema(),
-                                                                                          joinOperatorHandler);
+        auto joinSinkOperator = PhysicalOperators::PhysicalHashJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                        joinOperator->getRightInputSchema(),
+                                                                                        joinOperator->getOutputSchema(),
+                                                                                        joinOperatorHandler);
 
         leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
         rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);

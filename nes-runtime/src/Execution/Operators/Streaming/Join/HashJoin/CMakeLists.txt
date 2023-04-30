@@ -14,5 +14,4 @@ add_subdirectory(DataStructure)
 add_subdirectory(JoinPhases)
 
 add_source_files(nes-runtime
-        StreamJoinOperatorHandler.cpp
-        StreamJoinUtil.cpp)
+        HashJoinOperatorHandler.cpp)

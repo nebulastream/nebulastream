@@ -11,5 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        StreamJoinBuild.cpp
-        StreamJoinSink.cpp)
+        HashJoinBuild.cpp
+        HashJoinSink.cpp)

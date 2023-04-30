@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STREAMJOINWINDOW_HPP
-#define NES_STREAMJOINWINDOW_HPP
+#ifndef NES_HASHJOINWINDOW_HPP
+#define NES_HASHJOINWINDOW_HPP
 
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/SharedJoinHashTable.hpp>
@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution {
 /**
  * @brief This class is a data container for all the necessary objects in a window of the StreamJoin
  */
-class StreamJoinWindow {
+class HashJoinWindow {
 
   public:
     /**
@@ -42,16 +42,16 @@ class StreamJoinWindow {
      * @param pageSize
      * @param numPartitions
      */
-    explicit StreamJoinWindow(size_t maxNoWorkerThreads,
-                              uint64_t counterFinishedBuildingStart,
-                              uint64_t counterFinishedSinkStart,
-                              size_t totalSizeForDataStructures,
-                              size_t sizeOfRecordLeft,
-                              size_t sizeOfRecordRight,
-                              uint64_t windowStart,
-                              uint64_t windowEnd,
-                              size_t pageSize,
-                              size_t numPartitions);
+    explicit HashJoinWindow(size_t maxNoWorkerThreads,
+                            uint64_t counterFinishedBuildingStart,
+                            uint64_t counterFinishedSinkStart,
+                            size_t totalSizeForDataStructures,
+                            size_t sizeOfRecordLeft,
+                            size_t sizeOfRecordRight,
+                            uint64_t windowStart,
+                            uint64_t windowEnd,
+                            size_t pageSize,
+                            size_t numPartitions);
 
     /**
      * @brief Returns the local hash table of either the left or the right join side
@@ -114,4 +114,4 @@ class StreamJoinWindow {
 };
 
 }// namespace NES::Runtime::Execution
-#endif//NES_STREAMJOINWINDOW_HPP
+#endif//NES_HASHJOINWINDOW_HPP

@@ -22,9 +22,9 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -34,7 +34,7 @@ namespace NES::Runtime::Execution::Operators {
 
 void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    StreamJoinOperatorHandler* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    HashJoinOperatorHandler* opHandler = static_cast<HashJoinOperatorHandler*>(ptrOpHandler);
 
     auto localHashTablePointer =
         static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
@@ -54,7 +54,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
-    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<HashJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
@@ -86,7 +86,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
-    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<HashJoinOperatorHandler*>(ptrOpHandler);
     return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
@@ -94,13 +94,13 @@ void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
-    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<HashJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
 
     opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
 }
 
-void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
+void HashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -136,12 +136,12 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
-void StreamJoinBuild::setup(ExecutionContext& ctx) const {
+void HashJoinBuild::setup(ExecutionContext& ctx) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOperatorHandler", setupOperatorHandler, operatorHandlerMemRef, ctx.getPipelineContext());
 }
 
-StreamJoinBuild::StreamJoinBuild(uint64_t handlerIndex,
+HashJoinBuild::HashJoinBuild(uint64_t handlerIndex,
                                  bool isLeftSide,
                                  const std::string& joinFieldName,
                                  const std::string& timeStampField,

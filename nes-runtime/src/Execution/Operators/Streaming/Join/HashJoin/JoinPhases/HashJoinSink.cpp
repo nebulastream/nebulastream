@@ -19,8 +19,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/StreamJoinSink.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-StreamJoinSink::StreamJoinSink(uint64_t handlerIndex) : handlerIndex(handlerIndex) {}
+HashJoinSink::HashJoinSink(uint64_t handlerIndex) : handlerIndex(handlerIndex) {}
 
 /**
  * @brief Checks if two fields are similar
@@ -86,10 +86,10 @@ size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
  */
 size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                              WorkerContext* workerCtx,
-                             StreamJoinOperatorHandler* operatorHandler,
+                             HashJoinOperatorHandler* operatorHandler,
                              std::vector<FixedPage>&& probeSide,
                              std::vector<FixedPage>&& buildSide,
-                             StreamJoinWindow& currentWindow,
+                             HashJoinWindow& currentWindow,
                              uint64_t windowStart,
                              uint64_t windowEnd) {
 
@@ -176,7 +176,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
     NES_ASSERT2_FMT(joinPartitionTimeStampPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
-    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<HashJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
     auto joinPartTimestamp = static_cast<JoinPartitionIdTumpleStamp*>(joinPartitionTimeStampPtr);
@@ -244,7 +244,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 }
 
-void StreamJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void HashJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto joinPartitionTimestampPtr = recordBuffer.getBuffer();

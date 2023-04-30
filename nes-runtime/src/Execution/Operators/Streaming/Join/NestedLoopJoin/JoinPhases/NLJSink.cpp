@@ -150,8 +150,6 @@ namespace NES::Runtime::Execution::Operators {
         NES_DEBUG2("Joined a total of {} tuples!", numberOfTuplesJoined);
     }
 
-
-
     void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
         auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);

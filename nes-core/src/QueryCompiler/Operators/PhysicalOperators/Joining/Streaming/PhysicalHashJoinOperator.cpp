@@ -12,18 +12,17 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalStreamJoinOperator::PhysicalStreamJoinOperator(
-    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
-    OperatorId id)
+PhysicalHashJoinOperator::PhysicalHashJoinOperator(
+    Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler, OperatorId id)
     : operatorHandler(std::move(operatorHandler)) {
     this->operatorHandler->addOperatorId(id);
 }
 
-Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr PhysicalStreamJoinOperator::getOperatorHandler() const {
+Runtime::Execution::Operators::HashJoinOperatorHandlerPtr PhysicalHashJoinOperator::getOperatorHandler() const {
     return operatorHandler;
 }
 }// namespace NES::QueryCompilation::PhysicalOperators

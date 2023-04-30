@@ -14,7 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <atomic>
 #include <cstring>
 

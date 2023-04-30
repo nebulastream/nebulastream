@@ -18,8 +18,8 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -74,10 +74,10 @@ class LowerPhysicalToNautilusOperators {
      * @param streamJoinOperatorHandler
      * @return handlerIndex of the streamJoinOperatorHandler
      */
-    uint64_t insertStreamJoinOperatorHandlerIfNeeded(
+    uint64_t insertHashJoinOperatorHandlerIfNeeded(
         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
         OperatorId operatorId,
-        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler);
+        const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& streamJoinOperatorHandler);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
