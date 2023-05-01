@@ -23,6 +23,9 @@ namespace NES::Runtime::Execution::Operators {
 class NLJBuild : public ExecutableOperator {
 
 public:
+    NLJBuild(uint64_t operatorHandlerIndex, const SchemaPtr &schema, const std::string &joinFieldName,
+             const std::string &timeStampField, bool isLeftSide);
+
     void execute(ExecutionContext &ctx, Record &record) const override;
 
 private:

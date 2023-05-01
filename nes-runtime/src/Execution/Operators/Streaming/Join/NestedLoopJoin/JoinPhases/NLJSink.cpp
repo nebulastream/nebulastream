@@ -47,8 +47,6 @@ namespace NES::Runtime::Execution::Operators {
 
     uint64_t performNLJJoin(const NLJJoinParams& nljJoinParams) {
         auto numberOfTuplesJoined = 0UL;
-        auto outerKey = nljJoinParams.outerTuplesPtr + nljJoinParams.outerJoinKeyPosition;
-        auto innerKey = nljJoinParams.innerTuplesPtr + nljJoinParams.innerJoinKeyPosition;
         const auto outerTupleSize = nljJoinParams.outerSchema->getSchemaSizeInBytes();
         const auto innerTupleSize = nljJoinParams.innerSchema->getSchemaSizeInBytes();
         const auto joinTupleSize = nljJoinParams.joinSchema->getSchemaSizeInBytes();
@@ -61,11 +59,14 @@ namespace NES::Runtime::Execution::Operators {
 
         for(auto outer = 0UL; outer < nljJoinParams.numberOfTuplesOuter; ++outer) {
             for (auto inner = 0UL; inner < nljJoinParams.numberOfTuplesInner; ++inner) {
+                auto outerTuple = nljJoinParams.outerTuplesPtr + outerTupleSize * outer;
+                auto innerTuple = nljJoinParams.innerTuplesPtr + innerTupleSize * inner;
+
+                auto outerKey = outerTuple + nljJoinParams.outerJoinKeyPosition;
+                auto innerKey = innerTuple + nljJoinParams.innerJoinKeyPosition;
+
                 if (std::memcmp(innerKey, outerKey, nljJoinParams.joinKeySize) == 0) {
                     ++numberOfTuplesJoined;
-
-                    auto outerTuple = nljJoinParams.outerTuplesPtr + outerTupleSize * outer;
-                    auto innerTuple = nljJoinParams.innerTuplesPtr + innerTupleSize * inner;
 
                     auto numberOfTuplesInBuffer = tupleBuffer.getNumberOfTuples();
                     auto bufferPtr = tupleBuffer.getBuffer() + joinTupleSize * numberOfTuplesInBuffer;
@@ -74,11 +75,11 @@ namespace NES::Runtime::Execution::Operators {
                     std::memcpy(bufferPtr + sizeOfWindowStart, &nljJoinParams.windowEnd, sizeOfWindowEnd);
                     std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd, innerKey, nljJoinParams.joinKeySize);
 
-                        std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + nljJoinParams.joinKeySize,
-                                    outerTuple, outerTupleSize);
-                        std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + nljJoinParams.joinKeySize + outerTupleSize,
-                                    innerTuple, innerTupleSize);
-                    tupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+                    std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + nljJoinParams.joinKeySize,
+                                outerTuple, outerTupleSize);
+                    std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + nljJoinParams.joinKeySize + outerTupleSize,
+                                innerTuple, innerTupleSize);
+                    tupleBuffer.setNumberOfTuples(++numberOfTuplesInBuffer);
 
                     if (numberOfTuplesInBuffer >= numberOfTuplesPerBuffer) {
                         nljJoinParams.pipelineCtx->emitBuffer(tupleBuffer, *nljJoinParams.workerCtx);
@@ -86,9 +87,6 @@ namespace NES::Runtime::Execution::Operators {
                         tupleBuffer.setNumberOfTuples(0);
                     }
                 }
-
-                outerKey += outerTupleSize;
-                innerKey += innerTupleSize;
             }
         }
 
@@ -115,14 +113,14 @@ namespace NES::Runtime::Execution::Operators {
         auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
         auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
         auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
-        auto windowIdentifier = reinterpret_cast<uint64_t>(windowIdentifierPtr);
+        auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
 
         auto numberOfTuplesLeft = opHandler->getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true);
         auto numberOfTuplesRight = opHandler->getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false);
         auto tuplesLeftPtr = opHandler->getFirstTuple(windowIdentifier, /*isLeftSide*/ true);
         auto tuplesRightPtr = opHandler->getFirstTuple(windowIdentifier, /*isLeftSide*/ false);
         auto leftKeyPosition = opHandler->getPositionOfJoinKey(/*isLeftSide*/ true);
-        auto rightKeyPosition = opHandler->getPositionOfJoinKey(/*isLeftSide*/ true);
+        auto rightKeyPosition = opHandler->getPositionOfJoinKey(/*isLeftSide*/ false);
         auto leftSchema = opHandler->getSchema(/*isLeftSide*/ true);
         auto rightSchema = opHandler->getSchema(/*isLeftSide*/ false);
         auto [windowStart, windowEnd] = opHandler->getWindowStartEnd(windowIdentifier);
@@ -144,10 +142,11 @@ namespace NES::Runtime::Execution::Operators {
         nljJoinParams.innerSchema = rightSchema;
         nljJoinParams.joinSchema = Util::createJoinSchema(leftSchema, rightSchema, opHandler->getJoinFieldNameLeft());
         nljJoinParams.windowStart = windowStart;
-        nljJoinParams.windowEnd = windowEnd;
+        nljJoinParams.windowEnd = windowEnd + 1;
 
         auto numberOfTuplesJoined = performNLJJoin(nljJoinParams);
-        NES_DEBUG2("Joined a total of {} tuples!", numberOfTuplesJoined);
+        NES_DEBUG2("Joined a total of {} tuples for window {}-{}", numberOfTuplesJoined, nljJoinParams.windowStart,
+                   nljJoinParams.windowEnd);
     }
 
     void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
@@ -158,5 +157,7 @@ namespace NES::Runtime::Execution::Operators {
         Nautilus::FunctionCall("performNLJProxy", performNLJProxy, operatorHandlerMemRef,
                                ctx.getPipelineContext(), ctx.getWorkerContext(), windowIdentifierMemRef);
     }
+
+    NLJSink::NLJSink(uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex) {}
 
 } // namespace NES::Runtime::Execution::Operators

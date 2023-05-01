@@ -85,12 +85,6 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     return ss.str();
 }
 
-/**
- * @brief create CSV lines from the tuples
- * @param tbuffer the tuple buffer
- * @param schema how to read the tuples from the buffer
- * @return a full string stream as string
- */
 std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

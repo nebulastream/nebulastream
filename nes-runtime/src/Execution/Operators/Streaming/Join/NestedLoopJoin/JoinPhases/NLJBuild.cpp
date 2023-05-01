@@ -82,7 +82,7 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                          Value<Boolean>(isLeftSide));
 
     // Check if window is done
-    if (windowsTriggeredMemRef == Value<Boolean>(true)) {
+    if (windowsTriggeredMemRef) {
         Nautilus::FunctionCall("triggerJoinSinkProxy",
                                triggerJoinSinkProxy,
                                operatorHandlerMemRef,
@@ -106,5 +106,12 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef = entryMemRef + fieldType->size();
     }
 }
+
+NLJBuild::NLJBuild(uint64_t operatorHandlerIndex, const SchemaPtr &schema, const std::string &joinFieldName,
+                   const std::string &timeStampField, bool isLeftSide) : operatorHandlerIndex(operatorHandlerIndex),
+                                                                         schema(schema),
+                                                                         joinFieldName(joinFieldName),
+                                                                         timeStampField(timeStampField),
+                                                                         isLeftSide(isLeftSide) {}
 
 } // namespace NES::Runtime::Execution::Operators
