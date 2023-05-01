@@ -115,11 +115,11 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesGradual(){
     if (distributionStart == 1 || gradualDeclinePeriod < 0){
         distributionStart = 50;
         noChangeRemain = gradualChangePeriod;
-        gradualChangePeriod += 500;
+        gradualChangePeriod += 10000;
     } else {
         distributionStart = 1;
         noChangeRemain = gradualDeclinePeriod;
-        gradualDeclinePeriod -= 500;
+        gradualDeclinePeriod -= 10000;
     }
     std::vector<int64_t> fieldValues(100);
     std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);

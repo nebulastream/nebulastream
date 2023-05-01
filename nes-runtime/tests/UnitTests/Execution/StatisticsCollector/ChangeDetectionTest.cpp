@@ -569,8 +569,8 @@ TEST_P(ChangeDetectionTest, branchMissesGradualChangeTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2500000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(11000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2000000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -608,7 +608,7 @@ TEST_P(ChangeDetectionTest, branchMissesGradualChangeTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 11000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 10000);
 
     csvFile.close();
 }
