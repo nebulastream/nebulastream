@@ -180,8 +180,8 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                 } else {
                     containmentRelationship = ContainmentType::NO_CONTAINMENT;
                 }
-            // checks if the number of aggregates for the left signature is smaller than the number of aggregates for the right
-            // signature
+                // checks if the number of aggregates for the left signature is smaller than the number of aggregates for the right
+                // signature
             } else if (leftWindow.at("number-of-aggregates")->get_numeral_int()
                        < rightWindow.at("number-of-aggregates")->get_numeral_int()) {
                 NES_TRACE2("Right Window has more Aggregates than left Window.");
@@ -199,8 +199,8 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                 } else {
                     containmentRelationship = ContainmentType::NO_CONTAINMENT;
                 }
-            // checks if the number of aggregates for the left signature is larger than the number of aggregates for the right
-            // signature
+                // checks if the number of aggregates for the left signature is larger than the number of aggregates for the right
+                // signature
             } else if (leftWindow.at("number-of-aggregates")->get_numeral_int()
                        > rightWindow.at("number-of-aggregates")->get_numeral_int()) {
                 NES_TRACE2("Left Window has more Aggregates than right Window.");

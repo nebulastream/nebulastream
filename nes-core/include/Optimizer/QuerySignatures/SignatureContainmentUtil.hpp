@@ -196,8 +196,7 @@ class SignatureContainmentUtil {
      * @param rightSignature signature of the containee candidate
      * @return true if order is retained, false otherwise
      */
-    bool checkAttributeOrder(const QuerySignaturePtr& leftSignature,
-                             const QuerySignaturePtr& rightSignature) const;
+    bool checkAttributeOrder(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature) const;
 
     /**
      * @brief Reset z3 solver
