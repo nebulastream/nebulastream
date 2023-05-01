@@ -195,7 +195,7 @@ void CSVSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesT
 }
 
 void CSVSourceType::setGatheringMode(std::string inputGatheringMode) {
-    gatheringMode->setValue(magic_enum::enum_cast<GatheringMode>(inputGatheringMode).value());
+    CSVSourceType::setGatheringMode(magic_enum::enum_cast<GatheringMode>(inputGatheringMode).value());
 }
 
 void CSVSourceType::setGatheringMode(GatheringMode inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }

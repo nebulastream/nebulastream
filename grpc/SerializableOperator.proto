@@ -51,6 +51,12 @@ message SerializablePhysicalSourceType{
       CSV = 1;
   };
 
+  enum GatheringMode{
+    INTERVAL_MODE = 0;
+    INGESTION_RATE_MODE = 1;
+    ADAPTIVE_MODE = 2;
+  };
+
   enum TCPDecideMessageSize{
       TUPLE_SEPARATOR = 0;
       USER_SPECIFIED_BUFFER_SIZE = 1;
@@ -81,6 +87,7 @@ message SerializablePhysicalSourceType{
     uint32 numberOfBuffersToProduce = 4;
     uint32 numberOfTuplesToProducePerBuffer = 5;
     uint32 sourceGatheringInterval = 6;
+    GatheringMode sourceGatheringMode = 7;
   }
 
   /**
