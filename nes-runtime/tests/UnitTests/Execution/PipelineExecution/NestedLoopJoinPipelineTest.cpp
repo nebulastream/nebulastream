@@ -160,7 +160,8 @@ namespace NES::Runtime::Execution {
             }
 
             // Assure that at least one buffer has been emitted
-            nljWorks = nljWorks && (pipelineExecCtxLeft.emittedBuffers.size() > 0 || pipelineExecCtxRight.emittedBuffers.size() > 0);
+            nljWorks = nljWorks && (pipelineExecCtxLeft.emittedBuffers.size() > 0 ||
+                                    pipelineExecCtxRight.emittedBuffers.size() > 0);
 
             // Executing sink buffers
             std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
