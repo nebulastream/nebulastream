@@ -1499,6 +1499,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
         sourceConfig->setGatheringInterval(csvSourceConfig->sourcegatheringinterval());
+        sourceConfig->setGatheringMode(static_cast<GatheringMode>(csvSourceConfig->sourcegatheringmode()));
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
         sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
         auto ret = CsvSourceDescriptor::create(schema, sourceConfig);

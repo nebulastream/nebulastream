@@ -511,6 +511,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 if (this->gatheringInterval.count() != 0) {
                     // TODO: fix performance here?
                     auto numOfTuples = buf.getNumberOfTuples();
+                    NES_TRACE2("DataSource num of tuples = ", numOfTuples);
                     auto records = buf.getBuffer<Sensors::SingleSensor>();
                     double currentIntervalInSeconds = this->gatheringInterval.count() / 1000.;
                     for (uint64_t i = 0; i < numOfTuples; ++i) {
@@ -525,8 +526,11 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     }
                     totalIntervalInseconds /= this->lastValuesBuf.size();
                     double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
+                    NES_DEBUG2("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
+                    // TODO: check why negative nyq.
                     std::tuple<bool, double> res = Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
-                    if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
+                    if (std::get<0>(res) && std::get<1>(res) > 0.) { // nyq rate is smaller than current skewed median interval
+                        NES_DEBUG2("DataSource setSlowestInterval to {}ms", std::get<1>(res));
                         this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
                     }
                     NES_TRACE2("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
@@ -569,7 +573,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         NES_DEBUG("DataSource  {} : Data Source finished processing iteration  {}", operatorId, numberOfBuffersProduced);
     }
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
-        if (running && getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+        if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }

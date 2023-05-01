@@ -308,7 +308,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        operatorId,
                                        originId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::INTERVAL_MODE,
+                                       csvSourceType->getGatheringMode()->getValue(),
                                        physicalSourceName,
                                        successors);
 }

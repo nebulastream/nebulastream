@@ -237,6 +237,7 @@ void KalmanFilter::setGatheringIntervalWithRange(std::chrono::milliseconds gathe
 }
 
 void KalmanFilter::setSlowestInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
+    NES_DEBUG2("KalmanFilter::setSlowestInterval: {}ms to {}ms", this->slowestInterval.count(), gatheringIntervalInMillis.count());
     this->slowestInterval = gatheringIntervalInMillis;
     if (this->slowestInterval < this->fastestInterval) {
         this->fastestInterval = 3 * this->slowestInterval;

@@ -21,6 +21,16 @@ namespace NES {
 
 enum class GatheringMode : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2 };
 
+inline const char* GatheringModeString(GatheringMode v)
+{
+    switch (v)
+    {
+        case GatheringMode::INGESTION_RATE_MODE: return "Ingestion";
+        case GatheringMode::ADAPTIVE_MODE: return "Adaptive";
+        default: return "Interval";
+    }
+}
+
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_

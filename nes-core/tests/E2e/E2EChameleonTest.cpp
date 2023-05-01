@@ -40,7 +40,7 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"sensors\",\"schema\" : \"Schema::create()->addField(createField(\\\"value\\\", "
+    schema << "{\"logicalSourceName\" : \"sensors\",\"schema\" : \"Schema::create()->addField(createField(\\\"id\\\", "
               "BasicType::UINT64))->addField(createField(\\\"value\\\", "
               "BasicType::FLOAT64))->addField(createField(\\\"payload\\\", "
               "BasicType::FLOAT64))->addField(createField(\\\"timestamp\\\", BasicType::FLOAT64));\"}";
@@ -57,8 +57,10 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
                        TestUtils::gatheringMode(GatheringMode::ADAPTIVE_MODE),
                        TestUtils::logicalSourceName("sensors"),
                        TestUtils::physicalSourceName("sensor1"),
-                       TestUtils::numberOfBuffersToProduce(1),
-                       TestUtils::sourceGatheringInterval(4000)};
+                       TestUtils::numberOfTuplesToProducePerBuffer(1),
+                       TestUtils::numberOfBuffersToProduce(20),
+                       TestUtils::sourceGatheringInterval(4000),
+                       TestUtils::workerHealthCheckWaitTime(1)};
     auto worker = TestUtils::startWorker(workerConf);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
@@ -80,6 +82,33 @@ TEST_F(E2EChameleonTest, testAdaptiveIngestion) {
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+
+    string expectedContent = "sensors$id:INTEGER,sensors$value:(Float),sensors$payload:(Float),sensors$timestamp:(Float)\n"
+    "1,3.14159,123456789.000000,1640495147.000000\n"
+    "1,2.71828,234567890.000000,1640495157.000000\n"
+    "1,1.61803,345678901.000000,1640495167.000000\n"
+    "1,0.69315,456789012.000000,1640495177.000000\n"
+    "1,1.23456,567890123.000000,1640495187.000000\n"
+    "1,4.56789,678901234.000000,1640495197.000000\n"
+    "1,3.14159,789012345.000000,1640495207.000000\n"
+    "1,2.71828,890123456.000000,1640495217.000000\n"
+    "1,1.61803,901234567.000000,1640495227.000000\n"
+    "1,0.69315,012345678.000000,1640495237.000000\n"
+    "1,1.23456,123456789.000000,1640495247.000000\n"
+    "1,4.56789,234567890.000000,1640495257.000000\n"
+    "1,3.14159,345678901.000000,1640495267.000000\n"
+    "1,2.71828,456789012.000000,1640495277.000000\n"
+    "1,1.61803,567890123.000000,1640495287.000000\n"
+    "1,0.69315,678901234.000000,1640495297.000000\n"
+    "1,1.23456,789012345.000000,1640495307.000000\n"
+    "1,4.56789,890123456.000000,1640495317.000000\n"
+    "1,3.14159,901234567.000000,1640495327.000000\n"
+    "1,100.000000,012345678.000000,1640495337.000000\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, pathQuery1));
+
+//    int response = remove(testFile.c_str());
+//    EXPECT_TRUE(response == 0);
     // TODO: dump stats
 }
 }
