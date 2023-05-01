@@ -21,8 +21,8 @@ BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetector
                            const std::shared_ptr<Profiler>& profiler,
                            uint64_t normalizationWindowSize)
     : profiler(profiler),
-      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)),
-      branchMisses(0) {
+      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper))
+{
     eventId = profiler->addEvent(PERF_COUNT_HW_BRANCH_MISSES);
 }
 

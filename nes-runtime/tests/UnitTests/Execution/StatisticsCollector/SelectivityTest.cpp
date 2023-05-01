@@ -143,7 +143,7 @@ TEST_P(SelectivityTest, runtimeTest) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             runtime->collect();
-            csvFile << "," << std::any_cast<uint64_t>(runtime->getStatisticValue());
+            csvFile << ";" << std::any_cast<uint64_t>(runtime->getStatisticValue());
         }
         executablePipelineStage->stop(pipelineContext);
 
@@ -228,7 +228,7 @@ TEST_P(SelectivityTest, branchMissesTest) {
             executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
             branchMisses->collect();
-            csvFile << "," << std::any_cast<uint64_t>(branchMisses->getStatisticValue());
+            csvFile << ";" << std::any_cast<uint64_t>(branchMisses->getStatisticValue());
         }
         executablePipelineStage->stop(pipelineContext);
 
@@ -314,8 +314,6 @@ TEST_P(SelectivityTest, cacheMissesTest) {
         // initialize statistic cache misses
         auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperBranch), profiler, 1000);
 
-        csvFile << "Selectivity " << ((double) j / 100) << "\n";
-
         auto adwin = std::make_unique<Adwin>(0.001, 4);
         auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
 
@@ -338,7 +336,7 @@ TEST_P(SelectivityTest, cacheMissesTest) {
 
         // collect mean only
         double mean = (double) sum / (double) pipelineContext.buffers.size();
-        csvFile << sel << ", " << mean << "\n";
+        csvFile << sel << ";" << mean << "\n";
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
         ASSERT_EQ(numberOfResultBuffers, 260000);
@@ -382,7 +380,7 @@ TEST_P(SelectivityTest, cacheMissesValuesTest) {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(51);
+    auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(2); // 51
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
     auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
@@ -422,14 +420,14 @@ TEST_P(SelectivityTest, cacheMissesValuesTest) {
 
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
 
-    csvFile << "Selectivity " << ((double) 50 / 100) << "\n";
+    csvFile << "Selectivity " << ((double) 1 / 100) << "\n";
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (auto buffer : bufferVector) {
         executablePipelineStage->execute(buffer, pipelineContext, *wc);
 
         pipelineSelectivity->collect();
-        csvFile << std::any_cast<double>(pipelineSelectivity->getStatisticValue()) << ",";
+        csvFile << std::any_cast<double>(pipelineSelectivity->getStatisticValue()) << ";";
         cacheMisses->collect();
         csvFile << std::any_cast<uint64_t>(cacheMisses->getStatisticValue()) << "\n";
     }

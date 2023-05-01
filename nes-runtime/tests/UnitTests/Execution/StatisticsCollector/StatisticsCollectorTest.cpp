@@ -143,7 +143,7 @@ TEST_P(StatisticsCollectorTest, selectivityTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    // initialize statistics pipeline selectivity and pipeline runtime
+    // initialize statistics pipeline selectivity
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
@@ -497,6 +497,7 @@ TEST_P(StatisticsCollectorTest, triggerStatisticsTest) {
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (auto& buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+        //trigger statistics from nautilus pipeline
         nautilusExecutablePipelineStage->stop(statisticsCollector);
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);

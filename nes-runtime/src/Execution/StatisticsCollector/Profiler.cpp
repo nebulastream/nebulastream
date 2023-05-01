@@ -24,10 +24,10 @@ Profiler::Profiler (){
 Profiler::Profiler (std::vector<perf_hw_id> events){
     fileDescriptor = -1;
 
-    for (size_t i = 0; i < events.size(); ++i) {
+    for (auto & event : events) {
         memset(&pe, 0, sizeof(pe));
         pe.type = PERF_TYPE_HARDWARE;
-        pe.config = events[i]; // specify event e.g., branch misses or cache misses
+        pe.config = event; // specify event e.g., branch misses or cache misses
         pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID; // for multiple events
         pe.size = sizeof(pe);
         pe.disabled = 1;
@@ -36,13 +36,13 @@ Profiler::Profiler (std::vector<perf_hw_id> events){
         pe.exclude_kernel = 1;
         pe.exclude_hv = 1;
 
-        int eventFileDescriptor = perf_event_open(&pe, 0, -1, fileDescriptor, 0);
+        auto eventFileDescriptor = perf_event_open(&pe, 0, -1, fileDescriptor, 0);
         if (eventFileDescriptor == -1) {
             NES_THROW_RUNTIME_ERROR("Error opening perf event");
         }
 
-        eventToIdMap[events[i]] = 0;
-        ioctl(eventFileDescriptor, PERF_EVENT_IOC_ID, &eventToIdMap[events[i]]);
+        eventToIdMap[event] = 0;
+        ioctl(eventFileDescriptor, PERF_EVENT_IOC_ID, &eventToIdMap[event]);
 
         if (fileDescriptor == -1){
             // use one filedescriptor for a group of events
@@ -64,7 +64,7 @@ void Profiler::stopProfiling() {
 
 uint64_t Profiler::addEvent(perf_hw_id event){
     memset(&pe, 0, sizeof(pe));
-    pe.type = PERF_TYPE_HARDWARE;
+    pe.type = PERF_TYPE_HARDWARE; // has to be changed for software events
     pe.config = event; // specify event e.g., branch misses or cache misses
     pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID; // for multiple events
     pe.size = sizeof(pe);
@@ -74,7 +74,7 @@ uint64_t Profiler::addEvent(perf_hw_id event){
     pe.exclude_kernel = 1;
     pe.exclude_hv = 1;
 
-    int eventFileDescriptor = perf_event_open(&pe, 0, -1, fileDescriptor, 0);
+    auto eventFileDescriptor = perf_event_open(&pe, 0, -1, fileDescriptor, 0);
     if (eventFileDescriptor == -1) {
         NES_THROW_RUNTIME_ERROR("Error opening perf event");
     }

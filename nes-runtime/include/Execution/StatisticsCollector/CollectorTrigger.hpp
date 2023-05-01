@@ -45,7 +45,7 @@ class CollectorTrigger {
     */
     TriggerType getTriggerType();
 
-    uint64_t getId();
+    uint64_t getId() const;
 
   private:
     TriggerType triggerType;

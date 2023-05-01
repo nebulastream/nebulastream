@@ -23,7 +23,7 @@ TriggerType CollectorTrigger::getTriggerType() {
     return triggerType;
 }
 
-uint64_t CollectorTrigger::getId() {
+uint64_t CollectorTrigger::getId() const {
     return id;
 }
 

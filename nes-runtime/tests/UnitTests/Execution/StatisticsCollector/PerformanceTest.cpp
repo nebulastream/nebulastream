@@ -32,6 +32,8 @@ limitations under the License.
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/SeqDrift2/SeqDrift2.hpp>
+#include <Execution/StatisticsCollector/OutOfOrderRatio.hpp>
+#include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
 #include <Execution/StatisticsCollector/StatisticsCollector.hpp>
@@ -76,433 +78,1020 @@ class PerformanceTest : public testing::Test, public AbstractPipelineExecutionTe
 /**
 * @brief measure performance with statistics collection and Adwin
 */
-TEST_P(PerformanceTest, collectionPerformanceTest) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
 
-    // generate list of values 0 til 100
-    std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-    auto rng = std::default_random_engine {};
+    std::ofstream csvFile("PerformanceSelectivityAdwin.csv");
 
-    std::vector<TupleBuffer> bufferVector;
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    for (int i = 0; i < 1000; ++i){
-        auto buffer = bm->getBufferBlocking();
-        bufferVector.push_back(buffer);
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (int k = 0; k < 5; k++) {
-            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-            for (uint64_t j = 0; j < 100; j++) {
-                dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                dynamicBuffer[j]["f2"].write((int64_t) 1);
-                dynamicBuffer.setNumberOfTuples(j + 1);
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
             }
         }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detector
+        auto adwin = std::make_unique<Adwin>(0.001, 5);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+
+        // initialize statistics selectivity and add to statistics collector
+        auto pipelineSelectivity =
+            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+
+        // measure execution time
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
-
-    // create pipeline
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(50);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
-    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator->setChild(selectionOperator);
-
-    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(2);
-    auto addExpression = std::make_shared<Expressions::MulExpression>(readField1, constantInt2);
-    auto writeField3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
-    auto mapOperator = std::make_shared<Operators::Map>(writeField3);
-    selectionOperator->setChild(mapOperator);
-
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    mapOperator->setChild(emitOperator);
-
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
-
-    auto executablePipeline = provider->create(pipeline);
-    auto pipelineContext = MockedPipelineExecutionContext();
-
-    auto adwin = std::make_unique<Adwin>(0.001, 5);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
-
-    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
-    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
-
-    auto pipelineId = pipelineContext.getPipelineID();
-
-    // initialize statistics pipeline
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-
-    auto statisticsCollector = std::make_shared<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
-
-    auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-    nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (auto& buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        nautilusExecutablePipelineStage->stop(statisticsCollector);
-    }
-    nautilusExecutablePipelineStage->stop(pipelineContext);
-
-    auto runtimeEnd = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
-
-    std::cout << "duration with selectivity adwin " << duration.count() << std::endl;
-
-    ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    csvFile.close();
 }
 
 /**
 * @brief measure performance with statistics collection and SeqDrift2
 */
-TEST_P(PerformanceTest, collectionSeqDriftPerformanceTest) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
 
-    // generate list of values 0 til 100
-    std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-    auto rng = std::default_random_engine {};
+    std::ofstream csvFile("PerformanceSelectivitySeqDrift.csv");
 
-    std::vector<TupleBuffer> bufferVector;
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    for (int i = 0; i < 1000; ++i){
-        auto buffer = bm->getBufferBlocking();
-        bufferVector.push_back(buffer);
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (int k = 0; k < 5; k++) {
-            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-            for (uint64_t j = 0; j < 100; j++) {
-                dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                dynamicBuffer[j]["f2"].write((int64_t) 1);
-                dynamicBuffer.setNumberOfTuples(j + 1);
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
             }
         }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detector
+        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
+
+        // initialize statistics selectivity and add to statistics collector
+        auto pipelineSelectivity =
+            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
 
-    // create pipeline
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(50);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
-    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator->setChild(selectionOperator);
-
-    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(2);
-    auto addExpression = std::make_shared<Expressions::MulExpression>(readField1, constantInt2);
-    auto writeField3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
-    auto mapOperator = std::make_shared<Operators::Map>(writeField3);
-    selectionOperator->setChild(mapOperator);
-
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    mapOperator->setChild(emitOperator);
-
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
-
-    auto executablePipeline = provider->create(pipeline);
-    auto pipelineContext = MockedPipelineExecutionContext();
-
-    auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
-
-    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
-    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
-
-    auto pipelineId = pipelineContext.getPipelineID();
-
-    // initialize statistics pipeline
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-
-    auto statisticsCollector = std::make_shared<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
-
-    auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-    nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (auto& buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        nautilusExecutablePipelineStage->stop(statisticsCollector);
-    }
-    nautilusExecutablePipelineStage->stop(pipelineContext);
-
-    auto runtimeEnd = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
-
-    std::cout << "duration with selectivity seqdrift " << duration.count() << std::endl;
-
-    ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    csvFile.close();
 }
 
 /**
-* @brief measure performance with branch msses i.e., profiler and normalizer
+* @brief measure performance with statistics collection and Adwin
 */
-TEST_P(PerformanceTest, branchMissesTest) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
 
-    // generate list of values 0 til 100
-    std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-    auto rng = std::default_random_engine {};
+    std::ofstream csvFile("PerformanceRuntimeAdwin.csv");
 
-    std::vector<TupleBuffer> bufferVector;
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    for (int i = 0; i < 1000; ++i){
-        auto buffer = bm->getBufferBlocking();
-        bufferVector.push_back(buffer);
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (int k = 0; k < 5; k++) {
-            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-            for (uint64_t j = 0; j < 100; j++) {
-                dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                dynamicBuffer[j]["f2"].write((int64_t) 1);
-                dynamicBuffer.setNumberOfTuples(j + 1);
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
             }
         }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detector
+        auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+        auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
+
+        // initialize statistic runtime
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 4);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(runtime));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    }
+    csvFile.close();
+}
+
+/**
+* @brief measure performance with statistics collection and SeqDrift2
+*/
+TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
+
+    std::ofstream csvFile("PerformanceRuntimeSeqDrift.csv");
+
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
+            }
+        }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detector
+        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
+
+        // initialize statistic runtime
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, 4);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(runtime));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
 
-    // create pipeline
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+    csvFile.close();
+}
 
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(50);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
-    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator->setChild(selectionOperator);
+/**
+* @brief measure performance with branch misses i.e., profiler and normalizer
+*/
+TEST_P(PerformanceTest, branchMissesAdwinTest) {
 
-    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(2);
-    auto addExpression = std::make_shared<Expressions::MulExpression>(readField1, constantInt2);
-    auto writeField3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
-    auto mapOperator = std::make_shared<Operators::Map>(writeField3);
-    selectionOperator->setChild(mapOperator);
+    std::ofstream csvFile("PerformanceBranchMissesAdwin.csv");
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    mapOperator->setChild(emitOperator);
+    for (auto l = 0; l < 10; l++) {
 
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto executablePipeline = provider->create(pipeline);
-    auto pipelineContext = MockedPipelineExecutionContext();
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
 
-    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
-    auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftBranchMisses));
+        std::vector<TupleBuffer> bufferVector;
 
-    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
-    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
+            }
+        }
 
-    auto profiler = std::make_shared<Profiler>();
-    nautilusExecutablePipelineStage->setProfiler(profiler);
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto pipelineId = pipelineContext.getPipelineID();
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(2);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
 
-    // initialize statistics pipeline
-    auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
 
-    auto statisticsCollector = std::make_shared<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
 
-    auto runtimeStart = std::chrono::high_resolution_clock::now();
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (auto& buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        nautilusExecutablePipelineStage->stop(statisticsCollector);
+        // initialize change detector
+        auto adwin = std::make_unique<Adwin>(0.001, 5);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+
+        // initialize profiler
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics branch misses
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapper), profiler, 4);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
-    nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    auto runtimeEnd = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+    csvFile.close();
+}
 
-    std::cout << "duration with branch misses " << duration.count() << std::endl;
+/**
+* @brief measure performance with branch misses i.e., profiler and normalizer
+*/
+TEST_P(PerformanceTest, branchMissesTest) {
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    std::ofstream csvFile("PerformanceBranchMissesSeqDrift.csv");
+
+    for (auto l = 0; l < 10; l++) {
+
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
+            }
+        }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(2);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detector
+        auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftBranchMisses));
+
+        // initialize profiler
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics branch misses
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    }
+
+    csvFile.close();
+}
+
+/**
+* @brief measure performance with statistics collection out-of-order-ratio and Adwin
+*/
+TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
+
+    std::ofstream csvFile("PerformanceOutOfOrderRatioAdwin.csv");
+
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("timestamp", BasicType::UINT64);
+        schema->addField("f1", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+        auto timestamp = 0;
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    if((j+1) % 5 == 0) {
+                        // insert out-of-order timestamp
+                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp - 3);
+                    } else {
+                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp);
+                        timestamp++;
+                    }
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
+            }
+        }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto oufOfOrderMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto readTimestamp = std::make_shared<Expressions::ReadFieldExpression>("timestamp");
+        auto outOfOrderRatioOperator = std::make_shared<Operators::OutOfOrderRatioOperator>(std::move(readTimestamp),0);
+        scanOperator->setChild(outOfOrderRatioOperator);
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        outOfOrderRatioOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        // initialize change detector
+        auto adwin = std::make_unique<Adwin>(0.001, 4);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+
+        // initialize statistics selectivity and add to statistics collector
+        auto record = Record({{"time", Value<>(0)}});
+        auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
+
+        auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(changeDetectorWrapper), handler);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        statisticsCollector->addStatistic(pipelineId, std::move(outOfOrderRatio));
+
+        // measure execution time
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    }
+    csvFile.close();
+}
+
+/**
+* @brief measure performance with statistics collection out-of-orderratio and SeqDrift
+*/
+TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
+
+    std::ofstream csvFile("PerformanceOutOfOrderRatioSeqDrift.csv");
+
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("timestamp", BasicType::UINT64);
+        schema->addField("f1", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+        auto timestamp = 0;
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    if((j+1) % 5 == 0) {
+                        // insert out-of-order timestamp
+                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp - 3);
+                    } else {
+                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp);
+                        timestamp++;
+                    }
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
+            }
+        }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto oufOfOrderMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto readTimestamp = std::make_shared<Expressions::ReadFieldExpression>("timestamp");
+        auto outOfOrderRatioOperator = std::make_shared<Operators::OutOfOrderRatioOperator>(std::move(readTimestamp),0);
+        scanOperator->setChild(outOfOrderRatioOperator);
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        outOfOrderRatioOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        // initialize change detector
+        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
+
+        // initialize statistics selectivity and add to statistics collector
+        auto record = Record({{"time", Value<>(0)}});
+        auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
+
+        auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(changeDetectorWrapper), handler);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        statisticsCollector->addStatistic(pipelineId, std::move(outOfOrderRatio));
+
+        // measure execution time
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    }
+    csvFile.close();
+}
+
+/**
+* @brief measure performance with statistics collection of selectivity and runtime
+*/
+TEST_P(PerformanceTest, selectivityRuntimeTest) {
+
+    std::ofstream csvFile("PerformanceSelectivityRuntime.csv");
+
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
+            }
+        }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detectors
+        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
+        auto seqDriftRuntime = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftRuntime));
+
+        // initialize profiler
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics selectivity and runtime
+        auto pipelineSelectivity =
+            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 4);
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+        statisticsCollector->addStatistic(pipelineId, std::move(runtime));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    }
+
+    csvFile.close();
 }
 
 /**
 * @brief measure performance with statistics collection
 */
-TEST_P(PerformanceTest, multipleStatisticsTest) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+TEST_P(PerformanceTest, selectivityBranchMissesTest) {
 
-    // generate list of values 0 til 100
-    std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-    auto rng = std::default_random_engine {};
+    std::ofstream csvFile("PerformanceSelectivityBranchMisses.csv");
 
-    std::vector<TupleBuffer> bufferVector;
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    for (int i = 0; i < 1000; ++i){
-        auto buffer = bm->getBufferBlocking();
-        bufferVector.push_back(buffer);
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (int k = 0; k < 5; k++) {
-            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-            for (uint64_t j = 0; j < 100; j++) {
-                dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                dynamicBuffer[j]["f2"].write((int64_t) 1);
-                dynamicBuffer.setNumberOfTuples(j + 1);
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
             }
         }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        auto pipelineId = pipelineContext.getPipelineID();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        // initialize change detectors
+        auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
+        auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
+        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftBranchMisses));
+
+        // initialize profiler
+        auto profiler = std::make_shared<Profiler>();
+        nautilusExecutablePipelineStage->setProfiler(profiler);
+
+        // initialize statistics selectivity and branch misses
+        auto pipelineSelectivity =
+            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
+
+        auto statisticsCollector = std::make_shared<StatisticsCollector>();
+        statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+        statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+            nautilusExecutablePipelineStage->stop(statisticsCollector);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
 
-    // create pipeline
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(50);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
-    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator->setChild(selectionOperator);
-
-    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(2);
-    auto addExpression = std::make_shared<Expressions::MulExpression>(readField1, constantInt2);
-    auto writeField3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
-    auto mapOperator = std::make_shared<Operators::Map>(writeField3);
-    selectionOperator->setChild(mapOperator);
-
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    mapOperator->setChild(emitOperator);
-
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
-
-    auto executablePipeline = provider->create(pipeline);
-    auto pipelineContext = MockedPipelineExecutionContext();
-
-    auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
-    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
-    auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftBranchMisses));
-
-    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
-    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
-
-    auto profiler = std::make_shared<Profiler>();
-    nautilusExecutablePipelineStage->setProfiler(profiler);
-
-    auto pipelineId = pipelineContext.getPipelineID();
-
-    // initialize statistics pipeline
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-    auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
-
-    auto statisticsCollector = std::make_shared<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
-    statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
-
-    auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-    nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (auto& buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        nautilusExecutablePipelineStage->stop(statisticsCollector);
-    }
-    nautilusExecutablePipelineStage->stop(pipelineContext);
-
-    auto runtimeEnd = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
-
-    std::cout << "duration with selectitivy and branch misses " << duration.count() << std::endl;
-
-    ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    csvFile.close();
 }
 
 /**
 * @brief measure performance without statistics collection
 */
-TEST_P(PerformanceTest, withoutCollectionPerformanceTest) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+TEST_P(PerformanceTest, pipelinePerformanceTest) {
 
-    // generate list of values 0 til 100
-    std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-    auto rng = std::default_random_engine {};
+    std::ofstream csvFile("PerformancePipeline.csv");
 
-    std::vector<TupleBuffer> bufferVector;
+    for (auto l = 0; l < 10; l++) {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("f1", BasicType::INT64);
+        schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    for (int i = 0; i < 1000; ++i){
-        auto buffer = bm->getBufferBlocking();
-        bufferVector.push_back(buffer);
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (int k = 0; k < 5; k++) {
-            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-            for (uint64_t j = 0; j < 100; j++) {
-                dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                dynamicBuffer[j]["f2"].write((int64_t) 1);
-                dynamicBuffer.setNumberOfTuples(j + 1);
+        // generate list of values 0 til 100
+        std::vector<int64_t> fieldValues(100);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
+        auto rng = std::default_random_engine{};
+
+        std::vector<TupleBuffer> bufferVector;
+
+        for (int i = 0; i < 1000; ++i) {
+            auto buffer = bm->getBufferBlocking();
+            bufferVector.push_back(buffer);
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (int k = 0; k < 5; k++) {
+                std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+                for (uint64_t j = 0; j < 100; j++) {
+                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
+                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples(j + 1);
+                }
             }
         }
+
+        // create pipeline
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
+        auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+        auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+        auto pipelineContext = MockedPipelineExecutionContext();
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage =
+            std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
+
+        nautilusExecutablePipelineStage->setup(pipelineContext);
+        for (auto& buffer : bufferVector) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+        }
+        nautilusExecutablePipelineStage->stop(pipelineContext);
+
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
+        //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+        std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
+
+        csvFile << duration.count() << ",";
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
 
-    // create pipeline
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(50);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
-    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator->setChild(selectionOperator);
-
-    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(2);
-    auto addExpression = std::make_shared<Expressions::MulExpression>(readField1, constantInt2);
-    auto writeField3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
-    auto mapOperator = std::make_shared<Operators::Map>(writeField3);
-    selectionOperator->setChild(mapOperator);
-
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    mapOperator->setChild(emitOperator);
-
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
-
-    auto executablePipeline = provider->create(pipeline);
-    auto pipelineContext = MockedPipelineExecutionContext();
-    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
-    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
-
-    auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-    nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (auto& buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-    }
-    nautilusExecutablePipelineStage->stop(pipelineContext);
-
-    auto runtimeEnd = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
-
-    std::cout << "duration " << duration.count() << std::endl;
-
-    ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+    csvFile.close();
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

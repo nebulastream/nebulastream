@@ -191,6 +191,7 @@ TEST_P(MultiplePipelinesTest, multiplePipelines) {
 
         statisticsCollector->updateStatisticsHandler(triggerP1);
         statisticsCollector->updateStatisticsHandler(triggerP2);
+        //MockedPipelineExecutionContext registers both pipelines with same id, otherwise this would work
         //nautilusExecutablePipelineStage->stop(statisticsCollector);
         //nautilusExecutablePipelineStageP2->stop(statisticsCollector);
     }

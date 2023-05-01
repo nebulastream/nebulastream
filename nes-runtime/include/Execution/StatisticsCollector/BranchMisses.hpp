@@ -43,7 +43,7 @@ class BranchMisses : public Statistic {
     std::shared_ptr<Profiler> profiler;
     Normalizer normalizer;
     uint64_t eventId;
-    uint64_t branchMisses;
+    uint64_t branchMisses{};
 };
 
 }// namespace NES::Runtime::Execution

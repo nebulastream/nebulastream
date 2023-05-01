@@ -34,8 +34,9 @@ void StatisticsCollector::updateStatisticsHandler(CollectorTrigger trigger) {
         auto statisticsMapEntry = idToStatisticMap.find(id);
 
         if (statisticsMapEntry != idToStatisticMap.end()) {
-            for (std::shared_ptr<Statistic> statistic : statisticsMapEntry->second) {
+            for (const std::shared_ptr<Statistic>& statistic : statisticsMapEntry->second) {
                 statistic->collect();
+                // if collect returns true, change detected -> report back to compiler and optimizer
             }
         }
     }
