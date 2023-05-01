@@ -11,6 +11,8 @@
 # limitations under the License.
 
 add_nes_runtime_test(runtime-stream-hash-join-operator-test "HashJoinOperatorTest.cpp")
+add_nes_runtime_test(runtime-stream-nested-loop-join-operator-test "NestedLoopJoinOperatorTest.cpp")
+
 add_subdirectory(Aggregations)
 IF (NES_USE_TF)
     add_subdirectory(InferModel)

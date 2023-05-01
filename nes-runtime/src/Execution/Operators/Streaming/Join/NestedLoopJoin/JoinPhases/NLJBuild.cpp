@@ -67,13 +67,6 @@ void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWor
 
 
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
-    /**
-     * 1. Check if window is done
-     * 2. Window bekommen durch OperatorHandler
-     * 3. Pointer zu freiem Speicherbereich bekommen
-     * 4. Record in den Speicherbereich reinschreiben
-     */
-
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto windowsTriggeredMemRef = Nautilus::FunctionCall("updateStateOfNLJWindows", updateStateOfNLJWindows,
