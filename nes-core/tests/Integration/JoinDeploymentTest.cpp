@@ -89,81 +89,6 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
 }
 
 /**
- * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
- *        buffers that do not fit will be discarded.
- * @param buffersToBeMerged
- * @param schema
- * @param bufferManager
- * @return merged TupleBuffer
- */
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, BufferManagerPtr bufferManager) {
-
-    auto retBuffer = bufferManager->getBufferBlocking();
-    auto retBufferPtr = retBuffer.getBuffer();
-
-    auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
-    auto cnt = 0UL;
-    for (auto& buffer : buffersToBeMerged) {
-        cnt += buffer.getNumberOfTuples();
-        if (cnt > maxPossibleTuples) {
-            NES_WARNING("Too many tuples to fit in a single buffer.");
-            return retBuffer;
-        }
-
-        auto bufferSize = buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
-        std::memcpy(retBufferPtr, buffer.getBuffer(), bufferSize);
-
-        retBufferPtr += bufferSize;
-        retBuffer.setNumberOfTuples(cnt);
-    }
-
-    return retBuffer;
-}
-
-/**
- * @brief checks if the buffers contain the same tuples
- * @param buffer1
- * @param buffer2
- * @param schema
- * @return True if the buffers contain the same tuples
- */
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
-    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
-    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
-        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
-        return false;
-    }
-
-    std::set<size_t> sameTupleIndices;
-    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
-        bool idxFoundInBuffer2 = false;
-        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2) {
-            if (sameTupleIndices.contains(idxBuffer2)) {
-                continue;
-            }
-
-            auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
-            auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
-            auto equalTuple = (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0);
-            if (equalTuple) {
-                sameTupleIndices.insert(idxBuffer2);
-                idxFoundInBuffer2 = true;
-                break;
-            }
-        }
-
-        if (!idxFoundInBuffer2) {
-            NES_DEBUG(
-                "Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: " << idxBuffer1);
-            return false;
-        }
-    }
-
-    return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
-}
-
-/**
 * Test deploying join with same data and same schema
  * */
 TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
@@ -219,13 +144,13 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 /**
@@ -284,13 +209,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 /**
@@ -349,13 +274,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 /**
@@ -413,13 +338,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 /**
@@ -481,13 +406,13 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 40);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 /**
@@ -548,13 +473,13 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 40);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 /**
@@ -616,13 +541,13 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 2);
-    auto resultBuffer = mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 INSTANTIATE_TEST_CASE_P(testJoinQueries,

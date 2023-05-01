@@ -13,12 +13,14 @@
 */
 #ifndef NES_NLJSINK_HPP
 #define NES_NLJSINK_HPP
-#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-class NLJSink : public ExecutableOperator {
+class NLJSink : public Operator {
 
 public:
+    explicit NLJSink(uint64_t operatorHandlerIndex);
+
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:

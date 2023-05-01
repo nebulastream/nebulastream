@@ -53,7 +53,8 @@ namespace NES::Runtime::Execution {
         return windowEnd;
     }
 
-    NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd) {}
+    NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : windowState(WindowState::BOTH_SIDES_FILLING),
+    windowStart(windowStart), windowEnd(windowEnd) {}
 
     bool NLJWindow::operator==(const NLJWindow &rhs) const {
         return windowState == rhs.windowState &&

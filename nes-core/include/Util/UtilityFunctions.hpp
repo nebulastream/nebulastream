@@ -187,9 +187,11 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
 std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
 
 /**
-* @brief this method creates a string from the content of a tuple buffer
-* @return string of the buffer content
-*/
+ * @brief create CSV lines from the tuples
+ * @param tbuffer the tuple buffer
+ * @param schema how to read the tuples from the buffer
+ * @return a full string stream as string
+ */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**

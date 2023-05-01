@@ -23,6 +23,8 @@ namespace NES::Runtime::Execution::Operators {
 class NLJOperatorHandler : public OperatorHandler {
 
 public:
+    NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft, const SchemaPtr &joinSchemaRight,
+                       const std::string &joinFieldNameLeft, const std::string &joinFieldNameRight);
 
     uint8_t* insertNewTuple(uint64_t timestamp, bool isLeftSide);
 
@@ -45,6 +47,11 @@ public:
     const std::string &getJoinFieldNameLeft() const;
 
     const std::string &getJoinFieldNameRight() const;
+
+    void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager,
+               uint32_t localStateVariableId) override;
+
+    void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
 private:
     void createNewWindow();

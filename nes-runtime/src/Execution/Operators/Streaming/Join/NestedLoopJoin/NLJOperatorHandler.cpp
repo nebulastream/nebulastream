@@ -33,8 +33,8 @@ namespace NES::Runtime::Execution::Operators {
             }
 
             if (timestamp > curWindow.getWindowEnd()) {
-                if ((isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING) ||
-                    (!isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_LEFT_FILLING)) {
+                if ((isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_LEFT_FILLING) ||
+                    (!isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING)) {
                     curWindow.windowState = NLJWindow::WindowState::DONE_FILLING;
                     atLeastOneDoneFilling = true;
                 }
@@ -66,7 +66,7 @@ namespace NES::Runtime::Execution::Operators {
     }
 
     void NLJOperatorHandler::createNewWindow() {
-        nljWindows.emplace_back(windowStart, windowStart + windowSize);
+        nljWindows.emplace_back(windowStart, windowStart + windowSize - 1);
         windowStart += windowSize;
     }
 
@@ -79,7 +79,7 @@ namespace NES::Runtime::Execution::Operators {
 
     std::optional<NLJWindow*> NLJOperatorHandler::getWindowByTimestamp(uint64_t timestamp) {
         for (auto& curWindow : nljWindows) {
-            if (curWindow.getWindowStart() <= timestamp && timestamp < curWindow.getWindowEnd()) {
+            if (curWindow.getWindowStart() <= timestamp && timestamp <= curWindow.getWindowEnd()) {
                 return &curWindow;
             }
         }
@@ -154,5 +154,23 @@ namespace NES::Runtime::Execution::Operators {
 
     const std::string &NLJOperatorHandler::getJoinFieldNameRight() const {
         return joinFieldNameRight;
+    }
+
+    NLJOperatorHandler::NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft,
+                                           const SchemaPtr &joinSchemaRight, const std::string &joinFieldNameLeft,
+                                           const std::string &joinFieldNameRight) : windowSize(windowSize),
+                                                                                    joinSchemaLeft(joinSchemaLeft),
+                                                                                    joinSchemaRight(joinSchemaRight),
+                                                                                    joinFieldNameLeft(
+                                                                                            joinFieldNameLeft),
+                                                                                    joinFieldNameRight(
+                                                                                            joinFieldNameRight) {}
+
+    void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
+        NES_DEBUG("start HashJoinOperatorHandler");
+    }
+
+    void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
+        NES_DEBUG("stop HashJoinOperatorHandler");
     }
 } // namespace NES::Runtime::Execution::Operators
