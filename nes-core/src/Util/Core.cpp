@@ -283,9 +283,9 @@ std::tuple<bool, int> Util::is_aliased_and_nyq_freq(const std::vector<double>& p
     uint64_t bin_idx = 0;
     while (current_level < cutoff_percent && bin_idx < psd_array.size()) {
         current_level += psd_array[bin_idx];
-        bin_idx++;
+        ++bin_idx;
     }
-    return std::make_tuple(bin_idx == psd_array.size(), bin_idx);
+    return std::make_tuple(bin_idx == psd_array.size(), bin_idx - 1);
 };
 
 

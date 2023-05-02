@@ -528,8 +528,14 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
                     NES_DEBUG2("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
                     // TODO: check why negative nyq.
+                    auto toVec = this->lastValuesBuf.toVector();
+                    std::string numbers = "";
+                    for (double item : toVec) {
+                        numbers.append(std::to_string(item) + ", ");
+                    }
                     std::tuple<bool, double> res = Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
-                    if (std::get<0>(res) && std::get<1>(res) > 0.) { // nyq rate is smaller than current skewed median interval
+                    NES_DEBUG2("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
+                    if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
                         NES_DEBUG2("DataSource setSlowestInterval to {}ms", std::get<1>(res));
                         this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
                     }
