@@ -40,8 +40,8 @@ class TypeCastable {
 
 template<typename T>
 concept GetType = requires(T a) {
-                      { T::type } -> convertible_to<TypeCastable::Kind>;
-                  };
+    { T::type } -> convertible_to<TypeCastable::Kind>;
+};
 
 template<class X, class Y>
     requires(std::is_base_of<Y, X>::value == false)
