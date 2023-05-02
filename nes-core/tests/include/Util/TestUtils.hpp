@@ -471,7 +471,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         timeoutInSec = std::chrono::seconds(customTimeout);
     }
 
-    NES_TRACE("using timeout=" << timeoutInSec.count());
+    NES_TRACE2("using timeout={}", timeoutInSec.count());
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t found = 0;
     uint64_t count = 0;
@@ -479,23 +479,19 @@ template<typename Predicate = std::equal_to<uint64_t>>
         std::this_thread::sleep_for(sleepDuration);
         found = 0;
         count = 0;
-        NES_TRACE("checkOutputOrTimeout: check content for file " << outputFilePath);
+        NES_TRACE2("checkOutputOrTimeout: check content for file {}", outputFilePath);
         std::ifstream ifs(outputFilePath);
         if (ifs.good() && ifs.is_open()) {
             std::vector<std::string> expectedlines = Util::splitWithStringDelimiter<std::string>(expectedContent, "\n");
             std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
             count = std::count(content.begin(), content.end(), '\n');
             if (expectedlines.size() != count) {
-                NES_TRACE("checkoutputortimeout: number of expected lines " << expectedlines.size() << " not reached yet with "
-                                                                            << count << " lines content=" << content
-                                                                            << " file=" << outputFilePath);
+                NES_TRACE2("checkoutputortimeout: number of expected lines {} not reached yet with {} lines content={} file={}", expectedlines.size(), count, content, outputFilePath);
                 continue;
             }
 
             if (content.size() != expectedContent.size()) {
-                NES_TRACE("checkoutputortimeout: number of chars " << expectedContent.size()
-                                                                   << " not reached yet with chars content=" << content.size()
-                                                                   << " lines content=" << content);
+                NES_TRACE2("checkoutputortimeout: number of chars {} not reached yet with chars content={} lines content={}", expectedContent.size(), content.size(), content);
                 continue;
             }
 
@@ -505,10 +501,10 @@ template<typename Predicate = std::equal_to<uint64_t>>
                 }
             }
             if (found == count) {
-                NES_TRACE("all lines found final content=" << content);
+                NES_TRACE2("all lines found final content={}", content);
                 return true;
             }
-            NES_TRACE("only " << found << " lines found final content=" << content);
+            NES_TRACE2("only {} lines found final content={}", found, content);
         }
     }
     NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found << ") within set timeout content");
