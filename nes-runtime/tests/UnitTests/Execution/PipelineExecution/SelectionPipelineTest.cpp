@@ -117,7 +117,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SelectionPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) {
                             return info.param;
                         });

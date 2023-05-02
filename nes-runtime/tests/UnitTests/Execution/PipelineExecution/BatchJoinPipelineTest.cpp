@@ -126,7 +126,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         BatchJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<BatchJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });
