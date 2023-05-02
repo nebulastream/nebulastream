@@ -13,6 +13,7 @@
 */
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -38,13 +39,15 @@ namespace NES {
 using namespace Configurations;
 const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
+const uint64_t numberOfBuffersToProduce = 50000000;
+const uint64_t ingestionRate = 1000;
 
 class UpstreamBackupTest : public Testing::NESBaseTest {
   public:
     std::string ipAddress = "127.0.0.1";
     CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr workerConfig;
-    CSVSourceTypePtr csvSourceTypeInfinite;
+    LambdaSourceTypePtr lambdaSource;
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
     Runtime::BufferManagerPtr bufferManager;
@@ -67,10 +70,35 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
-        csvSourceTypeInfinite = CSVSourceType::create();
-        csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
-        csvSourceTypeInfinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers);
-        csvSourceTypeInfinite->setNumberOfBuffersToProduce(0);
+        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            struct Record {
+                uint64_t a;
+                uint64_t b;
+                uint64_t c;
+                uint64_t d;
+                uint64_t e;
+                uint64_t f;
+                uint64_t timestamp1;
+                uint64_t timestamp2;
+            };
+
+            auto* records = buffer.getBuffer<Record>();
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            auto epoch = now_ms.time_since_epoch();
+            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].a = u;
+                records[u].b = u % 2;
+                records[u].c = u % 3;
+                records[u].d = u % 4;
+                records[u].e = u % 5;
+                records[u].f = u % 6;
+                records[u].timestamp1 = value.count();
+                records[u].timestamp2 = value.count();
+            }
+        };
+        lambdaSource = LambdaSourceType::create(std::move(func1), numberOfBuffersToProduce, ingestionRate, GatheringMode::INGESTION_RATE_MODE);
 
         csvSourceTypeFinite = CSVSourceType::create();
         csvSourceTypeFinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -97,7 +125,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
+    auto physicalSource1 = PhysicalSource::create("window", "x1", lambdaSource);
     workerConfig->physicalSources.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -172,7 +200,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 /*
  * @brief test message passing between sink-coordinator-sources
  */
-TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
+TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -182,7 +210,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
+    auto physicalSource1 = PhysicalSource::create("window", "x1", lambdaSource);
     workerConfig->physicalSources.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -243,7 +271,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
 /*
  * @brief test if upstream backup doesn't fail
  */
-TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
+TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
