@@ -509,7 +509,6 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
-                    // TODO: fix performance here?
                     auto numOfTuples = buf.getNumberOfTuples();
                     NES_TRACE2("DataSource num of tuples = ", numOfTuples);
                     auto records = buf.getBuffer<Sensors::SingleSensor>();
@@ -518,7 +517,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                         this->lastValuesBuf.emplace(records[i].value);
                         this->lastIntervalBuf.emplace(currentIntervalInSeconds);
                     }
-                    // TODO: wait for buffer to populate fully first?
+
                     // use a vector, find mean interval at the same time
                     double totalIntervalInseconds = 0;
                     for (uint64_t idx=0; idx < this->lastValuesBuf.size(); ++idx) {
@@ -526,17 +525,16 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     }
                     totalIntervalInseconds /= this->lastValuesBuf.size();
                     double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
-                    NES_DEBUG2("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
-                    // TODO: check why negative nyq.
+                    NES_TRACE2("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
                     auto toVec = this->lastValuesBuf.toVector();
                     std::string numbers = "";
                     for (double item : toVec) {
                         numbers.append(std::to_string(item) + ", ");
                     }
                     std::tuple<bool, double> res = Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
-                    NES_DEBUG2("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
+                    NES_TRACE2("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
                     if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
-                        NES_DEBUG2("DataSource setSlowestInterval to {}ms", std::get<1>(res));
+                        NES_TRACE2("DataSource setSlowestInterval to {}ms", std::get<1>(res));
                         this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
                     }
                     NES_TRACE2("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
