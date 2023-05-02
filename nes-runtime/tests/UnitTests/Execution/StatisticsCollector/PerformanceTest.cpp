@@ -143,21 +143,20 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
 
+        nautilusExecutablePipelineStage->setup(pipelineContext);
         // measure execution time
         auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-        nautilusExecutablePipelineStage->setup(pipelineContext);
         for (auto& buffer : bufferVector) {
+
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -232,20 +231,19 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        // measure execution time
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -320,20 +318,18 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(runtime));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -407,20 +403,18 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(runtime));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -500,20 +494,18 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -593,20 +585,18 @@ TEST_P(PerformanceTest, branchMissesTest) {
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -697,21 +687,19 @@ TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
 
         statisticsCollector->addStatistic(pipelineId, std::move(outOfOrderRatio));
 
+        nautilusExecutablePipelineStage->setup(pipelineContext);
         // measure execution time
         auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-        nautilusExecutablePipelineStage->setup(pipelineContext);
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -801,21 +789,19 @@ TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
 
         statisticsCollector->addStatistic(pipelineId, std::move(outOfOrderRatio));
 
+        nautilusExecutablePipelineStage->setup(pipelineContext);
         // measure execution time
         auto runtimeStart = std::chrono::high_resolution_clock::now();
-
-        nautilusExecutablePipelineStage->setup(pipelineContext);
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -898,20 +884,18 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
         statisticsCollector->addStatistic(pipelineId, std::move(runtime));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -996,20 +980,18 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
         statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }
@@ -1074,19 +1056,17 @@ TEST_P(PerformanceTest, pipelinePerformanceTest) {
         auto nautilusExecutablePipelineStage =
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-        auto runtimeStart = std::chrono::high_resolution_clock::now();
-
         nautilusExecutablePipelineStage->setup(pipelineContext);
+        auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
         }
+        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         nautilusExecutablePipelineStage->stop(pipelineContext);
 
-        auto runtimeEnd = std::chrono::high_resolution_clock::now();
         //auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
-
-        csvFile << duration.count() << ",";
+        csvFile << duration.count() << ";";
 
         ASSERT_EQ(pipelineContext.buffers.size(), 1000);
     }

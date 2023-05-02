@@ -89,7 +89,7 @@ TEST_P(SelectivityTest, runtimeTest) {
     // generate tuple buffers
     std::vector<TupleBuffer> bufferVector;
 
-    for (int i = 0; i < 1000; ++i){
+    for (int i = 0; i < 510000; ++i){
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
@@ -248,6 +248,12 @@ TEST_P(SelectivityTest, cacheMissesTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
+    schema->addField("f3", BasicType::INT64);
+    schema->addField("f4", BasicType::INT64);
+    schema->addField("f5", BasicType::INT64);
+    schema->addField("f6", BasicType::INT64);
+    schema->addField("f7", BasicType::INT64);
+    schema->addField("f8", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     // generate list of values 0 til 100
@@ -267,6 +273,12 @@ TEST_P(SelectivityTest, cacheMissesTest) {
             for (uint64_t j = 0; j < 100; j++) {
                 dynamicBuffer[j]["f1"].write(fieldValues[j]);
                 dynamicBuffer[j]["f2"].write((int64_t) 1);
+                dynamicBuffer[j]["f3"].write((int64_t) 2);
+                dynamicBuffer[j]["f4"].write((int64_t) 3);
+                dynamicBuffer[j]["f5"].write((int64_t) 4);
+                dynamicBuffer[j]["f6"].write((int64_t) 5);
+                dynamicBuffer[j]["f7"].write((int64_t) 6);
+                dynamicBuffer[j]["f8"].write((int64_t) 7);
                 dynamicBuffer.setNumberOfTuples(j + 1);
             }
         }
@@ -336,7 +348,7 @@ TEST_P(SelectivityTest, cacheMissesTest) {
 
         // collect mean only
         double mean = (double) sum / (double) pipelineContext.buffers.size();
-        csvFile << sel << ";" << mean << "\n";
+        csvFile << sel << ";" << sum << "\n";
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
         ASSERT_EQ(numberOfResultBuffers, 260000);
