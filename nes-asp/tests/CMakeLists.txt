@@ -40,5 +40,5 @@ add_nes_unit_test(synopsis-pipeline-test "UnitTests/Experimental/Operators/Synop
 target_link_libraries(synopsis-pipeline-test nes-asp nes-runtime-tests)
 
 # Adding unit test for SimpleRandomSampleWithoutReplacementTest.cpp
-add_nes_unit_test(simple-sampling-without-replacement-test "UnitTests/Experimental/Synopses/SimpleRandomSampleWithoutReplacementTest.cpp")
+add_nes_unit_test(simple-sampling-without-replacement-test "UnitTests/Experimental/Synopses/SRSWoRTest.cpp")
 target_link_libraries(simple-sampling-without-replacement-test nes-asp)

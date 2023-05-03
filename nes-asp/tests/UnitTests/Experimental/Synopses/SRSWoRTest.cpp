@@ -15,15 +15,16 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Operators/SynopsesOperator.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
+#include <Experimental/Synopses/Samples/SRSWoR.hpp>
 #include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
-#include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <random>
 
@@ -105,7 +106,7 @@ namespace NES::ASP {
         auto allRecords = fillBuffer(*inputSchema, numberOfTuplesToProduce);
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
-        auto sampleSynopsis = SimpleRandomSampleWithoutReplacement(aggregationConfig, sampleSize);
+        auto sampleSynopsis = SRSWoR(aggregationConfig, sampleSize);
 
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
@@ -195,9 +196,11 @@ namespace NES::ASP {
 
 
         auto allRecords = fillBuffer(*inputSchema, numberOfTuplesToProduce);
+        auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::Synopsis_Type::SRSWoR, sampleSize);
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
-        auto sampleSynopsis = SimpleRandomSampleWithoutReplacement(aggregationConfig, sampleSize);
+        auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig, aggregationConfig);
+
 
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
@@ -211,19 +214,20 @@ namespace NES::ASP {
         auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
         Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                               Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
-        opHandler->setup(inputSchema->getSchemaSizeInBytes());
+        auto synopsesOperator = std::make_shared<Runtime::Execution::Operators::SynopsesOperator>(handlerIndex, synopsis);
 
+        synopsesOperator->setup(executionContext);
         for (auto& record : allRecords) {
-            sampleSynopsis.addToSynopsis(handlerIndex, executionContext, record);
+            synopsesOperator->execute(executionContext, record);
         }
+        auto approximateBuffers = synopsis->getApproximate(handlerIndex, executionContext, bufferManager);
+        EXPECT_EQ(approximateBuffers.size(), 1);
 
         for (auto& pos : posOfRecordsForSamples) {
             auto tmpValue = allRecords[pos].read(aggregationString);
             exactAggFunction->lift(exactAggValueMemRef, tmpValue);
         }
 
-        auto approximateBuffers = sampleSynopsis.getApproximate(handlerIndex, executionContext, bufferManager);
-        EXPECT_EQ(approximateBuffers.size(), 1);
 
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                                   outputSchema);
@@ -231,10 +235,10 @@ namespace NES::ASP {
         auto scalingFactor = getScalingFactor(aggregationType, sampleSize, numberOfTuplesToProduce);
         EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), 1);
         if (outputSchema->get(approximateString)->getDataType()->isEquals(DataTypeFactory::createType(BasicType::INT64))) {
-            EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>() * 1.0,
+            EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(),
                 exactValue.getValue().staticCast<Nautilus::Int64>().getValue() * scalingFactor);
         } else if (outputSchema->get(approximateString)->getDataType()->isEquals(DataTypeFactory::createType(BasicType::FLOAT64))) {
-            EXPECT_EQ(dynamicBuffer[0][approximateString].read<double>() * 1.0,
+            EXPECT_EQ(dynamicBuffer[0][approximateString].read<double>(),
                 exactValue.getValue().staticCast<Nautilus::Double>().getValue() * scalingFactor);
         } else {
             NES_NOT_IMPLEMENTED();

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIMPLERANDOMSAMPLEWITHOUTREPLACEMENT_HPP
-#define NES_SIMPLERANDOMSAMPLEWITHOUTREPLACEMENT_HPP
+#ifndef NES_SRSWOR_HPP
+#define NES_SRSWOR_HPP
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -27,7 +27,7 @@ namespace NES::ASP{
  * @brief Implementation of a Simple Random Sample Without Replacement, as explained
  * in https://www.statisticshowto.com/sampling-with-replacement-without/
  */
-class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
+class SRSWoR : public AbstractSynopsis {
 
   public:
     /**
@@ -35,7 +35,7 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param aggregationConfig
      * @param sampleSize
      */
-    explicit SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
+    explicit SRSWoR(Parsing::SynopsisAggregationConfig& aggregationConfig,
                                                   size_t sampleSize);
 
     /**
@@ -62,7 +62,7 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
     /**
      * @brief Deconstructor
      */
-    virtual ~SimpleRandomSampleWithoutReplacement() = default;
+    virtual ~SRSWoR() = default;
 
 
   private:
@@ -87,4 +87,4 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
 };
 } // namespace NES::ASP
 
-#endif//NES_SIMPLERANDOMSAMPLEWITHOUTREPLACEMENT_HPP
+#endif//NES_SRSWOR_HPP

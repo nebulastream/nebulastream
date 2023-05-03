@@ -19,7 +19,7 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
-#include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
+#include <Experimental/Synopses/Samples/SRSWoR.hpp>
 #include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -74,11 +74,11 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
     opHandler->setup(entrySize);
 }
 
-SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
+SRSWoR::SRSWoR(Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
                          AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
 }
 
-void SimpleRandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+void SRSWoR::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
                                                          Nautilus::Record record) {
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -96,7 +96,7 @@ void SimpleRandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, 
     }
 }
 
-std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(uint64_t handlerIndex,
+std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex,
                                                                                        Runtime::Execution::ExecutionContext& ctx,
                                                                                        Runtime::BufferManagerPtr bufferManager) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -143,17 +143,17 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     return {outputBuffer};
 }
 
-void SimpleRandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
+void SRSWoR::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandlerMemRef,
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
 }
 
-double SimpleRandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::StackRef stackRef){
+double SRSWoR::getScalingFactor(Nautilus::Interface::StackRef stackRef){
     double retValue = 1;
 
     if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {
-        double numberOfTuplesInWindow = stackRef.getTotalNumberOfEntries();
+        auto numberOfTuplesInWindow = (double)stackRef.getTotalNumberOfEntries().getValue().getRawInt();
         double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);
     }
@@ -161,8 +161,7 @@ double SimpleRandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interfac
     return retValue;
 }
 
-Nautilus::Value<>
-SimpleRandomSampleWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
+Nautilus::Value<> SRSWoR::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
                                                                 Nautilus::Value<Nautilus::Double> scalingFactor) {
     auto tmpValue = Nautilus::Value<>(approximatedValue * scalingFactor);
     double value = tmpValue.getValue().staticCast<Nautilus::Double>().getValue();
