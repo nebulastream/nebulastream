@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.69](https://github.com/nebulastream/nebulastream/tree/v0.5.69) (2023-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.68...v0.5.69)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix non-terminating upstream backup test [\#3684](https://github.com/nebulastream/nebulastream/issues/3684)
+
 ## [v0.5.68](https://github.com/nebulastream/nebulastream/tree/v0.5.68) (2023-05-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.67...v0.5.68)
