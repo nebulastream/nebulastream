@@ -1,4 +1,4 @@
 {
-  "userQuery": "Query::from(\"sensors\").sink(NullOutputSinkDescriptor::create());",
+  "userQuery": "Query::from(\"ktm\").sink(NullOutputSinkDescriptor::create());",
   "strategyName": "BottomUp"
 }
