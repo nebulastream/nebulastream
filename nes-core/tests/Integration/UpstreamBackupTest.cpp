@@ -87,7 +87,10 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
             }
         };
 
-        lambdaSource = LambdaSourceType::create(std::move(func1), numberOfBuffersToProduceInTuples, ingestionRate, GatheringMode::INGESTION_RATE_MODE);
+        lambdaSource = LambdaSourceType::create(std::move(func1),
+                                                numberOfBuffersToProduceInTuples,
+                                                ingestionRate,
+                                                GatheringMode::INGESTION_RATE_MODE);
 
         csvSourceTypeFinite = CSVSourceType::create();
         csvSourceTypeFinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
