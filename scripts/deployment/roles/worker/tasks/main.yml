@@ -24,7 +24,12 @@
     src: worker.yaml.j2
     dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml"
 
-- name: Copy dummy data file
+- name: Copy smartgrid data file
   copy:
     src: smartgrid.csv.j2
     dest: /tmp/smartgrid.csv
+
+- name: Copy KTM data file
+  copy:
+    src: ktm.csv.j2
+    dest: /tmp/ktm.csv
