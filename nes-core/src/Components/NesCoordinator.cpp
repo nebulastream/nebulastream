@@ -192,6 +192,15 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //Start rest that accepts queryIdAndCatalogEntryMapping form the outsides
     NES_DEBUG2("NesCoordinator starting rest server");
+
+    //setting the allowed origins for http request to the rest server
+    std::optional<std::string> allowedOrigin = std::nullopt;
+    auto originString = coordinatorConfiguration->restServerCorsAllowedOrigin.getValue();
+    if (!originString.empty()) {
+        NES_INFO2("CORS: allow origin: {}", originString);
+        allowedOrigin = originString;
+    }
+
     restServer = std::make_shared<RestServer>(restIp,
                                               restPort,
                                               this->inherited0::weak_from_this(),
@@ -205,7 +214,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager(),
-                                              locationService);
+                                              locationService,
+                                              allowedOrigin);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking
