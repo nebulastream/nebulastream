@@ -27,6 +27,7 @@
 #include <llvm/IR/Mangler.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IRReader/IRReader.h>
+#include <llvm/Transforms/IPO/ExtractGV.h>
 
 #include <cstddef>
 #include <iostream>
@@ -45,6 +46,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+// #include <Util/Logger/Logger.hpp>
+
 using namespace llvm;
 
 std::string demangleToBaseName(const std::string& functionName) {
@@ -63,7 +66,10 @@ std::string demangleToBaseName(const std::string& functionName) {
 int main(int argc, char** argv) {
     InitLLVM X(argc, argv);
     bool Recursive = true;
-    NES_DEBUG("Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE);
+    // NES_DEBUG("Start Extraction proxy functions from: ");
+    // NES_DEBUG2("Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE);
+    // NES_DEBUG2("Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE);
+    std::cout << "Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE << '\n';
     LLVMContext Context;
 
     // Use lazy loading, since we only care about selected global values.
@@ -143,10 +149,15 @@ int main(int argc, char** argv) {
         }
     }
 
-    legacy::PassManager Extract;
+    // legacy::PassManager Extract;
     std::vector<GlobalValue*> FunctionsToKeep(ProxyFunctionValues.begin(), ProxyFunctionValues.end());
-    Extract.add(createGVExtractionPass(FunctionsToKeep, /* false: keep functions */ false, false));
-    Extract.run(*LLVMModule);
+    auto extractGVPass = new llvm::ExtractGVPass(FunctionsToKeep, /* false: keep functions */ false, false);
+    llvm::ModuleAnalysisManager dummyAnalysisManager;
+    extractGVPass->run(*LLVMModule, dummyAnalysisManager);
+    // llvm::ExtractGVPass extractGVPass = llvm::ExtractGVPass(FunctionsToKeep, /* false: keep functions */ false, false);
+    // Extract.add(extractGVPass);
+    // Extract.add(createGVExtractionPass(FunctionsToKeep, /* false: keep functions */ false, false));
+    // Extract.run(*LLVMModule);
 
     // Now that we only have the GVs that we need left, mark the module as fully materialized.
     ExitOnErr(LLVMModule->materializeAll());
@@ -160,7 +171,8 @@ int main(int argc, char** argv) {
     Passes.add(createStripDeadPrototypesPass());// Remove dead func decls
     // Passes.add(createFunctionInliningPass());    // Inline function definitions
 
-    NES_DEBUG("Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR);
+    // NES_DEBUG("Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR);
+    std::cout << "Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR << '\n';
     std::error_code EC;
     ToolOutputFile Out(std::string(PROXY_FUNCTIONS_RESULT_DIR), EC, sys::fs::OF_None);
     if (EC) {

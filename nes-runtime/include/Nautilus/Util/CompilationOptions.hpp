@@ -94,6 +94,18 @@ class CompilationOptions {
      */
     void setDebug(bool debug);
 
+    /**
+     * @brief Checks if the proxy inlining option is enabled.
+     * @return True if the proxy inlining option is enabled, false otherwise.
+     */
+    bool isProxyInlining() const;
+
+    /**
+     * @brief Sets the proxy inlining option.
+     * @param proxyInlining: The value to set the proxyInlining option to.
+     */
+    void setProxyInlining(const bool proxyInlining);
+
   private:
     std::string identifier;
     std::string dumpOutputPath;
@@ -101,6 +113,7 @@ class CompilationOptions {
     bool dumpToConsole = false;
     bool optimize = false;
     bool debug = true;
+    bool proxyInlining = false;
 };
 }// namespace NES::Nautilus
 

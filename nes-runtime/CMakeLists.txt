@@ -112,15 +112,20 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
-        add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
-        target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-        target_link_libraries(nes-runtime PUBLIC nes)
-        add_dependencies(nes-runtime nes)
+        # CMAKE_CURRENT_SOURCE_DIR -> nes-runtime
+        #Todo PhysicalType.hpp not found
+        # add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/src/Runtime/detail/TupleBufferImpl.cpp)
+        # No PipelineContext.cpp
+        add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp)
+        # add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp)
+        # target_link_libraries(nes-runtime-proxy PUBLIC nes-runtime)
+        # add_dependencies(nes-runtime-proxy nes-runtime)
         message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
-        target_include_directories(nes-runtime PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/)
-        set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-        llvmir_attach_bc_target(nes-runtime_bc nes-runtime -O3)
-        add_dependencies(nes-runtime_bc nes-runtime)
+        target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
+
+        set_target_properties(nes-runtime-proxy PROPERTIES LINKER_LANGUAGE CXX)
+        llvmir_attach_bc_target(nes-runtime_bc nes-runtime-proxy -O3)
+        add_dependencies(nes-runtime_bc nes-runtime-proxy)
 
         llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
         llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
@@ -141,7 +146,10 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
         target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
 
+        # message(STATUS "mlir libs: ${mlir_libs}")
+        message(STATUS "mlir libs: ${llvm_libs}")
         target_link_libraries(generate-proxy-function-ir ${mlir_libs})
+        target_link_libraries(generate-proxy-function-ir ${llvm_libs})
         target_include_directories(generate-proxy-function-ir SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
 
         add_custom_command(TARGET generate-proxy-function-ir POST_BUILD
@@ -149,7 +157,8 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 COMMAND "echo" ARGS "Executing function reducer on linked and optimized LLVM IR."
                 VERBATIM)
         add_dependencies(generate-proxy-function-ir nes-runtime_opt)
-        add_dependencies(nes-runtime generate-proxy-function-ir)
+        # Todo below line causes header files to be incorrectly linked
+        add_dependencies(nes-runtime-proxy generate-proxy-function-ir)
     endif ()
 endif ()
 

@@ -15,6 +15,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 
+#include "Nautilus/Util/CompilationOptions.hpp"
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
@@ -36,7 +37,8 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
-    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+    //Todo is CompilationOptions a trivial constructor here and thus does not perform any action and does not acquire any resource?
+    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace, CompilationOptions options = CompilationOptions()) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         NES_DEBUG(*executionTrace.get());
         auto ir = irCreationPhase.apply(executionTrace);
@@ -44,7 +46,8 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
         auto param = this->GetParam();
         auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
         auto dumpHelper = DumpHelper::create("", true, false, "");
-        CompilationOptions options;
+        //Todo #3020 -> what to do about options?
+        // CompilationOptions options;
         return compiler->compile(ir, options, dumpHelper);
     }
 };
