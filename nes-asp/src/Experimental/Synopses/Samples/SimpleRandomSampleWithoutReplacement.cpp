@@ -27,7 +27,6 @@
 #include <Nautilus/Interface/Stack/StackRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <random>
 
 namespace NES::ASP {
@@ -56,7 +55,10 @@ uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
     auto cnt = 0UL;
     std::sort(allRandomPositions.begin(), allRandomPositions.end());
     for (const auto randomPos : allRandomPositions) {
-        stack->moveTo(randomPos, cnt++);
+        if (randomPos != cnt) {
+            stack->moveTo(randomPos, cnt);
+        }
+        cnt += 1;
     }
 
     return numberOfRecordsInSample;
@@ -111,9 +113,10 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     auto memoryProviderInput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
                                                                                                    inputSchema);
 
-    auto entryMemRef = stackRef.getEntry(0UL);
     for (Nautilus::Value<Nautilus::UInt64> curTuple(0UL); curTuple < numberOfRecordsInSample; curTuple = curTuple + 1) {
-        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, curTuple);
+        Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
+        auto entryMemRef = stackRef.getEntry(curTuple);
+        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
         auto tmpValue = tmpRecord.read(fieldNameAggregation);
         aggregationFunction->lift(aggregationValueMemRef, tmpValue);
     }
