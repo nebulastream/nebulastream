@@ -14,7 +14,7 @@
 
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
-#include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
+#include <Experimental/Synopses/Samples/SRSWoR.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
@@ -23,7 +23,7 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
                                              Parsing::SynopsisAggregationConfig& aggregationConfig) {
 
     if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
-        return std::make_shared<SimpleRandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue());
+        return std::make_shared<SRSWoR>(aggregationConfig, arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }

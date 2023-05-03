@@ -194,8 +194,8 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto executablePipeline = provider->create(pipeline, CompilationOptions());
     Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                           Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
-    auto handlerIndex = 0UL;
 
+    auto handlerIndex = 0UL;
     executablePipeline->setup(*pipelineContext);
     for (auto& buffer : allBuffers) {
         executablePipeline->execute(buffer, *pipelineContext, *workerContext);
