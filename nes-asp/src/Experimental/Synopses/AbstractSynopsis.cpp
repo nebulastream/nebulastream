@@ -29,9 +29,6 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
     }
 }
 
-void AbstractSynopsis::setBufferManager(const Runtime::BufferManagerPtr& bufferManager) {
-    AbstractSynopsis::bufferManager = bufferManager;
-}
 
 AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
     : aggregationFunction(aggregationConfig.createAggregationFunction()),

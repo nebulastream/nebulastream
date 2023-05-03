@@ -37,6 +37,13 @@ class StackRef {
     Value<MemRef> allocateEntry();
 
     /**
+     * @brief Returns the reference to the start of the record at the pos
+     * @param pos
+     * @return Value<MemRef>
+     */
+    Value<MemRef> getEntry(Value<UInt64> pos);
+
+    /**
      * @brief Returns the number of entries in the current page.
      * @return Value<UInt64>
      */

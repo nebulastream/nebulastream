@@ -80,6 +80,20 @@ class Stack {
      */
     int8_t* appendPage();
 
+    /**
+     * @brief Moves the entry from the oldPos to the newPos. This will overwrite the data at the newPos
+     * @param oldPos
+     * @param newPos
+     */
+    void moveTo(uint64_t oldPos, uint64_t newPos);
+
+    /**
+     * @brief Returns the pointer to the first field of the record at pos
+     * @param pos
+     * @return Pointer to start of record
+     */
+    int8_t* getEntry(uint64_t pos);
+
     ~Stack();
 
   private:

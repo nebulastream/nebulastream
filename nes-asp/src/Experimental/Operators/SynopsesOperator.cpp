@@ -13,17 +13,25 @@
 */
 
 #include <Experimental/Operators/SynopsesOperator.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Operators {
+
+void initializeSynopsisProxy(void* synopsisPtr) {
+    auto* synopsis = (ASP::AbstractSynopsis*) synopsisPtr;
+    synopsis->initialize();
+}
 
 SynopsesOperator::SynopsesOperator(const ASP::AbstractSynopsesPtr& synopses)
     : synopses(synopses) {}
 
-void SynopsesOperator::setup(ExecutionContext&) const {
-    synopses->initialize();
-}
-
 void SynopsesOperator::execute(ExecutionContext&, Record& record) const {
     synopses->addToSynopsis(record);
 }
+
+void SynopsesOperator::setup(ExecutionContext&) const {
+    auto synopsisMemRef = Nautilus::Value<Nautilus::MemRef>(Nautilus::MemRef((int8_t*)synopses.get()));
+    Nautilus::FunctionCall("initializeSynopsisProxy", initializeSynopsisProxy, synopsisMemRef);
+}
+
 } // namespace NES::Runtime::Execution::Operators

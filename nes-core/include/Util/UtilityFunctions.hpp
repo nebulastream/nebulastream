@@ -291,13 +291,6 @@ void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 
 /**
- * @brief Iterates through the buffers and sums the number of tuples over all buffers
- * @param buffers
- * @return Number of total tuples in all buffers
- */
-uint64_t getNumberOfTuples(const std::vector<Runtime::TupleBuffer>& buffers);
-
-/**
  * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
  * @param input the vector
  * @param n the chunks
