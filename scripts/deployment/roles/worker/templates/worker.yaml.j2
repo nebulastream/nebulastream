@@ -19,11 +19,13 @@ dataPort: {{ default_worker_ports[1] }}
 ### Physical source configuration
 ###
 physicalSources:
-        - logicalSourceName: smartgrid
-          physicalSourceName: smartgrid_{{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
-          type: CSVSource
+        - logicalSourceName: ktm
+          physicalSourceName: ktm_{{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
+          type: CSV_SOURCE
           configuration:
-                  filePath: /tmp/smartgrid.csv
+                  filePath: /tmp/ktm.csv
                   numberOfBuffersToProduce: 1024
-                  numberOfTuplesToProducePerBuffer: 0
+                  numberOfTuplesToProducePerBuffer: 1
                   skipHeader: false
+                  sourceGatheringMode: adaptive
+                  sourceGatheringInterval: 4000
