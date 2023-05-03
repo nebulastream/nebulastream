@@ -54,7 +54,7 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     }
 
     // 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
-    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false, options);
+    auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ options.isProxyInlining(), options);
 
     // 4. JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(mlirModule,

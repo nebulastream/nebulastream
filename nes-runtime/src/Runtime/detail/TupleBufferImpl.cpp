@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <bitset>

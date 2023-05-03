@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
+#include <filesystem>
 
 namespace NES::Nautilus {
 
@@ -30,4 +32,12 @@ bool CompilationOptions::isOptimize() const { return optimize; }
 void CompilationOptions::setOptimize(bool optimize) { CompilationOptions::optimize = optimize; }
 bool CompilationOptions::isDebug() const { return debug; }
 void CompilationOptions::setDebug(bool debug) { CompilationOptions::debug = debug; }
+bool CompilationOptions::isProxyInlining() const { return proxyInlining; }
+void CompilationOptions::setProxyInlining(const bool proxyInlining) { 
+    if(proxyInlining && !std::filesystem::exists(PROXY_FUNCTIONS_RESULT_DIR)) {
+        NES_THROW_RUNTIME_ERROR("We require a proxy functions file under: " << PROXY_FUNCTIONS_RESULT_DIR << 
+                                " to perform proxy function inlining");
+    }
+    CompilationOptions::proxyInlining = proxyInlining; 
+}
 }// namespace NES::Nautilus

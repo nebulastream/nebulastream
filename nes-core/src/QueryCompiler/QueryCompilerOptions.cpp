@@ -29,6 +29,7 @@ uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSour
 
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
+    //Todo #3020: is this where the default compilationStrategy is set?
     options.setCompilationStrategy(CompilationStrategy::OPTIMIZE);
     options.setPipeliningStrategy(PipeliningStrategy::OPERATOR_FUSION);
     options.setFilterProcessingStrategy(FilterProcessingStrategy::BRANCHED);
