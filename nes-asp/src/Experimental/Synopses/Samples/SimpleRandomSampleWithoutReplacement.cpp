@@ -20,20 +20,24 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
+#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Stack/StackRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <random>
 
-namespace NES::ASP{
+namespace NES::ASP {
 
 
 uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
     auto* stack = (Nautilus::Interface::Stack*) stackPtr;
     const auto numberOfTuples = stack->getNumberOfEntries();
+
+    // Generating a uniform random distribution
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
     std::uniform_int_distribution<uint64_t> distribution(0, numberOfTuples - 1);
     auto numberOfRecordsInSample = std::min(sampleSize, numberOfTuples);
@@ -58,14 +62,27 @@ uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
     return numberOfRecordsInSample;
 }
 
-SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(
-    Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
-                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
+void* getStackRefProxy(void* opHandlerPtr) {
+    auto* opHandler = (SRSWoROperatorHandler*) opHandlerPtr;
+    return opHandler->getStackRef();
 }
 
-void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record) {
+void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
+    auto* opHandler = (SRSWoROperatorHandler*) opHandlerPtr;
+    opHandler->setup(entrySize);
+}
 
-    auto stackRef = Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) stack.get()), recordSize);
+SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(uint64_t handlerIndex,
+                                                                           Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
+                         AbstractSynopsis(handlerIndex, aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
+}
+
+void SimpleRandomSampleWithoutReplacement::addToSynopsis(Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) {
+
+    auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
+    auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
+
     auto entryMemRef = stackRef.allocateEntry();
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : inputSchema->fields) {
@@ -77,8 +94,10 @@ void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record
     }
 }
 
-std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
-    Nautilus::Value<Nautilus::MemRef> stackMemRef((int8_t*) stack.get());
+std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(Runtime::Execution::ExecutionContext& ctx,
+                                                                                       Runtime::BufferManagerPtr bufferManager) {
+    auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
     auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
 
     auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, stackMemRef,
@@ -119,10 +138,10 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     return {outputBuffer};
 }
 
-void SimpleRandomSampleWithoutReplacement::initialize() {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    auto entrySize = inputSchema->getSchemaSizeInBytes();
-    stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
+void SimpleRandomSampleWithoutReplacement::setup(Runtime::Execution::ExecutionContext& ctx) {
+    auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandlerMemRef,
+                           Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
 }
 
 double SimpleRandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::StackRef stackRef){

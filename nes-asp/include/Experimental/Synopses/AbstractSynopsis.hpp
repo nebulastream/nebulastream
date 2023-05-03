@@ -18,6 +18,7 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
@@ -47,13 +48,17 @@ class AbstractSynopsis {
      * @brief This is the first step of receiving an approximation. This method adds the record to the underlying synopsis
      * @param record
      */
-    virtual void addToSynopsis(Nautilus::Record record) = 0;
+    virtual void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) = 0;
 
     /**
      * @brief Once all records have been inserted, we can ask for an approximation
+     * @param ctx
+     * @param bufferManager
      * @return Record that stores the approximation
      */
-    virtual std::vector<Runtime::TupleBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) = 0;
+    virtual std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
+                                                             Runtime::Execution::ExecutionContext& ctx,
+                                                             Runtime::BufferManagerPtr bufferManager) = 0;
 
     /**
      * @brief Initializes the synopsis. This means that the synopsis should create a state in which a new approximation
@@ -61,15 +66,17 @@ class AbstractSynopsis {
      *  - removing all drawn samples for a sampling algorithm
      *  - resetting and writing zeros to the 2D array for a Count-min sketch
      */
-    virtual void initialize() = 0;
+    virtual void setup(Runtime::Execution::ExecutionContext& ctx) = 0;
 
     /**
      * @brief Creates the synopsis from the SynopsisArguments
+     * @param handlerIndex
      * @param arguments
      * @param aggregationConfig
      * @return AbstractSynopsesPtr
      */
-    static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration& arguments,
+    static AbstractSynopsesPtr create(uint64_t handlerIndex,
+                                      Parsing::SynopsisConfiguration& arguments,
                                       Parsing::SynopsisAggregationConfig& aggregationConfig);
 
     /**

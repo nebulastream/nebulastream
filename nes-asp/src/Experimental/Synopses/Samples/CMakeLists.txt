@@ -12,4 +12,5 @@
 
 add_source_files(nes-asp
         SimpleRandomSampleWithoutReplacement.cpp
+        SRSWoROperatorHandler.cpp
         )
