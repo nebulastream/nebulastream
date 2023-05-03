@@ -113,6 +113,9 @@ TEST_F(UDFCatalogControllerTest, getUdfDescriptorReturnsUdf) {
     auto response = future.get();
     //check if response code indicates a udf has been retrieved
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // extract protobuf message from string response
     GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
     // from protobuf message, get the java udf descriptor
@@ -140,6 +143,9 @@ TEST_F(UDFCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
     auto response = future.get();
     //check that status code indicates specified udf doesn't exist
     ASSERT_EQ(response.status_code, Status::CODE_404.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // and compare contents of response
     // extract protobuf message from string response
     GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
@@ -161,6 +167,9 @@ TEST_F(UDFCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
     auto response = future.get();
     // and see if the response code is 404
     ASSERT_EQ(response.status_code, Status::CODE_404.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     stopCoordinator();
 }
 
@@ -180,6 +189,9 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutR
     auto response = future.get();
     // then the response is BadRequest
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // make sure the response does not contain the stack trace
     ASSERT_TRUE(response.text.find("Stack trace") == std::string::npos);
     stopCoordinator();
@@ -204,6 +216,9 @@ TEST_F(UDFCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsUDF) {
     auto response = future.get();
     // then the HTTP response is OK
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     ASSERT_EQ(response.text, "Registered Java UDF");
     // check to see if a udf has been added to the udf catalog
     ASSERT_FALSE(udfCatalog->listUDFs().empty());
@@ -240,6 +255,9 @@ TEST_F(UDFCatalogControllerTest, testRemoveUdfEndpoint) {
     auto response = future.get();
     // then the response is OK
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // and the UDF no longer exists in the catalog
     ASSERT_EQ(UDF::UDFDescriptor::as<UDF::JavaUDFDescriptor>(udfCatalog->getUDFDescriptor("my_udf")), nullptr);
     // and the response shows that the UDF was removed
@@ -260,6 +278,9 @@ TEST_F(UDFCatalogControllerTest, testRemoveUdfEndpointIfUdfDoesNotExist) {
     auto response = future.get();
     // then the response is NOT FOUND
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // and the response shows that the UDF was not removed
     nlohmann::json json;
     json["removed"] = false;
@@ -277,6 +298,9 @@ TEST_F(UDFCatalogControllerTest, testRemoveUdfEndpointHandlesMissingQueryParamet
     auto response = future.get();
     // then the response is BadRequest
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     stopCoordinator();
 }
 
@@ -293,6 +317,9 @@ TEST_F(UDFCatalogControllerTest, testIfRemoveUdfEndpointHandlesExtraQueryParamet
     auto response = future.get();
     // then the response is NOT FOUND
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json json;
     json["removed"] = false;
     verifyResponseResult(response, json);
@@ -309,6 +336,9 @@ TEST_F(UDFCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParame
     auto response = future.get();
     // then the response is BadRequest
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     stopCoordinator();
 }
 
@@ -330,6 +360,9 @@ TEST_F(UDFCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
     auto response = future.get();
     // then the response is OK
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // and the response message contains a list of UDFs
     nlohmann::json json;
     std::vector<std::string> udfs = udfCatalog->listUDFs();
@@ -349,6 +382,9 @@ TEST_F(UDFCatalogControllerTest, testIfListUdfsReturnsEmptyUdfList) {
     future.wait();
     auto response = future.get();
     ASSERT_EQ(response.status_code, Status::CODE_200.code);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     // and the response message contains an empty list of UDFs
     nlohmann::json json;
     std::vector<std::string> udfs = udfCatalog->listUDFs();
