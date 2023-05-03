@@ -67,4 +67,6 @@ std::string TimeCharacteristic::getTypeAsString() {
     }
 }
 
+void TimeCharacteristic::setField(AttributeFieldPtr field) { this->field = std::move(field); }
+
 }// namespace NES::Windowing

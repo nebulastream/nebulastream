@@ -56,6 +56,12 @@ class TimeCharacteristic {
      */
     AttributeFieldPtr getField();
 
+    /**
+     * @brief Set the field from which we extract the time stamp.
+     * @param field for extracting the time stamp
+     */
+    void setField(AttributeFieldPtr field);
+
     std::string toString();
     std::string getTypeAsString();
     TimeUnit getTimeUnit();

@@ -32,6 +32,7 @@
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 
 #include <utility>
 
@@ -173,7 +174,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
         NES_DEBUG2("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
-
+        //needed for containment merger phase to make sure that all operators have correct input and output schema
+        for (const auto& item : globalQueryPlan->getSharedQueryPlansToDeploy()){
+            typeInferencePhase->execute(item->getQueryPlan());
+        }
         NES_DEBUG2("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
     } catch (std::exception& ex) {
