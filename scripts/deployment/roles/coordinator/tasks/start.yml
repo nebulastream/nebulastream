@@ -23,3 +23,12 @@
     headers:
       content-type: application/json
       cache-control: no-cache
+
+- name: Deploy KTM schema
+  uri:
+    url: "http://{{ default_coordinator_ip}}:{{ default_coordinator_ports[0] }}/v1/nes/sourceCatalog/addLogicalSource"
+    method: POST
+    src: schemata/ktm.json
+    headers:
+      content-type: application/json
+      cache-control: no-cache
