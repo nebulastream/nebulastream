@@ -55,7 +55,7 @@ std::vector<TupleBuffer> ChangeDataGenerator::generateBuffers(size_t numberOfBuf
                 if (noChangeRemain > 0) {
                     noChangeRemain--;
                     dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
+                    dynamicBuffer[j]["f2"].write(fieldValues[j]);
                     dynamicBuffer.setNumberOfTuples(j + 1);
                 } else {
                     fieldValues = getNextValues();

@@ -88,23 +88,26 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -176,23 +179,26 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -264,23 +270,26 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -349,23 +358,26 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -436,23 +448,26 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -527,23 +542,26 @@ TEST_P(PerformanceTest, branchMissesTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -821,23 +839,26 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -916,23 +937,26 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -1012,23 +1036,26 @@ TEST_P(PerformanceTest, pipelinePerformanceTest) {
         schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
+        // generate tuple buffers
+        uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 5; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write((int64_t) 1);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                for (uint64_t k = 0; k < fieldValuesSize; k++) {
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f2"].write((int64_t) 1);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }

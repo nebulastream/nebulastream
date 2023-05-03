@@ -436,7 +436,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeMTest) {
     std::vector<int> buckets = {2,3,4,5,8,16,32,64,128};
 
     for (int i = 0; i < (int)buckets.size(); i ++) {
-        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeTest{}.csv",i));
+        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeTestM{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
         auto executablePipeline = provider->create(pipeline);
@@ -589,7 +589,7 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeBlocksTest) {
     std::vector<int> blocks = {50,100,200,250,300,400,500,600,700};
 
     for (int i = 0; i < (int)blocks.size(); i ++) {
-        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeSeqDriftTest{}.csv",i));
+        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeSeqDriftTestBlocks{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
         auto executablePipeline = provider->create(pipeline);
@@ -810,8 +810,8 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::REOCCURRING, 500000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(21000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::REOCCURRING, 1000000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(42000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -852,7 +852,7 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 21000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 42000);
 
     csvFile.close();
 }
