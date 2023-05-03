@@ -28,6 +28,7 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
   public:
     /**
      * @brief Constructor for a SampleRandomWithReplacement
+     * @param aggregationConfig
      * @param sampleSize
      */
     explicit SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,

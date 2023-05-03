@@ -128,14 +128,21 @@ std::vector<Runtime::TupleBuffer> fillBuffer(BufferManager& bufferManager, Schem
 }
 
 /**
- * @brief Tests if the pipeline works by creating a sample with the same size as the number of tuples and then checking if the
- * correct result is returned
+ * @brief Tests if the pipeline works by creating a sample with the same size as the number of tuples and then
+ * checking if the correct result is returned
  */
 TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto fieldNameAggregation = "value";
     auto fieldNameApproximate = "aggregation";
     auto timestampFieldName = "ts";
     auto numberOfTuplesToProduce = 1000;
+
+    /* Output is 101 as it is the minimum of the loop
+     * for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
+     *   auto val = numberOfTuplesToProduce - i + 100;
+     * }
+     */
+    auto expectedOutput = 101L;
 
     auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("id", BasicType::INT64)
@@ -146,7 +153,7 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto allBuffers  = fillBuffer(*bufferManager, inputSchema, numberOfTuplesToProduce);
     auto expectedBuffer = bufferManager->getBufferBlocking();
     auto dynamicExpectedBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(expectedBuffer, outputSchema);
-    dynamicExpectedBuffer[0][outputSchema->get(0)->getName()].write(101L);
+    dynamicExpectedBuffer[0][outputSchema->get(0)->getName()].write(expectedOutput);
     dynamicExpectedBuffer.setNumberOfTuples(1);
 
     auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::Synopsis_Type::SRSWoR, numberOfTuplesToProduce);

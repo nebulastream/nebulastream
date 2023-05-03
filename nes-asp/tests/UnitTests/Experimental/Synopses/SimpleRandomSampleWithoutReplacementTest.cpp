@@ -37,7 +37,7 @@ namespace NES::ASP {
         /* Will be called before a test is executed. */
         void SetUp() override {
             NESBaseTest::SetUp();
-            NES_INFO("Setup SynopsisPipelineTest test case.");
+            NES_INFO("Setup SimpleRandomSampleWithoutReplacementTest test case.");
             bufferManager = std::make_shared<Runtime::BufferManager>();
             aggregationType = this->GetParam();
         }
@@ -61,6 +61,9 @@ namespace NES::ASP {
         return allRecords;
     }
 
+    /**
+     * @brief Tests SRSWoR with 100 tuples and the same sample size. Compares the approximate output with the exact query
+     */
     TEST_P(SimpleRandomSampleWithoutReplacementTest, testWithSmallNumberOfTuples) {
         if (aggregationType == Parsing::Aggregation_Type::NONE) {
             // We do not check anything for the aggregation type none
@@ -111,6 +114,13 @@ namespace NES::ASP {
         }
     }
 
+    /**
+     * @brief Returns the scaling factor, which is the numberOfTuples/sampleSize
+     * @param type
+     * @param sampleSize
+     * @param numberOfTuples
+     * @return ScalingFactor
+     */
     double getScalingFactor(Parsing::Aggregation_Type& type, size_t sampleSize, size_t numberOfTuples) {
         if (type == Parsing::Aggregation_Type::SUM || type == Parsing::Aggregation_Type::COUNT) {
             return (double)numberOfTuples / sampleSize;
@@ -118,6 +128,9 @@ namespace NES::ASP {
         return 1;
     }
 
+    /**
+     * @brief Tests with a sample size that is smaller than the number of tuples
+     */
     TEST_P(SimpleRandomSampleWithoutReplacementTest, testWithSmallerSampleSizeThan) {
         if (aggregationType == Parsing::Aggregation_Type::NONE) {
             // We do not check anything for the aggregation type none
