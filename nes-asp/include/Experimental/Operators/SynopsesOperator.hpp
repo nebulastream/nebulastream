@@ -30,7 +30,7 @@ class SynopsesOperator : public ExecutableOperator {
      * @brief Constructor for the nautilus operator corresponding to a synopses
      * @param synopses
      */
-    explicit SynopsesOperator(const ASP::AbstractSynopsesPtr& synopses);
+    explicit SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSynopsesPtr& synopses);
 
     /**
      * @brief Sets up the synopses and the operator, e.g., initializing the underlying synopsis
@@ -46,6 +46,7 @@ class SynopsesOperator : public ExecutableOperator {
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
+    uint64_t handlerIndex;
     ASP::AbstractSynopsesPtr synopses;
 };
 

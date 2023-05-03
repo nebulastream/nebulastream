@@ -17,8 +17,9 @@
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/Interface/Stack/StackRef.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
+
 
 namespace NES::ASP{
 
@@ -31,28 +32,33 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
   public:
     /**
      * @brief Constructor for a SampleRandomWithReplacement
+     * @param handlerIndex
      * @param aggregationConfig
      * @param sampleSize
      */
-    explicit SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
+    explicit SimpleRandomSampleWithoutReplacement(uint64_t handlerIndex,
+                                                  Parsing::SynopsisAggregationConfig& aggregationConfig,
                                                   size_t sampleSize);
+
+    /**
+     * @brief Initializes the sample by calling
+     */
+    void setup(Runtime::Execution::ExecutionContext& ctx) override;
 
     /**
      * @brief Adds the record to this sample
      * @param record
      */
-    void addToSynopsis(Nautilus::Record record) override;
-
-    /**
-     * @brief Initializes this synopsis
-     */
-    void initialize() override;
+    void addToSynopsis(Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) override;
 
     /**
      * @brief Once we have finished building our sample, we can ask for an approximate
+     * @param ctx
+     * @param bufferManager
      * @return Record(s) with the approximation
      */
-    std::vector<Runtime::TupleBuffer> getApproximate(Runtime::BufferManagerPtr bufferManager) override;
+    std::vector<Runtime::TupleBuffer> getApproximate(Runtime::Execution::ExecutionContext& ctx,
+                                                     Runtime::BufferManagerPtr bufferManager) override;
 
     /**
      * @brief Deconstructor
@@ -79,7 +85,6 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
 
     const size_t sampleSize;
     const size_t recordSize;
-    std::unique_ptr<Nautilus::Interface::Stack> stack;
 };
 } // namespace NES::ASP
 

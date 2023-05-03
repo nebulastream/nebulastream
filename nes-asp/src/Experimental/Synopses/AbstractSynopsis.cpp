@@ -19,19 +19,19 @@
 
 namespace NES::ASP {
 
-AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arguments,
+AbstractSynopsesPtr AbstractSynopsis::create(uint64_t handlerIndex, Parsing::SynopsisConfiguration& arguments,
                                              Parsing::SynopsisAggregationConfig& aggregationConfig) {
 
     if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
-        return std::make_shared<SimpleRandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue());
+        return std::make_shared<SimpleRandomSampleWithoutReplacement>(handlerIndex, aggregationConfig, arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }
 }
 
 
-AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
-    : aggregationFunction(aggregationConfig.createAggregationFunction()),
+AbstractSynopsis::AbstractSynopsis(uint64_t handlerIndex, Parsing::SynopsisAggregationConfig& aggregationConfig)
+    : handlerIndex(handlerIndex), aggregationFunction(aggregationConfig.createAggregationFunction()),
       aggregationValue(aggregationConfig.createAggregationValue()), fieldNameAggregation(aggregationConfig.fieldNameAggregation),
       fieldNameApproximate(aggregationConfig.fieldNameApproximate), inputSchema(aggregationConfig.inputSchema),
       outputSchema(aggregationConfig.outputSchema) {}

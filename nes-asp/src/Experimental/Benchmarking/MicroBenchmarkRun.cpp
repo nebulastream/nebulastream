@@ -73,21 +73,21 @@ void MicroBenchmarkRun::run() {
         }
 
         timer.snapshot(executePipelineSnapshotName);
-//        auto allApproximateBuffers = synopsis->getApproximate(bufferManager);
+        auto allApproximateBuffers = synopsis->getApproximate(bufferManager, *pipelineContext);
 
         timer.snapshot(getApproximateSnapshotName);
         timer.pause();
 
         executablePipeline->stop(*pipelineContext);
-//        auto duration = timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(executePipelineSnapshotName)) +
+        auto duration = timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(executePipelineSnapshotName)) +
             timer.getRuntimeFromSnapshot(timer.createFullyQualifiedSnapShotName(getApproximateSnapshotName));
-//
-//         Checking for the accuracy and calculating the throughput of this loop
-//        auto accuracy = this->compareAccuracy(allAccuracyBuffers, allApproximateBuffers);
-//
-//        auto throughputInTuples = windowSize / ((double)duration / NANO_TO_SECONDS_MULTIPLIER);
-//        NES_DEBUG2("accuracy: {} throughputInTuples: {}", accuracy, throughputInTuples);
-//        microBenchmarkResult.emplace_back(throughputInTuples, accuracy);
+
+        // Checking for the accuracy and calculating the throughput of this loop
+        auto accuracy = this->compareAccuracy(allAccuracyBuffers, allApproximateBuffers);
+
+        auto throughputInTuples = windowSize / ((double)duration / NANO_TO_SECONDS_MULTIPLIER);
+        NES_DEBUG2("accuracy: {} throughputInTuples: {}", accuracy, throughputInTuples);
+        microBenchmarkResult.emplace_back(throughputInTuples, accuracy);
     }
 
     NES_INFO2("Loop timers: {}", printString(timer));
@@ -296,6 +296,7 @@ MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
     auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
 
     // Synopses Operator
+    create here SRSWoROperatorHandler() and put it into the PipelineExecutionContext
     auto synopsesOperator = std::make_shared<Operators::SynopsesOperator>(synopsis);
     auto pipelineExecutionContext = std::make_shared<MockedPipelineExecutionContext>();
 

@@ -17,21 +17,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void initializeSynopsisProxy(void* synopsisPtr) {
-    auto* synopsis = (ASP::AbstractSynopsis*) synopsisPtr;
-    synopsis->initialize();
+SynopsesOperator::SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSynopsesPtr& synopses) : synopses(synopses) {}
+
+
+void SynopsesOperator::execute(ExecutionContext& ctx, Record& record) const {
+    // For now, we do not have to care about calling getApproximate once the window is done #3628
+    synopses->addToSynopsis(ctx, record);
 }
 
-SynopsesOperator::SynopsesOperator(const ASP::AbstractSynopsesPtr& synopses)
-    : synopses(synopses) {}
-
-void SynopsesOperator::execute(ExecutionContext&, Record& record) const {
-    synopses->addToSynopsis(record);
-}
-
-void SynopsesOperator::setup(ExecutionContext&) const {
-    auto synopsisMemRef = Nautilus::Value<Nautilus::MemRef>(Nautilus::MemRef((int8_t*)synopses.get()));
-    Nautilus::FunctionCall("initializeSynopsisProxy", initializeSynopsisProxy, synopsisMemRef);
+void SynopsesOperator::setup(ExecutionContext& ctx) const {
+    synopses->setup(ctx);
 }
 
 } // namespace NES::Runtime::Execution::Operators
