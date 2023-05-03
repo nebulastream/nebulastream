@@ -1,0 +1,6 @@
+---
+# This Playbook copies logs of a NES cluster
+
+- hosts: workers
+  tasks:
+    - include_tasks: roles/worker/tasks/collect.yml

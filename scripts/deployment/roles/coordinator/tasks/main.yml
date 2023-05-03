@@ -1,0 +1,20 @@
+---
+# This Playbook runs all the deployment tasks for a coordinator
+
+- name: Create the log directory
+  ignore_errors: true
+  file:
+    path: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
+    state: directory
+
+- name: Clone dool repository
+  git:
+    repo: 'https://github.com/scottchiefbaker/dool.git'
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}"
+    update: no
+    clone: yes
+
+- name: Copy and populate configuration template
+  template:
+    src: coordinator.yaml.j2
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/coordinator.yaml"

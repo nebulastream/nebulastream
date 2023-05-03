@@ -1,0 +1,24 @@
+---
+# This Playbook runs all the perf plays in the deployment
+
+- name: check is perf installed
+  shell: command -v perf
+  register: perf_exists
+  ignore_errors: yes
+
+- name: check kernel version
+  shell: uname -a
+  when: perf_exists is failed
+  ignore_errors: yes
+  register: uname_result
+
+- name: install perf
+  when: perf_exists is failed
+  apt:
+    pkg:
+    - linux-tools-common
+    - linux-tools-generic
+    - "linux-tools-{{ uname_result.stdout }}"
+    update_cache: yes
+    autoclean: yes
+    state: absent

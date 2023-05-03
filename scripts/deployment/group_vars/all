@@ -1,0 +1,55 @@
+# The global variables file
+
+# The build-dir to use for copying binaries
+# This should be the suffix of your CLion mappings
+cmake_build_dir: nebulastream/cmake-build-fat-1-debug/nes-core
+
+# The default log level
+log_level: LOG_DEBUG
+
+# The worker root dir to use for deployments
+worker_root_dir: /local-ssd
+
+# Worker binary name
+worker_bin_name: nesWorker
+
+# Worker conf file
+worker_conf_name: worker.yaml
+
+# Worker default ports
+default_worker_ports:
+    - 3000
+    - 3001
+
+# The coordinator root dir to use for deployments
+coord_root_dir: /data-ssd
+
+# Coordinator binary name
+coord_bin_name: nesCoordinator
+
+# Coordinator conf file
+coord_conf_file: coordinator.yaml
+
+# Coordinator default IP
+default_coordinator_ip: 192.168.6.181
+
+# Coordinator default port, this can be a list later
+default_coordinator_ports:
+    - 8081
+    - 10000
+    - 3001
+
+# Dir name of dool clone
+dool_name: dool
+
+# Coordinator cores to keep track of
+coord_cores: "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143"
+
+# Worker cores to keep track of
+worker_cores: "0,1,2,3"
+
+# Coordinator interface to keep track of
+coord_iface: ibs3f0
+
+# Worker interface to keep track of
+worker_iface: ibs2

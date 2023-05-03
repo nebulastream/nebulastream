@@ -1,0 +1,4 @@
+{
+  "logicalSourceName": "smartgrid",
+  "schema": "Schema::create()->addField(\"timestamp\", UINT64)->addField(\"value\", FLOAT64)->addField(\"property\", UINT64)->addField(\"plug_id\", UINT64)->addField(\"household_id\", UINT64)->addField(\"house_id\", UINT64)"
+}

@@ -1,0 +1,10 @@
+---
+# This Playbook starts a NES cluster
+
+- hosts: coordinator
+  tasks:
+    - include_tasks: roles/coordinator/tasks/start.yml
+
+- hosts: workers
+  tasks:
+    - include_tasks: roles/worker/tasks/start.yml

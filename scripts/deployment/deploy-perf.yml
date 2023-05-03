@@ -1,0 +1,12 @@
+---
+# This Playbook deploys perf in a NES cluster
+
+- hosts: coordinator
+  vars_prompt:
+    - name: "ansible_become_pass"
+      prompt: "Sudo password"
+      private: yes
+  become: yes
+  become_user: root
+  roles:
+    - role: perf-user
