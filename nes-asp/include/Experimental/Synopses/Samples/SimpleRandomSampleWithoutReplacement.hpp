@@ -32,24 +32,22 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
   public:
     /**
      * @brief Constructor for a SampleRandomWithReplacement
-     * @param handlerIndex
      * @param aggregationConfig
      * @param sampleSize
      */
-    explicit SimpleRandomSampleWithoutReplacement(uint64_t handlerIndex,
-                                                  Parsing::SynopsisAggregationConfig& aggregationConfig,
+    explicit SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
                                                   size_t sampleSize);
 
     /**
      * @brief Initializes the sample by calling
      */
-    void setup(Runtime::Execution::ExecutionContext& ctx) override;
+    void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) override;
 
     /**
      * @brief Adds the record to this sample
      * @param record
      */
-    void addToSynopsis(Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) override;
+    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) override;
 
     /**
      * @brief Once we have finished building our sample, we can ask for an approximate
@@ -57,7 +55,8 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param bufferManager
      * @return Record(s) with the approximation
      */
-    std::vector<Runtime::TupleBuffer> getApproximate(Runtime::Execution::ExecutionContext& ctx,
+    std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
+                                                     Runtime::Execution::ExecutionContext& ctx,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     /**

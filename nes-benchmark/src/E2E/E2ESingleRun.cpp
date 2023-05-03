@@ -51,7 +51,6 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numberOfBuffersInGlobalBufferManager = configPerRun.numberOfBuffersInGlobalBufferManager->getValue();
     coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool =
         configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue();
-    coordinatorConf->worker.queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();

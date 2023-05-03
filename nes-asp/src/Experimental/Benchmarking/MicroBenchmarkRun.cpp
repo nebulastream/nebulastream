@@ -16,6 +16,7 @@
 #include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Experimental/Operators/SynopsesOperator.hpp>
+#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -51,6 +52,8 @@ void MicroBenchmarkRun::run() {
         NES_INFO2("Create and compile the pipeline...");
         auto [pipeline, pipelineContext] = createExecutablePipeline(synopsis);
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
+        auto handlerIndex = 0;
+
 
         Nautilus::CompilationOptions compilationOptions;
         compilationOptions.setDumpToConsole(true);
@@ -73,7 +76,9 @@ void MicroBenchmarkRun::run() {
         }
 
         timer.snapshot(executePipelineSnapshotName);
-        auto allApproximateBuffers = synopsis->getApproximate(bufferManager, *pipelineContext);
+        Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
+                                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
+        auto allApproximateBuffers = synopsis->getApproximate(handlerIndex, executionContext, bufferManager);
 
         timer.snapshot(getApproximateSnapshotName);
         timer.pause();
@@ -296,9 +301,9 @@ MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
     auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
 
     // Synopses Operator
-    create here SRSWoROperatorHandler() and put it into the PipelineExecutionContext
-    auto synopsesOperator = std::make_shared<Operators::SynopsesOperator>(synopsis);
-    auto pipelineExecutionContext = std::make_shared<MockedPipelineExecutionContext>();
+    auto opHandlers = {createOperatorHandler()};
+    auto synopsesOperator = std::make_shared<Operators::SynopsesOperator>(/*handlerIndex*/ 0, synopsis);
+    auto pipelineExecutionContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
 
     // Build Pipeline
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -306,6 +311,25 @@ MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
     pipeline->setRootOperator(scan);
 
     return std::make_pair(pipeline, pipelineExecutionContext);
+}
+
+Runtime::Execution::OperatorHandlerPtr MicroBenchmarkRun::createOperatorHandler() {
+    switch (synopsesArguments->type) {
+
+        case Parsing::Synopsis_Type::SRSWoR: return std::make_shared<SRSWoROperatorHandler>();
+        case Parsing::Synopsis_Type::SRSWR:
+        case Parsing::Synopsis_Type::Poisson:
+        case Parsing::Synopsis_Type::Stratified:
+        case Parsing::Synopsis_Type::ResSamp:
+        case Parsing::Synopsis_Type::EqWdHist:
+        case Parsing::Synopsis_Type::EqDpHist:
+        case Parsing::Synopsis_Type::vOptHist:
+        case Parsing::Synopsis_Type::HaarWave:
+        case Parsing::Synopsis_Type::CM:
+        case Parsing::Synopsis_Type::ECM:
+        case Parsing::Synopsis_Type::HLL:
+        case Parsing::Synopsis_Type::NONE: NES_NOT_IMPLEMENTED();
+    }
 }
 
 } // namespace NES::ASP::Benchmarking

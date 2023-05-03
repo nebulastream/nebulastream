@@ -27,6 +27,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
@@ -37,7 +38,8 @@ namespace NES::Runtime::Execution::Operators {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     MockedPipelineExecutionContext(BufferManagerPtr bufferManager,
-                                   uint64_t pipelineId)
+                                   uint64_t pipelineId,
+                                   std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
         : PipelineExecutionContext(
             pipelineId,// mock pipeline id
             1,         // mock query id
@@ -49,7 +51,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             [this](TupleBuffer& buffer) {
                 this->emittedBuffers.emplace_back(std::move(buffer));
             },
-            {}){};
+            handlers){};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
@@ -79,8 +81,28 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
     }
 };
 
+Runtime::Execution::OperatorHandlerPtr createOperatorHandler(ASP::Parsing::Synopsis_Type type) {
+    switch (type) {
+
+        case ASP::Parsing::Synopsis_Type::SRSWoR: return std::make_shared<ASP::SRSWoROperatorHandler>();
+        case ASP::Parsing::Synopsis_Type::SRSWR:
+        case ASP::Parsing::Synopsis_Type::Poisson:
+        case ASP::Parsing::Synopsis_Type::Stratified:
+        case ASP::Parsing::Synopsis_Type::ResSamp:
+        case ASP::Parsing::Synopsis_Type::EqWdHist:
+        case ASP::Parsing::Synopsis_Type::EqDpHist:
+        case ASP::Parsing::Synopsis_Type::vOptHist:
+        case ASP::Parsing::Synopsis_Type::HaarWave:
+        case ASP::Parsing::Synopsis_Type::CM:
+        case ASP::Parsing::Synopsis_Type::ECM:
+        case ASP::Parsing::Synopsis_Type::HLL:
+        case ASP::Parsing::Synopsis_Type::NONE: NES_NOT_IMPLEMENTED();
+    }
+}
+
 std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
-createExecutableSynopsisPipeline(ASP::AbstractSynopsesPtr synopsis, SchemaPtr inputSchema, BufferManagerPtr bufferManager) {
+createExecutableSynopsisPipeline(ASP::AbstractSynopsesPtr synopsis, ASP::Parsing::Synopsis_Type type,
+                                 SchemaPtr inputSchema, BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
     // Scan Operator
@@ -88,8 +110,9 @@ createExecutableSynopsisPipeline(ASP::AbstractSynopsesPtr synopsis, SchemaPtr in
     auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProvider));
 
     // Synopses Operator
-    auto synopsesOperator = std::make_shared<Operators::SynopsesOperator>(synopsis);
-    auto pipelineExecutionContext = std::make_shared<MockedPipelineExecutionContext>(bufferManager, -1);
+    auto opHandlers = {createOperatorHandler(type)};
+    auto synopsesOperator = std::make_shared<Operators::SynopsesOperator>(/*handlerIndex*/ 0, synopsis);
+    auto pipelineExecutionContext = std::make_shared<MockedPipelineExecutionContext>(bufferManager, -1, opHandlers);
 
     // Build Pipeline
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -156,7 +179,8 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     dynamicExpectedBuffer[0][outputSchema->get(0)->getName()].write(expectedOutput);
     dynamicExpectedBuffer.setNumberOfTuples(1);
 
-    auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::Synopsis_Type::SRSWoR, numberOfTuplesToProduce);
+    auto synopsisType = ASP::Parsing::Synopsis_Type::SRSWoR;
+    auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(synopsisType, numberOfTuplesToProduce);
     auto aggregationConfig = ASP::Parsing::SynopsisAggregationConfig::create(ASP::Parsing::Aggregation_Type::MIN,
                                                                              fieldNameAggregation,
                                                                              fieldNameApproximate,
@@ -165,16 +189,19 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
                                                                              outputSchema);
     auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig, aggregationConfig);
 
-    auto [pipeline, pipelineContext] = createExecutableSynopsisPipeline(synopsis, inputSchema, bufferManager);
+    auto [pipeline, pipelineContext] = createExecutableSynopsisPipeline(synopsis, synopsisType, inputSchema, bufferManager);
     auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
     auto executablePipeline = provider->create(pipeline, CompilationOptions());
+    Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
+                                                          Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
+    auto handlerIndex = 0UL;
 
     executablePipeline->setup(*pipelineContext);
     for (auto& buffer : allBuffers) {
         executablePipeline->execute(buffer, *pipelineContext, *workerContext);
     }
 
-    auto approximateBuffer = synopsis->getApproximate(bufferManager);
+    auto approximateBuffer = synopsis->getApproximate(handlerIndex, executionContext, bufferManager);
 
     ASSERT_EQ(approximateBuffer.size(), 1);
     NES_INFO("approximateBuffer: " << Util::printTupleBufferAsCSV(approximateBuffer[0], outputSchema));
