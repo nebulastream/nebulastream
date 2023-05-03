@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.68](https://github.com/nebulastream/nebulastream/tree/v0.5.68) (2023-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.67...v0.5.68)
+
+#### Runtime 
+
+- \[JIT Compiler\] add debug mode to print ir [\#3093](https://github.com/nebulastream/nebulastream/issues/3093)
+
+#### Build Management
+
+- \[Update\] migrate to clang/LLVM 16 [\#3605](https://github.com/nebulastream/nebulastream/issues/3605)
+
+## [v0.5.67](https://github.com/nebulastream/nebulastream/tree/v0.5.67) (2023-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.66...v0.5.67)
+
 ## [v0.5.66](https://github.com/nebulastream/nebulastream/tree/v0.5.66) (2023-05-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.65...v0.5.66)
