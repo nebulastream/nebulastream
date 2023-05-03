@@ -184,4 +184,4 @@ std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& cs
 
     return recordBuffers;
 }
-}
+} // namespace NES::ASP::Util

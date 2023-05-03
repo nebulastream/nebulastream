@@ -27,6 +27,9 @@ namespace NES::ASP::Benchmarking {
         }
     };
 
+    /**
+     * @brief Tests the methods parseMicroBenchmarksFromYamlFile(), getHeaderAsCsv(), getRowsAsCsv(), and toString()
+     */
     TEST_F(MicroBenchmarkRunTest, testParseFromYAMLFileAndGetHeaderCsvAndRowsAsCsvAndToString) {
         auto yamlFile = std::filesystem::path(TEST_CONFIGS_DIRECTORY) / "some_other_example.yaml";
         auto data = "data";
