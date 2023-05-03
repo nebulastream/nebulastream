@@ -96,7 +96,9 @@ class RestServer {
                GlobalQueryPlanPtr globalQueryPlan,
                Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
-               LocationServicePtr locationServicePtr);
+               LocationServicePtr locationServicePtr,
+               std::optional<std::string> corsAllowedOrigin
+               );
 
     /**
    * @brief method to start the rest server, calls run() internally
@@ -133,6 +135,7 @@ class RestServer {
     Runtime::BufferManagerPtr bufferManager;
     std::condition_variable cvar;
     std::mutex mutex;
+    std::optional<std::string> corsAllowedOrigin;
     bool stopRequested{false};
 };
 }// namespace NES
