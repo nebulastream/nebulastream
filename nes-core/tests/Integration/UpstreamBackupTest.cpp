@@ -39,8 +39,8 @@ namespace NES {
 using namespace Configurations;
 const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
-const uint64_t numberOfBuffersToProduce = 50000000;
-const uint64_t ingestionRate = 1000;
+const uint64_t numberOfBuffersToProduceInTuples = 50000000;
+const uint64_t ingestionRate = 10;
 
 class UpstreamBackupTest : public Testing::NESBaseTest {
   public:
@@ -72,33 +72,22 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             struct Record {
-                uint64_t a;
-                uint64_t b;
-                uint64_t c;
-                uint64_t d;
-                uint64_t e;
-                uint64_t f;
-                uint64_t timestamp1;
-                uint64_t timestamp2;
+                uint64_t id;
+                uint64_t value;
+                uint64_t timestamp;
             };
 
             auto* records = buffer.getBuffer<Record>();
-            auto now = std::chrono::system_clock::now();
-            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-            auto epoch = now_ms.time_since_epoch();
-            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+            auto ts = time(nullptr);
             for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                records[u].a = u;
-                records[u].b = u % 2;
-                records[u].c = u % 3;
-                records[u].d = u % 4;
-                records[u].e = u % 5;
-                records[u].f = u % 6;
-                records[u].timestamp1 = value.count();
-                records[u].timestamp2 = value.count();
+                records[u].id = u;
+                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                records[u].value = u % 10;
+                records[u].timestamp = ts;
             }
         };
-        lambdaSource = LambdaSourceType::create(std::move(func1), numberOfBuffersToProduce, ingestionRate, GatheringMode::INGESTION_RATE_MODE);
+
+        lambdaSource = LambdaSourceType::create(std::move(func1), numberOfBuffersToProduceInTuples, ingestionRate, GatheringMode::INGESTION_RATE_MODE);
 
         csvSourceTypeFinite = CSVSourceType::create();
         csvSourceTypeFinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -106,8 +95,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 
         inputSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
     }
 };
@@ -235,8 +224,11 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
+    auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(queryId);
+
     //get sink
-    auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(queryId);
+    auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(sharedQueryPlanId);
+    ASSERT_TRUE(!querySubPlanIds.empty());
     for (auto querySubPlanId : querySubPlanIds) {
         auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
         for (auto& sink : sinks) {
