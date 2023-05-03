@@ -66,6 +66,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'id' must be provided");
@@ -88,6 +91,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingMigrationType
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'migrationType' must be provided");
@@ -110,6 +116,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string message =
@@ -135,6 +144,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "No Topology Node with ID " + std::to_string(69));
@@ -156,6 +168,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["Info"], "Successfully submitted Maintenance Request");
