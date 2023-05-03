@@ -24,5 +24,14 @@ void SRSWoROperatorHandler::setup(uint64_t entrySize) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
 }
+void SRSWoROperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                  Runtime::StateManagerPtr,
+                                  uint32_t) {
+    NES_DEBUG2("Started SRSWoROperatorHandler!");
+}
+void SRSWoROperatorHandler::stop(Runtime::QueryTerminationType,
+                                 Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG2("Stopped SRSWoROperatorHandler!");
+}
 
 } // namespace NES::ASP

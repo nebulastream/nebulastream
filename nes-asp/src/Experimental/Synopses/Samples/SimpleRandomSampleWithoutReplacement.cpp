@@ -72,12 +72,12 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
     opHandler->setup(entrySize);
 }
 
-SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(uint64_t handlerIndex,
-                                                                           Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
-                         AbstractSynopsis(handlerIndex, aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
+SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
+                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
 }
 
-void SimpleRandomSampleWithoutReplacement::addToSynopsis(Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) {
+void SimpleRandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                                         Nautilus::Record record) {
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
@@ -94,7 +94,8 @@ void SimpleRandomSampleWithoutReplacement::addToSynopsis(Runtime::Execution::Exe
     }
 }
 
-std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(Runtime::Execution::ExecutionContext& ctx,
+std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(uint64_t handlerIndex,
+                                                                                       Runtime::Execution::ExecutionContext& ctx,
                                                                                        Runtime::BufferManagerPtr bufferManager) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
@@ -107,13 +108,12 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
 
-    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+    auto memoryProviderInput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
                                                                                                    inputSchema);
 
-    std::vector<Nautilus::Value<Nautilus::UInt64>> alreadyDrawn;
     auto entryMemRef = stackRef.getEntry(0UL);
     for (Nautilus::Value<Nautilus::UInt64> curTuple(0UL); curTuple < numberOfRecordsInSample; curTuple = curTuple + 1) {
-        auto tmpRecord = memoryProvider->read({}, entryMemRef, curTuple);
+        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, curTuple);
         auto tmpValue = tmpRecord.read(fieldNameAggregation);
         aggregationFunction->lift(aggregationValueMemRef, tmpValue);
     }
@@ -129,16 +129,18 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
     auto outputBuffer = bufferManager->getBufferBlocking();
     auto outputRecordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer)));
 
+    auto memoryProviderOutput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                                        outputSchema);
     Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
     Nautilus::Value<Nautilus::UInt64> numRecords(1UL);
     auto bufferAddress = outputRecordBuffer.getBuffer();
-    memoryProvider->write(recordIndex, bufferAddress, record);
+    memoryProviderOutput->write(recordIndex, bufferAddress, record);
     outputRecordBuffer.setNumRecords(numRecords);
 
     return {outputBuffer};
 }
 
-void SimpleRandomSampleWithoutReplacement::setup(Runtime::Execution::ExecutionContext& ctx) {
+void SimpleRandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandlerMemRef,
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
@@ -147,8 +149,7 @@ void SimpleRandomSampleWithoutReplacement::setup(Runtime::Execution::ExecutionCo
 double SimpleRandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::StackRef stackRef){
     double retValue = 1;
 
-    if (std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction) ||
-        std::dynamic_pointer_cast<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregationFunction)) {
+    if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {
         double numberOfTuplesInWindow = stackRef.getTotalNumberOfEntries();
         double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);

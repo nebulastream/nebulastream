@@ -16,7 +16,10 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
+#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -25,6 +28,23 @@
 #include <random>
 
 namespace NES::ASP {
+    /**
+     * @brief MockedPipelineExecutionContext for our executable pipeline
+     */
+    class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+      public:
+        MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
+            : PipelineExecutionContext(
+                -1,// mock pipeline id
+                1,         // mock query id
+                nullptr,
+                1, //noWorkerThreads
+                {},
+                {},
+                handlers){};
+    };
+
+
     class SimpleRandomSampleWithoutReplacementTest : public Testing::NESBaseTest,
                                                      public ::testing::WithParamInterface<Parsing::Aggregation_Type> {
       public:
@@ -90,14 +110,24 @@ namespace NES::ASP {
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
         auto exactAggFunction = aggregationConfig.createAggregationFunction();
+
+        auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
+        auto handlerIndex = 0;
+        auto opHandler = std::make_shared<SRSWoROperatorHandler>();
+        std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
+        auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
+        Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
+                                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
+        sampleSynopsis.setup(handlerIndex, executionContext);
+
         exactAggFunction->reset(exactAggValueMemRef);
         for (auto& record : allRecords) {
-            sampleSynopsis.addToSynopsis(record);
+            sampleSynopsis.addToSynopsis(handlerIndex, executionContext, record);
             auto tmpValue = record.read(aggregationString);
             exactAggFunction->lift(exactAggValueMemRef, tmpValue);
         }
 
-        auto approximateBuffers = sampleSynopsis.getApproximate(bufferManager);
+        auto approximateBuffers = sampleSynopsis.getApproximate(handlerIndex, executionContext, bufferManager);
         EXPECT_EQ(approximateBuffers.size(), 1);
 
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
@@ -173,8 +203,18 @@ namespace NES::ASP {
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
         auto exactAggFunction = aggregationConfig.createAggregationFunction();
         exactAggFunction->reset(exactAggValueMemRef);
+
+        auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
+        auto handlerIndex = 0;
+        auto opHandler = std::make_shared<SRSWoROperatorHandler>();
+        std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
+        auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
+        Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
+                                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
+        opHandler->setup(inputSchema->getSchemaSizeInBytes());
+
         for (auto& record : allRecords) {
-            sampleSynopsis.addToSynopsis(record);
+            sampleSynopsis.addToSynopsis(handlerIndex, executionContext, record);
         }
 
         for (auto& pos : posOfRecordsForSamples) {
@@ -182,7 +222,7 @@ namespace NES::ASP {
             exactAggFunction->lift(exactAggValueMemRef, tmpValue);
         }
 
-        auto approximateBuffers = sampleSynopsis.getApproximate(bufferManager);
+        auto approximateBuffers = sampleSynopsis.getApproximate(handlerIndex, executionContext, bufferManager);
         EXPECT_EQ(approximateBuffers.size(), 1);
 
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],

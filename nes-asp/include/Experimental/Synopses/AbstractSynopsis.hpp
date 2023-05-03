@@ -66,17 +66,15 @@ class AbstractSynopsis {
      *  - removing all drawn samples for a sampling algorithm
      *  - resetting and writing zeros to the 2D array for a Count-min sketch
      */
-    virtual void setup(Runtime::Execution::ExecutionContext& ctx) = 0;
+    virtual void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) = 0;
 
     /**
      * @brief Creates the synopsis from the SynopsisArguments
-     * @param handlerIndex
      * @param arguments
      * @param aggregationConfig
      * @return AbstractSynopsesPtr
      */
-    static AbstractSynopsesPtr create(uint64_t handlerIndex,
-                                      Parsing::SynopsisConfiguration& arguments,
+    static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration& arguments,
                                       Parsing::SynopsisAggregationConfig& aggregationConfig);
 
     /**
@@ -87,6 +85,7 @@ class AbstractSynopsis {
   protected:
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     Parsing::AggregationValuePtr aggregationValue;
+    Parsing::Aggregation_Type aggregationType;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     SchemaPtr inputSchema;

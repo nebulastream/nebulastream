@@ -157,6 +157,12 @@ class MicroBenchmarkRun {
     std::pair<std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline>, std::shared_ptr<MockedPipelineExecutionContext>>
         createExecutablePipeline(AbstractSynopsesPtr synopsis);
 
+    /**
+     * @brief Creates an operator handler corresponding to the synopsis
+     * @return Operatorhandler
+     */
+    Runtime::Execution::OperatorHandlerPtr createOperatorHandler();
+
     Parsing::SynopsisConfigurationPtr synopsesArguments;
     Parsing::SynopsisAggregationConfig aggregation;
     uint32_t bufferSize;

@@ -17,16 +17,17 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-SynopsesOperator::SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSynopsesPtr& synopses) : synopses(synopses) {}
+SynopsesOperator::SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSynopsesPtr& synopses) : handlerIndex(handlerIndex),
+                                                                                                      synopses(synopses) {}
 
 
 void SynopsesOperator::execute(ExecutionContext& ctx, Record& record) const {
     // For now, we do not have to care about calling getApproximate once the window is done #3628
-    synopses->addToSynopsis(ctx, record);
+    synopses->addToSynopsis(handlerIndex, ctx, record);
 }
 
 void SynopsesOperator::setup(ExecutionContext& ctx) const {
-    synopses->setup(ctx);
+    synopses->setup(handlerIndex, ctx);
 }
 
 } // namespace NES::Runtime::Execution::Operators
