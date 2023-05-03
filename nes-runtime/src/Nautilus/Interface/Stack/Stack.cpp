@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/Stack/Stack.hpp>
+#include <cstring>
 
 namespace NES::Nautilus::Interface {
 
@@ -28,6 +29,13 @@ int8_t* Stack::appendPage() {
     return page;
 }
 
+int8_t* Stack::getEntry(uint64_t pos) {
+    auto pagePos = pos / capacityPerPage();
+    auto positionOnPage = pos % capacityPerPage();
+
+    return (pages[pagePos] + positionOnPage * entrySize);
+}
+
 Stack::~Stack() {
     for (auto* page : pages) {
         allocator->deallocate(page, PAGE_SIZE);
@@ -40,6 +48,12 @@ size_t Stack::getNumberOfPages() { return pages.size(); }
 size_t Stack::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
 const std::vector<int8_t*> Stack::getPages() { return pages; }
+
+void Stack::moveTo(uint64_t oldPos, uint64_t newPos) {
+    auto oldPosEntry = getEntry(oldPos);
+    auto newPosEntry = getEntry(newPos);
+    std::memcpy(newPosEntry, oldPosEntry, entrySize);
+}
 
 void Stack::clear() { pages.clear(); }
 

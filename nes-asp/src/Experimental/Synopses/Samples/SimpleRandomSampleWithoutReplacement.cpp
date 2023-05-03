@@ -22,6 +22,7 @@
 #include <Experimental/Synopses/Samples/SimpleRandomSampleWithoutReplacement.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -29,17 +30,44 @@
 
 namespace NES::ASP{
 
+
+uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
+    auto* stack = (Nautilus::Interface::Stack*) stackPtr;
+    const auto numberOfTuples = stack->getNumberOfEntries();
+    std::mt19937 generator(GENERATOR_SEED_DEFAULT);
+    std::uniform_int_distribution<uint64_t> distribution(0, numberOfTuples - 1);
+    auto numberOfRecordsInSample = std::min(sampleSize, numberOfTuples);
+
+    // Creating as many random positions as necessary
+    std::vector<uint64_t> allRandomPositions;
+    for (auto i = 0UL; i < numberOfRecordsInSample; ++i) {
+        auto randomPos = distribution(generator);
+        while(std::find(allRandomPositions.begin(), allRandomPositions.end(), randomPos) != allRandomPositions.end()) {
+            randomPos = distribution(generator);
+        }
+        allRandomPositions.emplace_back(randomPos);
+    }
+
+    // Sorting the random positions so that we can iterate through the vector and move all the records at the random positions to the front
+    auto cnt = 0UL;
+    std::sort(allRandomPositions.begin(), allRandomPositions.end());
+    for (const auto randomPos : allRandomPositions) {
+        stack->moveTo(randomPos, cnt++);
+    }
+
+    return numberOfRecordsInSample;
+}
+
 SimpleRandomSampleWithoutReplacement::SimpleRandomSampleWithoutReplacement(
     Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
                          AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
-    SimpleRandomSampleWithoutReplacement::initialize();
 }
 
 void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record) {
 
-    Nautilus::Interface::StackRef stackRef = Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) stack.get()), recordSize);
+    auto stackRef = Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) stack.get()), recordSize);
     auto entryMemRef = stackRef.allocateEntry();
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : inputSchema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -50,66 +78,35 @@ void SimpleRandomSampleWithoutReplacement::addToSynopsis(Nautilus::Record record
 }
 
 std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getApproximate(Runtime::BufferManagerPtr bufferManager) {
-    Nautilus::Interface::StackRef stackRef = Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) stack.get()), recordSize);
-    auto numberOfTuples = stackRef.getNumberOfEntries();
+    Nautilus::Value<Nautilus::MemRef> stackMemRef((int8_t*) stack.get());
+    auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
 
-    // First, we have to pick our sample and store it in a vector of Nautilus::Records
-    hier weiter machen!!!
-
-
-    // First, we have to pick our sample
-    std::vector<Runtime::TupleBuffer> sample;
-    std::mt19937 generator(GENERATOR_SEED_DEFAULT);
-    std::uniform_int_distribution<uint64_t> uniformIntDistribution(0, numberOfTuples - 1);
-    auto numberOfTuplesInSample = 0UL;
-    std::vector<uint64_t> alreadyDrawn;
-    while (numberOfTuplesInSample < sampleSize && numberOfTuplesInSample < numberOfTuples) {
-        uint64_t pos = uniformIntDistribution(generator);
-        while (std::find(alreadyDrawn.begin(), alreadyDrawn.end(), pos) != alreadyDrawn.end()) {
-            pos = uniformIntDistribution(generator);
-        }
-        alreadyDrawn.emplace_back(pos);
-
-        auto numberOfTuplesPerBuffer = bufferManager->getBufferSize() / inputSchema->getSchemaSizeInBytes();
-        auto tupleBuffer = pos / numberOfTuplesPerBuffer;
-        auto tuplePosition = pos % numberOfTuplesPerBuffer;
-
-        if (sample.empty() || sample[sample.size() - 1].getNumberOfTuples() >= numberOfTuplesPerBuffer) {
-            sample.emplace_back(bufferManager->getBufferBlocking());
-        }
-        auto sampleBuffer = sample[sample.size() - 1];
-
-        auto srcMem = storedRecords[tupleBuffer].getBuffer() + tuplePosition * inputSchema->getSchemaSizeInBytes();
-        auto destMem = sampleBuffer.getBuffer() + sampleBuffer.getNumberOfTuples() * inputSchema->getSchemaSizeInBytes();
-        std::memcpy(destMem, srcMem, inputSchema->getSchemaSizeInBytes());
-        sampleBuffer.setNumberOfTuples(sampleBuffer.getNumberOfTuples() + 1);
-        ++numberOfTuplesInSample;
-    }
+    auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, stackMemRef,
+                                                          Nautilus::Value<Nautilus::UInt64>((uint64_t)sampleSize));
 
     // Approximate over the sample and write the approximation into record
     auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
     aggregationFunction->reset(aggregationValueMemRef);
-    for (auto& buffer : sample) {
-        NES_TRACE2("buffer in SampleRandomWithoutReplacement::getApproximate: {}", NES::Util::printTupleBufferAsCSV(buffer, inputSchema));
-        auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
-        auto numberOfRecords = buffer.getNumberOfTuples();
-        for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-            auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), inputSchema);
-            auto tmpRecord = memoryProvider->read({}, bufferAddress, i);
-            auto tmpValue = tmpRecord.read(fieldNameAggregation);
-            aggregationFunction->lift(aggregationValueMemRef, tmpValue);
-        }
+
+    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                                   inputSchema);
+
+    std::vector<Nautilus::Value<Nautilus::UInt64>> alreadyDrawn;
+    auto entryMemRef = stackRef.getEntry(0UL);
+    for (Nautilus::Value<Nautilus::UInt64> curTuple(0UL); curTuple < numberOfRecordsInSample; curTuple = curTuple + 1) {
+        auto tmpRecord = memoryProvider->read({}, entryMemRef, curTuple);
+        auto tmpValue = tmpRecord.read(fieldNameAggregation);
+        aggregationFunction->lift(aggregationValueMemRef, tmpValue);
     }
 
     // Lower the aggregation
     Nautilus::Record record;
     auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
-    auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor());
+    auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor(stackRef));
     approximatedValue = multiplyWithScalingFactor(approximatedValue, scalingFactor);
     record.write(fieldNameApproximate, approximatedValue);
 
     // Create an output buffer and write the approximation into it
-    auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), outputSchema);
     auto outputBuffer = bufferManager->getBufferBlocking();
     auto outputRecordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer)));
 
@@ -123,19 +120,17 @@ std::vector<Runtime::TupleBuffer> SimpleRandomSampleWithoutReplacement::getAppro
 }
 
 void SimpleRandomSampleWithoutReplacement::initialize() {
-    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
-
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = inputSchema->getSchemaSizeInBytes();
     stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
 }
 
-double SimpleRandomSampleWithoutReplacement::getScalingFactor(){
+double SimpleRandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::StackRef stackRef){
     double retValue = 1;
 
     if (std::dynamic_pointer_cast<Runtime::Execution::Aggregation::CountAggregationFunction>(aggregationFunction) ||
         std::dynamic_pointer_cast<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregationFunction)) {
-        double numberOfTuplesInWindow = NES::Util::getNumberOfTuples(storedRecords);
+        double numberOfTuplesInWindow = stackRef.getTotalNumberOfEntries();
         double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);
     }

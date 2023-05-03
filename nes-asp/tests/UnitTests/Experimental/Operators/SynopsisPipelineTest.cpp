@@ -75,7 +75,7 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 256);
     }
 };
 
@@ -164,7 +164,6 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
                                                                              inputSchema,
                                                                              outputSchema);
     auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig, aggregationConfig);
-    synopsis->setBufferManager(bufferManager);
 
     auto [pipeline, pipelineContext] = createExecutableSynopsisPipeline(synopsis, inputSchema, bufferManager);
     auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);

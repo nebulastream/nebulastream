@@ -63,9 +63,10 @@ class SimpleRandomSampleWithoutReplacement : public AbstractSynopsis {
   private:
     /**
      * @brief Calculates the scaling factor from the current number of samples and stored records
+     * @param stackRef
      * @return Scaling factor
      */
-    double getScalingFactor();
+    double getScalingFactor(Nautilus::Interface::StackRef stackRef);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor

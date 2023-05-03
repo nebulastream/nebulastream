@@ -86,7 +86,6 @@ namespace NES::ASP {
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
         auto sampleSynopsis = SimpleRandomSampleWithoutReplacement(aggregationConfig, sampleSize);
-        sampleSynopsis.setBufferManager(bufferManager);
 
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
@@ -169,7 +168,6 @@ namespace NES::ASP {
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
         auto sampleSynopsis = SimpleRandomSampleWithoutReplacement(aggregationConfig, sampleSize);
-        sampleSynopsis.setBufferManager(bufferManager);
 
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
