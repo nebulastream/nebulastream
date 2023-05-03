@@ -14,7 +14,6 @@
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationRequest.hpp>
-#include <Compiler/DynamicObject.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Nautilus/Backends/CPP/CPPCompilationBackend.hpp>
 #include <Nautilus/Backends/CPP/CPPExecutable.hpp>
@@ -28,18 +27,26 @@ namespace NES::Nautilus::Backends::CPP {
 [[maybe_unused]] static CompilationBackendRegistry::Add<CPPCompilationBackend> cppCompilationBackend("CPPCompiler");
 
 std::unique_ptr<Executable>
-CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&, const DumpHelper&) {
+CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) {
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
     timer.start();
 
-    auto code = CPPLoweringProvider().lower(ir);
-    NES_INFO(code);
+    auto code = CPPLoweringProvider::lower(ir);
+    dumpHelper.dump("code.cpp", code);
+
     timer.snapshot("CPPCodeGeneration");
 
     auto compiler = Compiler::CPPCompiler::create();
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code);
-    auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "cppQuery", false, false, true, true);
+
+    auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
+                                                        "cppQuery",
+                                                        options.isDebug(),
+                                                        false,
+                                                        options.isOptimize(),
+                                                        options.isDebug());
     auto res = compiler->compile(request);
+    timer.snapshot("CCPCompilation");
     return std::make_unique<CPPExecutable>(res.getDynamicObject());
 }
 

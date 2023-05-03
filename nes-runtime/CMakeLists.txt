@@ -33,7 +33,11 @@ target_include_directories(nes-runtime PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
-target_link_libraries(nes-runtime PRIVATE nes-compiler)
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
+    message(STATUS "Enable cpp compiler backend")
+    target_link_libraries(nes-runtime PRIVATE nes-compiler)
+endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable bytecode interpreter")

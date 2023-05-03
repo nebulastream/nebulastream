@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_BYTECODEINTERPRETERBACKEND_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_BYTECODEINTERPRETERBACKEND_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPBACKEND_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPBACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::CPP {
 
 /**
- * @brief Compilation backend that uses a byte code interpreter.
+ * @brief Compilation backend that generates cpp code and compiles it at runtime
  */
 class CPPCompilationBackend : public CompilationBackend {
   public:
@@ -26,4 +26,4 @@ class CPPCompilationBackend : public CompilationBackend {
 };
 
 }// namespace NES::Nautilus::Backends::CPP
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_BYTECODEINTERPRETERBACKEND_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPBACKEND_HPP_

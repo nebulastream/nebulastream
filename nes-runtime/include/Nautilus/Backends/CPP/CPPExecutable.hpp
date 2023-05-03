@@ -27,15 +27,13 @@ class CPPExecutable : public Executable {
     /**
      * Constructor to create a cpp executable.
      */
-    CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj);
+    explicit CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj);
     ~CPPExecutable() override = default;
 
   public:
     void* getInvocableFunctionPtr(const std::string& member) override;
     bool hasInvocableFunctionPtr() override;
     std::unique_ptr<GenericInvocable> getGenericInvocable(const std::string& string) override;
-    std::any invokeGeneric(const std::vector<std::any>& arguments);
-
   private:
    std::shared_ptr<Compiler::DynamicObject> obj;
 };

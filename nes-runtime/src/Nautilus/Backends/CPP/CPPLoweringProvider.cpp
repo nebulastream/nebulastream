@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#include "Nautilus/Backends/CPP/CPPLoweringProvider.hpp"
-#include "Nautilus/Backends/BCInterpreter/ByteCode.hpp"
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstddef>
 #include <sstream>
 #include <utility>
 #include <vector>
 
 namespace NES::Nautilus::Backends::CPP {
 
-CPPLoweringProvider::CPPLoweringProvider() {}
+CPPLoweringProvider::CPPLoweringProvider() = default;
 CPPLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir)) {}
 
 std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {

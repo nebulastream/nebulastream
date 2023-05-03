@@ -53,7 +53,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
     } else {
         return [](llvm::Module* llvmIRModule) {
             // TODO make the optimization level dynamic.
-            auto optPipeline = mlir::makeOptimizingTransformer(1, 0, nullptr);
+            auto optPipeline = mlir::makeOptimizingTransformer(3, 0, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
             std::string result;
             auto output = llvm::raw_string_ostream(result);
