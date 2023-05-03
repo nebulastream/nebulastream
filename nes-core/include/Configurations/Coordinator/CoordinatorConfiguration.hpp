@@ -121,6 +121,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
     /**
+     * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server
+     */
+    StringOption restServerCorsAllowedOrigin = {REST_SERVER_CORS_ORIGIN, "", "The allowed origins to be set in the header of the responses to rest requests"};
+
+    /**
      * Create a CoordinatorConfiguration object with default values.
      * @return A CoordinatorConfiguration object with default values.
      */
@@ -149,7 +154,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &workerConfigPath,
                 &optimizer,
                 &logicalSources,
-                &coordinatorHealthCheckWaitTime};
+                &coordinatorHealthCheckWaitTime,
+                &restServerCorsAllowedOrigin};
     }
 };
 
