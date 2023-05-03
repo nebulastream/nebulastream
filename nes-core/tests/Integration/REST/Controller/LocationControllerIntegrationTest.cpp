@@ -83,6 +83,9 @@ TEST_F(LocationControllerIntegrationTest, testGetLocationMissingQueryParameters)
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     ASSERT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
     stopCoordinator();
@@ -101,6 +104,9 @@ TEST_F(LocationControllerIntegrationTest, testGetLocationNoSuchNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
@@ -121,6 +127,9 @@ TEST_F(LocationControllerIntegrationTest, testGetLocationNonNumericalNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
@@ -152,6 +161,9 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocation) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["id"], workerNodeId1);
@@ -182,6 +194,9 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocationWhenNoLocationDat
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     ASSERT_TRUE(res["location"].is_null());
@@ -213,6 +228,9 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationsNoMobileNodes
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     //no mobile nodes added yet, response should be empty
@@ -274,6 +292,9 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res);

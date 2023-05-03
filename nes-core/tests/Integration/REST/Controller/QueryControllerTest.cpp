@@ -69,6 +69,9 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
@@ -89,6 +92,9 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
@@ -112,6 +118,9 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
@@ -135,6 +144,9 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
@@ -159,6 +171,9 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
@@ -198,6 +213,9 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 202l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["queryId"], 1);
@@ -239,6 +257,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     f1.wait();
     auto r1 = f1.get();
     EXPECT_EQ(r1.status_code, 202l);
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
@@ -251,6 +272,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     f2.wait();
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 200l);
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response2;
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2.size(), 1);
@@ -265,6 +289,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     f3.wait();
     auto r3 = f3.get();
     EXPECT_EQ(r3.status_code, 404l);
+    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response3;
     ASSERT_NO_THROW(response3 = nlohmann::json::parse(r3.text));
     NES_DEBUG(response3.dump());
@@ -307,6 +334,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     f1.wait();
     auto r1 = f1.get();
     EXPECT_EQ(r1.status_code, 202l);
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
@@ -319,6 +349,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     f2.wait();
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 404l);
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response2;
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
@@ -359,6 +392,9 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     f1.wait();
     auto r1 = f1.get();
     EXPECT_EQ(r1.status_code, 202l);
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
@@ -372,6 +408,9 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     f2.wait();
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 200l);
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response2;
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     for (auto edge : response2["edges"]) {
@@ -417,6 +456,9 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     f1.wait();
     auto r1 = f1.get();
     EXPECT_EQ(r1.status_code, 202l);
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
@@ -429,6 +471,9 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     f2.wait();
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 404l);
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
     NES_DEBUG(response2.dump());
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
