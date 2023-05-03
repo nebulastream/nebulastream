@@ -101,7 +101,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
         syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(QueryParsingService::create(jitCompiler));
     }
 
-    /* Will be called before a test is executed. */
+    /* Will be called after a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryContainmentIdentificationTest: Tear down QueryContainmentIdentificationTest test case.");
     }
@@ -165,6 +165,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
                                                Optimizer::ContainmentType::EQUALITY)};
     }
+
     static auto createNoContainmentCases() {
         return std::vector<
             QueryContainmentTestEntry>{QueryContainmentTestEntry(
@@ -425,7 +426,7 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
     for (auto containmentCase : containmentCases) {
         QueryPlanPtr queryPlanSQPQuery = syntacticQueryValidation->validate(containmentCase.leftQuery);
         QueryPlanPtr queryPlanNewQuery = syntacticQueryValidation->validate(containmentCase.rightQuery);
-        //typ inference face
+        //type inference face
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         typeInferencePhase->execute(queryPlanSQPQuery);
         typeInferencePhase->execute(queryPlanNewQuery);
