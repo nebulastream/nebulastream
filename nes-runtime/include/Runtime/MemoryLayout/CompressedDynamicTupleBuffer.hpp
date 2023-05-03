@@ -42,14 +42,15 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
         : DynamicTupleBuffer(memoryLayout, buffer) {// TODO this one does not copy
         this->compressionAlgorithm = other.compressionAlgorithm;
         this->compressionMode = other.compressionMode;
-        this->maxBufferSize = other.maxBufferSize;
         this->offsets = other.offsets;
         this->compressedSizes = other.compressedSizes;
     }
 
     CompressionAlgorithm getCompressionAlgorithm();
     CompressionMode getCompressionMode();
-
+    std::vector<uint64_t> getOffsets();
+    std::vector<size_t> getCompressedSize();
+    double getCompressionRatio();
     void compress(CompressionAlgorithm targetCa);
     void compress(CompressionAlgorithm targetCa, CompressionMode targetCm);
     void decompress();
@@ -57,10 +58,9 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
   private:
     CompressionAlgorithm compressionAlgorithm;
     CompressionMode compressionMode;
-    size_t maxBufferSize;
     std::vector<uint64_t> offsets;// TODO mismatch to MemoryLayout offsets
     std::vector<size_t> compressedSizes;
-    fsst_encoder_t* encoder;
+    fsst_encoder_t* fsstEncoder;
     size_t fsstOutSize;
 
     std::vector<uint64_t> getOffsets(const MemoryLayoutPtr& memoryLayout);
