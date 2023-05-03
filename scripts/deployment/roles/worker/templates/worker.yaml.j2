@@ -1,0 +1,29 @@
+###
+### General configuration
+###
+logLevel: {{ log_level }}
+
+###
+### Network configuration
+###
+localWorkerIp: {{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
+coordinatorIp: {{ default_coordinator_ip }}
+coordinatorPort: {{ default_coordinator_ports[1] }}
+
+# Set RPC server port of NES Worker
+rpcPort: {{ default_worker_ports[0] }}
+# Set the data port of the NES Worker
+dataPort: {{ default_worker_ports[1] }}
+
+###
+### Physical source configuration
+###
+physicalSources:
+        - logicalSourceName: smartgrid
+          physicalSourceName: smartgrid_{{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
+          type: CSVSource
+          configuration:
+                  filePath: /tmp/smartgrid.csv
+                  numberOfBuffersToProduce: 1024
+                  numberOfTuplesToProducePerBuffer: 0
+                  skipHeader: false

@@ -1,0 +1,6 @@
+---
+# This Playbook submits a query in a NES cluster
+
+- hosts: coordinator
+  tasks:
+    - include_tasks: roles/coordinator/tasks/query.yml

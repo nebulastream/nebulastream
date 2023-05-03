@@ -1,0 +1,55 @@
+---
+# This task kills the worker and its monitoring
+
+- name: Check if worker monitoring pid file exists
+  stat:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid"
+  register: mon_stat_result
+
+- name: Get worker monitoring pid
+  when: mon_stat_result.stat.exists
+  shell: "cat {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid"
+  register: mon_cat_result
+
+- name: Kill worker monitoring
+  when: mon_stat_result.stat.exists
+  shell: "kill -9 {{ mon_cat_result.stdout }}"
+  ignore_errors: true
+
+- name: Wait for monitoring process to completely die
+  when: mon_stat_result.stat.exists
+  wait_for:
+    path: "/proc/{{ mon_cat_result.stdout }}/status"
+    state: absent
+
+- name: Remove worker monitoring pid file
+  file:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid"
+    state: absent
+
+- name: Check if pid file exists
+  stat:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid"
+  register: stat_result
+
+- name: Get process, if pid file exists
+  when: stat_result.stat.exists
+  shell: "cat {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid"
+  register: cat_result
+
+- name: Kill process
+  when: stat_result.stat.exists
+  shell: "kill -9 {{ cat_result.stdout }}"
+  ignore_errors: true
+
+
+- name: Wait for process to completely die
+  when: stat_result.stat.exists
+  wait_for:
+    path: "/proc/{{ cat_result.stdout }}/status"
+    state: absent
+
+- name: Remove pid file
+  file:
+    path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid"
+    state: absent

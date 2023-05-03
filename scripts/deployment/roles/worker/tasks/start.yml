@@ -1,0 +1,17 @@
+---
+# This Playbook starts a worker in the deployment
+
+# TODO: install netstat
+#- name: Gather occupied tcp v4 ports
+#  shell: netstat -nlt4 | grep -oP '(?<=0.0.0.0:)(\d+)'
+#  register: used_ports
+#
+#- name: Check if worker ports are free
+#  set_fact:
+#    bind_port: "{{ default_worker_ports | difference(used_ports.stdout_lines | map('int') | list) | first | default(0) }}"
+#  failed_when: bind_port | int == 0
+
+- name: Start Worker
+  shell: |
+    nohup numactl -N 0 -m 0 {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }} --configPath={{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 & 
+    echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid

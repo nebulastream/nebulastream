@@ -1,0 +1,15 @@
+---
+# This Playbook runs monitoring tasks for a coordinator
+
+- name: Start dool monitoring
+  shell: |
+    nohup /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -t -T -c -C {{ coord_cores }} -n -N {{ coord_iface }} -m --output /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv > /dev/null 2>&1 &
+    echo $! > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid
+
+- name: Coordinator monitoring pid is created
+  wait_for:
+    path: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid"
+
+- name: Coordinator monitoring log is created
+  wait_for:
+    path: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv"

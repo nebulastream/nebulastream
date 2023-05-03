@@ -1,0 +1,23 @@
+###
+### General configuration
+###
+logLevel: {{ log_level }}
+optimizer:
+  distributedWindowChildThreshold: 3
+
+###
+### Network configuration
+###
+restIp: {{ default_coordinator_ip }}
+coordinatorIp: {{ default_coordinator_ip }}
+
+# Set port exposed for REST endpoints
+restPort: {{ default_coordinator_ports[0] }}
+# Set RPC server port of NES Coordinator
+rpcPort: {{ default_coordinator_ports[1] }}
+# Set the data port of the network manager
+dataPort: {{ default_coordinator_ports[2] }}
+
+###
+### Logical source configuration
+###

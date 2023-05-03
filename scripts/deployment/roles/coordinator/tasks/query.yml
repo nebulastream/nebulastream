@@ -1,0 +1,12 @@
+---
+# This Playbook submits a query to the coordinator
+
+- name: Submit Smartgrid-1 (global avg) query
+  uri:
+    url: "http://{{ default_coordinator_ip}}:{{ default_coordinator_ports[0] }}/v1/nes/query/execute-query"
+    method: POST
+    src: queries/smartgrid-global-avg.json
+    status_code: 201
+    headers:
+      content-type: application/json
+      cache-control: no-cache

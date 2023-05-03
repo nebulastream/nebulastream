@@ -1,0 +1,4 @@
+{
+  "userQuery": "Query::from(\"smartgrid\").window(SlidingWindow::of(EventTime(Attribute(\"value\")), Seconds(3600), Seconds(1))).apply(Avg(Attribute(\"value\"))->as(Attribute(\"globalAvgLoad\"))).sink(NullOutputSinkDescriptor::create());",
+  "strategyName": "TopDown"
+}

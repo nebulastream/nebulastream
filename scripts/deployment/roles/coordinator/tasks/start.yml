@@ -1,0 +1,25 @@
+---
+# This Playbook runs a coordinator in the deployment
+
+- name: Gather occupied tcp v4 ports
+  shell: netstat -nlt4 | grep -oP '(?<=0.0.0.0:)(\d+)'
+  register: used_ports
+
+- name: Check if coordinator port is free
+  set_fact:
+    bind_port: "{{ default_coordinator_ports | difference(used_ports.stdout_lines | map('int') | list) | first | default(0) }}"
+  failed_when: bind_port | int == 0
+
+- name: Start coordinator
+  shell: |
+    nohup numactl -N 0 -m 0 /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ coord_bin_name }} --configPath=/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/coordinator.yaml > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ coord_bin_name }}.log 2>&1 & 
+    echo $! > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ coord_bin_name }}.pid
+
+- name: Deploy Smartgrid schema
+  uri:
+    url: "http://{{ default_coordinator_ip}}:{{ default_coordinator_ports[0] }}/v1/nes/sourceCatalog/addLogicalSource"
+    method: POST
+    src: schemata/smartgrid.json
+    headers:
+      content-type: application/json
+      cache-control: no-cache
