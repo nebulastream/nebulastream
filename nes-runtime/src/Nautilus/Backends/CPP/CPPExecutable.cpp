@@ -15,12 +15,10 @@
 #include <Nautilus/Backends/CPP/CPPExecutable.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <cstdint>
 #include <utility>
-
 namespace NES::Nautilus::Backends::CPP {
 
-CPPExecutable::CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj) : obj(obj) {}
+CPPExecutable::CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj) : obj(std::move(obj)) {}
 
 void* CPPExecutable::getInvocableFunctionPtr(const std::string&) { return obj->getInvocableMember<void*>("execute"); }
 

@@ -68,6 +68,8 @@ class BenchmarkRunner {
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
+        options.setOptimize(true);
+        options.setDumpToFile(true);
     }
     void run() {
         double sumCompilation = 0;
@@ -211,8 +213,8 @@ class Query3Runner : public BenchmarkRunner {
 
 int main(int, char**) {
     NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F1;
-    std::vector<std::string> compilers = {"PipelineCompiler"};
+    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
     for (const auto& c : compilers) {
-        NES::Runtime::Execution::Query3Runner(targetScaleFactor, c).run();
+        NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
     }
 }

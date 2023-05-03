@@ -53,7 +53,7 @@ namespace NES::Nautilus::Backends::CPP {
 class CPPLoweringProvider {
   public:
     CPPLoweringProvider();
-    std::string lower(std::shared_ptr<IR::IRGraph> ir);
+    static std::string lower(std::shared_ptr<IR::IRGraph> ir);
 
   private:
     using RegisterFrame = Frame<std::string, std::string>;
