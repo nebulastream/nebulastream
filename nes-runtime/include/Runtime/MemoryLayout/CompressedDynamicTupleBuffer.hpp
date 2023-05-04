@@ -45,6 +45,7 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
         this->offsets = other.offsets;
         this->compressedSizes = other.compressedSizes;
     }
+    void setNumberOfTuples(uint64_t value);
 
     CompressionAlgorithm getCompressionAlgorithm();
     CompressionMode getCompressionMode();
@@ -60,6 +61,7 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     CompressionMode compressionMode;
     std::vector<uint64_t> offsets;// TODO mismatch to MemoryLayout offsets
     std::vector<size_t> compressedSizes;
+    size_t totalOriginalSize;
     fsst_encoder_t* fsstEncoder;
     size_t fsstOutSize;
 
