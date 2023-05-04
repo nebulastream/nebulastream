@@ -149,7 +149,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::Co
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, sourceNameVar, sourceNameVal)));
 
     //Compute signature
-    return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {});
+    return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {}, {});
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const ProjectionLogicalOperatorNodePtr& projectOperator) {
@@ -210,10 +210,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
 
     auto conditions = childQuerySignature->getConditions();
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    auto unionExpressions = childQuerySignature->getUnionExpressions();
     return QuerySignature::create(std::move(conditions),
                                   std::move(updatedColumns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowExpressions));
+                                  std::move(windowExpressions),
+                                  std::move(unionExpressions));
 }
 
 #ifdef TFDEF
@@ -329,10 +331,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::Conte
 
     auto conditions = childQuerySignature->getConditions();
     auto windowsExpressions = childQuerySignature->getWindowsExpressions();
+    auto unionExpressions = childQuerySignature->getUnionExpressions();
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowsExpressions));
+                                  std::move(windowsExpressions),
+                                  std::move(unionExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::ContextPtr& context,
@@ -388,12 +392,14 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
 
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    auto unionExpressions = childQuerySignature->getUnionExpressions();
     auto columns = childQuerySignature->getColumns();
 
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(schemaFieldToExprMaps),
-                                  std::move(windowExpressions));
+                                  std::move(windowExpressions),
+                                  std::move(unionExpressions));
 }
 
 QuerySignaturePtr
@@ -450,11 +456,13 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto columns = childQuerySignature->getColumns();
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
+    auto unionExpressions = childQuerySignature->getUnionExpressions();
 
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(schemaFieldToExprMaps),
-                                  std::move(windowExpressions));
+                                  std::move(windowExpressions),
+                                  std::move(unionExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::ContextPtr& context,
@@ -503,15 +511,29 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
 
     //Add condition to the array
     z3::expr_vector allConditions(*context);
+    NES_TRACE2("LeftSignature Conditions: {}", leftSignature->getConditions()->to_string());
+    NES_TRACE2("RightSignature Conditions: {}", rightSignature->getConditions()->to_string());
     allConditions.push_back(*leftSignature->getConditions());
     allConditions.push_back(*rightSignature->getConditions());
+
+    //combine union expressions
+    //this is needed to prevent false containment identification
+    NES_TRACE2("LeftSignature source name qualifier: {}", unionOperator->getLeftInputSchema()->getSourceNameQualifier());
+    std::map<std::string, z3::ExprPtr> combinedUnionExpressions = leftSignature->getUnionExpressions();
+    for (const auto& [sourceName, conditions] : rightSignature->getUnionExpressions()) {
+        combinedUnionExpressions[sourceName] = conditions;
+    }
+
+    combinedUnionExpressions[unionOperator->getRightInputSchema()->getSourceNameQualifier()] = rightSignature->getConditions();
+    combinedUnionExpressions[unionOperator->getLeftInputSchema()->getSourceNameQualifier()] = leftSignature->getConditions();
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
     return QuerySignature::create(std::move(conditions),
                                   std::move(leftColumns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(combinedWindowExpressions));
+                                  std::move(combinedWindowExpressions),
+                                  std::move(combinedUnionExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::ContextPtr& context,
@@ -643,10 +665,16 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     joinWindowExpression.insert({"window-id", std::make_shared<z3::expr>(context->string_val(windowKey))});
     combinedWindowExpressions.push_back(joinWindowExpression);
 
+    std::map<std::string, z3::ExprPtr> combinedUnionExpressions = leftSignature->getUnionExpressions();
+    for (const auto& [sourceName, conditions] : rightSignature->getUnionExpressions()) {
+        combinedUnionExpressions[sourceName] = conditions;
+    }
+
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(combinedWindowExpressions));
+                                  std::move(combinedWindowExpressions),
+                                  std::move(combinedUnionExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::ContextPtr& context,
@@ -837,9 +865,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto conditions = childQuerySignature->getConditions();
     auto combinedWindowExpressions = childQuerySignature->getWindowsExpressions();
     combinedWindowExpressions.push_back(windowExpression);
+    auto unionExpressions = childQuerySignature->getUnionExpressions();
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(combinedWindowExpressions));
+                                  std::move(combinedWindowExpressions),
+                                  std::move(unionExpressions));
 }
 }// namespace NES::Optimizer

@@ -234,6 +234,8 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
+    //todo: union containment is not correctly identified. We need to make sure that the filter conditions are applied to all involved sources
+    //todo: we need to make sure that each or condition has the same number of conditions as the length of the vector and that there are the same number of or conditions overall
     NES_TRACE2("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
     z3::expr_vector rightQueryFilterConditions(*context);
@@ -258,11 +260,13 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
         if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE2("SignatureContainmentUtil::checkContainment: Equal filters.");
             return ContainmentType::EQUALITY;
+        } else if (checkFilterContainmentPossible(leftSignature, rightSignature)) {
+            NES_TRACE2("SignatureContainmentUtil::checkContainment: left sig contains right sig for filters.");
+            return ContainmentType::RIGHT_SIG_CONTAINED;
         }
-        NES_TRACE2("SignatureContainmentUtil::checkContainment: left sig contains right sig for filters.");
-        return ContainmentType::RIGHT_SIG_CONTAINED;
     } else {
-        if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
+        if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)
+            && checkFilterContainmentPossible(rightSignature, leftSignature)) {
             NES_TRACE2("SignatureContainmentUtil::checkContainment: right sig contains left sig for filters.");
             return ContainmentType::LEFT_SIG_CONTAINED;
         }
@@ -392,6 +396,48 @@ bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std
         && (checkFilterContainment(leftSignature, rightSignature) == ContainmentType::EQUALITY);
     return leftWindowContainsRightWindow;
 }
+
+bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignaturePtr& container,
+                                                              const QuerySignaturePtr& containee) {
+    if (container->getSchemaFieldToExprMaps().size() > 1) {
+        for (const auto& [containerSourceName, containerConditions] : container->getUnionExpressions()) {
+            NES_TRACE2("Container source name: {}", containerSourceName);
+            NES_TRACE2("Container conditions: {}", containerConditions->to_string());
+            // Check if the key exists in map2
+            auto containeeUnionExpressions = containee->getUnionExpressions().find(containerSourceName);
+            if (containeeUnionExpressions == containee->getUnionExpressions().end()) {
+                return false;
+            }
+
+            // Check if the values are equal
+            z3::ExprPtr containeeConditions = containeeUnionExpressions->second;
+            NES_TRACE2("Containee conditions: {}", containeeConditions->to_string());
+            if (containerConditions->to_string() != containeeConditions->to_string()) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/*std::vector<std::shared_ptr<z3::expr>> SignatureContainmentUtil::getOrSubexpressions(const std::shared_ptr<z3::expr>& containee) {
+    std::vector<std::shared_ptr<z3::expr>> result;
+
+    // Recursive case: if the expression has arguments, check each argument
+    // for or sub-expressions.
+    for (unsigned i = 0; i < containee->num_args(); i++) {
+        auto sub_expr = containee->arg(i);
+        auto sub_result = getOrSubexpressions(std::make_shared<z3::expr>(sub_expr));
+        result.insert(result.end(), sub_result.begin(), sub_result.end());
+    }
+    // If the expression itself is an or, add it to the result.
+    if (containee->is_or()) {
+        NES_TRACE2("Or subexpression added {}", containee->to_string());
+        result.push_back(containee);
+    }
+
+    return result;
+}*/
 
 void SignatureContainmentUtil::resetSolver() {
     solver->reset();

@@ -94,6 +94,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         sourceCatalog->addLogicalSource("windTurbines", schema);
         sourceCatalog->addLogicalSource("solarPanels", schema);
+        sourceCatalog->addLogicalSource("test", schema);
         sourceCatalog->addLogicalSource("households", schemaHouseholds);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -331,9 +332,9 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                 Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
-                R"(Query::from("windTurbines").filter(Attribute("value") == 5).unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
-                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") >= 4).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                R"(Query::from("windTurbines").filter(Attribute("value") == 5).unionWith(Query::from("solarPanels")).unionWith(Query::from("test")).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").filter(Attribute("value") == 5).unionWith(Query::from("solarPanels")).unionWith(Query::from("test")).filter(Attribute("value") >= 6).sink(PrintSinkDescriptor::create());)",
+                Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") != 4).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",

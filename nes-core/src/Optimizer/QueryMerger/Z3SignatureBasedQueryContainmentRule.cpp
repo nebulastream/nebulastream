@@ -18,7 +18,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedQueryContainmentRule.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -36,16 +37,17 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedQueryContainmentRule::Z3SignatureBasedQueryContainmentRule(const z3::ContextPtr& context)
+Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context)
     : BaseQueryMergerRule() {
     signatureContainmentUtil = SignatureContainmentUtil::create(std::move(context));
 }
 
-Z3SignatureBasedQueryContainmentRulePtr Z3SignatureBasedQueryContainmentRule::create(const z3::ContextPtr& context) {
-    return std::make_shared<Z3SignatureBasedQueryContainmentRule>(Z3SignatureBasedQueryContainmentRule(std::move(context)));
+Z3SignatureBasedQueryContainmentRulePtr Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& context) {
+    return std::make_shared<Z3SignatureBasedBottomUpQueryContainmentRule>(
+        Z3SignatureBasedBottomUpQueryContainmentRule(std::move(context)));
 }
 
-bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("Z3SignatureBasedQueryContainmentRule: Applying Signature Based Equal Query Merger Rule to the "
              "Global Query Plan");
@@ -294,8 +296,20 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         NES_DEBUG2("Both target and host operators are of sink type.");
         return {};
     }
+    for (const auto& item : hostOperator->getParents()) {
+        NES_DEBUG2("HostOperator Parents: {}", item->toString());
+    }
+    for (const auto& item : targetOperator->getParents()) {
+        NES_DEBUG2("TargetOperator Parents: {}", item->toString());
+    }
+    for (const auto& item : targetOperator->getChildren()) {
+        NES_DEBUG2("TargetOperator Children: {}", item->toString());
+    }
+    for (const auto& item : hostOperator->getChildren()) {
+        NES_DEBUG2("HostOperator Children: {}", item->toString());
+    }
 
-    NES_DEBUG2("Compare target and host operators.");
+    NES_DEBUG2("Compare target {} and host {} operators.", targetOperator->toString(), hostOperator->toString());
     auto containmentType =
         signatureContainmentUtil->checkContainment(hostOperator->getZ3Signature(), targetOperator->getZ3Signature());
     if (containmentType == ContainmentType::EQUALITY) {
@@ -323,6 +337,10 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}",
                    targetOperator->toString(),
                    hostOperator->toString());
+        //todo: here we need to obtain a delta so that we know that the filter operation is actually contained
+        if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
+           return targetHostOperatorMap;
+        }
         targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
         return targetHostOperatorMap;
     }
