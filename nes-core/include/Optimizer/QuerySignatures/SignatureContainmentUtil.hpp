@@ -201,6 +201,10 @@ class SignatureContainmentUtil {
      */
     bool checkAttributeOrder(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature) const;
 
+    bool checkFilterContainmentPossible(const QuerySignaturePtr& container, const QuerySignaturePtr& containee);
+
+    //std::vector<std::shared_ptr<z3::expr>> getOrSubexpressions(const std::shared_ptr<z3::expr>& containee);
+
     /**
      * @brief Reset z3 solver
      */

@@ -20,19 +20,22 @@ namespace NES::Optimizer {
 QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions,
                                          std::vector<std::string>&& columns,
                                          std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                         std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions) {
+                                         std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
+                                         std::map<std::string, z3::ExprPtr>&& unionExpressions) {
     return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions),
                                                            std::move(columns),
                                                            std::move(schemaFieldToExprMaps),
-                                                           std::move(windowsExpressions)));
+                                                           std::move(windowsExpressions),
+                                                           std::move(unionExpressions)));
 }
 
 QuerySignature::QuerySignature(z3::ExprPtr&& conditions,
                                std::vector<std::string>&& columns,
                                std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                               std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions)
+                               std::vector<std::map<std::string, z3::ExprPtr>>&& windowsExpressions,
+                               std::map<std::string, z3::ExprPtr>&& unionExpressions)
     : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
-      windowsExpressions(std::move(windowsExpressions)) {}
+      windowsExpressions(std::move(windowsExpressions)), unionExpressions(std::move(unionExpressions)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
@@ -42,6 +45,10 @@ const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getWindow
 
 const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
     return schemaFieldToExprMaps;
+}
+
+const std::map<std::string, z3::ExprPtr>& QuerySignature::getUnionExpressions() {
+    return unionExpressions;
 }
 
 }// namespace NES::Optimizer
