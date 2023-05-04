@@ -51,14 +51,14 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
 };
 
 void CompressionTest::fillBufferSingleColumn(CompressedDynamicTupleBuffer& buffer) {
-    const int numTuples = 10;
+    const int numTuples = 100;
     buffer.setNumberOfTuples(numTuples);
     const int character = 70;// == 'F'
     int i = 0;
-    for (; i < 3; i++) {
+    for (; i < 30; i++) {
         buffer[i][0].write<uint8_t>(character);
     }
-    for (; i < 6; i++) {
+    for (; i < 60; i++) {
         buffer[i][0].write<uint8_t>(0);
     }
     for (; i < numTuples; i++) {
@@ -66,28 +66,26 @@ void CompressionTest::fillBufferSingleColumn(CompressedDynamicTupleBuffer& buffe
     }
 }
 void CompressionTest::fillBufferMultiColumn(CompressedDynamicTupleBuffer& buffer) {
-    const int numTuples = 10;
+    const int numTuples = 120;
     buffer.setNumberOfTuples(numTuples);
     const int character = 65;// == 'A'
-    // first column: 6A2B2A
+    // first column: 10A
     for (int i = 0; i < numTuples; i++) {
-        buffer[i][0].write<uint8_t>(character);
+        buffer[i][2].write<uint8_t>(character);
     }
-    buffer[6][0].write<uint8_t>(character + 1);
-    buffer[7][0].write<uint8_t>(character + 1);
-    // second column: 3B4'0'3C
-    for (int i = 0; i < 3; i++) {
+    // second column: 30B40'0'50C
+    for (int i = 0; i < 30; i++) {
         buffer[i][1].write<uint8_t>(character + 1);
     }
-    for (int i = 3; i < 7; i++) {
+    for (int i = 3; i < 70; i++) {
         buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 7; i < numTuples; i++) {
         buffer[i][1].write<uint8_t>(character + 2);
     }
-    // third column: 10D
+    // third column: 10A
     for (int i = 0; i < numTuples; i++) {
-        buffer[i][2].write<uint8_t>(character + 3);
+        buffer[i][2].write<uint8_t>(character);
     }
 }
 
