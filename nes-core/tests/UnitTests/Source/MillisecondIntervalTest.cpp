@@ -89,7 +89,6 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
 
         csvSourceType = CSVSourceType::create();
-        csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
         csvSourceType->setGatheringInterval(550);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
