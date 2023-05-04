@@ -1,8 +1,6 @@
 # About
 
 This readme file explains about how you can build and publish the artifacts on our nebulastream docker hub repository.
-Currently, we have two images on our repository: a build image used by travis and an executable image used for exdra project.   
-
 (Note: Please make sure you have rights to publish images on [nebulastream](https://hub.docker.com/u/nebulastream) organization. Please ask one of the core developers to grant you access if you do not have one.)
 
 ## Images and Dockerfiles
