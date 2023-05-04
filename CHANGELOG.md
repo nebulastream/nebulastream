@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.70](https://github.com/nebulastream/nebulastream/tree/v0.5.70) (2023-05-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.69...v0.5.70)
+
+**Implemented enhancements:**
+
+- For all of us [\#3655](https://github.com/nebulastream/nebulastream/issues/3655)
+
+### Bug Fixes 🐛
+
+- earasing in catalog [\#560](https://github.com/nebulastream/nebulastream/issues/560)
+
 ## [v0.5.69](https://github.com/nebulastream/nebulastream/tree/v0.5.69) (2023-05-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.68...v0.5.69)
