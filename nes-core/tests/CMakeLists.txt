@@ -132,6 +132,9 @@ add_nes_integration_test(maintenance-controller-integration-test "Integration/RE
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-integration-tests "Integration/REST/Controller/LocationControllerIntegrationTest.cpp")
 
+### NES Location Controller Tests ###
+add_nes_integration_test(simulation-dublin "Simulation/SimulationDublin.cpp")
+
 ### NES TopologyProperty Tests ###
 add_nes_unit_test(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
 
