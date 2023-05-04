@@ -84,24 +84,6 @@ class SourceCatalog {
     bool removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, std::uint64_t hashId);
 
     /**
-   * @brief method to remove a physical source from its logical sources
-   * @param name of the logical source
-   * @param name of the physical source
-   * @param hashId of the actor
-   * @return bool indicating success of remove source
-   */
-
-    bool removePhysicalSourceByHashId(uint64_t hashId);
-
-    /**
-     * @brief method to remove a physical source from its logical sources
-     * @param hasId of the leaving node
-     * @return bool indicating success of remove of physical source
-     */
-
-    bool removeAllPhysicalSources(const std::string& physicalSourceName);
-
-    /**
    * @brief method to remove a physical source from all logical sources
    * @param param of the node to be deleted
    * @return bool indicating success of remove source
