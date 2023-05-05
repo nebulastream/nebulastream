@@ -40,7 +40,6 @@ class AbstractSynopsis {
     /**
      * @brief Creating an AbstractSynopsis
      * @param aggregationConfig
-     * @param bufferManager
      */
     explicit AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig);
 

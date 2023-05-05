@@ -45,7 +45,7 @@ namespace NES::ASP::Util {
         EXPECT_ANY_THROW(parseCsvFileFromYaml("some_not_existing_file.yaml"));
     }
 
-    TEST_F(MicroBenchmarkASPUtilTest, testParseSynopsisConfigurations) {
+    TEST_F(MicroBenchmarkASPUtilTest, testParseAggregations) {
         auto yamlConfigFile = std::filesystem::path(TEST_CONFIGS_DIRECTORY) / "some_example.yaml";
         auto data = std::filesystem::path("some_data_folder");
 
@@ -78,7 +78,7 @@ namespace NES::ASP::Util {
         EXPECT_EQ(parsedAggregations[2].first.timeStampFieldName, "ts");
     }
 
-    TEST_F(MicroBenchmarkASPUtilTest, testParseNoBuffersBuffer) {
+    TEST_F(MicroBenchmarkASPUtilTest, testParseNoBuffers) {
         Yaml::Node aggregationNode;
         aggregationNode["windowSize"] = "1";
 
@@ -119,4 +119,4 @@ namespace NES::ASP::Util {
         EXPECT_EQ(parsedBufferSizes[0], 1024);
     }
 
-}
+} // namespace NES::ASP::Util

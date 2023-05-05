@@ -55,25 +55,6 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
  * operations and then storing the metrics of each repetition.
  */
 class MicroBenchmarkRun {
-  private:
-    /**
-     * @brief Constructor for a MicroBenchmarkRun
-     * @param synopsesConfig
-     * @param yamlAggregation
-     * @param bufferSize
-     * @param numberOfBuffers
-     * @param windowSize
-     * @param inputFile
-     * @param reps
-     */
-    explicit MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesConfig,
-                               const Parsing::SynopsisAggregationConfig& yamlAggregation,
-                               const uint32_t bufferSize,
-                               const uint32_t numberOfBuffers,
-                               const size_t windowSize,
-                               const std::string& inputFile,
-                               const size_t reps);
-
   public:
     /**
      * @brief Default constructor
@@ -125,6 +106,25 @@ class MicroBenchmarkRun {
     const std::string getRowsAsCsv() const;
 
   private:
+
+    /**
+     * @brief Constructor for a MicroBenchmarkRun
+     * @param synopsesConfig
+     * @param yamlAggregation
+     * @param bufferSize
+     * @param numberOfBuffers
+     * @param windowSize
+     * @param inputFile
+     * @param reps
+     */
+    explicit MicroBenchmarkRun(Parsing::SynopsisConfigurationPtr synopsesConfig,
+                               const Parsing::SynopsisAggregationConfig& yamlAggregation,
+                               const uint32_t bufferSize,
+                               const uint32_t numberOfBuffers,
+                               const size_t windowSize,
+                               const std::string& inputFile,
+                               const size_t reps);
+
     /**
      * @brief Creates a vector of type TupleBuffer from the inputFile
      * @return Vector of TupleBuffer
@@ -149,7 +149,6 @@ class MicroBenchmarkRun {
     double compareAccuracy(std::vector<Runtime::TupleBuffer>& allAccuracyRecords,
                            std::vector<Runtime::TupleBuffer>& allApproximateBuffers);
 
-  private:
     /**
      * @brief Creates an executable pipeline and the pipeline context from the synopsis for this benchmark run
      * @param synopsis

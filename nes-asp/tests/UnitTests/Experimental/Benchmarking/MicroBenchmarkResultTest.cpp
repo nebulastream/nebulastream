@@ -58,4 +58,4 @@ namespace NES::ASP::Benchmarking {
         EXPECT_EQ(headerCsv, "accuracy,some_key,some_key123,some_key456,throughput");
         EXPECT_EQ(rowCsv, std::to_string(accuracy) + ",some_value,some_value123,some_value456," + std::to_string(throughput));
     }
-}
+} // namespace NES::ASP::Benchmarking
