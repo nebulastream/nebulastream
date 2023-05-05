@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.71](https://github.com/nebulastream/nebulastream/tree/v0.5.71) (2023-05-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.70...v0.5.71)
+
+**Implemented enhancements:**
+
+- \[TASK\] Unit Tests for nes-asp [\#3683](https://github.com/nebulastream/nebulastream/issues/3683)
+
 ## [v0.5.70](https://github.com/nebulastream/nebulastream/tree/v0.5.70) (2023-05-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.69...v0.5.70)
