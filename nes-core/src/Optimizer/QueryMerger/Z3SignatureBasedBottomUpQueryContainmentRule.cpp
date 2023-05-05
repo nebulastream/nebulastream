@@ -42,7 +42,8 @@ Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryConta
     signatureContainmentUtil = SignatureContainmentUtil::create(std::move(context));
 }
 
-Z3SignatureBasedQueryContainmentRulePtr Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& context) {
+Z3SignatureBasedBottomUpQueryContainmentRulePtr
+Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& context) {
     return std::make_shared<Z3SignatureBasedBottomUpQueryContainmentRule>(
         Z3SignatureBasedBottomUpQueryContainmentRule(std::move(context)));
 }

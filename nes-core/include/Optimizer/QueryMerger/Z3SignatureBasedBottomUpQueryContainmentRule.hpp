@@ -28,13 +28,13 @@ namespace NES::Optimizer {
 class SignatureContainmentUtil;
 using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
 
-class Z3SignatureBasedQueryContainmentRule;
-using Z3SignatureBasedQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedQueryContainmentRule>;
+class Z3SignatureBasedBottomUpQueryContainmentRule;
+using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedBottomUpQueryContainmentRule>;
 
 /**
  * @brief Z3SignatureBasedCompleteQueryMergerRule currently identifies containment relationships between the global query plan and newly registered queries
  */
-class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
+class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule {
 
   public:
     /**
@@ -42,7 +42,7 @@ class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedQueryContainmentRulePtr create(const z3::ContextPtr& context);
+    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query
@@ -54,14 +54,14 @@ class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
     /**
      * @brief destructor
      */
-    ~Z3SignatureBasedQueryContainmentRule() noexcept final = default;
+    ~Z3SignatureBasedBottomUpQueryContainmentRule() noexcept final = default;
 
   private:
     /**
      * @brief explicit constructor
      * @param context The Z3 context for the SMT solver
      */
-    explicit Z3SignatureBasedQueryContainmentRule(const z3::ContextPtr& context);
+    explicit Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context);
 
     /**
      * @brief identify if the query plans are equal or not
