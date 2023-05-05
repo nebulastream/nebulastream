@@ -100,10 +100,11 @@ class SignatureContainmentUtil {
      * check if right sig ⊆ left sig for filters
      *      true: check if left sig ⊆ right sig
      *          true: return EQUALITY
-     *          false: return RIGHT_SIG_CONTAINED
-     *      false: check if left sig ⊆ right sig
+     *          false: checkFilterContainmentPossible
+     *              true: return RIGHT_SIG_CONTAINED
+     *      false: check if left sig ⊆ right sig && checkFilterContainmentPossible
      *          true: return LEFT_SIG_CONTAINED
-     *          false: return NO_CONTAINMENT
+     *      false: return NO_CONTAINMENT
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships
@@ -201,9 +202,13 @@ class SignatureContainmentUtil {
      */
     bool checkAttributeOrder(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature) const;
 
+    /**
+     * @brief prevents false positives in case unions are present
+     * @param container container signature
+     * @param containee contained signature
+     * @return true, if no union is present or all unions have an equal amount of filters per attribute, false otherwise
+     */
     bool checkFilterContainmentPossible(const QuerySignaturePtr& container, const QuerySignaturePtr& containee);
-
-    //std::vector<std::shared_ptr<z3::expr>> getOrSubexpressions(const std::shared_ptr<z3::expr>& containee);
 
     /**
      * @brief Reset z3 solver

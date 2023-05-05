@@ -78,7 +78,7 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
     createProjectionFOL(rightSignature, rightQueryProjectionFOL);
     // We first check if the first order logic (FOL) is equal for projections, if not we move on to check for containment relationships.
     // We added heuristic checks to prevent unnecessary calls to the SMT solver
-    // if (!leftProjectionFOL && !rightProjectionFOL) == unsat
+    // if ((!leftProjectionFOL && !rightProjectionFOL) == unsat
     //     && the column order is the same)
     //      true: return EQUALITY
     //      false:
@@ -126,7 +126,6 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
     // we assume a bottom up approach for our containment algorithm, hence a window operation can only be partially shared if
     // the previous operations are completely sharable. As soon as there is no equality in window operations, we return the
     // obtained relationship
-    //todo: #3503 introduce a mechanism to identify which window is contained in the presence of multiple windows
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     for (size_t i = 0; i < numberOfWindows; ++i) {
         // obtain each window signature in bottom up fashion
@@ -223,7 +222,6 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
                 }
             }
         }
-
         // stop the loop as soon as there is no equality relationship
         if (containmentRelationship != ContainmentType::EQUALITY) {
             return containmentRelationship;
@@ -234,8 +232,6 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
-    //todo: union containment is not correctly identified. We need to make sure that the filter conditions are applied to all involved sources
-    //todo: we need to make sure that each or condition has the same number of conditions as the length of the vector and that there are the same number of or conditions overall
     NES_TRACE2("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
     z3::expr_vector rightQueryFilterConditions(*context);
@@ -250,12 +246,14 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     //check if right sig ⊆ left sig for filters, i.e. if ((right cond && !left condition) == unsat) <=> right sig ⊆ left sig,
     //since we're checking for projection containment, the negation is on the side of the contained condition,
     //e.g. right sig ⊆ left sig <=> (((attr<5 && attr2==6) && !(attr1<=10 && attr2==45)) == unsat)
-    //      true: check if left sig ⊆ right sig
-    //          true: return EQUALITY
-    //          false: return LEFT_SIG_CONTAINED
-    //      false: check if left sig ⊆ right sig
-    //          true: return RIGHT_SIG_CONTAINED
-    //          false: return NO_CONTAINMENT
+    //      check if right sig ⊆ left sig for filters
+    //           true: check if left sig ⊆ right sig
+    //               true: return EQUALITY
+    //               false: checkFilterContainmentPossible
+    //                   true: return RIGHT_SIG_CONTAINED
+    //           false: check if left sig ⊆ right sig && checkFilterContainmentPossible
+    //               true: return LEFT_SIG_CONTAINED
+    //           false: return NO_CONTAINMENT
     if (checkContainmentConditionsUnsatisfied(leftQueryFilterConditions, rightQueryFilterConditions)) {
         if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE2("SignatureContainmentUtil::checkContainment: Equal filters.");
@@ -419,25 +417,6 @@ bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignatu
     }
     return true;
 }
-
-/*std::vector<std::shared_ptr<z3::expr>> SignatureContainmentUtil::getOrSubexpressions(const std::shared_ptr<z3::expr>& containee) {
-    std::vector<std::shared_ptr<z3::expr>> result;
-
-    // Recursive case: if the expression has arguments, check each argument
-    // for or sub-expressions.
-    for (unsigned i = 0; i < containee->num_args(); i++) {
-        auto sub_expr = containee->arg(i);
-        auto sub_result = getOrSubexpressions(std::make_shared<z3::expr>(sub_expr));
-        result.insert(result.end(), sub_result.begin(), sub_result.end());
-    }
-    // If the expression itself is an or, add it to the result.
-    if (containee->is_or()) {
-        NES_TRACE2("Or subexpression added {}", containee->to_string());
-        result.push_back(containee);
-    }
-
-    return result;
-}*/
 
 void SignatureContainmentUtil::resetSolver() {
     solver->reset();

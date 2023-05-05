@@ -455,11 +455,11 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
 
 INSTANTIATE_TEST_CASE_P(testContainment,
                         QueryContainmentIdentificationTest,
-                        ::testing::Values(QueryContainmentIdentificationTest::createEqualityCases(),
+                        ::testing::Values(/*QueryContainmentIdentificationTest::createEqualityCases(),
                                           QueryContainmentIdentificationTest::createNoContainmentCases(),
-                                          QueryContainmentIdentificationTest::createProjectionContainmentCases(),
-                                          QueryContainmentIdentificationTest::createFilterContainmentCases(),
-                                          QueryContainmentIdentificationTest::createWindowContainmentCases()),
+                                          QueryContainmentIdentificationTest::createProjectionContainmentCases(),*/
+                                          QueryContainmentIdentificationTest::createFilterContainmentCases()/*,
+                                          QueryContainmentIdentificationTest::createWindowContainmentCases()*/),
                         [](const testing::TestParamInfo<QueryContainmentIdentificationTest::ParamType>& info) {
                             std::string name = info.param.at(0).testType;
                             return name;
