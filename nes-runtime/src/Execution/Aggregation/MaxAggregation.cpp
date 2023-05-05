@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/Record.hpp"
+#include <Nautilus/Interface/Record.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>

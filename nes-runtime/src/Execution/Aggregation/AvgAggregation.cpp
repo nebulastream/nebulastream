@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/Record.hpp"
+#include <Nautilus/Interface/Record.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>

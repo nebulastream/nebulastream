@@ -14,7 +14,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 
-#include "Execution/Expressions/Expression.hpp"
+#include <Execution/Expressions/Expression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>

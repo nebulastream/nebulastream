@@ -77,9 +77,8 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
                                  uint64_t minCount,
                                  const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                                  uint64_t operatorHandlerIndex)
-    :  aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers),
-      predicateExpression(std::move(predicateExpression)), minCount(minCount), operatorHandlerIndex(operatorHandlerIndex),
-      aggregationFunctions(aggregationFunctions) {}
+    : predicateExpression(std::move(predicateExpression)), aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers),
+      minCount(minCount), operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
 void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
@@ -139,7 +138,6 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                                            [&resultRecord](std::string acc, std::string s) {
                                                return acc + " " + s + "=" + resultRecord.read(s)->toString();
                                            }));
-
 
                 // crucial to release the handler here before we execute the rest of the pipeline
                 child->execute(ctx, resultRecord);
