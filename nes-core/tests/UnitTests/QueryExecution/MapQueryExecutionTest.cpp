@@ -26,7 +26,7 @@ using namespace NES;
 using Runtime::TupleBuffer;
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
 
 class MapQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
                               public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
@@ -127,6 +127,43 @@ TEST_P(MapQueryExecutionTest, MapLogarithmicFunctions) {
         EXPECT_EQ(resultBuffer[recordIndex]["test$log10"].read<double>(), std::log10(recordIndex));
         EXPECT_EQ(resultBuffer[recordIndex]["test$log2"].read<double>(), std::log2(recordIndex));
         EXPECT_EQ(resultBuffer[recordIndex]["test$ln"].read<double>(), std::log(recordIndex));
+    }
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_P(MapQueryExecutionTest, TwoMapQuery) {
+    auto schema = Schema::create()->addField("test$id", BasicType::INT64);
+
+    auto resultSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$new1", BasicType::INT64)->addField("test$new2", BasicType::INT64);
+    auto testSink = executionEngine->createDataSink(resultSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .map(Attribute("test$new1") = Attribute("test$id") * 2)
+                     .map(Attribute("test$new2") = Attribute("test$id") + 2)
+                     .sink(testSinkDescriptor);
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto source = executionEngine->getDataSource(plan, 0);
+    ASSERT_TRUE(!!source);
+    // add buffer
+    auto inputBuffer = executionEngine->getBuffer(schema);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        inputBuffer[recordIndex][0].write<int64_t>(recordIndex);
+    }
+    inputBuffer.setNumberOfTuples(10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    // compare results
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex]["test$new1"].read<int64_t>(), recordIndex * 2);
+        EXPECT_EQ(resultBuffer[recordIndex]["test$new2"].read<int64_t>(), recordIndex + 2);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);

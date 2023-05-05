@@ -22,9 +22,10 @@ namespace NES::Runtime::Execution::Operators {
 
 class EmitState : public OperatorState {
   public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer) {}
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
     Value<UInt64> outputIndex = (uint64_t) 0;
     RecordBuffer resultBuffer;
+    Value<MemRef> bufferReference;
 };
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
@@ -36,19 +37,19 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
 
 void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
-    auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
-    auto buffer = resultBuffer.getBuffer();
-    memoryProvider->write(outputIndex, buffer, recordBuffer);
+    memoryProvider->write(outputIndex, emitState->bufferReference, recordBuffer);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
+        auto resultBuffer = emitState->resultBuffer;
         resultBuffer.setNumRecords(emitState->outputIndex);
         resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
         resultBuffer.setOriginId(ctx.getOriginId());
         ctx.emitBuffer(resultBuffer);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
+        emitState->bufferReference = resultBuffer.getBuffer();
         emitState->outputIndex = (uint64_t) 0;
     }
 }
