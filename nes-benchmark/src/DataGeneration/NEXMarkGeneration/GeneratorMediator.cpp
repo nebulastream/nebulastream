@@ -13,20 +13,33 @@
 */
 
 #include <DataGeneration/NEXMarkGeneration/GeneratorMediator.hpp>
+#include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-GeneratorMediator::GeneratorMediator(uint64_t size) {
-    // create vectors of given size
+GeneratorMediator::GeneratorMediator(size_t numberOfBuffers, size_t bufferSize) {
+    auto openAuctionSchema = OpenAuctionGenerator().getSchema();
+    auto openAuctionSchemaSize = openAuctionSchema->getSchemaSizeInBytes();
+    uint64_t numOpenAuctions = numberOfBuffers * bufferSize / openAuctionSchemaSize;
+    uint64_t numPersons = numOpenAuctions / 3;
+
+    auto timeInSec = 0UL;
+
+    for (uint64_t i = 0; i < numOpenAuctions; ++i) {
+        std::tuple<uint64_t, uint64_t, uint64_t> auctionRecord;
+        auctions.emplace_back(auctionRecord);
+    }
+
+    for (uint64_t i = 0; i < numPersons; ++i) {
+        std::tuple<uint64_t, uint64_t> personRecord;
+        persons.emplace_back(personRecord);
+    }
 }
 
-GeneratorMediator* GeneratorMediator::getInstance(uint64_t size) {
-    std::unique_lock<std::mutex> lock(mtxInstance);
-    if (instance == nullptr) {
-        instance = new GeneratorMediator(size);
-    }
-    lock.unlock();
-    
+GeneratorMediator& GeneratorMediator::getInstance(size_t numberOfBuffers, size_t bufferSize) {
+    // C++11 guarantees that static local variables are initialized in a thread-safe manner
+    static GeneratorMediator instance(numberOfBuffers, bufferSize);
     return instance;
 }
 } // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration

@@ -16,7 +16,6 @@
 #define NES_GENERATORMEDIATOR_HPP
 
 #include <cstdint>
-#include <mutex>
 #include <vector>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
@@ -28,7 +27,7 @@ class GeneratorMediator {
      * @param size
      * @return
      */
-    static GeneratorMediator* getInstance(uint64_t size);
+    static GeneratorMediator& getInstance(size_t numberOfBuffers, size_t bufferSize);
 
     uint64_t getPersonTimestamp (uint64_t personId);
 
@@ -41,12 +40,18 @@ class GeneratorMediator {
   private:
     /**
      * @brief constructor of a GeneratorMediator
-     * @param size
+     * @param numberOfBuffers
+     * @param bufferSize
      */
-    explicit GeneratorMediator(uint64_t size);
+    GeneratorMediator(size_t numberOfBuffers, size_t bufferSize);
 
-    static GeneratorMediator* instance;
-    static std::mutex mtxInstance;
+    /**
+     * @brief copy constructor and move assignment operator are deleted to prevent creation of multiple instances of the GeneratorMediator.
+     * Note that the move constructor and move assignment operator are deleted implicitly by the compiler.
+     */
+    GeneratorMediator(const GeneratorMediator&) = delete;
+    GeneratorMediator& operator=(const GeneratorMediator&) = delete;
+
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> auctions;
     std::vector<std::tuple<uint64_t, uint64_t>> persons;
 };
