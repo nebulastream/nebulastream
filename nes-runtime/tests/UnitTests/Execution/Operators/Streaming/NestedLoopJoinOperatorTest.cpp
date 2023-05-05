@@ -49,7 +49,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 };
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
-    Each test does it for the left and right side
+//    Each test does it for the left and right side
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
@@ -59,8 +59,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
 
 }
-
-
 
 TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestOneRecord) {
 
