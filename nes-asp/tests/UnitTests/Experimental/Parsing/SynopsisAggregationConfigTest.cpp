@@ -60,7 +60,7 @@ namespace NES::ASP::Parsing {
         Parsing::SynopsisAggregationConfig synopsisAggregationConfig;
     };
 
-    TEST_F(SynopsisAggregationConfigTest, testCreateAggregation) {
+    TEST_F(SynopsisAggregationConfigTest, testCreateAggregationFromYamlNode) {
         /* Creating values */
         auto numberOfTypes = magic_enum::enum_values<Aggregation_Type>().size();
         auto type = magic_enum::enum_cast<Aggregation_Type>(rand() % numberOfTypes).value();
@@ -170,9 +170,10 @@ namespace NES::ASP::Parsing {
                 }
                 case Aggregation_Type::NONE: {
                     synopsisAggregationConfig.type = type;
-                    EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue()); break;
+                    EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue());
+                    break;
                 }
             }
         }
     }
-}
+} // namespace NES::ASP:Parsing

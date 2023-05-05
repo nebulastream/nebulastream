@@ -115,8 +115,10 @@ class SynopsisAggregationConfig {
      * @brief Custom constructor
      * @param type
      * @param fieldNameAggregation
-     * @param inputFile
+     * @param fieldNameApproximate
+     * @param timestampFieldName
      * @param inputSchema
+     * @param outputSchema
      */
     explicit SynopsisAggregationConfig(const Aggregation_Type& type,
                                        const std::string& fieldNameAggregation,
