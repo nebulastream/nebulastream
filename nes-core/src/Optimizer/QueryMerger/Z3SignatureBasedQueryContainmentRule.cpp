@@ -75,6 +75,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
             auto targetSink = targetQueryPlan->getSinkOperators()[0];
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
             bool foundMatch = false;
+            //Before the bottom up check, we first check the whole query for equality.
             if (signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature())
                 == ContainmentType::EQUALITY) {
                 NES_TRACE2("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
@@ -160,8 +161,6 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                 hostOperator = hostOperator->getChildren()[0]->as<LogicalOperatorNode>();
                             }
                             NES_TRACE2("Adding parent {} to {}", targetOperator->toString(), hostOperator->toString());
-                            NES_TRACE2("Output schema containee {}", targetOperator->getOutputSchema()->toString());
-                            NES_TRACE2("Output schema container {}", hostOperator->getOutputSchema()->toString());
                             targetOperator->removeChildren();
                             NES_TRACE2("Current host operator: {}", hostOperator->toString());
                             bool addedNewParent = hostOperator->addParent(targetOperator);
@@ -185,8 +184,6 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                 }
                                 targetOperator = targetOperator->getChildren()[0]->as<LogicalOperatorNode>();
                             }
-                            NES_TRACE2("Output schema container {}", targetOperator->getOutputSchema()->toString());
-                            NES_TRACE2("Output schema containee {}", hostOperator->getOutputSchema()->toString());
                             NES_TRACE2("Adding parent {} to {}", hostOperator->toString(), targetOperator->toString());
                             hostOperator->removeChildren();
                             NES_TRACE2("Current host operator: {}", targetOperator->toString());

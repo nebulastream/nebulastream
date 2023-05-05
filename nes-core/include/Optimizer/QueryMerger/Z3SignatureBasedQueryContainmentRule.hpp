@@ -81,9 +81,17 @@ class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
     std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> areOperatorsContained(const LogicalOperatorNodePtr& targetOperator,
                                                                               const LogicalOperatorNodePtr& hostOperator);
 
+    /**
+     * @brief This method makes sure that we can use the identified window containment relationship, i.e.
+     * it checks that the contained window size and slide % the container window size and slide are 0
+     * @param container operation that contains the other
+     * @param containee contained operation
+     * @return true, if container and contanee are not a window operation or if window containment is possible, false otherwise
+     */
+    bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& container,
+                                        const LogicalOperatorNodePtr& containee) const;
+
     SignatureContainmentUtilPtr signatureContainmentUtil;
-    bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& targetOperator,
-                                        const LogicalOperatorNodePtr& hostOperator) const;
 };
 }// namespace NES::Optimizer
 
