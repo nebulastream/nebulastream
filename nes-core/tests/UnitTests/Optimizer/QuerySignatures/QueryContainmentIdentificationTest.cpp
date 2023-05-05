@@ -434,7 +434,7 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
         //obtain context and create signatures
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto signatureInferencePhase =
-            Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
+            Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule);
         signatureInferencePhase->execute(queryPlanSQPQuery);
         signatureInferencePhase->execute(queryPlanNewQuery);
         SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
