@@ -1,4 +1,6 @@
+#include "API/Schema.hpp"
 #include "DataGeneration/DefaultDataGenerator.hpp"
+#include "DataGeneration/ZipfianDataGenerator.hpp"
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Exceptions/SignalHandling.hpp>
@@ -12,11 +14,6 @@
 
 using namespace NES::Benchmark;
 
-const size_t ysbTotalTypeSize = 78;
-const size_t numberOfTuples = 10;
-const size_t bufferSizeInBytes = ysbTotalTypeSize * numberOfTuples;
-const size_t numberOfBuffersToProduce = 10;
-
 class ErrorHandler : public NES::Exceptions::ErrorListener {
   public:
     void onFatalError(int signalNumber, std::string callstack) override {
@@ -28,35 +25,70 @@ class ErrorHandler : public NES::Exceptions::ErrorListener {
     }
 };
 
-std::string defaultTupleToString(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> tuple) {
-    std::string out;
-    out += std::to_string(get<0>(tuple)) += "\t";
-    out += std::to_string(get<1>(tuple)) += "\t";
-    out += std::to_string(get<2>(tuple)) += "\t";
-    out += std::to_string(get<3>(tuple)) += "\t";
-    return out;
+class BenchmarkCompression {
+  public:
+    BenchmarkCompression(size_t bufferSize,
+                         NES::Benchmark::DataGeneration::DataGenerator& dataGenerator,
+                         const std::shared_ptr<NES::Runtime::MemoryLayouts::MemoryLayout>& memoryLayout,
+                         NES::Runtime::MemoryLayouts::CompressionMode cm);
+    void run();
+
+    const size_t numberOfBuffersToProduce = 10;
+
+  private:
+    size_t bufferSize;
+    std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleBuffer> buffers;
+    uint8_t* origBuffers[10]{};// TODO dynamic (numberOfBuffersToProduce)
+    double compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm ca);
+    void decompressAndVerify();
+};
+
+BenchmarkCompression::BenchmarkCompression(const size_t bufferSize,
+                                           NES::Benchmark::DataGeneration::DataGenerator& dataGenerator,
+                                           const std::shared_ptr<NES::Runtime::MemoryLayouts::MemoryLayout>& memoryLayout,
+                                           NES::Runtime::MemoryLayouts::CompressionMode cm) {
+    NES::Logger::setupLogging("BenchmarkCompression.log", NES::LogLevel::LOG_DEBUG);
+    auto listener = std::make_shared<ErrorHandler>();
+    NES::Exceptions::installGlobalErrorListener(listener);
+
+    this->bufferSize = bufferSize;
+    NES::Runtime::BufferManagerPtr bufferManager =
+        std::make_shared<NES::Runtime::BufferManager>(bufferSize, numberOfBuffersToProduce);
+
+    // create data
+    dataGenerator.setBufferManager(bufferManager);
+    auto tmpBuffers = dataGenerator.createData(numberOfBuffersToProduce, bufferSize);
+
+    buffers.reserve(tmpBuffers.size());
+    for (const auto& tmpBuffer : tmpBuffers) {
+        buffers.emplace_back(memoryLayout, tmpBuffer, cm);
+    }
+    for (size_t i = 0; i < tmpBuffers.size(); i++) {
+        auto* bufferOrig = (uint8_t*) malloc(bufferSize);
+        memcpy(bufferOrig, tmpBuffers[i].getBuffer(), bufferSize);
+        origBuffers[i] = bufferOrig;
+    }
 }
 
-std::string ysbTupleToString(
-    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint32_t, uint16_t>
-        tuple) {
-    std::string out;
-    out += std::to_string(get<0>(tuple)) += "\t";
-    out += std::to_string(get<1>(tuple)) += "\t";
-    out += std::to_string(get<2>(tuple)) += "\t";//
-    out += std::to_string(get<3>(tuple)) += "\t";
-    out += std::to_string(get<4>(tuple)) += "\t";//
-    out += std::to_string(get<5>(tuple)) += "\t";//
-    out += std::to_string(get<6>(tuple)) += "\t";
-    out += std::to_string(get<7>(tuple)) += "\t";
-    out += std::to_string(get<8>(tuple)) += "\t";
-    out += std::to_string(get<9>(tuple)) += "\t";
-    out += std::to_string(get<10>(tuple));
-    return out;
+void BenchmarkCompression::run() {
+    std::cout << "------------------------------\n"
+              << "Algo\tRatio\tSpeed\n";
+    // compress and verify
+    compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm::LZ4);
+    decompressAndVerify();
+
+    compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm::SNAPPY);
+    decompressAndVerify();
+
+    compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm::FSST);
+    decompressAndVerify();
+
+    compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm::RLE);
+    decompressAndVerify();
+    std::cout << "------------------------------\n";
 }
 
-double compress(std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleBuffer>& buffers,
-                NES::Runtime::MemoryLayouts::CompressionAlgorithm ca) {
+double BenchmarkCompression::compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm ca) {
     double totalCompressionRatio = 0;
     auto start = std::chrono::high_resolution_clock::now();
     for (auto& buffer : buffers) {
@@ -71,9 +103,7 @@ double compress(std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleB
     return totalCompressionRatio;
 }
 
-static void decompressAndVerify(uint8_t* origBuffers[],
-                                std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleBuffer>& buffers,
-                                const size_t bufferSize) {
+void BenchmarkCompression::decompressAndVerify() {
     for (size_t i = 0; i < buffers.size(); i++) {
         buffers[i].decompress();
         auto contentOrig = reinterpret_cast<const char*>(origBuffers[i]);
@@ -93,131 +123,135 @@ static void decompressAndVerify(uint8_t* origBuffers[],
     }
 }
 
-void rowLayoutHorizontalYsb() {
-    NES::Logger::setupLogging("BenchmarkCompression.log", NES::LogLevel::LOG_DEBUG);
-    auto listener = std::make_shared<ErrorHandler>();
-    NES::Exceptions::installGlobalErrorListener(listener);
-
-    NES::Runtime::BufferManagerPtr bufferManager =
-        std::make_shared<NES::Runtime::BufferManager>(bufferSizeInBytes, numberOfBuffersToProduce);
-
-    // create data
+void benchmarkYsb(const size_t numberOfTuples = 10) {
     NES::Benchmark::DataGeneration::YSBDataGenerator dataGenerator;
-    dataGenerator.setBufferManager(bufferManager);
-    auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(dataGenerator.getSchema(), bufferManager->getBufferSize());
-    auto tmpBuffers = dataGenerator.createData(numberOfBuffersToProduce, bufferSizeInBytes);
-    std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleBuffer> buffers;
-    buffers.reserve(tmpBuffers.size());
-    for (const auto& tmpBuffer : tmpBuffers) {
-        buffers.emplace_back(rowLayout, tmpBuffer, NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL);
-    }
-    uint8_t* origBuffers[10];// TODO dynamic (numberOfBuffersToProduce)
-    for (size_t i = 0; i < tmpBuffers.size(); i++) {
-        auto* bufferOrig = (uint8_t*) malloc(bufferSizeInBytes);
-        memcpy(bufferOrig, tmpBuffers[i].getBuffer(), bufferSizeInBytes);
-        origBuffers[i] = bufferOrig;
-    }
+    const size_t bufferSizeInBytes = dataGenerator.getSchema().get()->getSchemaSizeInBytes() * numberOfTuples;
 
-    std::cout << "Algo\tRatio\tSpeed" << std::endl;
-    // compress and verify
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::LZ4);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
+    /*
+    // RowLayout, Horizontal
+    auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, rowLayout, cm);
+    std::cout << "MemoryLayout: RowLayout\n"
+              << "CompressionMode: Horizontal\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
 
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::SNAPPY);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::FSST);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::RLE);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
+    // ColumnLayout, Horizontal
+    auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
+    std::cout << "MemoryLayout: ColumnLayout\n"
+              << "CompressionMode: Horizontal\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
+    */
+    // ColumnLayout, Vertical
+    auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::VERTICAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
+    std::cout << "MemoryLayout: ColumnLayout\n"
+              << "CompressionMode: Vertical\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
 }
 
-void columnLayoutHorizontalYsb() {
-    NES::Logger::setupLogging("BenchmarkCompression.log", NES::LogLevel::LOG_DEBUG);
-    auto listener = std::make_shared<ErrorHandler>();
-    NES::Exceptions::installGlobalErrorListener(listener);
+void benchmarkUniform(const size_t numberOfTuples = 10, const size_t min = 0, const size_t max = 100) {
+    NES::Benchmark::DataGeneration::DefaultDataGenerator dataGenerator(min, max);
+    const size_t bufferSizeInBytes = dataGenerator.getSchema().get()->getSchemaSizeInBytes() * numberOfTuples;
 
-    NES::Runtime::BufferManagerPtr bufferManager =
-        std::make_shared<NES::Runtime::BufferManager>(bufferSizeInBytes, numberOfBuffersToProduce);
+    /*
+    // RowLayout, Horizontal
+    auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, rowLayout, cm);
+    std::cout << "MemoryLayout: RowLayout\n"
+              << "CompressionMode: Horizontal\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
 
-    // create data
-    NES::Benchmark::DataGeneration::YSBDataGenerator dataGenerator;
-    dataGenerator.setBufferManager(bufferManager);
-    auto columnLayout =
-        NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferManager->getBufferSize());
-    auto tmpBuffers = dataGenerator.createData(numberOfBuffersToProduce, bufferSizeInBytes);
-    std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleBuffer> buffers;
-    buffers.reserve(tmpBuffers.size());
-    for (const auto& tmpBuffer : tmpBuffers) {
-        buffers.emplace_back(columnLayout, tmpBuffer, NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL);
-    }
-    uint8_t* origBuffers[10];// TODO dynamic (numberOfBuffersToProduce)
-    for (size_t i = 0; i < tmpBuffers.size(); i++) {
-        auto* bufferOrig = (uint8_t*) malloc(bufferSizeInBytes);
-        memcpy(bufferOrig, tmpBuffers[i].getBuffer(), bufferSizeInBytes);
-        origBuffers[i] = bufferOrig;
-    }
-
-    std::cout << "Algo\tRatio\tSpeed" << std::endl;
-    // compress and verify
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::LZ4);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::SNAPPY);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::FSST);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::RLE);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
+    // ColumnLayout, Horizontal
+    auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
+    std::cout << "MemoryLayout: ColumnLayout\n"
+              << "CompressionMode: Horizontal\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
+    */
+    // ColumnLayout, Vertical
+    auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::VERTICAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
+    std::cout << "MemoryLayout: ColumnLayout\n"
+              << "CompressionMode: Vertical\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
 }
 
-void columnLayoutVerticalYsb() {
-    NES::Logger::setupLogging("BenchmarkCompression.log", NES::LogLevel::LOG_DEBUG);
-    auto listener = std::make_shared<ErrorHandler>();
-    NES::Exceptions::installGlobalErrorListener(listener);
+void benchmarkZipf(const size_t numberOfTuples = 10, const size_t min = 0, const size_t max = 100) {
+    NES::Benchmark::DataGeneration::ZipfianDataGenerator dataGenerator(0.9, min, max);
+    const size_t bufferSizeInBytes = dataGenerator.getSchema().get()->getSchemaSizeInBytes() * numberOfTuples;
 
-    NES::Runtime::BufferManagerPtr bufferManager =
-        std::make_shared<NES::Runtime::BufferManager>(bufferSizeInBytes, numberOfBuffersToProduce);
+    /*
+    // RowLayout, Horizontal
+    auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, rowLayout, cm);
+    std::cout << "MemoryLayout: RowLayout\n"
+              << "CompressionMode: Horizontal\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
 
-    // create data
-    NES::Benchmark::DataGeneration::YSBDataGenerator dataGenerator;
-    dataGenerator.setBufferManager(bufferManager);
-    auto columnLayout =
-        NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferManager->getBufferSize());
-    auto tmpBuffers = dataGenerator.createData(numberOfBuffersToProduce, bufferSizeInBytes);
-    std::vector<NES::Runtime::MemoryLayouts::CompressedDynamicTupleBuffer> buffers;
-    buffers.reserve(tmpBuffers.size());
-    for (const auto& tmpBuffer : tmpBuffers) {
-        buffers.emplace_back(columnLayout, tmpBuffer, NES::Runtime::MemoryLayouts::CompressionMode::VERTICAL);
-    }
-    uint8_t* origBuffers[10];// TODO dynamic (numberOfBuffersToProduce)
-    for (size_t i = 0; i < tmpBuffers.size(); i++) {
-        auto* bufferOrig = (uint8_t*) malloc(bufferSizeInBytes);
-        memcpy(bufferOrig, tmpBuffers[i].getBuffer(), bufferSizeInBytes);
-        origBuffers[i] = bufferOrig;
-    }
-
-    std::cout << "Algo\tRatio\tSpeed" << std::endl;
-    // compress and verify
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::LZ4);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::SNAPPY);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::FSST);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
-
-    compress(buffers, NES::Runtime::MemoryLayouts::CompressionAlgorithm::RLE);
-    decompressAndVerify(origBuffers, buffers, bufferSizeInBytes);
+    // ColumnLayout, Horizontal
+    auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::HORIZONTAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
+    std::cout << "MemoryLayout: ColumnLayout\n"
+              << "CompressionMode: Horizontal\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
+    */
+    // ColumnLayout, Vertical
+    auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
+    auto cm = NES::Runtime::MemoryLayouts::CompressionMode::VERTICAL;
+    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
+    std::cout << "MemoryLayout: ColumnLayout\n"
+              << "CompressionMode: Vertical\n"
+              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+              << "Buffer Size: " << bufferSizeInBytes << "\n"
+              << "Num Tuples: " << numberOfTuples << "\n"
+              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+    b.run();
 }
 
 int main() {
-    rowLayoutHorizontalYsb();
-    //columnLayoutHorizontalYsb();
-    //columnLayoutVerticalYsb();
+    benchmarkYsb();
+    benchmarkUniform();
+    benchmarkZipf();
     return 0;
 }
