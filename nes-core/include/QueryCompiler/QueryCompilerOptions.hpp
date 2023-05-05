@@ -50,7 +50,9 @@ class QueryCompilerOptions {
         // Uses the byte code interpretation based nautilus backend.
         BC_INTERPRETER,
         // Uses the flounder based nautilus backend.
-        FLOUNDER_COMPILER
+        FLOUNDER_COMPILER,
+        // Uses the cpp based nautilus backend.
+        CPP_COMPILER
     };
 
     enum class FilterProcessingStrategy : uint8_t {

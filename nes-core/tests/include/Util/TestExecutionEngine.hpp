@@ -13,6 +13,7 @@
 */
 #ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
 #define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -139,6 +140,7 @@ class TestExecutionEngine {
 
         workerConfiguration->queryCompiler.queryCompilerType = compiler;
         workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
+        workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
         workerConfiguration->queryCompiler.compilationStrategy =

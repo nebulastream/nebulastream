@@ -52,7 +52,7 @@ class RecordBuffer {
      * @brief Retrieve the reference to the underling buffer from the record buffer.
      * @return Value<MemRef>
      */
-    Value<MemRef> getBuffer();
+    Value<MemRef> getBuffer() const;
 
     /**
      * @brief Get the reference to the TupleBuffer

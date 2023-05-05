@@ -40,7 +40,7 @@ void RecordBuffer::setNumRecords(Value<UInt64> numRecordsValue) {
                    numRecordsValue);
 }
 
-Value<MemRef> RecordBuffer::getBuffer() {
+Value<MemRef> RecordBuffer::getBuffer() const {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getBuffer",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer,
                           tupleBufferRef);
