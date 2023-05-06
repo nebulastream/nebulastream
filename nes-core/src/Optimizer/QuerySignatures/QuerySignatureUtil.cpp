@@ -270,11 +270,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
 
     auto windowsExpressions = childQuerySignature->getWindowsExpressions();
+    auto unionExpressions = childQuerySignature->getUnionExpressions();
     //Compute signature
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
-                                  std::move(windowsExpressions));
+                                  std::move(windowsExpressions),
+                                  std::move(unionExpressions));
 }
 #endif// TFDEF
 
