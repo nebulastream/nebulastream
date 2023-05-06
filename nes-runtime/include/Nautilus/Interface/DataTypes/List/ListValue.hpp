@@ -94,7 +94,7 @@ class ListValue final : public BaseListValue {
     bool contains(T element) const;
 
     /**
-     * @brief Returns the index of the element if the list contains the element.
+     * @brief Returns the index of the element if the list contains the element and -1 if element not found.
      * @param element
      * @return
      */

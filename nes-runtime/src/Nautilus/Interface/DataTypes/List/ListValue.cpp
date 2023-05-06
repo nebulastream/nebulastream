@@ -140,6 +140,7 @@ int32_t ListValue<T>::listPosition(T element) const {
     }
     return -1;
 }
+
 template<class T>
 ListValue<T>* ListValue<T>::sort() const {
     // create copy of list
@@ -149,6 +150,7 @@ ListValue<T>* ListValue<T>::sort() const {
     std::sort(resultDataPtr, resultDataPtr + length());
     return resultList;
 }
+
 template<class T>
 ListValue<T>* ListValue<T>::revers() const {
     // create reverse copy of list
