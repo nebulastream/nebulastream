@@ -37,12 +37,12 @@ JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(const std::str
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(const JavaSerializedInstance& newInstance) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(const jni::JavaSerializedInstance& newInstance) {
     this->instance = newInstance;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(const JavaUDFByteCodeList& newByteCodeList) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(const jni::JavaUDFByteCodeList& newByteCodeList) {
     this->byteCodeList = newByteCodeList;
     return *this;
 }

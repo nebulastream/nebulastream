@@ -208,7 +208,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \
         const std::source_location __location = std::source_location::current();                                                 \
-        throw Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace), std::move(__location));                      \
+        throw NES::Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace), std::move(__location));                      \
     } while (0)
 
 #define NES_NOT_IMPLEMENTED()                                                                                                    \

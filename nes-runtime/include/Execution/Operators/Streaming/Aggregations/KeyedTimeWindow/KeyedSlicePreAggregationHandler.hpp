@@ -33,8 +33,8 @@ class State;
  * This is decided by the current watermark timestamp.
  */
 class KeyedSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler,
-                                        public detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false>;
+                                        public ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
+    using inherited0 = ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:

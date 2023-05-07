@@ -224,24 +224,6 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
     // check if we jump to a loop head:
     if (targetBlock.operations.back().op == OpCode::CMP) {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
-#ifdef USE_BABELFISH
-        if (isBlockInLoop(targetBlock.blockId, BasicType::UINT32_MAX)) {
-            NES_DEBUG("1. found loop");
-            auto loopOperator = std::make_shared<NES::Nautilus::IR::Operations::LoopOperation>(
-                NES::Nautilus::IR::Operations::LoopOperation::LoopType::ForLoop);
-            loopOperator->setLoopInfo(std::make_shared<NES::Nautilus::IR::Operations::DefaultLoopInfo>());
-            auto loopHeadBlock = processBlock(scope + 1, trace->getBlock(blockRef.block));
-            loopOperator->getLoopHeadBlock().setBlock(loopHeadBlock);
-            for (auto& arg : blockRef.arguments) {
-                auto arcIdentifier = createValueIdentifier(arg);
-                auto argument = frame.getValue(arcIdentifier);
-                loopOperator->getLoopHeadBlock().addArgument(argument);
-            }
-            blockMap[blockRef.block] = loopHeadBlock;
-            block->addOperation(loopOperator);
-            return;
-        }
-#endif
     }
 
     auto resultTargetBlock = processBlock(scope - 1, trace->getBlock(blockRef.block));

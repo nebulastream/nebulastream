@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Util/JNI/JNIUtils.hpp"
 #ifdef ENABLE_JNI
 
 #include <API/Schema.hpp>
@@ -124,8 +125,11 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    Catalogs::UDF::JavaUDFByteCodeList byteCodeList;
-    for (const auto& className : {"MapFunction", "IntegerMapFunction"}) {
+    std::vector<std::string> classNames = {"stream/nebula/MapFunction", "IntegerMapFunction"};
+    auto methodName = "map";
+    std::vector<char> serializedInstance = {};
+    jni::JavaUDFByteCodeList byteCodeList;
+    for (const auto& className : classNames) {
         auto buffer = loadClassFileIntoBuffer(testDataPath, className);
         byteCodeList.emplace_back(className, buffer);
     }

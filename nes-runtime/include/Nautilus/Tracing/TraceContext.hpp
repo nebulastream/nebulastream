@@ -49,6 +49,9 @@ class TraceContext {
      * @return TraceContext*
      */
     static TraceContext* get();
+    static TraceContext* getIfActive();
+
+    static bool shouldTrace();
 
     /**
      * @brief Add an argument for the traced functioned.
@@ -122,6 +125,8 @@ class TraceContext {
     bool traceCMP(const ValueRef& inputRef);
     ValueRef createNextRef(const Nautilus::IR::Types::StampPtr& type);
     virtual ~TraceContext() = default;
+    void pause() { active = false; }
+    void resume() { active = true; }
 
   private:
     TraceContext(TagRecorder& tagRecorder);
@@ -135,7 +140,7 @@ class TraceContext {
     void initializeTraceIteration();
     template<typename Functor>
     void trace(const OpCode& opCode, Functor initFunction);
-
+    bool active = false;
     TagRecorder& tagRecorder;
     std::shared_ptr<ExecutionTrace> executionTrace;
     SymbolicExecutionContext symbolicExecutionContext;

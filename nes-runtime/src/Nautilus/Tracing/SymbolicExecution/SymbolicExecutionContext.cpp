@@ -15,6 +15,7 @@
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES::Nautilus::Tracing {
@@ -48,6 +49,8 @@ bool SymbolicExecutionContext::record(TagRecorder& tr) {
         case SymbolicExecutionContext::TagState::SecondVisit: {
             // The tag is in SecondVisit state -> terminate execution.
             NES_DEBUG("Trace: early terminate via exception.");
+            TraceContext::get()->pause();
+            // todo disable tracing
             throw TraceTerminationException();
         };
     }

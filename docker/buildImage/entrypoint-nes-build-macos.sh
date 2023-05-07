@@ -31,7 +31,18 @@ echo "Build dir=$build_dir"
 # Build NES
 # We use ccache to reuse intermediate build files across ci runs.
 ccache -s
-cmake --fresh -B "$build_dir/" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_USE_CCACHE=1 -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 .
+
+# configure correct jdk for the specific runner
+enableJNI=1
+if [[ $(uname -m) == 'arm64' ]]; then
+  JAVA_HOME="/Users/nesci/jdk-20-arm64/Contents/Home/"
+else
+  JAVA_HOME="/Users/nesci/jdk-20-x64/Contents/Home/"
+fi
+
+export JAVA_HOME="$JAVA_HOME"
+
+cmake --fresh -B "$build_dir/" -DJAVA_HOME="$JAVA_HOME"  -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_USE_CCACHE=1 -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=$enableJNI -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 .
 cmake --build "$build_dir/" -j8
 # Check if build was successful
 errorCode=$?

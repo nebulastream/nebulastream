@@ -18,13 +18,15 @@ add_nes_runtime_test(runtime-keyed-threshold-window-pipeline-test "KeyedThreshol
 add_nes_runtime_test(runtime-nonkeyed-window-pipeline-test "NonKeyedTimeWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-keyed-window-pipeline-test "KeyedTimeWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
-add_nes_runtime_test(runtime-flatmapjavaudf-pipeline-test "FlatMapJavaUDFPipelineTest.cpp")
-add_nes_runtime_test(runtime-mapjavaudf-pipeline-test "MapJavaUDFPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-hash-join-pipeline-test "StreamHashJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-nested-loop-join-pipeline-test "NestedLoopJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-limit-pipeline-test "LimitPipelineTest.cpp")
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    add_nes_runtime_test(runtime-javaudf-pipeline-test "MapJavaUDFPipelineTest.cpp" "FlatMapJavaUDFPipelineTest.cpp")
+endif ()
 
 if (NES_USE_TF)
     add_nes_runtime_test(runtime-infer-model-pipeline-test "InferModelPipelineTest.cpp")

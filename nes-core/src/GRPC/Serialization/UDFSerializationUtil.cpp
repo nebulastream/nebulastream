@@ -45,15 +45,15 @@ Catalogs::UDF::JavaUDFDescriptorPtr
 UDFSerializationUtil::deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessage& JavaUdfDescriptorMessage) {
     // C++ represents the bytes type of serialized_instance and byte_code as std::strings
     // which have to be converted to typed byte arrays.
-    auto serializedInstance = Catalogs::UDF::JavaSerializedInstance{JavaUdfDescriptorMessage.serialized_instance().begin(),
+    auto serializedInstance = jni::JavaSerializedInstance{JavaUdfDescriptorMessage.serialized_instance().begin(),
                                                                     JavaUdfDescriptorMessage.serialized_instance().end()};
-    auto javaUdfByteCodeList = Catalogs::UDF::JavaUDFByteCodeList{};
+    auto javaUdfByteCodeList = jni::JavaUDFByteCodeList{};
     javaUdfByteCodeList.reserve(JavaUdfDescriptorMessage.classes().size());
     for (const auto& classDefinition : JavaUdfDescriptorMessage.classes()) {
         NES_DEBUG("Deserialized Java UDF class: {}", classDefinition.class_name());
         javaUdfByteCodeList.emplace_back(
             classDefinition.class_name(),
-            Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()});
+            jni::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()});
     }
     // Deserialize the input and output schema.
     auto inputSchema = SchemaSerializationUtil::deserializeSchema(JavaUdfDescriptorMessage.inputschema());
