@@ -74,9 +74,9 @@ KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
                                      std::string startTsFieldName,
                                      std::string endTsFieldName,
                                      uint64_t resultOriginId)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
-      startTsFieldName(std::move(startTsFieldName)), endTsFieldName(std::move(endTsFieldName)), keySize(0), valueSize(0),
-      resultOriginId(resultOriginId) {
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions), resultKeyFields(resultKeyFields),
+      keyDataTypes(keyDataTypes), startTsFieldName(std::move(startTsFieldName)), endTsFieldName(std::move(endTsFieldName)),
+      keySize(0), valueSize(0), resultOriginId(resultOriginId) {
     for (auto& keyType : keyDataTypes) {
         keySize = keySize + keyType->size();
     }

@@ -26,10 +26,10 @@ namespace NES::Runtime::Execution::Aggregation {
  */
 class AggregationFunction {
   public:
-    AggregationFunction(PhysicalTypePtr  inputType,
-                        PhysicalTypePtr  resultType,
-                        Expressions::ExpressionPtr  inputExpression,
-                        Nautilus::Record::RecordFieldIdentifier  resultFieldIdentifier);
+    AggregationFunction(PhysicalTypePtr inputType,
+                        PhysicalTypePtr resultType,
+                        Expressions::ExpressionPtr inputExpression,
+                        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /**
      * @brief lift adds the incoming value to the existing aggregation value

@@ -28,7 +28,7 @@ void* getStates(void* op, uint64_t workerId) {
 BatchAggregationScan::BatchAggregationScan(
     uint64_t operatorHandlerIndex,
     const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions){}
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
 void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     Operators::Operator::open(ctx, rb);
