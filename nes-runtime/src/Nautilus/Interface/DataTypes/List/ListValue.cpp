@@ -71,7 +71,7 @@ bool ListValue<T>::equals(const ListValue<T>* other) const {
         return false;
     }
     // compare of both underling arrays.
-    return std::equal(c_data(), c_data() + length(), other->c_data() + length());
+    return std::equal(c_data(), c_data() + length(), other->c_data());
 }
 
 template<typename T>
