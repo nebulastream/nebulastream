@@ -35,6 +35,7 @@
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/Util/Frame.hpp>
 
+#include <Util/DumpHelper.hpp>
 #include <flounder/compilation/compiler.h>
 #include <set>
 
@@ -46,16 +47,14 @@ namespace NES::Nautilus::Backends::Flounder {
 class FlounderLoweringProvider {
   public:
     FlounderLoweringProvider();
-    std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::IRGraph> ir);
-    flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
-                                                     /*collect the asm code to print later*/ true};
+    std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::IRGraph> ir, const NES::DumpHelper& helper);
 
   private:
     using FlounderFrame = Frame<std::string, flounder::Register>;
     class LoweringContext {
       public:
         LoweringContext(std::shared_ptr<IR::IRGraph> ir);
-        std::unique_ptr<flounder::Executable> process(flounder::Compiler& compiler);
+        std::unique_ptr<flounder::Executable> process(flounder::Compiler& compiler, const NES::DumpHelper&);
         void process(const std::shared_ptr<IR::Operations::FunctionOperation>&);
         void process(const std::shared_ptr<IR::BasicBlock>&, FlounderFrame& frame);
         void processInline(const std::shared_ptr<IR::BasicBlock>&, FlounderFrame& frame);

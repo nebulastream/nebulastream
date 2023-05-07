@@ -20,8 +20,9 @@ namespace NES::Runtime::Execution {
 
 class FlounderPipelineProvider : public ExecutablePipelineProvider {
   public:
-    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override {
-        return std::make_unique<CompiledExecutablePipelineStage>(physicalOperatorPipeline, "Flounder");
+    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+                                                    const Nautilus::CompilationOptions& options) override {
+        return std::make_unique<CompiledExecutablePipelineStage>(physicalOperatorPipeline, "Flounder", options);
     }
 };
 
