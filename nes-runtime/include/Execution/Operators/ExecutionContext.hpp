@@ -17,6 +17,7 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 
@@ -94,11 +95,41 @@ class ExecutionContext final {
      */
     const Value<MemRef>& getWorkerContext() const;
 
+    /**
+     * @brief Returns the current origin id. This is set in the scan.
+     * @return Value<UInt64> origin id
+     */
     const Value<UInt64>& getOriginId() const;
+
+    /**
+     * @brief Sets the current origin id.
+     * @param origin
+     */
     void setOrigin(Value<UInt64> origin);
 
+    /**
+     * @brief Returns the current watermark ts. This is set in the scan.
+     * @return Value<UInt64> watermark ts
+     */
     const Value<UInt64>& getWatermarkTs() const;
+
+    /**
+     * @brief Sets the current valid watermark ts.
+     * @param watermarkTs
+     */
     void setWatermarkTs(Value<UInt64> watermarkTs);
+
+    /**
+     * @brief Returns the current time stamp ts. This is set by a time function
+     * @return Value<UInt64> timestamp ts
+     */
+    const Value<UInt64>& getCurrentTs() const;
+
+    /**
+     * @brief Sets the current processing timestamp.
+     * @param ts
+     */
+    void setCurrentTs(Value<UInt64> ts);
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
@@ -106,6 +137,7 @@ class ExecutionContext final {
     Value<MemRef> pipelineContext;
     Value<UInt64> origin;
     Value<UInt64> watermarkTs;
+    Value<UInt64> currentTs;
 };
 
 }// namespace NES::Runtime::Execution

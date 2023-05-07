@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <utility>
@@ -64,9 +64,9 @@ class LocalGlobalPreAggregationState : public Operators::OperatorState {
 
 GlobalSlicePreAggregation::GlobalSlicePreAggregation(
     uint64_t operatorHandlerIndex,
-    Expressions::ExpressionPtr timestampExpression,
+    TimeFunctionPtr timeFunction,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), timestampExpression(std::move(timestampExpression)),
+    : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction)),
       aggregationFunctions(aggregationFunctions) {}
 
 void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
@@ -87,7 +87,7 @@ void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     }
 }
 
-void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
+void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     // 1. get the operator handler
@@ -97,13 +97,14 @@ void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalGlobalPreAggregationState>(sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
+    // 4. initialize timestamp function
+    timeFunction->open(ctx, rb);
 }
 
 void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
     // For each input record, we derive its timestamp, we derive the correct slice from the slice store, and we manipulate the thread local aggregate.
     // 1. derive the current ts for the record.
-    // Depending on the timestamp expression this is derived by a record field (event-time).
-    auto timestampValue = timestampExpression->execute(record).as<UInt64>();
+    auto timestampValue = timeFunction->getTs(ctx, record);
     // 2. load the reference to the slice store and find the correct slice.
     auto sliceStore = static_cast<LocalGlobalPreAggregationState*>(ctx.getLocalState(this));
     auto sliceState =
