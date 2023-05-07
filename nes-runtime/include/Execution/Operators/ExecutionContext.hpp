@@ -100,12 +100,17 @@ class ExecutionContext final {
     const Value<UInt64>& getWatermarkTs() const;
     void setWatermarkTs(Value<UInt64> watermarkTs);
 
+    const Value<UInt64>& getCurrentTs() const;
+    void setCurrentTs(Value<UInt64> ts);
+
+
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
     Value<UInt64> origin;
     Value<UInt64> watermarkTs;
+    Value<UInt64> currentTs;
 };
 
 }// namespace NES::Runtime::Execution

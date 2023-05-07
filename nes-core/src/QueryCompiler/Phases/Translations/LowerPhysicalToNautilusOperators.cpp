@@ -411,7 +411,6 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
-    auto keyExpressions = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
     auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
         operatorHandlers.size() - 1,
         timeStampField,

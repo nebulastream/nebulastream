@@ -17,11 +17,12 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
 Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider)), projections(projections) {}
+    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
 
 void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // initialize global state variables to keep track of the watermark ts and the origin id
