@@ -58,7 +58,6 @@ TEST_F(ListTypeTest, createListTest) {
     Value<List> l = any.as<List>();
     ASSERT_EQ(valueList, l);
     auto res2 = (valueList->equals(l));
-    auto isList2 = dynamic_cast<List*>(&any.getValue());
     auto isList = any->isType<TypedList<Int32>>();
     ASSERT_TRUE(isList);
 }
@@ -158,7 +157,7 @@ TEST_F(ListTypeTest, sortTest) {
     auto result = list1->sort();
     ASSERT_EQ(result->length(), 6);
     for (int32_t i = 1; i < 6; i++) {
-        EXPECT_EQ(result->data()[i-1], i);
+        EXPECT_EQ(result->data()[i - 1], i);
     }
     // free each list value explicitly here.
     list1->~ListValue<int32_t>();
