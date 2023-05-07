@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.73](https://github.com/nebulastream/nebulastream/tree/v0.5.73) (2023-05-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.72...v0.5.73)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve field name inference for window aggregations [\#3668](https://github.com/nebulastream/nebulastream/issues/3668)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Use NES Logging to Print Dumps of MLIR/LLVM Modules [\#3666](https://github.com/nebulastream/nebulastream/issues/3666)
+
 ## [v0.5.72](https://github.com/nebulastream/nebulastream/tree/v0.5.72) (2023-05-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.71...v0.5.72)
