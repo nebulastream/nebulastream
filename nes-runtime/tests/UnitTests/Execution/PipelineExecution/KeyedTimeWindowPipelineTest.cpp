@@ -16,23 +16,19 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -96,7 +92,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     std::vector<PhysicalTypePtr> types = {integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                              readTsField,
+                                                              std::make_unique<Operators::EventTimeFunction>(readTsField),
                                                               keyFields,
                                                               types,
                                                               aggregationFunctions,
@@ -198,7 +194,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     std::vector<PhysicalTypePtr> keyTypes = {integerType, integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                              readTsField,
+                                                              std::make_unique<Operators::EventTimeFunction>(readTsField),
                                                               keyFields,
                                                               keyTypes,
                                                               aggregationFunctions,

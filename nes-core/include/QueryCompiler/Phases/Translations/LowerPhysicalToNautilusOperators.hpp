@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
@@ -25,6 +26,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <memory>
 #include <vector>
 
 namespace NES {
@@ -101,6 +103,9 @@ class LowerPhysicalToNautilusOperators {
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
              const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+
+    std::unique_ptr<Runtime::Execution::Operators::TimeFunction>
+    lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeBasedWindowType);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,

@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution {
 
-RecordBuffer::RecordBuffer(Value<MemRef> tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
+RecordBuffer::RecordBuffer(const Value<MemRef>& tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
 Value<UInt64> RecordBuffer::getNumRecords() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getNumberOfTuples",
@@ -33,7 +33,7 @@ Value<UInt64> RecordBuffer::getNumRecords() {
                           tupleBufferRef);
 }
 
-void RecordBuffer::setNumRecords(Value<UInt64> numRecordsValue) {
+void RecordBuffer::setNumRecords(const Value<UInt64>& numRecordsValue) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setNumberOfTuples",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples,
                    tupleBufferRef,
@@ -66,7 +66,7 @@ Value<UInt64> RecordBuffer::getWatermarkTs() {
                           tupleBufferRef);
 }
 
-void RecordBuffer::setWatermarkTs(Value<UInt64> watermarkTs) {
+void RecordBuffer::setWatermarkTs(const Value<UInt64>& watermarkTs) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setWatermark,
                    tupleBufferRef,
@@ -77,6 +77,19 @@ Value<UInt64> RecordBuffer::getSequenceNr() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getSequenceNumber",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getSequenceNumber,
                           tupleBufferRef);
+}
+
+Value<UInt64> RecordBuffer::getCreatingTs() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getCreationTimestampInMS,
+                          tupleBufferRef);
+}
+
+void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS,
+                   tupleBufferRef,
+                   creationTs);
 }
 
 }// namespace NES::Runtime::Execution

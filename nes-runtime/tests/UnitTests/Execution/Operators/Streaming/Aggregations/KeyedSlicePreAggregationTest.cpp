@@ -21,6 +21,7 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
@@ -88,7 +89,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
 
     auto slicePreAggregation =
         KeyedSlicePreAggregation(0 /*handler index*/,
-                                 readTs,
+                                 std::make_unique<EventTimeFunction>(readTs),
                                  {readKey},
                                  {integerType},
                                  {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},

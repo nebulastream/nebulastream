@@ -30,6 +30,7 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -91,7 +92,9 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
     auto slicePreAggregation =
-        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/, readTsField, aggregationFunctions);
+        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+                                                               std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                               aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
@@ -184,7 +187,9 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
         std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName3),
         std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName4)};
     auto slicePreAggregation =
-        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/, readTsField, aggregationFunctions);
+        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+                                                               std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                               aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
