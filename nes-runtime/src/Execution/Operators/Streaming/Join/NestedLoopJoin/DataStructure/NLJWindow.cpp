@@ -18,7 +18,13 @@
 #include <sstream>
 namespace NES::Runtime::Execution {
 
+NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd)
+    : StreamWindow(windowStart, windowEnd){}
+
+
 uint8_t* NLJWindow::allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
+    //TODO: I am not sure if this resizing is really efficient expecially if we know the tuple sizes
+    // maybe we should preallocate here too
     if (leftSide) {
         std::lock_guard<std::mutex> lock(leftTuplesMutex);
         auto currentSize = leftTuples.size();
@@ -48,29 +54,9 @@ size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
     }
 }
 
-uint64_t NLJWindow::getWindowIdentifier() const { return getWindowEnd(); }
-
-uint64_t NLJWindow::getWindowStart() const { return windowStart; }
-
-uint64_t NLJWindow::getWindowEnd() const { return windowEnd; }
-
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd)
-    : windowState(WindowState::BOTH_SIDES_FILLING), windowStart(windowStart), windowEnd(windowEnd) {}
-
-bool NLJWindow::operator==(const NLJWindow& rhs) const {
-    return windowState == rhs.windowState && leftTuples == rhs.leftTuples && rightTuples == rhs.rightTuples
-        && windowStart == rhs.windowStart && windowEnd == rhs.windowEnd;
-}
-
-bool NLJWindow::operator!=(const NLJWindow& rhs) const { return !(rhs == *this); }
-
-bool NLJWindow::compareExchangeStrong(NLJWindow::WindowState expectedState, NLJWindow::WindowState newWindowState) {
-    return windowState.compare_exchange_strong(expectedState, newWindowState);
-}
-
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "(windowState: " << magic_enum::enum_name(windowState.load()) << " windowStart: " << windowStart
+    basicOstringstream << "NLJWindow(windowState: " << magic_enum::enum_name(windowState.load()) << " windowStart: " << windowStart
                        << " windowEnd: " << windowEnd << ")";
     return basicOstringstream.str();
 }

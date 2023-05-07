@@ -15,8 +15,10 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
 class WatermarkState : public OperatorState {
@@ -25,14 +27,18 @@ class WatermarkState : public OperatorState {
     Value<> currentWatermark = Value<UInt64>((uint64_t) 0);
 };
 
+EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction)
+    : timeFunction(std::move(timeFunction)){};
+
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     Operator::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
+    timeFunction->open(executionCtx, recordBuffer);
 }
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const {
     auto state = (WatermarkState*) ctx.getLocalState(this);
-    Value<> tsField = watermarkExtractionExpression->execute(record);
+    Value<> tsField = timeFunction->getTs(ctx, record);
     if (tsField > state->currentWatermark) {
         state->currentWatermark = tsField;
     }

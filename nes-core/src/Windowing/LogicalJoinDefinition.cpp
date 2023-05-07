@@ -99,4 +99,7 @@ void LogicalJoinDefinition::setNumberOfInputEdgesRight(uint64_t numberOfInputEdg
     LogicalJoinDefinition::numberOfInputEdgesRight = numberOfInputEdgesRight;
 }
 
+uint64_t LogicalJoinDefinition::getOriginId() const { return originId; }
+void LogicalJoinDefinition::setOriginId(OriginId originId) { this->originId = originId; }
+
 };// namespace NES::Join

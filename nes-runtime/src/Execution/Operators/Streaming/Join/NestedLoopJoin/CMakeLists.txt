@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(JoinPhases)
-add_subdirectory(DataStructure)
-
 add_source_files(nes-runtime
         NLJOperatorHandler.cpp)
+
+add_subdirectory(JoinPhases)
+add_subdirectory(DataStructure)

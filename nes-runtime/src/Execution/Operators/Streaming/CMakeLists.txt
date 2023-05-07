@@ -20,5 +20,6 @@ add_source_files(nes-runtime
         MultiOriginWatermarkProcessor.cpp
         SlidingWindowAssigner.cpp
         EventTimeWatermarkAssignment.cpp
+        IngestionTimeWatermarkAssignment.cpp
         TimeFunction.cpp
         )

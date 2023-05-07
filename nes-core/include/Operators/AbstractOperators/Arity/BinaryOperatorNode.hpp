@@ -93,6 +93,13 @@ class BinaryOperatorNode : public virtual OperatorNode {
     virtual std::vector<OriginId> getLeftInputOriginIds();
 
     /**
+     * @brief Gets the input origin from both sides
+     * @return std::vector<OriginId>
+     */
+    virtual std::vector<OriginId> getAllInputOriginIds();
+
+
+    /**
      * @brief Set the input origin ids for the right input stream.
      * @param originIds
      */

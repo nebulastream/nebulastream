@@ -7,7 +7,7 @@ numberOfPreAllocatedBuffer: 10000000
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 3
+numberOfMeasurementsToCollect: 5
 
 logicalSources:
   - name: input1

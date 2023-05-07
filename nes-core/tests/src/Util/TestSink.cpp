@@ -45,6 +45,7 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     if (resultBuffers.size() == expectedBuffer) {
         completed.set_value(expectedBuffer);
     } else if (resultBuffers.size() > expectedBuffer) {
+        NES_ERROR("result buffer size" << resultBuffers.size() << " and expected buffer=" << expectedBuffer << " do not match");
         EXPECT_TRUE(false);
     }
     return true;

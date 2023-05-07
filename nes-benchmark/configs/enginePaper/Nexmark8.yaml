@@ -1,0 +1,53 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+benchmarkName: Nexmark8
+outputFile: nexmark8.csv
+
+#numberOfWorkerThreads: 1,2,3,4,5,6,7,8
+#numberOfSources: 1,1,1,1,2,2,2,2
+#numberOfWorkerThreads: 1,2,4,8,16
+numberOfWorkerThreads: 1
+numberOfSources: 1
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 16384
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+#bufferSizeInBytes: 1048576
+bufferSizeInBytes: 131072
+#pageSize: 128,256,512,1024,4096,8192,16384,32768,65536,131072,262144
+pageSize: 65536
+#pageSize: 8192
+numberOfPartitions: 16
+preAllocPageCnt: 32
+
+logicalSources:
+  - name: bit
+    type: NEBit
+  - name: auction
+    type: NEAuction
+
+# configure data source
+#dataGenerator: NEBit,NEAuction
+#logicalStreamName: bit,auction
+
+numberOfPreAllocatedBuffer: 1000
+dataProvider: Internal
+dataProviderMode: ZeroCopy
+
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(RecordCreationTs()), Hours(12))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(TumblingWindow::of(IngestionTime(),Hours(12))).sink(NullOutputSinkDescriptor::create());'
+
+gatheringValues: 50000
+#generatorPinList: 12
+#workerPinList: 1,2,3,4,5,6,7,8,9,10
+#sourcePinList: 0
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 5000000
+scalability: scale-up
+#logLevel: LOG_DEBUG
+logLevel: LOG_ERROR
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 1
+numberOfMeasurementsToCollect: 3
