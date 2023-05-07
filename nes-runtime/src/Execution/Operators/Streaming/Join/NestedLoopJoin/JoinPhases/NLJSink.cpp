@@ -71,6 +71,9 @@ namespace NES::Runtime::Execution::Operators {
                     auto numberOfTuplesInBuffer = tupleBuffer.getNumberOfTuples();
                     auto bufferPtr = tupleBuffer.getBuffer() + joinTupleSize * numberOfTuplesInBuffer;
 
+                    // TODO think if we might want to use dynamictuplebuffer here...
+                    // If so, then we have to rewrite dynamictuplebuffer to maybe use a pointer as an input to write a record
+
                     std::memcpy(bufferPtr, &nljJoinParams.windowStart, sizeOfWindowStart);
                     std::memcpy(bufferPtr + sizeOfWindowStart, &nljJoinParams.windowEnd, sizeOfWindowEnd);
                     std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd, innerKey, nljJoinParams.joinKeySize);
