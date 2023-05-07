@@ -18,8 +18,12 @@ add_source_files(nes-common
         FileMutex.cpp
         NonBlockingMonotonicSeqQueue.cpp
         DumpHelper.cpp
-)
+        )
 add_subdirectory(yaml)
 add_subdirectory(Logger)
 add_subdirectory(Subprocess)
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    add_subdirectory(JNI)
+endif ()
 

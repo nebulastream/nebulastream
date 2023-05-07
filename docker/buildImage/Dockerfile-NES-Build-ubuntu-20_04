@@ -36,6 +36,7 @@ RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.
     && apt update && apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && apt update
 RUN apt install -y cmake
 
+ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
 # docker buildx, TARGETARCH,TARGETOS available in the intermediate container during build time

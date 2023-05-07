@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Util/Logger/Logger.hpp"
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
@@ -55,6 +56,7 @@ uint32_t ExecutionTrace::createBlock() {
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex) {
     // perform a control flow merge and merge the current block with operations in some other block.
     // create new block
+   // NES_DEBUG(this->toString());
     auto mergedBlockId = createBlock();
     auto& mergeBlock = getBlock(mergedBlockId);
     mergeBlock.type = Block::Type::ControlFlowMerge;
@@ -96,7 +98,6 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
             std::replace(blockPredecessor.begin(), blockPredecessor.end(), currentBlock, mergedBlockId);
         }
     }
-
     return mergeBlock;
 }
 

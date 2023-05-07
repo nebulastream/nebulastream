@@ -104,6 +104,7 @@ void SSACreationPhase::SSACreationPhaseContext::processValueRef(Block& block, Va
                     }
                 }
             } else {
+                NES_ERROR(trace->toString());
                 NES_THROW_RUNTIME_ERROR("Last operation of pred block should be JMP or CMP");
             }
         }

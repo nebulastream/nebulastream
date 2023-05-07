@@ -13,7 +13,7 @@
 add_source_files(nes-runtime
         FlatMapJavaUDF.cpp
         MapJavaUDF.cpp
-        JVMContext.cpp
         JavaUDFOperatorHandler.cpp
         JavaUDFUtils.cpp
+        AbstractJavaUDFOperator.cpp
         )

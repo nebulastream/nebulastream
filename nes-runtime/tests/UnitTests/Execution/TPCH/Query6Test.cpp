@@ -141,7 +141,7 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q6,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "BabelfishPipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q6::ParamType>& info) {
                             return info.param;
                         });

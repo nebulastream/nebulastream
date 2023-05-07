@@ -11,7 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(JavaUDF)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    add_subdirectory(JavaUDF)
+endif ()
 
 add_nes_runtime_test(runtime-map-operator-test "MapOperatorTest.cpp")
 add_nes_runtime_test(runtime-selection-operator-test "SelectionOperatorTest.cpp")

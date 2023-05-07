@@ -27,6 +27,9 @@ namespace NES::Nautilus::Tracing {
 static thread_local TraceContext* traceContext;
 
 TraceContext* TraceContext::get() { return traceContext; }
+TraceContext* TraceContext::getIfActive() { return shouldTrace() ? get() : nullptr; };
+
+bool TraceContext::shouldTrace() { return get() != nullptr && get()->active; }
 
 TraceContext* TraceContext::initialize(TagRecorder& tagRecorder) {
     traceContext = new TraceContext(tagRecorder);
@@ -217,6 +220,7 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
     while (symbolicExecutionContext.shouldContinue()) {
         try {
             initializeTraceIteration();
+            TraceContext::get()->resume();
             auto result = function();
             traceReturnOperation(result);
             //NES_DEBUG("ExecutionTrace: " << *executionTrace);

@@ -25,3 +25,7 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     add_subdirectory(CPP)
 endif ()
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
+    add_subdirectory(Babelfish)
+endif ()

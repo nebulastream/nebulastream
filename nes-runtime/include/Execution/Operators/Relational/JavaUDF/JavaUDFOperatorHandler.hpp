@@ -15,11 +15,10 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
 
-#ifdef ENABLE_JNI
-
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <jni.h>
+#include <Util/JNI/JNI.hpp>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
@@ -53,12 +52,12 @@ class JavaUDFOperatorHandler : public OperatorHandler {
                                     const std::vector<char>& serializedInstance,
                                     SchemaPtr udfInputSchema,
                                     SchemaPtr udfOutputSchema,
-                                    const std::optional<std::string>& javaPath)
-        : className(className), classJNIName(convertToJNIName(className)), methodName(methodName), inputClassName(inputClassName),
-          inputClassJNIName(convertToJNIName(inputClassName)), outputClassName(outputClassName),
-          outputClassJNIName(convertToJNIName(outputClassName)), byteCodeList(byteCodeList),
-          serializedInstance(serializedInstance), udfInputSchema(udfInputSchema), udfOutputSchema(udfOutputSchema),
-          javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
+                                    const std::optional<std::string>& javaPath);
+
+    /**
+     * @brief Initializes the operator handler and the jvm if required.
+     */
+    void setup();
 
     /**
      * @brief Convert a Java class name from Java notation (e.g., java.lang.Object), to JNI notation (e.g., java/lang/Object).
@@ -71,67 +70,67 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @brief This method returns the class name of the java udf
      * @return std::string class name
      */
-    const std::string& getClassName() const { return className; }
+    const std::string& getClassName() const;
 
     /**
      * @brief This method returns the class name of the Java UDF in JNI notation.
      * @return std::string class name
      */
-    const std::string& getClassJNIName() const { return classJNIName; }
+    const std::string& getClassJNIName() const;
 
     /**
      * @brief This method returns the method name of the java udf
      * @return std::string method name
      */
-    const std::string& getMethodName() const { return methodName; }
+    const std::string& getMethodName() const;
 
     /**
      * @brief This method returns the class name of the input class name of the java udf
      * @return std::string input class name
      */
-    const std::string& getInputClassName() const { return inputClassName; }
+    const std::string& getInputClassName() const;
 
     /**
      * @brief This method returns the class name of the input class name of the Java UDF in JNI notation.
      * @return std::string input class name in JNI notation.
      */
-    const std::string& getInputClassJNIName() const { return inputClassJNIName; }
+    const std::string& getInputClassJNIName() const;
 
     /**
      * @brief This method returns the class name of the output class name of the java udf
      * @return std::string output class name
      */
-    const std::string& getOutputClassName() const { return outputClassName; }
+    const std::string& getOutputClassName() const;
 
     /**
      * @brief This method returns the class name of the output class name of the Java UDF in JNI notation.
      * @return std::string output class name
      */
-    const std::string& getOutputClassJNIName() const { return outputClassJNIName; }
+    const std::string& getOutputClassJNIName() const;
 
     /**
      * @brief This method returns the byte code list of the java udf
      * @return std::unordered_map<std::string, std::vector<char>> byte code list
      */
-    const std::unordered_map<std::string, std::vector<char>>& getByteCodeList() const { return byteCodeList; }
+    const std::unordered_map<std::string, std::vector<char>>& getByteCodeList() const;
 
     /**
      * @brief This method returns the serialized instance of the java udf
      * @return std::vector<char> serialized instance
      */
-    const std::vector<char>& getSerializedInstance() const { return serializedInstance; }
+    const std::vector<char>& getSerializedInstance() const;
 
     /**
      * @brief This method returns the input schema of the Java UDF.
      * @return SchemaPtr Java UDF input schema
      */
-    const SchemaPtr& getUdfInputSchema() const { return udfInputSchema; }
+    const SchemaPtr& getUdfInputSchema() const;
 
     /**
      * @brief This method returns the output schema of the Java UDF.
      * @return SchemaPtr Java UDF output schema
      */
-    const SchemaPtr& getUdfOutputSchema() const { return udfOutputSchema; }
+    const SchemaPtr& getUdfOutputSchema() const;
 
     /**
      * @brief This method returns the java path of the java udf jar
@@ -140,44 +139,21 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::optional<std::string>& getJavaPath() const { return javaPath; }
 
     /**
-     * @brief This method returns the jni environment of the java udf
-     * @return JNIEnv* java udf instance
-     */
-    JNIEnv* getEnvironment() const { return env; }
-
-    /**
-     * @brief This method sets the jni environment of the java udf
-     * @param env jni environment
-     */
-    void setEnvironment(JNIEnv* env) { this->env = env; }
-
-    /**
      * @brief This method returns the java udf object state
      * @return jobject java udf object
      */
-    jobject getFlatMapUDFObject() const { return flatMapUDFObject; }
-
-    /**
-     * @brief This method sets the java udf object state
-     * @param flatMapObject java udf object
-     */
-    void setFlatMapUDFObject(jobject flatMapObject) { this->flatMapUDFObject = flatMapObject; }
+    jni::jobject getFlatMapUDFObject() const { return udfInstance; }
 
     /**
      * @brief This method returns the java udf method id
      * @return jmethodID java udf method id
      */
-    jmethodID getFlatMapUDFMethodId() const { return flatMapUDFMethodId; }
+    jni::jmethodID getUDFMethodId() const;
 
-    /**
-     * @brief This method sets the java udf method id
-     * @param flatMapMethodUDFId java udf method id
-     */
-    void setFlatMapUDFMethodId(const jmethodID flatMapUDFMethodId) { this->flatMapUDFMethodId = flatMapUDFMethodId; }
+    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override;
+    void stop(QueryTerminationType, PipelineExecutionContextPtr) override;
 
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
-    void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
-
+    ~JavaUDFOperatorHandler();
   private:
     const std::string className;
     const std::string classJNIName;
@@ -192,12 +168,10 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const SchemaPtr udfOutputSchema;
     const SchemaPtr operatorInputSchema;
     const SchemaPtr operatorOutputSchema;
-    JNIEnv* env;
     const std::optional<std::string> javaPath;
-    jmethodID flatMapUDFMethodId;
-    jobject flatMapUDFObject;
+    jni::jmethodID udfMethodId;
+    jni::jobject udfInstance;
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//ENABLE_JNI
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_

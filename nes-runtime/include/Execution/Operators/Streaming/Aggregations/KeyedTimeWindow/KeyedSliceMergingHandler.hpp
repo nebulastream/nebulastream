@@ -27,8 +27,8 @@ class KeyedSliceStaging;
  * tumbling and sliding window aggregations.
  */
 class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
-                                 public detail::virtual_enable_shared_from_this<KeyedSliceMergingHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<KeyedSliceMergingHandler, false>;
+                                 public ::NES::detail::virtual_enable_shared_from_this<KeyedSliceMergingHandler, false> {
+    using inherited0 = ::NES::detail::virtual_enable_shared_from_this<KeyedSliceMergingHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:

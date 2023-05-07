@@ -31,7 +31,7 @@ Value<Text> transformReturnValues(TextValue* value) {
 Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
 bool textEquals(const TextValue* leftText, const TextValue* rightText) {
-    NES_DEBUG("Check if " << leftText->c_str() << "and " << rightText->c_str() << " are equal")
+    NES_DEBUG("Check if " << leftText->c_str() << " and " << rightText->c_str() << " are equal")
     if (leftText->length() != rightText->length()) {
         return false;
     } else if (std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0) {
