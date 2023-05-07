@@ -408,4 +408,11 @@ std::ostream& operator<<(std::ostream& os, const OpCode& code) {
 
     return os;
 }
+
+std::string Code::toString() {
+    std::stringstream ss;
+    ss << this;
+    return ss.str();
+}
+
 }// namespace NES::Nautilus::Backends::BC
