@@ -12,6 +12,9 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <sstream>
+
 namespace NES::Runtime::Execution::Operators {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins) {
@@ -25,12 +28,30 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 }
 
 uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
+    bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
         if (origins[originIndex] == origin) {
             watermarkProcessors[originIndex]->emplace(sequenceNumber, ts);
+            found = true;
         }
     }
+    if (!found) {
+        std::stringstream ss;
+        for (auto& id : origins) {
+            ss << id << ",";
+        }
+        NES_THROW_RUNTIME_ERROR("update watermark for non existing origin " << origin << " number of origins=" << origins.size()
+                                                                            << " ids=" << ss.str());
+    }
     return getCurrentWatermark();
+}
+
+std::string MultiOriginWatermarkProcessor::getCurrentStatus() {
+    std::stringstream ss;
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
+        ss << " id=" << origins[originIndex] << " watermark=" << watermarkProcessors[originIndex]->getCurrentValue();
+    }
+    return ss.str();
 }
 
 uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark() {

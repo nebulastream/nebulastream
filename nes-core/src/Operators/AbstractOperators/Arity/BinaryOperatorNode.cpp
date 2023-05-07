@@ -53,6 +53,13 @@ SchemaPtr BinaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
 std::vector<OriginId> BinaryOperatorNode::getLeftInputOriginIds() { return leftInputOriginIds; }
 
+std::vector<OriginId> BinaryOperatorNode::getAllInputOriginIds() {
+    std::vector<OriginId> vec;
+    vec.insert(vec.end(), leftInputOriginIds.begin(), leftInputOriginIds.end());
+    vec.insert(vec.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
+    return vec;
+}
+
 void BinaryOperatorNode::setLeftInputOriginIds(std::vector<OriginId> originIds) { this->leftInputOriginIds = originIds; }
 
 std::vector<OriginId> BinaryOperatorNode::getRightInputOriginIds() { return rightInputOriginIds; }

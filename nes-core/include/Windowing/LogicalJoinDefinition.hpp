@@ -17,6 +17,7 @@
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <cstdint>
+#include <Common/Identifiers.hpp>
 
 namespace NES::Join {
 
@@ -144,6 +145,18 @@ class LogicalJoinDefinition {
     void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
 
+    /**
+     * @brief Getter for the origin id of this window.
+     * @return origin id
+     */
+    [[nodiscard]] uint64_t getOriginId() const;
+
+    /**
+     * @brief Setter for the origin id
+     * @param originId
+     */
+    void setOriginId(OriginId originId);
+
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
@@ -157,6 +170,7 @@ class LogicalJoinDefinition {
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
     JoinType joinType;
+    OriginId originId;
 };
 
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;

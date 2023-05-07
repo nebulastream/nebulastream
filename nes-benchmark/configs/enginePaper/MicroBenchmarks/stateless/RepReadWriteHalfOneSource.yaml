@@ -1,0 +1,33 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+#numberOfWorkerThreads: 1,2,4,8,16
+#numberOfSources: 1
+# Parameter that are changed per run with comma separated list
+#numberOfWorkerThreads: 1,2,4,8,15,16,24
+numberOfWorkerThreads: 1,2,4,8,12,16
+numberOfSources: 1,1,1,2,3,4
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 1048576
+#bufferSizeInBytes: 131072
+
+##benchmark parameter for the entire run
+inputType: MemoryMode
+sourceMode: copyBuffer
+sourcePinList: 0
+workerPinList: 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32
+
+outputFile: RepReadWriteHalfOneSource.csv
+benchmarkName: RepReadWriteHalfOneSource
+query: 'Query::from("input").filter(Attribute("value") < 50).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 500000000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5
+

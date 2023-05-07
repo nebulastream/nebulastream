@@ -40,7 +40,11 @@ class LocalHashTable {
      * @param overrunAddress
      * @param pageSize
      */
-    explicit LocalHashTable(size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize);
+    explicit LocalHashTable(size_t sizeOfRecord,
+                            size_t numPartitions,
+                            FixedPagesAllocator& fixedPagesAllocator,
+                            size_t pageSize,
+                            size_t preAllocPageSizeCnt);
 
     LocalHashTable(const LocalHashTable&) = delete;
 
@@ -68,6 +72,17 @@ class LocalHashTable {
      * @return bucket position
      */
     size_t getBucketPos(uint64_t hash) const;
+
+    /**
+     * @brief debug mehtod to print the statistics of the hash table
+     */
+    void printStatistics();
+
+    /**
+     * @brief get number of tuples in hash table
+     * @return
+     */
+    uint64_t getNumberOfTuples();
 
   private:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;

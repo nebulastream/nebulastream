@@ -20,7 +20,6 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Common.hpp>
-#include <Util/Core.hpp>
 
 #include <chrono>
 

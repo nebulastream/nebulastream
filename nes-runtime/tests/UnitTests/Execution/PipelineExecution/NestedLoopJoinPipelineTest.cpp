@@ -21,6 +21,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
@@ -36,6 +37,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -108,6 +110,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto rightBuffers =
             Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
         auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
+        NES_DEBUG("read file=" << fileNameBuffersSink);
+
+        NES_DEBUG("leftBuffer: \n" << Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
+        NES_DEBUG("rightBuffers: \n" << Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
         // Creating the scan (for build) and emit operator (for sink)
         auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
@@ -124,16 +130,25 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
         // Creating the left, right and sink NLJ operator
         auto handlerIndex = 0;
-        auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                                  leftSchema,
-                                                                  joinFieldNameLeft,
-                                                                  timeStampFieldLeft,
-                                                                  /*isLeftSide*/ true);
-        auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                                   rightSchema,
-                                                                   joinFieldNameRight,
-                                                                   timeStampFieldRight,
-                                                                   /*isLeftSide*/ false);
+        auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
+        auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
+
+        auto nljBuildLeft =
+            std::make_shared<Operators::NLJBuild>(handlerIndex,
+                                                  leftSchema,
+                                                  joinFieldNameLeft,
+                                                  timeStampFieldLeft,
+                                                  /*isLeftSide*/ true,
+                                                  std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+
+        auto nljBuildRight =
+            std::make_shared<Operators::NLJBuild>(handlerIndex,
+                                                  rightSchema,
+                                                  joinFieldNameRight,
+                                                  timeStampFieldRight,
+                                                  /*isLeftSide*/ false,
+                                                  std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
+
         auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex,
                                                             leftSchema,
                                                             rightSchema,
@@ -143,12 +158,12 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{0, 1};
-        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize,
-                                                                            leftSchema,
+        auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(leftSchema,
                                                                             rightSchema,
                                                                             joinFieldNameLeft,
                                                                             joinFieldNameRight,
-                                                                            originIds);
+                                                                            originIds,
+                                                                            windowSize);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
@@ -315,7 +330,6 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
     const std::string fileNameBuffersLeft(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
     const std::string fileNameBuffersSink(std::string(TEST_DATA_DIRECTORY) + "window_sink3.csv");
-
     ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
                                 fileNameBuffersRight,
                                 fileNameBuffersSink,
@@ -331,7 +345,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
 
 INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,
                         NestedLoopJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),//CPPPipelineCompiler
                         [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

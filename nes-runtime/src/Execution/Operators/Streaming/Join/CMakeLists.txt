@@ -11,8 +11,12 @@
 # limitations under the License.
 
 
-add_subdirectory(StreamHashJoin)
-add_subdirectory(NestedLoopJoin)
 
-add_source(nes-runtime
-        StreamJoinUtil.cpp)
+add_subdirectory(NestedLoopJoin)
+add_subdirectory(StreamHashJoin)
+
+add_source_files(nes-runtime
+        StreamWindow.cpp
+        StreamJoinOperatorHandler.cpp
+        StreamJoinUtil.cpp
+        )

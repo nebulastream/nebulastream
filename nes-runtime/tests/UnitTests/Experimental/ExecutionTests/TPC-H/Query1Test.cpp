@@ -27,7 +27,6 @@
 #include <Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp>
 #include <Experimental/Interpreter/Operators/GroupedAggregation.hpp>
 #include <Experimental/Utility/TPCHUtil.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
 #include <Util/Timer.hpp>
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>

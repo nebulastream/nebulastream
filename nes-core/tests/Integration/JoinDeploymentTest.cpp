@@ -71,6 +71,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
                                                       BufferManagerPtr bufferManager) {
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
+    NES_DEBUG("read file=" << fullPath);
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
     const std::string delimiter = ",";
     auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
@@ -139,8 +140,16 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
+
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
@@ -204,7 +213,14 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
@@ -269,7 +285,14 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
@@ -333,7 +356,14 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
@@ -401,7 +431,14 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
@@ -468,7 +505,14 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
@@ -536,7 +580,14 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 

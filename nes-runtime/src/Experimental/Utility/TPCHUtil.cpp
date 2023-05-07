@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Experimental/Utility/TPCHUtil.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
 #include <filesystem>
 #include <fstream>
 
