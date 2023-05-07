@@ -528,6 +528,7 @@ class Code {
     std::vector<CodeBlock> blocks = std::vector<CodeBlock>();
     Type returnType = Type::v;
     friend std::ostream& operator<<(std::ostream& os, const Code& code);
+    std::string toString();
 };
 
 }// namespace NES::Nautilus::Backends::BC
