@@ -26,7 +26,7 @@ using namespace NES;
 using Runtime::TupleBuffer;
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class MapQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
                               public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {

@@ -264,11 +264,11 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                         // Finally, we check whether the relation between the loop-induction-variable and the upperBound
                         // and the stepSize are valid. Then we assign the values to the countedLoopInfo.
                         auto countedLoopInfo = std::make_unique<Operations::CountedLoopInfo>();
-                        if (inductionVar->getConstantIntValue() < upperBound->getConstantIntValue()
-                            && stepSize->getConstantIntValue() > 0) {
-                            countedLoopInfo->lowerBound = inductionVar->getConstantIntValue();
-                            countedLoopInfo->stepSize = stepSize->getConstantIntValue();
-                            countedLoopInfo->upperBound = upperBound->getConstantIntValue() + comparisonContainsEqual;
+                        if (inductionVar->getValue() < upperBound->getValue()
+                            && stepSize->getValue() > 0) {
+                            countedLoopInfo->lowerBound = inductionVar->getValue();
+                            countedLoopInfo->stepSize = stepSize->getValue();
+                            countedLoopInfo->upperBound = upperBound->getValue() + comparisonContainsEqual;
                         } else {
                             NES_DEBUG("Could not detect a counted loop. Reason 1: UpperBound == LowerBound, Reason 2: "
                                       << "Found increasing loop (loop induction variable > loop stop variable), but "

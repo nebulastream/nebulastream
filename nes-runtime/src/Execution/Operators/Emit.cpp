@@ -49,7 +49,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
         ctx.emitBuffer(resultBuffer);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
-        emitState->bufferReference = resultBuffer.getBuffer();
+        emitState->bufferReference = emitState->resultBuffer.getBuffer();
         emitState->outputIndex = (uint64_t) 0;
     }
 }

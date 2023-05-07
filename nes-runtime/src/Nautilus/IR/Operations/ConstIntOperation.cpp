@@ -23,7 +23,7 @@ namespace NES::Nautilus::IR::Operations {
 ConstIntOperation::ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp)
     : Operation(OperationType::ConstIntOp, identifier, stamp), constantValue(constantValue) {}
 
-int64_t ConstIntOperation::getConstantIntValue() { return constantValue; }
+int64_t ConstIntOperation::getValue() { return constantValue; }
 bool ConstIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
 
 std::string ConstIntOperation::toString() { return identifier + " = " + std::to_string(constantValue); }

@@ -24,6 +24,4 @@ void* CPPExecutable::getInvocableFunctionPtr(const std::string&) { return obj->g
 
 bool CPPExecutable::hasInvocableFunctionPtr() { return true; }
 
-std::unique_ptr<Executable::GenericInvocable> CPPExecutable::getGenericInvocable(const std::string&) { return nullptr; }
-
 }// namespace NES::Nautilus::Backends::CPP

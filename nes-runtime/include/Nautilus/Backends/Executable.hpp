@@ -112,6 +112,11 @@ class Executable {
      * @return bool
      */
     virtual bool hasInvocableFunctionPtr() = 0;
+
+    /**
+     * @brief Returns an generic invocable function
+     * @return std::unique_ptr<GenericInvocable>
+     */
     virtual std::unique_ptr<GenericInvocable> getGenericInvocable(const std::string&) { return nullptr; };
 };
 
