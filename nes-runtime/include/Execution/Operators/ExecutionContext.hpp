@@ -17,6 +17,7 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 
@@ -102,7 +103,6 @@ class ExecutionContext final {
 
     const Value<UInt64>& getCurrentTs() const;
     void setCurrentTs(Value<UInt64> ts);
-
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;

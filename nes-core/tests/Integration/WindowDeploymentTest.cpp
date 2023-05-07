@@ -735,7 +735,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeySlidingWindowEventTim
     };
     std::vector<Output> expectedOutput = {{0, 10000, 120}, {5000, 15000, 190}, {10000, 20000, 290}};
 
-    std::vector<Output> actualOutput = testHarness.getOut^put<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

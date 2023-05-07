@@ -23,7 +23,7 @@ namespace NES::Windowing {
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
-class TimeCharacteristic {
+class TimeCharacteristic final {
   public:
     constexpr static const auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
     /**

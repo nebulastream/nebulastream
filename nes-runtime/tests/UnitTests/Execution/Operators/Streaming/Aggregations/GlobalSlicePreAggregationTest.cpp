@@ -27,6 +27,7 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -92,7 +93,7 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
     auto slicePreAggregation = GlobalSlicePreAggregation(
         0 /*handler index*/,
-        readTs,
+        std::make_unique<EventTimeFunction>(readTs),
         {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType, readF2, "count")});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
@@ -142,7 +143,7 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
 
     auto slicePreAggregation =
         GlobalSlicePreAggregation(0 /*handler index*/,
-                                  readTs,
+                                  std::make_unique<EventTimeFunction>(readTs),
                                   {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
                                    std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 

@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "API/Windowing.hpp"
+#include "Execution/Operators/Streaming/TimeFunction.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
@@ -362,6 +364,24 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     return sliceMergingOperator;
 }
 
+std::unique_ptr<Runtime::Execution::Operators::TimeFunction>
+LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeWindow) {
+    // Depending on the window type we create a different time function.
+    // If the window type is ingestion time or we use the special record creation ts field, create an ingestion time function.
+    // TODO remove record creation ts if it is not needed anymore
+    if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime
+        || timeWindow->getTimeCharacteristic()->getField()->getName()
+            == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+        return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+    } else if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+        // For event time fields, we look up the reference field name and create an expression to read the field.
+        auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
+        auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
+        return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampField);
+    }
+    NES_THROW_RUNTIME_ERROR("Timefunction could not be created for the following window definition: " << timeWindow->toString());
+}
+
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     Runtime::Execution::PhysicalOperatorPipeline&,
@@ -376,11 +396,10 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     auto aggregationFunctions = lowerAggregations(aggregations);
 
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
-    auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
+    auto timeFunction = lowerTimeFunction(timeWindow);
     auto sliceMergingOperator =
         std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregation>(operatorHandlers.size() - 1,
-                                                                                   timeStampField,
+                                                                                   std::move(timeFunction),
                                                                                    aggregationFunctions);
     return sliceMergingOperator;
 }
@@ -398,9 +417,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
     auto aggregations = windowDefinition->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
-    auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
-
+    auto timeFunction = lowerTimeFunction(timeWindow);
     auto keys = windowDefinition->getKeys();
     NES_ASSERT(!keys.empty(), "A keyed window should have keys");
     std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
@@ -413,7 +430,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
 
     auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
         operatorHandlers.size() - 1,
-        timeStampField,
+        std::move(timeFunction),
         keyReadExpressions,
         keyDataTypes,
         aggregationFunctions,
