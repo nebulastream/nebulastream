@@ -400,7 +400,7 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
         }
         case IR::Operations::Operation::OperationType::ConstIntOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstIntOperation>(opt);
-            auto flounderConst = program.constant64(constInt->getConstantIntValue());
+            auto flounderConst = program.constant64(constInt->getValue());
             auto resultVreg = createVreg(opt->getIdentifier(), opt->getStamp(), frame);
             program << program.mov(resultVreg, flounderConst);
             frame.setValue(constInt->getIdentifier(), resultVreg);
