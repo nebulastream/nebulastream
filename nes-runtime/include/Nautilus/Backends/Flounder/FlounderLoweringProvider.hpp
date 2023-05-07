@@ -14,15 +14,13 @@
 #ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 
-#include <Nautilus/IR/Operations/CastOperation.hpp>
-#include <flounder/ir/instructions.h>
-#include <flounder/ir/register.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/CastOperation.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
@@ -34,9 +32,10 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/Util/Frame.hpp>
-
 #include <Util/DumpHelper.hpp>
 #include <flounder/compilation/compiler.h>
+#include <flounder/ir/instructions.h>
+#include <flounder/ir/register.h>
 #include <set>
 
 namespace flounder {
@@ -81,10 +80,21 @@ class FlounderLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame);
-        void processAnd(const std::shared_ptr<IR::Operations::AndOperation>& opt, FlounderFrame& frame, flounder::Label& trueCase, flounder::Label& falseCase);
-        void processOr(const std::shared_ptr<IR::Operations::OrOperation>& opt, FlounderFrame& frame, flounder::Label& trueCase, flounder::Label& falseCase);
-        void processCmp(const std::shared_ptr<IR::Operations::Operation>& opt, FlounderFrame& frame, flounder::Label& trueCase, flounder::Label& falseCase);
-        void processCmp(const std::shared_ptr<IR::Operations::CompareOperation>& opt, FlounderFrame& frame, flounder::Label& falseCase);
+        void processAnd(const std::shared_ptr<IR::Operations::AndOperation>& opt,
+                        FlounderFrame& frame,
+                        flounder::Label& trueCase,
+                        flounder::Label& falseCase);
+        void processOr(const std::shared_ptr<IR::Operations::OrOperation>& opt,
+                       FlounderFrame& frame,
+                       flounder::Label& trueCase,
+                       flounder::Label& falseCase);
+        void processCmp(const std::shared_ptr<IR::Operations::Operation>& opt,
+                        FlounderFrame& frame,
+                        flounder::Label& trueCase,
+                        flounder::Label& falseCase);
+        void processCmp(const std::shared_ptr<IR::Operations::CompareOperation>& opt,
+                        FlounderFrame& frame,
+                        flounder::Label& falseCase);
     };
 };
 
