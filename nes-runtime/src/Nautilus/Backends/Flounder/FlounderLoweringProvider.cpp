@@ -33,25 +33,31 @@
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <flounder/compilation/compiler.h>
 #include <flounder/executable.h>
 #include <flounder/program.h>
 #include <flounder/statement.h>
 #include <memory>
+#include <sstream>
 #include <utility>
 namespace NES::Nautilus::Backends::Flounder {
 
 FlounderLoweringProvider::FlounderLoweringProvider() = default;
 
-std::unique_ptr<flounder::Executable> FlounderLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
-    auto ctx = LoweringContext(ir);
-    return ctx.process(compiler);
+std::unique_ptr<flounder::Executable> FlounderLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir,
+                                                                      const NES::DumpHelper& dumpHelper) {
+    flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
+                                                     /*collect the asm code to print later*/ true};
+    auto ctx = LoweringContext(std::move(ir));
+    return ctx.process(compiler, dumpHelper);
 }
 
 FlounderLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir)) {}
 
-std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext::process(flounder::Compiler& compiler) {
+std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext::process(flounder::Compiler& compiler,
+                                                                                         const NES::DumpHelper& dumpHelper) {
 
     auto root = ir->getRootOperation();
     this->process(root);
@@ -59,15 +65,21 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
     auto executable = std::make_unique<flounder::Executable>();
 
     const auto flounder_code = program.code();
-    std::cout << "\n == Flounder Code == \n";
+
+    std::stringstream flounderCode;
+    flounderCode << "\n == Flounder Code == \n";
     for (const auto& line : flounder_code) {
-        std::cout << line << std::endl;
+        flounderCode << line << std::endl;
     }
+    dumpHelper.dump("3. flounder.ir", flounderCode.str());
     const auto is_compilation_successful = compiler.compile(program, *executable.get());
-    if (executable->compilate().has_code())
+    if (executable->compilate().has_code()) {
+        std::stringstream flounderASM;
         for (const auto& line : executable->compilate().code()) {
-            std::cout << line << std::endl;
+            flounderASM << line << std::endl;
         }
+        dumpHelper.dump("3. flounder.asm", flounderASM.str());
+    }
     return executable;
 }
 
