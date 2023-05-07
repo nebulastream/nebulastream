@@ -135,7 +135,10 @@ TEST_P(MapQueryExecutionTest, MapLogarithmicFunctions) {
 TEST_P(MapQueryExecutionTest, TwoMapQuery) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64);
 
-    auto resultSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$new1", BasicType::INT64)->addField("test$new2", BasicType::INT64);
+    auto resultSchema = Schema::create()
+                            ->addField("test$id", BasicType::INT64)
+                            ->addField("test$new1", BasicType::INT64)
+                            ->addField("test$new2", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(resultSchema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 

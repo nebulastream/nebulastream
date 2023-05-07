@@ -34,6 +34,7 @@ class CPPExecutable : public Executable {
   public:
     void* getInvocableFunctionPtr(const std::string& member) override;
     bool hasInvocableFunctionPtr() override;
+
   private:
     std::shared_ptr<Compiler::DynamicObject> obj;
 };

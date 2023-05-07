@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>

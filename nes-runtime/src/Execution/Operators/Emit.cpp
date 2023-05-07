@@ -22,7 +22,8 @@ namespace NES::Runtime::Execution::Operators {
 
 class EmitState : public OperatorState {
   public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
+    explicit EmitState(const RecordBuffer& resultBuffer)
+        : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
     Value<UInt64> outputIndex = (uint64_t) 0;
     RecordBuffer resultBuffer;
     Value<MemRef> bufferReference;
