@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.74](https://github.com/nebulastream/nebulastream/tree/v0.5.74) (2023-05-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.73...v0.5.74)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus C++ backend [\#3699](https://github.com/nebulastream/nebulastream/issues/3699)
+
 ## [v0.5.73](https://github.com/nebulastream/nebulastream/tree/v0.5.73) (2023-05-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.72...v0.5.73)
