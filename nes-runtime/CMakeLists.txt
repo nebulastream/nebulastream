@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set(CMAKE_VERBOSE_MAKEFILE on)
+#set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(../cmake/LLVMIRUtil.cmake)
 include_directories(tests/include)
@@ -43,7 +43,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
-    message(STATUS "Enable bytecode interpreter")
+    message(STATUS "Enable dyncall")
 
 
     # We use the dyncall lib to call arbitrary runtime function.
@@ -156,18 +156,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     endif ()
 endif ()
 
-if ((NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI) AND (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH))
-    message(FATAL_ERROR "You cant activate JNI and BABELFISH at the same time")
-elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
-    target_compile_definitions(nes-runtime PUBLIC USE_BABELFISH)
-    add_library(babelfish STATIC IMPORTED)
-    set_target_properties(babelfish PROPERTIES IMPORTED_LOCATION //home/pgrulich/projects/nes/nautilusbf/makenative/lib/babelfish.so)
-    set_target_properties(babelfish PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/pgrulich/projects/nes/nautilusbf/makenative/lib/)
-    target_link_libraries(nes-runtime PUBLIC babelfish)
-    target_include_directories(nes-runtime PUBLIC
-            $<BUILD_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>
-            $<INSTALL_INTERFACE:/home/pgrulich/projects/nes/nautilusbf/makenative/lib/>)
-endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     # add flounder backend
@@ -207,14 +195,15 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     # Define map java udf utils class file
     if (NES_JAVA_UDF_UTILS_PATH)
         # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
-        add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+
         message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
 
         # Install Java deserialization helper.
         INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
     else()
         # Use Java helpers from test directory when working in CLion.
-        add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
+        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
     endif()
 endif()
 

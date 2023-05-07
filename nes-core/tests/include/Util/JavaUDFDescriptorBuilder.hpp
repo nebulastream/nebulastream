@@ -61,14 +61,14 @@ class JavaUDFDescriptorBuilder {
      * @param newInstance The serialized Java instance of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setInstance(const JavaSerializedInstance& newInstance);
+    JavaUDFDescriptorBuilder& setInstance(const jni::JavaSerializedInstance& newInstance);
 
     /**
      * Set the bytecode list of the Java UDF descriptor.
      * @param newByteCodeList The bytecode list of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
      */
-    JavaUDFDescriptorBuilder& setByteCodeList(const JavaUDFByteCodeList& newByteCodeList);
+    JavaUDFDescriptorBuilder& setByteCodeList(const jni::JavaUDFByteCodeList& newByteCodeList);
 
     /**
      * Set the input schema of the Java UDF descriptor.
@@ -110,8 +110,8 @@ class JavaUDFDescriptorBuilder {
   private:
     std::string className = "some_package.my_udf";
     std::string methodName = "udf_method";
-    JavaSerializedInstance instance = JavaSerializedInstance{1};// byte-array containing 1 byte
-    JavaUDFByteCodeList byteCodeList = JavaUDFByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
+    jni::JavaSerializedInstance instance = jni::JavaSerializedInstance{1};// byte-array containing 1 byte
+    jni::JavaUDFByteCodeList byteCodeList = jni::JavaUDFByteCodeList{{"some_package.my_udf"s, jni::JavaByteCode{1}}};
     SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
     SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
     std::string inputClassName = "some_package.my_input_type";

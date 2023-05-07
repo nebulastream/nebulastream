@@ -570,7 +570,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
         include_directories(${JNI_INCLUDE_DIRS})
         add_compile_definitions(ENABLE_JNI)
     else ()
-        message(STATUS "JNI not found")
+        message(FATAL_ERROR "JNI not found")
     endif ()
 endif ()
 

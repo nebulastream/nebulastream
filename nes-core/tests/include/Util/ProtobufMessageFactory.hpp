@@ -35,8 +35,8 @@ class ProtobufMessageFactory {
     static RegisterJavaUdfRequest createRegisterJavaUdfRequest(const std::string& udfName,
                                                                const std::string& udfClassName,
                                                                const std::string& methodName,
-                                                               const Catalogs::UDF::JavaSerializedInstance& serializedInstance,
-                                                               const Catalogs::UDF::JavaUDFByteCodeList& byteCodeList,
+                                                               const jni::JavaSerializedInstance& serializedInstance,
+                                                               const jni::JavaUDFByteCodeList& byteCodeList,
                                                                const SchemaPtr& outputSchema,
                                                                const std::string& inputClassName,
                                                                const std::string& outputClassName) {

@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace NES::Catalogs::UDF {
-
+namespace jni {
 // Utility types
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
@@ -30,6 +29,9 @@ using JavaByteCode = std::vector<char>;
 // that is provided by the Java client.
 using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
 using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
+}// namespace jni
+
+namespace NES::Catalogs::UDF {
 
 class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
@@ -58,8 +60,8 @@ class JavaUDFDescriptor : public UDFDescriptor {
      */
     JavaUDFDescriptor(const std::string& className,
                       const std::string& methodName,
-                      const JavaSerializedInstance& serializedInstance,
-                      const JavaUDFByteCodeList& byteCodeList,
+                      const jni::JavaSerializedInstance& serializedInstance,
+                      const jni::JavaUDFByteCodeList& byteCodeList,
                       const SchemaPtr inputSchema,
                       const SchemaPtr outputSchema,
                       const std::string& inputClassName,
@@ -85,8 +87,8 @@ class JavaUDFDescriptor : public UDFDescriptor {
      */
     static JavaUDFDescriptorPtr create(const std::string& className,
                                        const std::string& methodName,
-                                       const JavaSerializedInstance& serializedInstance,
-                                       const JavaUDFByteCodeList& byteCodeList,
+                                       const jni::JavaSerializedInstance& serializedInstance,
+                                       const jni::JavaUDFByteCodeList& byteCodeList,
                                        const SchemaPtr inputSchema,
                                        const SchemaPtr outputSchema,
                                        const std::string& inputClassName,
@@ -111,13 +113,13 @@ class JavaUDFDescriptor : public UDFDescriptor {
      * @brief Return the serialized instance of the UDF class which stores captured free variables.
      * @return Serialized instance of the UDF class.
      */
-    const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
+    const jni::JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
 
     /**
      * @brief Return the list of classes and their bytecode required to execute the UDF.
      * @return A map containing class names as keys and their bytecode as values.
      */
-    const JavaUDFByteCodeList& getByteCodeList() const { return byteCodeList; }
+    const jni::JavaUDFByteCodeList& getByteCodeList() const { return byteCodeList; }
 
     /**
      * @brief Return the output schema of the map UDF operation.
@@ -169,8 +171,8 @@ class JavaUDFDescriptor : public UDFDescriptor {
 
   private:
     const std::string className;
-    const JavaSerializedInstance serializedInstance;
-    const JavaUDFByteCodeList byteCodeList;
+    const jni::JavaSerializedInstance serializedInstance;
+    const jni::JavaUDFByteCodeList byteCodeList;
     SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
     const std::string inputClassName;

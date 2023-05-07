@@ -186,7 +186,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     auto byteCodeList = javaDescriptor->getByteCodeList();
                     auto classByteCode = std::find_if(byteCodeList.cbegin(),
                                                       byteCodeList.cend(),
-                                                      [&](const Catalogs::UDF::JavaClassDefinition& c) {
+                                                      [&](const jni::JavaClassDefinition& c) {
                                                           return c.first == className;
                                                       });
 
@@ -195,7 +195,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                                                        "The bytecode list of classes implementing the "
                                                        "UDF must contain the fully-qualified name of the UDF");
                     }
-                    Catalogs::UDF::JavaByteCode javaByteCode = classByteCode->second;
+                    jni::JavaByteCode javaByteCode = classByteCode->second;
 
                     //5. Prepare the multi-part message
                     cpr::Part part1 = {"firstPayload", to_string(payload)};

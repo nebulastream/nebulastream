@@ -15,7 +15,7 @@ include(ExternalProject)
 add_subdirectory(Util)
 
 # Copy Test Data
-file(COPY testData DESTINATION .)
+file(COPY testData DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
 

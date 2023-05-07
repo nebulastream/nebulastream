@@ -56,7 +56,7 @@ TEST_F(JavaUDFDescriptorTest, TheMethodNameMustNotBeEmtpy) {
 
 TEST_F(JavaUDFDescriptorTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
     EXPECT_THROW(JavaUDFDescriptorBuilder{}
-                     .setByteCodeList(JavaUDFByteCodeList{})// empty list
+                     .setByteCodeList(jni::JavaUDFByteCodeList{})// empty list
                      .build(),
                  UDFException);
 }
@@ -64,7 +64,7 @@ TEST_F(JavaUDFDescriptorTest, TheListOfByteCodeDefinitionsMustNotBeEmpty) {
 TEST_F(JavaUDFDescriptorTest, TheListOfByteCodeDefinitionsMustContainTheFullyQualifiedNameOfTheUdfClass) {
     // when
     auto unknownClassName = "some_other_package.some_other_class_name"s;
-    auto byteCodeList = JavaUDFByteCodeList{{"some_package.unknown_class_name"s, JavaByteCode{1}}};
+    auto byteCodeList = jni::JavaUDFByteCodeList{{"some_package.unknown_class_name"s, jni::JavaByteCode{1}}};
     // then
     EXPECT_THROW(JavaUDFDescriptorBuilder{}.setClassName(unknownClassName).setByteCodeList(byteCodeList).build(), UDFException);
 }
@@ -72,7 +72,7 @@ TEST_F(JavaUDFDescriptorTest, TheListOfByteCodeDefinitionsMustContainTheFullyQua
 TEST_F(JavaUDFDescriptorTest, TheListOfByteCodeDefinitionsMustNotContainEmptyByteCode) {
     // when
     auto className = "some_package.my_udf"s;
-    auto byteCodeListWithEmptyByteCode = JavaUDFByteCodeList{{className, JavaByteCode{}}};// empty byte array
+    auto byteCodeListWithEmptyByteCode = jni::JavaUDFByteCodeList{{className, jni::JavaByteCode{}}};// empty byte array
     // then
     EXPECT_THROW(JavaUDFDescriptorBuilder{}.setClassName(className).setByteCodeList(byteCodeListWithEmptyByteCode).build(),
                  UDFException);

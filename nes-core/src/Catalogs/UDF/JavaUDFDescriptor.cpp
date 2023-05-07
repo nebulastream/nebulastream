@@ -20,8 +20,8 @@ namespace NES::Catalogs::UDF {
 
 JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
                                      const std::string& methodName,
-                                     const JavaSerializedInstance& serializedInstance,
-                                     const JavaUDFByteCodeList& byteCodeList,
+                                     const jni::JavaSerializedInstance& serializedInstance,
+                                     const jni::JavaUDFByteCodeList& byteCodeList,
                                      const SchemaPtr inputSchema,
                                      const SchemaPtr outputSchema,
                                      const std::string& inputClassName,
@@ -45,7 +45,7 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
     if (byteCodeList.empty()) {
         throw UDFException("The bytecode list of classes implementing the UDF must not be empty");
     }
-    auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const JavaClassDefinition& c) {
+    auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
         return c.first == className;
     });
     if (classByteCode == byteCodeList.end()) {
