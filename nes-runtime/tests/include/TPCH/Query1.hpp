@@ -14,7 +14,6 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query1_HPP_
 
-#include <Execution/Expressions/Expression.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -26,6 +25,7 @@
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
+#include <Execution/Expressions/Expression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
