@@ -357,11 +357,9 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOper
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame) {
     if (!frame.contains(constIntOp->getIdentifier())) {
-        frame.setValue(constIntOp->getIdentifier(),
-                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
+        frame.setValue(constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
     } else {
-        frame.setValue(constIntOp->getIdentifier(),
-                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
+        frame.setValue(constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
     }
 }
 
@@ -369,11 +367,10 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFlo
     if (auto floatStamp = cast_if<IR::Types::FloatStamp>(constFloatOp->getStamp().get())) {
         auto floatType =
             (floatStamp->getBitWidth() == IR::Types::FloatStamp::BitWidth::F32) ? builder->getF32Type() : builder->getF64Type();
-        frame.setValue(
-            constFloatOp->getIdentifier(),
-            builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
-                                                    floatType,
-                                                    builder->getFloatAttr(floatType, constFloatOp->getValue())));
+        frame.setValue(constFloatOp->getIdentifier(),
+                       builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
+                                                               floatType,
+                                                               builder->getFloatAttr(floatType, constFloatOp->getValue())));
     }
 }
 

@@ -264,8 +264,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                         // Finally, we check whether the relation between the loop-induction-variable and the upperBound
                         // and the stepSize are valid. Then we assign the values to the countedLoopInfo.
                         auto countedLoopInfo = std::make_unique<Operations::CountedLoopInfo>();
-                        if (inductionVar->getValue() < upperBound->getValue()
-                            && stepSize->getValue() > 0) {
+                        if (inductionVar->getValue() < upperBound->getValue() && stepSize->getValue() > 0) {
                             countedLoopInfo->lowerBound = inductionVar->getValue();
                             countedLoopInfo->stepSize = stepSize->getValue();
                             countedLoopInfo->upperBound = upperBound->getValue() + comparisonContainsEqual;
