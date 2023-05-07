@@ -5,8 +5,8 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEEXTRACTIONFUNCTION_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEEXTRACTIONFUNCTION_HPP_
 
-#include "Nautilus/Interface/DataTypes/Integer/Int.hpp"
-#include "Nautilus/Interface/FunctionCall.hpp"
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
