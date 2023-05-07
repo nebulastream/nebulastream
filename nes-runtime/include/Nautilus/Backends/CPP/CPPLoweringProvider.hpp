@@ -15,7 +15,6 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPLOWERINGPROVIDER_HPP_
 
-#include "Nautilus/IR/Types/Stamp.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
@@ -40,6 +39,7 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/Util/Frame.hpp>
 #include <sstream>
 #include <unordered_set>
@@ -52,7 +52,7 @@ namespace NES::Nautilus::Backends::CPP {
  */
 class CPPLoweringProvider {
   public:
-    CPPLoweringProvider();
+    CPPLoweringProvider() = default;
     static std::string lower(std::shared_ptr<IR::IRGraph> ir);
 
   private:
@@ -61,10 +61,8 @@ class CPPLoweringProvider {
 
     class LoweringContext {
       public:
-        LoweringContext(std::shared_ptr<IR::IRGraph> ir);
+        explicit LoweringContext(std::shared_ptr<IR::IRGraph> ir);
         Code process();
-        std::string process(const std::shared_ptr<IR::BasicBlock>&, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::Operation>& operation, short block, RegisterFrame& frame);
 
       private:
         Code blockArguments;
@@ -73,23 +71,43 @@ class CPPLoweringProvider {
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_map<std::string, std::string> activeBlocks;
         std::unordered_set<std::string> functionNames;
-        void process(const std::shared_ptr<IR::Operations::AddOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::MulOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::DivOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::SubOperation>& opt, short block, RegisterFrame& frame);
+        std::string process(const std::shared_ptr<IR::BasicBlock>&, RegisterFrame& frame);
+        void process(IR::Operations::BasicBlockInvocation& opt, short block, RegisterFrame& frame);
+        void process(const std::shared_ptr<IR::Operations::Operation>& operation, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::IfOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::CompareOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::BranchOperation>& opt, short block, RegisterFrame& frame);
-        void process(IR::Operations::BasicBlockInvocation& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::LoadOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::StoreOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::OrOperation>& opt, short block, RegisterFrame& frame);
-        void process(const std::shared_ptr<IR::Operations::AndOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::NegateOperation>& opt, short block, RegisterFrame& frame);
         void process(const std::shared_ptr<IR::Operations::CastOperation>& opt, short block, RegisterFrame& frame);
-       std::string getVariable(const std::string& id);
+        static std::string getVariable(const std::string& id);
+        static std::string getType(const IR::Types::StampPtr& stamp);
+
+        template<class Type>
+        void processConst(const std::shared_ptr<IR::Operations::Operation>& opt, short blockIndex, RegisterFrame& frame) {
+            auto constValue = std::static_pointer_cast<Type>(opt);
+            auto var = getVariable(constValue->getIdentifier());
+            blockArguments << getType(constValue->getStamp()) << " " << var << ";\n";
+            frame.setValue(constValue->getIdentifier(), var);
+            blocks[blockIndex] << var << " = " << constValue->getValue() << ";\n";
+        }
+
+        template<class Type>
+        void processBinary(const std::shared_ptr<IR::Operations::Operation>& o,
+                           const std::string& operation,
+                           short blockIndex,
+                           RegisterFrame& frame) {
+            auto op = std::static_pointer_cast<Type>(o);
+            auto leftInput = frame.getValue(op->getLeftInput()->getIdentifier());
+            auto rightInput = frame.getValue(op->getRightInput()->getIdentifier());
+            auto resultVar = getVariable(op->getIdentifier());
+            blockArguments << getType(op->getStamp()) << " " << resultVar << ";\n";
+            frame.setValue(op->getIdentifier(), resultVar);
+            blocks[blockIndex] << resultVar << " = " << leftInput << operation << rightInput << ";\n";
+        }
     };
 };
-}// namespace NES::Nautilus::Backends::BC
+}// namespace NES::Nautilus::Backends::CPP
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPLOWERINGPROVIDER_HPP_

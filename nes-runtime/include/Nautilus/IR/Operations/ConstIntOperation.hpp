@@ -23,7 +23,7 @@ class ConstIntOperation : public Operation {
   public:
     explicit ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp);
     ~ConstIntOperation() override = default;
-    int64_t getConstantIntValue();
+    int64_t getValue();
 
     template<class T>
     T getIntegerViaType();

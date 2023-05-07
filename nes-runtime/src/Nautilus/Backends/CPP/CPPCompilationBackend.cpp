@@ -23,7 +23,6 @@
 
 namespace NES::Nautilus::Backends::CPP {
 
-// this makes nes crash if the logger singleton is destroyed before BCInterpreterBackend object as its dtor prints
 [[maybe_unused]] static CompilationBackendRegistry::Add<CPPCompilationBackend> cppCompilationBackend("CPPCompiler");
 
 std::unique_ptr<Executable>

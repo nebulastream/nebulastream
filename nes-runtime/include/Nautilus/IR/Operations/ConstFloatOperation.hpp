@@ -24,7 +24,7 @@ class ConstFloatOperation : public Operation {
     explicit ConstFloatOperation(OperationIdentifier identifier, double constantValue, Types::StampPtr stamp);
     ~ConstFloatOperation() override = default;
 
-    double getConstantFloatValue();
+    double getValue();
 
     template<class T>
     T getFloatViaType();

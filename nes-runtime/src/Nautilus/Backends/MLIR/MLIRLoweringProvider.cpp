@@ -358,10 +358,10 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOper
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame) {
     if (!frame.contains(constIntOp->getIdentifier())) {
         frame.setValue(constIntOp->getIdentifier(),
-                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getConstantIntValue()));
+                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
     } else {
         frame.setValue(constIntOp->getIdentifier(),
-                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getConstantIntValue()));
+                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
     }
 }
 
@@ -373,7 +373,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFlo
             constFloatOp->getIdentifier(),
             builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
                                                     floatType,
-                                                    builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue())));
+                                                    builder->getFloatAttr(floatType, constFloatOp->getValue())));
     }
 }
 

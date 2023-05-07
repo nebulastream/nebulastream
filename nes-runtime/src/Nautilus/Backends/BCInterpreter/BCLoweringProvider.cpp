@@ -466,7 +466,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         case IR::Operations::Operation::OperationType::ConstIntOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstIntOperation>(opt);
             auto defaultRegister = registerProvider.allocRegister();
-            defaultRegisterFile[defaultRegister] = constInt->getConstantIntValue();
+            defaultRegisterFile[defaultRegister] = constInt->getValue();
             auto targetRegister = registerProvider.allocRegister();
             frame.setValue(constInt->getIdentifier(), targetRegister);
             OpCode oc = {ByteCode::REG_MOV, defaultRegister, -1, targetRegister};
@@ -477,11 +477,11 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             auto constInt = std::static_pointer_cast<IR::Operations::ConstFloatOperation>(opt);
             auto defaultRegister = registerProvider.allocRegister();
             if (cast<IR::Types::FloatStamp>(constInt->getStamp())->getBitWidth() == IR::Types::FloatStamp::BitWidth::F32) {
-                auto floatValue = (float) constInt->getConstantFloatValue();
+                auto floatValue = (float) constInt->getValue();
                 auto floatReg = reinterpret_cast<float*>(&defaultRegisterFile[defaultRegister]);
                 *floatReg = floatValue;
             } else {
-                auto floatValue = (double) constInt->getConstantFloatValue();
+                auto floatValue = (double) constInt->getValue();
                 auto floatReg = reinterpret_cast<double*>(&defaultRegisterFile[defaultRegister]);
                 *floatReg = floatValue;
             }

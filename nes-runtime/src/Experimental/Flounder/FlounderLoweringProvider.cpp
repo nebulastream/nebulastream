@@ -446,7 +446,7 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
         }
         case IR::Operations::Operation::ConstIntOp: {
             auto constInt = std::static_pointer_cast<IR::Operations::ConstIntOperation>(opt);
-            auto flounderConst = program.constant64(constInt->getConstantIntValue());
+            auto flounderConst = program.constant64(constInt->getValue());
             frame.setValue(constInt->getIdentifier(), flounderConst);
             return;
         }

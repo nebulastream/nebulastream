@@ -75,7 +75,7 @@ void IRSerialization::serializeOperation(std::shared_ptr<IR::Operations::Operati
     if (operation->getOperationType() == IR::Operations::Operation::ConstIntOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation);
         opJson["type"] = "ConstInt";
-        opJson["value"] = constOp->getConstantIntValue();
+        opJson["value"] = constOp->getValue();
     } else if (operation->getOperationType() == IR::Operations::Operation::ConstBooleanOp) {
         auto constOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
         opJson["type"] = "ConstBool";

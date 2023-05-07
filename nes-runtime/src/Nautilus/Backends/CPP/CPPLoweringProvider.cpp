@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp"
+#include "Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp"
+#include "Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp"
+#include "Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp"
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
@@ -24,7 +28,6 @@
 
 namespace NES::Nautilus::Backends::CPP {
 
-CPPLoweringProvider::CPPLoweringProvider() = default;
 CPPLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir)) {}
 
 std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
@@ -32,7 +35,7 @@ std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
     return ctx.process().str();
 }
 
-std::string getType(const IR::Types::StampPtr& stamp) {
+std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::StampPtr& stamp) {
     if (stamp->isInteger()) {
         auto value = cast<IR::Types::IntegerStamp>(stamp);
         if (value->isSigned()) {
@@ -133,72 +136,6 @@ std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<
     }
 }
 
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::AndOperation>& addOpt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
-    auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto resultVar = getVariable(addOpt->getIdentifier());
-    blockArguments << getType(addOpt->getStamp()) << " " << resultVar << ";\n";
-    frame.setValue(addOpt->getIdentifier(), resultVar);
-    blocks[blockIndex] << resultVar << " = " << leftInput << " && " << rightInput << ";\n";
-}
-
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::OrOperation>& addOpt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
-    auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto resultVar = getVariable(addOpt->getIdentifier());
-    blockArguments << getType(addOpt->getStamp()) << " " << resultVar << ";\n";
-    frame.setValue(addOpt->getIdentifier(), resultVar);
-    blocks[blockIndex] << resultVar << " = " << leftInput << " || " << rightInput << ";\n";
-}
-
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::AddOperation>& addOpt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
-    auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    auto resultVar = getVariable(addOpt->getIdentifier());
-    blockArguments << getType(addOpt->getStamp()) << " " << resultVar << ";\n";
-    frame.setValue(addOpt->getIdentifier(), resultVar);
-    blocks[blockIndex] << resultVar << " = " << leftInput << " + " << rightInput << ";\n";
-}
-
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::SubOperation>& subOpt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    auto leftInput = frame.getValue(subOpt->getLeftInput()->getIdentifier());
-    auto rightInput = frame.getValue(subOpt->getRightInput()->getIdentifier());
-    auto resultVar = getVariable(subOpt->getIdentifier());
-    blockArguments << getType(subOpt->getStamp()) << " " << resultVar << ";\n";
-    frame.setValue(subOpt->getIdentifier(), resultVar);
-    blocks[blockIndex] << resultVar << " = " << leftInput << " - " << rightInput << ";\n";
-}
-
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::MulOperation>& mulOpt,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    auto leftInput = frame.getValue(mulOpt->getLeftInput()->getIdentifier());
-    auto rightInput = frame.getValue(mulOpt->getRightInput()->getIdentifier());
-    auto resultVar = getVariable(mulOpt->getIdentifier());
-    blockArguments << getType(mulOpt->getStamp()) << " " << resultVar << ";\n";
-    frame.setValue(mulOpt->getIdentifier(), resultVar);
-    blocks[blockIndex] << resultVar << " = " << leftInput << " * " << rightInput << ";\n";
-}
-
-void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::DivOperation>& divOp,
-                                                   short blockIndex,
-                                                   RegisterFrame& frame) {
-    auto leftInput = frame.getValue(divOp->getLeftInput()->getIdentifier());
-    auto rightInput = frame.getValue(divOp->getRightInput()->getIdentifier());
-    auto resultVar = getVariable(divOp->getIdentifier());
-    blockArguments << getType(divOp->getStamp()) << " " << resultVar << ";\n";
-    frame.setValue(divOp->getIdentifier(), resultVar);
-    blocks[blockIndex] << resultVar << " = " << leftInput << " / " << rightInput << ";\n";
-}
-
 void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::CompareOperation>& cmpOp,
                                                    short blockIndex,
                                                    RegisterFrame& frame) {
@@ -208,9 +145,10 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
     blockArguments << getType(cmpOp->getStamp()) << " " << resultVar << ";\n";
     frame.setValue(cmpOp->getIdentifier(), resultVar);
 
+    // we have to handle the special case that we want to do a null check. Currently, Nautilus IR just contains a x == 0, thus we check if x is a ptr type.
     if (cmpOp->isEquals() && cmpOp->getLeftInput()->getStamp()->isAddress() && cmpOp->getRightInput()->getStamp()->isInteger()) {
         blocks[blockIndex] << resultVar << " = " << leftInput << " == nullptr;\n";
-        return ;
+        return;
     }
 
     std::string comperator;
@@ -298,47 +236,31 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
                                                    RegisterFrame& frame) {
     switch (opt->getOperationType()) {
         case IR::Operations::Operation::OperationType::ConstBooleanOp: {
-            auto constInt = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(opt);
-            auto var = getVariable(constInt->getIdentifier());
-            blockArguments << getType(constInt->getStamp()) << " " << var << ";\n";
-            frame.setValue(constInt->getIdentifier(), var);
-            blocks[blockIndex] << var << " = " << constInt->getValue() << ";\n";
+            processConst<IR::Operations::ConstBooleanOperation>(opt, blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::ConstIntOp: {
-            auto constInt = std::static_pointer_cast<IR::Operations::ConstIntOperation>(opt);
-            auto var = getVariable(constInt->getIdentifier());
-            frame.setValue(constInt->getIdentifier(), var);
-            blockArguments << getType(constInt->getStamp()) << " " << var << ";\n";
-            blocks[blockIndex] << var << " = " << constInt->getConstantIntValue() << ";\n";
+            processConst<IR::Operations::ConstIntOperation>(opt, blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::ConstFloatOp: {
-            auto constInt = std::static_pointer_cast<IR::Operations::ConstFloatOperation>(opt);
-            auto var = getVariable(constInt->getIdentifier());
-            frame.setValue(constInt->getIdentifier(), var);
-            blockArguments << getType(constInt->getStamp()) << " " << var << ";\n";
-            blocks[blockIndex] << var << " = " << constInt->getConstantFloatValue() << ";\n";
+            processConst<IR::Operations::ConstFloatOperation>(opt, blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::AddOp: {
-            auto addOpt = std::static_pointer_cast<IR::Operations::AddOperation>(opt);
-            process(addOpt, blockIndex, frame);
+            processBinary<IR::Operations::AndOperation>(opt, "+", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::MulOp: {
-            auto mulOpt = std::static_pointer_cast<IR::Operations::MulOperation>(opt);
-            process(mulOpt, blockIndex, frame);
+            processBinary<IR::Operations::MulOperation>(opt, "*", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::SubOp: {
-            auto subOpt = std::static_pointer_cast<IR::Operations::SubOperation>(opt);
-            process(subOpt, blockIndex, frame);
+            processBinary<IR::Operations::SubOperation>(opt, "-", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::DivOp: {
-            auto divOpt = std::static_pointer_cast<IR::Operations::DivOperation>(opt);
-            process(divOpt, blockIndex, frame);
+            processBinary<IR::Operations::DivOperation>(opt, "/", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::ReturnOp: {
@@ -383,13 +305,11 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
             return;
         }
         case IR::Operations::Operation::OperationType::OrOp: {
-            auto call = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
-            process(call, blockIndex, frame);
+            processBinary<IR::Operations::OrOperation>(opt, "||", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::AndOp: {
-            auto call = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
-            process(call, blockIndex, frame);
+            processBinary<IR::Operations::AndOperation>(opt, "&&", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::NegateOp: {
