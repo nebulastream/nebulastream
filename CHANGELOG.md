@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.72](https://github.com/nebulastream/nebulastream/tree/v0.5.72) (2023-05-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.71...v0.5.72)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add List Functions to Nautilus  [\#3131](https://github.com/nebulastream/nebulastream/issues/3131)
+
 ## [v0.5.71](https://github.com/nebulastream/nebulastream/tree/v0.5.71) (2023-05-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.70...v0.5.71)
