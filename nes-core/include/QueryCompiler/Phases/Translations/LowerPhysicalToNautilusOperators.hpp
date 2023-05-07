@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
+#include "Execution/Operators/Streaming/TimeFunction.hpp"
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
