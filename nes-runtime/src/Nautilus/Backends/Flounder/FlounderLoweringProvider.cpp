@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/CastOperation.hpp"
-#include "Nautilus/IR/Operations/LoadOperation.hpp"
-#include "Nautilus/IR/Operations/Operation.hpp"
-#include "flounder/ir/instructions.h"
-#include "flounder/ir/label.h"
-#include "flounder/ir/register.h"
+#include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <Nautilus/IR/Operations/LoadOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <flounder/ir/instructions.h>
+#include <flounder/ir/label.h>
+#include <flounder/ir/register.h>
 #include <Nautilus/Backends/Flounder/FlounderLoweringProvider.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>

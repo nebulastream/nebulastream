@@ -14,9 +14,9 @@
 #ifndef NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 
-#include "Nautilus/IR/Operations/CastOperation.hpp"
-#include "flounder/ir/instructions.h"
-#include "flounder/ir/register.h"
+#include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <flounder/ir/instructions.h>
+#include <flounder/ir/register.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
