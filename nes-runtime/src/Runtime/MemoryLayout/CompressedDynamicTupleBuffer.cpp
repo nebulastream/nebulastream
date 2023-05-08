@@ -143,7 +143,7 @@ void CompressedDynamicTupleBuffer::compressVertical(CompressionAlgorithm targetC
             case CompressionAlgorithm::SNAPPY: compressSnappyVertical(); break;
             case CompressionAlgorithm::FSST: compressFsstVertical(); break;
             case CompressionAlgorithm::RLE: compressRleVertical(); break;
-            case CompressionAlgorithm::SPRINTZ: NES_NOT_IMPLEMENTED(); break;
+            case CompressionAlgorithm::SPRINTZ: compressSprintzVertical(); break;
         }
     } else {
         NES_THROW_RUNTIME_ERROR(printf("Cannot compress from %s to %s.",
@@ -189,7 +189,7 @@ void CompressedDynamicTupleBuffer::decompressHorizontal() {
         case CompressionAlgorithm::SNAPPY: decompressSnappyHorizontal(); break;
         case CompressionAlgorithm::FSST: decompressFsstHorizontal(); break;
         case CompressionAlgorithm::RLE: decompressRleHorizontal(); break;
-        case CompressionAlgorithm::SPRINTZ: NES_NOT_IMPLEMENTED(); break;
+        case CompressionAlgorithm::SPRINTZ: decompressSprintzHorizontal(); break;
     }
 }
 
@@ -200,7 +200,7 @@ void CompressedDynamicTupleBuffer::decompressVertical() {
         case CompressionAlgorithm::SNAPPY: decompressSnappyVertical(); break;
         case CompressionAlgorithm::FSST: decompressFsstVertical(); break;
         case CompressionAlgorithm::RLE: decompressRleVertical(); break;
-        case CompressionAlgorithm::SPRINTZ: NES_NOT_IMPLEMENTED(); break;
+        case CompressionAlgorithm::SPRINTZ: decompressSprintzVertical(); break;
     }
 }
 
@@ -714,18 +714,82 @@ void CompressedDynamicTupleBuffer::decompressRleVertical() {
 // ===================================
 void CompressedDynamicTupleBuffer::compressSprintzHorizontal() {
     uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    size_t srcSize = strlen(reinterpret_cast<const char*>(baseSrcPointer));
-    auto* baseDstPointer = (uint8_t*) malloc(srcSize);// TODO? new TupleBuffer instead?
-    for (size_t i = 0; i < srcSize; i++) {            // TODO src content exists but without gibberish
-        baseDstPointer[i] = '\0';
+    uint8_t* baseDstPointer = (uint8_t*) calloc(1, 1.2 * totalOriginalSize);// TODO magic number
+
+    int64_t compressedSize = sprintz_compress_delta_8b(baseSrcPointer,
+                                                       totalOriginalSize,
+                                                       reinterpret_cast<int8_t*>(baseDstPointer),
+                                                       this->getMemoryLayout()->getTupleSize());
+    if ((size_t) compressedSize > totalOriginalSize) {
+        // TODO do not compress and return original buffer
+        NES_THROW_RUNTIME_ERROR("Sprintz compression failed: compressed size ("
+                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
     }
-    uint16_t nDimensions = 1;
-    int64_t res = sprintz_compress_delta_8b(baseSrcPointer, srcSize, reinterpret_cast<int8_t*>(baseDstPointer), nDimensions);
     clearBuffer();
-    size_t compressedSize = strlen(reinterpret_cast<const char*>(baseDstPointer));//473
     compressedSizes.push_back(compressedSize);
     memcpy(baseSrcPointer, baseDstPointer, compressedSize);
     this->compressionAlgorithm = CompressionAlgorithm::SPRINTZ;
+    free(baseDstPointer);
+}
+
+void CompressedDynamicTupleBuffer::decompressSprintzHorizontal() {
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
+
+    const int64_t decompressedSize = sprintz_decompress_delta_8b(reinterpret_cast<const int8_t*>(baseSrcPointer), baseDstPointer);
+    if ((size_t) decompressedSize != totalOriginalSize)
+        NES_THROW_RUNTIME_ERROR("Sprintz decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+                                                                                    << totalOriginalSize << ").");
+    clearBuffer();
+    if (offsets.size() == 1) {
+        memcpy(baseSrcPointer, baseDstPointer, decompressedSize);
+    } else {
+        auto newOffsets = getOffsets(this->getMemoryLayout());
+        auto types = this->getMemoryLayout()->getPhysicalTypes();
+        for (size_t i = 0; i < offsets.size(); i++) {
+            const size_t dstSize = types[i].get()->size() * this->getNumberOfTuples();
+            memcpy(baseSrcPointer + newOffsets[i], baseDstPointer + offsets[i], dstSize);
+        }
+        offsets = newOffsets;
+    }
+    compressedSizes = {};
+    compressionAlgorithm = CompressionAlgorithm::NONE;
+    free(baseDstPointer);
+}
+
+void CompressedDynamicTupleBuffer::compressSprintzVertical() {
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
+
+    int64_t compressedSize = sprintz_compress_delta_8b(baseSrcPointer,
+                                                       this->getBuffer().getBufferSize(),
+                                                       reinterpret_cast<int8_t*>(baseDstPointer),
+                                                       1);
+    if ((size_t) compressedSize > totalOriginalSize) {
+        // TODO do not compress and return original buffer
+        NES_THROW_RUNTIME_ERROR("Sprintz compression failed: compressed size ("
+                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
+    }
+    clearBuffer();
+    compressedSizes.push_back(compressedSize);
+    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
+    this->compressionAlgorithm = CompressionAlgorithm::SPRINTZ;
+    free(baseDstPointer);
+}
+
+void CompressedDynamicTupleBuffer::decompressSprintzVertical() {
+    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
+
+    const int64_t decompressedSize = sprintz_decompress_delta_8b(reinterpret_cast<const int8_t*>(baseSrcPointer), baseDstPointer);
+    if ((size_t) decompressedSize != this->getBuffer().getBufferSize())
+        NES_THROW_RUNTIME_ERROR("Sprintz decompression failed: decompressed size (" << decompressedSize << ") != buffer size ("
+                                                                                    << this->getBuffer().getBufferSize() << ").");
+    clearBuffer();
+    memcpy(baseSrcPointer, baseDstPointer, decompressedSize);
+    compressedSizes = {};
+    compressionAlgorithm = CompressionAlgorithm::NONE;
+    free(baseDstPointer);
 }
 
 }// namespace NES::Runtime::MemoryLayouts

@@ -91,6 +91,9 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     void compressRleVertical();
     void decompressRleVertical();
     void compressSprintzHorizontal();
+    void decompressSprintzHorizontal();
+    void compressSprintzVertical();
+    void decompressSprintzVertical();
 };
 
 }// namespace NES::Runtime::MemoryLayouts

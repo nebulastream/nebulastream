@@ -26,7 +26,7 @@ limitations under the License.
 #include <vector>
 
 // ======================================================================
-// NOTE: tests work when executed individually
+// NOTE: all tests succeed when executed individually
 // TODO: fix bug when executing all tests at once
 // ======================================================================
 
@@ -51,14 +51,14 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
 };
 
 void CompressionTest::fillBufferSingleColumn(CompressedDynamicTupleBuffer& buffer) {
-    const int numTuples = 100;
+    const int numTuples = 1000;
     buffer.setNumberOfTuples(numTuples);
     const int character = 70;// == 'F'
     int i = 0;
-    for (; i < 30; i++) {
+    for (; i < 300; i++) {
         buffer[i][0].write<uint8_t>(character);
     }
-    for (; i < 60; i++) {
+    for (; i < 600; i++) {
         buffer[i][0].write<uint8_t>(0);
     }
     for (; i < numTuples; i++) {
@@ -66,24 +66,24 @@ void CompressionTest::fillBufferSingleColumn(CompressedDynamicTupleBuffer& buffe
     }
 }
 void CompressionTest::fillBufferMultiColumn(CompressedDynamicTupleBuffer& buffer) {
-    const int numTuples = 120;
+    const int numTuples = 500;
     buffer.setNumberOfTuples(numTuples);
     const int character = 65;// == 'A'
-    // first column: 10A
+    // first column: 500A
     for (int i = 0; i < numTuples; i++) {
         buffer[i][2].write<uint8_t>(character);
     }
-    // second column: 30B40'0'50C
-    for (int i = 0; i < 30; i++) {
+    // second column: 200B100'0'200C
+    for (int i = 0; i < 200; i++) {
         buffer[i][1].write<uint8_t>(character + 1);
     }
-    for (int i = 3; i < 70; i++) {
+    for (int i = 3; i < 300; i++) {
         buffer[i][1].write<uint8_t>(0);
     }
     for (int i = 7; i < numTuples; i++) {
         buffer[i][1].write<uint8_t>(character + 2);
     }
-    // third column: 10A
+    // third column: 500A
     for (int i = 0; i < numTuples; i++) {
         buffer[i][2].write<uint8_t>(character);
     }
@@ -637,81 +637,83 @@ TEST_F(CompressionTest, rleColumnLayoutVerticalMultiColumnUint8) {
 // Horizontal
 // ===================================
 TEST_F(CompressionTest, sprintzRowLayoutHorizontalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-
-    int i = 0;
-
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(72);
-    }
-    // copy for comparison
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
-    memcpy(bufferOrig.getBuffer().getBuffer(), buffer.getBuffer().getBuffer(), bufferOrig.getCapacity());
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     buffer.compress(CompressionAlgorithm::SPRINTZ);
-
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    bool contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_FALSE(contentIsEqual);
+    verifyCompressed(bufferOrig, buffer);
 
     //decompress
     buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
 
-    // evaluate
-    // raw content
-    contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    contentCompressed = reinterpret_cast<const char*>(buffer.getBuffer().getBuffer());
-    contentIsEqual = strncmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
-    ASSERT_TRUE(contentIsEqual);
-    // field values
-    for (i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        ASSERT_EQ(bufferOrig[i][0].read<uint8_t>(), buffer[i][0].read<uint8_t>());
-    }
+TEST_F(CompressionTest, sprintzRowLayoutHorizontalMultiColumnUint8) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::SPRINTZ);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, sprintzColumnLayoutHorizontalSingleColumnUint8) {
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::SPRINTZ, CompressionMode::HORIZONTAL);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, sprintzColumnLayoutHorizontalMultiColumnUint8) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::SPRINTZ, CompressionMode::HORIZONTAL);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
 }
 
 // ===================================
 // Vertical
 // ===================================
 TEST_F(CompressionTest, sprintzRowLayoutVerticalSingleColumnUint8) {
-    int NUMBER_OF_TUPLES_IN_BUFFER = 10;
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
-
-    RowLayoutPtr rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(rowLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
-    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
-    int i = 0;
-    for (; i < 3; i++) {
-        buffer[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
-    for (; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
-        buffer[i][0].write<uint8_t>(71);
-    }
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
 
     // compress
     try {
@@ -722,5 +724,40 @@ TEST_F(CompressionTest, sprintzRowLayoutVerticalSingleColumnUint8) {
     } catch (...) {
         FAIL();
     }
+}
+
+TEST_F(CompressionTest, sprintzColumnLayoutVerticalSingleColumnUint8) {
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::SPRINTZ);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, sprintzColumnLayoutVerticalMultiColumnUint8) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::SPRINTZ);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
 }
 }// namespace NES::Runtime::MemoryLayouts
