@@ -174,7 +174,7 @@ TEST_P(MapQueryExecutionTest, TwoMapQuery) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(MapQueryExecutionTest, MapAbsFunctions) {
+TEST_P(MapQueryExecutionTest, MapAbsFunction) {
     auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
 
     auto resultSchema = Schema::create()
@@ -193,11 +193,8 @@ TEST_P(MapQueryExecutionTest, MapAbsFunctions) {
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        inputBuffer[recordIndex]["test$id"].write<double>((double)recordIndex);
+        inputBuffer[recordIndex]["test$id"].write<double>((double)-recordIndex);
     }
-    inputBuffer[1]["test$id"].write<double>(-1);
-    inputBuffer[2]["test$id"].write<double>(-0.54);
-    inputBuffer[3]["test$id"].write<double>(-3.14);
     inputBuffer.setNumberOfTuples(10);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();
@@ -209,6 +206,90 @@ TEST_P(MapQueryExecutionTest, MapAbsFunctions) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
     for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex]["test$abs"].read<double>(), std::fabs(recordIndex));
+    }
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_P(MapQueryExecutionTest, MapPowerFunctions) {
+    auto schema = Schema::create()
+                      ->addField("test$left$id", BasicType::FLOAT64)
+                      ->addField("test$right$id", BasicType::FLOAT64);
+
+    auto resultSchema = Schema::create()
+                            ->addField("test$left$id", BasicType::FLOAT64)
+                            ->addField("test$right$id", BasicType::FLOAT64)
+                            ->addField("test$power", BasicType::FLOAT64);
+    auto testSink = executionEngine->createDataSink(resultSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .map(Attribute("power") = POWER(Attribute("left$id"), Attribute("right$id")))
+                     .sink(testSinkDescriptor);
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto source = executionEngine->getDataSource(plan, 0);
+    ASSERT_TRUE(!!source);
+    // add buffer
+    auto inputBuffer = executionEngine->getBuffer(schema);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        inputBuffer[recordIndex]["test$left$id"].write<double>((double)2 * recordIndex);
+        inputBuffer[recordIndex]["test$right$id"].write<double>((double)recordIndex);
+    }
+    inputBuffer.setNumberOfTuples(10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    // compare results
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex]["test$power"].read<double>(), std::pow(2 * recordIndex, recordIndex));
+    }
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_P(MapQueryExecutionTest, MapTrigonometricFunctions) {
+    auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
+
+    auto resultSchema = Schema::create()
+                            ->addField("test$id", BasicType::FLOAT64)
+                            ->addField("test$sin", BasicType::FLOAT64)
+                            ->addField("test$cos", BasicType::FLOAT64)
+                            ->addField("test$radians", BasicType::FLOAT64);
+    auto testSink = executionEngine->createDataSink(resultSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .map(Attribute("sin") = SIN(Attribute("id")))
+                     .map(Attribute("cos") = COS(Attribute("id")))
+                     .map(Attribute("radians") = RADIANS(Attribute("id")))
+                     .sink(testSinkDescriptor);
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto source = executionEngine->getDataSource(plan, 0);
+    ASSERT_TRUE(!!source);
+    // add buffer
+    auto inputBuffer = executionEngine->getBuffer(schema);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        inputBuffer[recordIndex][0].write<double>(recordIndex);
+    }
+    inputBuffer.setNumberOfTuples(10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    // compare results
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex]["test$sin"].read<double>(), std::sin(recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex]["test$cos"].read<double>(), std::cos(recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex]["test$radians"].read<double>(), (recordIndex * M_PI) / 180);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
