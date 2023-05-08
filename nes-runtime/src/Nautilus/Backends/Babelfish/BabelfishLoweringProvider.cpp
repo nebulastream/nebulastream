@@ -41,18 +41,23 @@ std::stringstream BabelfishLoweringProvider::LoweringContext::process() {
 
     auto functionOperation = ir->getRootOperation();
     RegisterFrame rootFrame;
-    std::vector<std::string> arguments;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
     this->process(functionBasicBlock, rootFrame);
 
-    nlohmann::json opJson;
-
-    for (const auto& block : blocks) {
-        opJson.emplace_back(block);
+    nlohmann::json irJson{};
+    irJson["blocks"] = blocks;
+    irJson["id"] = ir->getRootOperation()->getIdentifier();
+    std::vector<nlohmann::json> arguments;
+    for (const auto& arg : functionOperation->getFunctionBasicBlock()->getArguments()) {
+        nlohmann::json irJson{};
+        irJson["id"] = arg->getIdentifier();
+        irJson["type"] = arg->getStamp()->toString();
+        arguments.emplace_back(irJson);
     }
+    irJson["arguments"] = arguments;
 
     std::stringstream pipelineCode;
-    pipelineCode << opJson;
+    pipelineCode << irJson;
     return pipelineCode;
 }
 
