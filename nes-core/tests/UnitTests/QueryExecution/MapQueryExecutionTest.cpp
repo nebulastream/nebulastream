@@ -211,7 +211,7 @@ TEST_P(MapQueryExecutionTest, MapAbsFunction) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(MapQueryExecutionTest, MapPowerFunctions) {
+TEST_P(MapQueryExecutionTest, MapPowerFunction) {
     auto schema = Schema::create()
                       ->addField("test$left$id", BasicType::FLOAT64)
                       ->addField("test$right$id", BasicType::FLOAT64);
