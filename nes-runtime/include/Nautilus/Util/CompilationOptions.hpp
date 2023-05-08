@@ -106,9 +106,15 @@ class CompilationOptions {
      */
     void setProxyInlining(const bool proxyInlining);
 
+    /**
+     * @brief Get the proxy inlining path.
+     */
+    const std::string getProxyInliningPath() const;
+
   private:
     std::string identifier;
     std::string dumpOutputPath;
+    std::string proxyInliningPath;
     bool dumpToFile = false;
     bool dumpToConsole = false;
     bool optimize = false;

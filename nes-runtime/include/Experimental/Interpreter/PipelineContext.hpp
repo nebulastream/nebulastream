@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_PIPELINECONTEXT_HPP_
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <unordered_map>
 namespace NES::Nautilus {
 class RecordBuffer;
 class Operator;

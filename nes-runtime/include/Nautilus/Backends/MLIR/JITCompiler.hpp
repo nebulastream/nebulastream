@@ -37,7 +37,7 @@ class JITCompiler {
 
     static std::unique_ptr<mlir::ExecutionEngine>
     jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
-                     llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                     const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
                      const std::vector<std::string>& jitProxyFunctionSymbols,
                      const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
                      const CompilationOptions& options,

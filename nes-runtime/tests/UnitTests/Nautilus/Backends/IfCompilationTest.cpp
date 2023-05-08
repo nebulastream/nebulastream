@@ -49,9 +49,7 @@ TEST_P(IfCompilationTest, ifConditionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return ifThenCondition();
     });
-    CompilationOptions options;
-    options.setProxyInlining(true);
-    auto engine = prepare(executionTrace, options);
+    auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 43);
 }
