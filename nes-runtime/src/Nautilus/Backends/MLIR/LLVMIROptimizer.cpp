@@ -19,6 +19,8 @@
 #include <llvm/Support/FileCollector.h>
 #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
+#include <iostream>
+#include <filesystem>
 namespace NES::Nautilus::Backends::MLIR {
 
 llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(const bool linkProxyFunctions,
@@ -51,8 +53,10 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
                 llvm::Attribute::get(llvmIRModule->getContext(), "tune-cpu", targetMachinePtr->getTargetCPU())
                 );
             llvm::SMDiagnostic Err;
+            // Todo we will remove this PROXY_FUNCTIONS_RESULT_DIR in issue #3709
+            const std::string PROXY_FUNCTIONS_RESULT_DIR = std::filesystem::temp_directory_path();
             auto proxyFunctionsIR = llvm::parseIRFile(
-                std::string(PROXY_FUNCTIONS_RESULT_DIR) + "proxiesReduced.ll", Err, llvmIRModule->getContext());
+                std::string(PROXY_FUNCTIONS_RESULT_DIR) + "/proxiesReduced.ll", Err, llvmIRModule->getContext());
             // Link the module with our generated LLVM IR module and optimize the linked LLVM IR module (inlining happens during optimization).
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR), llvm::Linker::Flags::OverrideFromSrc);
             auto optPipeline = mlir::makeOptimizingTransformer(3, 0, targetMachinePtr);
@@ -63,7 +67,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
             llvmIRModule->print(llvmStringStream, nullptr);
             auto* basicError = new std::error_code();
-            llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR)+ "generated.ll", *basicError);
+            llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR)+ "/generated.ll", *basicError);
             fileStream.write(llvmIRString.c_str(), llvmIRString.length());
             return optimizedModule;
         };

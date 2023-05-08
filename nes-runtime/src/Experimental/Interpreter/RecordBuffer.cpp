@@ -16,7 +16,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>

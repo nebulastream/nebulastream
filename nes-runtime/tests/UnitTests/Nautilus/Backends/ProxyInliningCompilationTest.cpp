@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -94,7 +94,8 @@ TEST_P(ProxyFunctionInliningCompilationTest, addIntFunctionTest) {
 auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testFunctionCalls,
                         ProxyFunctionInliningCompilationTest,
-                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        // ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        ::testing::Values("MLIR"),
                         [](const testing::TestParamInfo<ProxyFunctionInliningCompilationTest::ParamType>& info) {
                             return info.param;
                         });

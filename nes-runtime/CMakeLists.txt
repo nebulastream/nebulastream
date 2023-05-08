@@ -111,7 +111,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
-        add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp)
+        add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp)
         message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
         target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
 
@@ -132,12 +132,12 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
         set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}")
         list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
-        set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/)
-        target_compile_definitions(nes-runtime PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
+        # set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/)
+        target_compile_definitions(nes-runtime PRIVATE PROXY_FUNCTIONS_RESULT_DIR_CMAKE=\"${OP_BINARY_DIR}\")
 
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
-        target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
+        target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR_CMAKE=\"${OP_BINARY_DIR}\")
 
         target_link_libraries(generate-proxy-function-ir ${mlir_libs})
         target_link_libraries(generate-proxy-function-ir ${llvm_libs})

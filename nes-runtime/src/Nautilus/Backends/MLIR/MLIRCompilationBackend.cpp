@@ -25,7 +25,9 @@
 
 namespace NES::Nautilus::Backends::MLIR {
 
+//Singleton
 [[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");
+
 std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir,
                                                             const CompilationOptions& options,
                                                             const DumpHelper& dumpHelper) {
