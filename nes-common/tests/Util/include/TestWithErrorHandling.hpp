@@ -52,6 +52,6 @@ class TestWithErrorHandling : public testing::Test, public Exceptions::ErrorList
     std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
 };
 
-}// namespace NES
+}// namespace NES::Testing
 
 #endif//NES_NES_COMMON_TESTS_UTIL_TESTWITHERRORHANDLING_HPP_

@@ -37,13 +37,13 @@ void TestWithErrorHandling::TearDown() {
 }
 
 void TestWithErrorHandling::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack [{}]", signalNumber, strerror(errno), callstack);
     failTest();
     FAIL();
 }
 
 void TestWithErrorHandling::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
+    NES_ERROR2("onFatalException: exception=[{}] callstack=\n{}", exception->what(), callstack);
     failTest();
     FAIL();
 }
@@ -78,7 +78,6 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
             case std::future_status::ready: {
                 try {
                     auto res = future.get();
-                    ASSERT_TRUE(res);
                     if (!res) {
                         NES_FATAL_ERROR2("Got error in test [{}]", testName);
                         std::exit(-127);
