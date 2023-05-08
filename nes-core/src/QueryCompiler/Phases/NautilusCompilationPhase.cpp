@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "QueryCompiler/QueryCompilerOptions.hpp"
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -85,7 +84,6 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.setDumpToFile(compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE
                           || compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE);
 
-    // #Todo 3020 -> set inlining option when proxy inlining is chosen
     options.setProxyInlining(compilerOptions->getCompilationStrategy() == QueryCompilerOptions::CompilationStrategy::PROXY_INLINING);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);

@@ -144,7 +144,6 @@ class TestExecutionEngine {
             QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
         workerConfiguration->queryCompiler.windowingStrategy =
             QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
-        //Todo #3020 -> does this set the compilation strategy for tests?
         workerConfiguration->queryCompiler.compilationStrategy =
             QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
         auto defaultSourceType = DefaultSourceType::create();

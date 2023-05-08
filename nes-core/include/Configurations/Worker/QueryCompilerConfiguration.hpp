@@ -58,7 +58,6 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::CompilationStrategy> compilationStrategy = {
         QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
-        //TODO #3020 -> is this where the default compilation strategy is set?
         QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE,
         "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE|PROXY_INLINING]."};
 
