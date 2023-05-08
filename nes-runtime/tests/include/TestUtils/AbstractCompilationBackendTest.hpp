@@ -43,7 +43,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
         std::cout << ir->toString() << std::endl;
         auto param = this->GetParam();
         auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
-        auto dumpHelper = DumpHelper::create("", true, false, "");
+        auto dumpHelper = DumpHelper::create("", true, true, "");
         CompilationOptions options;
         return compiler->compile(ir, options, dumpHelper);
     }

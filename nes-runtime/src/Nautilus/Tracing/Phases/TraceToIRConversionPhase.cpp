@@ -192,6 +192,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
     // check if we jump to a loop head:
     if (targetBlock.operations.back().op == OpCode::CMP) {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
+        /**
 #ifdef USE_BABELFISH
         if (isBlockInLoop(targetBlock.blockId, BasicType::UINT32_MAX)) {
             NES_DEBUG("1. found loop");
@@ -210,6 +211,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
             return;
         }
 #endif
+         */
     }
 
     auto resultTargetBlock = processBlock(scope - 1, trace->getBlock(blockRef.block));

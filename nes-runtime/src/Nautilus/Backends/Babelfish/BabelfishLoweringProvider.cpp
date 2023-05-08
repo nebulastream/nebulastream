@@ -1,0 +1,272 @@
+/*
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include <Nautilus/Backends/Babelfish/BabelfishLoweringProvider.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/AddressStamp.hpp>
+#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <sstream>
+#include <utility>
+#include <vector>
+
+namespace NES::Nautilus::Backends::Babelfish {
+
+BabelfishLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir)) {}
+
+std::string BabelfishLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
+    auto ctx = LoweringContext(std::move(ir));
+    return ctx.process().str();
+}
+
+std::stringstream BabelfishLoweringProvider::LoweringContext::process() {
+
+    auto functionOperation = ir->getRootOperation();
+    RegisterFrame rootFrame;
+    std::vector<std::string> arguments;
+    auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
+    this->process(functionBasicBlock, rootFrame);
+
+    nlohmann::json opJson;
+
+    for (const auto& block : blocks) {
+        opJson.emplace_back(block);
+    }
+
+    std::stringstream pipelineCode;
+    pipelineCode << opJson;
+    return pipelineCode;
+}
+
+std::string BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block,
+                                                                RegisterFrame& frame) {
+    // assume that all argument registers are correctly set
+    auto entry = activeBlocks.find(block->getIdentifier());
+    if (entry == activeBlocks.end()) {
+        // create bytecode block;
+        auto blockName = block->getIdentifier();
+        auto blockIndex = blocks.size();
+        auto& blockJson = blocks.emplace_back();
+        blockJson["id"] = blockName;
+        std::vector<nlohmann::json> arguments;
+        for (const auto& arg : block->getArguments()) {
+            arguments.emplace_back(arg->getIdentifier());
+        }
+        blockJson["arguments"] = arguments;
+        activeBlocks.emplace(block->getIdentifier(), blockName);
+        std::vector<nlohmann::json> jsonOperations;
+        for (auto& opt : block->getOperations()) {
+            this->process(opt, blockIndex, jsonOperations, frame);
+        }
+
+        for (auto& jsonBlock : blocks) {
+            NES_DEBUG2("block id: {}", jsonBlock["id"]);
+            if (jsonBlock["id"] == block->getIdentifier()) {
+                NES_DEBUG2("add operations to block id: {}", jsonBlock["id"]);
+                jsonBlock["operations"] = jsonOperations;
+            }
+        }
+        return blockName;
+    } else {
+        return entry->second;
+    }
+}
+
+void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::CompareOperation>& operation,
+                                                         nlohmann::json& opJson) {
+    auto cmpOp = std::static_pointer_cast<IR::Operations::CompareOperation>(operation);
+    opJson["type"] = "Compare";
+    opJson["left"] = cmpOp->getLeftInput()->getIdentifier();
+    opJson["right"] = cmpOp->getRightInput()->getIdentifier();
+
+    std::string comperator;
+    if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::EQ) {
+        comperator = "EQ";
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LT) {
+        comperator = "LT";
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GT) {
+        comperator = "GT";
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::GE) {
+        comperator = "GE";
+    } else if (cmpOp->getComparator() == IR::Operations::CompareOperation::Comparator::LE) {
+        comperator = "LE";
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+    opJson["Compare"] = comperator;
+}
+
+nlohmann::json BabelfishLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInvocation& blockInvocation) {
+    nlohmann::json opJson{};
+    auto blockInputArguments = blockInvocation.getArguments();
+    auto blockTargetArguments = blockInvocation.getBlock()->getArguments();
+    opJson["target"] = blockInvocation.getBlock()->getIdentifier();
+    std::vector<nlohmann::json> arguments;
+    for (const auto& arg : blockInvocation.getArguments()) {
+        arguments.emplace_back(arg->getIdentifier());
+    }
+    opJson["arguments"] = arguments;
+    return opJson;
+}
+
+void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::Operation>& operation,
+                                                         short,
+                                                         std::vector<nlohmann::json>& block,
+                                                         RegisterFrame& frame) {
+    nlohmann::json& opJson = block.emplace_back(nlohmann::json{});
+    opJson["stamp"] = operation->getStamp()->toString();
+    opJson["id"] = operation->getIdentifier();
+    switch (operation->getOperationType()) {
+        case IR::Operations::Operation::OperationType::ConstBooleanOp: {
+            auto constOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
+            opJson["type"] = "ConstBool";
+            opJson["value"] = constOp->getValue();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::ConstIntOp: {
+            auto constOp = std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation);
+            opJson["type"] = "ConstInt";
+            opJson["value"] = constOp->getValue();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::ConstFloatOp: {
+            auto constOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
+            opJson["type"] = "ConstBool";
+            opJson["value"] = constOp->getValue();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::AddOp: {
+            auto constOp = std::static_pointer_cast<IR::Operations::AddOperation>(operation);
+            opJson["type"] = "Add";
+            opJson["left"] = constOp->getLeftInput()->getIdentifier();
+            opJson["right"] = constOp->getRightInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::MulOp: {
+            auto mulOp = std::static_pointer_cast<IR::Operations::MulOperation>(operation);
+            opJson["type"] = "Mul";
+            opJson["left"] = mulOp->getLeftInput()->getIdentifier();
+            opJson["right"] = mulOp->getRightInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::SubOp: {
+            auto constOp = std::static_pointer_cast<IR::Operations::AddOperation>(operation);
+            opJson["type"] = "Sub";
+            opJson["left"] = constOp->getLeftInput()->getIdentifier();
+            opJson["right"] = constOp->getRightInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::DivOp: {
+            auto op = std::static_pointer_cast<IR::Operations::DivOperation>(operation);
+            opJson["type"] = "Div";
+            opJson["left"] = op->getLeftInput()->getIdentifier();
+            opJson["right"] = op->getRightInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::ReturnOp: {
+            auto constOp = std::static_pointer_cast<IR::Operations::ReturnOperation>(operation);
+            opJson["type"] = "Return";
+            if (constOp->hasReturnValue())
+                opJson["value"] = constOp->getReturnValue()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::CompareOp: {
+            auto compOpt = std::static_pointer_cast<IR::Operations::CompareOperation>(operation);
+            process(compOpt, opJson);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::IfOp: {
+            auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(operation);
+            opJson["type"] = "If";
+            opJson["input"] = ifOp->getValue()->getIdentifier();
+            opJson["trueCase"] = process(ifOp->getTrueBlockInvocation());
+            opJson["falseCase"] = process(ifOp->getFalseBlockInvocation());
+            process(ifOp->getTrueBlockInvocation().getBlock(), frame);
+            process(ifOp->getFalseBlockInvocation().getBlock(), frame);
+            return;
+        }
+
+        case IR::Operations::Operation::OperationType::BranchOp: {
+            auto compOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operation);
+            opJson["type"] = "Branch";
+            opJson["next"] = process(compOp->getNextBlockInvocation());
+            process(compOp->getNextBlockInvocation().getBlock(), frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::LoadOp: {
+            auto loadOp = std::static_pointer_cast<IR::Operations::LoadOperation>(operation);
+            opJson["type"] = "Load";
+            opJson["address"] = loadOp->getAddress()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::StoreOp: {
+            auto storeOp = std::static_pointer_cast<IR::Operations::StoreOperation>(operation);
+            opJson["type"] = "Store";
+            opJson["address"] = storeOp->getAddress()->getIdentifier();
+            opJson["value"] = storeOp->getValue()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::ProxyCallOp: {
+            auto proxyCallOp = std::static_pointer_cast<IR::Operations::ProxyCallOperation>(operation);
+            opJson["type"] = "call";
+            opJson["symbol"] = proxyCallOp->getFunctionSymbol();
+            std::vector<nlohmann::json> arguments;
+            for (const auto& arg : proxyCallOp->getInputArguments()) {
+                arguments.emplace_back(arg->getIdentifier());
+            }
+            opJson["arguments"] = arguments;
+            return;
+        }
+        case IR::Operations::Operation::OperationType::OrOp: {
+            auto andOp = std::static_pointer_cast<IR::Operations::OrOperation>(operation);
+            opJson["type"] = "And";
+            opJson["left"] = andOp->getLeftInput()->getIdentifier();
+            opJson["right"] = andOp->getRightInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::AndOp: {
+            auto andOp = std::static_pointer_cast<IR::Operations::AndOperation>(operation);
+            opJson["type"] = "And";
+            opJson["left"] = andOp->getLeftInput()->getIdentifier();
+            opJson["right"] = andOp->getRightInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::NegateOp: {
+            auto negate = std::static_pointer_cast<IR::Operations::NegateOperation>(operation);
+            opJson["type"] = "Negate";
+            opJson["input"] = negate->getInput()->getIdentifier();
+            return;
+        }
+        case IR::Operations::Operation::OperationType::CastOp: {
+            auto andOp = std::static_pointer_cast<IR::Operations::OrOperation>(operation);
+            opJson["type"] = "Or";
+            opJson["left"] = andOp->getLeftInput()->getIdentifier();
+            opJson["right"] = andOp->getRightInput()->getIdentifier();
+            return;
+        }
+        default: {
+            NES_THROW_RUNTIME_ERROR("Operation " << operation->toString() << " not handled");
+            return;
+        }
+    }
+}
+
+}// namespace NES::Nautilus::Backends::Babelfish
