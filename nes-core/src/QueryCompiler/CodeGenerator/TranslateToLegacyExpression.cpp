@@ -13,7 +13,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -21,7 +20,6 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
@@ -99,6 +97,15 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
             // Translate LOG expression node.
             auto legacyChild = transformExpression(function->getArguments()[0]);
             return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
+        } else if (function->getFunctionName() == "abs") {
+            // Translate ABS expression node.
+            auto legacyChild = transformExpression(function->getArguments()[0]);
+            return UnaryPredicate(UnaryOperatorType::ABSOLUTE_VALUE_OF_OP, legacyChild).copy();
+        } else if (function->getFunctionName() == "power") {
+            // Translate POWER expression node.
+            auto legacyLeft = transformExpression(function->getArguments()[0]);
+            auto legacyRight = transformExpression(function->getArguments()[1]);
+            return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
         }
     }
     NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this expression node: {}",
@@ -139,17 +146,6 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto legacyLeft = transformExpression(modExpressionNode->getLeft());
         auto legacyRight = transformExpression(modExpressionNode->getRight());
         return Predicate(BinaryOperatorType::MODULO_OP, legacyLeft, legacyRight).copy();
-    } else if (expression->instanceOf<PowExpressionNode>()) {
-        // Translate POWER expression node.
-        auto powExpressionNode = expression->as<PowExpressionNode>();
-        auto legacyLeft = transformExpression(powExpressionNode->getLeft());
-        auto legacyRight = transformExpression(powExpressionNode->getRight());
-        return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
-    } else if (expression->instanceOf<AbsExpressionNode>()) {
-        // Translate ABS expression node.
-        auto absExpressionNode = expression->as<AbsExpressionNode>();
-        auto legacyChild = transformExpression(absExpressionNode->child());
-        return UnaryPredicate(UnaryOperatorType::ABSOLUTE_VALUE_OF_OP, legacyChild).copy();
     } else if (expression->instanceOf<CeilExpressionNode>()) {
         // Translate CEIL expression node.
         auto ceilExpressionNode = expression->as<CeilExpressionNode>();
