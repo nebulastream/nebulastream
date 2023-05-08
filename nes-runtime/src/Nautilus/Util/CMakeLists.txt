@@ -14,7 +14,6 @@
 
 add_source_files(nes-runtime
         CastUtils.cpp
-        CompilationOptions.cpp
         IRDumpHandler.cpp
         CompilationOptions.cpp
         )

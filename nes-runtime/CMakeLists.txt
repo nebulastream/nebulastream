@@ -139,7 +139,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
         target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
 
-        # message(STATUS "mlir libs: ${mlir_libs}")
         target_link_libraries(generate-proxy-function-ir ${mlir_libs})
         target_link_libraries(generate-proxy-function-ir ${llvm_libs})
         target_include_directories(generate-proxy-function-ir SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
