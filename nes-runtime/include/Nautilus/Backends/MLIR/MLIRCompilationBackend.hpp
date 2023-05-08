@@ -13,7 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
-#include "Nautilus/Util/CompilationOptions.hpp"
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::MLIR {
 

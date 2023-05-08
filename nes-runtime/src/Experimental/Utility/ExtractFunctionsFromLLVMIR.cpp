@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <filesystem>
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
@@ -161,7 +162,9 @@ int main(int argc, char** argv) {
     Passes.add(createStripDeadPrototypesPass());// Remove dead func decls
 
     std::error_code EC;
-    ToolOutputFile Out(std::string(PROXY_FUNCTIONS_RESULT_DIR) + "proxiesReduced.ll", EC, sys::fs::OF_None);
+    // Todo we will remove this PROXY_FUNCTIONS_RESULT_DIR in issue #3709
+    std::string PROXY_FUNCTIONS_RESULT_DIR = std::filesystem::temp_directory_path();
+    ToolOutputFile Out(PROXY_FUNCTIONS_RESULT_DIR + "/proxiesReduced.ll", EC, sys::fs::OF_None);
     if (EC) {
         errs() << EC.message() << '\n';
         return 1;

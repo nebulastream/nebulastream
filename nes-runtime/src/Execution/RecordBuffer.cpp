@@ -17,7 +17,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -61,7 +61,7 @@ void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
 }
 
 Value<UInt64> RecordBuffer::getWatermarkTs() {
-    return FunctionCall<>("NES__Runtime__TupleBuffer__getWatermark",
+    return FunctionCall<>("NES__Runtime__TupleBuffer__Watermark",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,
                           tupleBufferRef);
 }

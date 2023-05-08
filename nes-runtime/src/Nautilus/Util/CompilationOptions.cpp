@@ -38,12 +38,15 @@ void CompilationOptions::setProxyInlining(const bool proxyInlining) {
     // Todo in issue #3709 we aim to remove the dependency on PROXY_FUNCTIONS_RESULT_DIR and replace it with a
     // configurable path (analog to 'dumpOutputPath'). There should be a default, so that it is not required to 
     // configure a path to use the proxyInlining flag (avoid dependency).
+    // Todo we will remove this PROXY_FUNCTIONS_RESULT_DIR in issue #3709
+    const std::string PROXY_FUNCTIONS_RESULT_DIR = std::filesystem::temp_directory_path();
+    // const std::string PROXY_FUNCTIONS_RESULT_DIR = "../../../../llvm-ir/nes-runtime_opt/";
     if(proxyInlining && !std::filesystem::exists(PROXY_FUNCTIONS_RESULT_DIR)) {
         NES_THROW_RUNTIME_ERROR("We require a proxy functions file under: " << PROXY_FUNCTIONS_RESULT_DIR << 
                                 " to perform proxy function inlining");
     }
     CompilationOptions::proxyInlining = proxyInlining; 
-    CompilationOptions::proxyInliningPath = PROXY_FUNCTIONS_RESULT_DIR;
+    CompilationOptions::proxyInliningPath = PROXY_FUNCTIONS_RESULT_DIR + "/";
 }
 const std::string CompilationOptions::getProxyInliningPath() const { return proxyInliningPath; }
 
