@@ -36,8 +36,9 @@ class Record {
     void write(RecordFieldIdentifier fieldName, Value<>& value);
     uint64_t numberOfFields();
     bool hasField(RecordFieldIdentifier fieldName);
-
     std::vector<RecordFieldIdentifier> getAllFields();
+    std::string toString();
+
 
   private:
     std::map<RecordFieldIdentifier, Value<>> fields;

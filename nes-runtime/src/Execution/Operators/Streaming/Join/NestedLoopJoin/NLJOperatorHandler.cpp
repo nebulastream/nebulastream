@@ -20,30 +20,32 @@
 
 namespace NES::Runtime::Execution::Operators {
     bool NLJOperatorHandler::updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide) {
+        NES_DEBUG2("NLJOperatorHandler::updateStateOfNLJWindows for timestamp {} and isLeftSide {}", timestamp, isLeftSide);
         bool atLeastOneDoneFilling = false;
         for (auto& curWindow : nljWindows) {
-            if (curWindow.windowState == NLJWindow::WindowState::DONE_FILLING) {
+            auto currentWindowState = curWindow.getWindowState();
+            if (currentWindowState == NLJWindow::WindowState::DONE_FILLING) {
                 atLeastOneDoneFilling = true;
                 continue;
             }
-            if (curWindow.windowState == NLJWindow::WindowState::EMITTED_TO_NLJ_SINK ||
-                (isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING) ||
-                (!isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_LEFT_FILLING)) {
+            if (currentWindowState == NLJWindow::WindowState::EMITTED_TO_NLJ_SINK ||
+                (isLeftSide && currentWindowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING) ||
+                (!isLeftSide && currentWindowState == NLJWindow::WindowState::ONLY_LEFT_FILLING)) {
                 continue;
             }
 
             if (timestamp > curWindow.getWindowEnd()) {
-                if ((isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_LEFT_FILLING) ||
-                    (!isLeftSide && curWindow.windowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING)) {
-                    curWindow.windowState = NLJWindow::WindowState::DONE_FILLING;
+                if ((isLeftSide && currentWindowState == NLJWindow::WindowState::ONLY_LEFT_FILLING) ||
+                    (!isLeftSide && currentWindowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING)) {
+                    curWindow.updateWindowState(NLJWindow::WindowState::DONE_FILLING);
                     atLeastOneDoneFilling = true;
                 }
 
-                if (curWindow.windowState == NLJWindow::WindowState::BOTH_SIDES_FILLING) {
+                if (currentWindowState == NLJWindow::WindowState::BOTH_SIDES_FILLING) {
                     if (isLeftSide) {
-                        curWindow.windowState = NLJWindow::WindowState::ONLY_RIGHT_FILLING;
+                        curWindow.updateWindowState(NLJWindow::WindowState::ONLY_RIGHT_FILLING);
                     } else {
-                        curWindow.windowState = NLJWindow::WindowState::ONLY_LEFT_FILLING;
+                        curWindow.updateWindowState(NLJWindow::WindowState::ONLY_LEFT_FILLING);
                     }
                 }
             }
@@ -55,7 +57,7 @@ namespace NES::Runtime::Execution::Operators {
         return nljWindows;
     }
 
-    uint8_t *NLJOperatorHandler::insertNewTuple(uint64_t timestamp, bool isLeftSide) {
+    uint8_t* NLJOperatorHandler::insertNewTuple(uint64_t timestamp, bool isLeftSide) {
         auto window = getWindowByTimestamp(timestamp);
         while(!window.has_value()) {
             createNewWindow();
