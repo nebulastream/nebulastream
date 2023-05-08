@@ -38,6 +38,9 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setQueryCompiler(QueryCompiler::DEFAULT_QUERY_COMPILER);
     options.setDumpMode(DumpMode::FILE_AND_CONSOLE);
     options.setNautilusBackend(NautilusBackend::MLIR_COMPILER);
+    options.setNumberOfPartitions(16);
+    options.setPageSize(128);
+    options.setPreAllocPageCnt(16);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 QueryCompilerOptions::PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
@@ -75,5 +78,11 @@ void QueryCompilerOptions::setNautilusBackend(const NautilusBackend nautilusBack
 }
 const QueryCompilerOptions::DumpMode& QueryCompilerOptions::getDumpMode() const { return dumpMode; }
 void QueryCompilerOptions::setDumpMode(QueryCompilerOptions::DumpMode dumpMode) { QueryCompilerOptions::dumpMode = dumpMode; }
+uint64_t QueryCompilerOptions::getNumberOfPartitions() const { return numberOfPartitions; }
+void QueryCompilerOptions::setNumberOfPartitions(uint64_t num) { numberOfPartitions = num; }
+uint64_t QueryCompilerOptions::getPageSize() const { return pageSize; }
+void QueryCompilerOptions::setPageSize(uint64_t size) { pageSize = size; }
+uint64_t QueryCompilerOptions::getPreAllocPageCnt() const { return preAllocPageCnt; }
+void QueryCompilerOptions::setPreAllocPageCnt(uint64_t cnt) { preAllocPageCnt = cnt; }
 
 }// namespace NES::QueryCompilation

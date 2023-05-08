@@ -18,7 +18,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <utility>
-
+#include <iostream>
 namespace NES::Runtime::Execution::Operators {
 
 void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuffer&) {

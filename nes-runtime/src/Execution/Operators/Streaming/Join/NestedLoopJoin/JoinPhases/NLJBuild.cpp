@@ -32,18 +32,18 @@ void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t times
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
     NLJOperatorHandler* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->insertNewTuple(timestampRecord, isLeftSide);
+    return opHandler->allocateNewEntry(timestampRecord, isLeftSide);
 }
 
 /**
  * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
  */
-void checkWindowsTriggerProxy(void* ptrOpHandler,
-                              void* ptrPipelineCtx,
-                              void* ptrWorkerCtx,
-                              uint64_t watermarkTs,
-                              uint64_t sequenceNumber,
-                              OriginId originId) {
+void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
+                                         void* ptrPipelineCtx,
+                                         void* ptrWorkerCtx,
+                                         uint64_t watermarkTs,
+                                         uint64_t sequenceNumber,
+                                         OriginId originId) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
@@ -52,6 +52,7 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
+    //TODO: Multi threaded this can become a problem
     auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(watermarkTs, sequenceNumber, originId);
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
         auto buffer = workerCtx->allocateTupleBuffer();
@@ -67,7 +68,13 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // TODO for now, this is okay but we have to fix this with issue #3652
-    auto timestampVal = record.read(timeStampField).as<UInt64>();
+    //TODO change to timestampfunction
+    Value<UInt64> timestampVal = (uint64_t) 0;
+    if (timeStampField == "IngestionTime") {
+        timestampVal = ctx.getCurrentTs();
+    } else {
+        timestampVal = record.read(timeStampField).as<UInt64>();
+    }
 
     // Get the memRef to the new entry
     auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy",
@@ -91,8 +98,10 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // Update the watermark for the nlj operator and trigger windows
+    //TODO SZ: I am not sure this is doing it at the end of the buffer which is maybe fine for now but if a particular tuple within the buffer
+    // can trigger window this will be missed?
     Nautilus::FunctionCall("checkWindowsTriggerProxy",
-                           checkWindowsTriggerProxy,
+                           checkWindowsTriggerProxyForNLJBuild,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
                            ctx.getWorkerContext(),

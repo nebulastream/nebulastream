@@ -1,0 +1,82 @@
+#include <API/Schema.hpp>
+#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <DataGeneration/Nextmark/NexmarkCommon.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <fstream>
+#include <math.h>
+#include <algorithm>
+#include <utility>
+
+namespace NES::Benchmark::DataGeneration {
+
+NEAuctionDataGenerator::NEAuctionDataGenerator() : DataGenerator() {}
+
+std::string NEAuctionDataGenerator::getName() { return "NEAuction"; }
+std::vector<Runtime::TupleBuffer> NEAuctionDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+    std::vector<Runtime::TupleBuffer> buffers;
+    buffers.reserve(numberOfBuffers);
+
+    auto memoryLayout = getMemoryLayout(bufferSize);
+
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+        auto buffer = allocateBuffer();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+            long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
+            long offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
+            if (offset < NexmarkCommon::PERSON_EVENT_RATIO) {
+                epoch--;
+                offset = NexmarkCommon::AUCTION_EVENT_RATIO - 1;
+            } else {
+                offset = NexmarkCommon::AUCTION_EVENT_RATIO - 1;
+            }
+            long auctionId =  epoch * NexmarkCommon::AUCTION_EVENT_RATIO + offset;//r.nextLong(minAuctionId, maxAuctionId);
+
+            epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
+            offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
+
+            if (offset >= NexmarkCommon::PERSON_EVENT_RATIO) {
+                offset = NexmarkCommon::PERSON_EVENT_RATIO - 1;
+            }
+            long matchingPerson;
+            if (rand() % 100 > 85) {
+                long personId = epoch * NexmarkCommon::PERSON_EVENT_RATIO + offset;
+                matchingPerson = (personId / NexmarkCommon::HOT_SELLER_RATIO) * NexmarkCommon::HOT_SELLER_RATIO;
+            } else {
+                long personId = epoch * NexmarkCommon::PERSON_EVENT_RATIO + offset + 1;
+                long activePersons = std::min(personId, 20000L);
+                long n = rand() % (activePersons + 100);
+                matchingPerson = personId + activePersons - n;
+            }
+            dynamicBuffer[currentRecord]["id"].write<uint64_t>(auctionId);
+            dynamicBuffer[currentRecord]["seller"].write<uint64_t>(matchingPerson);
+        }
+        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        buffers.emplace_back(buffer);
+    }
+    return buffers;
+}
+SchemaPtr NEAuctionDataGenerator::getSchema() {
+    return Schema::create()
+        ->addField("id", BasicType::UINT64)
+        ->addField("itemName", BasicType::UINT64)
+        ->addField("itemNamePad", BasicType::UINT64)
+        ->addField("description", BasicType::UINT64)
+        ->addField("descriptionPad", BasicType::UINT64)
+        ->addField("initialBit", BasicType::UINT64)
+        ->addField("reserve", BasicType::UINT64)
+        ->addField("dateTime", BasicType::UINT64)
+        ->addField("seller", BasicType::UINT64)
+        ->addField("expires", BasicType::UINT64)
+        ->addField("category", BasicType::UINT64);
+}
+
+std::string NEAuctionDataGenerator::toString() {
+    std::ostringstream oss;
+    oss << getName();
+    return oss.str();
+}
+
+}// namespace NES

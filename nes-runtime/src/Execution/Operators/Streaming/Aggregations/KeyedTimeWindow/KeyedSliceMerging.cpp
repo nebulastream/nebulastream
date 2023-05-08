@@ -117,6 +117,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
 
     // 4. emit global slice when we have a tumbling window.
     emitWindow(ctx, startSliceTs, endSliceTs, globalHashTable);
+    this->child->terminate(ctx);
 }
 
 void KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,

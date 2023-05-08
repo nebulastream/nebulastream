@@ -50,6 +50,8 @@ void Operator::terminate(ExecutionContext& executionCtx) const {
     }
 }
 
-Operator::~Operator() {}
+Operator::~Operator() {
+
+}
 
 }// namespace NES::Runtime::Execution::Operators

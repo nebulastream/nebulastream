@@ -1,0 +1,48 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+# Parameter that are changed per run with comma separated list
+#numberOfWorkerThreads: 1,2,4,8,15,16,24
+#numberOfWorkerThreads: 1,2,3,4,5,6,7,8
+numberOfWorkerThreads: 1
+#numberOfWorkerThreads: 1
+numberOfSources: 1
+#numberOfQueriesToDeploy: 1
+numberOfQueriesToDeploy: 2
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+#bufferSizeInBytes: 1048576
+bufferSizeInBytes: 131072
+
+##benchmark parameter for the entire run
+dataGenerator: Default
+numberOfPreAllocatedBuffer: 1000
+logicalStreamName: input
+dataProvider: External
+dataProviderMode: ZeroCopy
+#ingestionRateList: 50000
+#ingestionDistributionList: SINUS,COSINUS
+#gatheringValues: 5500 #is one 100M tuples 11000
+#gatheringValues: 10000
+gatheringValues: 10000
+#gatheringValues: 10000,5000,3333,2500,2000,1666,1428,1250
+#gatheringValues: 10000
+
+#sourcePinList: 8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32
+workerPinList: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+#queuePinList: 0,1
+
+outputFile: MultiQueryExp.csv
+benchmarkName: MultiQueryExp
+query: 'Query::from("input").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());'
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 500000000
+scalability: scale-up
+logLevel: LOG_NONE
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 5
+numberOfMeasurementsToCollect: 10
+#collectionMode: History

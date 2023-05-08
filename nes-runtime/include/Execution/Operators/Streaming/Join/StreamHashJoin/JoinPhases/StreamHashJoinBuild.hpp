@@ -57,6 +57,13 @@ class StreamHashJoinBuild : public ExecutableOperator {
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    /**
+     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
+     * @param ctx
+     * @param recordBuffer
+     */
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
   private:
     uint64_t handlerIndex;
     bool isLeftSide;

@@ -25,6 +25,7 @@ using PartitionId = uint64_t;
 using OperatorId = uint64_t;
 using OriginId = uint64_t;
 using QueryId = uint64_t;
+using PipeLineId = uint64_t;
 using SharedQueryId = uint64_t;
 using QuerySubPlanId = uint64_t;
 using TopologyNodeId = uint64_t;

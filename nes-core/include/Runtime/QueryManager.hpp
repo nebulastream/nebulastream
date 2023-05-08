@@ -358,7 +358,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void completedWork(Task& task, WorkerContext& workerContext);
 
   protected:
-    virtual void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext);
+    virtual void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, PipeLineId pipeId, WorkerContext& workerContext);
 
     /**
      * @brief Executes cleaning up logic on the task queue
@@ -488,7 +488,7 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param subPlanId
      * @param workerContext
      */
-    void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
+    void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, PipeLineId pipeId, WorkerContext& workerContext) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
 
@@ -602,7 +602,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param subPlanId
      * @param workerContext
      */
-    void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
+    void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, PipeLineId pipeId, WorkerContext& workerContext) override;
 
   private:
     /**

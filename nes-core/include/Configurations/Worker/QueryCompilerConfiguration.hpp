@@ -103,6 +103,17 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      * */
     BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
 
+    UIntOption numberOfPartitions = {NUMBER_OF_PARTITIONS,
+                                  0,
+                                  "Partitions in the hash table"};
+    UIntOption pageSize   = {PAGE_SIZE,
+                            0,
+                            "Page size of hash table"};
+    UIntOption preAllocPageCnt   = {PREALLOC_PAGE_CNT,
+                            0,
+                            "Page cnt of pre allocated pages in each bucket hash table"};
+
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryCompilerType,
@@ -111,7 +122,11 @@ class QueryCompilerConfiguration : public BaseConfiguration {
                 &nautilusBackend,
                 &outputBufferOptimizationLevel,
                 &windowingStrategy,
-                &useCompilationCache};
+                &useCompilationCache,
+            &numberOfPartitions,
+            &pageSize,
+                &preAllocPageCnt,
+            };
     }
 };
 

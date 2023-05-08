@@ -28,10 +28,13 @@ class WatermarkState : public OperatorState {
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     Operator::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
+
+    //timefunction open
 }
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const {
     auto state = (WatermarkState*) ctx.getLocalState(this);
+    //timefunction .get
     Value<> tsField = watermarkExtractionExpression->execute(record);
     if (tsField > state->currentWatermark) {
         state->currentWatermark = tsField;

@@ -18,9 +18,10 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalHashJoinOperator::PhysicalHashJoinOperator(
     Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
-    OperatorId id)
+    OperatorId)
+    //TODO:add operator ids
     : operatorHandler(std::move(operatorHandler)) {
-    this->operatorHandler->addOperatorId(id);
+//    this->operatorHandler->addOperatorId(id);
 }
 
 Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr PhysicalHashJoinOperator::getOperatorHandler() const {

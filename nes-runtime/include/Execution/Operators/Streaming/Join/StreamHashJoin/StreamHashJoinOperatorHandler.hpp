@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/SharedJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -42,7 +43,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class StreamHashJoinOperatorHandler;
 using StreamHashJoinOperatorHandlerPtr = std::shared_ptr<StreamHashJoinOperatorHandler>;
-class StreamHashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
+class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
 
   public:
     /**
@@ -61,10 +62,12 @@ class StreamHashJoinOperatorHandler : public OperatorHandler, public Runtime::Bu
                                            SchemaPtr joinSchemaRight,
                                            std::string joinFieldNameLeft,
                                            std::string joinFieldNameRight,
-                                           uint64_t counterFinishedBuildingStart,
+                                           const std::vector<OriginId>& origins,
+                                           uint64_t numberOfWorker,
                                            size_t windowSize,
                                            size_t totalSizeForDataStructures,
                                            size_t pageSize,
+                                           size_t preAllocPageSizeCnt,
                                            size_t numPartitions);
 
     /**
@@ -80,39 +83,18 @@ class StreamHashJoinOperatorHandler : public OperatorHandler, public Runtime::Bu
      * @param numPartitions
      * @return StreamJoinOperatorHandlerPtr
      */
+
     static StreamHashJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
                                                    const SchemaPtr& joinSchemaRight,
                                                    const std::string& joinFieldNameLeft,
                                                    const std::string& joinFieldNameRight,
-                                                   uint64_t counterFinishedBuildingStart,
+                                                   const std::vector<OriginId>& origins,
+                                                   uint64_t numberOfWorker,
                                                    size_t windowSize,
                                                    size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
-                                                   size_t pageSize = CHUNK_SIZE,
+                                                   size_t pageSize = PAGE_SIZE,
+                                                   size_t preAllocPageSizeCnt = NUM_PREALLOC_PAGES,
                                                    size_t numPartitions = NUM_PARTITIONS);
-
-    /**
-     * @brief Getter for the left join schema
-     * @return left join schema
-     */
-    SchemaPtr getJoinSchemaLeft() const;
-
-    /**
-     * @brief Getter for the right join schema
-     * @return right join schema
-     */
-    SchemaPtr getJoinSchemaRight() const;
-
-    /**
-     * @brief Getter for the field name of the left join schmea
-     * @return string of the join field name left
-     */
-    const std::string& getJoinFieldNameLeft() const;
-
-    /**
-     * @brief Getter for the field name of the right join schmea
-     * @return string of the join field name right
-     */
-    const std::string& getJoinFieldNameRight() const;
 
     /**
      * @brief Starts the operator handler
@@ -125,120 +107,46 @@ class StreamHashJoinOperatorHandler : public OperatorHandler, public Runtime::Bu
                uint32_t localStateVariableId) override;
 
     /**
-     * @brief sets the operator handler up
-     * @param newNumberOfWorkerThreads
-     */
-    void setup(uint64_t newNumberOfWorkerThreads);
-
-    /**
      * @brief Stops the operator handler.
      * @param pipelineExecutionContext
      */
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
-     * @brief Interface method for pooled buffer recycling
-     */
-    void recyclePooledBuffer(NES::Runtime::detail::MemorySegment*) override;
-
-    /**
-     * @brief Interface method for unpooled buffer recycling
-     */
-    void recycleUnpooledBuffer(NES::Runtime::detail::MemorySegment*) override;
-
-    /**
-     * @brief creating a new window either for the left or right side of the join
+     * @brief Creates an entry for a new tuple by first getting the responsible window for the timestamp. This method is thread safe.
+     * @param timestamp
      * @param isLeftSide
+     * @return Pointer
      */
-    void createNewWindow(bool isLeftSide);
+    uint8_t* allocateNewEntry(uint64_t timestamp, uint64_t index, bool isLeftSide);
 
     /**
-     * @brief deletes the window corresponding to this window
-     * @param timeStamp
+     * @brief get the number of prealllcated pages per bucket
+     * @return
      */
-    void deleteWindow(uint64_t timeStamp);
+    size_t getPreAllocPageSizeCnt() const;
 
     /**
-     * @brief Returns the window corresponding to the timeStamp
-     * @param timeStamp
-     * @return Reference to the Window
+     * @brief get the page size in the HT
+     * @return
      */
-    StreamHashJoinWindow& getWindow(uint64_t timeStamp);
+    size_t getPageSize() const;
 
     /**
-     * @brief Returning the number of active windows
-     * @return number of active window
-     */
-    size_t getNumActiveWindows();
-
-    /**
-     * @brief Returns the current window that gets filled
-     * @param isLeftSide
-     * @return Reference to the current window that gets filled
-     */
-    StreamHashJoinWindow& getWindowToBeFilled(bool isLeftSide);
-
-    /**
-     * @brief Increments the timeStamp of either the left or right side
-     * @param increment
-     * @param isLeftSide
-     */
-    void incLastTupleTimeStamp(uint64_t increment, bool isLeftSide);
-
-    /**
-     * @brief Returns the window size
-     * @return window size
-     */
-    size_t getWindowSize() const;
-
-    /**
-     * @brief Returns the number of buckets/partitions
-     * @return number of partitions
+     * @brief get the number of partitins in the HT
+     * @return
      */
     size_t getNumPartitions() const;
 
-    /**
-     * @brief Returns the timeStamp of the last tuple for the current window either of the left or the right side
-     * @param isLeftSide
-     * @return timeStamp of the last tuple
-     */
-    uint64_t getLastTupleTimeStamp(bool isLeftSide) const;
-
-    /**
-     * @brief Checks if a window with this timeStamp exists
-     * @param timeStamp
-     * @return true if exists, false otherwise
-     */
-    bool checkWindowExists(uint64_t timeStamp);
-
-    /**
-     * @brief Adds an operatorId
-     * @param id
-     */
-    void addOperatorId(OperatorId id);
-
-    /**
-     * @brief Getter for the operatorIds belonging to this operator handler
-     * @return Vector of operatorIds
-     */
-    const std::vector<OperatorId>& getJoinOperatorsId() const;
-
   private:
-    SchemaPtr joinSchemaLeft;
-    SchemaPtr joinSchemaRight;
-    std::string joinFieldNameLeft;
-    std::string joinFieldNameRight;
     std::list<StreamHashJoinWindow> hashJoinWindows;
-    size_t numberOfWorkerThreads;
-    uint64_t counterFinishedBuildingStart;
-    uint64_t counterFinishedSinkStart;
+    uint64_t numberOfWorker;
     size_t totalSizeForDataStructures;
-    uint64_t lastTupleTimeStampLeft, lastTupleTimeStampRight;
-    size_t windowSize;
+    size_t preAllocPageSizeCnt;
     size_t pageSize;
     size_t numPartitions;
-    std::atomic<bool> alreadySetup{false};
     std::vector<OperatorId> joinOperatorsId;
+    std::mutex windowCreateLock;
 };
 
 }// namespace NES::Runtime::Execution::Operators

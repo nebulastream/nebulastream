@@ -61,6 +61,8 @@ class SharedMemoryFixedVector {
             NES_ASSERT(ret, "cannot create shared area");
         } else {
             while (!std::filesystem::exists(std::filesystem::temp_directory_path() / "nes.tests.begin")) {
+                NES_DEBUG("File " << (std::filesystem::temp_directory_path() / "nes.tests.begin") << " does not exists");
+                sleep(1);
             }
         }
         mem = reinterpret_cast<uint8_t*>(mmap(nullptr, mmapSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmemFd, 0));

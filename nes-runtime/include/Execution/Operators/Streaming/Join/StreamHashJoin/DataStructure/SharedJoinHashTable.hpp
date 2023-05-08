@@ -74,6 +74,13 @@ class SharedJoinHashTable {
      */
     size_t getNumPages(size_t bucketPos) const;
 
+    /**
+     * @brief Returns the number buckets
+     * @param bucketPos
+     * @return number of pages
+     */
+    size_t getNumBuckets() const;
+
   private:
     std::vector<std::atomic<InternalNode*>> bucketHeads;
     std::vector<std::atomic<size_t>> bucketNumItems;

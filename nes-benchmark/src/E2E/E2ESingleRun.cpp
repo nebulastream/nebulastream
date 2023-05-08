@@ -59,6 +59,14 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
+//    coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    coordinatorConf->worker.queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::INTERPRETER;
+
+    coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
+    coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
+    coordinatorConf->worker.queryCompiler.preAllocPageCnt = configPerRun.preAllocPageCnt->getValue();
 
     if (configOverAllRuns.sourceSharing->getValue() == "on") {
         coordinatorConf->worker.enableSourceSharing = true;
@@ -216,6 +224,7 @@ void E2ESingleRun::runQuery() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t timeStamp =
             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::map<uint64_t, uint64_t> previousMap;
         measurements.addNewTimestamp(timeStamp);
         for (auto id : submittedIds) {
             auto statisticsCoordinator = coordinator->getNodeEngine()->getQueryStatistics(id);
@@ -247,6 +256,15 @@ void E2ESingleRun::runQuery() {
                                                availGlobalBufferSum,
                                                availFixedBufferSum,
                                                timeStamp);
+                std::stringstream ss;
+                size_t pipeCnt = 0;
+
+                ss << "time=" << timeStamp << " subplan=" << subPlanStatistics->getSubQueryId() << " procTasks=" << processedTasks;
+                for(auto& pipe : subPlanStatistics->getPipelineToTaskMap())
+                {
+                    ss << " pipeNo:" << pipeCnt++ << " tasks=" << pipe.second;
+                }
+                std::cout << ss.str() << std::endl;
             }
         }
 
@@ -327,7 +345,7 @@ void E2ESingleRun::stopQuery() {
 
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
-
+    std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
     std::string queryString = configOverAllRuns.query->getValue();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
@@ -352,11 +370,13 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     }
 
     std::ofstream ofs;
-    ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out | std::ofstream::app);
+    ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out);
     ofs << outputCsvStream.str();
     ofs.close();
 
     NES_INFO("Done writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
+    NES_INFO("Statistics are: " << outputCsvStream.str())
+    std::cout << "Throughput=" << measurements.getthroughputAsString() << std::endl;
 }
 
 E2ESingleRun::E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,

@@ -43,6 +43,7 @@ std::vector<FixedPage> SharedJoinHashTable::getPagesForBucket(size_t bucketPos) 
 
     return ret;
 }
+size_t SharedJoinHashTable::getNumBuckets() const { return bucketNumPages.size(); }
 
 size_t SharedJoinHashTable::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }
 

@@ -60,6 +60,16 @@ void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
                    originId);
 }
 
+void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setOriginId",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setSequenceNumber,
+                   tupleBufferRef,
+                   seqNumber);
+}
+
+void setSequenceNr(const Value<UInt64>& seqNumber);
+
+
 Value<UInt64> RecordBuffer::getWatermarkTs() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__Watermark",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,

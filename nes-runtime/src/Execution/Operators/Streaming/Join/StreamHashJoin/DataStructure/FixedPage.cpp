@@ -29,12 +29,14 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t hash) {
+uint8_t* FixedPage::append(const uint64_t) {
     if (currentPos >= capacity) {
         return nullptr;
     }
 
-    bloomFilter->add(hash);
+    //TODO: this is somehow not working anymore
+    //    bloomFilter->add(hash);
+    // I think the reason is that the page is reused and a copy into the global HT will move the bloomfilter unique
     uint8_t* ptr = &data[currentPos * sizeOfRecord];
     currentPos++;
     return ptr;

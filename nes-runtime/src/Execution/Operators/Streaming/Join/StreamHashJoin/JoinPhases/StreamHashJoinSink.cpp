@@ -88,7 +88,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                              StreamHashJoinOperatorHandler* operatorHandler,
                              std::vector<FixedPage>&& probeSide,
                              std::vector<FixedPage>&& buildSide,
-                             StreamHashJoinWindow& currentWindow,
+                             StreamHashJoinWindow*,
                              uint64_t windowStart,
                              uint64_t windowEnd) {
 
@@ -103,13 +103,9 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
     auto sizeOfJoinedTuple = joinSchema->getSchemaSizeInBytes();
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
 
-    auto& workerIdToBuffers = currentWindow.getMapEmittableBuffers();
-    auto workerId = workerCtx->getId();
-    if (!workerIdToBuffers.contains(workerId)) {
-        workerIdToBuffers[workerId] = workerCtx->allocateTupleBuffer();
-        workerIdToBuffers[workerId].setNumberOfTuples(0);
-    }
-    auto currentTupleBuffer = workerIdToBuffers[workerId];
+    auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
+    currentTupleBuffer.setNumberOfTuples(0);
+
     size_t joinedTuples = 0;
     const auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
     const auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
@@ -124,10 +120,11 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
             for (auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
 
+                //TODO: for now we deactivate bloom filters as they are not working
                 // Checking if the key is on the page with the bloom filter
-                if (rhsLen == 0 || !rhsPage.bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
-                    continue;
-                }
+                //                if (rhsLen == 0 || !rhsPage.bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
+                //                    continue;
+                //                }
 
                 // Iterating through all tuples of the page as we do not know where the exact tuple is
                 for (auto j = 0UL; j < rhsLen; ++j) {
@@ -156,8 +153,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                         if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                             pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
 
-                            workerIdToBuffers[workerId] = workerCtx->allocateTupleBuffer();
-                            currentTupleBuffer = workerIdToBuffers[workerId];
+                            currentTupleBuffer = workerCtx->allocateTupleBuffer();
                             currentTupleBuffer.setNumberOfTuples(0);
                         }
                     }
@@ -165,36 +161,50 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
             }
         }
     }
-
+    if (currentTupleBuffer.getNumberOfTuples() != 0) {
+        NES_DEBUG("StreamJoinSInk: emit remaining tuples")
+        pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
+    }
     return joinedTuples;
 }
 
-void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, void* joinPartitionTimeStampPtr) {
+void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, void* JoinPartitionIdTWindowIdentifierPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
-    NES_ASSERT2_FMT(joinPartitionTimeStampPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
+    NES_ASSERT2_FMT(JoinPartitionIdTWindowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
     auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
-    auto joinPartTimestamp = static_cast<JoinPartitionIdTumpleStamp*>(joinPartitionTimeStampPtr);
+    auto joinPartTimestamp = static_cast<JoinPartitionIdTWindowIdentifier*>(JoinPartitionIdTWindowIdentifierPtr);
 
     const auto partitionId = joinPartTimestamp->partitionId;
-    const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
+    const auto windowIdentifier = joinPartTimestamp->windowIdentifier;
 
-    NES_TRACE("Joining for partition " << partitionId << " and lastTupleTimeStamp " << lastTupleTimeStamp);
+    NES_DEBUG("Joining for partition " << partitionId << " and windowIdentifier " << windowIdentifier);
 
-    auto& currentWindow = opHandler->getWindow(lastTupleTimeStamp);
-    auto& leftHashTable = currentWindow.getSharedJoinHashTable(true /* isLeftSide */);
-    auto& rightHashTable = currentWindow.getSharedJoinHashTable(false /* isLeftSide */);
+    auto streamWindow = opHandler->getWindowByWindowIdentifier(windowIdentifier).value();
+    auto hashWindow = static_cast<StreamHashJoinWindow*>(streamWindow.get());
+
+    auto& leftHashTable = hashWindow->getSharedJoinHashTable(true /* isLeftSide */);
+    NES_TRACE("left HT stats")
+    for (size_t i = 0; i < leftHashTable.getNumBuckets(); i++) {
+        NES_TRACE("Bucket=" << i << " pages=" << leftHashTable.getNumPages(i) << " items=" << leftHashTable.getNumItems(i));
+    }
+
+    auto& rightHashTable = hashWindow->getSharedJoinHashTable(false /* isLeftSide */);
+    NES_TRACE("right HT stats")
+    for (size_t i = 0; i < rightHashTable.getNumBuckets(); i++) {
+        NES_TRACE("Bucket=" << i << " pages=" << rightHashTable.getNumPages(i) << " items=" << rightHashTable.getNumItems(i));
+    }
 
     auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
     auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
     auto leftBucketSize = leftHashTable.getNumItems(partitionId);
     auto rightBucketSize = rightHashTable.getNumItems(partitionId);
-    const auto windowStart = currentWindow.getWindowStart();
-    const auto windowEnd = currentWindow.getWindowEnd() + 1;
+    const auto windowStart = hashWindow->getWindowStart();
+    const auto windowEnd = hashWindow->getWindowEnd();
 
     size_t joinedTuples = 0;
     if (leftBucketSize && rightBucketSize) {
@@ -204,7 +214,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
                                                  opHandler,
                                                  std::move(rightBucket),
                                                  std::move(leftBucket),
-                                                 currentWindow,
+                                                 hashWindow,
                                                  windowStart,
                                                  windowEnd);
         } else {
@@ -213,7 +223,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
                                                  opHandler,
                                                  std::move(leftBucket),
                                                  std::move(rightBucket),
-                                                 currentWindow,
+                                                 hashWindow,
                                                  windowStart,
                                                  windowEnd);
         }
@@ -226,34 +236,25 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
                                                           << (leftBucketSize * rightBucketSize));
     }
 
-    if (opHandler->getWindow(lastTupleTimeStamp).fetchSubSink(1) == 1) {
-        // If in the current buffer are any tuples, we have to emit then before returning
-        auto& mapEmittableBuffers = currentWindow.getMapEmittableBuffers();
-        auto currentTupleBufferIt = mapEmittableBuffers.find(workerCtx->getId());
-
-        if (currentTupleBufferIt != mapEmittableBuffers.end()) {
-            auto currentTupleBuffer = currentTupleBufferIt->second;
-            if (currentTupleBuffer.getNumberOfTuples() > 0) {
-                pipelineCtx->emitBuffer(currentTupleBuffer, *workerCtx);
-            }
-        }
-
-        // delete the current hash table
-        opHandler->deleteWindow(lastTupleTimeStamp);
+    //delete window if all partitions are porcessed
+    if (hashWindow->markPartionAsFinished()) {
+        NES_DEBUG("All partitions of window id= " << hashWindow->getWindowIdentifier()
+                                                  << " processed, now deleting window result were numTuples=" << joinedTuples);
+        opHandler->deleteWindow(windowIdentifier);
     }
 }
 
 void StreamHashJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
+    auto windowAndPartitonIdentifier = recordBuffer.getBuffer();
 
     Nautilus::FunctionCall("performJoin",
                            performJoin,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
                            ctx.getWorkerContext(),
-                           joinPartitionTimestampPtr);
+                           windowAndPartitonIdentifier);
 }
 
 }//namespace NES::Runtime::Execution::Operators

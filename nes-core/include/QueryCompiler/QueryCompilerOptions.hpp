@@ -144,6 +144,42 @@ class QueryCompilerOptions {
     void setNumSourceLocalBuffers(uint64_t num);
 
     /**
+     * @brief get the number of partitions for the hash join
+     * @return number of partitions
+     */
+    uint64_t getNumberOfPartitions() const;
+
+    /**
+     * @brief get the number of partitions for the hash join
+     * @param num
+     */
+    void setNumberOfPartitions(uint64_t num);
+
+    /**
+     * @brief get the size of each page in the hash table
+     * @return page size
+     */
+    uint64_t getPageSize() const;
+
+    /**
+     * @brief set the size of each page in the hash table
+     * @param size
+     */
+    void setPageSize(uint64_t size);
+
+    /**
+     * @brief get the number of pre-allocated pages in the hash table per bucket
+     * @return number of pages
+     */
+    uint64_t getPreAllocPageCnt() const;
+
+    /**
+     * @brief  get the number of pre-allocated pages in the hash table per bucket
+     * @param cnt
+     */
+    void setPreAllocPageCnt(uint64_t cnt);
+
+    /**
      * @brief Returns the number of local source buffers.
      * @return uint64_t
      */
@@ -168,6 +204,9 @@ class QueryCompilerOptions {
     QueryCompiler queryCompiler;
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
+    uint64_t numberOfPartitions = 0;
+    uint64_t pageSize = 0;
+    uint64_t preAllocPageCnt = 0;
 };
 }// namespace NES::QueryCompilation
 

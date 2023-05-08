@@ -143,7 +143,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
 
         nljBuildLeft.setup(executionContext);
         nljBuildRight.setup(executionContext);
-        uint64_t maxTimestamp = 0;
+        uint64_t maxTimestamp = 2;
         for (auto& leftRecord : allLeftRecords) {
             maxTimestamp = std::max(leftRecord.read(timestampLeft).getValue().staticCast<UInt64>().getValue(), maxTimestamp);
             nljBuildLeft.execute(executionContext, leftRecord);
@@ -227,7 +227,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         for (auto& leftRecord : allLeftRecords) {
             auto timestamp = leftRecord.read(timestampFieldnameLeft).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
-            auto pointerToRecord = nljOperatorHandler.insertNewTuple(timestamp, /*isLeftSide*/ true);
+            auto pointerToRecord = nljOperatorHandler.allocateNewEntry(timestamp, /*isLeftSide*/ true);
             auto memRefToRecord = Value<MemRef>((int8_t*) pointerToRecord);
             memoryProviderLeft->write(zeroVal, memRefToRecord, leftRecord);
         }
@@ -235,7 +235,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
         for (auto& rightRecord : allRightRecords) {
             auto timestamp = rightRecord.read(timestampFieldnameRight).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
-            auto pointerToRecord = nljOperatorHandler.insertNewTuple(timestamp, /*isLeftSide*/ false);
+            auto pointerToRecord = nljOperatorHandler.allocateNewEntry(timestamp, /*isLeftSide*/ false);
             auto memRefToRecord = Value<MemRef>((int8_t*) pointerToRecord);
             memoryProviderRight->write(zeroVal, memRefToRecord, rightRecord);
         }

@@ -347,55 +347,74 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW,
                    "Only a tumbling window is currently supported for StreamJoin");
 
-        // FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
-
         std::string timeStampFieldNameLeft = "";
         std::string timeStampFieldNameRight = "";
-        auto timeStampFieldNameWithoutSourceName =
-            timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
-        // Extract the schema of the right side
-        auto rightSchema = joinOperator->getRightInputSchema();
-        // Extract the first field from right schema and trim it to find the schema qualifier for the right side
-        bool found = false;
-        for (auto& field : rightSchema->fields) {
-            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
-                timeStampFieldNameRight = field->getName();
-                found = true;
+        if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
+            NES_DEBUG("Skip eventime identification as we use ingestion time");
+            timeStampFieldNameLeft = "IngestionTime";
+            timeStampFieldNameRight = "IngestionTime";
+        } else {
+
+            // FIXME Once #3407 is done, we can change this to get the left and right fieldname
+            auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+
+            auto timeStampFieldNameWithoutSourceName =
+                timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+            // Extract the schema of the right side
+            auto rightSchema = joinOperator->getRightInputSchema();
+            // Extract the first field from right schema and trim it to find the schema qualifier for the right side
+            bool found = false;
+            for (auto& field : rightSchema->fields) {
+                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                    timeStampFieldNameRight = field->getName();
+                    found = true;
+                }
             }
-        }
-        NES_ASSERT(found, " right schema does not contain a timestamp attribute");
 
-        //Extract the schema of the right side
-        auto leftSchema = joinOperator->getLeftInputSchema();
-        //Extract the first field from right schema and trim it to find the schema qualifier for the right side
-        found = false;
-        for (auto& field : leftSchema->fields) {
-            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
-                timeStampFieldNameLeft = field->getName();
-                found = true;
+            NES_ASSERT(found, " right schema does not contain a timestamp attribute");
+
+            //Extract the schema of the right side
+            auto leftSchema = joinOperator->getLeftInputSchema();
+            //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+            found = false;
+            for (auto& field : leftSchema->fields) {
+                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                    timeStampFieldNameLeft = field->getName();
+                    found = true;
+                }
             }
+            NES_ASSERT(found, " left schema does not contain a timestamp attribute");
+
+            NES_DEBUG("leftSchema: " << leftSchema->toString() << " rightSchema: " << rightSchema->toString());
+
+            NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
+                       "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+
+            NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft
+                                                 << " timeStampFieldNameRight: " << timeStampFieldNameRight);
         }
-        NES_ASSERT(found, " left schema does not contain a timestamp attribute");
-
-        NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-                   "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
-
-        NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft
-                                             << " timeStampFieldNameRight: " << timeStampFieldNameRight);
-        NES_DEBUG("leftSchema: " << leftSchema->toString() << " rightSchema: " << rightSchema->toString());
-
         auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
 
-        auto joinOperatorHandler = StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
-                                                                         joinOperator->getRightInputSchema(),
-                                                                         joinFieldNameLeft,
-                                                                         joinFieldNameRight,
-                                                                         numSourcesLeft + numSourcesRight,
-                                                                         windowSize);
+        auto pageSize = options->getPageSize();
+        auto numberOfPartitions = options->getNumberOfPartitions();
+        auto preallocPageSizeCnt = options->getPreAllocPageCnt();
+
+        auto joinOperatorHandler = StreamHashJoinOperatorHandler::create(
+            joinOperator->getLeftInputSchema(),
+            joinOperator->getRightInputSchema(),
+            joinFieldNameLeft,
+            joinFieldNameRight,
+            joinOperator->getAllInputOriginIds(),
+            numSourcesLeft + numSourcesRight,
+            windowSize,
+            NES::Runtime::Execution::DEFAULT_MEM_SIZE_JOIN,
+            pageSize == 0 ? NES::Runtime::Execution::PAGE_SIZE : pageSize,
+            preallocPageSizeCnt == 0 ? NES::Runtime::Execution::NUM_PREALLOC_PAGES : preallocPageSizeCnt,
+            numberOfPartitions == 0 ? NES::Runtime::Execution::NUM_PARTITIONS : numberOfPartitions);
 
         auto leftInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());

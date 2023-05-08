@@ -31,7 +31,10 @@ class FixedPagesLinkedList {
      * @param sizeOfRecord
      * @param pageSize
      */
-    explicit FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize);
+    explicit FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
+                                  size_t sizeOfRecord,
+                                  size_t pageSize,
+                                  size_t preAllocPageSizeCnt);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space.
@@ -46,12 +49,23 @@ class FixedPagesLinkedList {
      */
     const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
 
+
+    /**
+     * @brief debug method to print the statistics of the Linked list
+     */
+    void printStatistics();
+
   private:
     size_t pos;
     FixedPagesAllocator& fixedPagesAllocator;
     std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
+
+    //for debug
+    std::atomic<uint64_t> pageFullCnt = 0;
+    std::atomic<uint64_t> allocateNewPageCnt = 0;
+    std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
 };
 }// namespace NES::Runtime::Execution::Operators
 

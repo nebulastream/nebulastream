@@ -53,7 +53,7 @@ int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
     // Activating and installing error listener
-    NES::Logger::setupLogging("main.log", NES::LogLevel::LOG_INFO);
+    NES::Logger::setupLogging("main.log", NES::LogLevel::LOG_ERROR);
     auto runner = std::make_shared<BenchmarkRunner>();
     NES::Exceptions::installGlobalErrorListener(runner);
 

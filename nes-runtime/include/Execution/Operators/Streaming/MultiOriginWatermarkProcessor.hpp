@@ -50,6 +50,7 @@ class MultiOriginWatermarkProcessor {
      */
     [[nodiscard]] uint64_t getCurrentWatermark();
 
+    std::string getCurrentStatus();
   private:
     const std::vector<OriginId> origins;
     std::vector<std::shared_ptr<NES::Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};

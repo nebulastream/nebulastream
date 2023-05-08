@@ -68,6 +68,13 @@ class Measurements {
      */
     std::vector<std::string> getMeasurementsAsCSV(size_t schemaSizeInByte, size_t numberOfQueries);
 
+    /**
+     * @brief get only the throughput number
+     * @return string
+     */
+    std::string getthroughputAsString();
+
+
   private:
     /**
      * @brief adds processedTasks

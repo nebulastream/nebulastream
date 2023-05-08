@@ -19,10 +19,15 @@ namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
     uint8_t* retPointer = pages[pos]->append(hash);
+    //check page is full
     if (retPointer == nullptr) {
+        pageFullCnt++;
         if (++pos >= pages.size()) {
+            allocateNewPageCnt++;
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
             pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
+        } else {
+            emptyPageStillExistsCnt++;
         }
         retPointer = pages[pos]->append(hash);
     }
@@ -32,15 +37,23 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
 
 const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
 
-FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize)
+FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
+                                           size_t sizeOfRecord,
+                                           size_t pageSize,
+                                           size_t preAllocPageSizeCnt)
     : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
 
-    const auto numPreAllocatedPage = PREALLOCATED_SIZE / pageSize;
-    NES_ASSERT2_FMT(numPreAllocatedPage > 0, "numPreAllocatedPage is 0");
+    NES_ASSERT2_FMT(preAllocPageSizeCnt > 0, "numPreAllocatedPage is 0");
 
-    for (auto i = 0UL; i < numPreAllocatedPage; ++i) {
+    for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
     }
 }
+
+void FixedPagesLinkedList::printStatistics() {
+    NES_DEBUG(" FixPagesLinkedList reports pageFullCnt=" << pageFullCnt << " allocateNewPageCnt=" << allocateNewPageCnt
+                                                         << " emptyPageStillExistsCnt=" << emptyPageStillExistsCnt)
+}
+
 }// namespace NES::Runtime::Execution::Operators

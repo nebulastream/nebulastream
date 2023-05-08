@@ -35,15 +35,16 @@ using SchemaPtr = std::shared_ptr<Schema>;
 namespace NES::Runtime::Execution {
 
 static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
-static constexpr auto CHUNK_SIZE = 128;
-static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
-static constexpr auto NUM_PARTITIONS = 16;
-static constexpr auto DEFAULT_MEM_SIZE_JOIN = 1 * 1024 * 1024UL;
+static constexpr auto PAGE_SIZE = 128;
+static constexpr auto NUM_PREALLOC_PAGES = 1 * 1024;
+static constexpr auto NUM_PARTITIONS = 1;
+//static constexpr auto DEFAULT_MEM_SIZE_JOIN = 1024 * 1024 * 1024UL;
+static constexpr auto DEFAULT_MEM_SIZE_JOIN = 1024 * 1024 * 1024UL * 8;
 
 namespace Operators {
-struct __attribute__((packed)) JoinPartitionIdTumpleStamp {
+struct __attribute__((packed)) JoinPartitionIdTWindowIdentifier {
     size_t partitionId;
-    size_t lastTupleTimeStamp;
+    size_t windowIdentifier;
 };
 }// namespace Operators
 

@@ -20,6 +20,8 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
+class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
  * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the

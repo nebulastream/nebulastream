@@ -31,62 +31,84 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLeftSide) {
+void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLeftSide, uint64_t timeStamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-
-    auto localHashTablePointer =
-        static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    auto currentWindow = opHandler->getWindowByTimestamp(timeStamp);
+    //TODO I am not sure if while is a good idea here or if it is just an error
+    while (!currentWindow.has_value()) {
+        opHandler->createNewWindow(timeStamp);
+        currentWindow = opHandler->getWindowByTimestamp(timeStamp);
+    }
+    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
+    NES_TRACE("Insert into HT for window=" << hashWindow->getWindowIdentifier() << " is left=" << isLeftSide << " idx=" << index);
+    auto localHashTablePointer = static_cast<void*>(hashWindow->getLocalHashTable(index, isLeftSide));
     return localHashTablePointer;
 }
 
 void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
-
     LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
-
     return localHashTable->insert(key);
 }
 
-void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+/**
+ * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
+ */
+void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
+                                          void* ptrPipelineCtx,
+                                          void* ptrWorkerCtx,
+                                          uint64_t watermarkTs,
+                                          uint64_t sequenceNumber,
+                                          OriginId originId,
+                                          bool isLeftSide) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+    auto* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
-    auto& sharedJoinHashTable = opHandler->getWindowToBeFilled(isLeftSide).getSharedJoinHashTable(isLeftSide);
-    auto localHashTable = opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(workerCtx->getId(), isLeftSide);
+    //update last seen watermark by this worker
+    opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
+    auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
-        sharedJoinHashTable.insertBucket(a, localHashTable->getBucketLinkedList(a));
-    }
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
 
-    // If the last thread/worker is done with building, then start the second phase (comparing buckets)
-    if (opHandler->getWindowToBeFilled(isLeftSide).fetchSubBuild(1) == 1) {
+    //one of the two builds identify that we now need to trigger
+    //TODO: check if this is really threadsafe
+
+    //for every window
+    for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
+        //for every partition within the window create one task
+        //get current window
+        auto currentWindow = opHandler->getWindowByWindowIdentifier(windowIdentifier);
+        NES_ASSERT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
+        auto hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
+        auto& sharedJoinHashTableLeft = hashWindow->getSharedJoinHashTable(true);
+        auto& sharedJoinHashTableRight = hashWindow->getSharedJoinHashTable(false);
+
+        NES_DEBUG("Trigger window =" << hashWindow->getWindowIdentifier() << " from leftSide=" << isLeftSide);
         for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
+            //push actual bucket from local to global hash table for left side
+            auto localHashTableLeft = hashWindow->getLocalHashTable(workerCtx->getId(), true);
+            sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
+            //push actual bucket from local to global hash table for right side
+            auto localHashTableRight = hashWindow->getLocalHashTable(workerCtx->getId(), false);
+            sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+
+            //create task for current window and current partition
             auto buffer = workerCtx->allocateTupleBuffer();
-            auto bufferAs = buffer.getBuffer<JoinPartitionIdTumpleStamp>();
-
+            auto bufferAs = buffer.getBuffer<JoinPartitionIdTWindowIdentifier>();
             bufferAs->partitionId = i;
-            bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getWindowEnd();
+            bufferAs->windowIdentifier = windowIdentifier;
             buffer.setNumberOfTuples(1);
-            pipelineCtx->emitBuffer(buffer, *workerCtx);
+            pipelineCtx->dispatchBuffer(buffer);
+            NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
         }
     }
-
-    opHandler->incLastTupleTimeStamp(opHandler->getWindowSize(), isLeftSide);
-    opHandler->createNewWindow(isLeftSide);
-}
-
-uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
 void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
@@ -100,32 +122,30 @@ void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
 }
 
 void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
-
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto lastTupleWindowRef =
-        Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef, Value<Boolean>(isLeftSide));
 
-    if (record.read(timeStampField) > lastTupleWindowRef) {
-        Nautilus::FunctionCall("triggerJoinSink",
-                               triggerJoinSink,
-                               operatorHandlerMemRef,
-                               ctx.getPipelineContext(),
-                               ctx.getWorkerContext(),
-                               Value<Boolean>(isLeftSide));
+    Value<UInt64> tsValue = (uint64_t) 0;
+    if (timeStampField == "IngestionTime") {
+        tsValue = ctx.getCurrentTs();
+    } else {
+        tsValue = record.read(timeStampField).as<UInt64>();
     }
 
     auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableFunctionCall",
                                                        getLocalHashTableFunctionCall,
                                                        operatorHandlerMemRef,
                                                        ctx.getWorkerId(),
-                                                       Value<Boolean>(isLeftSide));
+                                                       Value<Boolean>(isLeftSide),
+                                                       Value<UInt64>(tsValue));
 
+    //get position in the HT where to write to
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall",
                                               insertFunctionCall,
                                               localHashTableMemRef,
                                               record.read(joinFieldName).as<UInt64>());
+    //write data
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -133,6 +153,23 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
+}
+
+void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+
+    // Update the watermark for the nlj operator and trigger windows
+    //TODO SZ: I am not sure this is doing it at the end of the buffer which is maybe fine for now but if a particular tuple within the buffer
+    // can trigger window this will be missed?
+    Nautilus::FunctionCall("checkWindowsTriggerProxy",
+                           checkWindowsTriggerProxyForJoinBuild,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext(),
+                           ctx.getWorkerContext(),
+                           recordBuffer.getWatermarkTs(),
+                           recordBuffer.getSequenceNr(),
+                           recordBuffer.getOriginId(),
+                           Value<Boolean>(isLeftSide));
 }
 
 void StreamHashJoinBuild::setup(ExecutionContext& ctx) const {

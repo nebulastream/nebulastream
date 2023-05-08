@@ -14,6 +14,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
 
 namespace NES::Runtime::Execution {
+
 Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
     if (leftSide) {
         index = index % localHashTableLeftSide.size();
@@ -24,6 +25,8 @@ Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index,
     }
 }
 
+size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool) { return 0; }
+
 Operators::SharedJoinHashTable& StreamHashJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
     if (isLeftSide) {
         return leftSideHashTable;
@@ -32,42 +35,46 @@ Operators::SharedJoinHashTable& StreamHashJoinWindow::getSharedJoinHashTable(boo
     }
 }
 
-StreamHashJoinWindow::StreamHashJoinWindow(size_t maxNoWorkerThreads,
-                                           uint64_t counterFinishedBuildingStart,
-                                           uint64_t counterFinishedSinkStart,
-                                           size_t totalSizeForDataStructures,
+StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t sizeOfRecordLeft,
                                            size_t sizeOfRecordRight,
                                            uint64_t windowStart,
                                            uint64_t windowEnd,
                                            size_t pageSize,
+                                           size_t preAllocPageSizeCnt,
                                            size_t numPartitions)
-    : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
-      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), windowStart(windowStart), windowEnd(windowEnd),
-      fixedPagesAllocator(totalSizeForDataStructures) {
+    : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
+      leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
+      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(DEFAULT_MEM_SIZE_JOIN),
+      partitionFinishedCounter(numPartitions) {
 
-    counterFinishedBuilding.store(counterFinishedBuildingStart);
-    counterFinishedSink.store(counterFinishedSinkStart);
-
-    for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableLeftSide.emplace_back(
-            std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft, numPartitions, fixedPagesAllocator, pageSize));
+    for (auto i = 0UL; i < numberOfWorker; ++i) {
+        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft,
+                                                                                        numPartitions,
+                                                                                        fixedPagesAllocator,
+                                                                                        pageSize,
+                                                                                        preAllocPageSizeCnt));
     }
 
-    for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableRightSide.emplace_back(
-            std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight, numPartitions, fixedPagesAllocator, pageSize));
+    for (auto i = 0UL; i < numberOfWorker; ++i) {
+        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight,
+                                                                                         numPartitions,
+                                                                                         fixedPagesAllocator,
+                                                                                         pageSize,
+                                                                                         preAllocPageSizeCnt));
     }
+    NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads="
+              << numberOfWorker << " HTs with numPartitions=" << numPartitions << " of pageSize=" << pageSize
+              << " sizeOfRecordLeft=" << sizeOfRecordLeft << " sizeOfRecordRight=" << sizeOfRecordRight);
 }
 
-uint64_t StreamHashJoinWindow::fetchSubBuild(uint64_t sub) { return counterFinishedBuilding.fetch_sub(sub); }
+bool StreamHashJoinWindow::markPartionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }
 
-uint64_t StreamHashJoinWindow::fetchSubSink(uint64_t sub) { return counterFinishedSink.fetch_sub(sub); }
-
-uint64_t StreamHashJoinWindow::getWindowEnd() const { return windowEnd; }
-
-uint64_t StreamHashJoinWindow::getWindowStart() const { return windowStart; }
-
-std::map<uint64_t, TupleBuffer>& StreamHashJoinWindow::getMapEmittableBuffers() { return workerIdToEmittableBuffer; }
+std::string StreamHashJoinWindow::toString() {
+    std::ostringstream basicOstringstream;
+    basicOstringstream << "StreamHashJoinWindow(windowState: "
+                       << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
+    return basicOstringstream.str();
+}
 
 }// namespace NES::Runtime::Execution

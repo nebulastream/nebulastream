@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_EVENTTIMEWATERMARKASSIGNMENT_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include "Execution/Operators/Streaming/TimeFunction.hpp"
 
 namespace NES::Runtime::Execution::Operators {
 

@@ -17,24 +17,24 @@
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <vector>
 
 namespace NES::Runtime::Execution {
 
+class StreamHashJoinWindow;
+using StreamHashJoinWindowPtr = std::shared_ptr<StreamHashJoinWindow>;
 /**
  * @brief This class is a data container for all the necessary objects in a window of the StreamJoin
  */
-class StreamHashJoinWindow {
+class StreamHashJoinWindow : public StreamWindow {
 
   public:
     /**
      * @brief Constructor for a StreamJoinWindow
-     * @param maxNoWorkerThreads
-     * @param counterFinishedBuildingStart
-     * @param counterFinishedSinkStart
-     * @param totalSizeForDataStructures
+     * @param numberOfWorkerThreads
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
      * @param windowStart
@@ -42,16 +42,39 @@ class StreamHashJoinWindow {
      * @param pageSize
      * @param numPartitions
      */
-    explicit StreamHashJoinWindow(size_t maxNoWorkerThreads,
-                                  uint64_t counterFinishedBuildingStart,
-                                  uint64_t counterFinishedSinkStart,
-                                  size_t totalSizeForDataStructures,
+    explicit StreamHashJoinWindow(size_t numberOfWorkerThreads,
                                   size_t sizeOfRecordLeft,
                                   size_t sizeOfRecordRight,
                                   uint64_t windowStart,
                                   uint64_t windowEnd,
                                   size_t pageSize,
+                                  size_t preAllocPageSizeCnt,
                                   size_t numPartitions);
+
+    ~StreamHashJoinWindow() = default;
+
+    /**
+     * @brief Returns the tuple
+     * @param sizeOfTupleInByte
+     * @param tuplePos
+     * @param leftSide
+     * @return Pointer to the start of the memory for the
+     */
+    uint8_t* getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide);
+
+    /**
+     * @brief Returns the number of tuples in this window
+     * @param sizeOfTupleInByte
+     * @param leftSide
+     * @return size_t
+     */
+    size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) override;
+
+    /**
+     * @brief Creates a string representation of this window
+     * @return String
+     */
+    std::string toString() override;
 
     /**
      * @brief Returns the local hash table of either the left or the right join side
@@ -69,48 +92,19 @@ class StreamHashJoinWindow {
     Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide);
 
     /**
-     * @brief Performs an atomic fetch and sub instruction for detecting if the build phase is done
-     * @param sub
-     * @return old value
+     * @brief this method marks that one partition of this window was finally processed by the sink
+     * @param bool indicating if all partitions are done
      */
-    uint64_t fetchSubBuild(uint64_t sub);
-
-    /**
-     * @brief Performs an atomic fetch and sub instruction for detecting if the sink phase is done
-     * @param sub
-     * @return old value
-     */
-    uint64_t fetchSubSink(uint64_t sub);
-
-    /**
-     * @brief Returns the last tuple timestamp (end of the window) that can be inserted into this window
-     * @return windowEnd
-     */
-    uint64_t getWindowEnd() const;
-
-    /**
-     * @brief Returns the first tuple timestamp (start of the window) that can be inserted into this window
-     * @return windowStart
-     */
-    uint64_t getWindowStart() const;
-
-    /**
-     * @brief Getter for the map that stores the current TupleBuffer for each worker Id
-     * @return map
-     */
-    std::map<uint64_t, TupleBuffer>& getMapEmittableBuffers();
+    bool markPartionAsFinished();
 
   private:
+    uint64_t numberOfWorker;
     std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
     std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableRightSide;
     Operators::SharedJoinHashTable leftSideHashTable;
     Operators::SharedJoinHashTable rightSideHashTable;
-    std::atomic<uint64_t> counterFinishedBuilding;
-    std::atomic<uint64_t> counterFinishedSink;
-    uint64_t windowStart;
-    uint64_t windowEnd;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
-    std::map<uint64_t, TupleBuffer> workerIdToEmittableBuffer;
+    std::atomic<uint64_t> partitionFinishedCounter;
 };
 
 }// namespace NES::Runtime::Execution

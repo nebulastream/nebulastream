@@ -88,6 +88,13 @@ class RecordBuffer {
     Value<UInt64> getSequenceNr();
 
     /**
+     * @brief Set the sequence number of the underlying tuple buffer.
+     * @param originId Value<UInt64> containing the sequence number to set for the
+     * tuple buffer.
+     */
+    void setSequenceNr(const Value<UInt64>& seqNumber);
+
+    /**
      * @brief Get the watermark timestamp of the underlying tuple buffer.
      * The watermark timestamp is a point in time that guarantees no records with
      * a lower timestamp will be received.

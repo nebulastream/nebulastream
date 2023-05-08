@@ -47,6 +47,7 @@
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
+#include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
@@ -84,6 +85,7 @@
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
@@ -444,12 +446,22 @@ LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Exec
                                                                    const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                                    std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
     auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
-    auto eventTimeWatermarkStrategy =
-        wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-    auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
-    auto watermarkAssignmentOperator =
-        std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(fieldExpression);
-    return watermarkAssignmentOperator;
+
+    if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+        auto eventTimeWatermarkStrategy =
+            wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+        auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
+        //timefunction
+        auto watermarkAssignmentOperator =
+            std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(fieldExpression);
+        return watermarkAssignmentOperator;
+    } else if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::IngestionTimeWatermarkAssignment>(
+            std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>());
+        return watermarkAssignmentOperator;
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>

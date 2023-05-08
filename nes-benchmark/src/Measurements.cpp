@@ -18,6 +18,25 @@
 
 namespace NES::Benchmark::Measurements {
 
+std::string Measurements::getthroughputAsString() {
+    std::stringstream ss;
+    size_t avgValue = 0;
+    size_t avgCnt = 0;
+    size_t maxValue = 0;
+    for (size_t measurementIdx = 0; measurementIdx < timestamps.size() - 1; ++measurementIdx) {
+        auto currentTs = timestamps[measurementIdx];
+        double timeDeltaSeconds = (timestamps[measurementIdx + 1] - timestamps[measurementIdx]);
+        size_t actualThroughput =
+            (allProcessedTuples[timestamps[measurementIdx + 1]] - allProcessedTuples[currentTs]) / (timeDeltaSeconds);
+        ss << actualThroughput << ",";
+        avgValue += actualThroughput;
+        avgCnt++;
+        maxValue = std::max(maxValue, actualThroughput);
+    }
+    ss << std::endl << " avgThroughput=" << avgValue /avgCnt <<  " maxValue=" << maxValue << std::endl;
+    return ss.str();
+}
+
 std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte, size_t numberOfQueries) {
     const double factorToMebi = 1024 * 1024;
     std::vector<std::string> vecCsvStrings;
