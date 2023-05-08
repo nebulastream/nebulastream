@@ -62,9 +62,7 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t) {
     switch (terminatorOp->getOperationType()) {
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-            //if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
             dumpHelper(branchOp->getNextBlockInvocation().getBlock());
-            //}
             break;
         }
         case Operations::Operation::OperationType::LoopOp: {
@@ -93,7 +91,6 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
     if (!visitedBlocks.contains(basicBlock->getIdentifier())) {
         int32_t indent = basicBlock->getScopeLevel() + 1;
         visitedBlocks.emplace(basicBlock->getIdentifier());
-        //out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << "Block_" << basicBlock->getIdentifier() << '(';
         out << '\n' << "Block_" << basicBlock->getIdentifier() << '(';
         if (basicBlock->getArguments().size() > 0) {
             out << basicBlock->getArguments().at(0)->getIdentifier() + ":"
@@ -106,7 +103,6 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
         out << "):" << '\n';
         for (auto operation : basicBlock->getOperations()) {
             out << std::string(4, ' ') << operation->toString() << " :" << operation->getStamp()->toString() << std::endl;
-            //  out << std::string(indent * 4, ' ') << operation->toString() << std::endl;
         }
         OperationPtr terminatorOp = basicBlock->getOperations().back();
         dumpHelper(terminatorOp, basicBlock->getScopeLevel());
