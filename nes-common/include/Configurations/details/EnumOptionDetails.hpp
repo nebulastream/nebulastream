@@ -65,7 +65,12 @@ void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std:
 template<class EnumType>
     requires std::is_enum<EnumType>::value
 std::string EnumOption<EnumType>::toString() {
-    return "";
+    std::stringstream os;
+    os << "Name: " << this->name << "\n";
+    os << "Description: " << this->description << "\n";
+    os << "Value: " << std::string(magic_enum::enum_name(this->value)) << "\n";
+    os << "Default Value: " << std::string(magic_enum::enum_name(this->defaultValue)) << "\n";
+    return os.str();
 }
 
 }

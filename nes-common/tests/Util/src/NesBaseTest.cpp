@@ -97,7 +97,6 @@ void NESBaseTest::TearDown() {
         std::filesystem::remove_all(testResourcePath);
         NES::Testing::TestWithErrorHandling::TearDown();
         completeTest();
-        //        portDispatcher.tearDown();
     } else {
         NES_ERROR2("TearDown called twice in {}", typeid(*this).name());
     }
@@ -109,7 +108,7 @@ void NESBaseTest::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NESBaseTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
+    NES_ERROR2("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
     failTest();
 }
 
