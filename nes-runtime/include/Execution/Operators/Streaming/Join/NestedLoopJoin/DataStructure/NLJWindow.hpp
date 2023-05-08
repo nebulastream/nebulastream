@@ -18,6 +18,7 @@
 #include <atomic>
 #include <cstdint>
 #include <mutex>
+#include <ostream>
 #include <vector>
 
 namespace NES::Runtime::Execution {
@@ -62,9 +63,41 @@ public:
 
     uint64_t getWindowEnd() const;
 
-    std::atomic<WindowState> windowState;
+    /**
+     * @brief Retrieving the window state
+     * @return WindowState
+     */
+    WindowState getWindowState() const;
 
-private:
+    /**
+     * @brief Updates the window state
+     * @param newWindowState
+     */
+    void updateWindowState(WindowState newWindowState);
+
+    /**
+     * @brief Compares if the windowState is equal to the expectedState
+     * @param expectedState
+     * @return Bool
+     */
+    bool compareCurrentWindowState(WindowState expectedState);
+
+    /**
+     * @brief Wrapper for std::atomic<T>::compare_exchange_strong
+     * @param expectedState
+     * @param newWindowState
+     * @return Bool
+     */
+    bool compareExchangeStrong(WindowState expectedState, WindowState newWindowState);
+
+    /**
+     * @brief Creates a string representation of this window
+     * @return String
+     */
+    std::string toString();
+
+  private:
+    std::atomic<WindowState> windowState;
     std::vector<uint8_t> leftTuples;
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;

@@ -55,12 +55,13 @@ void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWor
     auto& allNLJWindows = opHandler->getAllNLJWindows();
     for (auto& nljWindow : allNLJWindows) {
         auto expected = NLJWindow::WindowState::DONE_FILLING;
-        if (nljWindow.windowState.compare_exchange_strong(expected, NLJWindow::WindowState::EMITTED_TO_NLJ_SINK)) {
+        if (nljWindow.compareExchangeStrong(expected, NLJWindow::WindowState::EMITTED_TO_NLJ_SINK)) {
             auto buffer = workerCtx->allocateTupleBuffer();
             auto windowEnd = nljWindow.getWindowEnd();
             std::memcpy(buffer.getBuffer(), &windowEnd, sizeof(uint64_t));
             buffer.setNumberOfTuples(1);
             pipelineCtx->emitBuffer(buffer, *workerCtx);
+            NES_DEBUG2("Emitted window {}", nljWindow.toString());
         }
     }
 }
