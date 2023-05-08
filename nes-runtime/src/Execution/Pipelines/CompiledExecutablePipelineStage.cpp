@@ -30,16 +30,16 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
     const std::string& compilationBackend,
     const Nautilus::CompilationOptions& options)
-    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend), options(options) {}
+    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend), options(options),
+      pipelineFunction(nullptr) {}
 
 ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
                                                          WorkerContext& workerContext) {
     // wait till pipeline is ready
     executablePipeline.wait();
-    auto& pipeline = executablePipeline.get();
-    auto func = pipeline->getInvocableMember<void, void*, void*, void*>("execute");
-    func((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+
+    pipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
 }
 
@@ -94,7 +94,7 @@ uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
     executablePipeline = std::async(std::launch::deferred, [this] {
                              return this->compilePipeline();
                          }).share();
-    executablePipeline.get();
+    pipelineFunction = executablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
     return 0;
 }
 

@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
+#include <Nautilus/Backends/Executable.hpp>
 #include <future>
 
 namespace NES::Nautilus::Backends {
@@ -42,6 +43,7 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
     std::string compilationBackend;
     const Nautilus::CompilationOptions options;
     std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
+    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> pipelineFunction;
 };
 
 }// namespace NES::Runtime::Execution
