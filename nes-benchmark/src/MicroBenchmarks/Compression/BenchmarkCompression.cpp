@@ -85,6 +85,8 @@ void BenchmarkCompression::run() {
 
     compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm::RLE);
     decompressAndVerify();
+    compress(NES::Runtime::MemoryLayouts::CompressionAlgorithm::SPRINTZ);
+    decompressAndVerify();
     std::cout << "------------------------------\n";
 }
 
