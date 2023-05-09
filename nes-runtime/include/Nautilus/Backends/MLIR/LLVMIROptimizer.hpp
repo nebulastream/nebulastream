@@ -15,8 +15,9 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 
-#include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/DumpHelper.hpp>
+class CompilationOptions;
+class DumpHelper;
+
 #include <llvm/IR/Module.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>

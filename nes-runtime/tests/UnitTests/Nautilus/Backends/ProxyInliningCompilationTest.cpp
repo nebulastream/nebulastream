@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "Nautilus/Util/CompilationOptions.hpp"
-#include "Util/DumpHelper.hpp"
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
