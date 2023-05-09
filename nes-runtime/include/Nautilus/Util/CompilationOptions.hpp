@@ -14,6 +14,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #include <string>
+#include <filesystem>
 namespace NES::Nautilus {
 
 /**
@@ -103,23 +104,43 @@ class CompilationOptions {
     /**
      * @brief Sets the proxy inlining option.
      * @param proxyInlining: The value to set the proxyInlining option to.
+     * @param inPath: The file from which the proxy functions are read.
+     * @param outPath: The file in which the linked and optimized (with inlined proxy functions) LLVM IR file is written.
      */
-    void setProxyInlining(const bool proxyInlining);
+    void setProxyInlining(const bool proxyInlining, const std::string& proxyInliningOutputPath = 
+                          std::filesystem::temp_directory_path().string() + "/generatedProxy.ll");
+
+    /**
+     * @brief Get the proxy inlining input path.
+     */
+    const std::string getProxyInliningInputPath() const;
 
     /**
      * @brief Get the proxy inlining path.
      */
-    const std::string getProxyInliningPath() const;
+    const std::string getProxyInliningOutputPath() const;
+
+    /**
+     * @brief set the optimization level used for compilation.
+     */
+    void setOptimizationLevel(const uint8_t optimizationLevel);
+
+    /**
+     * @brief get the optimization level used for compilation.
+     */
+    uint8_t getOptimizationLevel() const;
 
   private:
     std::string identifier;
     std::string dumpOutputPath;
-    std::string proxyInliningPath;
+    std::string proxyInliningInputPath;
+    std::string proxyInliningOutputPath;
     bool dumpToFile = false;
     bool dumpToConsole = false;
     bool optimize = false;
     bool debug = true;
     bool proxyInlining = false;
+    uint8_t optimizationLevel = 1;
 };
 }// namespace NES::Nautilus
 
