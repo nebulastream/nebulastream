@@ -47,7 +47,7 @@ Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef) {
 }
 
 // Todo (#3709) fix: proxiesReduced should be built in the CI if non-existing
-TEST_P(ProxyFunctionInliningCompilationTest, DISABLED_getNumberOfTuplesInliningTest) {
+TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
     auto bufferManager = std::make_unique<Runtime::BufferManager>();
     auto tupleBuffer = bufferManager->getBufferNoBlocking();
     Value<MemRef> tupleBufferPointer = Value<MemRef>((int8_t*) std::addressof(tupleBuffer));
