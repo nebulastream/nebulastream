@@ -13,6 +13,7 @@
 */
 
 #include "Nautilus/Util/CompilationOptions.hpp"
+#include "Util/DumpHelper.hpp"
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -24,6 +25,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 
@@ -47,7 +49,7 @@ Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef) {
                           tupleBufferRef);
 }
 
-void executeFunctionWithOptions(CompilationOptions& options) {
+void executeFunctionWithOptions(const CompilationOptions& options, const DumpHelper& dumpHelper) {
     // Create TupleBuffer and generate execution trace.
     auto bufferManager = std::make_unique<Runtime::BufferManager>();
     auto tupleBuffer = bufferManager->getBufferNoBlocking();
@@ -57,29 +59,32 @@ void executeFunctionWithOptions(CompilationOptions& options) {
         return getNumberOfTuples(tupleBufferPointer);
     });
 
-    // Create file name to write LLVM IR file with inlined proxy functions to. Set proxy inlining to true in options.
-    const std::time_t t_c = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    std::ostringstream datetime;
-    datetime << std::put_time(std::localtime(&t_c), "%F-%T");
-    const auto outputFileName = std::filesystem::temp_directory_path().string() 
-                                + "/" + datetime.str() + "-ProxyInliningCompilationTest.ll";
-    options.setProxyInlining(true, outputFileName);
-    options.setDumpToFile(true);
-
     // Execute function that contains 'getNumberOfTuples' as external function call.
     AbstractCompilationBackendTest abstractCompilationBackendTest{};
-    auto result = abstractCompilationBackendTest.prepare(executionTrace, options);
+    auto result = abstractCompilationBackendTest.prepare(executionTrace, options, dumpHelper);
     auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
     NES_DEBUG("Function result: " << function((uint8_t*) std::addressof(tupleBuffer)));
 }
 
 TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
+    // Create the required CompilationOptions and the DumpHelper.
     CompilationOptions options;
-    executeFunctionWithOptions(options);
-    std::ifstream generatedProxyIR(options.getProxyInliningOutputPath());
+    options.setProxyInlining(true);
+    options.setDumpToFile(true);
+    options.setDumpOutputPath(std::filesystem::temp_directory_path().string());
+    options.setIdentifier("ProxyInliningCompilationTest.ll");
+    auto dumpHelper = DumpHelper::create(options.getIdentifier(), true, true, options.getDumpOutputPath());
+    
+    // Execute the getNumberOfTuples() function.
+    executeFunctionWithOptions(options, dumpHelper);
+
+    // When compiling with O0, the generated code should contain a function call to getNumberOfTuples.
+    std::ifstream generatedProxyIR(dumpHelper.getOutputPath() +  std::filesystem::path::preferred_separator + options.getIdentifier());
     NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
-    bool foundExecute = false;
+
+    // When compiling with O1+, the generated LLVM IR should not contain a function call.
     std::string line;
+    bool foundExecute = false;
     while (std::getline(generatedProxyIR, line)) {
         if (!foundExecute) {
             if (line.find("@execute") != std::string::npos) {
@@ -95,20 +100,30 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
             }
         }
     }
-    std::remove(options.getProxyInliningOutputPath().c_str());
     generatedProxyIR.close();
 }
 
 TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningWithoutOptimizationTest) {
+    // Create the required CompilationOptions and the DumpHelper.
     CompilationOptions options;
+    options.setProxyInlining(true);
+    options.setDumpToFile(true);
+    options.setDumpOutputPath(std::filesystem::temp_directory_path().string());
     options.setOptimizationLevel(0);
-    executeFunctionWithOptions(options);
-    std::ifstream generatedProxyIR(options.getProxyInliningOutputPath());
+    options.setIdentifier("ProxyInliningCompilationTest.ll");
+    auto dumpHelper = DumpHelper::create(options.getIdentifier(), true, true, options.getDumpOutputPath());
+
+    // Execute the getNumberOfTuples() function.
+    executeFunctionWithOptions(options, dumpHelper);
+
+    // Check if a file that contains the generated LLVM IR (generated function code linked with proxy functions).
+    std::ifstream generatedProxyIR(dumpHelper.getOutputPath() +  std::filesystem::path::preferred_separator + options.getIdentifier());
     NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
+
+    // When compiling with O0, the generated LLVM IR should contain a function call to getNumberOfTuples.
+    std::string line;
     bool foundExecute = false;
     bool callFound = false;
-    // When compiling with O0, the generated code should contain a function call to getNumberOfTuples.
-    std::string line;
     while (std::getline(generatedProxyIR, line)) {
         if (!foundExecute) {
             if (line.find("@execute") != std::string::npos) {
@@ -124,7 +139,6 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningWithoutOpt
     }
     NES_ASSERT2_FMT(callFound, "The execute function should contain a call to getNumberOfTuples when compiling with \
                                 optimization level O0");
-    std::remove(options.getProxyInliningOutputPath().c_str());
     generatedProxyIR.close();
 }
 

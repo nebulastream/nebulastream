@@ -14,7 +14,6 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #include <string>
-#include <filesystem>
 namespace NES::Nautilus {
 
 /**
@@ -46,6 +45,18 @@ class CompilationOptions {
      * @param dumpOutputPath The dump output path string to set.
      */
     void setDumpOutputPath(const std::string& dumpOutputPath);
+
+    /**
+    * @brief Retrieves the dump output file name for this compilation options instance.
+     * @return A const reference to the dump output file name string.
+     */
+    const std::string getDumpOutputFileName() const;
+
+    /**
+     * @brief Sets the dump output file name for this compilation options instance.
+     * @param dumpOutputPath The dump output file name string to set.
+     */
+    void setDumpOutputFileName(const std::string& dumpOutputFileName);
 
     /**
      * @brief Checks if the dump to file option is enabled.
@@ -107,18 +118,17 @@ class CompilationOptions {
      * @param inPath: The file from which the proxy functions are read.
      * @param outPath: The file in which the linked and optimized (with inlined proxy functions) LLVM IR file is written.
      */
-    void setProxyInlining(const bool proxyInlining, const std::string& proxyInliningOutputPath = 
-                          std::filesystem::temp_directory_path().string() + "/generatedProxy.ll");
+    void setProxyInlining(const bool proxyInlining);
 
     /**
      * @brief Get the proxy inlining input path.
      */
     const std::string getProxyInliningInputPath() const;
 
-    /**
-     * @brief Get the proxy inlining path.
-     */
-    const std::string getProxyInliningOutputPath() const;
+    // /**
+    //  * @brief Get the proxy inlining path.
+    //  */
+    // const std::string getProxyInliningOutputPath() const;
 
     /**
      * @brief set the optimization level used for compilation.
@@ -134,7 +144,7 @@ class CompilationOptions {
     std::string identifier;
     std::string dumpOutputPath;
     std::string proxyInliningInputPath;
-    std::string proxyInliningOutputPath;
+    std::string dumpOutputFileName;
     bool dumpToFile = false;
     bool dumpToConsole = false;
     bool optimize = false;

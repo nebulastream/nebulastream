@@ -26,6 +26,10 @@ const std::string CompilationOptions::getDumpOutputPath() const { return dumpOut
 void CompilationOptions::setDumpOutputPath(const std::string& dumpOutputPath) {
     CompilationOptions::dumpOutputPath = dumpOutputPath;
 }
+const std::string CompilationOptions::getDumpOutputFileName() const { return dumpOutputFileName; }
+void CompilationOptions::setDumpOutputFileName(const std::string& dumpOutputFileName) {
+    CompilationOptions::dumpOutputFileName = dumpOutputFileName;
+}
 bool CompilationOptions::isDumpToFile() const { return dumpToFile; }
 void CompilationOptions::setDumpToFile(bool dumpToFile) { CompilationOptions::dumpToFile = dumpToFile; }
 bool CompilationOptions::isDumpToConsole() const { return dumpToConsole; }
@@ -35,17 +39,17 @@ void CompilationOptions::setOptimize(bool optimize) { CompilationOptions::optimi
 bool CompilationOptions::isDebug() const { return debug; }
 void CompilationOptions::setDebug(bool debug) { CompilationOptions::debug = debug; }
 bool CompilationOptions::isProxyInlining() const { return proxyInlining; }
-void CompilationOptions::setProxyInlining(const bool proxyInlining, const std::string& proxyInliningOutputPath) {
+void CompilationOptions::setProxyInlining(const bool proxyInlining) {
+    // For now we statically write proxy functions to /tmp/proxiesReduced.ll (see ExtractFunctionFromLLVMIR.cpp)
     CompilationOptions::proxyInliningInputPath = std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll";
     if (proxyInlining && !std::filesystem::exists(proxyInliningInputPath)) {
         NES_THROW_RUNTIME_ERROR("We require a proxy functions file under: " << 
                                  proxyInliningInputPath << " to perform proxy function inlining");
     }
     CompilationOptions::proxyInlining = proxyInlining;
-    CompilationOptions::proxyInliningOutputPath = proxyInliningOutputPath;
 }
 const std::string CompilationOptions::getProxyInliningInputPath() const { return proxyInliningInputPath; }
-const std::string CompilationOptions::getProxyInliningOutputPath() const { return proxyInliningOutputPath; }
+// const std::string CompilationOptions::getProxyInliningOutputPath() const { return proxyInliningOutputPath; }
 void CompilationOptions::setOptimizationLevel(const uint8_t optimizationLevel) { 
     CompilationOptions::optimizationLevel = optimizationLevel;
 };
