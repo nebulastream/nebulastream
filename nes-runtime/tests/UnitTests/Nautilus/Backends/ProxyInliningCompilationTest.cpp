@@ -45,10 +45,11 @@ Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef) {
                           NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
                           tupleBufferRef);
 }
-TEST_P(ProxyFunctionInliningCompilationTest, addIntFunctionTest) {
+
+// Todo (#3709) fix: proxiesReduced should be built in the CI if non-existing
+TEST_P(ProxyFunctionInliningCompilationTest, DISABLED_getNumberOfTuplesInliningTest) {
     auto bufferManager = std::make_unique<Runtime::BufferManager>();
     auto tupleBuffer = bufferManager->getBufferNoBlocking();
-    tupleBuffer->setNumberOfTuples(3);
     Value<MemRef> tupleBufferPointer = Value<MemRef>((int8_t*) std::addressof(tupleBuffer));
     tupleBufferPointer.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
