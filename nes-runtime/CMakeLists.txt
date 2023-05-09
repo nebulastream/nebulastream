@@ -124,6 +124,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
 
         get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
         get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
+        
         message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}")
         message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
         message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
@@ -132,8 +133,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
         set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}")
         list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
-        # set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/)
-        target_compile_definitions(nes-runtime PRIVATE PROXY_FUNCTIONS_RESULT_DIR_CMAKE=\"${OP_BINARY_DIR}\")
+        target_compile_definitions(nes-runtime-proxy PRIVATE PROXY_FUNCTIONS_RESULT_DIR_CMAKE=\"${OP_BINARY_DIR}\")
 
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")

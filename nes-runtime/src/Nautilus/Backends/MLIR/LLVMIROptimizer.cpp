@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IRReader/IRReader.h>
@@ -19,8 +20,8 @@
 #include <llvm/Support/FileCollector.h>
 #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
-#include <iostream>
 #include <filesystem>
+#include <fstream>
 namespace NES::Nautilus::Backends::MLIR {
 
 llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(const bool linkProxyFunctions,
@@ -54,7 +55,11 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
                 );
             llvm::SMDiagnostic Err;
             // Todo we will remove this PROXY_FUNCTIONS_RESULT_DIR in issue #3709
+            // Check that 'proxiesReduced.ll' exists
             const std::string PROXY_FUNCTIONS_RESULT_DIR = std::filesystem::temp_directory_path();
+            std::ifstream proxiesFile(PROXY_FUNCTIONS_RESULT_DIR + "/proxiesReduced.ll");
+            NES_ASSERT2_FMT(proxiesFile.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
+            // Load 'proxiesReduced.ll' into an LLVM IR module.
             auto proxyFunctionsIR = llvm::parseIRFile(
                 std::string(PROXY_FUNCTIONS_RESULT_DIR) + "/proxiesReduced.ll", Err, llvmIRModule->getContext());
             // Link the module with our generated LLVM IR module and optimize the linked LLVM IR module (inlining happens during optimization).
