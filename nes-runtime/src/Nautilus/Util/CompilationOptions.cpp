@@ -26,10 +26,6 @@ const std::string CompilationOptions::getDumpOutputPath() const { return dumpOut
 void CompilationOptions::setDumpOutputPath(const std::string& dumpOutputPath) {
     CompilationOptions::dumpOutputPath = dumpOutputPath;
 }
-const std::string CompilationOptions::getDumpOutputFileName() const { return dumpOutputFileName; }
-void CompilationOptions::setDumpOutputFileName(const std::string& dumpOutputFileName) {
-    CompilationOptions::dumpOutputFileName = dumpOutputFileName;
-}
 bool CompilationOptions::isDumpToFile() const { return dumpToFile; }
 void CompilationOptions::setDumpToFile(bool dumpToFile) { CompilationOptions::dumpToFile = dumpToFile; }
 bool CompilationOptions::isDumpToConsole() const { return dumpToConsole; }
@@ -49,7 +45,6 @@ void CompilationOptions::setProxyInlining(const bool proxyInlining) {
     CompilationOptions::proxyInlining = proxyInlining;
 }
 const std::string CompilationOptions::getProxyInliningInputPath() const { return proxyInliningInputPath; }
-// const std::string CompilationOptions::getProxyInliningOutputPath() const { return proxyInliningOutputPath; }
 void CompilationOptions::setOptimizationLevel(const uint8_t optimizationLevel) { 
     CompilationOptions::optimizationLevel = optimizationLevel;
 };

@@ -47,18 +47,6 @@ class CompilationOptions {
     void setDumpOutputPath(const std::string& dumpOutputPath);
 
     /**
-    * @brief Retrieves the dump output file name for this compilation options instance.
-     * @return A const reference to the dump output file name string.
-     */
-    const std::string getDumpOutputFileName() const;
-
-    /**
-     * @brief Sets the dump output file name for this compilation options instance.
-     * @param dumpOutputPath The dump output file name string to set.
-     */
-    void setDumpOutputFileName(const std::string& dumpOutputFileName);
-
-    /**
      * @brief Checks if the dump to file option is enabled.
      * @return True if the dump to file option is enabled, false otherwise.
      */
@@ -115,8 +103,6 @@ class CompilationOptions {
     /**
      * @brief Sets the proxy inlining option.
      * @param proxyInlining: The value to set the proxyInlining option to.
-     * @param inPath: The file from which the proxy functions are read.
-     * @param outPath: The file in which the linked and optimized (with inlined proxy functions) LLVM IR file is written.
      */
     void setProxyInlining(const bool proxyInlining);
 
@@ -124,11 +110,6 @@ class CompilationOptions {
      * @brief Get the proxy inlining input path.
      */
     const std::string getProxyInliningInputPath() const;
-
-    // /**
-    //  * @brief Get the proxy inlining path.
-    //  */
-    // const std::string getProxyInliningOutputPath() const;
 
     /**
      * @brief set the optimization level used for compilation.
