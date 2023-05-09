@@ -162,7 +162,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ADD_CORS(submitQuery)
     ENDPOINT("POST", "/execute-query", submitQuery, BODY_STRING(String, request)) {
         try {
             //nlohmann::json library has trouble parsing Oatpp String type
@@ -233,7 +232,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ADD_CORS(submitQueryProtobuf)
     ENDPOINT("POST", "/execute-query-ex", submitQueryProtobuf, BODY_STRING(String, request)) {
         try {
             std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
@@ -289,7 +287,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ADD_CORS(stopQuery)
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             bool success = queryService->validateAndQueueStopQueryRequest(queryId);
