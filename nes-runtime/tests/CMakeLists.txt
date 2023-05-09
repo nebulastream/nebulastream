@@ -42,10 +42,4 @@ function(add_nes_runtime_test)
     message(STATUS "Added ut test ${TARGET_NAME}")
 endfunction()
 
-
-#add_library(nes-runtime-tests INTERFACE)
-#target_include_directories(nes-runtime-tests INTERFACE "./include/")
-#target_link_libraries(nes-runtime-tests INTERFACE nes-runtime nes-tests-util)
-
 add_subdirectory(UnitTests)
-

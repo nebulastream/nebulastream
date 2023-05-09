@@ -14,7 +14,6 @@
 include(ExternalProject)
 
 # Copy Test Data --------------------------------------------------------------
-#file(COPY test_data DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 file(COPY test_data DESTINATION .)
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")

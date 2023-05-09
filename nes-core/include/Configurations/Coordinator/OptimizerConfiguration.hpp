@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/Configs.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <iostream>
