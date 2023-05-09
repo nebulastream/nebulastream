@@ -33,7 +33,8 @@ class LLVMIROptimizer {
     LLVMIROptimizer(); // Disable default constructor
     ~LLVMIROptimizer();// Disable default destructor
 
-    static std::function<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(const CompilationOptions& options);
+    static std::function<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(const CompilationOptions& options,
+                                                                              const DumpHelper& dumpHelper);
 
 };
 }// namespace NES::Nautilus::Backends::MLIR

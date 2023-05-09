@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
@@ -30,7 +31,7 @@ DumpHelper::create(const std::string& contextIdentifier, bool dumpToConsole, boo
     if (!std::filesystem::is_directory(path)) {
         std::filesystem::create_directory(path);
     }
-    path = path + std::filesystem::path::preferred_separator + contextIdentifier + "-" + ss.str();
+    path = path + std::filesystem::path::preferred_separator + ss.str();
     if (!std::filesystem::is_directory(path)) {
         std::filesystem::create_directory(path);
     }
@@ -55,6 +56,9 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
         NES_INFO2("DUMP {} {} to path file://{}", contextIdentifier, name, path);
     }
 }
+
+const std::string& DumpHelper::getOutputPath() const { return outputPath; };
+
 DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath)
     : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), dumpToFile(dumpToFile),
       outputPath(std::move(outputPath)) {}
