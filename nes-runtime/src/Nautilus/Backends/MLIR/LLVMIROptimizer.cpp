@@ -28,6 +28,8 @@ namespace NES::Nautilus::Backends::MLIR {
 std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(const CompilationOptions& options) {
     // Return LLVM optimizer pipeline.
     return [options](llvm::Module* llvmIRModule) {
+        // Currently, we do not increase the sizeLevel requirement of the optimizingTransformer beyond 0.
+        constexpr int SIZE_LEVEL = 0;
         // Create A target-specific target machine for the host
         auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
         NES_ASSERT2_FMT(tmBuilderOrError, "Failed to create a JITTargetMachineBuilder for the host");
@@ -54,7 +56,7 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
                                                     llvmIRModule->getContext());
         // Link the module with our generated LLVM IR module and optimize the linked LLVM IR module (inlining happens during optimization).
         llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR), llvm::Linker::Flags::OverrideFromSrc);
-        auto optPipeline = mlir::makeOptimizingTransformer(options.getOptimizationLevel(), 0, targetMachinePtr);
+        auto optPipeline = mlir::makeOptimizingTransformer(options.getOptimizationLevel(), SIZE_LEVEL, targetMachinePtr);
         auto optimizedModule = optPipeline(llvmIRModule);
 
         // Print debug information to file/console if set in options.
