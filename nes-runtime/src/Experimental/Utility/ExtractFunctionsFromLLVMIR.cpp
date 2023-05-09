@@ -161,9 +161,8 @@ int main(int argc, char** argv) {
     Passes.add(createStripDeadPrototypesPass());// Remove dead func decls
 
     std::error_code EC;
-    // Todo we will remove this PROXY_FUNCTIONS_RESULT_DIR in issue #3709
-    std::string PROXY_FUNCTIONS_RESULT_DIR = std::filesystem::temp_directory_path();
-    ToolOutputFile Out(PROXY_FUNCTIONS_RESULT_DIR + "/proxiesReduced.ll", EC, sys::fs::OF_None);
+    // We statically write proxy functions to /tmp/proxiesReduced.ll (we might change this behavior in #3710)
+    ToolOutputFile Out(std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll", EC, sys::fs::OF_None);
     if (EC) {
         errs() << EC.message() << '\n';
         return 1;

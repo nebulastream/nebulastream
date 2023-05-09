@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/Util/CompilationOptions.hpp"
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -46,8 +47,8 @@ Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef) {
                           tupleBufferRef);
 }
 
-// Todo (#3709) fix: proxiesReduced should be built in the CI if non-existing
-TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
+void executeFunctionWithOptions(CompilationOptions& options) {
+    // Create TupleBuffer and generate execution trace.
     auto bufferManager = std::make_unique<Runtime::BufferManager>();
     auto tupleBuffer = bufferManager->getBufferNoBlocking();
     Value<MemRef> tupleBufferPointer = Value<MemRef>((int8_t*) std::addressof(tupleBuffer));
@@ -55,25 +56,31 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
         return getNumberOfTuples(tupleBufferPointer);
     });
-    CompilationOptions options;
-    options.setProxyInlining(true);
-    auto result = prepare(executionTrace, options);
-    auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
 
-    // Clean proxy functions issue: 3710
-    // Todo (#3709) Right now we can only statically check one file, since we cannot configure the LLVM optimizer
-    // lambda function. With #3709 we change this. We should then write the generated code with inlined proxy functions
-    // to files that we name using timestamps. These files should also be deleted again, at the end of the test.
-    // -> avoid reading an old file (check if file already exists at the beginning of the test)
-    // -> avoid reading a non-existing file (assert that file exists after code generation)
-    // -> avoid accumulating test files (delete file with generated code at the end o the test)
-    // -> potentially, we also test that inlining does not happen with optimization set to O0
-    std::string line;
-    std::ifstream infile(options.getProxyInliningPath() + "generated.ll");
-    NES_ASSERT2_FMT(infile.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
-    // while (std::getline(std::string(PROXY_FUNCTIONS_RESULT_DIR) + "generated.ll", line))
+    // Create file name to write LLVM IR file with inlined proxy functions to. Set proxy inlining to true in options.
+    const std::time_t t_c = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::ostringstream datetime;
+    datetime << std::put_time(std::localtime(&t_c), "%F-%T");
+    const auto outputFileName = std::filesystem::temp_directory_path().string() 
+                                + "/" + datetime.str() + "-ProxyInliningCompilationTest.ll";
+    options.setProxyInlining(true, outputFileName);
+    options.setDumpToFile(true);
+
+    // Execute function that contains 'getNumberOfTuples' as external function call.
+    AbstractCompilationBackendTest abstractCompilationBackendTest{};
+    auto result = abstractCompilationBackendTest.prepare(executionTrace, options);
+    auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
+    NES_DEBUG("Function result: " << function((uint8_t*) std::addressof(tupleBuffer)));
+}
+
+TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
+    CompilationOptions options;
+    executeFunctionWithOptions(options);
+    std::ifstream generatedProxyIR(options.getProxyInliningOutputPath());
+    NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
     bool foundExecute = false;
-    while (std::getline(infile, line)) {
+    std::string line;
+    while (std::getline(generatedProxyIR, line)) {
         if (!foundExecute) {
             if (line.find("@execute") != std::string::npos) {
                 foundExecute = true;
@@ -88,7 +95,37 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
             }
         }
     }
-    NES_DEBUG("Function result: " << function((uint8_t*) std::addressof(tupleBuffer)));
+    std::remove(options.getProxyInliningOutputPath().c_str());
+    generatedProxyIR.close();
+}
+
+TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningWithoutOptimizationTest) {
+    CompilationOptions options;
+    options.setOptimizationLevel(0);
+    executeFunctionWithOptions(options);
+    std::ifstream generatedProxyIR(options.getProxyInliningOutputPath());
+    NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
+    bool foundExecute = false;
+    bool callFound = false;
+    // When compiling with O0, the generated code should contain a function call to getNumberOfTuples.
+    std::string line;
+    while (std::getline(generatedProxyIR, line)) {
+        if (!foundExecute) {
+            if (line.find("@execute") != std::string::npos) {
+                foundExecute = true;
+            }
+        } else {
+            callFound = callFound || (line.find("call") == std::string::npos);
+            // Check if we reached the end of the execute function.
+            if (line == "}") {
+                break;
+            }
+        }
+    }
+    NES_ASSERT2_FMT(callFound, "The execute function should contain a call to getNumberOfTuples when compiling with \
+                                optimization level O0");
+    std::remove(options.getProxyInliningOutputPath().c_str());
+    generatedProxyIR.close();
 }
 
 // Tests all registered compilation backends.
