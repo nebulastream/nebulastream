@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Util/PluginRegistry.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/PluginRegistry.hpp>
 namespace NES::Runtime::Execution {
 class ExecutablePipelineStage;
 

@@ -12,22 +12,22 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <filesystem>
+#include <fstream>
+#include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <llvm/IR/Attributes.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/FileCollector.h>
-#include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
-#include <filesystem>
-#include <fstream>
 namespace NES::Nautilus::Backends::MLIR {
 
 llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(const bool linkProxyFunctions,
                                                                                          const CompilationOptions&) {
     // Return LLVM optimizer pipeline.
-    // Todo in issue #3709 we aim to: 
+    // Todo in issue #3709 we aim to:
     // - make inlining configurable inside of the lambda function, which gets rid of `if (linkProxyFunctions) { ... }`
     // - remove the dependency on PROXY_FUNCTIONS_RESULT_DIR and replace it with a
     // - make dumping the generated code optional.
@@ -40,19 +40,19 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
                 llvm::errs() << "Failed to create a JITTargetMachineBuilder for the host\n";
             }
             auto targetMachine = tmBuilderOrError->createTargetMachine();
-            llvm::TargetMachine *targetMachinePtr = targetMachine->get();
+            llvm::TargetMachine* targetMachinePtr = targetMachine->get();
             targetMachinePtr->setOptLevel(llvm::CodeGenOpt::Level::Aggressive);
 
             // Add target-specific attributes to the 'execute' function.
-            llvmIRModule->getFunction("execute")->addAttributeAtIndex(~0, 
-                llvm::Attribute::get(llvmIRModule->getContext(), "target-cpu", targetMachinePtr->getTargetCPU())
-                );
-            llvmIRModule->getFunction("execute")->addAttributeAtIndex(~0, 
-                llvm::Attribute::get(llvmIRModule->getContext(), "target-features", targetMachinePtr->getTargetFeatureString())
-                );
-            llvmIRModule->getFunction("execute")->addAttributeAtIndex(~0, 
-                llvm::Attribute::get(llvmIRModule->getContext(), "tune-cpu", targetMachinePtr->getTargetCPU())
-                );
+            llvmIRModule->getFunction("execute")->addAttributeAtIndex(
+                ~0,
+                llvm::Attribute::get(llvmIRModule->getContext(), "target-cpu", targetMachinePtr->getTargetCPU()));
+            llvmIRModule->getFunction("execute")->addAttributeAtIndex(
+                ~0,
+                llvm::Attribute::get(llvmIRModule->getContext(), "target-features", targetMachinePtr->getTargetFeatureString()));
+            llvmIRModule->getFunction("execute")->addAttributeAtIndex(
+                ~0,
+                llvm::Attribute::get(llvmIRModule->getContext(), "tune-cpu", targetMachinePtr->getTargetCPU()));
             llvm::SMDiagnostic Err;
             // Todo we will remove this PROXY_FUNCTIONS_RESULT_DIR in issue #3709
             // Check that 'proxiesReduced.ll' exists
@@ -60,8 +60,9 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
             std::ifstream proxiesFile(PROXY_FUNCTIONS_RESULT_DIR + "/proxiesReduced.ll");
             NES_ASSERT2_FMT(proxiesFile.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
             // Load 'proxiesReduced.ll' into an LLVM IR module.
-            auto proxyFunctionsIR = llvm::parseIRFile(
-                std::string(PROXY_FUNCTIONS_RESULT_DIR) + "/proxiesReduced.ll", Err, llvmIRModule->getContext());
+            auto proxyFunctionsIR = llvm::parseIRFile(std::string(PROXY_FUNCTIONS_RESULT_DIR) + "/proxiesReduced.ll",
+                                                      Err,
+                                                      llvmIRModule->getContext());
             // Link the module with our generated LLVM IR module and optimize the linked LLVM IR module (inlining happens during optimization).
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR), llvm::Linker::Flags::OverrideFromSrc);
             auto optPipeline = mlir::makeOptimizingTransformer(3, 0, targetMachinePtr);
@@ -72,7 +73,7 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
             llvmIRModule->print(llvmStringStream, nullptr);
             auto* basicError = new std::error_code();
-            llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR)+ "/generated.ll", *basicError);
+            llvm::raw_fd_ostream fileStream(std::string(PROXY_FUNCTIONS_RESULT_DIR) + "/generated.ll", *basicError);
             fileStream.write(llvmIRString.c_str(), llvmIRString.length());
             return optimizedModule;
         };

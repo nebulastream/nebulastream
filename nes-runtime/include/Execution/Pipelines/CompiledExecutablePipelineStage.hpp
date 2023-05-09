@@ -14,8 +14,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <future>
 
 namespace NES::Nautilus::Backends {

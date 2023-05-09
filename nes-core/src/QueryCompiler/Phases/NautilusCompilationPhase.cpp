@@ -84,7 +84,8 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.setDumpToFile(compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE
                           || compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE);
 
-    options.setProxyInlining(compilerOptions->getCompilationStrategy() == QueryCompilerOptions::CompilationStrategy::PROXY_INLINING);
+    options.setProxyInlining(compilerOptions->getCompilationStrategy()
+                             == QueryCompilerOptions::CompilationStrategy::PROXY_INLINING);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);

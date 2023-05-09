@@ -37,7 +37,8 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
-    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace, CompilationOptions options = CompilationOptions()) {
+    auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
+                 CompilationOptions options = CompilationOptions()) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         NES_DEBUG(*executionTrace.get());
         auto ir = irCreationPhase.apply(executionTrace);
