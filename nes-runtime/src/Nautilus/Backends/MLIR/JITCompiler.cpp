@@ -71,21 +71,21 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
 
     // TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
     // right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
-    const std::unordered_set<std::string> ProxyInliningFunctions{ "NES__Runtime__TupleBuffer__getNumberOfTuples",
-                                                            "NES__Runtime__TupleBuffer__setNumberOfTuples",
-                                                            "NES__Runtime__TupleBuffer__getBuffer",
-                                                            "NES__Runtime__TupleBuffer__getBufferSize",
-                                                            "NES__Runtime__TupleBuffer__getWatermark",
-                                                            "NES__Runtime__TupleBuffer__setWatermark",
-                                                            "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
-                                                            "NES__Runtime__TupleBuffer__setSequenceNumber",
-                                                            "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                                            "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
+    const std::unordered_set<std::string> ProxyInliningFunctions{"NES__Runtime__TupleBuffer__getNumberOfTuples",
+                                                                 "NES__Runtime__TupleBuffer__setNumberOfTuples",
+                                                                 "NES__Runtime__TupleBuffer__getBuffer",
+                                                                 "NES__Runtime__TupleBuffer__getBufferSize",
+                                                                 "NES__Runtime__TupleBuffer__getWatermark",
+                                                                 "NES__Runtime__TupleBuffer__setWatermark",
+                                                                 "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+                                                                 "NES__Runtime__TupleBuffer__setSequenceNumber",
+                                                                 "NES__Runtime__TupleBuffer__getSequenceNumber",
+                                                                 "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
     // We register all external functions (symbols) that we do not inline.
     const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
         auto symbolMap = llvm::orc::SymbolMap();
         for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
-            if(!(compilerOptions.isProxyInlining() && ProxyInliningFunctions.contains(jitProxyFunctionSymbols.at(i)))) {
+            if (!(compilerOptions.isProxyInlining() && ProxyInliningFunctions.contains(jitProxyFunctionSymbols.at(i)))) {
                 symbolMap[interner(jitProxyFunctionSymbols.at(i))] =
                     llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
             }

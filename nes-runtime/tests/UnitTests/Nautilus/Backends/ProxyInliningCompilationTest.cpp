@@ -23,8 +23,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <memory>
 #include <fstream>
+#include <memory>
 
 namespace NES::Nautilus {
 
@@ -59,9 +59,9 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
     options.setProxyInlining(true);
     auto result = prepare(executionTrace, options);
     auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
-    
+
     // Clean proxy functions issue: 3710
-    // Todo (#3709) Right now we can only statically check one file, since we cannot configure the LLVM optimizer 
+    // Todo (#3709) Right now we can only statically check one file, since we cannot configure the LLVM optimizer
     // lambda function. With #3709 we change this. We should then write the generated code with inlined proxy functions
     // to files that we name using timestamps. These files should also be deleted again, at the end of the test.
     // -> avoid reading an old file (check if file already exists at the beginning of the test)
@@ -69,13 +69,13 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
     // -> avoid accumulating test files (delete file with generated code at the end o the test)
     // -> potentially, we also test that inlining does not happen with optimization set to O0
     std::string line;
-    std::ifstream infile( options.getProxyInliningPath() + "generated.ll");
+    std::ifstream infile(options.getProxyInliningPath() + "generated.ll");
     NES_ASSERT2_FMT(infile.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
     // while (std::getline(std::string(PROXY_FUNCTIONS_RESULT_DIR) + "generated.ll", line))
     bool foundExecute = false;
-    while (std::getline(infile, line)) {  
-        if(!foundExecute) {
-            if(line.find("@execute") != std::string::npos) {
+    while (std::getline(infile, line)) {
+        if (!foundExecute) {
+            if (line.find("@execute") != std::string::npos) {
                 foundExecute = true;
             }
         } else {
@@ -83,7 +83,7 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
             NES_ASSERT2_FMT(line.find("@tail call") == std::string::npos, "execute contained a tail call even though \
             all tail calls should have been removed via proxy function inlining.");
             // Check if we reached the end of the execute function.
-            if(line == "}") {
+            if (line == "}") {
                 break;
             }
         }
