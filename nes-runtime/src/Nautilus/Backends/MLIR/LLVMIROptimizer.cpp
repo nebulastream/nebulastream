@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include "Util/DumpHelper.hpp"
+#include <Util/DumpHelper.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>

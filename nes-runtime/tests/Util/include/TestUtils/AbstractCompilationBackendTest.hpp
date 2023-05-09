@@ -45,7 +45,6 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
         std::cout << ir->toString() << std::endl;
         auto param = this->GetParam();
         auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
-        // auto dumpHelper = DumpHelper::create("", true, false, options.getDumpOutputPath());
         return compiler->compile(ir, options, dumpHelper);
     }
 };
