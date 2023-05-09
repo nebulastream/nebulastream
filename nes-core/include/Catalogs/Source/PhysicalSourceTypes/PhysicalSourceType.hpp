@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 
-#include <Configurations/Configs.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <map>
 #include <memory>
 #include <string>

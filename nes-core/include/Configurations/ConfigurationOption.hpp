@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
-#include <Configurations/Configs.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>

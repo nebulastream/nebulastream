@@ -15,12 +15,11 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 
 namespace NES::Nautilus {
-
-    std::unique_ptr<Nautilus::Backends::Executable> AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+std::unique_ptr<Nautilus::Backends::Executable> AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_DEBUG(*executionTrace.get());
+    NES_DEBUG2("{}", executionTrace.get()->toString());
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG2("{}", ir->toString());
     auto param = this->GetParam();
     auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
     auto dumpHelper = DumpHelper::create("", true, false, "");

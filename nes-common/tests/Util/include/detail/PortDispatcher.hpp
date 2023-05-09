@@ -16,7 +16,7 @@
 #define NES_NES_COMMON_TESTS_UTIL_SRC_PORTDISPATCHER_HPP_
 #include <Util/FileMutex.hpp>
 #include <atomic>
-#include <detail/ShmFixedVector.hpp>
+#include <detail/SharedMemoryFixedVector.hpp>
 #include <memory>
 namespace NES::Testing {
 class BorrowedPort;
@@ -45,7 +45,7 @@ class PortDispatcher {
 
   private:
     Util::FileMutex mutex;
-    detail::ShmFixedVector<PortHolder> data;
+    detail::SharedMemoryFixedVector<PortHolder> data;
     std::atomic<size_t> numOfBorrowedPorts{0};
 };
 

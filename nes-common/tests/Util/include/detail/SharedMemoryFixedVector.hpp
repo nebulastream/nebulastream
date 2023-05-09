@@ -25,14 +25,14 @@
 namespace NES::Testing::detail {
 
 template<typename T>
-class ShmFixedVector {
+class SharedMemoryFixedVector {
     struct Metadata {
         std::atomic<uint32_t> refCnt;
         std::atomic<uint64_t> currentIndex;
     };
 
   public:
-    explicit ShmFixedVector(const std::string& name, size_t capacity)
+    explicit SharedMemoryFixedVector(const std::string& name, size_t capacity)
         : name(name), mmapSize(sizeof(T) * capacity + sizeof(Metadata)), capacity(capacity), created(false) {}
 
     void open() {
@@ -83,7 +83,7 @@ class ShmFixedVector {
         }
     }
 
-    ~ShmFixedVector() {
+    ~SharedMemoryFixedVector() {
         bool doCleanup = metadata->refCnt.fetch_sub(1) == 1;
         NES_ASSERT(0 == munmap(mem, mmapSize), "Cannot munmap");
         NES_ASSERT(0 == close(shmemFd), "Cannot close");

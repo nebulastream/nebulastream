@@ -20,7 +20,7 @@ namespace detail{
 class PortDispatcher;
 }
 /**
- * @brief A borrowed port for the port pool of nes test base class.
+ * @brief A borrowed port from the port pool of nes test base class.
  * It manages garbage collection internally when dtor is called.
  */
 class BorrowedPort {

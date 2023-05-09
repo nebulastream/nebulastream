@@ -41,6 +41,12 @@ TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName,
     return *this;
 }
 
+TestHarness& TestHarness::enableNautilus()  {
+    useNautilus = true;
+
+    return *this;
+}
+
 void TestHarness::checkAndAddLogicalSources() {
 
     for (const auto& logicalSource : logicalSources) {
@@ -262,6 +268,9 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         //Fetch the worker configuration
         auto workerConfiguration = workerConf->getWorkerConfiguration();
+        if (useNautilus) {
+            workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        }
 
         //Set ports at runtime
         workerConfiguration->coordinatorPort = coordinatorRPCPort;

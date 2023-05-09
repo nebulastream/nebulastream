@@ -87,10 +87,7 @@ class TestHarness {
      * @brief Enable using nautilus compiler
      * @return self
      */
-    TestHarness& enableNautilus() {
-        useNautilus = true;
-        return *this;
-    }
+    TestHarness& enableNautilus();
 
     /**
          * @brief push a single element/tuple to specific source
