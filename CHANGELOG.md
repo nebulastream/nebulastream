@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.75](https://github.com/nebulastream/nebulastream/tree/v0.5.75) (2023-05-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.74...v0.5.75)
+
+### Bug Fixes 🐛
+
+- \[BUG\] libmlir\_float16\_utils.so.16 not found  [\#3713](https://github.com/nebulastream/nebulastream/issues/3713)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Stabilize MLIR Inlining [\#3020](https://github.com/nebulastream/nebulastream/issues/3020)
+
 ## [v0.5.74](https://github.com/nebulastream/nebulastream/tree/v0.5.74) (2023-05-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.73...v0.5.74)
