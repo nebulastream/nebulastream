@@ -710,6 +710,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     std::map<std::string, z3::ExprPtr> windowExpression;
     NES_TRACE2("Create Window Signature");
+    uint64_t length = 0;
+    uint64_t slide = 0;
     //Compute the expression for window time key
     if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -725,14 +727,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
         auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
-        z3::expr windowId = context->string_val(windowKey + "." + windowTimeKeyVal.to_string());
+        z3::expr windowId = context->string_val(windowKey);
         // window id for heuristic checks for query containment identification
         windowExpression.insert({"window-id", std::make_shared<z3::expr>(windowId)});
 
         //Compute the expression for window size and slide
         auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-        uint64_t length = 0;
-        uint64_t slide = 0;
         if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
             auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindowType);
             length = tumblingWindow->getSize().getTime() * multiplier;
@@ -819,6 +819,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     uint64_t numberOfAggregates = allAggregates.size();
     windowExpression.insert({"number-of-aggregates", std::make_shared<z3::expr>(context->int_val(numberOfAggregates))});
     windowExpression.insert({"aggregate-types", std::make_shared<z3::expr>(context->string_val(aggregateTypes))});
+    windowExpression.insert({"window-time-size", std::make_shared<z3::expr>(context->int_val(length))});
+    windowExpression.insert({"window-time-slide", std::make_shared<z3::expr>(context->int_val(slide))});
 
     //Compute new schemas for this operator
     std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaFieldToExprMaps;

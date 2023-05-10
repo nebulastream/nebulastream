@@ -75,20 +75,15 @@ class SignatureContainmentUtil {
   private:
     /**
      * @brief check for projection containment as follows:
-     * check if (!leftProjectionFOL && !rightProjectionFOL) == unsat
-     *      true: return EQUALITY
-     *      false:
-     *          if (# of attr left sig > # of attr right sig)
-     *          && !rightFOL && leftFOL == unsat, aka leftFOL ⊆ rightFOL
-     *          && filters are equal
-     *          && the column order is still the same, despite the containment relationship
-     *              true: return Right sig contained
-     *      else if (# of attr left sig < # of attr right sig)
-     *          && (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
-     *          && filters are equal
-     *          && the column order is still the same, despite the containment relationship
-     *              true: return Left sig contained
-     *      else: No_Containment
+     * if (!rightFOL && leftFOL == unsat, aka leftFOL ⊆ rightFOL
+     *      && filters are equal)
+     *        if (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+     *            true: return Equality
+     *      true: return Right sig contained
+     * else if (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+     *      && filters are equal
+     *      true: return Left sig contained
+     * else: No_Containment
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships
@@ -115,7 +110,6 @@ class SignatureContainmentUtil {
      * @brief check for window containment as follows:
      * check if window conditions are present, if not, return EQUALITY
      * for the size of the smaller window:
-     *      check if window ids are equal
      *          true: check if # of aggregates equal
      *              true: check if right sig ⊆ left sig
      *                  true: check if left sig ⊆ right sig
@@ -163,22 +157,15 @@ class SignatureContainmentUtil {
     bool checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition, z3::expr_vector& condition);
 
     /**
-     * @brief checks if the combination (combined via &&) of negated conditions is unsatisfiable
-     * it also pops the given number of conditions and calls resetSolver() if the counter hits the threshold for resetting
-     * @param leftConditions condition that will be negated
-     * @param rightConditions condition that will be negated
-     * @return true if the combination of the given conditions is unsatisfiable, false otherwise
-     */
-    bool checkEqualityConditionsUnsatisfied(const z3::expr_vector& leftConditions, const z3::expr_vector& rightConditions);
-
-    /**
      * @brief checks if window containment is possible, i.e. no join window, no avg or median aggregation, and filter conditions are equal
-     * @param currentWindow current window to be checked for join or aggregation
+     * further, window-time-size and window-time-slide must be equal
+     * @param leftWindow current window to be checked for join or aggregation
      * @param leftSignature left query signature for filter check
      * @param rightSignature right query signature for filter check
      * @return true if all conditions for window containment are met, false otherwise
      */
-    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& currentWindow,
+    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& containerWindow,
+                                        const std::map<std::string, z3::ExprPtr>& containedWindow,
                                         const QuerySignaturePtr& leftSignature,
                                         const QuerySignaturePtr& rightSignature);
 

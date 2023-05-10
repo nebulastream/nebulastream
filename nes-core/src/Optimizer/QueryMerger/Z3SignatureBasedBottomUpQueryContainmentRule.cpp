@@ -232,13 +232,6 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
         if (containeeWindowDefinition->getWindowType()->isTimeBasedWindowType()) {
             auto containeeTimeBasedWindow =
                 containeeWindowDefinition->getWindowType()->asTimeBasedWindowType(containeeWindowDefinition->getWindowType());
-            auto containerWindowType = container->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType();
-            auto containerTimeBasedWindow =
-                containee->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->asTimeBasedWindowType(
-                    containerWindowType);
-            //check that containee time and slide % container is == 0 else return false
-            if (containeeTimeBasedWindow->getSize().getTime() % containerTimeBasedWindow->getSize().getTime() == 0
-                && containeeTimeBasedWindow->getSlide().getTime() % containerTimeBasedWindow->getSlide().getTime() == 0) {
                 //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
                 auto field = container->getOutputSchema()->hasFieldName("start");
                 //return false if this is not possible
@@ -246,9 +239,10 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
                     return false;
                 }
                 containeeTimeBasedWindow->getTimeCharacteristic()->setField(field);
+                NES_TRACE2("Window containment possible.");
                 return true;
-            }
         }
+        NES_TRACE2("Window containment impossible.");
         return false;
     }
     return true;
@@ -294,18 +288,6 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         NES_DEBUG2("Both target and host operators are of sink type.");
         return {};
     }
-    for (const auto& item : hostOperator->getParents()) {
-        NES_DEBUG2("HostOperator Parents: {}", item->toString());
-    }
-    for (const auto& item : targetOperator->getParents()) {
-        NES_DEBUG2("TargetOperator Parents: {}", item->toString());
-    }
-    for (const auto& item : targetOperator->getChildren()) {
-        NES_DEBUG2("TargetOperator Children: {}", item->toString());
-    }
-    for (const auto& item : hostOperator->getChildren()) {
-        NES_DEBUG2("HostOperator Children: {}", item->toString());
-    }
 
     NES_DEBUG2("Compare target {} and host {} operators.", targetOperator->toString(), hostOperator->toString());
     auto containmentType =
@@ -332,10 +314,9 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         }
         return targetHostOperatorMap;
     } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
-        NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}",
+        NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}, ContainmentType: {}",
                    targetOperator->toString(),
-                   hostOperator->toString());
-        //todo: here we need to obtain a delta so that we know that the filter operation is actually contained
+                   hostOperator->toString(), magic_enum::enum_name(containmentType));
         if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
            return targetHostOperatorMap;
         }
