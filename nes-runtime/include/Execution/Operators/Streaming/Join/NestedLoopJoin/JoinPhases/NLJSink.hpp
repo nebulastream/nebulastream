@@ -19,12 +19,15 @@ namespace NES::Runtime::Execution::Operators {
 class NLJSink : public Operator {
 
 public:
-    explicit NLJSink(uint64_t operatorHandlerIndex);
+    explicit NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema);
 
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
     uint64_t operatorHandlerIndex;
+    SchemaPtr leftSchema;
+    SchemaPtr rightSchema;
+    SchemaPtr joinSchema;
 };
 } // namespace NES::Runtime::Execution::Operators
 

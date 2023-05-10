@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -28,130 +29,38 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-    struct NLJJoinParams {
-        PipelineExecutionContext* pipelineCtx;
-        WorkerContext* workerCtx;
-        uint8_t* outerTuplesPtr;
-        uint8_t* innerTuplesPtr;
-        uint64_t numberOfTuplesOuter;
-        uint64_t numberOfTuplesInner;
-        uint64_t outerJoinKeyPosition;
-        uint64_t innerJoinKeyPosition;
-        uint64_t joinKeySize;
-        SchemaPtr outerSchema;
-        SchemaPtr innerSchema;
-        SchemaPtr joinSchema;
-        uint64_t windowStart;
-        uint64_t windowEnd;
-    };
-
-    uint64_t performNLJJoin(const NLJJoinParams& nljJoinParams) {
-        auto numberOfTuplesJoined = 0UL;
-        const auto outerTupleSize = nljJoinParams.outerSchema->getSchemaSizeInBytes();
-        const auto innerTupleSize = nljJoinParams.innerSchema->getSchemaSizeInBytes();
-        const auto joinTupleSize = nljJoinParams.joinSchema->getSchemaSizeInBytes();
-        const uint64_t sizeOfWindowStart = sizeof(nljJoinParams.windowStart);
-        const uint64_t sizeOfWindowEnd = sizeof(nljJoinParams.windowEnd);
-
-        auto tupleBuffer = nljJoinParams.workerCtx->allocateTupleBuffer();
-        tupleBuffer.setNumberOfTuples(0);
-        const auto numberOfTuplesPerBuffer = tupleBuffer.getBufferSize() / nljJoinParams.joinSchema->getSchemaSizeInBytes();
-
-        for(auto outer = 0UL; outer < nljJoinParams.numberOfTuplesOuter; ++outer) {
-            for (auto inner = 0UL; inner < nljJoinParams.numberOfTuplesInner; ++inner) {
-                auto outerTuple = nljJoinParams.outerTuplesPtr + outerTupleSize * outer;
-                auto innerTuple = nljJoinParams.innerTuplesPtr + innerTupleSize * inner;
-
-                auto outerKey = outerTuple + nljJoinParams.outerJoinKeyPosition;
-                auto innerKey = innerTuple + nljJoinParams.innerJoinKeyPosition;
-
-                if (std::memcmp(innerKey, outerKey, nljJoinParams.joinKeySize) == 0) {
-                    ++numberOfTuplesJoined;
-
-                    auto numberOfTuplesInBuffer = tupleBuffer.getNumberOfTuples();
-                    auto bufferPtr = tupleBuffer.getBuffer() + joinTupleSize * numberOfTuplesInBuffer;
-
-                    /*
-                     * TODO think if we might want to use dynamictuplebuffer (wrap memory) here or to use MemoryProvider
-                     * If so, then we have to rewrite dynamictuplebuffer to maybe use a pointer as an input to write a record
-                     */
-
-                    std::memcpy(bufferPtr, &nljJoinParams.windowStart, sizeOfWindowStart);
-                    std::memcpy(bufferPtr + sizeOfWindowStart, &nljJoinParams.windowEnd, sizeOfWindowEnd);
-                    std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd, innerKey, nljJoinParams.joinKeySize);
-
-                    std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + nljJoinParams.joinKeySize,
-                                outerTuple, outerTupleSize);
-                    std::memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + nljJoinParams.joinKeySize + outerTupleSize,
-                                innerTuple, innerTupleSize);
-                    tupleBuffer.setNumberOfTuples(++numberOfTuplesInBuffer);
-
-                    if (numberOfTuplesInBuffer >= numberOfTuplesPerBuffer) {
-                        nljJoinParams.pipelineCtx->emitBuffer(tupleBuffer, *nljJoinParams.workerCtx);
-                        tupleBuffer = nljJoinParams.workerCtx->allocateTupleBuffer();
-                        tupleBuffer.setNumberOfTuples(0);
-                    }
-                }
-            }
-        }
-
-        if (tupleBuffer.getNumberOfTuples() > 0) {
-            nljJoinParams.pipelineCtx->emitBuffer(tupleBuffer, *nljJoinParams.workerCtx);
-        }
-
-        return numberOfTuplesJoined;
-    }
-
-    /**
-     * @brief For now, we join the left as the outer and the right as the inner join
-     * @param ptrOpHandler
-     * @param ptrPipelineCtx
-     * @param ptrWorkerCtx
-     * @param windowIdentifierPtr
-     */
-    void performNLJProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, void* windowIdentifierPtr) {
+    void* getFirstTupleProxy(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
         NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-        NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
-        NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
         NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
         auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-        auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-        auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
         auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
+        return opHandler->getFirstTuple(windowIdentifier, isLeftSide);
+    }
 
-        auto numberOfTuplesLeft = opHandler->getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ true);
-        auto numberOfTuplesRight = opHandler->getNumberOfTuplesInWindow(windowIdentifier, /*isLeftSide*/ false);
-        auto tuplesLeftPtr = opHandler->getFirstTuple(windowIdentifier, /*isLeftSide*/ true);
-        auto tuplesRightPtr = opHandler->getFirstTuple(windowIdentifier, /*isLeftSide*/ false);
-        auto leftKeyPosition = opHandler->getPositionOfJoinKey(/*isLeftSide*/ true);
-        auto rightKeyPosition = opHandler->getPositionOfJoinKey(/*isLeftSide*/ false);
-        auto leftSchema = opHandler->getSchema(/*isLeftSide*/ true);
-        auto rightSchema = opHandler->getSchema(/*isLeftSide*/ false);
-        auto [windowStart, windowEnd] = opHandler->getWindowStartEnd(windowIdentifier);
+    uint64_t getNumberOfTuplesProxy(void* ptrOpHandler, void* windowIdentifierPtr, bool isLeftSide) {
+        NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+        NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
-        DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        auto joinKeySize = defaultPhysicalTypeFactory.getPhysicalType(leftSchema->get(opHandler->getJoinFieldNameLeft())->getDataType())->size();
+        auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+        auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
+        return opHandler->getNumberOfTuplesInWindow(windowIdentifier, isLeftSide);
+    }
 
-        NLJJoinParams nljJoinParams;
-        nljJoinParams.workerCtx = workerCtx;
-        nljJoinParams.pipelineCtx = pipelineCtx;
-        nljJoinParams.outerTuplesPtr = tuplesLeftPtr;
-        nljJoinParams.innerTuplesPtr = tuplesRightPtr;
-        nljJoinParams.numberOfTuplesOuter = numberOfTuplesLeft;
-        nljJoinParams.numberOfTuplesInner = numberOfTuplesRight;
-        nljJoinParams.outerJoinKeyPosition = leftKeyPosition;
-        nljJoinParams.innerJoinKeyPosition = rightKeyPosition;
-        nljJoinParams.joinKeySize = joinKeySize;
-        nljJoinParams.outerSchema = leftSchema;
-        nljJoinParams.innerSchema = rightSchema;
-        nljJoinParams.joinSchema = Util::createJoinSchema(leftSchema, rightSchema, opHandler->getJoinFieldNameLeft());
-        nljJoinParams.windowStart = windowStart;
-        nljJoinParams.windowEnd = windowEnd + 1;
+    void deleteWindowProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
+        NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+        NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
-        auto numberOfTuplesJoined = performNLJJoin(nljJoinParams);
-        NES_DEBUG2("Joined a total of {} tuples for window {}-{}", numberOfTuplesJoined, nljJoinParams.windowStart,
-                   nljJoinParams.windowEnd);
+        auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+        auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
+        opHandler->deleteWindow(windowIdentifier);
+    }
+
+    std::string getJoinFieldNameProxy(void* ptrOpHandler, bool isLeftSide) {
+        NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+
+        auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+        return opHandler->getJoinFieldName(isLeftSide);
     }
 
     void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
@@ -159,10 +68,66 @@ namespace NES::Runtime::Execution::Operators {
         auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         auto windowIdentifierMemRef = recordBuffer.getBuffer();
 
-        Nautilus::FunctionCall("performNLJProxy", performNLJProxy, operatorHandlerMemRef,
-                               ctx.getPipelineContext(), ctx.getWorkerContext(), windowIdentifierMemRef);
+        auto firstTupleLeft = Nautilus::FunctionCall("getFirstTupleProxy", getFirstTupleProxy,
+                                                     operatorHandlerMemRef,
+                                                     windowIdentifierMemRef,
+                                                     Value<Boolean>(/*isLeftSide*/ true));
+        auto firstTupleRight = Nautilus::FunctionCall("getFirstTupleProxy", getFirstTupleProxy,
+                                                      operatorHandlerMemRef,
+                                                      windowIdentifierMemRef,
+                                                      Value<Boolean>(/*isLeftSide*/ false));
+
+        auto numberOfTuplesLeft = Nautilus::FunctionCall("getNumberOfTuplesProxy", getNumberOfTuplesProxy,
+                                                         operatorHandlerMemRef,
+                                                         windowIdentifierMemRef,
+                                                         Value<Boolean>(/*isLeftSide*/ true));
+        auto numberOfTuplesRight = Nautilus::FunctionCall("getNumberOfTuplesProxy", getNumberOfTuplesProxy,
+                                                          operatorHandlerMemRef,
+                                                          windowIdentifierMemRef,
+                                                          Value<Boolean>(/*isLeftSide*/ false));
+
+        auto joinFieldNameLeft = Nautilus::FunctionCall("getJoinFieldNameProxy", getJoinFieldNameProxy,
+                                                        operatorHandlerMemRef,
+                                                        Value<Boolean>(/*isLeftSide*/ true));
+        auto joinFieldNameRight = Nautilus::FunctionCall("getJoinFieldNameProxy", getJoinFieldNameProxy,
+                                                        operatorHandlerMemRef,
+                                                        Value<Boolean>(/*isLeftSide*/ false));
+
+//        then iterate over both tuplesmemref via rowMemoryProvider and create a new record
+//            - left and right record via rowMemoryprovider read
+//            - two additional fields windowstart and windowend
+//            - get the windowStart and windowEnd from the NLJOpHandler
+//
+
+        // As we know that the data is of type rowlayout, we do not have to provide a buffer size
+        auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/1, leftSchema);
+        auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/1, rightSchema);
+
+        for (Value<UInt64> leftPos(0UL); leftPos < numberOfTuplesLeft; leftPos = leftPos + 1){
+            for (Value<UInt64> rightPos(0UL); rightPos < numberOfTuplesRight; rightPos = rightPos + 1){
+                auto leftRecord = leftMemProvider->read({}, firstTupleLeft, leftPos);
+                auto rightRecord = rightMemProvider->read({}, firstTupleRight, rightPos);
+
+                /* This can be later replaced by an interface that returns bool and gets passed the
+                 * two Nautilus::Records (left and right) #3691 */
+                if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
+                    Record joinedRecord;
+                    hier das Record zusammen bauen.
+                    Philipp fragen:
+                        - wie das mit dem underlying data layout aussieht, also ob es schlimm ist, dass die Daten nicht 1:1 neben einander liegen
+                        - Kann ich einen string mit Nautilus::Functioncall zurück geben?
+                        - Wie bekomme ich das hin, dass korrekte Joinlayout mit windowstart und windowend hinzubekommen?
+                }
+            }
+        }
+
+        // Once we are done with this window, we can delete it to free up space
+        Nautilus::FunctionCall("deleteWindowProxy", deleteWindowProxy, operatorHandlerMemRef, windowIdentifierMemRef);
+
     }
 
-    NLJSink::NLJSink(uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex) {}
+    NLJSink::NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema)
+            : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)),
+            rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema)) {}
 
 } // namespace NES::Runtime::Execution::Operators

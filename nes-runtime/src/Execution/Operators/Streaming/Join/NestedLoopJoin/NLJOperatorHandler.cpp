@@ -72,8 +72,8 @@ namespace NES::Runtime::Execution::Operators {
         windowStart += windowSize;
     }
 
-    void NLJOperatorHandler::deleteWindow(uint64_t timestamp) {
-        const auto window = getWindowByTimestamp(timestamp);
+    void NLJOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
+        const auto window = getWindowByWindowIdentifier(windowIdentifier);
         if (window.has_value()) {
             nljWindows.remove(*window.value());
         }
@@ -150,12 +150,12 @@ namespace NES::Runtime::Execution::Operators {
         return std::pair<uint64_t, uint64_t>();
     }
 
-    const std::string &NLJOperatorHandler::getJoinFieldNameLeft() const {
-        return joinFieldNameLeft;
-    }
-
-    const std::string &NLJOperatorHandler::getJoinFieldNameRight() const {
-        return joinFieldNameRight;
+    const std::string &NLJOperatorHandler::getJoinFieldName(bool isLeftSide) const {
+        if (isLeftSide) {
+            return joinFieldNameLeft;
+        } else {
+            return joinFieldNameRight;
+        }
     }
 
     NLJOperatorHandler::NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft,
