@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.76](https://github.com/nebulastream/nebulastream/tree/v0.5.76) (2023-05-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.75...v0.5.76)
+
+**Implemented enhancements:**
+
+- Add option to configure whitelisted addresses for CORS [\#1919](https://github.com/nebulastream/nebulastream/issues/1919)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix the github workflow to trigger workflow in the java client repository [\#3716](https://github.com/nebulastream/nebulastream/issues/3716)
+
 ## [v0.5.75](https://github.com/nebulastream/nebulastream/tree/v0.5.75) (2023-05-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.74...v0.5.75)
@@ -139,10 +151,6 @@
 ## [v0.5.58](https://github.com/nebulastream/nebulastream/tree/v0.5.58) (2023-04-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.57...v0.5.58)
-
-### Miscellaneous Issues ✌️
-
-- \[Feature\] Migrate Sliding Window Aggregation implementation from legacy to the new Nautilus compiler [\#3205](https://github.com/nebulastream/nebulastream/issues/3205)
 
 ## [v0.5.57](https://github.com/nebulastream/nebulastream/tree/v0.5.57) (2023-04-21)
 
