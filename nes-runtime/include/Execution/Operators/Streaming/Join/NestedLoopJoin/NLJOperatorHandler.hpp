@@ -28,7 +28,7 @@ public:
 
     uint8_t* insertNewTuple(uint64_t timestamp, bool isLeftSide);
 
-    void deleteWindow(uint64_t timestamp);
+    void deleteWindow(uint64_t windowIdentifier);
 
     bool updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide);
 
@@ -44,9 +44,8 @@ public:
 
     std::pair<uint64_t, uint64_t> getWindowStartEnd(uint64_t windowIdentifier);
 
-    const std::string &getJoinFieldNameLeft() const;
+    const std::string &getJoinFieldName(bool isLeftSide) const;
 
-    const std::string &getJoinFieldNameRight() const;
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
