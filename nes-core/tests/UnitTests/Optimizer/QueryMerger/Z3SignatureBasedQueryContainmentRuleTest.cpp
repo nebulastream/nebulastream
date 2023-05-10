@@ -71,7 +71,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
     }
 

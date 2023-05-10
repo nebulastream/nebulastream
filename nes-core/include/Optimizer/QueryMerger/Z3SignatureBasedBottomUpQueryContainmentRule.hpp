@@ -82,8 +82,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
                                                                               const LogicalOperatorNodePtr& hostOperator);
 
     /**
-     * @brief This method makes sure that we can use the identified window containment relationship, i.e.
-     * it checks that the contained window size and slide % the container window size and slide are 0
+     * @brief This method makes sure that we can reset the time attribute for the contained window operation
      * @param container operation that contains the other
      * @param containee contained operation
      * @return true, if container and contanee are not a window operation or if window containment is possible, false otherwise
