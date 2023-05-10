@@ -117,7 +117,8 @@ namespace NES::Runtime::Execution {
                                                                       timeStampField, /*isLeftSide*/ true);
             auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex, rightSchema, joinFieldNameRight,
                                                                        timeStampField, /*isLeftSide*/ false);
-            auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex);
+            auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex, leftSchema, rightSchema, joinSchema,
+                                                                joinFieldNameLeft, joinFieldNameRight);
 
             // Creating the NLJ operator handler
             auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,

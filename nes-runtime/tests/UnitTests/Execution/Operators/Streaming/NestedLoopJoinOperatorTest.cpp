@@ -28,6 +28,7 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <TestUtils/RecordCollectOperator.hpp>
 #include <random>
 
 namespace NES::Runtime::Execution {
@@ -201,7 +202,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                                Operators::NLJOperatorHandler& nljOperatorHandler,
                                const std::string& timestampFieldnameLeft, const std::string& timestampFieldnameRight,
                                const std::string& joinFieldnameLeft, const std::string& joinFieldnameRight,
-                               NLJSinkPiplineExecutionContext& pipelineContext, ExecutionContext& executionContext) {
+                               ExecutionContext& executionContext) {
 
         auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, /*isLeftSide*/ true);
         auto allRightRecords = createRandomRecords(numberOfRecordsRight, /*isLeftSide*/ false);
@@ -228,8 +229,10 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             auto pointerToRecord = nljOperatorHandler.insertNewTuple(timestamp, /*isLeftSide*/ false);
             auto memRefToRecord = Value<MemRef>((int8_t*) pointerToRecord);
             memoryProviderRight->write(zeroVal, memRefToRecord, rightRecord);
-
         }
+
+        auto collector = std::make_shared<Operators::CollectOperator>();
+        nljSink.setChild(collector);
 
         Value<UInt64> zeroValue(0UL);
         auto maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize) * windowSize;
@@ -252,9 +255,6 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
             }
 
 
-            std::vector<TupleBuffer> expectedTuplesBuffers;
-            auto buffer = bm->getBufferBlocking();
-            auto numberOfTuplesPerBuffer = bm->getBufferSize() / joinSchema->getSchemaSizeInBytes();
             for (auto& leftRecord : allLeftRecords) {
                 for (auto& rightRecord : allRightRecords) {
 
@@ -278,81 +278,30 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                     if (windowStart <= timestampLeftVal && timestampLeftVal < windowEnd &&
                         windowStart <= timestampRightVal && timestampRightVal < windowEnd &&
                         leftKey == rightKey) {
-                        // Join these two tuples together
-                        auto bufferPtr = buffer.getBuffer();
-                        auto numberOfTuples = buffer.getNumberOfTuples();
-                        auto bufferMemRef = Value<MemRef>((int8_t*) bufferPtr + numberOfTuples * joinSchema->getSchemaSizeInBytes());
+                        Record joinedRecord;
+                        Nautilus::Value<Any> windowStartVal(windowStart);
+                        Nautilus::Value<Any> windowEndVal(windowEnd);
+                        joinedRecord.write(joinSchema->get(0)->getName(), windowStartVal);
+                        joinedRecord.write(joinSchema->get(1)->getName(), windowEndVal);
+                        joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldnameLeft));
 
-                        bufferMemRef.store(Value<UInt64>(windowStart));
-                        bufferMemRef = bufferMemRef + sizeOfWindowStart;
-                        bufferMemRef.store(Value<UInt64>(windowEnd));
-                        bufferMemRef = bufferMemRef + sizeOfWindowEnd;
-
-                        bufferMemRef.store(leftKey);
-                        bufferMemRef = bufferMemRef + joinKeySize;
-
+                        // Writing the leftSchema fields
                         for (auto& field : leftSchema->fields) {
-                            auto const fieldName = field->getName();
-                            auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-
-                            bufferMemRef.store(leftRecord.read(fieldName));
-                            bufferMemRef = bufferMemRef + fieldType->size();
+                            joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
                         }
+
+                        // Writing the rightSchema fields
                         for (auto& field : rightSchema->fields) {
-                            auto const fieldName = field->getName();
-                            auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-
-                            bufferMemRef.store(rightRecord.read(fieldName));
-                            bufferMemRef = bufferMemRef + fieldType->size();
+                            joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                         }
 
-                        buffer.setNumberOfTuples(++numberOfTuples);
-
-                        if (numberOfTuples >= numberOfTuplesPerBuffer) {
-                            expectedTuplesBuffers.emplace_back(buffer);
-                            buffer = bm->getBufferBlocking();
-                            buffer.setNumberOfTuples(0);
-                        }
+                        hier weiter machen mit dem erstellen des joinedtuples und dann durch alle collect.records
+                        durch iterieren und schauen, ob der record drinnen ist und dann den Record löschen
+                        wahscheinlich brauche ich nen equal operator um std::find() aufrufen zu können
                     }
                 }
             }
-
-            if (numberOfTuplesPerBuffer > 0) {
-                expectedTuplesBuffers.emplace_back(buffer);
-            }
-
-            ASSERT_TRUE(expectedTuplesBuffers.size() > 0);
-            for (auto expectedBuf : expectedTuplesBuffers) {
-                bool foundBuffer = checkIfBufferFoundAndRemove(pipelineContext.emittedBuffers, expectedBuf, joinSchema, windowIdentifier);
-                if (!foundBuffer) {
-                    NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema) << " in emittedBuffers!");
-                    ASSERT_TRUE(false);
-                }
-            }
         }
-    }
-
-    bool checkIfBufferFoundAndRemove(std::vector<TupleBuffer>& emittedBuffers,
-                                     Runtime::TupleBuffer expectedBuffer,
-                                     SchemaPtr joinSchema,
-                                     uint64_t& windowIdentifier) {
-
-        bool foundBuffer = false;
-
-        for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
-            NES_TRACE2("Comparing versus {}", Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
-            if (memcmp(tupleBufferIt->getBuffer(),
-                       expectedBuffer.getBuffer(),
-                       joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples())
-                == 0) {
-                NES_TRACE2("Removing buffer for windowIdentifier {} {} of size {}", windowIdentifier,
-                           Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema), joinSchema->getSchemaSizeInBytes());
-                emittedBuffers.erase(tupleBufferIt);
-                foundBuffer = true;
-                break;
-            }
-        }
-        return foundBuffer;
     }
 };
 
@@ -387,9 +336,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
     auto joinFieldnameRight = rightSchema->get(1)->getName();
     auto timestampFieldLeft = leftSchema->get(2)->getName();
     auto timestampFieldRight = leftSchema->get(2)->getName();
-    auto numberOfRecordsLeft = 5;
-    auto numberOfRecordsRight = 5;
-    windowSize = 10;
+    auto numberOfRecordsLeft = 500;
+    auto numberOfRecordsRight = 500;
+    windowSize = 2000;
 
     auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,
                                                                               joinFieldnameLeft, joinFieldnameRight);
@@ -413,9 +362,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     auto joinFieldnameRight = rightSchema->get(1)->getName();
     auto timestampFieldLeft = leftSchema->get(2)->getName();
     auto timestampFieldRight = leftSchema->get(2)->getName();
-    auto numberOfRecordsLeft = 10;
-    auto numberOfRecordsRight = 10;
-    windowSize = 5;
+    auto numberOfRecordsLeft = 1000;
+    auto numberOfRecordsRight = 1000;
+    windowSize = 50;
 
     auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,
                                                                               joinFieldnameLeft, joinFieldnameRight);
@@ -443,9 +392,11 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestOneWindow) {
     auto numberOfRecordsRight = 2;
     windowSize = 10;
 
+    auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldnameLeft);
     auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,
                                                                               joinFieldnameLeft, joinFieldnameRight);
-    auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex);
+    auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex, leftSchema, rightSchema, joinSchema,
+                                                        joinFieldnameLeft, joinFieldnameRight);
     NLJSinkPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
@@ -454,7 +405,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestOneWindow) {
 
     insertRecordsIntoSink(*nljSink, numberOfRecordsLeft, numberOfRecordsRight, *nljOperatorHandler,
                           timestampFieldLeft, timestampFieldRight, joinFieldnameLeft, joinFieldnameRight,
-                          pipelineContext, executionContext);
+                          executionContext);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestMultipleWindows) {
@@ -466,9 +417,11 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestMultipleWindows) {
     auto numberOfRecordsRight = 100;
     windowSize = 10;
 
+    auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldnameLeft);
     auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,
                                                                               joinFieldnameLeft, joinFieldnameRight);
-    auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex);
+    auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex, leftSchema, rightSchema, joinSchema,
+                                                        joinFieldnameLeft, joinFieldnameRight);
     NLJSinkPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
@@ -477,7 +430,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinSinkSimpleTestMultipleWindows) {
 
     insertRecordsIntoSink(*nljSink, numberOfRecordsLeft, numberOfRecordsRight, *nljOperatorHandler,
                           timestampFieldLeft, timestampFieldRight, joinFieldnameLeft, joinFieldnameRight,
-                          pipelineContext, executionContext);
+                          executionContext);
 }
 
 } // namespace NES::Runtime::Execution

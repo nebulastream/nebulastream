@@ -17,9 +17,11 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -56,12 +58,26 @@ namespace NES::Runtime::Execution::Operators {
         opHandler->deleteWindow(windowIdentifier);
     }
 
-    std::string getJoinFieldNameProxy(void* ptrOpHandler, bool isLeftSide) {
+    uint64_t getWindowStartProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
         NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+        NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
         auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-        return opHandler->getJoinFieldName(isLeftSide);
+        auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
+
+        return opHandler->getWindowStartEnd(windowIdentifier).first;
     }
+
+    uint64_t getWindowEndProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
+        NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+        NES_ASSERT2_FMT(windowIdentifierPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
+
+        auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+        auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
+
+        return opHandler->getWindowStartEnd(windowIdentifier).second + 1;
+    }
+
 
     void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
@@ -86,20 +102,13 @@ namespace NES::Runtime::Execution::Operators {
                                                           windowIdentifierMemRef,
                                                           Value<Boolean>(/*isLeftSide*/ false));
 
-        auto joinFieldNameLeft = Nautilus::FunctionCall("getJoinFieldNameProxy", getJoinFieldNameProxy,
-                                                        operatorHandlerMemRef,
-                                                        Value<Boolean>(/*isLeftSide*/ true));
-        auto joinFieldNameRight = Nautilus::FunctionCall("getJoinFieldNameProxy", getJoinFieldNameProxy,
-                                                        operatorHandlerMemRef,
-                                                        Value<Boolean>(/*isLeftSide*/ false));
+        // TODO ask Philipp why do I need this here and can not use auto?
+        Value<Any> windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy,
+                                                  operatorHandlerMemRef, windowIdentifierMemRef);
+        Value<Any> windowEnd = Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy,
+                                                  operatorHandlerMemRef, windowIdentifierMemRef);
 
-//        then iterate over both tuplesmemref via rowMemoryProvider and create a new record
-//            - left and right record via rowMemoryprovider read
-//            - two additional fields windowstart and windowend
-//            - get the windowStart and windowEnd from the NLJOpHandler
-//
-
-        // As we know that the data is of type rowlayout, we do not have to provide a buffer size
+        // As we know that the data is of type rowLayout, we do not have to provide a buffer size
         auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/1, leftSchema);
         auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/1, rightSchema);
 
@@ -112,11 +121,24 @@ namespace NES::Runtime::Execution::Operators {
                  * two Nautilus::Records (left and right) #3691 */
                 if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                     Record joinedRecord;
-                    hier das Record zusammen bauen.
-                    Philipp fragen:
-                        - wie das mit dem underlying data layout aussieht, also ob es schlimm ist, dass die Daten nicht 1:1 neben einander liegen
-                        - Kann ich einen string mit Nautilus::Functioncall zurück geben?
-                        - Wie bekomme ich das hin, dass korrekte Joinlayout mit windowstart und windowend hinzubekommen?
+
+                    // TODO replace this with a more useful version
+                    joinedRecord.write(joinSchema->get(0)->getName(), windowStart);
+                    joinedRecord.write(joinSchema->get(1)->getName(), windowEnd);
+                    joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldNameLeft));
+
+                    // Writing the leftSchema fields
+                    for (auto& field : leftSchema->fields) {
+                        joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
+                    }
+
+                    // Writing the rightSchema fields
+                    for (auto& field : rightSchema->fields) {
+                        joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
+                    }
+
+                    // Calling the child operator for this joinedRecord
+                    child->execute(ctx, joinedRecord);
                 }
             }
         }
@@ -126,8 +148,10 @@ namespace NES::Runtime::Execution::Operators {
 
     }
 
-    NLJSink::NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema)
+    NLJSink::NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema,
+                     std::string joinFieldNameLeft, std::string joinFieldNameRight)
             : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)),
-            rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema)) {}
+            rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft),
+            joinFieldNameRight(joinFieldNameRight) {}
 
 } // namespace NES::Runtime::Execution::Operators

@@ -19,7 +19,8 @@ namespace NES::Runtime::Execution::Operators {
 class NLJSink : public Operator {
 
 public:
-    explicit NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema);
+    explicit NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema,
+                     std::string joinFieldNameLeft, std::string joinFieldNameRight);
 
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -28,6 +29,10 @@ private:
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
     SchemaPtr joinSchema;
+
+    // TODO ask Philipp, if we can get this string from the NLJOperatorHandler
+    std::string joinFieldNameLeft;
+    std::string joinFieldNameRight;
 };
 } // namespace NES::Runtime::Execution::Operators
 
