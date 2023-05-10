@@ -11,13 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Experimental)
 add_source_files(nes-core
-        RunQueryRequest.cpp
-        StopQueryRequest.cpp
-        RestartQueryRequest.cpp
-        MaintenanceRequest.cpp
-        FailQueryRequest.cpp
-        MigrateQueryRequest.cpp
-        AbstractRequest.cpp
-        )
+        FailQueryRequest.cpp)
