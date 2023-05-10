@@ -352,14 +352,16 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::FLOAT64);
+    inputSchema->addField("f3", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
-                     .map(Attribute("powIntInt") = POWER(Attribute("f1"), 2))
-                     .map(Attribute("powFloatInt") = POWER(Attribute("f2"), 2))
+                     .map(Attribute("powInt32") = POWER(Attribute("f1"), 2))
+                     .map(Attribute("powFloat32") = POWER(Attribute("f2"), 2))
+                     .map(Attribute("powInt64") = POWER(Attribute("f3"), 2))
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
@@ -370,33 +372,42 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
     EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
     EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f3"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    EXPECT_TRUE(mapOutputSchema->fields.size() == 4);
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 6);
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
-    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powIntInt"));
-    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powFloatInt"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powInt32"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powFloat32"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powInt64"));
 
     auto f1 = mapOutputSchema->get("default_logical$f1");
     auto f2 = mapOutputSchema->get("default_logical$f2");
-    auto powIntInt = mapOutputSchema->get("default_logical$powIntInt");
-    auto powFloatInt = mapOutputSchema->get("default_logical$powFloatInt");
+    auto f3 = mapOutputSchema->get("default_logical$f3");
+    auto powInt32 = mapOutputSchema->get("default_logical$powInt32");
+    auto powFloat32 = mapOutputSchema->get("default_logical$powFloat32");
+    auto powInt64 = mapOutputSchema->get("default_logical$powInt64");
 
     EXPECT_TRUE(f1->getDataType()->isEquals(DataTypeFactory::createInt32()));
     EXPECT_TRUE(f2->getDataType()->isEquals(DataTypeFactory::createDouble()));
-    EXPECT_TRUE(powIntInt->getDataType()->isEquals(DataTypeFactory::createInt64()));
-    EXPECT_TRUE(powFloatInt->getDataType()->isEquals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(f3->getDataType()->isEquals(DataTypeFactory::createInt64()));
+    EXPECT_TRUE(powInt32->getDataType()->isEquals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(powFloat32->getDataType()->isEquals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(powInt64->getDataType()->isEquals(DataTypeFactory::createDouble()));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 6);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("f2"));
-    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powIntInt"));
-    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powFloatInt"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powInt32"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powFloat32"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powInt64"));
 }
 
 /**
