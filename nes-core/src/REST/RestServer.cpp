@@ -53,13 +53,15 @@ RestServer::RestServer(std::string host,
                        GlobalQueryPlanPtr globalQueryPlan,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
-                       LocationServicePtr locationService, std::optional<std::string> corsAllowedOrigin)
+                       LocationServicePtr locationService,
+                       std::optional<std::string> corsAllowedOrigin)
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
       globalExecutionPlan(std::move(globalExecutionPlan)), queryService(std::move(queryService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
       topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
       locationService(std::move(locationService)), maintenanceService(std::move(maintenanceService)),
-      monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)),
+      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
     NES_INFO2("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -155,7 +157,8 @@ void RestServer::run() {
     /* Add CORS-enabling interceptors */
     if (corsAllowedOrigin.has_value()) {
         connectionHandler->addRequestInterceptor(std::make_shared<oatpp::web::server::interceptor::AllowOptionsGlobal>());
-        connectionHandler->addResponseInterceptor(std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(corsAllowedOrigin.value()));
+        connectionHandler->addResponseInterceptor(
+            std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(corsAllowedOrigin.value()));
     }
 
     /* Create TCP connection provider */

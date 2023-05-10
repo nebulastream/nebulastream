@@ -123,7 +123,9 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server
      */
-    StringOption restServerCorsAllowedOrigin = {REST_SERVER_CORS_ORIGIN, "", "The allowed origins to be set in the header of the responses to rest requests"};
+    StringOption restServerCorsAllowedOrigin = {REST_SERVER_CORS_ORIGIN,
+                                                "",
+                                                "The allowed origins to be set in the header of the responses to rest requests"};
 
     /**
      * Create a CoordinatorConfiguration object with default values.
