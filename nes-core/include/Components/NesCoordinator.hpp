@@ -224,6 +224,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     LocationServicePtr getLocationService() const;
 
+    /**
+     * getter for the global execution plan
+     * @return
+     */
+    GlobalExecutionPlanPtr getGlobalExecutionPlan() const;
+
     NesWorkerPtr getNesWorker();
 
   private:

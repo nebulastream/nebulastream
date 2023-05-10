@@ -503,6 +503,9 @@ add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/StorageHandle
 
 ### Unlock Deleter Test ###
 add_nes_unit_test(unlock-deleter-tests "UnitTests/StorageHandles/UnlockDeleterTest.cpp")
+
+### Fail Query Request Test ###
+add_nes_unit_test(fail-query-request-test "UnitTests/WorkQueues/FailQueryRequestTests.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")

@@ -360,4 +360,6 @@ TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { re
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
+GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
+
 }// namespace NES
