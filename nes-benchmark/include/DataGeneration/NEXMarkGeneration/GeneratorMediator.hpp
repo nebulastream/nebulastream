@@ -24,26 +24,37 @@ class GeneratorMediator {
   public:
     /**
      * @brief
-     * @param size
+     * @param numberOfBuffers
+     * @param bufferSize
+     * @param numGenCalls
      * @return
      */
-    static GeneratorMediator& getInstance(size_t numberOfBuffers, size_t bufferSize);
+    static GeneratorMediator& getInstance(size_t numberOfBuffers, size_t bufferSize, uint64_t numGenCalls);
 
-    uint64_t getPersonTimestamp (uint64_t personId);
+    uint64_t getPersonTimestamp(uint64_t personId);
 
-    std::tuple<uint64_t, uint64_t> getAuctionTimestamps (uint64_t auctionId);
+    std::tuple<uint64_t, uint64_t> getAuctionTimestamps(uint64_t auctionId);
 
-    uint64_t getAuctionId (uint64_t timestamp);
+    uint64_t getAuctionId(uint64_t timestamp);
 
-    uint64_t getPersonId (uint64_t timestamp);
+    uint64_t getPersonId(uint64_t timestamp);
 
   private:
     /**
      * @brief constructor of a GeneratorMediator
      * @param numberOfBuffers
      * @param bufferSize
+     * @param numGenCalls
      */
-    GeneratorMediator(size_t numberOfBuffers, size_t bufferSize);
+    GeneratorMediator(size_t numberOfBuffers, size_t bufferSize, uint64_t numGenCalls);
+
+    void createPersonTimestamps(uint64_t* curTime, uint64_t numPersons);
+
+    void createOpenAuctionTimestamps(uint64_t* curTime, uint64_t numOpenAuctions);
+
+    void createBidTimestamps(uint64_t* curTime, uint64_t numBids);
+
+    uint64_t incrementTime(uint64_t curTime);
 
     /**
      * @brief copy constructor and move assignment operator are deleted to prevent creation of multiple instances of the GeneratorMediator.
@@ -54,6 +65,7 @@ class GeneratorMediator {
 
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> auctions;
     std::vector<std::tuple<uint64_t, uint64_t>> persons;
+    std::vector<std::tuple<uint64_t, uint64_t>> bids;
 };
 } // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
