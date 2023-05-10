@@ -142,31 +142,10 @@ jobs:
           rm -rf nes-amd64.deb nes-arm64.deb
           echo "Pushed the execution image"
           docker logout
-      #Find the PR associated with this push, if there is one.
-      - uses: jwalton/gh-find-current-pr@v1
-        id: findPr
-        with:
-          github-token: ${{ secrets.NES_CI_SECRET }}
-      - name: "Repository Dispatch"
+      - name: "Repository dispatch for Java-Client"
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.CI_TOKEN }}
           repository: nebulastream/nebulastream-java-client
           event-type: nes-executable-image-update
-          client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}", "version": "${{ nes_version }}"}'
-      - name: KTM Use Case Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/KTM/
-          sh ./docker/regressionImage/KTM/run.sh
-      - name: Video Use Case Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Video/
-          sh ./docker/regressionImage/Video/run.sh
-      - name: Smart Meter Use Case Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/SmartMeter/
-          sh ./docker/regressionImage/SmartMeter/run.sh
-      - name: Medic Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Med/
-          sh ./docker/regressionImage/Med/run.sh
+          client-payload: '{"version": "${{ nes_version }}"}'

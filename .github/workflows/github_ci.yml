@@ -364,18 +364,6 @@ jobs:
           else
             docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           fi
-      #Find the PR associated with this push, if there is one.
-      - uses: jwalton/gh-find-current-pr@v1
-        id: findPr
-        with:
-          github-token: ${{ secrets.NES_CI_SECRET }}
-      - name: "Repository Dispatch"
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.CI_TOKEN }}
-          repository: nebulastream/nebulastream-java-client
-          event-type: nes-executable-image-update
-          client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
       - name: "Push Docs To Pages"
         uses: peaceiris/actions-gh-pages@v3
         with:
