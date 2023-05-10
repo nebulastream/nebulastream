@@ -92,7 +92,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     return true;
 }
 
-bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId) {
+void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId) {
     std::unique_lock lock(serviceMutex);
 
     NES_INFO2("checkAndMarkForFailure sharedQueryId={} subQueryId={}", sharedQueryId, querySubPlanId);
@@ -139,7 +139,6 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
         }
     }
     NES_INFO2("QueryCatalogService: Shared query id {} is marked as failed", sharedQueryId);
-    return true;
 }
 
 Catalogs::Query::QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
