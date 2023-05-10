@@ -914,7 +914,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                             ->addField("id", BasicType::INT64)
                             ->addField("one", BasicType::INT64)
                             ->addField("value", BasicType::INT64)
-                            ->addField("result_pow_int", BasicType::INT64)
+                            ->addField("result_pow_int", BasicType::FLOAT64)
                             ->addField("result_pow_float", BasicType::FLOAT64)
                             ->addField("result_mod_int", BasicType::INT64)
                             ->addField("result_mod_float", BasicType::FLOAT64)
@@ -970,15 +970,15 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
         std::string expectedContent =
             "+----------------------------------------------------+\n"
-            "|id:INT64|one:INT64|value:INT64|result_pow_int:INT64|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:"
+            "|id:INT64|one:INT64|value:INT64|result_pow_int:FLOAT64|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:"
             "FLOAT64|result_ceil:FLOAT64|result_exp:FLOAT64|result_batch_test:BOOLEAN|\n"
             "+----------------------------------------------------+\n"
-            "|0|1|0|2|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
-            "|1|1|1|4|4.000000|0|-0.000000|1.000000|2.718282|1|\n"
-            "|2|1|0|8|8.000000|2|-2.000000|1.000000|2.718282|1|\n"
-            "|3|1|1|16|16.000000|0|-0.000000|2.000000|7.389056|1|\n"
-            "|4|1|0|32|32.000000|0|-0.000000|2.000000|7.389056|1|\n"
-            "|5|1|1|64|64.000000|2|-2.000000|3.000000|20.085537|1|\n"
+            "|0|1|0|2.000000|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
+            "|1|1|1|4.000000|4.000000|0|-0.000000|1.000000|2.718282|1|\n"
+            "|2|1|0|8.000000|8.000000|2|-2.000000|1.000000|2.718282|1|\n"
+            "|3|1|1|16.000000|16.000000|0|-0.000000|2.000000|7.389056|1|\n"
+            "|4|1|0|32.000000|32.000000|0|-0.000000|2.000000|7.389056|1|\n"
+            "|5|1|1|64.000000|64.000000|2|-2.000000|3.000000|20.085537|1|\n"
             "+----------------------------------------------------+";
 
         auto resultBuffer = testSink->get(0);
