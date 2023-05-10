@@ -26,6 +26,7 @@
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <utility>
 
 using namespace NES;
@@ -252,7 +253,9 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
 
         auto sharedQueryId = request->queryid();
         auto subQueryId = request->subqueryid();
-        if (!queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId)) {
+        try {
+            queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId);
+        } catch (std::exception &e) {
             NES_ERROR2("Unable to mark queries for failure :: subQueryId={}", subQueryId);
             return Status::CANCELLED;
         }

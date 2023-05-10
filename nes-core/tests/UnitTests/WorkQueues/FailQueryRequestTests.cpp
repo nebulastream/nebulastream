@@ -33,6 +33,7 @@
 #include <iostream>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 
 using namespace std;
 
@@ -298,6 +299,7 @@ TEST_F(FailQueryRequestTest, testWronQueryStatus) {
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
     Experimental::FailQueryRequest failQueryRequest(queryId, subPlanId, 1, workerRpcClient);
     auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
-    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), std::exception);
+
+    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), InvalidQueryStatusException);
 }
 }// namespace NES

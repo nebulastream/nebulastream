@@ -112,7 +112,17 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
             || currentQueryStatus == QueryStatus::STOPPED) {
             NES_WARNING2("QueryCatalogService: Query can not be marked for failure as query in {} status.",
                          queryCatalogEntry->getQueryStatusAsString());
-            return false;
+            throw InvalidQueryStatusException({QueryStatus::REGISTERED,
+                                               QueryStatus::OPTIMIZING,
+                                               QueryStatus::DEPLOYED,
+                                               QueryStatus::RUNNING,
+                                               QueryStatus::MARKED_FOR_HARD_STOP,
+                                               QueryStatus::MARKED_FOR_SOFT_STOP,
+                                               QueryStatus::SOFT_STOP_TRIGGERED,
+                                               QueryStatus::SOFT_STOP_COMPLETED,
+                                               QueryStatus::RESTARTING,
+                                               QueryStatus::MIGRATING},
+                                               currentQueryStatus);
         }
     }
 
