@@ -164,9 +164,8 @@ class QueryCatalogService {
      * Check and mark all query belonging to the shared query plan for failure
      * @param sharedQueryId : id of the shared query plan
      * @param querySubPlanId : id of the sub query plan that failed
-     * @return true if query marked for failure
      */
-    bool checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
+    void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
   private:
     /**
