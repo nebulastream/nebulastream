@@ -27,7 +27,7 @@ class FailQueryRequest : public AbstractRequest {
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void rollBack(std::exception& ex, StorageHandler& storageHandle);
+    void rollBack(std::exception& ex, StorageHandler& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
