@@ -31,6 +31,8 @@
 #include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 
 using namespace std;
 
@@ -56,19 +58,19 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(FailQueryRequestTest, testQueryFailureForFaultySource) {
+TEST_F(FailQueryRequestTest, testValidFailRequest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NES_INFO("Fail Query Request Test: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
     crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
 
-    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
@@ -83,14 +85,14 @@ TEST_F(FailQueryRequestTest, testQueryFailureForFaultySource) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO("Fail Query Request Test: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query=" << query);
@@ -128,6 +130,11 @@ TEST_F(FailQueryRequestTest, testQueryFailureForFaultySource) {
 
     //check status of query in the query catalog
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::FAILED);
+    auto entry = crd->getQueryCatalogService()->getAllQueryCatalogEntries()[queryId];
+    EXPECT_EQ(entry->getQueryStatus(), QueryStatus::FAILED);
+    for (const auto& subQueryPlanMetaData : entry->getAllSubQueryPlanMetaData()) {
+        EXPECT_EQ(subQueryPlanMetaData->getSubQueryStatus(), QueryStatus::FAILED);
+    }
 
     //check status of query in the global query plan
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Failed);
@@ -145,5 +152,152 @@ TEST_F(FailQueryRequestTest, testQueryFailureForFaultySource) {
         sleep(1);
     }
     EXPECT_EQ(crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Invalid);
+}
+
+TEST_F(FailQueryRequestTest, testInvalidQueryId) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("Fail Query Request Test: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
+    crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
+
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
+    csvSourceType->setGatheringInterval(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType->setNumberOfBuffersToProduce(100000);
+    csvSourceType->setSkipHeader(false);
+
+    workerConfig1->coordinatorPort = port;
+    auto physicalSource1 = PhysicalSource::create("test", "physical_test", csvSourceType);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
+
+    NES_INFO("Fail Query Request Test: Submit query");
+    string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
+                   + R"(", "CSV_FORMAT", "APPEND"));)";
+    NES_DEBUG("query=" << query);
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    //wait until query has been succesfully deployed on worker 1
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG2("query not running yet")
+        sleep(1);
+    }
+    EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+    //wait until query has been succesfully deployed on worker at coordinator
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG2("query not running yet")
+        sleep(1);
+    }
+    EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+    //check status of query in the query catalog
+    EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
+
+    //check status of query in the global query plan
+    auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    EXPECT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+    EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
+
+    //execute fail query request
+    auto subPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+
+    //creating request with wrong query id
+    Experimental::FailQueryRequest failQueryRequest(queryId + 1, subPlanId, 1, workerRpcClient);
+
+    auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), QueryNotFoundException);
+}
+
+TEST_F(FailQueryRequestTest, testWronQueryStatus) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("Fail Query Request Test: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
+    crd->getSourceCatalog()->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    NES_DEBUG("Fail Query Request Test: Coordinator started successfully");
+
+    NES_DEBUG("Fail Query Request Test: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/sequence_long.csv");
+    csvSourceType->setGatheringInterval(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType->setNumberOfBuffersToProduce(100000);
+    csvSourceType->setSkipHeader(false);
+
+    workerConfig1->coordinatorPort = port;
+    auto physicalSource1 = PhysicalSource::create("test", "physical_test", csvSourceType);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("Fail Query Request Test: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
+
+    NES_INFO("Fail Query Request Test: Submit query");
+    string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
+                   + R"(", "CSV_FORMAT", "APPEND"));)";
+    NES_DEBUG("query=" << query);
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    //wait until query has been succesfully deployed on worker 1
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG2("query not running yet")
+        sleep(1);
+    }
+    EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+    //wait until query has been succesfully deployed on worker at coordinator
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+        NES_DEBUG2("query not running yet")
+        sleep(1);
+    }
+    EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+    //check status of query in the query catalog
+    EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
+
+    //check status of query in the global query plan
+    auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    EXPECT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+    EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
+
+    crd->getQueryCatalogService()->getEntryForQuery(queryId)->setQueryStatus(QueryStatus::MARKED_FOR_FAILURE);
+
+    //execute fail query request
+    auto subPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
+    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+    Experimental::FailQueryRequest failQueryRequest(queryId, subPlanId, 1, workerRpcClient);
+    auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), std::exception);
 }
 }// namespace NES
