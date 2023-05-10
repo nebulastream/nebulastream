@@ -56,11 +56,11 @@ TEST_F(ConnectivityControllerTest, testCORSRequest) {
     EXPECT_EQ(corsMethodHeader, "GET, POST, OPTIONS");
     std::string corsAllowedHeaders;
     EXPECT_NO_THROW(corsAllowedHeaders = r.header.at("Access-Control-Allow-Headers"));
-    EXPECT_EQ(corsAllowedHeaders, "DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Range, Authorization");
+    EXPECT_EQ(corsAllowedHeaders,
+              "DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Range, Authorization");
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
-
 
 TEST_F(ConnectivityControllerTest, testGetRequest) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");

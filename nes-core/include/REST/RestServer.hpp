@@ -97,8 +97,7 @@ class RestServer {
                Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
                LocationServicePtr locationServicePtr,
-               std::optional<std::string> corsAllowedOrigin
-               );
+               std::optional<std::string> corsAllowedOrigin);
 
     /**
    * @brief method to start the rest server, calls run() internally
