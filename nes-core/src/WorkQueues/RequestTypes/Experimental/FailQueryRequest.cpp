@@ -15,17 +15,23 @@ FailQueryRequest::FailQueryRequest(NES::QueryId queryId, NES::QuerySubPlanId fai
                                                       size_t maxRetries,
                                                       NES::WorkerRPCClientPtr  workerRpcClient) :
                                                                                      AbstractRequest(maxRetries),
-                                                                                     queryId(queryId), workerRpcClient(std::move(workerRpcClient)) {}
+                                                                                     queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
 void FailQueryRequest::preRollbackHandle(std::exception ex, NES::StorageHandler& storageHandler) {
+    (void) ex;
+    (void) storageHandler;
     //todo: if failed in stage checkAndMakrForFailure: do nothing
 }
 
-void FailQueryRequest::rollBack(std::exception& ex, StorageHandler& storageHandle) {
+void FailQueryRequest::rollBack(std::exception& ex, StorageHandler& storageHandler) {
+    (void) ex;
+    (void) storageHandler;
     //todo: if failed in stage checkAndMakrForFailure: do nothing
 }
 
 void FailQueryRequest::postRollbackHandle(std::exception ex, NES::StorageHandler& storageHandler) {
+    (void) ex;
+    (void) storageHandler;
     //todo: if failed in stage checkAndMakrForFailure: do nothing
 }
 
@@ -38,7 +44,8 @@ void FailQueryRequest::preExecution(NES::StorageHandler& storageHandler) {
 }
  */
 
-void FailQueryRequest::postExecution(NES::StorageHandler& storageHandle) {
+void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) {
+    (void) storageHandler;
     //todo: reset member vars
     //todo: communicate with workers if necessary
 }
@@ -63,12 +70,13 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     globalQueryPlan->removeQuery(queryId, RequestType::Fail);
     globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle();
+    topology = storageHandle.getTopologyHandle();
     auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
 
     //todo: exception handling
     queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
     for (auto& queryId : globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId)->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Failed");
     }
 }
 }

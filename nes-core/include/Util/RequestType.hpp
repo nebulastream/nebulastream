@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
 #define NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#include <cstdint>
 
 namespace NES {
 
