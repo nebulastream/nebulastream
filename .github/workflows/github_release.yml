@@ -148,7 +148,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           repository: nebulastream/nebulastream-java-client
           event-type: nes-executable-image-update
-          client-payload: '{"version": "${{ nes_version }}"}'
+          client-payload: '{"version": "${{ GITHUB_REF_NAME:1 }}"}'
       - name: KTM Use Case Regression Test
         run: |
           cp ./docker/regressionImage/run.sh ./docker/regressionImage/KTM/
