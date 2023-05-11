@@ -27,5 +27,5 @@ class FlounderPipelineProvider : public ExecutablePipelineProvider {
 };
 
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<FlounderPipelineProvider>
-    bcInterpreterPipelineProvider("FlounderCompiler");
+    flounderPipelineProvider("FlounderCompiler");
 }// namespace NES::Runtime::Execution

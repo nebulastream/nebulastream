@@ -12,31 +12,31 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/CastOperation.hpp>
-#include <Nautilus/IR/Operations/LoadOperation.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
-#include <flounder/ir/instructions.h>
-#include <flounder/ir/label.h>
-#include <flounder/ir/register.h>
 #include <Nautilus/Backends/Flounder/FlounderLoweringProvider.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/CastOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <flounder/compilation/compiler.h>
 #include <flounder/executable.h>
+#include <flounder/ir/instructions.h>
+#include <flounder/ir/label.h>
+#include <flounder/ir/register.h>
 #include <flounder/program.h>
 #include <flounder/statement.h>
 #include <memory>
@@ -61,18 +61,18 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
 
     auto root = ir->getRootOperation();
     this->process(root);
-
     auto executable = std::make_unique<flounder::Executable>();
-
     const auto flounder_code = program.code();
-
     std::stringstream flounderCode;
     flounderCode << "\n == Flounder Code == \n";
     for (const auto& line : flounder_code) {
         flounderCode << line << std::endl;
     }
     dumpHelper.dump("3. flounder.ir", flounderCode.str());
-    const auto is_compilation_successful = compiler.compile(program, *executable.get());
+    const auto isCompilationSuccessful = compiler.compile(program, *executable.get());
+    if (isCompilationSuccessful) {
+        NES_THROW_RUNTIME_ERROR("Flounder compilation failed!");
+    }
     if (executable->compilate().has_code()) {
         std::stringstream flounderASM;
         for (const auto& line : executable->compilate().code()) {
@@ -91,7 +91,7 @@ void FlounderLoweringProvider::LoweringContext::process(
         auto argument = functionBasicBlock->getArguments()[i];
         auto arg = createVreg(argument->getIdentifier(), argument->getStamp(), rootFrame);
 
-        auto intStamp = std::static_pointer_cast<IR::Types::IntegerStamp>(argument->getStamp());
+        const auto intStamp = std::static_pointer_cast<IR::Types::IntegerStamp>(argument->getStamp());
         if (intStamp->getBitWidth() != IR::Types::IntegerStamp::BitWidth::I64) {
             auto tmpArg = program.vreg("temp_" + argument->getIdentifier());
             program << program.request_vreg64(tmpArg) << program.get_argument(i, tmpArg) << program.mov(arg, tmpArg);
@@ -106,8 +106,7 @@ void FlounderLoweringProvider::LoweringContext::process(
     program << program.section(blockLabel);
 }
 
-void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block,
-                                                        FlounderFrame& parentFrame) {
+void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block, FlounderFrame& frame) {
 
     if (!this->activeBlocks.contains(block->getIdentifier())) {
         this->activeBlocks.emplace(block->getIdentifier());
@@ -115,16 +114,16 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
         auto blockLabel = program.label("Block_" + block->getIdentifier());
         program << program.section(blockLabel);
 
-        for (const auto& opt : block->getOperations()) {
-            this->process(opt, parentFrame);
+        for (const auto& operation : block->getOperations()) {
+            this->process(operation, frame);
         }
     }
 }
 
 void FlounderLoweringProvider::LoweringContext::processInline(const std::shared_ptr<IR::BasicBlock>& block,
-                                                              FlounderFrame& parentFrame) {
-    for (auto opt : block->getOperations()) {
-        this->process(opt, parentFrame);
+                                                              FlounderFrame& frame) {
+    for (const auto& operation : block->getOperations()) {
+        this->process(operation, frame);
     }
 }
 
@@ -158,7 +157,7 @@ flounder::Register FlounderLoweringProvider::LoweringContext::createVreg(IR::Ope
 
 FlounderLoweringProvider::FlounderFrame
 FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations::BasicBlockInvocation& bi,
-                                                                  FlounderFrame& parentFrame) {
+                                                                  FlounderFrame& frame) {
 
     FlounderFrame blockFrame;
     auto blockInputArguments = bi.getArguments();
@@ -166,15 +165,15 @@ FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
         auto blockArgument = blockInputArguments[i]->getIdentifier();
         auto blockTargetArgument = blockTargetArguments[i]->getIdentifier();
-        auto parentFrameFlounderValue = parentFrame.getValue(blockArgument);
-        if (parentFrame.contains(blockTargetArgument)) {
-            auto targetFrameFlounderValue = parentFrame.getValue(blockTargetArgument);
-            program << program.mov(targetFrameFlounderValue, parentFrameFlounderValue);
-            blockFrame.setValue(blockTargetArgument, parentFrameFlounderValue);
+        auto frameFlounderValue = frame.getValue(blockArgument);
+        if (frame.contains(blockTargetArgument)) {
+            auto targetFrameFlounderValue = frame.getValue(blockTargetArgument);
+            program << program.mov(targetFrameFlounderValue, frameFlounderValue);
+            blockFrame.setValue(blockTargetArgument, frameFlounderValue);
         } else {
             auto targetVreg = program.vreg(blockTargetArgument.data());
             program << requestVreg(targetVreg, blockTargetArguments[i]->getStamp());
-            program << program.mov(targetVreg, parentFrameFlounderValue);
+            program << program.mov(targetVreg, frameFlounderValue);
             blockFrame.setValue(blockTargetArgument, targetVreg);
         }
     }
@@ -183,16 +182,14 @@ FlounderLoweringProvider::LoweringContext::processBlockInvocation(IR::Operations
 
 FlounderLoweringProvider::FlounderFrame
 FlounderLoweringProvider::LoweringContext::processInlineBlockInvocation(IR::Operations::BasicBlockInvocation& bi,
-                                                                        FlounderFrame& parentFrame) {
-
+                                                                        FlounderFrame& frame) {
     FlounderFrame blockFrame;
     auto blockInputArguments = bi.getArguments();
     auto blockTargetArguments = bi.getBlock()->getArguments();
     auto inputArguments = std::set<std::string>();
     for (uint64_t i = 0; i < blockInputArguments.size(); i++) {
         inputArguments.emplace(blockInputArguments[i]->getIdentifier());
-        blockFrame.setValue(blockTargetArguments[i]->getIdentifier(),
-                            parentFrame.getValue(blockInputArguments[i]->getIdentifier()));
+        blockFrame.setValue(blockTargetArguments[i]->getIdentifier(), frame.getValue(blockInputArguments[i]->getIdentifier()));
     }
     return blockFrame;
 }
@@ -202,19 +199,18 @@ void FlounderLoweringProvider::LoweringContext::process(
     auto inputReg = frame.getValue(castOp->getInput()->getIdentifier());
     auto inputStamp = castOp->getInput()->getStamp();
     auto resultReg = program.vreg(castOp->getIdentifier());
-    //program << requestVreg(inputReg, inputStamp);
     program << requestVreg(resultReg, castOp->getStamp());
     program << program.mov(resultReg, inputReg);
     frame.setValue(castOp->getIdentifier(), resultReg);
 }
 void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::AddOperation>& addOpt,
                                                         FlounderFrame& frame) {
-    auto leftInput = addOpt->getLeftInput();
-    auto leftFlounderRef = frame.getValue(leftInput->getIdentifier());
+
+    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
     // perform add
     auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
-    program << program.mov(result, leftFlounderRef);
+    program << program.mov(result, leftInput);
     auto addFOp = program.add(result, rightInput);
     frame.setValue(addOpt->getIdentifier(), result);
     program << addFOp;
@@ -222,13 +218,10 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
 
 void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::MulOperation>& mulOp,
                                                         FlounderFrame& frame) {
-    auto leftInput = mulOp->getLeftInput();
-    flounder::Register leftFlounderRef = frame.getValue(leftInput->getIdentifier());
-
+    auto leftInput = frame.getValue(mulOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(mulOp->getRightInput()->getIdentifier());
     auto result = createVreg(mulOp->getIdentifier(), mulOp->getStamp(), frame);
-    program << program.mov(result, leftFlounderRef);
-
+    program << program.mov(result, leftInput);
     auto addFOp = program.imul(result, rightInput);
     frame.setValue(mulOp->getIdentifier(), result);
     program << addFOp;
@@ -236,21 +229,12 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
 
 void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::SubOperation>& subOp,
                                                         FlounderFrame& frame) {
-    auto leftInput = subOp->getLeftInput();
-    flounder::Register leftFlounderRef = frame.getValue(leftInput->getIdentifier());
-
+    auto leftInput = frame.getValue(subOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(subOp->getRightInput()->getIdentifier());
-
-    auto addFOp = program.sub(leftFlounderRef, rightInput);
-    frame.setValue(subOp->getIdentifier(), leftFlounderRef);
+    auto addFOp = program.sub(leftInput, rightInput);
+    frame.setValue(subOp->getIdentifier(), leftInput);
     program << addFOp;
 }
-
-void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::CompareOperation>, FlounderFrame&) {}
-
-void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::OrOperation>, FlounderFrame&) {}
-
-void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Operations::AndOperation>, FlounderFrame&) {}
 
 void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::LoadOperation>& opt,
                                                         FlounderFrame& frame) {
@@ -279,7 +263,6 @@ void FlounderLoweringProvider::LoweringContext::processCmp(
     NES::Nautilus::Backends::Flounder::FlounderLoweringProvider::FlounderFrame& frame,
     flounder::Label& trueCase,
     flounder::Label& falseCase) {
-
     if (opt->getOperationType() == IR::Operations::Operation::OperationType::CompareOp) {
         auto left = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
         processCmp(left, frame, falseCase);
@@ -290,8 +273,6 @@ void FlounderLoweringProvider::LoweringContext::processCmp(
     } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::OrOp) {
         auto left = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
         processOr(left, frame, trueCase, falseCase);
-    } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::ConstBooleanOp) {
-
     } else {
         NES_THROW_RUNTIME_ERROR("Left is not a compare operation but a " << opt->toString());
     }
@@ -304,7 +285,6 @@ void FlounderLoweringProvider::LoweringContext::processAnd(const std::shared_ptr
     auto andSecondCaseLabel = program.label("And_tmp_label" + andOpt->getIdentifier());
     auto left = andOpt->getLeftInput();
     processCmp(left, frame, andSecondCaseLabel, falseCase);
-
     program << program.section(andSecondCaseLabel);
     auto right = andOpt->getRightInput();
     processCmp(right, frame, trueCase, falseCase);
@@ -316,16 +296,13 @@ void FlounderLoweringProvider::LoweringContext::processOr(
     NES::Nautilus::Backends::Flounder::FlounderLoweringProvider::FlounderFrame& frame,
     flounder::Label& trueCase,
     flounder::Label& falseCase) {
-
     auto orSecondCaseLabel = program.label("Or_tmp_label" + orOpt->getIdentifier());
     auto left = orOpt->getLeftInput();
     processCmp(left, frame, trueCase, orSecondCaseLabel);
     program << program.jmp(trueCase);
     program << program.section(orSecondCaseLabel);
-
     auto right = orOpt->getRightInput();
     processCmp(right, frame, trueCase, falseCase);
-
     program << program.jmp(trueCase);
 }
 
@@ -335,7 +312,6 @@ void FlounderLoweringProvider::LoweringContext::processCmp(const std::shared_ptr
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
     program << program.cmp(leftInput, rightInput);
-
     switch (compOpt->getComparator()) {
         case IR::Operations::CompareOperation::Comparator::EQ: program << program.jne(falseCase); break;
         case IR::Operations::CompareOperation::Comparator::LT: program << program.jge(falseCase); break;

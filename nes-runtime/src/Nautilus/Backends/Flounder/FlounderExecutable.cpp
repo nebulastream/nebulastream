@@ -23,4 +23,4 @@ void* FlounderExecutable::getInvocableFunctionPtr(const std::string&) { return r
 bool FlounderExecutable::hasInvocableFunctionPtr() { return true; }
 
 FlounderExecutable::~FlounderExecutable() noexcept = default;
-}// namespace NES::Nautilus::Backends::MLIR
+}// namespace NES::Nautilus::Backends::Flounder
