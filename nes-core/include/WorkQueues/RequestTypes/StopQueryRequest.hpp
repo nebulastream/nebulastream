@@ -17,7 +17,7 @@
 
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
-#include <WorkQueues/StorageHandles/StorageHandle.hpp>
+#include <WorkQueues/StorageHandles/StorageHandler.hpp>
 
 namespace NES::Optimizer {
 class TypeInferencePhase;
@@ -67,8 +67,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Source
 
 namespace UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
@@ -90,13 +90,13 @@ class StopQueryRequest : public Request, public AbstractRequest {
     static StopQueryRequestPtr
     create(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
 
-    void executeRequestLogic(const StorageHandlePtr storageHandle) override;
+    void executeRequestLogic(StorageHandler& storageHandle) override;
 
-    void preRollbackHandle(std::exception ex, StorageHandlePtr storageHandle) override;
-    void postRollbackHandle(std::exception ex, StorageHandlePtr storageHandle) override;
-    void rollBack(std::exception& ex, StorageHandlePtr storageHandle) override;
-    void preExecution(StorageHandlePtr storageHandle, std::vector<StorageHandleResourceType> requiredResources) override;
-    void postExecution(StorageHandlePtr storageHandle, std::vector<StorageHandleResourceType> requiredResources) override;
+    void preRollbackHandle(std::exception ex, StorageHandler& storageHandle) override;
+    void postRollbackHandle(std::exception ex, StorageHandler& storageHandle) override;
+    void rollBack(std::exception& ex, StorageHandler& storageHandle) override;
+    void preExecution(StorageHandler& storageHandle) override;
+    void postExecution(StorageHandler& storageHandle) override;
 
     std::string toString() override;
 
@@ -111,17 +111,17 @@ class StopQueryRequest : public Request, public AbstractRequest {
     //todo: remove constructor after Request Restructuring was successfully completed
     StopQueryRequest(QueryId queryId);
     const WorkerRPCClientPtr& workerRpcClient;
+    QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
-    QueryId queryId;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool queryReconfiguration;
 };
 }// namespace NES

@@ -68,7 +68,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * acquireResources function
      * @return a handle to the query catalog.
      */
-    QueryCatalogServiceHandle getQueryCatalogHandle() override;
+    QueryCatalogServiceHandle getQueryCatalogServiceHandle() override;
 
     /**
      * @brief Obtain a mutable global query plan handle. Will throw an exception if the resource has not been locked in the
