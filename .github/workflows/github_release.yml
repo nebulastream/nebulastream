@@ -150,7 +150,7 @@ jobs:
     needs: [build-docker]
     runs-on: ubuntu-latest
     env:
-      VERSION: 1.2.3
+      VERSION: $GITHUB_REF_NAME
     steps:
       - name: "Repository dispatch for Java-Client"
         uses: peter-evans/repository-dispatch@v1
