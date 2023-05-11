@@ -76,7 +76,7 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
         stopQueryRequest->postExecution(*twoPLAccessHandle);
         thread->join();
     }
-    //todo: this should throw something as the aquired locks should be released after execution but it doesn't currently
+    //todo: #3725 this should throw something as the acquired locks should be released after execution but it doesn't currently
     //now thread 2 should be able to acquire lock on topology manager service
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
         ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
