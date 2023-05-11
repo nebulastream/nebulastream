@@ -72,14 +72,11 @@ class FlounderLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::MulOperation>& mulOp, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::SubOperation>& subOp, FlounderFrame& frame);
         void process(std::shared_ptr<IR::Operations::IfOperation> opt, FlounderFrame& frame);
-        void process(std::shared_ptr<IR::Operations::CompareOperation> opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::BranchOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::LoopOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::LoadOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::StoreOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, FlounderFrame& frame);
-        void process(std::shared_ptr<IR::Operations::OrOperation> opt, FlounderFrame& frame);
-        void process(std::shared_ptr<IR::Operations::AndOperation> opt, FlounderFrame& frame);
         void processAnd(const std::shared_ptr<IR::Operations::AndOperation>& opt,
                         FlounderFrame& frame,
                         flounder::Label& trueCase,

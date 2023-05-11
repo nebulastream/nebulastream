@@ -17,7 +17,7 @@
 
 #include <Nautilus/Backends/Executable.hpp>
 
-namespace flounder{
+namespace flounder {
 class Executable;
 }
 
@@ -30,6 +30,7 @@ class FlounderExecutable : public Executable {
   public:
     explicit FlounderExecutable(std::unique_ptr<flounder::Executable> engine);
     ~FlounderExecutable() noexcept override;
+
   protected:
     void* getInvocableFunctionPtr(const std::string& member) override;
 
@@ -39,5 +40,5 @@ class FlounderExecutable : public Executable {
   private:
     std::unique_ptr<flounder::Executable> engine;
 };
-}// namespace NES::Nautilus::Backends::MLIR
+}// namespace NES::Nautilus::Backends::Flounder
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_
