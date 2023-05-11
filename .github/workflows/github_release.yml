@@ -128,7 +128,7 @@ jobs:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
       UBUNTU_VERSION: 22_04
-      VERSION: $GITHUB_REF_NAME
+      VERSION: ${{ env.GITHUB_REF_NAME }}
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -150,7 +150,7 @@ jobs:
     needs: [build-docker]
     runs-on: ubuntu-latest
     env:
-      VERSION: $GITHUB_REF_NAME
+      VERSION: ${{ env.GITHUB_REF_NAME }}
     steps:
       - name: "Repository dispatch for Java-Client"
         uses: peter-evans/repository-dispatch@v1
