@@ -17,6 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Expressions/Expression.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {
@@ -29,11 +30,13 @@ public:
     void execute(ExecutionContext &ctx, Record &record) const override;
 
 private:
-    uint64_t operatorHandlerIndex;
+    const uint64_t operatorHandlerIndex;
+    const bool isLeftSide;
+    const Expressions::ExpressionPtr timestampExpression;
+
     SchemaPtr schema;
     std::string joinFieldName;
     std::string timeStampField;
-    bool isLeftSide;
 };
 } // namespace NES::Runtime::Execution::Operators
 
