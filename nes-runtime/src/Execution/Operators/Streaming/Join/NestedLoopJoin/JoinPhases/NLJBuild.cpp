@@ -61,7 +61,7 @@ void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWor
             std::memcpy(buffer.getBuffer(), &windowEnd, sizeof(uint64_t));
             buffer.setNumberOfTuples(1);
             pipelineCtx->emitBuffer(buffer, *workerCtx);
-            NES_DEBUG2("Emitted window {}", nljWindow.toString());
+            NES_TRACE2("Emitted window {}", nljWindow.toString());
         }
     }
 }

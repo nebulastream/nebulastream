@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Operators {
     bool NLJOperatorHandler::updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide) {
-        NES_DEBUG2("NLJOperatorHandler::updateStateOfNLJWindows for timestamp {} and isLeftSide {}", timestamp, isLeftSide);
+        NES_TRACE2("NLJOperatorHandler::updateStateOfNLJWindows for timestamp {} and isLeftSide {}", timestamp, isLeftSide);
         bool atLeastOneDoneFilling = false;
         for (auto& curWindow : nljWindows) {
             auto currentWindowState = curWindow.getWindowState();

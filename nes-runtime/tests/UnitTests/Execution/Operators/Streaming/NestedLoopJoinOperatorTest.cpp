@@ -175,7 +175,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                 Value<UInt64> posInWindowVal(posInWindow);
                 auto& leftRecord = allLeftRecords[pos];
                 auto readRecordLeft = memoryProviderLeft->read({}, startOfTupleLeft, posInWindowVal);
-                NES_DEBUG2("readRecordLeft {} leftRecord{}", readRecordLeft.toString(), leftRecord.toString());
+                NES_TRACE2("readRecordLeft {} leftRecord{}", readRecordLeft.toString(), leftRecord.toString());
 
                 for (auto& field : leftSchema->fields) {
                     EXPECT_EQ(readRecordLeft.read(field->getName()), leftRecord.read(field->getName()));
@@ -188,7 +188,7 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                 Value<UInt64> posInWindowVal(posInWindow);
                 auto& rightRecord = allRightRecords[pos];
                 auto readRecordRight = memoryProviderRight->read({}, startOfTupleRight, posInWindowVal);
-                NES_DEBUG2("readRecordRight {} rightRecord{}", readRecordRight.toString(), rightRecord.toString());
+                NES_TRACE2("readRecordRight {} rightRecord{}", readRecordRight.toString(), rightRecord.toString());
 
                 for (auto& field : rightSchema->fields) {
                     EXPECT_EQ(readRecordRight.read(field->getName()), rightRecord.read(field->getName()));
@@ -295,9 +295,13 @@ class NestedLoopJoinOperatorTest : public Testing::NESBaseTest {
                             joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                         }
 
-                        hier weiter machen mit dem erstellen des joinedtuples und dann durch alle collect.records
-                        durch iterieren und schauen, ob der record drinnen ist und dann den Record löschen
-                        wahscheinlich brauche ich nen equal operator um std::find() aufrufen zu können
+                        // Check if this joinedRecord is in the emitted records
+                        auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
+                        if (it == collector->records.end()) {
+                            NES_ERROR2("Could not find joinedRecord {} in the emitted records!", joinedRecord.toString());
+                            ASSERT_TRUE(false);
+                        }
+                        collector->records.erase(it);
                     }
                 }
             }
@@ -362,8 +366,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     auto joinFieldnameRight = rightSchema->get(1)->getName();
     auto timestampFieldLeft = leftSchema->get(2)->getName();
     auto timestampFieldRight = leftSchema->get(2)->getName();
-    auto numberOfRecordsLeft = 1000;
-    auto numberOfRecordsRight = 1000;
+    auto numberOfRecordsLeft = 10000;
+    auto numberOfRecordsRight = 10000;
     windowSize = 50;
 
     auto nljOperatorHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,

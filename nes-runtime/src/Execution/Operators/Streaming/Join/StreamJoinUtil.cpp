@@ -44,18 +44,21 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
                "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
 
     auto retSchema = Schema::create(leftSchema->getLayoutType());
-    retSchema->addField(leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier() + "$start",
-                        BasicType::UINT64);
-    retSchema->addField(leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier() + "$end", BasicType::UINT64);
+    auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
 
-    if (leftSchema->contains(keyFieldName)) {
-        retSchema->addField(leftSchema->get(keyFieldName));
-    } else {
-        retSchema->addField(rightSchema->get(keyFieldName));
+    retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
+    retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
+    retSchema->addField(newQualifierForSystemField + "$key", BasicType::UINT64);
+
+    for (auto& fields : leftSchema->fields) {
+        retSchema->addField(fields->getName(), fields->getDataType());
     }
 
-    retSchema->copyFields(leftSchema);
-    retSchema->copyFields(rightSchema);
+    for (auto& fields : rightSchema->fields) {
+        retSchema->addField(fields->getName(), fields->getDataType());
+    }
+    NES_DEBUG2("Created joinSchema {} from leftSchema {} and rightSchema {}.", retSchema->toString(),
+               leftSchema->toString(), rightSchema->toString());
 
     return retSchema;
 }
