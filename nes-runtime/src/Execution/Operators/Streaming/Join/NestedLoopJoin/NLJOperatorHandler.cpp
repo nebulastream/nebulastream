@@ -34,7 +34,7 @@ namespace NES::Runtime::Execution::Operators {
                 continue;
             }
 
-            if (timestamp > curWindow.getWindowEnd()) {
+            if (timestamp >= curWindow.getWindowEnd()) {
                 if ((isLeftSide && currentWindowState == NLJWindow::WindowState::ONLY_LEFT_FILLING) ||
                     (!isLeftSide && currentWindowState == NLJWindow::WindowState::ONLY_RIGHT_FILLING)) {
                     curWindow.updateWindowState(NLJWindow::WindowState::DONE_FILLING);
@@ -58,18 +58,21 @@ namespace NES::Runtime::Execution::Operators {
     }
 
     uint8_t* NLJOperatorHandler::insertNewTuple(uint64_t timestamp, bool isLeftSide) {
+        std::lock_guard<std::mutex> lock(insertNewTupleMutex);
+
         auto window = getWindowByTimestamp(timestamp);
         while(!window.has_value()) {
-            createNewWindow();
+            createNewWindow(timestamp);
             window = getWindowByTimestamp(timestamp);
         }
         auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
         return window.value()->insertNewTuple(sizeOfTupleInByte, isLeftSide);
     }
 
-    void NLJOperatorHandler::createNewWindow() {
-        nljWindows.emplace_back(windowStart, windowStart + windowSize - 1);
-        windowStart += windowSize;
+    void NLJOperatorHandler::createNewWindow(uint64_t timestamp) {
+        auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
+        auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
+        nljWindows.emplace_back(windowStart, windowEnd);
     }
 
     void NLJOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
@@ -81,7 +84,7 @@ namespace NES::Runtime::Execution::Operators {
 
     std::optional<NLJWindow*> NLJOperatorHandler::getWindowByTimestamp(uint64_t timestamp) {
         for (auto& curWindow : nljWindows) {
-            if (curWindow.getWindowStart() <= timestamp && timestamp <= curWindow.getWindowEnd()) {
+            if (curWindow.getWindowStart() <= timestamp && timestamp < curWindow.getWindowEnd()) {
                 return &curWindow;
             }
         }
@@ -160,7 +163,7 @@ namespace NES::Runtime::Execution::Operators {
 
     NLJOperatorHandler::NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft,
                                            const SchemaPtr &joinSchemaRight, const std::string &joinFieldNameLeft,
-                                           const std::string &joinFieldNameRight) : windowSize(windowSize),
+                                           const std::string &joinFieldNameRight) : sliceAssigner(windowSize, windowSize),
                                                                                     joinSchemaLeft(joinSchemaLeft),
                                                                                     joinSchemaRight(joinSchemaRight),
                                                                                     joinFieldNameLeft(

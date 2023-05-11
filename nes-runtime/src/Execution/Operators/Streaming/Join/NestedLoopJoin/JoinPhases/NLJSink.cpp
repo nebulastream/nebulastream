@@ -75,7 +75,7 @@ namespace NES::Runtime::Execution::Operators {
         auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
         auto windowIdentifier = *static_cast<uint64_t*>(windowIdentifierPtr);
 
-        return opHandler->getWindowStartEnd(windowIdentifier).second + 1;
+        return opHandler->getWindowStartEnd(windowIdentifier).second;
     }
 
 

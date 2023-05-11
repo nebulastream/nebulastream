@@ -18,6 +18,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <list>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class NLJOperatorHandler : public OperatorHandler {
@@ -46,23 +47,21 @@ public:
 
     const std::string &getJoinFieldName(bool isLeftSide) const;
 
-
     void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
 private:
-    void createNewWindow();
+    void createNewWindow(uint64_t timestamp);
 
     std::optional<NLJWindow*> getWindowByTimestamp(uint64_t timestamp);
 
     std::optional<NLJWindow*> getWindowByWindowIdentifier(uint64_t windowIdentifier);
 
-
+    std::mutex insertNewTupleMutex;
     std::list<NLJWindow> nljWindows;
-    size_t windowSize;
-    uint64_t windowStart = 0;
+    SliceAssigner sliceAssigner;
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
