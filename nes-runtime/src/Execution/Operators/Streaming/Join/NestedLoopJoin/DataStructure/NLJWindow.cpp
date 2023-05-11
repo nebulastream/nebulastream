@@ -76,7 +76,7 @@ namespace NES::Runtime::Execution {
     }
 
     void NLJWindow::updateWindowState(NLJWindow::WindowState newWindowState) {
-        NES_DEBUG2("Changing windowState for {} to {}", toString(), magic_enum::enum_name(newWindowState));
+        NES_TRACE2("Changing windowState for {} to {}", toString(), magic_enum::enum_name(newWindowState));
         windowState.store(newWindowState);
     }
 

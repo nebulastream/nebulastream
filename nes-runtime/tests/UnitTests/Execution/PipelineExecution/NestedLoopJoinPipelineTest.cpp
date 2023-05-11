@@ -35,6 +35,7 @@
 #include <Execution/Operators/Scan.hpp>
 #include <fstream>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
+#include <Execution/Operators/Emit.hpp>
 
 
 namespace NES::Runtime::Execution {
@@ -91,7 +92,7 @@ namespace NES::Runtime::Execution {
                              const std::string& fileNameBuffersSink, uint64_t windowSize,
                              const SchemaPtr leftSchema, const SchemaPtr rightSchema, const SchemaPtr joinSchema,
                              const std::string& joinFieldNameLeft, const std::string& joinFieldNameRight,
-                             const std::string& timeStampField) {
+                             const std::string& timeStampFieldLeft, const std::string& timeStampFieldRight) {
 
             bool nljWorks = true;
 
@@ -100,23 +101,25 @@ namespace NES::Runtime::Execution {
             auto rightBuffers = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager);
             auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager);
 
-            // Creating the scan operator
+            // Creating the scan (for build) and emit operator (for sink)
             auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
             auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
             auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
 
             auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
             auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
+            auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutJoined);
 
             auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
             auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
+            auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderSink));
 
             // Creating the left, right and sink NLJ operator
             auto handlerIndex = 0;
             auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex, leftSchema, joinFieldNameLeft,
-                                                                      timeStampField, /*isLeftSide*/ true);
+                                                                      timeStampFieldLeft, /*isLeftSide*/ true);
             auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex, rightSchema, joinFieldNameRight,
-                                                                       timeStampField, /*isLeftSide*/ false);
+                                                                       timeStampFieldRight, /*isLeftSide*/ false);
             auto nljSink = std::make_shared<Operators::NLJSink>(handlerIndex, leftSchema, rightSchema, joinSchema,
                                                                 joinFieldNameLeft, joinFieldNameRight);
 
@@ -131,6 +134,8 @@ namespace NES::Runtime::Execution {
 
             scanOperatorLeft->setChild(nljBuildLeft);
             scanOperatorRight->setChild(nljBuildRight);
+            nljSink->setChild(emitOperator);
+
             pipelineBuildLeft->setRootOperator(scanOperatorLeft);
             pipelineBuildRight->setRootOperator(scanOperatorRight);
             pipelineSink->setRootOperator(nljSink);
@@ -148,7 +153,7 @@ namespace NES::Runtime::Execution {
             auto executablePipelineRight = provider->create(pipelineBuildRight, options);
             auto executablePipelineSink = provider->create(pipelineSink, options);
 
-            nljWorks = nljWorks && (executablePipelineLeft->setup(pipelineExecCtxLeft) == 0);
+            nljWorks = (executablePipelineLeft->setup(pipelineExecCtxLeft) == 0);
             nljWorks = nljWorks && (executablePipelineRight->setup(pipelineExecCtxRight) == 0);
             nljWorks = nljWorks && (executablePipelineSink->setup(pipelineExecCtxSink) == 0);
 
@@ -159,6 +164,8 @@ namespace NES::Runtime::Execution {
             for (auto buffer : rightBuffers) {
                 executablePipelineRight->execute(buffer, pipelineExecCtxRight, *workerContext);
             }
+            nljWorks = nljWorks && (executablePipelineLeft->stop(pipelineExecCtxLeft) == 0);
+            nljWorks = nljWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
 
             // Assure that at least one buffer has been emitted
             nljWorks = nljWorks && (pipelineExecCtxLeft.emittedBuffers.size() > 0 ||
@@ -172,6 +179,8 @@ namespace NES::Runtime::Execution {
             for (auto buf : buildEmittedBuffers) {
                 executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
             }
+            nljWorks = nljWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
+
 
             nljWorks = nljWorks && (pipelineExecCtxSink.emittedBuffers.size() == 20);
             auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
@@ -192,22 +201,19 @@ namespace NES::Runtime::Execution {
 
     TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
         const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                    ->addField("id", BasicType::UINT64)
-                                    ->addField("value", BasicType::UINT64)
-                                    ->addField("timestamp", BasicType::UINT64);
+                                    ->addField("left$id", BasicType::UINT64)
+                                    ->addField("left$value", BasicType::UINT64)
+                                    ->addField("left$timestamp", BasicType::UINT64);
 
         const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                    ->addField("id", BasicType::UINT64)
-                                    ->addField("value", BasicType::UINT64)
-                                    ->addField("timestamp", BasicType::UINT64);
+                                    ->addField("right$id", BasicType::UINT64)
+                                    ->addField("right$value", BasicType::UINT64)
+                                    ->addField("right$timestamp", BasicType::UINT64);
 
         const auto joinFieldNameRight = rightSchema->get(1)->getName();
         const auto joinFieldNameLeft = leftSchema->get(1)->getName();
-
-
-        // This is necessary as, the timestamp field has to be the same for the left and right #3407
-        EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
-        auto timeStampField = leftSchema->get(2)->getName();
+        const auto timeStampFieldRight = rightSchema->get(2)->getName();
+        const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
         EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
         const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
@@ -220,27 +226,24 @@ namespace NES::Runtime::Execution {
 
         ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft, fileNameBuffersRight, fileNameBuffersSink, windowSize,
                                     leftSchema, rightSchema, joinSchema, joinFieldNameLeft, joinFieldNameRight,
-                                    timeStampField));
+                                    timeStampFieldLeft, timeStampFieldRight));
     }
 
     TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
         const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                    ->addField("id", BasicType::UINT64)
-                                    ->addField("value", BasicType::UINT64)
-                                    ->addField("timestamp", BasicType::UINT64);
+                                    ->addField("left$id", BasicType::UINT64)
+                                    ->addField("left$value", BasicType::UINT64)
+                                    ->addField("left$timestamp", BasicType::UINT64);
 
         const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                    ->addField("id", BasicType::UINT64)
-                                    ->addField("value", BasicType::UINT64)
-                                    ->addField("timestamp", BasicType::UINT64);
+                                    ->addField("right$id", BasicType::UINT64)
+                                    ->addField("right$value", BasicType::UINT64)
+                                    ->addField("right$timestamp", BasicType::UINT64);
 
         const auto joinFieldNameRight = rightSchema->get(1)->getName();
         const auto joinFieldNameLeft = leftSchema->get(1)->getName();
-
-
-        // This is necessary as, the timestamp field has to be the same for the left and right #3407
-        EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
-        auto timeStampField = leftSchema->get(2)->getName();
+        const auto timeStampFieldRight = rightSchema->get(2)->getName();
+        const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
         EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
         const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
@@ -253,25 +256,23 @@ namespace NES::Runtime::Execution {
 
         ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft, fileNameBuffersRight, fileNameBuffersSink, windowSize,
                                     leftSchema, rightSchema, joinSchema, joinFieldNameLeft, joinFieldNameRight,
-                                    timeStampField));
+                                    timeStampFieldLeft, timeStampFieldRight));
     }
 
     TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes) {
         const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                ->addField("id", BasicType::UINT64)
-                ->addField("value", BasicType::UINT64)
-                ->addField("timestamp", BasicType::UINT64);
+                ->addField("left$id", BasicType::UINT64)
+                ->addField("left$value", BasicType::UINT64)
+                ->addField("left$timestamp", BasicType::UINT64);
 
         const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                ->addField("id", BasicType::UINT64)
-                ->addField("timestamp", BasicType::UINT64);
+                ->addField("right$id", BasicType::UINT64)
+                ->addField("right$timestamp", BasicType::UINT64);
 
-        const auto joinFieldNameLeft = "value";
-        const auto joinFieldNameRight = "id";
-
-        // This is necessary as, the timestamp field has to be the same for the left and right #3407
-        EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(1)->getName());
-        auto timeStampField = leftSchema->get(2)->getName();
+        const auto joinFieldNameRight = rightSchema->get(0)->getName();
+        const auto joinFieldNameLeft = leftSchema->get(1)->getName();
+        const auto timeStampFieldRight = rightSchema->get(1)->getName();
+        const auto timeStampFieldLeft = leftSchema->get(2)->getName();
 
         EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
         const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
@@ -284,7 +285,7 @@ namespace NES::Runtime::Execution {
 
         ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft, fileNameBuffersRight, fileNameBuffersSink, windowSize,
                                     leftSchema, rightSchema, joinSchema, joinFieldNameLeft, joinFieldNameRight,
-                                    timeStampField));
+                                    timeStampFieldLeft, timeStampFieldRight));
     }
 
     INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,

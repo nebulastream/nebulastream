@@ -80,6 +80,9 @@ namespace NES::Runtime::Execution::Operators {
 
 
     void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+        if (hasChild()) {
+            child->open(ctx, recordBuffer);
+        }
 
         auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         auto windowIdentifierMemRef = recordBuffer.getBuffer();
@@ -127,12 +130,14 @@ namespace NES::Runtime::Execution::Operators {
                     joinedRecord.write(joinSchema->get(1)->getName(), windowEnd);
                     joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldNameLeft));
 
-                    // Writing the leftSchema fields
+                    /* Writing the leftSchema fields, expect the join schema to have the fields in the same order then
+                     * the left schema */
                     for (auto& field : leftSchema->fields) {
                         joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
                     }
 
-                    // Writing the rightSchema fields
+                    /* Writing the rightSchema fields, expect the join schema to have the fields in the same order then
+                     * the right schema */
                     for (auto& field : rightSchema->fields) {
                         joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                     }
@@ -145,7 +150,6 @@ namespace NES::Runtime::Execution::Operators {
 
         // Once we are done with this window, we can delete it to free up space
         Nautilus::FunctionCall("deleteWindowProxy", deleteWindowProxy, operatorHandlerMemRef, windowIdentifierMemRef);
-
     }
 
     NLJSink::NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema,
