@@ -14,7 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -25,7 +25,8 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandle.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <gtest/gtest.h>
 
 namespace z3 {
@@ -59,25 +60,23 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle = TwoPhaseLockingStorageHandle::create(globalExecutionPlan,
-                                                                  topology,
-                                                                  queryCatalogService,
-                                                                  globalQueryPlan,
-                                                                  sourceCatalog,
-                                                                  udfCatalog);
+    auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
+    auto lockManager = std::make_shared<LockManager>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
+    auto twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     //if thread 1 holds a handle to the topology, thread 2 should not be able to acquire a handle at the same time
 
     //constructor acquires lock
     {
-        stopQueryRequest->preExecution(twoPLAccessHandle, {});
-        auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
-            ASSERT_THROW((twoPLAccessHandle->getTopologyHandle()), std::exception);
+        ASSERT_NO_THROW(stopQueryRequest->preExecution(*twoPLAccessHandle));
+        auto thread = std::make_shared<std::thread>([&twoPLAccessHandle2]() {
+            ASSERT_THROW((twoPLAccessHandle2->getTopologyHandle()), std::exception);
         });
         //release lock
-        stopQueryRequest->postExecution(twoPLAccessHandle, {});
+        stopQueryRequest->postExecution(*twoPLAccessHandle);
         thread->join();
     }
+    //todo: this should throw something as the aquired locks should be released after execution but it doesn't currently
     //now thread 2 should be able to acquire lock on topology manager service
     auto thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
         ASSERT_NO_THROW((twoPLAccessHandle->getTopologyHandle()));
@@ -95,16 +94,11 @@ TEST_F(StopQueryRequestTest, testErrorHandlingAndRollBackForIdNotInQueryCatalog)
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
-    auto twoPLAccessHandle = TwoPhaseLockingStorageHandle::create(globalExecutionPlan,
-                                                                  topology,
-                                                                  queryCatalogService,
-                                                                  globalQueryPlan,
-                                                                  sourceCatalog,
-                                                                  udfCatalog);
-
+    auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
+    auto lockManager = std::make_shared<LockManager>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
     auto thread = std::make_shared<std::thread>([&stopQueryRequest, &twoPLAccessHandle]() {
-        ASSERT_NO_THROW((stopQueryRequest->execute(twoPLAccessHandle)));
+        ASSERT_NO_THROW((stopQueryRequest->execute(*twoPLAccessHandle)));
     });
     thread->join();
     //now thread 2 should be able to acquire lock on topology manager service

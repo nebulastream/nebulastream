@@ -90,7 +90,7 @@ class StorageHandler {
      * @brief Obtain a mutable query catalog handle.
      * @return a handle to the query catalog.
      */
-    virtual QueryCatalogServiceHandle getQueryCatalogHandle() = 0;
+    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle() = 0;
 
     /**
      * @brief Obtain a mutable global query plan handle.

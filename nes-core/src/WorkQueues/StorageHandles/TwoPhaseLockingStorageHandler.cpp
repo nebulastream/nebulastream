@@ -66,7 +66,7 @@ TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle() {
     return topology;
 }
 
-QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogHandle() {
+QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle() {
     if (!queryCatalogService) {
         //todo #3611: write custom exception for this case
         throw std::exception();

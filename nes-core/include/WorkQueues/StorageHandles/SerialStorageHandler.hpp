@@ -65,7 +65,7 @@ class SerialStorageHandler : public StorageHandler {
      * @brief Obtain a mutable query catalog handle.
      * @return a handle to the query catalog.
      */
-    QueryCatalogServiceHandle getQueryCatalogHandle() override;
+    QueryCatalogServiceHandle getQueryCatalogServiceHandle() override;
 
     /**
      * @brief Obtain a mutable source catalog handle.
