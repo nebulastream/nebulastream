@@ -59,9 +59,7 @@ TEST_P(FunctionCompilationTest, addIntFunctionTest) {
 
 int64_t returnConst() { return 42; };
 
-Value<> returnConstFunction() {
-    return FunctionCall<>("returnConst", returnConst);
-}
+Value<> returnConstFunction() { return FunctionCall<>("returnConst", returnConst); }
 
 TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
 
