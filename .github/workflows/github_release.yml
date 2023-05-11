@@ -148,7 +148,7 @@ jobs:
 
   Java-Client-CI-Dispatch:
     needs: [build-docker]
-    runs-on: [ self-hosted, linux, X64, Build ]
+    runs-on: ubuntu-latest
     env:
       VERSION: 1.2.3
     steps:
@@ -158,7 +158,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           repository: nebulastream/nebulastream-java-client
           event-type: nes-executable-image-update
-          client-payload: '{"version": "$VERSION"}'
+          client-payload: '{"version": "${{ env.VERSION }}"}'
 
   Run-Regression-Tests:
     needs: [build-docker]
