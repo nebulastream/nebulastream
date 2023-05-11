@@ -290,7 +290,7 @@ namespace NES::Runtime::Execution {
 
     INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,
                             NestedLoopJoinPipelineTest,
-                            ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                            ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                             [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) {
                                 return info.param;
                             });
