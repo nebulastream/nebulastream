@@ -9,6 +9,7 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
+#include <Exceptions/FailQueryRequestExecutionException.h>
 #include <utility>
 
 namespace NES::Experimental {
@@ -23,19 +24,28 @@ void FailQueryRequest::preRollbackHandle(std::exception, NES::StorageHandler&) {
 
 void FailQueryRequest::rollBack(std::exception&, StorageHandler&) {}
 
+//todo: pass a CoordinatorRequestExecutionException here?
 void FailQueryRequest::postRollbackHandle(std::exception ex, NES::StorageHandler& storageHandler) {
-    //todo: is this an efficient design?
     try {
         //todo: depending on where exactly the undeployment exception occured, we might have to repeat only parts of the undeployment phase
-        //undeploy queries
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
-        topology = storageHandler.getTopologyHandle();
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-        auto undeploymentException = dynamic_cast<QueryUndeploymentException&>(ex);
-        queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
 
-        for (auto& queryId : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Failed");
+        auto failQueryException = dynamic_cast<FailQueryRequestExecutionException&>(ex);
+        switch ((FailQueryStage) failQueryException.getStage()) {
+            case FailQueryStage::MARK_FOR_FAILURE: break;
+            case FailQueryStage::UNDEPLOY: {
+                //undeploy queries
+                globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
+                topology = storageHandler.getTopologyHandle();
+                auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+                queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
+                auto sharedQueryId = failQueryException.getSharedQueryid();
+
+                for (auto& queryId : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Failed");
+                }
+            }
+                break;
+            case FailQueryStage::REMOVE: break;
         }
 
     } catch (std::bad_cast& e) {}
@@ -45,7 +55,7 @@ void FailQueryRequest::postExecution(NES::StorageHandler&) {}
 
 void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle();
-    sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         throw QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId) + " in the global query plan");
     }
@@ -63,8 +73,13 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     topology = storageHandle.getTopologyHandle();
     auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     //todo: exception handling
-    if (!queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed)) {
-        throw QueryUndeploymentException("could not undeploy query " + std::to_string(queryId));
+    try {
+        if (!queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed)) {
+            //throw QueryUndeploymentException("could not undeploy query " + std::to_string(queryId));
+            throw FailQueryRequestExecutionException((uint8_t) FailQueryStage::UNDEPLOY, sharedQueryId);
+        }
+    } catch (std::exception &e) {
+        throw FailQueryRequestExecutionException((uint8_t) FailQueryStage::UNDEPLOY, sharedQueryId);
     }
 
     //update global query plan

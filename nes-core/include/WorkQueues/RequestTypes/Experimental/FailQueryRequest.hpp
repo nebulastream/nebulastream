@@ -54,7 +54,7 @@ class FailQueryRequest : public AbstractRequest {
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     //todo: should this really be a member variable?
-    SharedQueryId sharedQueryId;
+    //SharedQueryId sharedQueryId;
     WorkerRPCClientPtr workerRpcClient;
     GlobalQueryPlanPtr globalQueryPlan;
     QueryCatalogServicePtr queryCatalogService;
