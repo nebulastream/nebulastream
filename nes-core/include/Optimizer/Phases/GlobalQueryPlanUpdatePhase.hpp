@@ -135,5 +135,4 @@ class GlobalQueryPlanUpdatePhase {
     z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
-
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_
