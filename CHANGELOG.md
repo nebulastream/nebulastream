@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.77](https://github.com/nebulastream/nebulastream/tree/v0.5.77) (2023-05-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.76...v0.5.77)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate flounder backend [\#3642](https://github.com/nebulastream/nebulastream/issues/3642)
+
 ## [v0.5.76](https://github.com/nebulastream/nebulastream/tree/v0.5.76) (2023-05-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.75...v0.5.76)
