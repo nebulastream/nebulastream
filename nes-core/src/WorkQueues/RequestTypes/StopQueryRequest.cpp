@@ -68,7 +68,6 @@ void StopQueryRequest::preExecution(StorageHandler& storageHandler) {
     globalQueryPlan = storageHandler.getGlobalQueryPlanHandle();
     udfCatalog = storageHandler.getUDFCatalogHandle();
     sourceCatalog = storageHandler.getSourceCatalogHandle();
-    //todo: does it make sense to recreate this for every request?
     NES_TRACE2("Locks acquired. Create Phases");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryPlacementPhase =
@@ -102,11 +101,14 @@ void StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
                 queryCatalogService->updateQueryStatus(involvedQueryIds, QueryStatus::STOPPED, "Hard Stopped");
             }
+            //todo: #3728 remove shared query plan
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
             //3.3.2. Perform placement of updated shared query plan
             auto queryPlan = sharedQueryPlan->getQueryPlan();
             NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
-            //todo: Where to get the placement strategy? Currently it is supplied with the run query request
+            //todo: 3726 Where to get the placement strategy? Currently it is supplied with the run query request
+            //todo: 3726 store placement strategy in shared query plan; do this in a separate issue
+            //todo: 3726 add placement strategy to index for sqp identification
             //could we move it to the SQP? Since one SQP should have the same placement strategy, right?
             //otherwise maybe add it to an individual query plan?
             bool placementSuccessful = queryPlacementPhase->execute(PlacementStrategy::TopDown, sharedQueryPlan);
@@ -128,7 +130,6 @@ void StopQueryRequest::executeRequestLogic(StorageHandler& storageHandler) {
             //Update the shared query plan as deployed
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
         }
-        globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 
         //FIXME: This is a work-around for an edge case. To reproduce this:
         // 1. The query merging feature is enabled.
@@ -150,7 +151,7 @@ void StopQueryRequest::postExecution([[maybe_unused]] StorageHandler& storageHan
 
 std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
-/*todo: add error handling for:
+/*todo: #3724 add error handling for:
  * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
  * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
 */
@@ -159,47 +160,11 @@ void StopQueryRequest::preRollbackHandle(std::exception ex,[[maybe_unused]] Stor
 }
 void StopQueryRequest::postRollbackHandle(std::exception ex,[[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
-    //todo: call fail query request
+    //todo: #3635 call fail query request
 }
 void StopQueryRequest::rollBack(std::exception& ex,[[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
-    //todo: need to add instanceOf to errors to handle failures correctly
-    //where to implement instanceOf? schould I create a new error class that encapsulates all other errors?
-    /*
-} catch (QueryPlacementException& ex) {
-    NES_ERROR2("QueryRequestProcessingService: QueryPlacementException: {}", ex.what());
-    auto sharedQueryId = ex.getSharedQueryId();
-    queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
-    auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-    for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
-    }
-} catch (QueryDeploymentException& ex) {
-    NES_ERROR2("QueryRequestProcessingService: QueryDeploymentException: {}", ex.what());
-    auto sharedQueryId = ex.getSharedQueryId();
-    queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
-    auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-    for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
-    }
-} catch (TypeInferenceException& ex) {
-    NES_ERROR2("QueryRequestProcessingService: TypeInferenceException: {}", ex.what());
-    auto queryId = ex.getQueryId();
-    queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
-} catch (InvalidQueryStatusException& ex) {
-    NES_ERROR2("QueryRequestProcessingService: InvalidQueryStatusException: {}", ex.what());
-} catch (QueryNotFoundException& ex) {
-    NES_ERROR2("QueryRequestProcessingService: QueryNotFoundException: {}", ex.what());
-} catch (QueryUndeploymentException& ex) {
-    NES_ERROR2("QueryRequestProcessingService: QueryUndeploymentException: {}", ex.what());
-} catch (InvalidQueryException& ex) {
-    NES_ERROR2("QueryRequestProcessingService InvalidQueryException: {}", ex.what());
-} catch (std::exception& ex) {
-    NES_FATAL_ERROR2("QueryProcessingService: Received unexpected exception while scheduling the "
-                     "queryIdAndCatalogEntryMapping: {}",
-                     ex.what());
-    shutDown();
-}*/
+    //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }
 const WorkerRPCClientPtr& StopQueryRequest::getWorkerRpcClient() const { return workerRpcClient; }
 const QueryId& StopQueryRequest::getQueryId() const { return queryId; }
