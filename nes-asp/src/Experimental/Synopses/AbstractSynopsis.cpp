@@ -14,7 +14,7 @@
 
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
-#include <Experimental/Synopses/Samples/SRSWoR.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ASP {
@@ -22,8 +22,9 @@ namespace NES::ASP {
 AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arguments,
                                              Parsing::SynopsisAggregationConfig& aggregationConfig) {
 
+    // TODO For now this is okay, but later on we want to have a separate factory class, see issue #3734
     if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
-        return std::make_shared<SRSWoR>(aggregationConfig, arguments.width.getValue());
+        return std::make_shared<RandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue());
     } else {
         NES_NOT_IMPLEMENTED();
     }

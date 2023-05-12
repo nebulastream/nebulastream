@@ -17,7 +17,7 @@
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Operators/SynopsesOperator.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
-#include <Experimental/Synopses/Samples/SRSWoR.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
 #include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -106,7 +106,7 @@ namespace NES::ASP {
         auto allRecords = fillBuffer(*inputSchema, numberOfTuplesToProduce);
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
-        auto sampleSynopsis = SRSWoR(aggregationConfig, sampleSize);
+        auto sampleSynopsis = RandomSampleWithoutReplacement(aggregationConfig, sampleSize);
 
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());

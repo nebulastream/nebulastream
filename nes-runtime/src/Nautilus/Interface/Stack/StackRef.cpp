@@ -26,11 +26,6 @@ void allocateNewPageProxy(void* stackPtr) {
     stack->appendPage();
 }
 
-uint64_t getTotalNumberOfEntriesProxy(void* stackPtr) {
-    auto* stack = (Stack*) stackPtr;
-    return stack->getNumberOfEntries();
-}
-
 void* getEntryProxy(void* stackPtr, uint64_t pos) {
     auto* stack = (Stack*) stackPtr;
     return stack->getEntry(pos);
@@ -45,6 +40,7 @@ Value<MemRef> StackRef::allocateEntry() {
     auto page = getCurrentPage();
     auto entry = page + (getNumberOfEntries() * entrySize);
     setNumberOfEntries(getNumberOfEntries() + (uint64_t) 1);
+    setNumberOfTotalEntries(getTotalNumberOfEntries() + (uint64_t) 1);
     return entry.as<MemRef>();
 }
 
@@ -53,15 +49,28 @@ Value<MemRef> StackRef::getCurrentPage() { return getMember(stackRef, Stack, cur
 Value<UInt64> StackRef::getNumberOfEntries() { return getMember(stackRef, Stack, numberOfEntries).load<UInt64>(); }
 
 Value<UInt64> StackRef::getTotalNumberOfEntries() {
-    return FunctionCall("getTotalNumberOfEntriesProxy", getTotalNumberOfEntriesProxy, stackRef);
+    return getMember(stackRef, Stack, totalNumberOfEntries).load<UInt64>();
 }
 
-Value<MemRef> StackRef::getEntry(Value<NES::Nautilus::UInt64> pos) {
-    return FunctionCall("getEntryProxy", getEntryProxy, stackRef, pos);
+Value<MemRef> StackRef::getPage(const Value<>& pos) {
+    return (getMember(stackRef, Stack, pages).load<MemRef>() + pos).as<MemRef>();
+}
+
+Value<MemRef> StackRef::getEntry(const Value<UInt64>& pos) {
+//    return FunctionCall("getEntryProxy", getEntryProxy, stackRef, pos);
+    auto pagePos = pos / entriesPerPage;
+
+    // As I can not find a modulo operator, I have to do this weird loop
+    auto positionOnPage = pos;
+    while(positionOnPage >= entriesPerPage) {
+        positionOnPage = positionOnPage - entriesPerPage;
+    }
+    return (getPage(pos) + (positionOnPage * entrySize)).as<MemRef>();
 }
 
 void StackRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
 
+void StackRef::setNumberOfTotalEntries(const Value<>& val) { getMember(stackRef, Stack, totalNumberOfEntries).store(val); }
 
 
 }// namespace NES::Nautilus::Interface

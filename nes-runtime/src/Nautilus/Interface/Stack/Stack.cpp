@@ -17,7 +17,7 @@
 namespace NES::Nautilus::Interface {
 
 Stack::Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
-    : allocator(std::move(allocator)), entrySize(entrySize) {
+    : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
     appendPage();
 }
 
@@ -41,7 +41,7 @@ Stack::~Stack() {
         allocator->deallocate(page, PAGE_SIZE);
     }
 }
-size_t Stack::getNumberOfEntries() { return (getNumberOfPages() - 1) * capacityPerPage() + numberOfEntries; }
+size_t Stack::getNumberOfEntries() { return totalNumberOfEntries; }
 
 size_t Stack::getNumberOfPages() { return pages.size(); }
 

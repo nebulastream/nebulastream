@@ -19,7 +19,7 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
-#include <Experimental/Synopses/Samples/SRSWoR.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
 #include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -74,12 +74,12 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
     opHandler->setup(entrySize);
 }
 
-SRSWoR::SRSWoR(Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
+RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
                          AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
 }
 
-void SRSWoR::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
-                                                         Nautilus::Record record) {
+void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                                   Nautilus::Record record) {
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
@@ -96,8 +96,9 @@ void SRSWoR::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionC
     }
 }
 
-std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
-                                                         Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate(uint64_t handlerIndex,
+                                                                                 Runtime::Execution::ExecutionContext& ctx,
+                                                                                 Runtime::BufferManagerPtr bufferManager) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
     auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
@@ -112,6 +113,7 @@ std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex, 
     auto memoryProviderInput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
                                                                                                    inputSchema);
 
+    // TODO Swap this for loop with an iterator over the stack as soon as #3735 is implemented
     for (Nautilus::Value<Nautilus::UInt64> curTuple(0UL); curTuple < numberOfRecordsInSample; curTuple = curTuple + 1) {
         Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
         auto entryMemRef = stackRef.getEntry(curTuple);
@@ -141,13 +143,13 @@ std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex, 
     return {outputBuffer};
 }
 
-void SRSWoR::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
+void RandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandlerMemRef,
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
 }
 
-double SRSWoR::getScalingFactor(Nautilus::Interface::StackRef stackRef){
+double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::StackRef stackRef){
     double retValue = 1;
 
     if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {
@@ -159,8 +161,8 @@ double SRSWoR::getScalingFactor(Nautilus::Interface::StackRef stackRef){
     return retValue;
 }
 
-Nautilus::Value<> SRSWoR::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
-                                                                Nautilus::Value<Nautilus::Double> scalingFactor) {
+Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Nautilus::Value<> approximatedValue,
+                                                                            Nautilus::Value<Nautilus::Double> scalingFactor) {
     auto tmpValue = Nautilus::Value<>(approximatedValue * scalingFactor);
     double value = tmpValue.getValue().staticCast<Nautilus::Double>().getValue();
 
