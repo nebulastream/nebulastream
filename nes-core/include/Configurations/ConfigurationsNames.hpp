@@ -54,6 +54,8 @@ const std::string WORKER_CONFIG = "worker";
 const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
 const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
+const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
+
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
@@ -181,6 +183,12 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
+
+// Synopses Configurations
+const std::string SYNOPSIS_CONFIG_TYPE = "synopsisType";
+const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
+const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
+const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
 #endif//NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_

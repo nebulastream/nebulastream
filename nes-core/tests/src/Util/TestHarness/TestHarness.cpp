@@ -32,8 +32,9 @@ TestHarness::TestHarness(std::string queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
-      topologyId(1), validationDone(false), topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+      useNautilus(false), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
+      physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
+      testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
