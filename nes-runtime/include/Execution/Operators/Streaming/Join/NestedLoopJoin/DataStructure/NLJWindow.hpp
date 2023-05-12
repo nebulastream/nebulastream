@@ -97,7 +97,7 @@ public:
     std::string toString();
 
   private:
-    std::atomic<WindowState> windowState;
+    std::atomic<WindowState> windowState; // this might not be necessary anymore, if we have a SliceTriggerChecker
     std::vector<uint8_t> leftTuples;
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;

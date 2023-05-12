@@ -19,6 +19,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <list>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Execution/Operators/Streaming/SliceTriggerChecker.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class NLJOperatorHandler : public OperatorHandler {
@@ -62,6 +63,7 @@ private:
     std::mutex insertNewTupleMutex;
     std::list<NLJWindow> nljWindows;
     SliceAssigner sliceAssigner;
+    SliceTriggerChecker windowTrigger;
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
