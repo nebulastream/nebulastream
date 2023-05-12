@@ -97,10 +97,10 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     // 2. Complex: plain old java object containing the multiple primitive types
     if (operatorInputSchema->fields.size() == 1) {
         // 1. Simple, the input schema contains only one field
-        auto field = operatorInputSchema->fields[0];
+        const auto field = operatorInputSchema->fields[0];
         // Record should contain only one field
         assert(record.getAllFields().size() == 1);
-        auto fieldName = record.getAllFields()[0];
+        const auto fieldName = record.getAllFields()[0];
 
         if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
             inputPojoPtr =
@@ -129,8 +129,8 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     } else {
         // 2. Complex, a plain old java object with multiple primitive types as map input
         for (int i = 0; i < (int) operatorInputSchema->fields.size(); i++) {
-            auto field = operatorInputSchema->fields[i];
-            auto fieldName = field->getName();
+            const auto field = operatorInputSchema->fields[i];
+            const auto fieldName = field->getName();
 
             if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
                 FunctionCall<>("setBooleanField",
@@ -215,8 +215,8 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     // Same differentiation as for input class above
     if (operatorOutputSchema->fields.size() == 1) {
         // 1. Simple, the output schema contains only one field
-        auto field = operatorOutputSchema->fields[0];
-        auto fieldName = field->getName();
+        const auto field = operatorOutputSchema->fields[0];
+        const auto fieldName = field->getName();
 
         if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
             Value<> val = FunctionCall<>("getBooleanObjectValue", getBooleanObjectValue, handler, outputPojoPtr);
@@ -248,8 +248,8 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     } else {
         // 2. Complex, a plain old java object with multiple primitive types as map output
         for (int i = 0; i < (int) operatorOutputSchema->fields.size(); i++) {
-            auto field = operatorOutputSchema->fields[i];
-            auto fieldName = field->getName();
+            const auto field = operatorOutputSchema->fields[i];
+            const auto fieldName = field->getName();
 
             if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
                 Value<> val =
