@@ -19,6 +19,9 @@
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/BidGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -72,6 +75,30 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
 
     } else if (NES::Util::toUpperCase(type) == "YSB" || type == "YSBKafka") {
         return std::make_unique<YSBDataGenerator>();
+
+    } else if (type == "NEXMarkPerson") {
+        if (generatorNode["numberOfRecords"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("numberOfRecords is necessary for a NEXMarkPerson data generator!");
+        }
+
+        auto numberOfRecords = generatorNode["numberOfRecords"].As<uint64_t>();
+        return std::make_unique<NEXMarkGeneration::PersonGenerator>(numberOfRecords);
+
+    } else if (type == "NEXMarkOpenAuction") {
+        if (generatorNode["numberOfRecords"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("numberOfRecords is necessary for a NEXMarkOpenAuction data generator!");
+        }
+
+        auto numberOfRecords = generatorNode["numberOfRecords"].As<uint64_t>();
+        return std::make_unique<NEXMarkGeneration::OpenAuctionGenerator>(numberOfRecords);
+
+    } else if (type == "NEXMarkBid") {
+        if (generatorNode["numberOfRecords"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("numberOfRecords is necessary for a NEXMarkBid data generator!");
+        }
+
+        auto numberOfRecords = generatorNode["numberOfRecords"].As<uint64_t>();
+        return std::make_unique<NEXMarkGeneration::BidGenerator>(numberOfRecords);
 
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
