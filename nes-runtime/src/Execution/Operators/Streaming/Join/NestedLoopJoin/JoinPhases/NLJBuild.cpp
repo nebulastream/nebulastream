@@ -66,23 +66,41 @@ void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWor
     }
 }
 
+/**
+ * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
+ */
+void checkWindowsTriggerProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, bool isLeftSide) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+    NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
+
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
+
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger();
+    for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
+        auto buffer = workerCtx->allocateTupleBuffer();
+        std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
+        buffer.setNumberOfTuples(1);
+        pipelineCtx->emitBuffer(buffer, *workerCtx);
+        NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier.toString());
+    }
+}
+
+void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("checkWindowsTriggerProxy", checkWindowsTriggerProxy,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext(),
+                           ctx.getWorkerContext(),
+                           Value<Boolean>(isLeftSide));
+
+}
+
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
-    Continue with rewriting the NLJBuild Operator after
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto windowsTriggeredMemRef = Nautilus::FunctionCall("updateStateOfNLJWindows", updateStateOfNLJWindows,
-                                                         operatorHandlerMemRef,
-                                                         record.read(timeStampField).as<UInt64>(),
-                                                         Value<Boolean>(isLeftSide));
-
-    // Check if window is done
-    if (windowsTriggeredMemRef) {
-        Nautilus::FunctionCall("triggerJoinSinkProxy",
-                               triggerJoinSinkProxy,
-                               operatorHandlerMemRef,
-                               ctx.getPipelineContext(),
-                               ctx.getWorkerContext());
-    }
 
     // Get the memRef to the new entry
     auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy", insertEntryMemRefProxy,

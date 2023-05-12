@@ -28,6 +28,7 @@ public:
              const std::string &timeStampField, bool isLeftSide);
 
     void execute(ExecutionContext &ctx, Record &record) const override;
+    void close(ExecutionContext &ctx, RecordBuffer& recordBuffer) const override;
 
 private:
     const uint64_t operatorHandlerIndex;
