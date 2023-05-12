@@ -41,13 +41,13 @@ class DependencyGenerator {
      * @brief getter for auctions
      * @return auctions
      */
-    std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>& getAuctions();
+    std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getAuctions();
 
     /**
      * @brief getter for bids
      * @return bids
      */
-    std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>& getBids();
+    std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getBids();
 
   private:
     /**
@@ -71,14 +71,14 @@ class DependencyGenerator {
     void generatePersonDependencies(uint64_t* curTime, uint64_t numPersons);
 
     /**
-     * @brief creates start and end timestamps as well as a random seller id and adds the element to 'auctions'
+     * @brief creates start and end timestamps as well as a random seller id and an initial price and adds the element to 'auctions'
      * @param curTime
      * @param numOpenAuctions
      */
     void generateOpenAuctionDependencies(uint64_t* curTime, uint64_t numOpenAuctions);
 
     /**
-     * @brief creates a timestamp as well as a random auction id and bidder id and adds the element to 'bids'
+     * @brief creates a timestamp as well as a random auction id, bidder id and a new bid and adds the element to 'bids'
      * @param curTime
      * @param numBids
      */
@@ -96,13 +96,13 @@ class DependencyGenerator {
      */
     std::vector<uint64_t> persons;
     /**
-     * @brief an auctions element consists of seller id, start timestamp and end timestamp
+     * @brief an auctions element consists of seller id, current price, start timestamp and end timestamp
      */
-    std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> auctions;
+    std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>> auctions;
     /**
-     * @brief a bids element consists of auction id, bidder id and timestamp
+     * @brief a bids element consists of auction id, bidder id, new bid and timestamp
      */
-    std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> bids;
+    std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>> bids;
 };
 } // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 

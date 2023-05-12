@@ -69,17 +69,21 @@ void DependencyGenerator::generateOpenAuctionDependencies(uint64_t* curTime, uin
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
 
-    // generate a random end time that is between two and twenty-six hours after the start time
-    std::uniform_int_distribution<uint64_t> uniformEndTimeDistribution(2 * 60 * 60, 26 * 60 * 60 - 1);
-
     // generate a random seller id from the pool of persons
     auto maxSellerId = persons.size() - 1;
     std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, maxSellerId);
 
+    // generate a random initial price that is between one and two-hundred dollars
+    std::uniform_int_distribution<uint64_t> uniformCurPriceDistribution(1, 200);
+
+    // generate a random end time that is between two and twenty-six hours after the start time
+    std::uniform_int_distribution<uint64_t> uniformEndTimeDistribution(2 * 60 * 60, 26 * 60 * 60 - 1);
+
     for (uint64_t i = 0; i < numOpenAuctions; ++i) {
         auto sellerId = uniformPersonIdDistribution(generator);
+        auto curPrice = uniformCurPriceDistribution(generator);
         auto endTime = *curTime + uniformEndTimeDistribution(generator);
-        std::tuple<uint64_t, uint64_t, uint64_t> auctionRecord = std::make_tuple(sellerId, *curTime, endTime);
+        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> auctionRecord = std::make_tuple(sellerId, curPrice, *curTime, endTime);
         auctions.emplace_back(auctionRecord);
     }
 }
@@ -97,11 +101,19 @@ void DependencyGenerator::generateBidDependencies(uint64_t* curTime, uint64_t nu
     auto maxBidderId = persons.size() - 1;
     std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, maxBidderId);
 
+    // generate a random bid that increases the current price between one and twenty-five dollars
+    std::uniform_int_distribution<uint64_t> uniformNewBidDistribution(1, 25);
+
     for (uint64_t i = 0; i < numBids; ++i) {
         auto auctionId = uniformAuctionIdDistribution(generator);
         auto bidderId = uniformPersonIdDistribution(generator);
-        std::tuple<uint64_t, uint64_t, uint64_t> bidRecord = std::make_tuple(auctionId, bidderId, *curTime);
+        auto curPrice = std::get<1>(auctions[auctionId]);
+        auto newBid = curPrice + uniformNewBidDistribution(generator);
+        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> bidRecord = std::make_tuple(auctionId, bidderId, newBid, *curTime);
         bids.emplace_back(bidRecord);
+
+        auto &auction = auctions[auctionId];
+        std::get<1>(auction) = newBid;
     }
 }
 
@@ -116,8 +128,8 @@ uint64_t DependencyGenerator::incrementTime(uint64_t curTimeInSec) {
 
 std::vector<uint64_t>& DependencyGenerator::getPersons() { return persons; }
 
-std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>& DependencyGenerator::getAuctions() { return auctions; }
+std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& DependencyGenerator::getAuctions() { return auctions; }
 
-std::vector<std::tuple<uint64_t, uint64_t, uint64_t>>& DependencyGenerator::getBids() { return bids; }
+std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& DependencyGenerator::getBids() { return bids; }
 
 } // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
