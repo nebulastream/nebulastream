@@ -166,8 +166,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto byteCodeList = mapJavaUDFDescriptor->getByteCodeList();
         auto inputClassName = mapJavaUDFDescriptor->getInputClassName();
         auto outputClassName = mapJavaUDFDescriptor->getOutputClassName();
-        auto inputSchema = mapJavaUDFDescriptor->getInputSchema();
-        auto outputSchema = mapJavaUDFDescriptor->getOutputSchema();
+        auto udfInputSchema = mapJavaUDFDescriptor->getInputSchema();
+        auto udfOutputSchema = mapJavaUDFDescriptor->getOutputSchema();
         auto serializedInstance = mapJavaUDFDescriptor->getSerializedInstance();
         auto returnType = mapJavaUDFDescriptor->getReturnType();
 
@@ -177,8 +177,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                                outputClassName,
                                                                                                byteCodeList,
                                                                                                serializedInstance,
-                                                                                               inputSchema,
-                                                                                               outputSchema,
+                                                                                               udfInputSchema,
+                                                                                               udfOutputSchema,
                                                                                                std::nullopt);
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
@@ -196,8 +196,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto byteCodeList = flatMapJavaUDFDescriptor->getByteCodeList();
         auto inputClassName = flatMapJavaUDFDescriptor->getInputClassName();
         auto outputClassName = flatMapJavaUDFDescriptor->getOutputClassName();
-        auto inputSchema = flatMapJavaUDFDescriptor->getInputSchema();
-        auto outputSchema = flatMapJavaUDFDescriptor->getOutputSchema();
+        auto udfInputSchema = flatMapJavaUDFDescriptor->getInputSchema();
+        auto udfOutputSchema = flatMapJavaUDFDescriptor->getOutputSchema();
         auto serializedInstance = flatMapJavaUDFDescriptor->getSerializedInstance();
         auto returnType = flatMapJavaUDFDescriptor->getReturnType();
 
@@ -207,8 +207,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                                outputClassName,
                                                                                                byteCodeList,
                                                                                                serializedInstance,
-                                                                                               inputSchema,
-                                                                                               outputSchema,
+                                                                                               udfInputSchema,
+                                                                                               udfOutputSchema,
                                                                                                std::nullopt);
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
@@ -533,11 +533,10 @@ LowerPhysicalToNautilusOperators::lowerMapJavaUDF(Runtime::Execution::PhysicalOp
                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                   uint64_t handlerIndex) {
     auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUDFOperator>();
-    auto mapJavaUDFDescriptor = mapOperator->getJavaUDFDescriptor();
-    auto inputSchema = mapJavaUDFDescriptor->getInputSchema();
-    auto outputSchema = mapJavaUDFDescriptor->getOutputSchema();
+    auto operatorInputSchema = mapOperator->getInputSchema();
+    auto operatorOutputSchema = mapOperator->getOutputSchema();
 
-    return std::make_shared<Runtime::Execution::Operators::MapJavaUDF>(handlerIndex, inputSchema, outputSchema);
+    return std::make_shared<Runtime::Execution::Operators::MapJavaUDF>(handlerIndex, operatorInputSchema, operatorOutputSchema);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
@@ -545,11 +544,12 @@ LowerPhysicalToNautilusOperators::lowerFlatMapJavaUDF(Runtime::Execution::Physic
                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                       uint64_t handlerIndex) {
     auto flatMapOperator = operatorPtr->as<PhysicalOperators::PhysicalFlatMapJavaUDFOperator>();
-    auto mapJavaUDFDescriptor = flatMapOperator->getJavaUDFDescriptor();
-    auto inputSchema = mapJavaUDFDescriptor->getInputSchema();
-    auto outputSchema = mapJavaUDFDescriptor->getOutputSchema();
+    auto operatorInputSchema = flatMapOperator->getInputSchema();
+    auto operatorOutputSchema = flatMapOperator->getOutputSchema();
 
-    return std::make_shared<Runtime::Execution::Operators::FlatMapJavaUDF>(handlerIndex, inputSchema, outputSchema);
+    return std::make_shared<Runtime::Execution::Operators::FlatMapJavaUDF>(handlerIndex,
+                                                                           operatorInputSchema,
+                                                                           operatorOutputSchema);
 }
 #endif// ENABLE_JNI
 

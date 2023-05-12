@@ -35,11 +35,12 @@ class MapJavaUDF : public ExecutableOperator {
     /**
      * @brief Creates a MapJavaUDF operator
      * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
-     * @param inputSchema The input schema of the map tuples. Same as in the handler.
-     * @param outputSchema The output schema of the map tuples Same as in the handler.
+     * @param operatorInputSchema The input schema of the map operator.
+     * @param operatorOutputSchema The output schema of the map operator.
      */
-    MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
-        : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
+    MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema)
+        : operatorHandlerIndex(operatorHandlerIndex), operatorInputSchema(operatorInputSchema),
+          operatorOutputSchema(operatorOutputSchema) { }
     void execute(ExecutionContext& ctx, Record& record) const override;
     void terminate(ExecutionContext& ctx) const override;
 
@@ -48,7 +49,7 @@ class MapJavaUDF : public ExecutableOperator {
 
     // These needs to be the same Schemas as used in the operator handler.
     // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
-    const SchemaPtr inputSchema, outputSchema;
+    const SchemaPtr operatorInputSchema, operatorOutputSchema;
 };
 
 }// namespace NES::Runtime::Execution::Operators
