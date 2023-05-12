@@ -20,6 +20,8 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
@@ -36,15 +38,13 @@
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Topology/Topology.hpp>
+#include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <Util/Experimental/S2Utilities.hpp>
-#include <Configurations/WorkerPropertyKeys.hpp>
-#include <Configurations/WorkerConfigurationKeys.hpp>
 
 using std::map;
 using std::string;

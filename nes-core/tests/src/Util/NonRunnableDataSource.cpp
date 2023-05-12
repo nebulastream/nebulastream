@@ -50,7 +50,7 @@ bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
 
 Runtime::MemoryLayouts::DynamicTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
 
-void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer)  {
+void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     auto buf = buffer.getBuffer();
     DataSource::emitWorkFromSource(buf);
 }

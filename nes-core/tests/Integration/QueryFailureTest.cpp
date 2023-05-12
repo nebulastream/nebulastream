@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -23,7 +24,6 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NesBaseTest.hpp>
-#include <API/QueryAPI.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>

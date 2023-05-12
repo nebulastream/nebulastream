@@ -14,10 +14,10 @@
 #ifndef NES_TESTS_UTIL_NESBASETEST_HPP_
 #define NES_TESTS_UTIL_NESBASETEST_HPP_
 
+#include <BorrowedPort.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <TestWithErrorHandling.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BorrowedPort.hpp>
 #include <filesystem>
 
 #define ASSERT_INSTANCE_OF(node, instance)                                                                                       \
@@ -27,7 +27,6 @@
     }
 
 namespace NES::Testing {
-
 
 class BorrowedPort;
 using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
@@ -79,6 +78,6 @@ class NESBaseTest : public Testing::TestWithErrorHandling {
     std::atomic<bool> setUpCalled{false};
     std::atomic<bool> tearDownCalled{false};
 };
-}// namespace NES
+}// namespace NES::Testing
 
 #endif//NES_TESTS_UTIL_NESBASETEST_HPP_

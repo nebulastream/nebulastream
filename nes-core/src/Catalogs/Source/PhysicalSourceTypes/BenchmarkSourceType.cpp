@@ -13,8 +13,8 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 

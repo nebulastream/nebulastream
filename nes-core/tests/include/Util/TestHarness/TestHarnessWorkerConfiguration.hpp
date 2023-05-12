@@ -55,8 +55,8 @@ class TestHarnessWorkerConfiguration {
     const std::vector<uint8_t*>& getRecords() const;
     void addRecord(uint8_t* record);
     uint32_t getWorkerId() const;
-    const std::string& getLogicalSourceName() const ;
-    const std::string& getPhysicalSourceName() const ;
+    const std::string& getLogicalSourceName() const;
+    const std::string& getPhysicalSourceName() const;
     const NesWorkerPtr& getNesWorker() const;
 
   private:

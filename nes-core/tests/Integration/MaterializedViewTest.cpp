@@ -24,8 +24,8 @@
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>

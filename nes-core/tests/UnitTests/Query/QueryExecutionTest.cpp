@@ -50,9 +50,9 @@
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
-#include <Util/TestUtils.hpp>
-#include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>

@@ -41,7 +41,9 @@ class TestSink : public SinkMedium {
      * @param nodeEngine
      * @param numOfProducers
      */
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine,
+    TestSink(uint64_t expectedBuffer,
+             const SchemaPtr& schema,
+             const Runtime::NodeEnginePtr& nodeEngine,
              uint32_t numOfProducers = 1);
 
     /**
@@ -53,8 +55,7 @@ class TestSink : public SinkMedium {
      * @return
      */
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine,
-           uint32_t numOfProducers = 1);
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1);
 
     /**
      * @brief Writes the input Buffer to the resultBuffer

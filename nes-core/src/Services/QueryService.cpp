@@ -14,7 +14,6 @@
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -26,6 +25,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/RequestQueue.hpp>
@@ -33,8 +33,8 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 
-#include <utility>
 #include <Util/magicenum/magic_enum.hpp>
+#include <utility>
 
 namespace NES {
 

@@ -14,12 +14,11 @@
 #ifndef NES_NES_COMMON_INCLUDE_CONFIGURATIONS_DETAILS_ENUMOPTIONDETAILS_HPP_
 #define NES_NES_COMMON_INCLUDE_CONFIGURATIONS_DETAILS_ENUMOPTIONDETAILS_HPP_
 
-#include <Util/magicenum/magic_enum.hpp>
 #include <Configurations/EnumOption.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 using namespace magic_enum::ostream_operators;
 namespace NES::Configurations {
-
 
 template<class EnumType>
     requires std::is_enum<EnumType>::value
@@ -39,7 +38,7 @@ void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
 
     if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
         std::stringstream ss;
-        for(const auto& name: magic_enum::enum_names<EnumType>()){
+        for (const auto& name : magic_enum::enum_names<EnumType>()) {
             ss << name;
         }
         throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + ss.str());
@@ -54,7 +53,7 @@ void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std:
     // Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<EnumType>(value)) {
         std::stringstream ss;
-        for(const auto& name: magic_enum::enum_names<EnumType>()){
+        for (const auto& name : magic_enum::enum_names<EnumType>()) {
             ss << name;
         }
         throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());
@@ -73,6 +72,6 @@ std::string EnumOption<EnumType>::toString() {
     return os.str();
 }
 
-}
+}// namespace NES::Configurations
 
 #endif//NES_NES_COMMON_INCLUDE_CONFIGURATIONS_DETAILS_ENUMOPTIONDETAILS_HPP_

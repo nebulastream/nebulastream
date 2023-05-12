@@ -49,11 +49,11 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/NonRunnableDataSource.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/NonRunnableDataSource.hpp>
 
 namespace NES::Testing {
 class NonRunnableDataSource;
@@ -66,7 +66,7 @@ class TestExecutionEngine {
   public:
     TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
                         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode =
-                        QueryCompilation::QueryCompilerOptions::DumpMode::NONE);
+                            QueryCompilation::QueryCompilerOptions::DumpMode::NONE);
 
     std::shared_ptr<TestSink> createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1);
 

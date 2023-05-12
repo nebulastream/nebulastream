@@ -38,12 +38,12 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::QueryCompilation {
 TranslateToLegacyExpressionPtr TranslateToLegacyExpression::create() { return std::make_shared<TranslateToLegacyExpression>(); }
 

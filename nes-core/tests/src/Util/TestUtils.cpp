@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Util/TestUtils.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
@@ -27,7 +27,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-
 
 namespace NES {
 
@@ -204,9 +203,8 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-[[nodiscard]] bool waitForQueryToStart(QueryId queryId,
-                                       const QueryCatalogServicePtr& queryCatalogService,
-                                       std::chrono::seconds timeoutInSec) {
+[[nodiscard]] bool
+waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeoutInSec) {
     NES_TRACE2("TestUtils: wait till the query {} gets into Running status.", queryId);
     auto start_timestamp = std::chrono::system_clock::now();
 
@@ -251,9 +249,8 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
      * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
-[[nodiscard]] bool checkStoppedOrTimeout(QueryId queryId,
-                                         const QueryCatalogServicePtr& queryCatalogService,
-                                         std::chrono::seconds timeout) {
+[[nodiscard]] bool
+checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -276,9 +273,8 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
      * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
-[[nodiscard]] bool checkFailedOrTimeout(QueryId queryId,
-                                        const QueryCatalogServicePtr& queryCatalogService,
-                                        std::chrono::seconds timeout) {
+[[nodiscard]] bool
+checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -358,8 +354,7 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
    * @param outputFilePath
    * @return true if successful
    */
-[[nodiscard]] bool
-checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout) {
+[[nodiscard]] bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout) {
     std::chrono::seconds timeoutInSec;
     if (customTimeout == 0) {
         timeoutInSec = std::chrono::seconds(defaultTimeout);

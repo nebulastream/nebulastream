@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BorrowedPort.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <detail/PortDispatcher.hpp>
-#include <BorrowedPort.hpp>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -25,7 +25,7 @@
 
 namespace NES::Testing::detail {
 
-PortDispatcher& getPortDispatcher(){
+PortDispatcher& getPortDispatcher() {
     static PortDispatcher portDispatcher(8000, 10000);
     return portDispatcher;
 }

@@ -15,10 +15,9 @@
 #ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
 #define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
 
-
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 
 namespace NES::TestUtils {
 class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
@@ -26,6 +25,6 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
     QueryCompilation::LowerToExecutableQueryPlanPhasePtr
     createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) override;
 };
-}// namespace NES
+}// namespace NES::TestUtils
 
 #endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_

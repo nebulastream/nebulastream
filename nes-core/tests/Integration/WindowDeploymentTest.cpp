@@ -25,9 +25,9 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <Util/TestUtils.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <Util/TestUtils.hpp>
 #include <iostream>
 using namespace std;
 

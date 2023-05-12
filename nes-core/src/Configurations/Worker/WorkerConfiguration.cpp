@@ -41,4 +41,4 @@ template class EnumOption<NES::Optimizer::QueryMergerRule>;
 template class EnumOption<NES::LogLevel>;
 template class EnumOption<NES::Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy>;
 
-}// namespace NES
+}// namespace NES::Configurations

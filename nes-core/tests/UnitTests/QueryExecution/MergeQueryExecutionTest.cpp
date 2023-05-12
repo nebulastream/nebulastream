@@ -65,8 +65,6 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-
-
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK

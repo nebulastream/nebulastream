@@ -26,8 +26,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>

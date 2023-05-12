@@ -15,9 +15,9 @@
 #define NES_COMMON_INCLUDE_CONFIGURATIONS_ENUMOPTION_HPP_
 #include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <string>
 #include <type_traits>
-#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Configurations {
 /**

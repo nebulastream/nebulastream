@@ -15,10 +15,10 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <filesystem>
 #include <type_traits>
@@ -42,7 +42,7 @@ TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName,
     return *this;
 }
 
-TestHarness& TestHarness::enableNautilus()  {
+TestHarness& TestHarness::enableNautilus() {
     useNautilus = true;
 
     return *this;
@@ -84,11 +84,11 @@ TestHarness& TestHarness::attachWorkerWithMemorySourceToWorkerWithId(const std::
     std::string physicalSourceName = getNextPhysicalSourceName();
     auto workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
-            TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                   logicalSourceName,
-                                                   physicalSourceName,
-                                                   TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource,
-                                                   workerId);
+        TestHarnessWorkerConfiguration::create(workerConfiguration,
+                                               logicalSourceName,
+                                               physicalSourceName,
+                                               TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource,
+                                               workerId);
     testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
     return *this;
 }
@@ -106,11 +106,11 @@ TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(const std::s
     std::string physicalSourceName = getNextPhysicalSourceName();
     auto workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
-            TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                   logicalSourceName,
-                                                   physicalSourceName,
-                                                   TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource,
-                                                   workerId);
+        TestHarnessWorkerConfiguration::create(workerConfiguration,
+                                               logicalSourceName,
+                                               physicalSourceName,
+                                               TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource,
+                                               workerId);
     testHarnessWorkerConfiguration->setPhysicalSourceType(physicalSource);
     testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
     return *this;
@@ -126,11 +126,11 @@ TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const std::str
     workerConfiguration->parentId = parentId;
     uint32_t workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
-            TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                   logicalSourceName,
-                                                   physicalSourceName,
-                                                   TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::CSVSource,
-                                                   workerId);
+        TestHarnessWorkerConfiguration::create(workerConfiguration,
+                                               logicalSourceName,
+                                               physicalSourceName,
+                                               TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::CSVSource,
+                                               workerId);
     testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
     return *this;
 }
@@ -170,8 +170,8 @@ TestHarness& TestHarness::validate() {
 
     uint64_t sourceCount = 0;
     for (const auto& workerConf : testHarnessWorkerConfigurations) {
-        if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource &&
-            workerConf->getRecords().empty()) {
+        if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource
+            && workerConf->getRecords().empty()) {
             throw Exceptions::RuntimeException("TestHarness: No Record defined for Memory Source with logical source Name: "
                                                + workerConf->getLogicalSourceName() + " and Physical source name : "
                                                + workerConf->getPhysicalSourceName() + ". Please add data to the test harness.");
@@ -243,8 +243,8 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
     NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency,
-                                                     GatheringMode::INTERVAL_MODE);
+    auto memorySourceType =
+        MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, GatheringMode::INTERVAL_MODE);
     return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
 };
 
@@ -270,7 +270,8 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         //Fetch the worker configuration
         auto workerConfiguration = workerConf->getWorkerConfiguration();
         if (useNautilus) {
-            workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            workerConfiguration->queryCompiler.queryCompilerType =
+                QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         }
 
         //Set ports at runtime

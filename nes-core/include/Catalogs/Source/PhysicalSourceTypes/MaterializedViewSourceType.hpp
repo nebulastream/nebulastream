@@ -77,5 +77,5 @@ class MaterializedViewSourceType : public PhysicalSourceType {
 
     IntConfigOption id;
 };
-}// namespace NES
+}// namespace NES::Configurations::Experimental::MaterializedView
 #endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MATERIALIZEDVIEWSOURCETYPE_HPP_

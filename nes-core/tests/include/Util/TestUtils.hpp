@@ -14,17 +14,17 @@
 
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/Identifiers.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <chrono>
 #include <fstream>
@@ -237,7 +237,6 @@ template<typename T>
  * @return Command line argument
  */
 [[nodiscard]] std::string enableMonitoring(bool prefix = false);
-
 
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization();
