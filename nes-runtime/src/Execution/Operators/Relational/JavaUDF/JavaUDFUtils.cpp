@@ -59,16 +59,28 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
 jobject deserializeInstance(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
+    auto env = handler->getEnvironment();
 
-    // use deserializer given in java utils file
-    void* object = (void*) handler->getSerializedInstance().data();
-    auto clazz = handler->getEnvironment()->FindClass("MapJavaUdfUtils");
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
+    // Create an array from the serialized instance.
+    auto length = handler->getSerializedInstance().size();
+    auto data = reinterpret_cast<const jbyte*>(handler->getSerializedInstance().data());
+    auto byteArray = env->NewByteArray(length);
+    jniErrorCheck(env, __func__, __LINE__);
+    env->SetByteArrayRegion(byteArray, 0, length, data);
+    jniErrorCheck(env, __func__, __LINE__);
+
+    // Deserialize the instance using a Java helper method.
+    auto clazz = env->FindClass("MapJavaUdfUtils");
+    jniErrorCheck(env, __func__, __LINE__);
     // TODO: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
-    auto mid = handler->getEnvironment()->GetMethodID(clazz, "deserialize", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
-    auto obj = handler->getEnvironment()->CallStaticObjectMethod(clazz, mid, object);
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
+    auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
+    jniErrorCheck(env, __func__, __LINE__);
+    auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
+    jniErrorCheck(env, __func__, __LINE__);
+
+    // Release the array.
+    env->DeleteLocalRef(byteArray);
+    jniErrorCheck(env, __func__, __LINE__);
     return obj;
 }
 
