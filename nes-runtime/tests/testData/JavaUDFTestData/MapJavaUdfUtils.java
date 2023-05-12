@@ -10,12 +10,12 @@ import java.io.IOException;
 
 public class MapJavaUdfUtils {
    /**
-    * Deserialize a ByteBuffer into an Object.
-    * @param byteBuffer The ByteBuffer to deserialize.
+    * Deserialize a byte array into an Object.
+    * @param byteArray The byte array to deserialize.
     * @return The deserialized Object.
     */
-    public Object deserialize(ByteBuffer byteBuffer) {
-        try (ObjectInputStream os = new ObjectInputStream(new ByteArrayInputStream(byteBuffer.array()))) {
+    public Object deserialize(final byte[] byteArray) {
+        try (ObjectInputStream os = new ObjectInputStream(new ByteArrayInputStream(byteArray))) {
             return os.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
