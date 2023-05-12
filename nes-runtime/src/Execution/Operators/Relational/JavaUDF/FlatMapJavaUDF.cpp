@@ -108,9 +108,9 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     // We derive the types of the values from the schema. The type can be complex of simple.
     // 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
     // 2. Complex: plain old java object containing the multiple primitive types
-    if (inputSchema->fields.size() == 1) {
+    if (operatorInputSchema->fields.size() == 1) {
         // 1. Simple, the input schema contains only one field
-        auto field = inputSchema->fields[0];
+        auto field = operatorInputSchema->fields[0];
         // Record should contain only one field
         assert(record.getAllFields().size() == 1);
         auto fieldName = record.getAllFields()[0];
@@ -141,8 +141,8 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
         }
     } else {
         // 2. Complex, a plain old java object with multiple primitive types as map input
-        for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
-            auto field = inputSchema->fields[i];
+        for (int i = 0; i < (int) operatorInputSchema->fields.size(); i++) {
+            auto field = operatorInputSchema->fields[i];
             auto fieldName = field->getName();
 
             if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
@@ -226,9 +226,9 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
 
     // Reading result values from jvm into result record
     // Same differentiation as for input class above
-    if (outputSchema->fields.size() == 1) {
+    if (operatorOutputSchema->fields.size() == 1) {
         // 1. Simple, the input schema contains only one field
-        auto field = outputSchema->fields[0];
+        auto field = operatorOutputSchema->fields[0];
         auto fieldName = field->getName();
 
         if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
@@ -260,8 +260,8 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
         }
     } else {
         // 2. Complex, a plain old java object with multiple primitive types as map input
-        for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
-            auto field = outputSchema->fields[i];
+        for (int i = 0; i < (int) operatorOutputSchema->fields.size(); i++) {
+            auto field = operatorOutputSchema->fields[i];
             auto fieldName = field->getName();
 
             if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {

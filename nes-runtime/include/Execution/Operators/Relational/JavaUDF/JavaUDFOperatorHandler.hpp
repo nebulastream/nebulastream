@@ -41,8 +41,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @param outputClassName The class name of the output type of the udf
      * @param byteCodeList The byteCode containing serialized java objects to load into jvm
      * @param serializedInstance The serialized instance of the java java class
-     * @param inputSchema The input schema of the records of the map function
-     * @param outputSchema The output schema of the records of the map function
+     * @param udfInputSchema The input schema of the Java UDF
+     * @param udfOutputSchema The output schema of the Java UDF
      * @param javaPath Optional: path to jar files to load classes from into JVM
      */
     explicit JavaUDFOperatorHandler(const std::string& className,
@@ -51,12 +51,12 @@ class JavaUDFOperatorHandler : public OperatorHandler {
                                     const std::string& outputClassName,
                                     const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
                                     const std::vector<char>& serializedInstance,
-                                    SchemaPtr inputSchema,
-                                    SchemaPtr outputSchema,
+                                    SchemaPtr udfInputSchema,
+                                    SchemaPtr udfOutputSchema,
                                     const std::optional<std::string>& javaPath)
         : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
-          byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
-          outputSchema(outputSchema), javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
+          byteCodeList(byteCodeList), serializedInstance(serializedInstance), udfInputSchema(udfInputSchema),
+          udfOutputSchema(udfOutputSchema), javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
 
     /**
      * @brief This method returns the class name of the java udf
@@ -95,16 +95,16 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::vector<char>& getSerializedInstance() const { return serializedInstance; }
 
     /**
-     * @brief This method returns the input schema of the java udf
-     * @return SchemaPtr input schema
+     * @brief This method returns the input schema of the Java UDF.
+     * @return SchemaPtr Java UDF input schema
      */
-    const SchemaPtr& getInputSchema() const { return inputSchema; }
+    const SchemaPtr& getUdfInputSchema() const { return udfInputSchema; }
 
     /**
-     * @brief This method returns the output schema of the java udf
-     * @return SchemaPtr output schema
+     * @brief This method returns the output schema of the Java UDF.
+     * @return SchemaPtr Java UDF output schema
      */
-    const SchemaPtr& getOutputSchema() const { return outputSchema; }
+    const SchemaPtr& getUdfOutputSchema() const { return udfOutputSchema; }
 
     /**
      * @brief This method returns the java path of the java udf jar
@@ -158,8 +158,10 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::string outputClassName;
     const std::unordered_map<std::string, std::vector<char>> byteCodeList;
     const std::vector<char> serializedInstance;
-    const SchemaPtr inputSchema;
-    const SchemaPtr outputSchema;
+    const SchemaPtr udfInputSchema;
+    const SchemaPtr udfOutputSchema;
+    const SchemaPtr operatorInputSchema;
+    const SchemaPtr operatorOutputSchema;
     JNIEnv* env;
     const std::optional<std::string> javaPath;
     jmethodID flatMapUDFMethodId;

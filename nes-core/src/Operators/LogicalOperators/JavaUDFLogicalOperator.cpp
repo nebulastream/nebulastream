@@ -77,11 +77,10 @@ bool JavaUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& t
     if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
         return false;
     }
-
     // The output schema of this operation is determined by the Java UDF.
-    outputSchema = javaUDFDescriptor->getOutputSchema();
-
-    //Update output schema by changing the qualifier and corresponding attribute names
+    outputSchema->clear();
+    outputSchema->copyFields(javaUDFDescriptor->getOutputSchema());
+    // Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
         //Extract field name without qualifier
@@ -90,9 +89,7 @@ bool JavaUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& t
         field->setName(newQualifierName + fieldName);
     }
 
-    // set the derived input schema
-    // TODO: check if this corresponds to the schema of the parent operator #3481
-    javaUDFDescriptor->setInputSchema(inputSchema);
+    // TODO #3481 Check if the UDF input schema corresponds to the operator input schema of the parent operator
     return true;
 }
 

@@ -283,7 +283,7 @@ T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::st
 
     auto pojoClass = (jclass) classPtr;
     auto pojo = (jobject) objectPtr;
-    std::string fieldName = handler->getInputSchema()->fields[fieldIndex]->getName();
+    std::string fieldName = handler->getUdfOutputSchema()->fields[fieldIndex]->getName();
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     T value;
@@ -355,7 +355,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
 
     auto pojoClass = (jclass) classPtr;
     auto pojo = (jobject) objectPtr;
-    std::string fieldName = handler->getInputSchema()->fields[fieldIndex]->getName();
+    std::string fieldName = handler->getUdfInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     if constexpr (std::is_same<T, bool>::value) {
