@@ -214,7 +214,7 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SynopsisPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<SynopsisPipelineTest::ParamType>& info) {
                             return info.param;
                         });
