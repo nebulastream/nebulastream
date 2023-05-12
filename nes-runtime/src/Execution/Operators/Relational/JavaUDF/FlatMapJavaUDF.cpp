@@ -41,11 +41,11 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
     // Check if flat map object was created
     if (handler->getFlatMapUDFObject() == nullptr) {
         // Find class implementing the map udf
-        jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
+        jclass c1 = handler->getEnvironment()->FindClass(handler->getClassJNIName().c_str());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
         // Build function signature of map function
-        std::string sig = "(L" + handler->getInputClassName() + ";)L" + handler->getOutputClassName() + ";";
+        std::string sig = "(L" + handler->getInputClassJNIName() + ";)L" + handler->getOutputClassJNIName() + ";";
 
         // Find udf function
         jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
@@ -57,7 +57,7 @@ void* executeFlatMapUDF(void* state, void* pojoObjectPtr) {
             instance = deserializeInstance(state);
         } else {
             // Create instance object using class information
-            jclass clazz = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
+            jclass clazz = handler->getEnvironment()->FindClass(handler->getClassJNIName().c_str());
             jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
             // Here we assume the default constructor is available
