@@ -285,7 +285,7 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowMultiBuff
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
+TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
