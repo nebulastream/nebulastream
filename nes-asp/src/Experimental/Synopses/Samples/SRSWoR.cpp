@@ -96,9 +96,8 @@ void SRSWoR::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionC
     }
 }
 
-std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex,
-                                                                                       Runtime::Execution::ExecutionContext& ctx,
-                                                                                       Runtime::BufferManagerPtr bufferManager) {
+std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
+                                                         Runtime::BufferManagerPtr bufferManager) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
     auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
