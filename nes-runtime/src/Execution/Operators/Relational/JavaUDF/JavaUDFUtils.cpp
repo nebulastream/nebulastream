@@ -62,20 +62,20 @@ jobject deserializeInstance(void* state) {
     auto env = handler->getEnvironment();
 
     // Create an array from the serialized instance.
-    auto length = handler->getSerializedInstance().size();
-    auto data = reinterpret_cast<const jbyte*>(handler->getSerializedInstance().data());
-    auto byteArray = env->NewByteArray(length);
+    const auto length = handler->getSerializedInstance().size();
+    const auto data = reinterpret_cast<const jbyte*>(handler->getSerializedInstance().data());
+    const auto byteArray = env->NewByteArray(length);
     jniErrorCheck(env, __func__, __LINE__);
     env->SetByteArrayRegion(byteArray, 0, length, data);
     jniErrorCheck(env, __func__, __LINE__);
 
     // Deserialize the instance using a Java helper method.
-    auto clazz = env->FindClass("MapJavaUdfUtils");
+    const auto clazz = env->FindClass("MapJavaUdfUtils");
     jniErrorCheck(env, __func__, __LINE__);
     // TODO #3738: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
-    auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
+    const auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
     jniErrorCheck(env, __func__, __LINE__);
-    auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
+    const auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
     jniErrorCheck(env, __func__, __LINE__);
 
     // Release the array.
