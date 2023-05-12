@@ -17,6 +17,7 @@
 
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/PersonDataPool.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
