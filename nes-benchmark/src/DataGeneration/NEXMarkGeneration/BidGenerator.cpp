@@ -19,7 +19,7 @@
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 BidGenerator::BidGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), generatorMediatorInstance(GeneratorMediator::getInstance(numberOfRecords)) {}
+    : DataGenerator(), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
 
 std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
@@ -39,8 +39,8 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
         std::uniform_int_distribution<> uniformIntDistribution(0, bidderId);
 
         for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-            dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-            dynamicBuffer[curRecord]["bidder"].write<uint64_t>(uniformIntDistribution(generator));
+            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(curRecord);
+            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(uniformIntDistribution(generator));
             dynamicBuffer[curRecord]["price"].write<uint64_t>(curRecord);
             dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
         }
@@ -54,8 +54,8 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
 
 SchemaPtr BidGenerator::getSchema() {
     return Schema::create()
-        ->addField(createField("id", BasicType::UINT64))
-        ->addField(createField("bidder", BasicType::UINT64))
+        ->addField(createField("auctionId", BasicType::UINT64))
+        ->addField(createField("bidderId", BasicType::UINT64))
         ->addField(createField("price", BasicType::UINT64))
         ->addField(createField("timestamp", BasicType::UINT64));
 }

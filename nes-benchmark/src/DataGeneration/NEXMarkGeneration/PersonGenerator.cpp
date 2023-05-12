@@ -17,7 +17,7 @@
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 PersonGenerator::PersonGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), generatorMediatorInstance(GeneratorMediator::getInstance(numberOfRecords)) {}
+    : DataGenerator(), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
 
 SchemaPtr PersonGenerator::getSchema() {
     return Schema::create()

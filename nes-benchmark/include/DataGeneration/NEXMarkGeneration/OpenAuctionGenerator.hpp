@@ -16,7 +16,7 @@
 #define NES_OPENAUCTIONGENERATOR_HPP
 
 #include <DataGeneration/DataGenerator.hpp>
-#include <DataGeneration/NEXMarkGeneration/GeneratorMediator.hpp>
+#include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
@@ -57,7 +57,7 @@ class OpenAuctionGenerator : public DataGenerator {
     std::string toString() override;
 
   private:
-    NEXMarkGeneration::GeneratorMediator& generatorMediatorInstance;
+    NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 

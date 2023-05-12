@@ -17,7 +17,7 @@
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 OpenAuctionGenerator::OpenAuctionGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), generatorMediatorInstance(GeneratorMediator::getInstance(numberOfRecords)) {}
+    : DataGenerator(), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
 
 SchemaPtr OpenAuctionGenerator::getSchema() {
     return Schema::create()

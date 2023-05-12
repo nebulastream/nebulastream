@@ -17,7 +17,7 @@ add_source_files(nes-benchmark
         E2E/Configurations/E2EBenchmarkConfigOverAllRuns.cpp
         E2E/Configurations/E2EBenchmarkConfigPerRun.cpp
         DataGeneration/NEXMarkGeneration/BidGenerator.cpp
-        DataGeneration/NEXMarkGeneration/GeneratorMediator.cpp
+        DataGeneration/NEXMarkGeneration/DependencyGenerator.cpp
         DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.cpp
         DataGeneration/NEXMarkGeneration/PersonGenerator.cpp
         DataGeneration/DataGenerator.cpp
