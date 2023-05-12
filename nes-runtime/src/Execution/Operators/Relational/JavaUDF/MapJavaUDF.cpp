@@ -47,7 +47,7 @@ void* executeMapUdf(void* state, void* pojoObjectPtr) {
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
     // Build function signature of map function
-    std::string sig = "(L" + handler->getInputClassJNIName() + ";)L" + handler->getOutputClassJNIName() + ";";
+    const std::string sig = "(L" + handler->getInputClassJNIName() + ";)L" + handler->getOutputClassJNIName() + ";";
 
     // Find udf function
     jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
