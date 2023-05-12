@@ -14,11 +14,11 @@
 
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
@@ -232,15 +232,15 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
         if (containeeWindowDefinition->getWindowType()->isTimeBasedWindowType()) {
             auto containeeTimeBasedWindow =
                 containeeWindowDefinition->getWindowType()->asTimeBasedWindowType(containeeWindowDefinition->getWindowType());
-                //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
-                auto field = container->getOutputSchema()->hasFieldName("start");
-                //return false if this is not possible
-                if (field == nullptr) {
-                    return false;
-                }
-                containeeTimeBasedWindow->getTimeCharacteristic()->setField(field);
-                NES_TRACE2("Window containment possible.");
-                return true;
+            //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
+            auto field = container->getOutputSchema()->hasFieldName("start");
+            //return false if this is not possible
+            if (field == nullptr) {
+                return false;
+            }
+            containeeTimeBasedWindow->getTimeCharacteristic()->setField(field);
+            NES_TRACE2("Window containment possible.");
+            return true;
         }
         NES_TRACE2("Window containment impossible.");
         return false;
@@ -316,9 +316,10 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
     } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
         NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}, ContainmentType: {}",
                    targetOperator->toString(),
-                   hostOperator->toString(), magic_enum::enum_name(containmentType));
+                   hostOperator->toString(),
+                   magic_enum::enum_name(containmentType));
         if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
-           return targetHostOperatorMap;
+            return targetHostOperatorMap;
         }
         targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
         return targetHostOperatorMap;

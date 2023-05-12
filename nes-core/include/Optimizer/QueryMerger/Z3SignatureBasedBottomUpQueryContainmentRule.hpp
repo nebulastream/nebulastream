@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCONTAINMENTBASEDCOMPLETEQUERYMERGERRULE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCONTAINMENTBASEDCOMPLETEQUERYMERGERRULE_HPP_
 
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 
 namespace z3 {
 class context;
@@ -69,8 +69,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> areQueryPlansContained(const QueryPlanPtr& targetQueryPlan,
-                                                                                const QueryPlanPtr& hostQueryPlan);
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
+    areQueryPlansContained(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
 
     /**
      * @brief This method compares two operator signatures using Z3
@@ -78,8 +78,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param hostOperator : the host operator to compare with
      * @return bool true if equal else false
      */
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> areOperatorsContained(const LogicalOperatorNodePtr& targetOperator,
-                                                                              const LogicalOperatorNodePtr& hostOperator);
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
+    areOperatorsContained(const LogicalOperatorNodePtr& targetOperator, const LogicalOperatorNodePtr& hostOperator);
 
     /**
      * @brief This method makes sure that we can reset the time attribute for the contained window operation
@@ -87,8 +87,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param containee contained operation
      * @return true, if container and contanee are not a window operation or if window containment is possible, false otherwise
      */
-    bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& container,
-                                        const LogicalOperatorNodePtr& containee) const;
+    bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee) const;
 
     SignatureContainmentUtilPtr signatureContainmentUtil;
 };
