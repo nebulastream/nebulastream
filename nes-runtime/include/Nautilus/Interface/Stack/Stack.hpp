@@ -102,6 +102,7 @@ class Stack {
     uint64_t entrySize;
     std::vector<int8_t*> pages;
     int8_t* currentPage;
+    int8_t* firstPage;
     uint64_t numberOfEntries;
     uint64_t totalNumberOfEntries;
 };

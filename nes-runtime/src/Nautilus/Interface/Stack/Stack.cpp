@@ -19,6 +19,7 @@ namespace NES::Nautilus::Interface {
 Stack::Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
     : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
     appendPage();
+    firstPage = pages[0];
 }
 
 int8_t* Stack::appendPage() {

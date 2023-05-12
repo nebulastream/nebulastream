@@ -53,19 +53,18 @@ Value<UInt64> StackRef::getTotalNumberOfEntries() {
 }
 
 Value<MemRef> StackRef::getPage(const Value<>& pos) {
-    return (getMember(stackRef, Stack, pages).load<MemRef>() + pos).as<MemRef>();
+    return (getMember(stackRef, Stack, firstPage).load<UInt64>() + pos).as<MemRef>();
 }
 
 Value<MemRef> StackRef::getEntry(const Value<UInt64>& pos) {
 //    return FunctionCall("getEntryProxy", getEntryProxy, stackRef, pos);
     auto pagePos = pos / entriesPerPage;
+    auto positionOnPage = pos - (pagePos * entriesPerPage);
 
-    // As I can not find a modulo operator, I have to do this weird loop
-    auto positionOnPage = pos;
-    while(positionOnPage >= entriesPerPage) {
-        positionOnPage = positionOnPage - entriesPerPage;
-    }
-    return (getPage(pos) + (positionOnPage * entrySize)).as<MemRef>();
+    auto page = getPage(pagePos);
+    auto ptrOnPage = (positionOnPage * entrySize);
+    auto retPos = page + ptrOnPage;
+    return retPos.as<MemRef>();
 }
 
 void StackRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
