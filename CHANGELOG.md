@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.79](https://github.com/nebulastream/nebulastream/tree/v0.5.79) (2023-05-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.78...v0.5.79)
+
+### Miscellaneous Issues ✌️
+
+- Reduce complexity of test-utils and move implementation to shared-lib [\#3567](https://github.com/nebulastream/nebulastream/issues/3567)
+
 ## [v0.5.78](https://github.com/nebulastream/nebulastream/tree/v0.5.78) (2023-05-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.77...v0.5.78)
