@@ -72,7 +72,7 @@ jobject deserializeInstance(void* state) {
     // Deserialize the instance using a Java helper method.
     auto clazz = env->FindClass("MapJavaUdfUtils");
     jniErrorCheck(env, __func__, __LINE__);
-    // TODO: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
+    // TODO #3738: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
     auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
     jniErrorCheck(env, __func__, __LINE__);
     auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
