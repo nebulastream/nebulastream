@@ -45,18 +45,21 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
 
     // Create a SourceLogicalOperatorNode with a source schema
     // and add it as a child to the MapUdfLogicalOperatorNode to infer the input schema.
-    auto inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
+    const std::string sourceName = "sourceName";
+    auto inputSchema = std::make_shared<Schema>()->addField(sourceName + "$inputAttribute", DataTypeFactory::createUInt64());
     auto sourceDescriptor = std::make_shared<SchemaSourceDescriptor>(inputSchema);
     mapUdfLogicalOperatorNode->addChild(std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, 2));
 
-    // After calling inferSchema on the MapUdfLogicalOperatorNode,
-    // the output schema of the node should be the output schema of the JavaUDFDescriptor,
-    // and the input schema should be the schema of the source.
+    // After calling inferSchema on the MapUdfLogicalOperatorNode, the input schema should be the schema of the source.
     auto typeInferencePhaseContext =
         Optimizer::TypeInferencePhaseContext{Catalogs::Source::SourceCatalogPtr(), Catalogs::UDF::UDFCatalogPtr()};
     mapUdfLogicalOperatorNode->inferSchema(typeInferencePhaseContext);
     ASSERT_TRUE(mapUdfLogicalOperatorNode->getInputSchema()->equals(inputSchema));
-    ASSERT_TRUE(mapUdfLogicalOperatorNode->getOutputSchema()->equals(outputSchema));
+
+    // The output schema of the operator should be prefixed with source name.
+    auto expectedOutputSchema = std::make_shared<Schema>()->addField(sourceName + "$outputAttribute",
+                                                                     DataTypeFactory::createBoolean());
+    ASSERT_TRUE(mapUdfLogicalOperatorNode->getOutputSchema()->equals(expectedOutputSchema));
 }
 
 TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferStringSignature) {
