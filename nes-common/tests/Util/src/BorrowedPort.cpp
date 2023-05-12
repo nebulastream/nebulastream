@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <BorrowedPort.hpp>
-#include <memory>
 #include <Util/Logger/Logger.hpp>
 #include <detail/PortDispatcher.hpp>
+#include <memory>
 
 namespace NES::Testing {
 

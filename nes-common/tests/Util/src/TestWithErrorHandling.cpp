@@ -99,8 +99,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
         }
     });
 }
-}
-
+}// namespace detail
 
 }// namespace Testing
 }// namespace NES

@@ -27,7 +27,6 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
-#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
@@ -40,6 +39,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>

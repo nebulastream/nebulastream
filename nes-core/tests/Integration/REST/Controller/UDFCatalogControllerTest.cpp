@@ -16,6 +16,7 @@
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <UdfCatalogService.pb.h>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ProtobufMessageFactory.hpp>
@@ -24,7 +25,6 @@
 #include <google/protobuf/text_format.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <UdfCatalogService.pb.h>
 #include <nlohmann/json.hpp>
 #include <oatpp/web/protocol/http/Http.hpp>
 

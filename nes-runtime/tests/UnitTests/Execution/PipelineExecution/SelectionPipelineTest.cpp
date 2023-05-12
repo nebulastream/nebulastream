@@ -24,13 +24,13 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>

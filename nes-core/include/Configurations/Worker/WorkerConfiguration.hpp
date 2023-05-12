@@ -17,11 +17,11 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/details/EnumOptionDetails.hpp>
 #include <Configurations/Worker/LocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Configurations/details/EnumOptionDetails.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Experimental/SpatialType.hpp>

@@ -47,16 +47,17 @@ class MetricValidator {
 
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::CpuMetricsWrapper cpuMetrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
-                        Monitoring::NetworkMetricsWrapper networkMetrics);
+    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::NetworkMetricsWrapper networkMetrics);
 
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MemoryMetrics memoryMetrics);
 
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::DiskMetrics diskMetrics);
 
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
-                        Monitoring::StoredNodeMetricsPtr storedMetrics, Monitoring::MetricType expectedType,
-                        TopologyNodeId expectedNodeId, uint64_t expectedSize);
+                        Monitoring::StoredNodeMetricsPtr storedMetrics,
+                        Monitoring::MetricType expectedType,
+                        TopologyNodeId expectedNodeId,
+                        uint64_t expectedSize);
 
     static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
 

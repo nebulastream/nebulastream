@@ -37,6 +37,6 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
 }
 
-}// namespace NES
+}// namespace NES::TestUtils
 
 #endif// NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_

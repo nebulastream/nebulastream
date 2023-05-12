@@ -22,4 +22,4 @@ TestPhaseProvider::createLowerToExecutableQueryPlanPhase(QueryCompilation::Query
     auto sourceProvider = std::make_shared<TestUtils::TestSourceProvider>(options);
     return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
-}// namespace NES
+}// namespace NES::TestUtils

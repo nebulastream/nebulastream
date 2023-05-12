@@ -16,7 +16,7 @@
 #include <cstdint>
 namespace NES::Testing {
 
-namespace detail{
+namespace detail {
 class PortDispatcher;
 }
 /**
@@ -42,5 +42,5 @@ class BorrowedPort {
 
     [[nodiscard]] operator uint16_t() const;
 };
-}// namespace NES
+}// namespace NES::Testing
 #endif//NES_NES_COMMON_TESTS_UTIL_BORROWEDPORT_HPP_

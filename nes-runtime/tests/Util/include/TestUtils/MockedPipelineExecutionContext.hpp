@@ -26,6 +26,6 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
     explicit MockedPipelineExecutionContext();
     std::vector<TupleBuffer> buffers;
 };
-}// namespace NES
+}// namespace NES::Runtime::Execution
 
 #endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_MOKEDPIPELINECONTEXT_HPP_

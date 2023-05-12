@@ -12,25 +12,29 @@
     limitations under the License.
 */
 
-#include <Util/TestSink.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/TestSink.hpp>
 
 namespace NES {
 
-TestSink::TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine,
-                   uint32_t numOfProducers) :
-                   SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)),
-                           nodeEngine, numOfProducers, 0, 0), expectedBuffer(expectedBuffer) {
-        auto bufferManager = nodeEngine->getBufferManager(0);
-        if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
-            memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-            memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
-        }
+TestSink::TestSink(uint64_t expectedBuffer,
+                   const SchemaPtr& schema,
+                   const Runtime::NodeEnginePtr& nodeEngine,
+                   uint32_t numOfProducers)
+    : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
+      expectedBuffer(expectedBuffer) {
+    auto bufferManager = nodeEngine->getBufferManager(0);
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+    }
 };
 
-std::shared_ptr<TestSink> TestSink::create(uint64_t expectedBuffer, const SchemaPtr& schema,
-                                           const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers) {
+std::shared_ptr<TestSink> TestSink::create(uint64_t expectedBuffer,
+                                           const SchemaPtr& schema,
+                                           const Runtime::NodeEnginePtr& engine,
+                                           uint32_t numOfProducers) {
     return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
 }
 
@@ -56,7 +60,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer TestSink::getResultBuffer(uint64_t in
     return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
 }
 
-void TestSink::setup() {};
+void TestSink::setup(){};
 
 std::string TestSink::toString() const { return "Test_Sink"; }
 
@@ -77,4 +81,4 @@ void TestSink::waitTillCompleted() { completed.get_future().wait(); }
 
 void TestSink::shutdown() { cleanupBuffers(); }
 
-}
+}// namespace NES

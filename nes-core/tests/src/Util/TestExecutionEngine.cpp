@@ -25,17 +25,16 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     workerConfiguration->queryCompiler.queryCompilerType = compiler;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
-    workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     auto defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
     workerConfiguration->physicalSources.add(sourceConf);
     auto phaseProvider = std::make_shared<TestUtils::TestPhaseProvider>();
     nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
-            .setPhaseFactory(phaseProvider)
-            .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-            .build();
+                     .setPhaseFactory(phaseProvider)
+                     .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                     .build();
 
     // enable distributed window optimization
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
