@@ -58,4 +58,27 @@ TEST_F(StackTest, appendValue) {
     ASSERT_EQ(stack.getNumberOfPages(), 8);
 }
 
+TEST_F(StackTest, storeAndRetrieveValues) {
+    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto entrySize = 32;
+    auto stack = Stack(std::move(allocator), entrySize);
+    auto stackRef = StackRef(Value<MemRef>((int8_t*) &stack), entrySize);
+
+    for (auto i = 0UL; i < 1000UL; i++) {
+        Value<UInt64> val(i);
+        auto ref = stackRef.allocateEntry();
+        ref.store(val);
+    }
+    ASSERT_EQ(stack.getNumberOfEntries(), 1000);
+    ASSERT_EQ(stack.getNumberOfPages(), 8);
+
+    for (auto i = 0UL; i < 1000UL; i++) {
+        Value<UInt64> pos(i);
+        Value<UInt64> expectedVal(i);
+        auto ref = stackRef.getEntry(pos);
+        auto resultVal = ref.load<UInt64>();
+        ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());
+    }
+}
+
 }// namespace NES::Nautilus::Interface
