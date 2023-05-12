@@ -21,6 +21,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -92,13 +93,31 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfi
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
     auto inputType = defaultPhysicalTypeFactory.getPhysicalType(inputSchema->get(fieldNameAggregation)->getDataType());
     auto finalType = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
+    auto readFieldExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldNameAggregation);
+    auto resultFieldIdentifier = fieldNameApproximate;
+
 
     switch (type) {
-        case Aggregation_Type::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType, finalType);
-        case Aggregation_Type::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType, finalType);
-        case Aggregation_Type::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType, finalType);
-        case Aggregation_Type::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType, finalType);
-        case Aggregation_Type::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType, finalType);
+        case Aggregation_Type::MIN: return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(inputType,
+                                                                                                                     finalType,
+                                                                                                                     readFieldExpression,
+                                                                                                                     resultFieldIdentifier);
+        case Aggregation_Type::MAX: return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(inputType,
+                                                                                                                     finalType,
+                                                                                                                     readFieldExpression,
+                                                                                                                     resultFieldIdentifier);
+        case Aggregation_Type::SUM: return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(inputType,
+                                                                                                                     finalType,
+                                                                                                                     readFieldExpression,
+                                                                                                                     resultFieldIdentifier);
+        case Aggregation_Type::AVERAGE: return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(inputType,
+                                                                                                                         finalType,
+                                                                                                                         readFieldExpression,
+                                                                                                                         resultFieldIdentifier);
+        case Aggregation_Type::COUNT: return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(inputType,
+                                                                                                                         finalType,
+                                                                                                                         readFieldExpression,
+                                                                                                                         resultFieldIdentifier);
         case Aggregation_Type::NONE: NES_NOT_IMPLEMENTED();
     }
 }

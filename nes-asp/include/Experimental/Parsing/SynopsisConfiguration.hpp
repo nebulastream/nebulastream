@@ -49,6 +49,10 @@ enum class Synopsis_Type : uint8_t {
     HLL,        // HyperLogLog
     NONE        // NONE
 };
+
+/**
+ * @brief This class encapsulates the necessary stuff for configuring a synopsis
+ */
 class SynopsisConfiguration : public Configurations::BaseConfiguration {
 
   public:

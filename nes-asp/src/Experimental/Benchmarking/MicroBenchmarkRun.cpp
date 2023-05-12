@@ -234,8 +234,7 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
 
     auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
 
-
-    // TODO for now we can ignore windows
+    // TODO for now we can ignore windows #3628
     aggregationFunction->reset(aggregationValueMemRef);
     for (auto& buffer : inputBuffers) {
         NES_INFO2("buffer: {}", NES::Util::printTupleBufferAsCSV(buffer, aggregation.inputSchema));
@@ -243,15 +242,13 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::
         auto bufferAddress = Nautilus::Value<Nautilus::MemRef>((int8_t*) buffer.getBuffer());
         for (Nautilus::Value<Nautilus::UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read({}, bufferAddress, i);
-            auto value = record.read(aggregation.fieldNameAggregation);
-            aggregationFunction->lift(aggregationValueMemRef, value);
+            aggregationFunction->lift(aggregationValueMemRef, record);
         }
     }
 
     // Writes the output into a Nautilus::Record
     Nautilus::Record record;
-    auto exactValue = aggregationFunction->lower(aggregationValueMemRef);
-    record.write(aggregation.fieldNameApproximate, exactValue);
+    aggregationFunction->lower(aggregationValueMemRef, record);
 
     // Create an output buffer and write the approximation into it
     auto outputMemoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.outputSchema);
