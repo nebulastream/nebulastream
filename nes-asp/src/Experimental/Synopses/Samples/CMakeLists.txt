@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-asp
-        SRSWoR.cpp
+        RandomSampleWithoutReplacement.cpp
         SRSWoROperatorHandler.cpp
         )

@@ -103,6 +103,7 @@ class Stack {
     std::vector<int8_t*> pages;
     int8_t* currentPage;
     uint64_t numberOfEntries;
+    uint64_t totalNumberOfEntries;
 };
 
 }// namespace NES::Nautilus::Interface

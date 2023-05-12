@@ -41,7 +41,7 @@ class StackRef {
      * @param pos
      * @return Value<MemRef>
      */
-    Value<MemRef> getEntry(Value<UInt64> pos);
+    Value<MemRef> getEntry(const Value<UInt64>& pos);
 
     /**
      * @brief Returns the number of entries in the current page.
@@ -56,10 +56,23 @@ class StackRef {
     void setNumberOfEntries(const Value<>& entries);
 
     /**
+     * @brief Modifies the number of total entries
+     * @param totalEntries
+     */
+    void setNumberOfTotalEntries(const Value<>& totalEntries);
+
+    /**
      * @brief Returns the total number of entries for this stack.
      * @return Value<UInt64>
      */
     Value<UInt64> getTotalNumberOfEntries();
+
+    /**
+     * @brief Returns the memref to the page at position pos
+     * @param pos
+     * @return MemRef
+     */
+    Value<MemRef> getPage(const Value<>& pos);
 
   private:
     Value<MemRef> getCurrentPage();
