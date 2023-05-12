@@ -54,15 +54,30 @@ class JavaUDFOperatorHandler : public OperatorHandler {
                                     SchemaPtr udfInputSchema,
                                     SchemaPtr udfOutputSchema,
                                     const std::optional<std::string>& javaPath)
-        : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
+        : className(className), classJNIName(convertToJNIName(className)),methodName(methodName), inputClassName(inputClassName),
+          inputClassJNIName(convertToJNIName(inputClassName)), outputClassName(outputClassName),
+          outputClassJNIName(convertToJNIName(outputClassName)),
           byteCodeList(byteCodeList), serializedInstance(serializedInstance), udfInputSchema(udfInputSchema),
           udfOutputSchema(udfOutputSchema), javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
+
+    /**
+     * @brief Convert a Java class name from Java notation (e.g., java.lang.Object), to JNI notation (e.g., java/lang/Object).
+     * @param javaClassName The class name in Java notation.
+     * @return The class name in JNI notation.
+     */
+    const std::string convertToJNIName(const std::string& javaClassName) const;
 
     /**
      * @brief This method returns the class name of the java udf
      * @return std::string class name
      */
     const std::string& getClassName() const { return className; }
+
+    /**
+     * @brief This method returns the class name of the Java UDF in JNI notation.
+     * @return std::string class name
+     */
+    const std::string& getClassJNIName() const { return classJNIName; }
 
     /**
      * @brief This method returns the method name of the java udf
@@ -77,10 +92,22 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::string& getInputClassName() const { return inputClassName; }
 
     /**
+     * @brief This method returns the class name of the input class name of the Java UDF in JNI notation.
+     * @return std::string input class name in JNI notation.
+     */
+    const std::string& getInputClassJNIName() const { return inputClassJNIName; }
+
+    /**
      * @brief This method returns the class name of the output class name of the java udf
      * @return std::string output class name
      */
     const std::string& getOutputClassName() const { return outputClassName; }
+
+    /**
+     * @brief This method returns the class name of the output class name of the Java UDF in JNI notation.
+     * @return std::string output class name
+     */
+    const std::string& getOutputClassJNIName() const { return outputClassJNIName; }
 
     /**
      * @brief This method returns the byte code list of the java udf
@@ -153,9 +180,12 @@ class JavaUDFOperatorHandler : public OperatorHandler {
 
   private:
     const std::string className;
+    const std::string classJNIName;
     const std::string methodName;
     const std::string inputClassName;
+    const std::string inputClassJNIName;
     const std::string outputClassName;
+    const std::string outputClassJNIName;
     const std::unordered_map<std::string, std::vector<char>> byteCodeList;
     const std::vector<char> serializedInstance;
     const SchemaPtr udfInputSchema;

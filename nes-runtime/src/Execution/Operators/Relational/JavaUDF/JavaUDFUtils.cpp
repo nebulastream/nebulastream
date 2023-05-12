@@ -49,7 +49,8 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
         jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
-        handler->getEnvironment()->DefineClass(className.c_str(), nullptr, jCode, (jint) byteCode.size());
+        auto jniName = handler->convertToJNIName(className);
+        handler->getEnvironment()->DefineClass(jniName.c_str(), nullptr, jCode, (jint) byteCode.size());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
@@ -157,7 +158,7 @@ void* findInputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
-    jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassName().c_str());
+    jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassJNIName().c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return clazz;
 }
@@ -166,7 +167,7 @@ void* findOutputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
-    jclass clazz = handler->getEnvironment()->FindClass(handler->getOutputClassName().c_str());
+    jclass clazz = handler->getEnvironment()->FindClass(handler->getOutputClassJNIName().c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
     return clazz;
 }
