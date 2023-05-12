@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.78](https://github.com/nebulastream/nebulastream/tree/v0.5.78) (2023-05-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.77...v0.5.78)
+
+### Query Optimizer 🔧
+
+- \[Feature\] Containment based query merging - first steps [\#3503](https://github.com/nebulastream/nebulastream/issues/3503)
+
 ## [v0.5.77](https://github.com/nebulastream/nebulastream/tree/v0.5.77) (2023-05-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.76...v0.5.77)
