@@ -20,18 +20,38 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::ASP {
+/**
+ * @brief OperatorHandler for a SRSWoR synopsis
+ */
 class SRSWoROperatorHandler : public Runtime::Execution::OperatorHandler {
 
   public:
-
-
+    /**
+     * @brief Getter for the stackRef
+     * @return Returns the pointer to the stack
+     */
     void* getStackRef();
 
+    /**
+     * @brief Initializes the stack
+     * @param entrySize
+     */
     void setup(uint64_t entrySize);
 
+    /**
+     * @brief Starts the operator handler.
+     * @param pipelineExecutionContext
+     * @param localStateVariableId
+     * @param stateManager
+     */
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
+
+    /**
+     * @brief Stops the operator handler.
+     * @param pipelineExecutionContext
+     */
     void stop(Runtime::QueryTerminationType terminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 

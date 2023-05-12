@@ -117,15 +117,14 @@ std::vector<Runtime::TupleBuffer> SRSWoR::getApproximate(uint64_t handlerIndex,
         Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
         auto entryMemRef = stackRef.getEntry(curTuple);
         auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
-        auto tmpValue = tmpRecord.read(fieldNameAggregation);
-        aggregationFunction->lift(aggregationValueMemRef, tmpValue);
+        aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
     }
 
     // Lower the aggregation
     Nautilus::Record record;
-    auto approximatedValue = aggregationFunction->lower(aggregationValueMemRef);
+    aggregationFunction->lower(aggregationValueMemRef, record);
     auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor(stackRef));
-    approximatedValue = multiplyWithScalingFactor(approximatedValue, scalingFactor);
+    auto approximatedValue = multiplyWithScalingFactor(record.read(fieldNameApproximate), scalingFactor);
     record.write(fieldNameApproximate, approximatedValue);
 
     // Create an output buffer and write the approximation into it

@@ -124,8 +124,7 @@ namespace NES::ASP {
         exactAggFunction->reset(exactAggValueMemRef);
         for (auto& record : allRecords) {
             sampleSynopsis.addToSynopsis(handlerIndex, executionContext, record);
-            auto tmpValue = record.read(aggregationString);
-            exactAggFunction->lift(exactAggValueMemRef, tmpValue);
+            exactAggFunction->lift(exactAggValueMemRef, record);
         }
 
         auto approximateBuffers = sampleSynopsis.getApproximate(handlerIndex, executionContext, bufferManager);
@@ -133,7 +132,13 @@ namespace NES::ASP {
 
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                                   outputSchema);
-        auto exactValue = exactAggFunction->lower(exactAggValueMemRef);
+        Nautilus::Record exactRecord;
+        exactAggFunction->lower(exactAggValueMemRef, exactRecord);
+        ASSERT_EQ(exactRecord.getAllFields().size(), 1);
+        auto fieldIdentifier = exactRecord.getAllFields()[0];
+        auto exactValue = exactRecord.read(fieldIdentifier);
+
+
         EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), 1);
         if (outputSchema->get(approximateString)->getDataType()->isEquals(DataTypeFactory::createType(BasicType::INT64))) {
             EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), exactValue.getValue().staticCast<Nautilus::Int64>().getValue());
@@ -167,7 +172,6 @@ namespace NES::ASP {
             ASSERT_TRUE(true);
         }
         NES_INFO("Running test for " << magic_enum::enum_name(aggregationType));
-
 
         auto aggregationString = "value";
         auto approximateString = "aggregation";
@@ -224,14 +228,17 @@ namespace NES::ASP {
         EXPECT_EQ(approximateBuffers.size(), 1);
 
         for (auto& pos : posOfRecordsForSamples) {
-            auto tmpValue = allRecords[pos].read(aggregationString);
-            exactAggFunction->lift(exactAggValueMemRef, tmpValue);
+            exactAggFunction->lift(exactAggValueMemRef, allRecords[pos]);
         }
-
 
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                                   outputSchema);
-        auto exactValue = exactAggFunction->lower(exactAggValueMemRef);
+        Nautilus::Record exactRecord;
+        exactAggFunction->lower(exactAggValueMemRef, exactRecord);
+        ASSERT_EQ(exactRecord.getAllFields().size(), 1);
+        auto fieldIdentifier = exactRecord.getAllFields()[0];
+        auto exactValue = exactRecord.read(fieldIdentifier);
+
         auto scalingFactor = getScalingFactor(aggregationType, sampleSize, numberOfTuplesToProduce);
         EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), 1);
         if (outputSchema->get(approximateString)->getDataType()->isEquals(DataTypeFactory::createType(BasicType::INT64))) {
