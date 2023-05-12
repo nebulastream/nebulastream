@@ -47,8 +47,6 @@ const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchema
     return schemaFieldToExprMaps;
 }
 
-const std::map<std::string, z3::ExprPtr>& QuerySignature::getUnionExpressions() {
-    return unionExpressions;
-}
+const std::map<std::string, z3::ExprPtr>& QuerySignature::getUnionExpressions() { return unionExpressions; }
 
 }// namespace NES::Optimizer
