@@ -49,7 +49,7 @@ void loadClassesFromByteList(void* state, const std::unordered_map<std::string, 
         jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
-        auto jniName = handler->convertToJNIName(className);
+        const auto jniName = handler->convertToJNIName(className);
         handler->getEnvironment()->DefineClass(jniName.c_str(), nullptr, jCode, (jint) byteCode.size());
         jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
