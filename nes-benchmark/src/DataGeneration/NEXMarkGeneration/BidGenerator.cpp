@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <DataGeneration/NEXMarkGeneration/BidGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <random>
-#include <mutex>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
+
+BidGenerator::BidGenerator(uint64_t numberOfRecords)
+    : DataGenerator(), generatorMediatorInstance(GeneratorMediator::getInstance(numberOfRecords)) {}
 
 std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
@@ -70,4 +70,4 @@ std::string BidGenerator::toString() {
     return oss.str();
 }
 
-} // namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration

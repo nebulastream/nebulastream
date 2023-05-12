@@ -16,11 +16,18 @@
 #define NES_BIDGENERATOR_HPP
 
 #include <DataGeneration/DataGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/GeneratorMediator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 class BidGenerator : public DataGenerator {
   public:
+    /**
+     * @brief creates a BidGenerator
+     * @param numberOfRecords
+     */
+    explicit BidGenerator(uint64_t numberOfRecords);
+
     /**
      * @brief creates uniformed data with the schema "id, value, payload, timestamp"
      * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
@@ -48,7 +55,10 @@ class BidGenerator : public DataGenerator {
      * @return the string representation of the BidGenerator
      */
     std::string toString() override;
+
+  private:
+    NEXMarkGeneration::GeneratorMediator& generatorMediatorInstance;
 };
-} //namespace NES::Benchmark::DataGeneration
+} //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
 #endif//NES_BIDGENERATOR_HPP

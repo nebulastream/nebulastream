@@ -16,11 +16,18 @@
 #define NES_OPENAUCTIONGENERATOR_HPP
 
 #include <DataGeneration/DataGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/GeneratorMediator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 class OpenAuctionGenerator : public DataGenerator {
   public:
+    /**
+     * @brief creates a OpenAuctionGenerator
+     * @param numberOfRecords
+     */
+    explicit OpenAuctionGenerator(uint64_t numberOfRecords);
+
     /**
      * @brief creates uniformed data with the schema "id, value, payload, timestamp"
      * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
@@ -48,7 +55,10 @@ class OpenAuctionGenerator : public DataGenerator {
      * @return the string representation of the OpenAuctionGenerator
      */
     std::string toString() override;
+
+  private:
+    NEXMarkGeneration::GeneratorMediator& generatorMediatorInstance;
 };
-} //namespace NES::Benchmark::DataGeneration
+} //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
 #endif//NES_OPENAUCTIONGENERATOR_HPP

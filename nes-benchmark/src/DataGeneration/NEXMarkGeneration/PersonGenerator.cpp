@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
+
+PersonGenerator::PersonGenerator(uint64_t numberOfRecords)
+    : DataGenerator(), generatorMediatorInstance(GeneratorMediator::getInstance(numberOfRecords)) {}
 
 SchemaPtr PersonGenerator::getSchema() {
     return Schema::create()
@@ -35,4 +37,4 @@ std::string PersonGenerator::toString() {
     return oss.str();
 }
 
-} // namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
