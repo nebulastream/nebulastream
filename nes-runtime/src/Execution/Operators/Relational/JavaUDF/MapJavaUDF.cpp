@@ -43,11 +43,11 @@ void* executeMapUdf(void* state, void* pojoObjectPtr) {
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
 
     // Find class implementing the map udf
-    jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
+    jclass c1 = handler->getEnvironment()->FindClass(handler->getClassJNIName().c_str());
     jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
 
     // Build function signature of map function
-    std::string sig = "(L" + handler->getInputClassName() + ";)L" + handler->getOutputClassName() + ";";
+    std::string sig = "(L" + handler->getInputClassJNIName() + ";)L" + handler->getOutputClassJNIName() + ";";
 
     // Find udf function
     jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
