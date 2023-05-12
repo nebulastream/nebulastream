@@ -81,7 +81,7 @@ bool JavaUDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& t
     outputSchema->clear();
     outputSchema->copyFields(javaUDFDescriptor->getOutputSchema());
     // Update output schema by changing the qualifier and corresponding attribute names
-    auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    const auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
         //Extract field name without qualifier
         auto fieldName = field->getName();
