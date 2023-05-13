@@ -58,7 +58,7 @@ class QueryUndeploymentPhase {
      * @param queryId : id of the query
      * @return true if successful
      */
-    bool execute(QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus);
+    void execute(QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus);
 
   private:
     explicit QueryUndeploymentPhase(TopologyPtr topology,
