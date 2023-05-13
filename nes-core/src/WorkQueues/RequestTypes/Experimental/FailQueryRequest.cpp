@@ -1,22 +1,40 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
+#include <Exceptions/QueryUndeploymentException.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Util/RequestType.hpp>
 #include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
-#include <Exceptions/QueryUndeploymentException.hpp>
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId,
-                                                      size_t maxRetries,
-                                                      NES::WorkerRPCClientPtr  workerRpcClient) :
-                                                                                     AbstractRequest(maxRetries),
-                                                                                     queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
+FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
+                                   NES::QuerySubPlanId failedSubPlanId,
+                                   size_t maxRetries,
+                                   NES::WorkerRPCClientPtr workerRpcClient)
+    : AbstractRequest({StorageHandlerResourceType::GlobalQueryPlan,
+                       StorageHandlerResourceType::QueryCatalogService,
+                       StorageHandlerResourceType::Topology,
+                       StorageHandlerResourceType::GlobalExecutionPlan},
+                      maxRetries),
+      queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
 void FailQueryRequest::preRollbackHandle(std::exception, NES::StorageHandler&) {}
 
@@ -51,7 +69,8 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle();
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        throw QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId) + " in the global query plan");
+        throw QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
+                                     + " in the global query plan");
     }
 
     queryCatalogService = storageHandle.getQueryCatalogHandle();
@@ -76,4 +95,4 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
         queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
     }
 }
-}
+}// namespace NES::Experimental

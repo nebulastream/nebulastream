@@ -17,7 +17,7 @@
 
 namespace NES {
 
-AbstractRequest::AbstractRequest(size_t maxRetries) : maxRetries(maxRetries), actualRetries(0) {}
+AbstractRequest::AbstractRequest(const std::vector<StorageHandlerResourceType>& requiredResources, size_t maxRetries) : maxRetries(maxRetries), actualRetries(0), requiredResources(requiredResources) {}
 
 void AbstractRequest::handleError(std::exception ex, StorageHandler& storageHandle) {
     //error handling to be performed before rolling back

@@ -29,6 +29,8 @@
 #include <Util/TestUtils.hpp>
 #include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/SerialStorageHandler.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <Exceptions/QueryNotFoundException.hpp>
@@ -128,8 +130,9 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     auto subPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
     Experimental::FailQueryRequest failQueryRequest(queryId, subPlanId, 1, workerRpcClient);
-    auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
-    failQueryRequest.execute(serialStorageHandler);
+    auto lockManager  = std::make_shared<LockManager>(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
+    failQueryRequest.execute(storageHandler);
 
     //check status of query in the query catalog
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::FAILED);
@@ -231,8 +234,9 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     //creating request with wrong query id
     Experimental::FailQueryRequest failQueryRequest(queryId + 1, subPlanId, 1, workerRpcClient);
 
-    auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
-    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), QueryNotFoundException);
+    auto lockManager  = std::make_shared<LockManager>(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
+    EXPECT_THROW(failQueryRequest.execute(storageHandler), QueryNotFoundException);
     bool stopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = crd->stopCoordinator(false);
@@ -308,9 +312,10 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     auto subPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
     Experimental::FailQueryRequest failQueryRequest(queryId, subPlanId, 1, workerRpcClient);
-    auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    auto lockManager  = std::make_shared<LockManager>(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
-    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), InvalidQueryStatusException);
+    EXPECT_THROW(failQueryRequest.execute(storageHandler), InvalidQueryStatusException);
     bool stopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = crd->stopCoordinator(false);
@@ -384,12 +389,13 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     auto subPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
     Experimental::FailQueryRequest failQueryRequest(queryId, subPlanId, 1, workerRpcClient);
-    auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    auto lockManager  = std::make_shared<LockManager>(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
+    auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
     //stop worker to provoke failure of undeployment
     wrk1->stop(true);
 
-    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), QueryUndeploymentException);
+    EXPECT_THROW(failQueryRequest.execute(storageHandler), QueryUndeploymentException);
     bool stopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = crd->stopCoordinator(false);

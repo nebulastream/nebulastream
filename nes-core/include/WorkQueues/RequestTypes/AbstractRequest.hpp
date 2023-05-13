@@ -54,7 +54,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
-    explicit AbstractRequest(size_t maxRetries);
+    explicit AbstractRequest(const std::vector<StorageHandlerResourceType>& requiredResources, size_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
