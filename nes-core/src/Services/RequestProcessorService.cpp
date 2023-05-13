@@ -160,12 +160,7 @@ void RequestProcessorService::start() {
                                     "running.");
 
                                 //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                                bool undeploymentSuccessful =
-                                    queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
-                                if (!undeploymentSuccessful) {
-                                    throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                     + std::to_string(sharedQueryId));
-                                }
+                                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
 
                                 //3.3.2. Perform placement of updated shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
@@ -198,12 +193,7 @@ void RequestProcessorService::start() {
                                            "running.");
 
                                 //3.4.1. Undeploy the running shared query plan
-                                bool undeploymentSuccessful =
-                                    queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-                                if (!undeploymentSuccessful) {
-                                    throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                     + std::to_string(sharedQueryId));
-                                }
+                                queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
 
                                 //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
                                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {

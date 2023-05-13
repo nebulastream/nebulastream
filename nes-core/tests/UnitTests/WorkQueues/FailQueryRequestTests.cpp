@@ -34,7 +34,8 @@
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
-#include <Exceptions/FailQueryRequestExecutionException.h>
+#include <Exceptions/QueryUndeploymentException.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 using namespace std;
 
@@ -154,6 +155,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
         sleep(1);
     }
     EXPECT_EQ(crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Invalid);
+    bool stopWrk1 = wrk1->stop(false);
 }
 
 TEST_F(FailQueryRequestTest, testInvalidQueryId) {
@@ -376,7 +378,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     //stop worker to provoke failure of undeployment
     wrk1->stop(true);
 
-    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), FailQueryRequestExecutionException);
+    EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), QueryUndeploymentException);
     //todo: proper shutdown of coordinator and worker everywhere
 }
 }// namespace NES

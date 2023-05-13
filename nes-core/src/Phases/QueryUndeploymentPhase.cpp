@@ -42,14 +42,14 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
         QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
-bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
+void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG2("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
         NES_ERROR2("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
-        return false;
+        throw QueryUndeploymentException("Unable to find ExecutionNodes where the query " + std::to_string(queryId) + " is deployed");
     }
 
     NES_DEBUG2("QueryUndeploymentPhase:removeQuery: stop query");
@@ -79,7 +79,9 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
         topology->increaseResources(entry.first, entry.second);
     }
 
-    return globalExecutionPlan->removeQuerySubPlans(queryId);
+    if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
+        throw QueryUndeploymentException("Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
+    }
 }
 
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
