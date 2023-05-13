@@ -61,7 +61,7 @@ install(TARGETS nes-grpc
 
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES} src/Exceptions/CoordinatorRequestExecutionException.cpp include/Exceptions/CoordinatorRequestExecutionException.h src/Exceptions/FailQueryRequestExecutionException.cpp include/Exceptions/FailQueryRequestExecutionException.h)
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
