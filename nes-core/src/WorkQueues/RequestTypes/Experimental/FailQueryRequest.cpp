@@ -12,7 +12,6 @@
 #include <utility>
 
 namespace NES::Experimental {
-//todo: do we expect to already have the query id and the failed query available here or should this request work with only the failed sub query id?
 FailQueryRequest::FailQueryRequest(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId,
                                                       size_t maxRetries,
                                                       NES::WorkerRPCClientPtr  workerRpcClient) :
@@ -23,7 +22,6 @@ void FailQueryRequest::preRollbackHandle(std::exception, NES::StorageHandler&) {
 
 void FailQueryRequest::rollBack(std::exception&, StorageHandler&) {}
 
-//todo: pass a CoordinatorRequestExecutionException here?
 void FailQueryRequest::postRollbackHandle(std::exception ex, NES::StorageHandler& storageHandler) {
     (void) ex;
     (void) storageHandler;
@@ -58,10 +56,8 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     queryCatalogService = storageHandle.getQueryCatalogHandle();
 
-    //todo: why do we have to specify the query sub plan id here?
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
-    //todo: this can throw an exception on map access, what do we do in the error handling when we fail in this stage?
     globalQueryPlan->removeQuery(queryId, RequestType::Fail);
 
     //undeploy queries

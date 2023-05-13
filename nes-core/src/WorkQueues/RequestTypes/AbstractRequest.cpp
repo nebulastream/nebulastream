@@ -32,8 +32,8 @@ void AbstractRequest::handleError(std::exception ex, StorageHandler& storageHand
 
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
+//todo #3725: pass pointer to storage handle and keep it as member variable
 void AbstractRequest::execute(StorageHandler& storageHandle) {
-    //todo: do we want to keep the storage handle as a member variable in the base class, to enforce that if lives for the whole existence of the class?
     //acquire locks and perform other tasks to prepare for execution
     preExecution(storageHandle);
 

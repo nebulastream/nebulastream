@@ -156,6 +156,9 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     }
     EXPECT_EQ(crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Invalid);
     bool stopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = crd->stopCoordinator(false);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(FailQueryRequestTest, testInvalidQueryId) {
@@ -230,6 +233,10 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
     EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), QueryNotFoundException);
+    bool stopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = crd->stopCoordinator(false);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
@@ -304,6 +311,10 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     auto serialStorageHandler  = SerialStorageHandler(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
 
     EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), InvalidQueryStatusException);
+    bool stopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = crd->stopCoordinator(false);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
@@ -379,6 +390,9 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     wrk1->stop(true);
 
     EXPECT_THROW(failQueryRequest.execute(serialStorageHandler), QueryUndeploymentException);
-    //todo: proper shutdown of coordinator and worker everywhere
+    bool stopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = crd->stopCoordinator(false);
+    EXPECT_TRUE(stopCrd);
 }
 }// namespace NES

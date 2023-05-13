@@ -12,6 +12,13 @@ using QueryId = uint64_t;
 
 class FailQueryRequest : public AbstractRequest {
   public:
+    /**
+     * @brief Constructor
+     * @param queryId: The id of the query that failed
+     * @param failedSubPlanId: The id of the subplan that caused the failure
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param workerRpcClient: The worker rpc client to be used during undeployment
+     */
     FailQueryRequest(unsigned long queryId, unsigned long failedSubPlanId, size_t maxRetries, WorkerRPCClientPtr workerRpcClient);
 
   protected:
@@ -53,8 +60,6 @@ class FailQueryRequest : public AbstractRequest {
   private:
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    //todo: should this really be a member variable?
-    //SharedQueryId sharedQueryId;
     WorkerRPCClientPtr workerRpcClient;
     GlobalQueryPlanPtr globalQueryPlan;
     QueryCatalogServicePtr queryCatalogService;
