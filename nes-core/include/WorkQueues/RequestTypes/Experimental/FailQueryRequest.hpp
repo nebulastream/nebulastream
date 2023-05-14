@@ -34,7 +34,7 @@ class FailQueryRequest : public AbstractRequest {
      */
     FailQueryRequest(NES::QueryId queryId,
                                    NES::QuerySubPlanId failedSubPlanId,
-                                   int16_t maxRetries,
+                                   uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient);
 
   protected:

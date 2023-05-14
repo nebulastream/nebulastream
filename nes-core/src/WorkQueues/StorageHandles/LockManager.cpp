@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <WorkQueues/StorageHandles/LockManager.hpp>
-#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
 
 namespace NES {
 LockManager::LockManager(GlobalExecutionPlanPtr globalExecutionPlan,
