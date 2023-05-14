@@ -21,7 +21,7 @@ namespace NES {
 TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(TwoPhaseLockManagerPtr lockManager)
     : lockManager(std::move(lockManager)), resourcesLocked(false) {}
 
-void TwoPhaseLockingStorageHandler::acquireResources(std::vector<StorageHandlerResourceType> requiredResources) {
+void TwoPhaseLockingStorageHandler::acquireResources(std::vector<ResourceType> requiredResources) {
     //do not allow performing resource acquisition more than once
     if (resourcesLocked) {
         //todo #3611: more verbose exception handling
@@ -39,16 +39,16 @@ void TwoPhaseLockingStorageHandler::acquireResources(std::vector<StorageHandlerR
     }
 }
 
-void TwoPhaseLockingStorageHandler::lockResource(StorageHandlerResourceType resourceType) {
+void TwoPhaseLockingStorageHandler::lockResource(ResourceType resourceType) {
     switch (resourceType) {
-        case StorageHandlerResourceType::Topology: topology = lockManager->getTopologyHandle(); break;
-        case StorageHandlerResourceType::QueryCatalogService: queryCatalogService = lockManager->getQueryCatalogHandle(); break;
-        case StorageHandlerResourceType::SourceCatalog: sourceCatalog = lockManager->getSourceCatalogHandle(); break;
-        case StorageHandlerResourceType::GlobalExecutionPlan:
+        case ResourceType::Topology: topology = lockManager->getTopologyHandle(); break;
+        case ResourceType::QueryCatalogService: queryCatalogService = lockManager->getQueryCatalogHandle(); break;
+        case ResourceType::SourceCatalog: sourceCatalog = lockManager->getSourceCatalogHandle(); break;
+        case ResourceType::GlobalExecutionPlan:
             globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle();
             break;
-        case StorageHandlerResourceType::GlobalQueryPlan: globalQueryPlan = lockManager->getGlobalQueryPlanHandle(); break;
-        case StorageHandlerResourceType::UdfCatalog: udfCatalog = lockManager->getUDFCatalogHandle(); break;
+        case ResourceType::GlobalQueryPlan: globalQueryPlan = lockManager->getGlobalQueryPlanHandle(); break;
+        case ResourceType::UdfCatalog: udfCatalog = lockManager->getUDFCatalogHandle(); break;
     }
 }
 

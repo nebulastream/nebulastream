@@ -53,7 +53,7 @@ class SerialStorageHandler : public StorageHandler {
      * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
      * @param requiredResources The resources required for request execution
      */
-    void acquireResources(std::vector<StorageHandlerResourceType> requiredResources) override;
+    void acquireResources(std::vector<ResourceType> requiredResources) override;
 
     /**
      * @brief Obtain a mutable topology handle.

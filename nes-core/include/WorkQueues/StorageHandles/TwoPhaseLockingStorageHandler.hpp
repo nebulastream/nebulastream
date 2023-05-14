@@ -14,8 +14,8 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKINGSTORAGEHANDLE_HPP
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_CONSERVATIVETWOPHASELOCKINGSTORAGEHANDLE_HPP
 
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
 #include <vector>
 
 namespace NES {
@@ -41,13 +41,13 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     static std::shared_ptr<TwoPhaseLockingStorageHandler> create(const TwoPhaseLockManagerPtr& lockManager);
 
     /**
-     * @brief Locks the specified resources ordered after the corresponding enum variants in StorageHandlerResourceType beginning
+     * @brief Locks the specified resources ordered after the corresponding enum variants in ResourceType beginning
      * with the first variant. Locking the resources in a specified order will prevent deadlocks.
      * This function can only be executed once during the lifetime of the storage handle. Will throw an
      * exception on second execution attempt. Resources which are not locked using this function can not be locked later on.
      * @param requiredResources the types of the resources to be locked
      */
-    void acquireResources(std::vector<StorageHandlerResourceType> requiredResources) override;
+    void acquireResources(std::vector<ResourceType> requiredResources) override;
 
     /**
      * @brief Obtain a mutable global execution plan handle. Will throw an exception if the resource has not been locked in the
@@ -96,7 +96,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @brief Locks the mutex corresponding to a resource and maintains the lock until the storage handle object is destructed
      * @param resourceType: The type of resource to be locked
      */
-    void lockResource(StorageHandlerResourceType resourceType);
+    void lockResource(ResourceType resourceType);
 
     TwoPhaseLockManagerPtr lockManager;
     bool resourcesLocked;

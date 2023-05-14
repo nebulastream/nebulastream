@@ -20,19 +20,19 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Util/RequestType.hpp>
 #include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
 #include <utility>
 
 namespace NES::Experimental {
 FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
                                    NES::QuerySubPlanId failedSubPlanId,
-                                   int16_t maxRetries,
+                                   uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
-    : AbstractRequest({StorageHandlerResourceType::GlobalQueryPlan,
-                       StorageHandlerResourceType::QueryCatalogService,
-                       StorageHandlerResourceType::Topology,
-                       StorageHandlerResourceType::GlobalExecutionPlan},
+    : AbstractRequest({ResourceType::GlobalQueryPlan,
+                       ResourceType::QueryCatalogService,
+                       ResourceType::Topology,
+                       ResourceType::GlobalExecutionPlan},
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 

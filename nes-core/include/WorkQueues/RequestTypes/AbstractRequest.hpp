@@ -14,8 +14,8 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
 #include <exception>
 #include <memory>
 #include <vector>
@@ -54,7 +54,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
-    explicit AbstractRequest(const std::vector<StorageHandlerResourceType>& requiredResources, size_t maxRetries);
+    explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, size_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -122,7 +122,7 @@ class AbstractRequest {
   private:
     size_t maxRetries;
     size_t actualRetries;
-    std::vector<StorageHandlerResourceType> requiredResources;
+    std::vector<ResourceType> requiredResources;
 };
 }// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_ABSTRACTREQUEST_HPP_

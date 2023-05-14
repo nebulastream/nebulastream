@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLE_HPP_
 
-#include <WorkQueues/StorageHandles/StorageHandlerResourceType.hpp>
+#include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
 #include <vector>
@@ -72,7 +72,7 @@ class StorageHandler {
      * Performs tasks necessary before request execution and locks resources if necessary
      * @param requiredResources The resources required for executing the request.
      */
-    virtual void acquireResources(std::vector<StorageHandlerResourceType> requiredResources) = 0;
+    virtual void acquireResources(std::vector<ResourceType> requiredResources) = 0;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
