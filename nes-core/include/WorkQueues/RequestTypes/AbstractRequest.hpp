@@ -54,7 +54,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
-    explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, size_t maxRetries);
+    explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -120,8 +120,8 @@ class AbstractRequest {
     virtual void executeRequestLogic(StorageHandler& storageHandle) = 0;
 
   private:
-    size_t maxRetries;
-    size_t actualRetries;
+    uint8_t maxRetries;
+    uint8_t actualRetries;
     std::vector<ResourceType> requiredResources;
 };
 }// namespace NES

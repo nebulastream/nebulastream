@@ -65,6 +65,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
     static constexpr auto defaultTimeout = std::chrono::seconds(60);
 };
 
+//test successful execution of fail query request for a single query
 TEST_F(FailQueryRequestTest, testValidFailRequest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -199,6 +200,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     EXPECT_TRUE(stopCrd);
 }
 
+//test error handling if a fail query request is executed but no query with the supplied id exists
 TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -298,6 +300,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     EXPECT_TRUE(stopCrd);
 }
 
+//test error handling when trying to let a query fail after it has already been set to the status STOPPED
 TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -400,6 +403,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     EXPECT_TRUE(stopCrd);
 }
 
+//test if exception is thrown when the undeployment did not succeed
 TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

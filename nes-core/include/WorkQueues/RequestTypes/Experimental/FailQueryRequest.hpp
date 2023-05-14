@@ -18,7 +18,6 @@ namespace NES {
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 using SharedQueryId = uint64_t;
-using QuerySubPlanId = uint64_t;
 
 namespace Experimental {
 using QueryId = uint64_t;
@@ -83,7 +82,5 @@ class FailQueryRequest : public AbstractRequest {
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }
-
 }
-
 #endif//NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_
