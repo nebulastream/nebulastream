@@ -61,6 +61,8 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
         auto inputSequence = std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv";
         remove(inputSequence.c_str());
     }
+    static constexpr auto sleepDuration = std::chrono::milliseconds(250);
+    static constexpr auto defaultTimeout = std::chrono::seconds(60);
 };
 
 TEST_F(FailQueryRequestTest, testValidFailRequest) {
@@ -105,25 +107,45 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     //wait until query has been succesfully deployed on worker 1
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //wait until query has been succesfully deployed on worker at coordinator
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
 
     //check status of query in the global query plan
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    start_timestamp = std::chrono::system_clock::now();
+    while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+        sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    }
     EXPECT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
 
     //execute fail query request
@@ -135,6 +157,11 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     failQueryRequest.execute(storageHandler);
 
     //check status of query in the query catalog
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::FAILED && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not failed yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::FAILED);
     auto entry = crd->getQueryCatalogService()->getAllQueryCatalogEntries()[queryId];
     EXPECT_EQ(entry->getQueryStatus(), QueryStatus::FAILED);
@@ -143,24 +170,32 @@ TEST_F(FailQueryRequestTest, testValidFailRequest) {
     }
 
     //check status of query in the global query plan
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Failed && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not stopped yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Failed);
 
-    //wait until query has been succesfully deployed on worker 1
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) == NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    //wait until query has been stopped running on worker 1
+    start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) == NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query still running")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Invalid);
 
-    //wait until query has been succesfully deployed on worker at coordinator
-    while (crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId) == NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    //wait until query has been stopped on worker at coordinator
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId) == NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query still running")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService, std::chrono::seconds(5)));
     EXPECT_EQ(crd->getNesWorker()->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Invalid);
-    bool stopWrk1 = wrk1->stop(false);
+    bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
-    bool stopCrd = crd->stopCoordinator(false);
+    bool stopCrd = crd->stopCoordinator(true);
     EXPECT_TRUE(stopCrd);
 }
 
@@ -206,25 +241,45 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     //wait until query has been succesfully deployed on worker 1
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //wait until query has been succesfully deployed on worker at coordinator
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
 
     //check status of query in the global query plan
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    start_timestamp = std::chrono::system_clock::now();
+    while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+        sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    }
     EXPECT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
 
     //execute fail query request
@@ -237,9 +292,9 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     auto lockManager  = std::make_shared<LockManager>(crd->getGlobalExecutionPlan(), crd->getTopology(), crd->getQueryCatalogService(), crd->getGlobalQueryPlan(), crd->getSourceCatalog(), crd->getUDFCatalog());
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
     EXPECT_THROW(failQueryRequest.execute(storageHandler), QueryNotFoundException);
-    bool stopWrk1 = wrk1->stop(false);
+    bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
-    bool stopCrd = crd->stopCoordinator(false);
+    bool stopCrd = crd->stopCoordinator(true);
     EXPECT_TRUE(stopCrd);
 }
 
@@ -285,28 +340,48 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     //wait until query has been succesfully deployed on worker 1
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //wait until query has been succesfully deployed on worker at coordinator
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
 
     //check status of query in the global query plan
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    start_timestamp = std::chrono::system_clock::now();
+    while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+        sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    }
     EXPECT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
 
-    crd->getQueryCatalogService()->getEntryForQuery(queryId)->setQueryStatus(QueryStatus::MARKED_FOR_FAILURE);
+    crd->getQueryCatalogService()->getEntryForQuery(queryId)->setQueryStatus(QueryStatus::STOPPED);
 
     //execute fail query request
     auto subPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
@@ -316,9 +391,12 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
     EXPECT_THROW(failQueryRequest.execute(storageHandler), InvalidQueryStatusException);
-    bool stopWrk1 = wrk1->stop(false);
+
+    //make sure that query is stopped before shutting down node engine to avoid errors in shutdown
+    EXPECT_TRUE(wrk1->getNodeEngine()->stopQuery(queryId));
+    bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
-    bool stopCrd = crd->stopCoordinator(false);
+    bool stopCrd = crd->stopCoordinator(true);
     EXPECT_TRUE(stopCrd);
 }
 
@@ -364,25 +442,45 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     //wait until query has been succesfully deployed on worker 1
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //wait until query has been succesfully deployed on worker at coordinator
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+    start_timestamp = std::chrono::system_clock::now();
+    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
-        sleep(1);
+        std::this_thread::sleep_for(sleepDuration);
     }
     EXPECT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus() != QueryStatus::RUNNING && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::RUNNING);
 
     //check status of query in the global query plan
     auto sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    start_timestamp = std::chrono::system_clock::now();
+    while (sharedQueryId == INVALID_SHARED_QUERY_ID && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+        sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    }
     EXPECT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+
+    start_timestamp = std::chrono::system_clock::now();
+    while (crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus() != SharedQueryPlanStatus::Deployed && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_DEBUG2("query not running yet")
+        std::this_thread::sleep_for(sleepDuration);
+    }
     EXPECT_EQ(crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
 
     //execute fail query request
@@ -393,12 +491,10 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     auto storageHandler = TwoPhaseLockingStorageHandler(lockManager);
 
     //stop worker to provoke failure of undeployment
-    wrk1->stop(true);
+    EXPECT_TRUE(wrk1->stop(true));
 
     EXPECT_THROW(failQueryRequest.execute(storageHandler), QueryUndeploymentException);
-    bool stopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(stopWrk1);
-    bool stopCrd = crd->stopCoordinator(false);
+    bool stopCrd = crd->stopCoordinator(true);
     EXPECT_TRUE(stopCrd);
 }
 }// namespace NES
