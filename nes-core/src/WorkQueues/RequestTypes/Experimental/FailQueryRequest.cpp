@@ -27,7 +27,7 @@
 namespace NES::Experimental {
 FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
                                    NES::QuerySubPlanId failedSubPlanId,
-                                   size_t maxRetries,
+                                   int16_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
     : AbstractRequest({StorageHandlerResourceType::GlobalQueryPlan,
                        StorageHandlerResourceType::QueryCatalogService,
