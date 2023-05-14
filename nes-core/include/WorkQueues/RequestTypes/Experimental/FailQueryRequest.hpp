@@ -32,7 +32,10 @@ class FailQueryRequest : public AbstractRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param workerRpcClient: The worker rpc client to be used during undeployment
      */
-    FailQueryRequest(unsigned long queryId, unsigned long failedSubPlanId, size_t maxRetries, WorkerRPCClientPtr workerRpcClient);
+    FailQueryRequest(NES::QueryId queryId,
+                                   NES::QuerySubPlanId failedSubPlanId,
+                                   int16_t maxRetries,
+                                   NES::WorkerRPCClientPtr workerRpcClient);
 
   protected:
     /**
