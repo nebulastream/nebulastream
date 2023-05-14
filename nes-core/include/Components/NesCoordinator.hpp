@@ -224,7 +224,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     LocationServicePtr getLocationService() const;
 
-    //Todo: this function is added for testing the fail query request. can be removed once the new request executor is implemented
+    //Todo #3740: this function is added for testing the fail query request. can be removed once the new request executor is implemented
     /**
      * getter for the global execution plan
      * @return
