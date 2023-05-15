@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.80](https://github.com/nebulastream/nebulastream/tree/v0.5.80) (2023-05-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.79...v0.5.80)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace std::vector with a StackRef implementation in SampleRandomWithoutReplacement [\#3677](https://github.com/nebulastream/nebulastream/issues/3677)
+
 ## [v0.5.79](https://github.com/nebulastream/nebulastream/tree/v0.5.79) (2023-05-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.78...v0.5.79)
