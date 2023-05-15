@@ -27,6 +27,22 @@ using Timestamp = uint64_t;
 class SliceTriggerChecker {
 
   public:
+
+    /**
+     * Some questions:
+     *    - How can I make sure that the left and right stream have seen everything.
+     *    - Is the originId unique for each logical stream? So can I have the same originId for the left and right stream?
+     *    - how do I know what the left and right originId are? Do I even need it?
+     *    - Do I need a SliceTriggerChecker for left and right stream? Or is one sufficient?
+     *    - How do I know what slices/windows are open?
+     *        - Do I need to implement some callback function or something like that?
+     *        - What information about the open windows do I really need?
+     *    - Regarding the slices/windows: Can I maybe use the sliceassigner in the SiceTriggerChecker to have an easy way of getting the start and end of a given slice?
+     *    - We can say that this gets called after every buffer and therefore, we can say that the slices/windows have to be given as a parameter...
+     *        - If we do this, how do we want them? Reference of a vector?
+     *
+     * @return
+     */
     std::vector<SliceIdentifier> updateAndGetTriggeredSlices();
 
   private:
