@@ -15,8 +15,8 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -25,54 +25,54 @@
 namespace NES::Runtime::Execution::Operators {
 
 extern "C" void incrementCount(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called incrementCount: recordCount = " << handler->recordCount + 1);
     handler->recordCount++;
 }
 
 extern "C" void setIsWindowOpen(void* state, bool isWindowOpen) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called setIsWindowOpen: " << isWindowOpen);
     handler->isWindowOpen = isWindowOpen;
 }
 
 extern "C" bool getIsWindowOpen(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->isWindowOpen);
     return handler->isWindowOpen;
 }
 
 extern "C" uint64_t getRecordCount(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getRecordCount: recordCount = " << handler->recordCount);
     return handler->recordCount;
 }
 
 extern "C" void resetCount(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called resetCount");
     handler->recordCount = 0;
 }
 
 extern "C" void lockWindowHandler(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called lockWindowHandler");
     handler->mutex.lock();
 }
 
 extern "C" void unlockWindowHandler(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called unlockWindowHandler");
     handler->mutex.unlock();
 }
 
 extern "C" void* getAggregationValue(void* state, uint64_t i) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
+    auto handler = (GlobalThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getAggregationValue: i = " << i);
     return (void*) handler->AggregationValues[i].get();
 }
 
-ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+GlobalThresholdWindow::GlobalThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                                  const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
                                  uint64_t minCount,
                                  const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
@@ -80,7 +80,7 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
     : predicateExpression(std::move(predicateExpression)), aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers),
       minCount(minCount), operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
-void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
+void GlobalThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
