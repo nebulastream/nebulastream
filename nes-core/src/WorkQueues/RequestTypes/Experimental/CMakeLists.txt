@@ -12,4 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        FailQueryRequest.cpp)
+        FailQueryRequest.cpp
+        StopQueryRequestExperimental.cpp
+        )
