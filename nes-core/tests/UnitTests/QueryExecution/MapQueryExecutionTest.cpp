@@ -74,7 +74,7 @@ TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto query = TestQuery::from(testSourceDescriptor).map(Attribute("id") = Attribute("id") * 2).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE(!!source);
+    ASSERT_TRUE((bool)source);
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
@@ -110,7 +110,7 @@ TEST_P(MapQueryExecutionTest, MapLogarithmicFunctions) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE(!!source);
+    ASSERT_TRUE((bool)source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -151,7 +151,7 @@ TEST_P(MapQueryExecutionTest, TwoMapQuery) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE(!!source);
+    ASSERT_TRUE((bool)source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -189,7 +189,7 @@ TEST_P(MapQueryExecutionTest, MapAbsFunction) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE(!!source);
+    ASSERT_TRUE((bool)source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -229,7 +229,7 @@ TEST_P(MapQueryExecutionTest, MapPowerFunction) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE(!!source);
+    ASSERT_TRUE((bool)source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -271,7 +271,7 @@ TEST_P(MapQueryExecutionTest, MapTrigonometricFunctions) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE(!!source);
+    ASSERT_TRUE((bool)source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
