@@ -44,18 +44,21 @@ class ChangeDataGenerator {
     std::vector<int64_t> getNextValuesIncremental();
     std::vector<int64_t> getNextValuesGradual();
     std::vector<int64_t> getNextValuesReoccurring();
+    std::vector<int64_t> getNextF2Values();
 
     std::shared_ptr<Runtime::BufferManager> bm;
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayoutPtr;
     ChangeType changeType;
     int64_t noChangePeriod;
     int64_t noChangeRemain;
-    int64_t distributionStart;
+    int64_t distributionF1Start;
+    int64_t distributionF2Start = 1;
     int64_t incrementSteps = 5;
     bool reoccur = false;
     int64_t gradualChangePeriod = 10000;
     int64_t gradualDeclinePeriod = 100000;
-    std::default_random_engine rng = std::default_random_engine {};
+    std::random_device rd = std::random_device {};
+    std::default_random_engine rng = std::default_random_engine {rd()};
 
 };
 }// namespace NES::Runtime::Execution

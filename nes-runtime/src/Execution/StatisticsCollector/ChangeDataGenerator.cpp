@@ -29,36 +29,41 @@ ChangeDataGenerator::ChangeDataGenerator(std::shared_ptr<Runtime::BufferManager>
       noChangeRemain(noChangePeriod){
 
     if (changeType == INCREMENTAL || changeType == REOCCURRING) {
-        distributionStart = 5;
+        distributionF1Start = 5;
+        distributionF2Start = 45;
     } else if (changeType == GRADUAL) {
-        distributionStart = 1;
+        distributionF1Start = 1;
     }
 }
 
 std::vector<TupleBuffer> ChangeDataGenerator::generateBuffers(size_t numberOfBuffers) {
 
+    // generate list of values 1 til 100
+    uint64_t field1ValuesSize = 100;
+    std::vector<int64_t> field1Values(field1ValuesSize);
+    std::iota(std::begin(field1Values), std::end(field1Values), 1);
+
+    std::vector<int64_t> field2Values(field1ValuesSize);
+    std::iota(std::begin(field2Values), std::end(field2Values), 50);
+
+    // generate tuple buffers
     std::vector<TupleBuffer> bufferVector;
-
-    // generate list of values 0 til 100
-    std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-
-    for (size_t i = 0; i < numberOfBuffers; ++i) {
+    for (uint64_t i = 0; i < numberOfBuffers; ++i){
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
-
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutPtr, buffer);
-
-        for (int k = 0; k < 5; k++) {
-            std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-            for (uint64_t j = 0; j < 100; j++) {
+        for (uint64_t j = 0; j < 5; j++) {
+            std::shuffle(std::begin(field1Values), std::end(field1Values), rng);
+            std::shuffle(std::begin(field2Values), std::end(field2Values), rng);
+            for (uint64_t k = 0; k < field1ValuesSize; k++) {
                 if (noChangeRemain > 0) {
                     noChangeRemain--;
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer[j]["f2"].write(fieldValues[j]);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                    dynamicBuffer[(j * field1ValuesSize) + k]["f1"].write(field1Values[k]);
+                    dynamicBuffer[(j * field1ValuesSize) + k]["f2"].write(field2Values[k]);
+                    dynamicBuffer.setNumberOfTuples((j * field1ValuesSize) + k + 1);
                 } else {
-                    fieldValues = getNextValues();
+                    field1Values = getNextValues();
+                    if (changeType == REOCCURRING) field2Values = getNextF2Values();
                 }
             }
         }
@@ -87,9 +92,25 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesAbrupt(){
 std::vector<int64_t> ChangeDataGenerator::getNextValuesIncremental(){
     noChangeRemain = noChangePeriod;
     std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
+    std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
     std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-    distributionStart += incrementSteps;
+    distributionF1Start += incrementSteps;
+    return fieldValues;
+}
+
+std::vector<int64_t> ChangeDataGenerator::getNextValuesGradual(){
+    if (distributionF1Start == 1 || gradualDeclinePeriod < 0){
+        distributionF1Start = 50;
+        noChangeRemain = gradualChangePeriod;
+        gradualChangePeriod += 10000;
+    } else {
+        distributionF1Start = 1;
+        noChangeRemain = gradualDeclinePeriod;
+        gradualDeclinePeriod -= 10000;
+    }
+    std::vector<int64_t> fieldValues(100);
+    std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
+    std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
     return fieldValues;
 }
 
@@ -97,33 +118,39 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesReoccurring(){
     std::vector<int64_t> fieldValues(100);
     if(!reoccur) {
         noChangeRemain = noChangePeriod;
-        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
         std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-        distributionStart += incrementSteps;
-        if (distributionStart == 50) reoccur = true;
+        distributionF1Start += incrementSteps;
     } else {
         noChangeRemain = noChangePeriod;
-        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
+        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);
         std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-        distributionStart -= incrementSteps;
-        if (distributionStart == 0) distributionStart = 1;
+        distributionF1Start -= incrementSteps;
+        if (distributionF1Start == 0) distributionF1Start = 1;
     }
     return fieldValues;
 }
-
-std::vector<int64_t> ChangeDataGenerator::getNextValuesGradual(){
-    if (distributionStart == 1 || gradualDeclinePeriod < 0){
-        distributionStart = 50;
-        noChangeRemain = gradualChangePeriod;
-        gradualChangePeriod += 10000;
-    } else {
-        distributionStart = 1;
-        noChangeRemain = gradualDeclinePeriod;
-        gradualDeclinePeriod -= 10000;
-    }
+std::vector<int64_t> ChangeDataGenerator::getNextF2Values() {
     std::vector<int64_t> fieldValues(100);
-    std::iota(std::begin(fieldValues), std::end(fieldValues), distributionStart);
-    std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+    if(!reoccur) {
+        noChangeRemain = noChangePeriod;
+        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF2Start);
+        std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+        distributionF2Start -= incrementSteps;
+        if (distributionF2Start == 0) {
+            distributionF2Start = 1;
+            reoccur = true;
+        }
+    } else {
+        noChangeRemain = noChangePeriod;
+        std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF2Start);
+        std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
+        if (distributionF2Start == 1){
+            distributionF2Start = 5;
+        } else {
+            distributionF2Start += incrementSteps;
+        }
+    }
     return fieldValues;
 }
 
