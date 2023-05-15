@@ -48,6 +48,10 @@ namespace NES::Runtime::Execution {
         }
     }
 
+    uint64_t NLJWindow::getWindowIdentifier() const {
+        return getWindowEnd();
+    }
+
     uint64_t NLJWindow::getWindowStart() const {
         return windowStart;
     }
@@ -75,14 +79,6 @@ namespace NES::Runtime::Execution {
         return windowState.load();
     }
 
-    void NLJWindow::updateWindowState(NLJWindow::WindowState newWindowState) {
-        NES_TRACE2("Changing windowState for {} to {}", toString(), magic_enum::enum_name(newWindowState));
-        windowState.store(newWindowState);
-    }
-
-    bool NLJWindow::compareCurrentWindowState(NLJWindow::WindowState expectedState) {
-        return getWindowState() == expectedState;
-    }
     bool NLJWindow::compareExchangeStrong(NLJWindow::WindowState expectedState, NLJWindow::WindowState newWindowState) {
         return windowState.compare_exchange_strong(expectedState, newWindowState);
     }

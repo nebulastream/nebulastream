@@ -97,9 +97,13 @@ namespace NES::Runtime::Execution {
             bool nljWorks = true;
 
             // Creating the input left and right buffers and the expected output buffer
-            auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager);
-            auto rightBuffers = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager);
-            auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager);
+            auto originId = 0UL;
+            auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager,
+                                                              originId++, timeStampFieldLeft);
+            auto rightBuffers = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager,
+                                                               originId++, timeStampFieldRight);
+            auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager,
+                                                                      originId++);
 
             // Creating the scan (for build) and emit operator (for sink)
             auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
@@ -124,8 +128,10 @@ namespace NES::Runtime::Execution {
                                                                 joinFieldNameLeft, joinFieldNameRight);
 
             // Creating the NLJ operator handler
+            std::vector<OriginId> originIds{0, 1};
             auto nljOpHandler = std::make_shared<Operators::NLJOperatorHandler>(windowSize, leftSchema, rightSchema,
-                                                                                joinFieldNameLeft, joinFieldNameRight);
+                                                                                joinFieldNameLeft, joinFieldNameRight,
+                                                                                originIds);
 
             // Building the pipeline
             auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

@@ -52,7 +52,7 @@ class MultiOriginWatermarkProcessor {
 
   private:
     const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
+    std::vector<std::shared_ptr<NES::Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
 };
 
 }// namespace NES::Runtime::Execution::Operators

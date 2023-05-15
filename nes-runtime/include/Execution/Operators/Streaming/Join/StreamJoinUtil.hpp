@@ -150,7 +150,9 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
  */
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
                                                                             const SchemaPtr& schema,
-                                                                            Runtime::BufferManagerPtr bufferManager);
+                                                                            Runtime::BufferManagerPtr bufferManager,
+                                                                            uint64_t originId = 0,
+                                                                            const std::string& timestampFieldname = "ts");
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
  * @brief casts a value in string format to the correct type and writes it to the TupleBuffer

@@ -65,7 +65,9 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
 
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(const std::string& csvFile,
                                                                             const SchemaPtr& schema,
-                                                                            Runtime::BufferManagerPtr bufferManager) {
+                                                                            Runtime::BufferManagerPtr bufferManager,
+                                                                            uint64_t originId,
+                                                                            const std::string& timestampFieldname) {
     std::vector<Runtime::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
@@ -83,6 +85,8 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
     const auto numberOfSchemaFields = schema->fields.size();
     const auto physicalTypes = getPhysicalTypes(schema);
 
+    auto sequenceNumber = 0UL;
+    auto watermarkTS = 0UL;
     do {
         std::string line = *it;
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
@@ -94,20 +98,33 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
             NES_TRACE2("Current value is:  {}", values[j]);
             writeFieldValueToTupleBuffer(values[j], j, dynamicBuffer, schema, tupleCount, bufferManager);
         }
+        if (schema->contains(timestampFieldname)) {
+            watermarkTS = std::max(watermarkTS, dynamicBuffer[tupleCount][timestampFieldname].read<uint64_t>());
+        }
         ++tupleCount;
 
         if (tupleCount >= maxTuplesPerBuffer) {
             tupleBuffer.setNumberOfTuples(tupleCount);
+            tupleBuffer.setOriginId(originId);
+            tupleBuffer.setSequenceNumber(++sequenceNumber);
+            tupleBuffer.setWatermark(watermarkTS);
+            NES_DEBUG2("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
+
             recordBuffers.emplace_back(tupleBuffer);
             tupleBuffer = bufferManager->getBufferBlocking();
             tupleCount = 0UL;
+            watermarkTS = 0UL;
         }
         ++it;
     } while (it != endIt);
 
     if (tupleCount > 0) {
         tupleBuffer.setNumberOfTuples(tupleCount);
+        tupleBuffer.setOriginId(originId);
+        tupleBuffer.setSequenceNumber(++sequenceNumber);
+        tupleBuffer.setWatermark(watermarkTS);
         recordBuffers.emplace_back(tupleBuffer);
+        NES_DEBUG2("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
     }
 
     return recordBuffers;

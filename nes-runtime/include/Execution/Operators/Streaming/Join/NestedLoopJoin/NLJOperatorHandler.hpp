@@ -19,20 +19,19 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <list>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Execution/Operators/Streaming/SliceTriggerChecker.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class NLJOperatorHandler : public OperatorHandler {
 
 public:
     NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft, const SchemaPtr &joinSchemaRight,
-                       const std::string &joinFieldNameLeft, const std::string &joinFieldNameRight);
+                       const std::string &joinFieldNameLeft, const std::string &joinFieldNameRight,
+                       const std::vector<OriginId>& origins);
 
     uint8_t* insertNewTuple(uint64_t timestamp, bool isLeftSide);
 
     void deleteWindow(uint64_t windowIdentifier);
-
-    bool updateStateOfNLJWindows(uint64_t timestamp, bool isLeftSide);
 
     std::list<NLJWindow>& getAllNLJWindows();
 
@@ -53,17 +52,20 @@ public:
 
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    std::vector<uint64_t> checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);
+
 private:
+
+    std::optional<NLJWindow*> getWindowByWindowIdentifier(uint64_t windowIdentifier);
+
     void createNewWindow(uint64_t timestamp);
 
     std::optional<NLJWindow*> getWindowByTimestamp(uint64_t timestamp);
 
-    std::optional<NLJWindow*> getWindowByWindowIdentifier(uint64_t windowIdentifier);
-
     std::mutex insertNewTupleMutex;
     std::list<NLJWindow> nljWindows;
     SliceAssigner sliceAssigner;
-    SliceTriggerChecker windowTrigger;
+    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;

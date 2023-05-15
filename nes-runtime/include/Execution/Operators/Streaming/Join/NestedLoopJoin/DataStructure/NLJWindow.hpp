@@ -26,8 +26,7 @@ namespace NES::Runtime::Execution {
 class NLJWindow {
 public:
 
-    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, ONLY_LEFT_FILLING, ONLY_RIGHT_FILLING, DONE_FILLING,
-            EMITTED_TO_NLJ_SINK};
+    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_NLJ_SINK};
 
     explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd);
 
@@ -59,28 +58,29 @@ public:
      */
     size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide);
 
+    /**
+     * @brief Getter for the start ts of the window
+     * @return uint64_t
+     */
     uint64_t getWindowStart() const;
 
+    /**
+     * @brief Getter for the end ts of the window
+     * @return uint64_t
+     */
     uint64_t getWindowEnd() const;
+
+    /**
+     * @brief Returns the identifier for this window. For now, the identifier is the windowEnd
+     * @return uint64_t
+     */
+    uint64_t getWindowIdentifier() const;
 
     /**
      * @brief Retrieving the window state
      * @return WindowState
      */
     WindowState getWindowState() const;
-
-    /**
-     * @brief Updates the window state
-     * @param newWindowState
-     */
-    void updateWindowState(WindowState newWindowState);
-
-    /**
-     * @brief Compares if the windowState is equal to the expectedState
-     * @param expectedState
-     * @return Bool
-     */
-    bool compareCurrentWindowState(WindowState expectedState);
 
     /**
      * @brief Wrapper for std::atomic<T>::compare_exchange_strong
@@ -97,7 +97,7 @@ public:
     std::string toString();
 
   private:
-    std::atomic<WindowState> windowState; // this might not be necessary anymore, if we have a SliceTriggerChecker
+    std::atomic<WindowState> windowState;
     std::vector<uint8_t> leftTuples;
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;
