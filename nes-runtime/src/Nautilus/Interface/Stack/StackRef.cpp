@@ -48,9 +48,7 @@ Value<MemRef> StackRef::getCurrentPage() { return getMember(stackRef, Stack, cur
 
 Value<UInt64> StackRef::getNumberOfEntries() { return getMember(stackRef, Stack, numberOfEntries).load<UInt64>(); }
 
-Value<UInt64> StackRef::getTotalNumberOfEntries() {
-    return getMember(stackRef, Stack, totalNumberOfEntries).load<UInt64>();
-}
+Value<UInt64> StackRef::getTotalNumberOfEntries() { return getMember(stackRef, Stack, totalNumberOfEntries).load<UInt64>(); }
 
 Value<MemRef> StackRef::getPage(const Value<>& pos) {
     return (getMember(stackRef, Stack, firstPage).load<MemRef>() + (pos * 8)).as<MemRef>();
@@ -70,6 +68,5 @@ Value<MemRef> StackRef::getEntry(const Value<UInt64>& pos) {
 void StackRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
 
 void StackRef::setNumberOfTotalEntries(const Value<>& val) { getMember(stackRef, Stack, totalNumberOfEntries).store(val); }
-
 
 }// namespace NES::Nautilus::Interface
