@@ -69,6 +69,7 @@ TEST_F(StackTest, storeAndRetrieveValues) {
         auto ref = stackRef.allocateEntry();
         ref.store(val);
     }
+
     ASSERT_EQ(stack.getNumberOfEntries(), 1000);
     ASSERT_EQ(stack.getNumberOfPages(), 8);
 

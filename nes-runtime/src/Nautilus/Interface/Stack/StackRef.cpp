@@ -26,9 +26,9 @@ void allocateNewPageProxy(void* stackPtr) {
     stack->appendPage();
 }
 
-void* getEntryProxy(void* stackPtr, uint64_t pos) {
+void* getStackPageProxy(void* stackPtr, uint64_t pagePos) {
     auto* stack = (Stack*) stackPtr;
-    return stack->getEntry(pos);
+    return stack->getPages()[pagePos];
 }
 
 Value<MemRef> StackRef::allocateEntry() {
@@ -53,15 +53,15 @@ Value<UInt64> StackRef::getTotalNumberOfEntries() {
 }
 
 Value<MemRef> StackRef::getPage(const Value<>& pos) {
-    return (getMember(stackRef, Stack, firstPage).load<UInt64>() + pos).as<MemRef>();
+    return (getMember(stackRef, Stack, firstPage).load<MemRef>() + (pos * 8)).as<MemRef>();
 }
 
 Value<MemRef> StackRef::getEntry(const Value<UInt64>& pos) {
-//    return FunctionCall("getEntryProxy", getEntryProxy, stackRef, pos);
-    auto pagePos = pos / entriesPerPage;
+    auto pagePos = (pos / entriesPerPage).as<UInt64>();
     auto positionOnPage = pos - (pagePos * entriesPerPage);
 
-    auto page = getPage(pagePos);
+    // TODO change this later to
+    auto page = Nautilus::FunctionCall("getStackPageProxy", getStackPageProxy, stackRef, Value<UInt64>(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
     return retPos.as<MemRef>();
