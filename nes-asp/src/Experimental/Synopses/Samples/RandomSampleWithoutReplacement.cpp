@@ -81,6 +81,7 @@ RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::Synopsis
 void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
                                                    Nautilus::Record record) {
 
+    // TODO this can be pulled out of this function and into the open() #3743
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
     auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
