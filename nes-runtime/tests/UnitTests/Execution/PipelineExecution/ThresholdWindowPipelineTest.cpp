@@ -26,8 +26,8 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/GlobalThresholdWindow/GlobalThresholdWindowOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -102,7 +102,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     aggVector.emplace_back(sumAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -139,7 +139,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -183,7 +183,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
                                                                             aggregationResultFieldName);
     aggVector.emplace_back(countAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -220,7 +220,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
 
     auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(countAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -263,7 +263,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(minAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -300,7 +300,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
 
     auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(minAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -343,7 +343,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(maxAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -380,7 +380,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
 
     auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(maxAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -423,7 +423,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -460,7 +460,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -501,7 +501,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -538,7 +538,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -581,7 +581,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
                                                                         aggregationResultFieldName);
     aggVector.emplace_back(sumAgg);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+        std::make_shared<Operators::GlobalThresholdWindow>(greaterThanExpression,
                                                      std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
                                                      0,
                                                      aggVector,
@@ -618,7 +618,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto handler = std::make_shared<Operators::GlobalThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

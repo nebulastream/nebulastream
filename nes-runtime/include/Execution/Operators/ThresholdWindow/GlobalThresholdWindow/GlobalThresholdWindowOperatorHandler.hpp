@@ -24,9 +24,9 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This handler stores states of a threshold window during its execution
  */
-class ThresholdWindowOperatorHandler : public OperatorHandler {
+class GlobalThresholdWindowOperatorHandler : public OperatorHandler {
   public:
-    explicit ThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
+    explicit GlobalThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
         : AggregationValues(std::move(AggregationValues)) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
