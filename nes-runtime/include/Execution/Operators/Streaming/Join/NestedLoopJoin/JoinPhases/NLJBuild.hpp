@@ -32,12 +32,10 @@ public:
 
 private:
     const uint64_t operatorHandlerIndex;
-    const bool isLeftSide;
-    const Expressions::ExpressionPtr timestampExpression;
-
     SchemaPtr schema;
     std::string joinFieldName;
     std::string timeStampField;
+    const bool isLeftSide;
 };
 } // namespace NES::Runtime::Execution::Operators
 

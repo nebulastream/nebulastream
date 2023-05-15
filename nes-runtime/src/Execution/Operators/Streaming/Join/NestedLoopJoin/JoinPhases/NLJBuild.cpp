@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
@@ -36,40 +37,11 @@ void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t times
     return opHandler->insertNewTuple(timestampRecord, isLeftSide);
 }
 
-bool updateStateOfNLJWindows(void* ptrOpHandler, uint64_t timestampRecord, bool isLeftSide) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-
-    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    return opHandler->updateStateOfNLJWindows(timestampRecord, isLeftSide);
-}
-
-void triggerJoinSinkProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
-    NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
-
-    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-    auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
-
-    auto& allNLJWindows = opHandler->getAllNLJWindows();
-    for (auto& nljWindow : allNLJWindows) {
-        auto expected = NLJWindow::WindowState::DONE_FILLING;
-        if (nljWindow.compareExchangeStrong(expected, NLJWindow::WindowState::EMITTED_TO_NLJ_SINK)) {
-            auto buffer = workerCtx->allocateTupleBuffer();
-            auto windowEnd = nljWindow.getWindowEnd();
-            std::memcpy(buffer.getBuffer(), &windowEnd, sizeof(uint64_t));
-            buffer.setNumberOfTuples(1);
-            pipelineCtx->emitBuffer(buffer, *workerCtx);
-            NES_TRACE2("Emitted window {}", nljWindow.toString());
-        }
-    }
-}
-
 /**
  * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
  */
-void checkWindowsTriggerProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, bool isLeftSide) {
+void checkWindowsTriggerProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx,
+                              uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
@@ -78,35 +50,41 @@ void checkWindowsTriggerProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* pt
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
-    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger();
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(watermarkTs, sequenceNumber, originId);
     for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
         auto buffer = workerCtx->allocateTupleBuffer();
         std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
         buffer.setNumberOfTuples(1);
-        pipelineCtx->emitBuffer(buffer, *workerCtx);
-        NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier.toString());
+        pipelineCtx->dispatchBuffer(buffer);
+        NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
     }
 }
 
 void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+
+    // Update the watermark for the nlj operator and trigger windows
     Nautilus::FunctionCall("checkWindowsTriggerProxy", checkWindowsTriggerProxy,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
                            ctx.getWorkerContext(),
-                           Value<Boolean>(isLeftSide));
-
+                           recordBuffer.getWatermarkTs(),
+                           recordBuffer.getSequenceNr(),
+                           recordBuffer.getOriginId());
 }
 
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
+    // TODO for now, this is okay but we have to fix this with issue #3652
+    auto timestampVal = record.read(timeStampField).as<UInt64>();
+
     // Get the memRef to the new entry
     auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy", insertEntryMemRefProxy,
                                               operatorHandlerMemRef,
                                               Value<Boolean>(isLeftSide),
-                                              record.read(timeStampField).as<UInt64>());
+                                              timestampVal);
 
     // Write Record at entryMemRef
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
