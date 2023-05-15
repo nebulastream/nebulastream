@@ -12,32 +12,38 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_INTERPRETER_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_INTERPRETER_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_EXECUTABLE_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_EXECUTABLE_HPP_
+#include "Nautilus/Backends/Babelfish/BabelfishCode.hpp"
 #include <Compiler/DynamicObject.hpp>
 #include <Nautilus/Backends/Executable.hpp>
+#include <jni.h>
 #include <memory>
-namespace NES::Nautilus::Backends:: {
+namespace NES::Nautilus::Backends::Babelfish {
 
 /**
  * @brief Implements the executable for the cpp backend
  */
-class CPPExecutable : public Executable {
+class BabelfishExecutable : public Executable {
   public:
     /**
      * Constructor to create a cpp executable.
      * @param obj the shared object, which we invoke at runtime.
      */
-    explicit CPPExecutable(std::shared_ptr<Compiler::DynamicObject> obj);
-    ~CPPExecutable() override = default;
+    explicit BabelfishExecutable(BabelfishCode code, JNIEnv* env, jclass entripointClazz, jobject pipelineObject);
+    ~BabelfishExecutable()  override ;
 
   public:
     void* getInvocableFunctionPtr(const std::string& member) override;
     bool hasInvocableFunctionPtr() override;
+    std::unique_ptr<GenericInvocable> getGenericInvocable(const std::string& string) override;
 
   private:
-    std::shared_ptr<Compiler::DynamicObject> obj;
+    BabelfishCode code;
+    JNIEnv* env;
+    jclass entripointClazz;
+    jobject pipelineObject;
 };
-}// namespace NES::Nautilus::Backends::CPP
+}// namespace NES::Nautilus::Backends::Babelfish
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_INTERPRETER_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_EXECUTABLE_HPP_

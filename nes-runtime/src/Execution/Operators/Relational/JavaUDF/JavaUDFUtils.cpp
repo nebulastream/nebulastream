@@ -171,32 +171,43 @@ void* allocateObject(void* state, void* classPtr) {
 }
 
 template<typename T>
-void* createObjectType(void* state, T value, std::string className, std::string constructorSignature) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-
-    auto clazz = handler->getEnvironment()->FindClass(className.c_str());
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
-    auto mid = handler->getEnvironment()->GetMethodID(clazz, "<init>", constructorSignature.c_str());
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
-    auto object = handler->getEnvironment()->NewObject(clazz, mid, value);
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
+jobject createObjectType(JNIEnv* env, T value, std::string className, std::string constructorSignature) {
+    NES_ASSERT2_FMT(env != nullptr, "op handler context should not be null");
+    auto clazz = env->FindClass(className.c_str());
+    jniErrorCheck(env, __func__, __LINE__);
+    auto mid = env->GetMethodID(clazz, "<init>", constructorSignature.c_str());
+    jniErrorCheck(env, __func__, __LINE__);
+    auto object = env->NewObject(clazz, mid, value);
+    jniErrorCheck(env, __func__, __LINE__);
     return object;
 }
 
-void* createBooleanObject(void* state, bool value) { return createObjectType(state, value, "java/lang/Boolean", "(Z)V"); }
+JNIEnv* getJNIEnvFromState(void* state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
+    return handler->getEnvironment();
+}
 
-void* createFloatObject(void* state, float value) { return createObjectType(state, value, "java/lang/Float", "(F)V"); }
+jobject createBoolean(JNIEnv* env, bool value) { return createObjectType(env, value, "java/lang/Boolean", "(Z)V"); }
+void* createBooleanObject(void* state, bool value) { return createBoolean(getJNIEnvFromState(state), value); }
 
-void* createDoubleObject(void* state, double value) { return createObjectType(state, value, "java/lang/Double", "(D)V"); }
+jobject createFloat(JNIEnv* env, float value) { return createObjectType(env, value, "java/lang/Float", "(F)V"); }
+void* createFloatObject(void* state, float value) { return createFloat(getJNIEnvFromState(state), value); }
 
-void* createIntegerObject(void* state, int32_t value) { return createObjectType(state, value, "java/lang/Integer", "(I)V"); }
+jobject createDouble(JNIEnv* env, double value) { return createObjectType(env, value, "java/lang/Double", "(D)V"); }
+void* createDoubleObject(void* state, double value) { return createDouble(getJNIEnvFromState(state), value); }
 
-void* createLongObject(void* state, int64_t value) { return createObjectType(state, value, "java/lang/Long", "(J)V"); }
+jobject createInteger(JNIEnv* env, int32_t value) { return createObjectType(env, value, "java/lang/Integer", "(I)V"); }
+void* createIntegerObject(void* state, int32_t value) { return createInteger(getJNIEnvFromState(state), value); }
 
-void* createShortObject(void* state, int16_t value) { return createObjectType(state, value, "java/lang/Short", "(S)V"); }
+jobject createLong(JNIEnv* env, int64_t value) { return createObjectType(env, value, "java/lang/Long", "(J)V"); }
+void* createLongObject(void* state, int64_t value) { return createLong(getJNIEnvFromState(state), value); }
 
-void* createByteObject(void* state, int8_t value) { return createObjectType(state, value, "java/lang/Byte", "(B)V"); }
+jobject createShort(JNIEnv* env, int16_t value) { return createObjectType(env, value, "java/lang/Short", "(S)V"); }
+void* createShortObject(void* state, int16_t value) { return createShort(getJNIEnvFromState(state), value); }
+
+jobject createByte(JNIEnv* env, int8_t value) { return createObjectType(env, value, "java/lang/Byte", "(B)V"); }
+void* createByteObject(void* state, int8_t value) { return createByte(getJNIEnvFromState(state), value); }
 
 void* createStringObject(void* state, TextValue* value) {
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
@@ -204,63 +215,75 @@ void* createStringObject(void* state, TextValue* value) {
 }
 
 template<typename T>
-T getObjectTypeValue(void* state, void* object, std::string className, std::string getterName, std::string getterSignature) {
-    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-
-    auto clazz = handler->getEnvironment()->FindClass(className.c_str());
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
-    auto mid = handler->getEnvironment()->GetMethodID(clazz, getterName.c_str(), getterSignature.c_str());
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
+T getObjectTypeValue(JNIEnv* env, jobject object, std::string className, std::string getterName, std::string getterSignature) {
+    auto clazz = env->FindClass(className.c_str());
+    jniErrorCheck(env, __func__, __LINE__);
+    auto mid = env->GetMethodID(clazz, getterName.c_str(), getterSignature.c_str());
+    jniErrorCheck(env, __func__, __LINE__);
     T value;
     if constexpr (std::is_same<T, bool>::value) {
-        value = handler->getEnvironment()->CallBooleanMethod((jobject) object, mid);
+        value = env->CallBooleanMethod((jobject) object, mid);
     } else if constexpr (std::is_same<T, float>::value) {
-        value = handler->getEnvironment()->CallFloatMethod((jobject) object, mid);
+        value = env->CallFloatMethod((jobject) object, mid);
     } else if constexpr (std::is_same<T, double>::value) {
-        value = handler->getEnvironment()->CallDoubleMethod((jobject) object, mid);
+        value = env->CallDoubleMethod((jobject) object, mid);
     } else if constexpr (std::is_same<T, int32_t>::value) {
-        value = handler->getEnvironment()->CallIntMethod((jobject) object, mid);
+        value = env->CallIntMethod((jobject) object, mid);
     } else if constexpr (std::is_same<T, int64_t>::value) {
-        value = handler->getEnvironment()->CallLongMethod((jobject) object, mid);
+        value = env->CallLongMethod((jobject) object, mid);
     } else if constexpr (std::is_same<T, int16_t>::value) {
-        value = handler->getEnvironment()->CallShortMethod((jobject) object, mid);
+        value = env->CallShortMethod((jobject) object, mid);
     } else if constexpr (std::is_same<T, int8_t>::value) {
-        value = handler->getEnvironment()->CallByteMethod((jobject) object, mid);
+        value = env->CallByteMethod((jobject) object, mid);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
-    jniErrorCheck(handler->getEnvironment(), __func__, __LINE__);
+    jniErrorCheck(env, __func__, __LINE__);
     return value;
 }
 
-bool getBooleanObjectValue(void* state, void* object) {
-    return getObjectTypeValue<bool>(state, object, "java/lang/Boolean", "booleanValue", "()Z");
+bool getBooleanValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<bool>(env, object, "java/lang/Boolean", "booleanValue", "()Z");
 }
 
-float getFloatObjectValue(void* state, void* object) {
-    return getObjectTypeValue<float>(state, object, "java/lang/Float", "floatValue", "()F");
+bool getBooleanObjectValue(void* state, void* object) { return getBooleanValue(getJNIEnvFromState(state), (jobject) object); }
+
+float getFloatValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<float>(env, object, "java/lang/Float", "floatValue", "()F");
 }
 
-double getDoubleObjectValue(void* state, void* object) {
-    return getObjectTypeValue<double>(state, object, "java/lang/Double", "doubleValue", "()D");
+float getFloatObjectValue(void* state, void* object) { return getFloatValue(getJNIEnvFromState(state), (jobject) object); }
+
+double getDoubleValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<double>(env, object, "java/lang/Double", "doubleValue", "()D");
 }
 
-int32_t getIntegerObjectValue(void* state, void* object) {
-    return getObjectTypeValue<int32_t>(state, object, "java/lang/Integer", "intValue", "()I");
+double getDoubleObjectValue(void* state, void* object) { return getDoubleValue(getJNIEnvFromState(state), (jobject) object); }
+
+int32_t getIntegerValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<int32_t>(env, object, "java/lang/Integer", "intValue", "()I");
 }
 
-int64_t getLongObjectValue(void* state, void* object) {
-    return getObjectTypeValue<int64_t>(state, object, "java/lang/Long", "longValue", "()J");
+int32_t getIntegerObjectValue(void* state, void* object) { return getIntegerValue(getJNIEnvFromState(state), (jobject) object); }
+
+int64_t getLongValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<int64_t>(env, object, "java/lang/Long", "longValue", "()J");
 }
 
-int16_t getShortObjectValue(void* state, void* object) {
-    return getObjectTypeValue<int16_t>(state, object, "java/lang/Short", "shortValue", "()S");
+int64_t getLongObjectValue(void* state, void* object) { return getLongValue(getJNIEnvFromState(state), (jobject) object); }
+
+
+int16_t getShortValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<int16_t>(env, object, "java/lang/Short", "shortValue", "()S");
 }
 
-int8_t getByteObjectValue(void* state, void* object) {
-    return getObjectTypeValue<int16_t>(state, object, "java/lang/Byte", "byteValue", "()B");
+int16_t getShortObjectValue(void* state, void* object) { return getShortValue(getJNIEnvFromState(state), (jobject) object); }
+
+int8_t getByteValue(JNIEnv* env, jobject object) {
+    return getObjectTypeValue<int8_t>(env, object, "java/lang/Byte", "byteValue", "()B");
 }
+
+int8_t getByteObjectValue(void* state, void* object) { return getByteValue(getJNIEnvFromState(state), (jobject) object); }
 
 TextValue* getStringObjectValue(void* state, void* object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");

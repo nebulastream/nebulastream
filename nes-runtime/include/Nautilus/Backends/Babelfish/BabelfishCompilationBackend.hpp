@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_BACKEND_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_BACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
+#include <memory>
 namespace NES::Nautilus::Backends::Babelfish {
 
 /**
@@ -21,9 +22,18 @@ namespace NES::Nautilus::Backends::Babelfish {
  */
 class BabelfishCompilationBackend : public CompilationBackend {
   public:
+    class VM {
+      public:
+        VM();
+        ~VM();
+        JNIEnv* env;
+        jclass jniEndpoint;
+    };
     std::unique_ptr<Executable>
     compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
+  private:
+    std::unique_ptr<VM> vm = nullptr;
 };
 
-}// namespace NES::Nautilus::Backends::CPP
+}// namespace NES::Nautilus::Backends::Babelfish
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_BACKEND_HPP_

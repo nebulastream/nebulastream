@@ -139,13 +139,14 @@ void* allocateObject(void* state, void* classPtr);
  * @return jobject instance of the given class
  */
 template<typename T>
-void* createObjectType(void* state, T value, std::string className, std::string constructorSignature);
+jobject createObjectType(JNIEnv* env, T value, std::string className, std::string constructorSignature);
 
 /**
  * Creates a new boolean object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
+jobject createBoolean(JNIEnv* env, bool value);
 void* createBooleanObject(void* state, bool value);
 
 /**
@@ -153,6 +154,7 @@ void* createBooleanObject(void* state, bool value);
  * @param state operator handler state
  * @param value value to set
  */
+jobject createFloat(JNIEnv* env, float value);
 void* createFloatObject(void* state, float value);
 
 /**
@@ -160,6 +162,7 @@ void* createFloatObject(void* state, float value);
  * @param state operator handler state
  * @param value value to set
  */
+jobject createDouble(JNIEnv* env, double value);
 void* createDoubleObject(void* state, double value);
 
 /**
@@ -167,6 +170,7 @@ void* createDoubleObject(void* state, double value);
  * @param state operator handler state
  * @param value value to set
  */
+jobject createInteger(JNIEnv* env, int32_t value);
 void* createIntegerObject(void* state, int32_t value);
 
 /**
@@ -174,6 +178,7 @@ void* createIntegerObject(void* state, int32_t value);
  * @param state operator handler state
  * @param value value to set
  */
+jobject createLong(JNIEnv* env, int64_t value);
 void* createLongObject(void* state, int64_t value);
 
 /**
@@ -181,6 +186,7 @@ void* createLongObject(void* state, int64_t value);
  * @param state operator handler state
  * @param value value to set
  */
+jobject createShort(JNIEnv* env, int16_t value);
 void* createShortObject(void* state, int16_t value);
 
 /**
@@ -188,6 +194,7 @@ void* createShortObject(void* state, int16_t value);
  * @param state operator handler state
  * @param value value to set
  */
+jobject createByte(JNIEnv* env, int8_t value);
 void* createByteObject(void* state, int8_t value);
 
 /**
@@ -195,7 +202,7 @@ void* createByteObject(void* state, int8_t value);
  * @param state operator handler state
  * @param value value to set
  */
-void* createStringObject(void* state, TextValue* value);
+void* createStringObject(void* state, Nautilus::TextValue* value);
 
 /**
  * Get the value of an object of type boolean, float, double, int, long, short, byte or string.
@@ -216,6 +223,7 @@ T getObjectTypeValue(void* state, void* object, std::string className, std::stri
  * @param object object to get the field from
  * @return bool value of the field
  */
+bool getBooleanValue(JNIEnv* env, jobject object);
 bool getBooleanObjectValue(void* state, void* object);
 
 /**
@@ -224,6 +232,8 @@ bool getBooleanObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return float value of the field
  */
+
+float getFloatValue(JNIEnv* env, jobject object);
 float getFloatObjectValue(void* state, void* object);
 /**
  * Get double value of a double object.
@@ -231,6 +241,7 @@ float getFloatObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return double value of the field
  */
+double getDoubleValue(JNIEnv* env, jobject object);
 double getDoubleObjectValue(void* state, void* object);
 /**
  * Get int value of a integer object.
@@ -238,6 +249,7 @@ double getDoubleObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return int value of the field
  */
+int32_t getIntegerValue(JNIEnv* env, jobject object);
 int32_t getIntegerObjectValue(void* state, void* object);
 
 /**
@@ -246,6 +258,7 @@ int32_t getIntegerObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return long value of the field
  */
+int64_t getLongValue(JNIEnv* env, jobject object);
 int64_t getLongObjectValue(void* state, void* object);
 
 /**
@@ -254,6 +267,7 @@ int64_t getLongObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return short value of the field
  */
+int16_t getShortValue(JNIEnv* env, jobject object);
 int16_t getShortObjectValue(void* state, void* object);
 /**
  * Get byte value of
@@ -261,6 +275,7 @@ int16_t getShortObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return byte value of the field
  */
+int8_t getByteValue(JNIEnv* env, jobject object);
 int8_t getByteObjectValue(void* state, void* object);
 
 /**
@@ -269,7 +284,7 @@ int8_t getByteObjectValue(void* state, void* object);
  * @param object object to get the field from
  * @return TextValue value of the field
  */
-TextValue* getStringObjectValue(void* state, void* object);
+Nautilus::TextValue* getStringObjectValue(void* state, void* object);
 
 /**
  * Get the value of a field of an object.
@@ -362,7 +377,7 @@ int8_t getByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex
  * @param fieldIndex index of the field
  * @return TextValue* value of the field
  */
-TextValue* getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
+Nautilus::TextValue* getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex);
 
 /**
  * Set the value of a field of an object.
@@ -455,7 +470,7 @@ void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, 
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const TextValue* value);
+void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const Nautilus::TextValue* value);
 
 };// namespace NES::Runtime::Execution::Operators
 

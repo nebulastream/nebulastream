@@ -94,7 +94,7 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
         return memScan(memPtr, size);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t, int, void*>("execute");
+    auto function = engine->getInvocableMember<int64_t, int64_t, void*>("execute");
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
     ASSERT_EQ(function(7, array), 28);
 }

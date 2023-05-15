@@ -30,7 +30,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
     const std::string& compilationBackend,
     const Nautilus::CompilationOptions& options)
-    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend), options(options) {}
+    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend), options(options), pipelineFunction(Nautilus::Backends::Executable::Invocable<void, void*, void*, void*>(nullptr)) {}
 
 ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
@@ -38,8 +38,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
     // wait till pipeline is ready
     executablePipeline.wait();
     auto& pipeline = executablePipeline.get();
-    auto func = pipeline->getInvocableMember<void, void*, void*, void*>("execute");
-    func((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+    pipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
 }
 
@@ -91,10 +90,14 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext) {
     NautilusExecutablePipelineStage::setup(pipelineExecutionContext);
     // TODO enable async compilation #3357
-    executablePipeline = std::async(std::launch::deferred, [this] {
-                             return this->compilePipeline();
-                         }).share();
+    if (!executablePipeline.valid()) {
+        executablePipeline = std::async(std::launch::deferred, [this] {
+                                 return this->compilePipeline();
+                             }).share();
+    }
     executablePipeline.get();
+    auto& pipeline = executablePipeline.get();
+    this->pipelineFunction = pipeline->getInvocableMember<void, void*, void*, void*>("execute");
     return 0;
 }
 

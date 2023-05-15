@@ -54,6 +54,7 @@
 #include <benchmark/benchmark.h>
 #include <gtest/gtest.h>
 #include <memory>
+#include <string>
 
 namespace NES::Runtime::Execution {
 
@@ -95,7 +96,7 @@ class BenchmarkRunner {
     virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) = 0;
 
   protected:
-    uint64_t iterations = 10;
+    uint64_t iterations = 5;
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F1;
     std::string compiler;
     ExecutablePipelineProvider* provider;
@@ -117,21 +118,29 @@ class Query6Runner : public BenchmarkRunner {
         auto pipeline2 = plan.getPipeline(1);
         auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
         auto emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
-        aggExecutablePipeline->setup(*pipeline1.ctx);
-        emitExecutablePipeline->setup(*pipeline2.ctx);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-        executionTimeTimer.start();
-        for (auto& chunk : lineitems->getChunks()) {
-            aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
+        Timer executionTimeTimer2("Execution");
+
+        for (auto i = 0; i < 5; i++) {
+            aggExecutablePipeline->setup(*pipeline1.ctx);
+            // emitExecutablePipeline->setup(*pipeline2.ctx);
+            compileTimeTimer.snapshot("setup");
+            compileTimeTimer.pause();
+            executionTimeTimer.start();
+            executionTimeTimer2.start();
+            for (auto& chunk : lineitems->getChunks()) {
+                aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
+            }
+            executionTimeTimer2.snapshot("execute i" + std::to_string(i));
+            executionTimeTimer2.pause();
+            executionTimeTimer.snapshot("execute agg");
+            auto dummyBuffer = NES::Runtime::TupleBuffer();
+            //emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
+            executionTimeTimer.snapshot("execute emit");
+            executionTimeTimer.pause();
+            aggExecutablePipeline->stop(*pipeline1.ctx);
+            //emitExecutablePipeline->stop(*pipeline2.ctx);
         }
-        executionTimeTimer.snapshot("execute agg");
-        auto dummyBuffer = NES::Runtime::TupleBuffer();
-        emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
-        executionTimeTimer.snapshot("execute emit");
-        executionTimeTimer.pause();
-        aggExecutablePipeline->stop(*pipeline1.ctx);
-        emitExecutablePipeline->stop(*pipeline2.ctx);
+        NES_INFO(executionTimeTimer2)
     }
 };
 
@@ -213,7 +222,7 @@ class Query3Runner : public BenchmarkRunner {
 
 int main(int, char**) {
     NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F1;
-    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
+    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler", "BabelfishPipelineCompiler"};
     for (const auto& c : compilers) {
         NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
     }

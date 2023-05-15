@@ -14,4 +14,6 @@
 add_source_files(nes-runtime
         BabelfishLoweringProvider.cpp
         BabelfishCompilationBackend.cpp
+        BabelfishExecutable.cpp
+        BabelfishPipelineProvider.cpp
         )

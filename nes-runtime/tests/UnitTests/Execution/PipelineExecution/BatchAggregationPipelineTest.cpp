@@ -202,7 +202,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         BatchAggregationPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler", "BabelfishPipelineCompiler"),
                         [](const testing::TestParamInfo<BatchAggregationPipelineTest::ParamType>& info) {
                             return info.param;
                         });

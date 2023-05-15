@@ -14,6 +14,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_QUERY6_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_QUERY6_HPP_
 
+#include "Execution/Expressions/LogicalExpressions/EqualsExpression.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -82,12 +83,13 @@ class TPCH_Query6 {
         auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
         auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
         auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
+        auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
 
         // l_quantity < 24
         auto const_24 = std::make_shared<ConstantInt32ValueExpression>(24);
         auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
         auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
-        auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
+
         auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
 
         auto selection2 = std::make_shared<Selection>(andExpression4);

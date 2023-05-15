@@ -12,6 +12,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include "Nautilus/Backends/Babelfish/BabelfishCode.hpp"
+#include "Nautilus/IR/Operations/CastOperation.hpp"
+#include "Nautilus/IR/Operations/ConstFloatOperation.hpp"
 #include <Nautilus/Backends/Babelfish/BabelfishLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
@@ -22,6 +25,7 @@ limitations under the License.
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <sstream>
@@ -32,12 +36,12 @@ namespace NES::Nautilus::Backends::Babelfish {
 
 BabelfishLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::IRGraph> ir) : ir(std::move(ir)) {}
 
-std::string BabelfishLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
+BabelfishCode BabelfishLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
     auto ctx = LoweringContext(std::move(ir));
-    return ctx.process().str();
+    return ctx.process();
 }
 
-std::stringstream BabelfishLoweringProvider::LoweringContext::process() {
+BabelfishCode BabelfishLoweringProvider::LoweringContext::process() {
 
     auto functionOperation = ir->getRootOperation();
     RegisterFrame rootFrame;
@@ -48,17 +52,22 @@ std::stringstream BabelfishLoweringProvider::LoweringContext::process() {
     irJson["blocks"] = blocks;
     irJson["id"] = ir->getRootOperation()->getIdentifier();
     std::vector<nlohmann::json> arguments;
+    std::vector<Type> argumentsTypes;
     for (const auto& arg : functionOperation->getFunctionBasicBlock()->getArguments()) {
         nlohmann::json irJson{};
         irJson["id"] = arg->getIdentifier();
         irJson["type"] = arg->getStamp()->toString();
         arguments.emplace_back(irJson);
+        argumentsTypes.emplace_back(i64);
     }
     irJson["arguments"] = arguments;
 
     std::stringstream pipelineCode;
     pipelineCode << irJson;
-    return pipelineCode;
+
+    BabelfishCode code = {pipelineCode.str(), returnType, argumentsTypes};
+
+    return code;
 }
 
 std::string BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block,
@@ -73,7 +82,10 @@ std::string BabelfishLoweringProvider::LoweringContext::process(const std::share
         blockJson["id"] = blockName;
         std::vector<nlohmann::json> arguments;
         for (const auto& arg : block->getArguments()) {
-            arguments.emplace_back(arg->getIdentifier());
+            nlohmann::json jsonArg;
+            jsonArg["stamp"] = arg->getStamp()->toString();
+            jsonArg["id"] = arg->getIdentifier();
+            arguments.emplace_back(jsonArg);
         }
         blockJson["arguments"] = arguments;
         activeBlocks.emplace(block->getIdentifier(), blockName);
@@ -83,9 +95,9 @@ std::string BabelfishLoweringProvider::LoweringContext::process(const std::share
         }
 
         for (auto& jsonBlock : blocks) {
-            NES_DEBUG2("block id: {}", jsonBlock["id"]);
+            //NES_DEBUG2("block id: {}", jsonBlock["id"]);
             if (jsonBlock["id"] == block->getIdentifier()) {
-                NES_DEBUG2("add operations to block id: {}", jsonBlock["id"]);
+              //  NES_DEBUG2("add operations to block id: {}", jsonBlock["id"]);
                 jsonBlock["operations"] = jsonOperations;
             }
         }
@@ -126,7 +138,10 @@ nlohmann::json BabelfishLoweringProvider::LoweringContext::process(IR::Operation
     opJson["target"] = blockInvocation.getBlock()->getIdentifier();
     std::vector<nlohmann::json> arguments;
     for (const auto& arg : blockInvocation.getArguments()) {
-        arguments.emplace_back(arg->getIdentifier());
+        nlohmann::json jsonArg;
+        jsonArg["stamp"] = arg->getStamp()->toString();
+        jsonArg["id"] = arg->getIdentifier();
+        arguments.emplace_back(jsonArg);
     }
     opJson["arguments"] = arguments;
     return opJson;
@@ -153,8 +168,8 @@ void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<I
             return;
         }
         case IR::Operations::Operation::OperationType::ConstFloatOp: {
-            auto constOp = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation);
-            opJson["type"] = "ConstBool";
+            auto constOp = std::static_pointer_cast<IR::Operations::ConstFloatOperation>(operation);
+            opJson["type"] = "ConstFloat";
             opJson["value"] = constOp->getValue();
             return;
         }
@@ -189,8 +204,10 @@ void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<I
         case IR::Operations::Operation::OperationType::ReturnOp: {
             auto constOp = std::static_pointer_cast<IR::Operations::ReturnOperation>(operation);
             opJson["type"] = "Return";
-            if (constOp->hasReturnValue())
+            returnType = constOp->getStamp();
+            if (constOp->hasReturnValue()) {
                 opJson["value"] = constOp->getReturnValue()->getIdentifier();
+            }
             return;
         }
         case IR::Operations::Operation::OperationType::CompareOp: {
@@ -233,6 +250,10 @@ void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<I
             auto proxyCallOp = std::static_pointer_cast<IR::Operations::ProxyCallOperation>(operation);
             opJson["type"] = "call";
             opJson["symbol"] = proxyCallOp->getFunctionSymbol();
+
+            auto val = (int64_t) proxyCallOp->getFunctionPtr();
+
+            opJson["fptr"] = val;
             std::vector<nlohmann::json> arguments;
             for (const auto& arg : proxyCallOp->getInputArguments()) {
                 arguments.emplace_back(arg->getIdentifier());
@@ -242,7 +263,7 @@ void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<I
         }
         case IR::Operations::Operation::OperationType::OrOp: {
             auto andOp = std::static_pointer_cast<IR::Operations::OrOperation>(operation);
-            opJson["type"] = "And";
+            opJson["type"] = "Or";
             opJson["left"] = andOp->getLeftInput()->getIdentifier();
             opJson["right"] = andOp->getRightInput()->getIdentifier();
             return;
@@ -261,10 +282,9 @@ void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<I
             return;
         }
         case IR::Operations::Operation::OperationType::CastOp: {
-            auto andOp = std::static_pointer_cast<IR::Operations::OrOperation>(operation);
-            opJson["type"] = "Or";
-            opJson["left"] = andOp->getLeftInput()->getIdentifier();
-            opJson["right"] = andOp->getRightInput()->getIdentifier();
+            auto castOp = std::static_pointer_cast<IR::Operations::CastOperation>(operation);
+            opJson["type"] = "Cast";
+            opJson["input"] = castOp->getInput()->getIdentifier();
             return;
         }
         default: {

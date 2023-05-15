@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_BABELFISHLOWERINGPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BABELFISH_BABELFISHLOWERINGPROVIDER_HPP_
 
+#include <Nautilus/Backends/Babelfish/BabelfishCode.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
@@ -54,7 +55,7 @@ namespace NES::Nautilus::Backends::Babelfish {
 class BabelfishLoweringProvider {
   public:
     BabelfishLoweringProvider() = default;
-    static std::string lower(std::shared_ptr<IR::IRGraph> ir);
+    static BabelfishCode lower(std::shared_ptr<IR::IRGraph> ir);
 
   private:
     using RegisterFrame = Frame<std::string, std::string>;
@@ -63,17 +64,20 @@ class BabelfishLoweringProvider {
     class LoweringContext {
       public:
         explicit LoweringContext(std::shared_ptr<IR::IRGraph> ir);
-        Code process();
+        BabelfishCode process();
 
       private:
         std::vector<nlohmann::json> blocks;
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_map<std::string, std::string> activeBlocks;
+        IR::Types::StampPtr returnType;
         std::string process(const std::shared_ptr<IR::BasicBlock>&, RegisterFrame& frame);
         nlohmann::json process(IR::Operations::BasicBlockInvocation& opt);
         void process(const std::shared_ptr<IR::Operations::CompareOperation>& operation, nlohmann::json& opJson);
-        void
-        process(const std::shared_ptr<IR::Operations::Operation>& operation, short, std::vector<nlohmann::json>& block, RegisterFrame& frame);
+        void process(const std::shared_ptr<IR::Operations::Operation>& operation,
+                     short,
+                     std::vector<nlohmann::json>& block,
+                     RegisterFrame& frame);
     };
 };
 }// namespace NES::Nautilus::Backends::Babelfish

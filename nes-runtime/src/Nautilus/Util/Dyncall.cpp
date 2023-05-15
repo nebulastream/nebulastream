@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/BCInterpreter/Dyncall.hpp>
+#include <Nautilus/Util//Dyncall.hpp>
 #include <dyncall.h>
 
 namespace NES::Nautilus::Backends::BC {

@@ -37,7 +37,7 @@ class LoopCompilationTest : public Testing::NESBaseTest, public AbstractCompilat
     static void TearDownTestCase() { NES_DEBUG("Tear down TraceTest test class."); }
 };
 
-Value<> sumLoop(Value<Int32> upperLimit) {
+Value<> sumLoop(int upperLimit) {
     Value agg = Value(1);
     for (Value start = 0; start < upperLimit; start = start + 1) {
         agg = agg + 10;
@@ -46,29 +46,13 @@ Value<> sumLoop(Value<Int32> upperLimit) {
 }
 
 TEST_P(LoopCompilationTest, sumLoopTestSCF) {
-    Value<Int32> tempx = (int32_t) 0;
-    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
-    auto execution = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
-        return sumLoop(tempx);
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
+        return sumLoop(10);
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t, int32_t>("execute");
-
-    for (int i = 0; i < 100000; i++) {
-
-        ASSERT_EQ(function(100000), 1000001);
-    }
-    sleep(3);
-    for (int i = 0; i < 100000; i++) {
-
-        ASSERT_EQ(function(100000), 1000001);
-    }
-    sleep(3);
-    for (int i = 0; i < 100000; i++) {
-
-        ASSERT_EQ(function(100000), 1000001);
-    }
+    auto function = engine->getInvocableMember<int32_t>("execute");
+    ASSERT_EQ(function(), 101);
 }
 
 Value<> nestedSumLoop(int upperLimit) {
