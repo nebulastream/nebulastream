@@ -54,6 +54,12 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
+
+    /**
+     * @brief constructor
+     * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
+     * @param maxRetries: amount of retries to execute the request after execution failed due to errors
+     */
     explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**
