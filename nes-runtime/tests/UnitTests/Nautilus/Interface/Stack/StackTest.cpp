@@ -65,7 +65,7 @@ TEST_F(StackTest, storeAndRetrieveValues) {
     auto stackRef = StackRef(Value<MemRef>((int8_t*) &stack), entrySize);
 
     for (auto i = 0UL; i < 1000UL; i++) {
-        Value<UInt64> val(i);
+        Value<UInt64> val((uint64_t) i);
         auto ref = stackRef.allocateEntry();
         ref.store(val);
     }
@@ -74,8 +74,8 @@ TEST_F(StackTest, storeAndRetrieveValues) {
     ASSERT_EQ(stack.getNumberOfPages(), 8);
 
     for (auto i = 0UL; i < 1000UL; i++) {
-        Value<UInt64> pos(i);
-        Value<UInt64> expectedVal(i);
+        Value<UInt64> pos((uint64_t) i);
+        Value<UInt64> expectedVal((uint64_t) i);
         auto ref = stackRef.getEntry(pos);
         auto resultVal = ref.load<UInt64>();
         ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());
