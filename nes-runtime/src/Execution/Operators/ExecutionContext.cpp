@@ -21,11 +21,11 @@
 
 namespace NES::Runtime::Execution {
 
-ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext,
-                                   const Value<NES::Nautilus::MemRef>& pipelineContext)
+ExecutionContext::ExecutionContext(const Value<TypedMemRef<Runtime::WorkerContext>>& workerContext,
+                                   const Value<TypedMemRef<Runtime::Execution::PipelineExecutionContext>>& pipelineContext)
     : workerContext(workerContext), pipelineContext(pipelineContext), origin((uint64_t) 0), watermarkTs((uint64_t) 0) {}
 
-void* allocateBufferProxy(void* workerContextPtr) {
+TupleBuffer* allocateBufferProxy(Runtime::WorkerContext* workerContextPtr) {
     if (workerContextPtr == nullptr) {
         NES_THROW_RUNTIME_ERROR("worker context should not be null");
     }
@@ -39,7 +39,7 @@ void* allocateBufferProxy(void* workerContextPtr) {
     return tb;
 }
 
-Value<MemRef> ExecutionContext::allocateBuffer() {
+Value<TypedMemRef<TupleBuffer>> ExecutionContext::allocateBuffer() {
     auto bufferPtr = Nautilus::FunctionCall("allocateBufferProxy", allocateBufferProxy, workerContext);
     return bufferPtr;
 }

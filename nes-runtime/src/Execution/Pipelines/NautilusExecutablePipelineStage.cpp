@@ -11,6 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Nautilus/Interface/DataTypes/MemRef.hpp"
+#include "Runtime/Execution/PipelineExecutionContext.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
+#include "Runtime/WorkerContext.hpp"
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -24,8 +28,9 @@ NautilusExecutablePipelineStage::NautilusExecutablePipelineStage(
     : physicalOperatorPipeline(physicalOperatorPipeline) {}
 
 uint32_t NautilusExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext) {
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &pipelineExecutionContext);
-    auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
+    auto pipelineExecutionContextRef = Value<TypedMemRef<PipelineExecutionContext>>(
+        std::make_shared<TypedMemRef<PipelineExecutionContext>>(&pipelineExecutionContext));
+    auto workerContextRef = Value<TypedMemRef<WorkerContext>>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     return 0;

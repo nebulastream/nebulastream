@@ -222,8 +222,12 @@ class Value : BaseValue {
                 return resultValue;
             }
         } else {
-            auto result = ((MemRef*) this->value.get())->load<ResultType>();
-            return Value<ResultType>(std::move(result));
+            auto result = std::make_shared<ResultType>(0);
+            auto resultValue = Value<ResultType>(std::move(result));
+            Tracing::TraceUtil::traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
+            return resultValue;
+            //auto result = ((MemRef*) this->value.get())->load<ResultType>();
+            //return Value<ResultType>(std::move(result));
         }
     }
 

@@ -14,6 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#include "Runtime/RuntimeForwardRefs.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Runtime/WorkerContext.hpp"
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -42,7 +45,8 @@ class ExecutionContext final {
      * @param workerContext reference to the worker context.
      * @param pipelineContext reference to the pipeline context.
      */
-    ExecutionContext(const Value<MemRef>& workerContext, const Value<MemRef>& pipelineContext);
+    ExecutionContext(const Value<TypedMemRef<Runtime::WorkerContext>>& workerContext,
+                     const Value<TypedMemRef<Runtime::Execution::PipelineExecutionContext>>& pipelineContext);
 
     /**
      * @brief Set local operator state that keeps state in a single pipeline invocation.
@@ -74,7 +78,7 @@ class ExecutionContext final {
      * @brief Allocate a new tuple buffer.
      * @return Value<MemRef>
      */
-    Value<MemRef> allocateBuffer();
+    Value<TypedMemRef<TupleBuffer>>  allocateBuffer();
 
     /**
      * @brief Emit a record buffer to the next pipeline or sink.
@@ -102,8 +106,8 @@ class ExecutionContext final {
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    Value<MemRef> workerContext;
-    Value<MemRef> pipelineContext;
+    Value<TypedMemRef<Runtime::WorkerContext>> workerContext;
+    Value<TypedMemRef<Runtime::Execution::PipelineExecutionContext>> pipelineContext;
     Value<UInt64> origin;
     Value<UInt64> watermarkTs;
 };

@@ -22,11 +22,24 @@
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <cstdio>
 #include <memory>
+#include <type_traits>
 #include <unistd.h>
 namespace NES::Nautilus {
 
+template<typename T>
+concept HasGetRaw  = requires(typename T::element_type a)
+{
+    { a.getRaw() };
+};
+
+
 template<class T>
 struct dependent_false : std::false_type {};
+
+template<HasGetRaw Arg>
+auto transform(Arg argument) {
+    return argument.value->getRaw();
+}
 
 template<typename Arg>
 auto transform(Arg argument) {
@@ -100,6 +113,8 @@ auto transformReturnValues(Arg argument) {
         return Value<Double>(std::make_unique<Double>(argument));
     } else if constexpr (std::is_same<Arg, double>::value) {
         return Value<Double>(std::make_unique<Double>(argument));
+    } else if constexpr (std::is_pointer<Arg>::value) {
+        return Value<TypedMemRef<Arg>>(std::make_unique<TypedMemRef<Arg>>(argument));
     } else {
         static_assert(dependent_false<Arg>::value);
     }
@@ -116,7 +131,7 @@ template<typename T>
 auto createDefault();
 
 template<typename R>
-    requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
+    requires std::is_fundamental_v<R> || std::is_same_v<void*, R> || std::is_pointer_v<R>
 auto createDefault() {
     if constexpr (std::is_same<R, int8_t>::value) {
         return Value<Int8>(std::make_unique<Int8>((int8_t) 0));
@@ -144,6 +159,8 @@ auto createDefault() {
         return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     } else if constexpr (std::is_same<R, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>(nullptr));
+    } else  if constexpr (std::is_pointer<R>::value) {
+        return Value<TypedMemRef<R>>(std::make_unique<TypedMemRef<R>>(nullptr));
     } else {
         static_assert(dependent_false<R>::value);
     }
@@ -174,6 +191,9 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
             traceVoidFunctionCall(functionArgumentReferences);
         }
     } else {
+        auto functionResult = fnptr(transform(std::forward<ValueArguments>(arguments))...);
+        return transformReturnValues(functionResult);
+        /*
         if (Tracing::TraceUtil::inInterpreter()) {
             auto functionResult = fnptr(transform(std::forward<ValueArguments>(arguments))...);
             return transformReturnValues(functionResult);
@@ -182,7 +202,7 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
             auto functionArgumentReferences = getArgumentReferences(functionName, (void*) fnptr, arguments...);
             traceFunctionCall(resultValue.ref, functionArgumentReferences);
             return resultValue;
-        }
+        }*/
     }
 }
 
