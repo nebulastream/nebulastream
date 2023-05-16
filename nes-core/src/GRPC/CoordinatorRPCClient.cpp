@@ -643,4 +643,18 @@ bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experime
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
     return reply.success();
 }
+std::vector<NodeId> CoordinatorRPCClient::getParents(NodeId nodeId) {
+    ClientContext context;
+    GetParentsRequest request;
+    GetParentsReply reply;
+
+    request.set_nodeid(nodeId);
+
+    coordinatorStub->GetParents(&context, request, &reply);
+    std::vector<NodeId> parentIds;
+    for (auto parentId : reply.parentids() ) {
+        parentIds.push_back(parentId);
+    }
+    return parentIds;
+}
 }// namespace NES

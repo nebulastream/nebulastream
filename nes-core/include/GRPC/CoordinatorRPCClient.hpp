@@ -222,6 +222,8 @@ class CoordinatorRPCClient {
      */
     bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint& locationUpdate);
 
+    std::vector<NodeId> getParents(NodeId nodeId);
+
   private:
     uint64_t workerId;
     std::string address;

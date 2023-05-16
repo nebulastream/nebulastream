@@ -413,3 +413,18 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
     reply->set_success(false);
     return Status::CANCELLED;
 }
+Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) {
+    auto nodeId = request->nodeid();
+    auto node = topologyManagerService->findNodeWithId(nodeId);
+    auto replyParents = reply->mutable_parentids();
+    if (node) {
+        auto parents = topologyManagerService->findNodeWithId(nodeId)->getParents();
+        replyParents->Reserve(parents.size());
+        for (const auto& parent : parents) {
+            auto newId = replyParents->Add();
+            *newId = parent->as<TopologyNode>()->getId();
+        }
+        return Status::OK;
+    }
+    return Status::CANCELLED;
+}
