@@ -17,12 +17,9 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <optional>
 
 namespace NES::Runtime::Execution::Operators {
-
-    std::list<NLJWindow> &NLJOperatorHandler::getAllNLJWindows() {
-        return nljWindows;
-    }
 
     uint8_t* NLJOperatorHandler::insertNewTuple(uint64_t timestamp, bool isLeftSide) {
         std::lock_guard<std::mutex> lock(insertNewTupleMutex);
@@ -94,38 +91,12 @@ namespace NES::Runtime::Execution::Operators {
         }
     }
 
-    uint64_t NLJOperatorHandler::getPositionOfJoinKey(bool isLeftSide) {
-        DefaultPhysicalTypeFactory physicalTypeFactory;
-        const auto schema = getSchema(isLeftSide);
-        const auto joinFieldName = isLeftSide ? joinFieldNameLeft : joinFieldNameRight;
-        auto position = 0UL;
-
-        for (auto& field : schema->fields) {
-            auto const fieldName = field->getName();
-            auto const fieldType = physicalTypeFactory.getPhysicalType(field->getDataType());
-            if (fieldName == joinFieldName) {
-                return position;
-            }
-            position += fieldType->size();
-        }
-
-        return position;
-    }
-
     std::pair<uint64_t, uint64_t> NLJOperatorHandler::getWindowStartEnd(uint64_t windowIdentifier) {
         const auto& window = getWindowByWindowIdentifier(windowIdentifier);
         if (window.has_value()) {
             return {window.value()->getWindowStart(), window.value()->getWindowEnd()};
         }
         return std::pair<uint64_t, uint64_t>();
-    }
-
-    const std::string &NLJOperatorHandler::getJoinFieldName(bool isLeftSide) const {
-        if (isLeftSide) {
-            return joinFieldNameLeft;
-        } else {
-            return joinFieldNameRight;
-        }
     }
 
     NLJOperatorHandler::NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft,
