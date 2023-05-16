@@ -33,19 +33,13 @@ public:
 
     void deleteWindow(uint64_t windowIdentifier);
 
-    std::list<NLJWindow>& getAllNLJWindows();
-
     uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
 
     uint8_t* getFirstTuple(uint64_t windowIdentifier, bool isLeftSide);
 
     SchemaPtr getSchema(bool isLeftSide);
 
-    uint64_t getPositionOfJoinKey(bool isLeftSide);
-
     std::pair<uint64_t, uint64_t> getWindowStartEnd(uint64_t windowIdentifier);
-
-    const std::string &getJoinFieldName(bool isLeftSide) const;
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
