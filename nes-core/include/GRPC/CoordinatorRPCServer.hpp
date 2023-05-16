@@ -256,6 +256,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) override;
 
+    Status GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) override;
+
   private:
     QueryServicePtr queryService;
     TopologyManagerServicePtr topologyManagerService;

@@ -44,6 +44,9 @@ service CoordinatorRPCService {
   // sends a replace parent request to the coordinator
   rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 
+  // get a list of a nodes parents
+  rpc GetParents (GetParentsRequest) returns (GetParentsReply) {}
+
   // queries for all field nodes within a specified radius around the supplied coordinates
   rpc GetNodesInRange (GetNodesInRangeRequest) returns (GetNodesInRangeReply) {}
 
@@ -258,4 +261,12 @@ message SoftStopCompletionMessage{
 
 message SoftStopCompletionReply{
   bool success = 1;
+}
+
+message GetParentsRequest{
+  uint64 nodeId = 1;
+}
+
+message GetParentsReply {
+  repeated uint64 parentIds = 1;
 }
