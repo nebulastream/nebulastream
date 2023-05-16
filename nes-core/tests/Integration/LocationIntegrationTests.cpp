@@ -947,6 +947,91 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     bool retStopWrk1 = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk1);
 }
+
+// even if no parent was specified in the worker configuration, the worker should reconnect to the closest parent on startup
+TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
+    size_t coverage = 5000;
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("start coordinator")
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    ASSERT_NE(port, 0UL);
+    NES_INFO("coordinator started successfully")
+
+    TopologyPtr topology = crd->getTopology();
+    std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
+
+    TopologyNodePtr node = topology->getRoot();
+
+    std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> locVec;
+    //fixed location node on path
+    locVec.emplace_back(52.57828047889124, 12.988243103027346);
+    locVec.emplace_back(52.53968787768964, 13.109092712402346);
+    locVec.emplace_back(52.544487724835534, 13.207969665527346);
+    locVec.emplace_back(52.55930133381748, 13.3154296875);
+    locVec.emplace_back(52.5221535423678, 13.411216735839846);
+    locVec.emplace_back(52.50523880235127, 13.540649414062502);
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
+
+    S2PointIndex<uint64_t> nodeIndex;
+    size_t idCount = 10000;
+    for (auto elem : locVec) {
+        TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
+        topology->addNewTopologyNodeAsChild(node, currNode);
+        topologyManagerService->addGeoLocation(currNode->getId(), NES::Spatial::DataTypes::Experimental::GeoLocation(elem));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem), currNode->getId());
+        idCount++;
+    }
+
+    NES_INFO("start worker 1");
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
+        Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
+    wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
+    wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(10);
+    wrkConf1->mobilityConfiguration.locationBufferSaveRate.setValue(1);
+    wrkConf1->mobilityConfiguration.pathPredictionLength.setValue(40000);
+    wrkConf1->mobilityConfiguration.defaultCoverageRadius.setValue(5000);
+    wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
+    wrkConf1->mobilityConfiguration.locationProviderType.setValue(
+        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "path1.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(waitForNodes(5, locVec.size() + 2, topology));
+
+    uint64_t parentId = 0;
+    std::vector<uint64_t> reconnectSequence({10000, 10001, 10002, 10003, 10004, 10005});
+    parentId =
+        std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+
+    //wait until the node has changed its parent from the coordinator node (id 1) to a fixed location node in range
+    auto startTimestamp = std::chrono::system_clock::now();
+    while (parentId == 1 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
+        parentId =
+            std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
+        NES_DEBUG("parent id = " << parentId);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    //check that the worker is connected to one of the nodes on the path
+    EXPECT_NE(std::find(reconnectSequence.begin(), reconnectSequence.end(), parentId), reconnectSequence.end());
+
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+    bool retStopWrk1 = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk1);
+}
 #endif
 
 TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
