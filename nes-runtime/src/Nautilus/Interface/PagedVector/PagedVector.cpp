@@ -17,8 +17,8 @@
 
 namespace NES::Nautilus::Interface {
 
-PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
-    : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
+PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize,  uint64_t pageSize)
+    : allocator(std::move(allocator)), entrySize(entrySize), pageSize(pageSize), totalNumberOfEntries(0) {
     appendPage();
     NES_ASSERT2_FMT(entrySize > 0, "Entrysize for a pagedVector has to be larger than 0!");
     NES_ASSERT2_FMT(capacityPerPage() > 0, "There has to fit at least one tuple on a page!");
