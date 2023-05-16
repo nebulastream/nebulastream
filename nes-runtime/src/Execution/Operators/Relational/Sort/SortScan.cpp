@@ -11,15 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Relational/Sort.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
-#include <cstring>
+#include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Execution/Operators/Relational/Sort/SortOperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,6 +25,20 @@ const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
 template <typename T>
 T MaxValue(T a, T b) {
     return a > b ? a : b;
+}
+
+void RadixSortMSD(void *op) {
+    auto handler = static_cast<SortOperatorHandler*>(op);
+    auto origPtr = handler->getState();
+    auto tempPtr = ;
+    auto count = handler->getCount();
+    auto colOffset = handler->getColumnOffset();
+    auto rowWidth = handler->getEntrySize();
+    auto compWidth =;
+    auto offset = 0; // init 0
+    auto locations =;
+    auto swap = false; // init false
+    RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
 }
 
 /**
@@ -111,93 +121,35 @@ void RadixSortMSD(const uint8_t *orig_ptr, const uint8_t *temp_ptr, const uint64
     for (uint64_t radix = 0; radix < VALUES_PER_RADIX; radix++) {
         const uint64_t loc = (locations[radix] - radix_count) * row_width;
         RadixSortMSD(orig_ptr + loc, temp_ptr + loc, radix_count, col_offset, row_width, comp_width, offset + 1,
-                         locations + MSD_RADIX_LOCATIONS, swap);
+                     locations + MSD_RADIX_LOCATIONS, swap);
         radix_count = locations[radix + 1] - locations[radix];
     }
 }
 
-class LocalSortState : public Operators::OperatorState {
-  public:
-    explicit LocalSortState(Interface::StackRef stack) : stack(std::move(stack)){};
+SortScan::SortScan(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex) {}
 
-    Interface::StackRef stack;
-};
-
-Sort::Sort(const uint64_t operatorHandlerIndex, const std::vector<Expressions::ExpressionPtr>& sortExpressions, const std::vector<PhysicalTypePtr>& sortDataTypes)
-    : operatorHandlerIndex(operatorHandlerIndex), sortExpressions(sortExpressions), sortDataTypes(sortDataTypes) {
-
-    for (auto& sortType : sortDataTypes) {
-        keySize = keySize + sortType->size();
-    }
+void SortScan::setup(ExecutionContext& ctx) const {
+    // perform sort
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto state = Nautilus::FunctionCall("RadixSortMSD", RadixSortMSD, globalOperatorHandler);
 }
 
-void Sort::execute(ExecutionContext& ctx, Record& record) const {
-    // Derive the column to sort on
-    std::vector<Value<>> sortValues;
-    for (const auto& exp : sortExpressions) {
-        sortValues.emplace_back(exp->execute(record));
-    }
+void SortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
+    Operators::Operator::open(ctx, rb);
 
-    // Store all the tuples into a thread local buffer
-    auto state = reinterpret_cast<LocalSortState*>(ctx.getLocalState(this));
-    auto& stack = state->stack;
+    // 1. get the operator handler
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // create entry and store it in stack
-    auto entry = stack.allocateEntry();
-    /* 4.3a store hash value at next offset
-    auto hashPtr = (entry + (uint64_t) sizeof(int64_t)).as<MemRef>();
-    hashPtr.store(hash);
+    // 2. load the local state.
+    auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerId());
 
-    // 4.3b store key values
-    auto keyPtr = (hashPtr + (uint64_t) sizeof(int64_t)).as<MemRef>();
-    storeKeys(keyValues, keyPtr);
-
-    // 4.3c store value values
-    std::vector<Value<>> values;
-    for (const auto& exp : valueExpressions) {
-        values.emplace_back(exp->execute(record));
-    }
-    auto valuePtr = (keyPtr + keySize).as<MemRef>();
-    storeValues(values, valuePtr);*/
-
-
-    // Radix Sort
-    // Byte-by-byte sorting
-
-    // 1. derive sort values
-    /*std::vector<Value<>> SortValues;
-    for (const auto& exp : sortExpressions) {
-        sortValues.emplace_back(exp->execute(record));
-    }*/
-
-    // 2. Store them on the
-
-    // TODO: support multi column sorting
-    // TODO: support descending order
-    // TODO: support column oriented record layouts
-    // TODO: depending on the data characteristics, we may want to use a different sorting algorithm
-
-    // Morsel Driven Parallelism
-    // 1. Split data into morsels
-    // 2. Sort morsels in parallel
-    // 3. Merge morsels
-    // 4. Repeat 2-3 until only one morsel is left
-
-
-    // K-way merge
-
-    // evaluate expression and call child operator if expression is valid
-    /*if (expression->execute(record)) {
-        if (child != nullptr) {
-            child->execute(ctx, record);
-        }
-    }*/
-}
-
-// This will be called when the tuple was fully processed
-void Sort::close(ExecutionContext& executionCtx,  RecordBuffer& recordBuffer) const {
-    // Perform the actual sort
-    //RadixSortMSD(..)
+    // 3. perform sort
+    Record result;
+    //for (uint64_t aggIndex = 0; aggIndex < aggregationFunctions.size(); aggIndex++) {
+    //    auto finalAggregationValue = aggregationFunctions[aggIndex]->lower(state);
+    //    result.write(aggregationResultFields[aggIndex], finalAggregationValue);
+    //}
+    child->execute(ctx, result);
 }
 
 }// namespace NES::Runtime::Execution::Operators
