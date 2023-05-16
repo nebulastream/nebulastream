@@ -64,7 +64,7 @@ class PerformanceTest : public testing::Test, public AbstractPipelineExecutionTe
     void SetUp() override {
         std::cout << "Setup PerformanceTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>((8*1024), 262144);
+        bm = std::make_shared<Runtime::BufferManager>((1024 * 1024), 8192);
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
@@ -98,11 +98,11 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -150,7 +150,6 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
         // measure execution time
         auto runtimeStart = std::chrono::high_resolution_clock::now();
         for (auto& buffer : bufferVector) {
-
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             nautilusExecutablePipelineStage->stop(statisticsCollector);
         }
@@ -161,7 +160,7 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
     csvFile.close();
 }
@@ -189,11 +188,11 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -251,7 +250,7 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
 
     csvFile.close();
@@ -280,11 +279,11 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -340,7 +339,7 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
     csvFile.close();
 }
@@ -368,11 +367,11 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -428,7 +427,7 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
 
     csvFile.close();
@@ -458,11 +457,11 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -477,7 +476,7 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
         auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(2);
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
         auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
         auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
         scanOperator->setChild(selectionOperator);
@@ -522,7 +521,7 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
 
     csvFile.close();
@@ -552,11 +551,11 @@ TEST_P(PerformanceTest, branchMissesTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -571,7 +570,7 @@ TEST_P(PerformanceTest, branchMissesTest) {
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
         auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(2);
+        auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(20);
         auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
         auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
         scanOperator->setChild(selectionOperator);
@@ -616,7 +615,7 @@ TEST_P(PerformanceTest, branchMissesTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
 
     csvFile.close();
@@ -635,30 +634,32 @@ TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
         schema->addField("f1", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
         std::vector<TupleBuffer> bufferVector;
+        uint64_t numberOfInputBuffers = 1000;
         auto timestamp = 0;
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    if((j+1) % 5 == 0) {
+                for (uint64_t k = 0; k < fieldValuesSize; k++)  {
+                    if(((j * fieldValuesSize) + k + 1) % 100 == 0) {
                         // insert out-of-order timestamp
-                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp - 3);
+                        dynamicBuffer[(j * fieldValuesSize) + k]["timestamp"].write((uint64_t) timestamp - 3);
                     } else {
-                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp);
+                        dynamicBuffer[(j * fieldValuesSize) + k]["timestamp"].write((uint64_t) timestamp);
                         timestamp++;
                     }
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[j]);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -719,7 +720,7 @@ TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
     csvFile.close();
 }
@@ -737,30 +738,32 @@ TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
         schema->addField("f1", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-
-        // generate list of values 0 til 100
-        std::vector<int64_t> fieldValues(100);
+        auto rd = std::random_device {};
+        auto rng = std::default_random_engine {rd()};
+        // generate list of values 1 til 100
+        uint64_t fieldValuesSize = 100;
+        std::vector<int64_t> fieldValues(fieldValuesSize);
         std::iota(std::begin(fieldValues), std::end(fieldValues), 1);
-        auto rng = std::default_random_engine{};
 
         std::vector<TupleBuffer> bufferVector;
+        uint64_t numberOfInputBuffers = 1000;
         auto timestamp = 0;
-        for (int i = 0; i < 1000; ++i) {
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (int k = 0; k < 5; k++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
-                for (uint64_t j = 0; j < 100; j++) {
-                    if((j+1) % 5 == 0) {
+                for (uint64_t k = 0; k < fieldValuesSize; k++)  {
+                    if(((j * fieldValuesSize) + k + 1) % 100 == 0) {
                         // insert out-of-order timestamp
-                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp - 3);
+                        dynamicBuffer[(j * fieldValuesSize) + k]["timestamp"].write((uint64_t) timestamp - 3);
                     } else {
-                        dynamicBuffer[j]["timestamp"].write((uint64_t) timestamp);
+                        dynamicBuffer[(j * fieldValuesSize) + k]["timestamp"].write((uint64_t) timestamp);
                         timestamp++;
                     }
-                    dynamicBuffer[j]["f1"].write(fieldValues[j]);
-                    dynamicBuffer.setNumberOfTuples(j + 1);
+                    dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[j]);
+                    dynamicBuffer.setNumberOfTuples((j * fieldValuesSize) + k + 1);
                 }
             }
         }
@@ -821,7 +824,7 @@ TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
     csvFile.close();
 }
@@ -849,11 +852,11 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -947,11 +950,11 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -1017,7 +1020,7 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
 
     csvFile.close();
@@ -1046,11 +1049,11 @@ TEST_P(PerformanceTest, pipelinePerformanceTest) {
         // generate tuple buffers
         uint64_t numberOfInputBuffers = 1000;
         std::vector<TupleBuffer> bufferVector;
-        for (uint64_t i = 0; i < numberOfInputBuffers; ++i){
+        for (uint64_t i = 0; i < numberOfInputBuffers; ++i) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 5; j++) {
+            for (uint64_t j = 0; j < 640; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -1095,7 +1098,7 @@ TEST_P(PerformanceTest, pipelinePerformanceTest) {
         std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
         csvFile << duration.count() << ";";
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 1000);
+        ASSERT_EQ(pipelineContext.buffers.size(), numberOfInputBuffers);
     }
 
     csvFile.close();

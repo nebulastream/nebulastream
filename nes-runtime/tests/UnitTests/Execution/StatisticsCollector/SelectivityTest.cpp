@@ -12,16 +12,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -29,7 +24,6 @@ limitations under the License.
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
-#include <Execution/StatisticsCollector/CacheMisses.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
