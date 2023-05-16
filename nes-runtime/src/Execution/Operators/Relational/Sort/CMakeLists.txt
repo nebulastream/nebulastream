@@ -1,3 +1,4 @@
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,14 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregation)
-add_subdirectory(Join)
-add_subdirectory(Sort)
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JavaUDF)
-endif ()
 add_source_files(nes-runtime
-        Map.cpp
-        Selection.cpp
-        SortHandler.cpp
+        Sort.cpp
+        SortScan.cpp
         )
