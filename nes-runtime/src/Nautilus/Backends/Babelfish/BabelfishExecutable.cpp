@@ -80,7 +80,6 @@ std::unique_ptr<Executable::GenericInvocable> BabelfishExecutable::getGenericInv
 BabelfishExecutable::~BabelfishExecutable() {
     NES_DEBUG("~BabelfishExecutable()");
     env->DeleteLocalRef(pipelineObject);
-    //  Runtime::Execution::Operators::detachVM();
 }
 
 std::any BabelfishInvocable::invokeGeneric(const std::vector<std::any>& args) {
@@ -101,7 +100,7 @@ std::any BabelfishInvocable::invokeGeneric(const std::vector<std::any>& args) {
         } else if (auto* value = std::any_cast<double>(&args[i])) {
             env->SetObjectArrayElement(argumentArray, i, Runtime::Execution::Operators::createDouble(env, *value));
         } else if (auto* value = std::any_cast<void*>(&args[i])) {
-            auto val = (int64_t) *value;
+            auto val = *(int64_t*) value;
             env->SetObjectArrayElement(argumentArray, i, Runtime::Execution::Operators::createLong(env, val));
         } else {
             NES_NOT_IMPLEMENTED();

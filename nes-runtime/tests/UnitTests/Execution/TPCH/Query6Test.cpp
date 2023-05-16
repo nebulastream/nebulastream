@@ -84,6 +84,7 @@ class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
+        options.setDumpToConsole(true);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -114,7 +115,7 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
         aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
     }
     timer.snapshot("execute agg");
-    auto dummyBuffer = TupleBuffer();
+    auto dummyBuffer = bm->getBufferBlocking();
     emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
     timer.snapshot("execute emit");
 
@@ -141,7 +142,7 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q6,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "BabelfishPipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q6::ParamType>& info) {
                             return info.param;
                         });

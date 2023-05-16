@@ -256,7 +256,10 @@ void BabelfishLoweringProvider::LoweringContext::process(const std::shared_ptr<I
             opJson["fptr"] = val;
             std::vector<nlohmann::json> arguments;
             for (const auto& arg : proxyCallOp->getInputArguments()) {
-                arguments.emplace_back(arg->getIdentifier());
+                nlohmann::json jsonArg;
+                jsonArg["id"] = arg->getIdentifier();
+                jsonArg["stamp"] = arg->getStamp()->toString();
+                arguments.emplace_back(jsonArg);
             }
             opJson["arguments"] = arguments;
             return;

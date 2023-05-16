@@ -14,6 +14,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACK_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACK_HPP_
 #include <Runtime/Allocator/MemoryResource.hpp>
+#include <Nautilus/Interface/Stack/vector_ref.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>

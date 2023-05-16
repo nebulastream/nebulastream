@@ -146,8 +146,8 @@ BabelfishCompilationBackend::VM::VM() : env() {
     JavaVMInitArgs args{};
     std::vector<std::string> opt{
         //"-verbose:jni", "-verbose:class",
-            "-Dgraal.Dump=Truffle:1",
-            "-Dgraal.PrintGraph=Network",
+     //       "-Dgraal.Dump=Truffle:1",
+     //       "-Dgraal.PrintGraph=Network",
         "-Dgraal.GenLoopSafepoints=false",
         "-Dgraalvm.locatorDisabled=true",
         //    "-Dtruffle.class.path.append=/home/pgrulich/projects/nes/nautilusbf/language/target/classes:/"

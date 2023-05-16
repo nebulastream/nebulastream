@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Nautilus/Interface/DataTypes/MemRef.hpp"
+#include "Runtime/TupleBuffer.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -55,6 +57,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace NES::Runtime::Execution {
 
@@ -70,7 +73,7 @@ class BenchmarkRunner {
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
         options.setOptimize(true);
-        options.setDumpToFile(false);
+       // options.setDumpToFile(false);
     }
     void run() {
         double sumCompilation = 0;
@@ -120,9 +123,9 @@ class Query6Runner : public BenchmarkRunner {
         auto emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
         Timer executionTimeTimer2("Execution");
 
-        for (auto i = 0; i < 5; i++) {
+        for (auto i = 0; i < 50; i++) {
             aggExecutablePipeline->setup(*pipeline1.ctx);
-            // emitExecutablePipeline->setup(*pipeline2.ctx);
+            emitExecutablePipeline->setup(*pipeline2.ctx);
             compileTimeTimer.snapshot("setup");
             compileTimeTimer.pause();
             executionTimeTimer.start();
@@ -130,15 +133,20 @@ class Query6Runner : public BenchmarkRunner {
             for (auto& chunk : lineitems->getChunks()) {
                 aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
             }
+            std::vector<int> x ;
+            using t = typename std::vector<int>::value_type;
+            std::vector<t> x12;
+            auto buffer = Nautilus::TypedMemRef<Runtime::TupleBuffer>(nullptr);
+
             executionTimeTimer2.snapshot("execute i" + std::to_string(i));
             executionTimeTimer2.pause();
             executionTimeTimer.snapshot("execute agg");
             auto dummyBuffer = NES::Runtime::TupleBuffer();
-            //emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
+            emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
             executionTimeTimer.snapshot("execute emit");
             executionTimeTimer.pause();
             aggExecutablePipeline->stop(*pipeline1.ctx);
-            //emitExecutablePipeline->stop(*pipeline2.ctx);
+            emitExecutablePipeline->stop(*pipeline2.ctx);
         }
         NES_INFO(executionTimeTimer2)
     }
