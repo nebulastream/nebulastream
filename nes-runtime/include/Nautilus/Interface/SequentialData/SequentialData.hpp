@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LIST_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LIST_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALDATA_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALDATA_HPP_
 #include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
 namespace NES::Nautilus::Interface {
-class ListRef;
+class SequentialDataRef;
 
 /**
  * @brief This class provides a dynamically growing stack/list data structure of entries.
@@ -27,20 +27,20 @@ class ListRef;
  * Each page can contain page_size/entry_size entries.
  * TODO check if we should use FixedPage.cpp or introduce specific page class
  */
-class List {
+class SequentialData {
   public:
     static const uint64_t PAGE_SIZE = 4096;
 
     /**
-     * @brief Creates a new list with a specific entry size
+     * @brief Creates a new sequential data with a specific entry size
      * @param allocator the allocator
      * @param entrySize the size of an entry.
-     * TODO pass page size dynamically and adjust ListRef if needed.
+     * TODO pass page size dynamically and adjust SequentialDataRef if needed.
      */
-    List(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
+    SequentialData(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
 
     /**
-     * @brief Return the number of pages in the list
+     * @brief Return the number of pages in the sequential data
      * @return size_t
      */
     size_t getNumberOfPages();
@@ -52,7 +52,7 @@ class List {
     const std::vector<int8_t*> getPages();
 
     /**
-     * @brief Clear the list of pages
+     * @brief Clear the sequential data of pages
      */
     void clear();
 
@@ -94,10 +94,13 @@ class List {
      */
     int8_t* getEntry(uint64_t pos);
 
-    ~List();
+    /**
+     * @brief Deconstructor
+     */
+    ~SequentialData();
 
   private:
-    friend ListRef;
+    friend SequentialDataRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
     std::vector<int8_t*> pages;
@@ -109,4 +112,4 @@ class List {
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LIST_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALDATA_HPP_
