@@ -69,4 +69,65 @@ void StackRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stac
 
 void StackRef::setNumberOfTotalEntries(const Value<>& val) { getMember(stackRef, Stack, totalNumberOfEntries).store(val); }
 
+
+StackRefIter StackRef::begin() {
+    return {*this};
+}
+
+StackRefIter StackRef::at(Value<UInt64> pos) {
+    StackRefIter stackRefIter(*this);
+    stackRefIter.setPos(pos);
+    return stackRefIter;
+}
+
+StackRefIter StackRef::end() {
+    return at(this->getTotalNumberOfEntries());
+}
+
+StackRefIter::StackRefIter(const StackRef& stackRef) : pos(0UL), stackRef(stackRef) {}
+
+StackRefIter::StackRefIter(const StackRefIter &it) : pos(it.pos), stackRef(it.stackRef) {}
+
+StackRefIter& StackRefIter::operator=(const StackRefIter &it) {
+    if (this == &it) {
+        return *this;
+    }
+
+    pos = it.pos;
+    return *this;
+}
+
+Value<MemRef> StackRefIter::operator*() {
+    return stackRef.getEntry(pos);
+}
+
+StackRefIter& StackRefIter::operator++() {
+    pos + pos + 1;
+    return *this;
+}
+
+StackRefIter StackRefIter::operator++(int) {
+    StackRefIter copy = *this;
+    pos = pos + 1;
+    return copy;
+}
+
+bool StackRefIter::operator==(const StackRefIter &other) const {
+    if (this == &other) {
+        return true;
+    }
+
+    return pos == other.pos;
+}
+
+bool StackRefIter::operator!=(const StackRefIter &other) const {
+    return !(*this == other);
+}
+
+void StackRefIter::setPos(Value<UInt64> newValue) {
+    pos = newValue;
+}
+
+
+
 }// namespace NES::Nautilus::Interface

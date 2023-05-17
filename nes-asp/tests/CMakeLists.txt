@@ -16,29 +16,29 @@ add_compile_definitions(TEST_CONFIGS_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test-configs")
 
 # Adding unit test for SynopsisConfigurationTest
-add_nes_unit_test(synopsis-configuration-test "UnitTests/Experimental/Parsing/SynopsisConfigurationTest.cpp")
-target_link_libraries(synopsis-configuration-test nes-asp)
+add_nes_runtime_test(synopsis-configuration-test "UnitTests/Experimental/Parsing/SynopsisConfigurationTest.cpp")
+target_link_libraries(synopsis-configuration-test PRIVATE nes-asp)
 
 # Adding unit test for SynopsisAggregationConfigTest
-add_nes_unit_test(synopsis-aggregation-config-test "UnitTests/Experimental/Parsing/SynopsisAggregationConfigTest.cpp")
-target_link_libraries(synopsis-aggregation-config-test nes-asp)
+add_nes_runtime_test(synopsis-aggregation-config-test "UnitTests/Experimental/Parsing/SynopsisAggregationConfigTest.cpp")
+target_link_libraries(synopsis-aggregation-config-test PRIVATE nes-asp)
 
 # Adding unit test for MicroBenchmarkASPUtilTest
-add_nes_unit_test(micro-benchmarking-asp-util-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkASPUtilTest.cpp")
-target_link_libraries(micro-benchmarking-asp-util-test nes-asp)
+add_nes_runtime_test(micro-benchmarking-asp-util-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkASPUtilTest.cpp")
+target_link_libraries(micro-benchmarking-asp-util-test PRIVATE nes-asp)
 
 # Adding unit test for MicroBenchmarkResultTest
-add_nes_unit_test(micro-benchmarking-result-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkResultTest.cpp")
-target_link_libraries(micro-benchmarking-result-test nes-asp)
+add_nes_runtime_test(micro-benchmarking-result-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkResultTest.cpp")
+target_link_libraries(micro-benchmarking-result-test PRIVATE nes-asp)
 
 # Adding unit test for MicroBenchmarkRun.cpp
-add_nes_unit_test(micro-benchmarking-run-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkRunTest.cpp")
-target_link_libraries(micro-benchmarking-run-test nes-asp)
+add_nes_runtime_test(micro-benchmarking-run-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkRunTest.cpp")
+target_link_libraries(micro-benchmarking-run-test PRIVATE nes-asp)
 
 # Adding unit test for SynopsisPipelineTest.cpp
-add_nes_unit_test(synopsis-pipeline-test "UnitTests/Experimental/Operators/SynopsisPipelineTest.cpp")
-target_link_libraries(synopsis-pipeline-test nes-asp nes-runtime-tests)
+add_nes_runtime_test(synopsis-pipeline-test "UnitTests/Experimental/Operators/SynopsisPipelineTest.cpp")
+target_link_libraries(synopsis-pipeline-test PRIVATE nes-asp)
 
 # Adding unit test for SimpleRandomSampleWithoutReplacementTest.cpp
-add_nes_unit_test(simple-sampling-without-replacement-test "UnitTests/Experimental/Synopses/SRSWoRTest.cpp")
-target_link_libraries(simple-sampling-without-replacement-test nes-asp)
+add_nes_runtime_test(simple-sampling-without-replacement-test "UnitTests/Experimental/Synopses/SRSWoRTest.cpp")
+target_link_libraries(simple-sampling-without-replacement-test PRIVATE nes-asp)

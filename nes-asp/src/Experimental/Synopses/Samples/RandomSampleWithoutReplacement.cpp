@@ -115,12 +115,19 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
                                                                                                    inputSchema);
 
     // TODO Swap this for loop with an iterator over the stack as soon as #3735 is implemented
-    for (Nautilus::Value<Nautilus::UInt64> curTuple(0UL); curTuple < numberOfRecordsInSample; curTuple = curTuple + 1) {
-        Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
-        auto entryMemRef = stackRef.getEntry(curTuple);
-        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
-        aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
-    }
+//    Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
+////    for (Nautilus::Value<Nautilus::UInt64> curTuple(0UL); curTuple < numberOfRecordsInSample; curTuple = curTuple + 1) {
+////        Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
+////        auto entryMemRef = stackRef.getEntry(curTuple);
+////        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
+////        aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
+////    }
+
+//    for (auto it = stackRef.begin(); it != stackRef.at(numberOfRecordsInSample); ++it) {
+//        auto entryMemRef = *it;
+//        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
+//        aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
+//    }
 
     // Lower the aggregation
     Nautilus::Record record;
