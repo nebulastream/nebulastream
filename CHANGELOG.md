@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.82](https://github.com/nebulastream/nebulastream/tree/v0.5.82) (2023-05-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.81...v0.5.82)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add ingestion time support for nautilus window aggregations [\#3706](https://github.com/nebulastream/nebulastream/issues/3706)
+
 ## [v0.5.81](https://github.com/nebulastream/nebulastream/tree/v0.5.81) (2023-05-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.80...v0.5.81)
