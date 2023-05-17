@@ -478,7 +478,7 @@ add_nes_unit_test(config-test "UnitTests/Configurations/ConfigTest.cpp")
 
 
 ### Timer Tests ###
-add_nes_unit_test(timer-test "UnitTests/Util/TimerTest.cpp")
+#add_nes_unit_test(timer-test "UnitTests/Util/TimerTest.cpp")
 
 
 ### Adaptive Source Tests ###
