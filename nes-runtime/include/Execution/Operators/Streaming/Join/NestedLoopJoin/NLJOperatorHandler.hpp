@@ -17,9 +17,10 @@
 #include <API/Schema.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
-#include <list>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <optional>
+#include <list>
 
 namespace NES::Runtime::Execution::Operators {
 /**
