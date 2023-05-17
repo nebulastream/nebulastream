@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Nautilus/Interface/Stack/ListRef.hpp>
+#include <Nautilus/Interface/List/ListRef.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {

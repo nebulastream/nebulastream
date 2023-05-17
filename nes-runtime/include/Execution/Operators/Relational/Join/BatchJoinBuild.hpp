@@ -22,8 +22,8 @@ namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief Batch JoinBuild operator.
- * The join build operator, consumes input tuples and materializes them in an thread local stack.
- * If all input records are processed, we build an hash table on the thread local stacks.
+ * The join build operator, consumes input tuples and materializes them in an thread local list.
+ * If all input records are processed, we build an hash table on the thread local lists.
  */
 class BatchJoinBuild : public ExecutableOperator {
   public:

@@ -20,12 +20,12 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Nautilus/Interface/Stack/ListRef.hpp>
+#include <Nautilus/Interface/List/ListRef.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getStackProxy(void* op, uint64_t workerId) {
+void* getListProxy(void* op, uint64_t workerId) {
     auto handler = static_cast<BatchJoinHandler*>(op);
     return handler->getThreadLocalState(workerId);
 }
@@ -38,9 +38,9 @@ void setupJoinBuildHandler(void* ss, void* ctx, uint64_t entrySize, uint64_t key
 
 class LocalJoinBuildState : public Operators::OperatorState {
   public:
-    explicit LocalJoinBuildState(Interface::ListRef stack) : stack(std::move(stack)){};
+    explicit LocalJoinBuildState(Interface::ListRef list) : list(std::move(list)){};
 
-    Interface::ListRef stack;
+    Interface::ListRef list;
 };
 
 BatchJoinBuild::BatchJoinBuild(uint64_t operatorHandlerIndex,
@@ -75,15 +75,15 @@ void BatchJoinBuild::setup(ExecutionContext& executionCtx) const {
 
 void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local stack and store it in the local state.
+    // We use this here, to load the thread local list and store it in the local state.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local stack according to the worker id.
-    auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler, ctx.getWorkerId());
+    // 2. load the thread local list according to the worker id.
+    auto state = Nautilus::FunctionCall("getListProxy", getListProxy, globalOperatorHandler, ctx.getWorkerId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
-    auto stack = Interface::ListRef(state, entrySize);
-    // 3. store the reference to the stack in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalJoinBuildState>(stack);
+    auto list = Interface::ListRef(state, entrySize);
+    // 3. store the reference to the list in the local operator state.
+    auto sliceStoreState = std::make_unique<LocalJoinBuildState>(list);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
 
@@ -94,17 +94,17 @@ void BatchJoinBuild::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
         keyValues.emplace_back(exp->execute(record));
     }
 
-    // 3. load the reference to the stack.
+    // 3. load the reference to the list.
     auto state = reinterpret_cast<LocalJoinBuildState*>(ctx.getLocalState(this));
-    auto& stack = state->stack;
+    auto& list = state->list;
 
-    // 4. store entry in the stack
+    // 4. store entry in the list
 
     // 4.1 calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 4.2 create entry and store it in stack
-    auto entry = stack.allocateEntry();
+    // 4.2 create entry and store it in list
+    auto entry = list.allocateEntry();
     // 4.3a store hash value at next offset
     auto hashPtr = (entry + (uint64_t) sizeof(int64_t)).as<MemRef>();
     hashPtr.store(hash);
