@@ -15,7 +15,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
+#include <Nautilus/Interface/List/List.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
