@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
-#include <Nautilus/Interface/List/List.hpp>
+#include <Nautilus/Interface/SequentialData/SequentialData.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators {
 
 BatchJoinHandler::BatchJoinHandler() = default;
 
-Nautilus::Interface::List* BatchJoinHandler::getThreadLocalState(uint64_t workerId) {
+Nautilus::Interface::SequentialData* BatchJoinHandler::getThreadLocalState(uint64_t workerId) {
     auto index = workerId % threadLocalStateStores.size();
     return threadLocalStateStores[index].get();
 }
@@ -33,7 +33,7 @@ void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
     this->valueSize = valueSize;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-        auto list = std::make_unique<Nautilus::Interface::List>(std::move(allocator), entrySize);
+        auto list = std::make_unique<Nautilus::Interface::SequentialData>(std::move(allocator), entrySize);
         threadLocalStateStores.emplace_back(std::move(list));
     }
 }
