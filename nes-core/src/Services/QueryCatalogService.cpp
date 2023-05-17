@@ -122,7 +122,7 @@ void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
                                                QueryStatus::SOFT_STOP_COMPLETED,
                                                QueryStatus::RESTARTING,
                                                QueryStatus::MIGRATING},
-                                               currentQueryStatus);
+                                              currentQueryStatus);
         }
     }
 

@@ -13,8 +13,8 @@
 */
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_
-#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 #include <Common/Identifiers.hpp>
+#include <WorkQueues/RequestTypes/AbstractRequest.hpp>
 namespace NES {
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -31,9 +31,9 @@ class FailQueryRequest : public AbstractRequest {
      * @param workerRpcClient: The worker rpc client to be used during undeployment
      */
     FailQueryRequest(NES::QueryId queryId,
-                                   NES::QuerySubPlanId failedSubPlanId,
-                                   uint8_t maxRetries,
-                                   NES::WorkerRPCClientPtr workerRpcClient);
+                     NES::QuerySubPlanId failedSubPlanId,
+                     uint8_t maxRetries,
+                     NES::WorkerRPCClientPtr workerRpcClient);
 
   protected:
     /**
@@ -80,6 +80,6 @@ class FailQueryRequest : public AbstractRequest {
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
-}
-}
+}// namespace Experimental
+}// namespace NES
 #endif//NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUEST_HPP_

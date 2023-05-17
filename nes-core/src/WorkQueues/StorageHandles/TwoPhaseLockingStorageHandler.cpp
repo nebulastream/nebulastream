@@ -44,9 +44,7 @@ void TwoPhaseLockingStorageHandler::lockResource(ResourceType resourceType) {
         case ResourceType::Topology: topology = lockManager->getTopologyHandle(); break;
         case ResourceType::QueryCatalogService: queryCatalogService = lockManager->getQueryCatalogHandle(); break;
         case ResourceType::SourceCatalog: sourceCatalog = lockManager->getSourceCatalogHandle(); break;
-        case ResourceType::GlobalExecutionPlan:
-            globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle();
-            break;
+        case ResourceType::GlobalExecutionPlan: globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle(); break;
         case ResourceType::GlobalQueryPlan: globalQueryPlan = lockManager->getGlobalQueryPlanHandle(); break;
         case ResourceType::UdfCatalog: udfCatalog = lockManager->getUDFCatalogHandle(); break;
     }
