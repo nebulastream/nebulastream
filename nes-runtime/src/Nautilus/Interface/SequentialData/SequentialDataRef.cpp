@@ -78,7 +78,8 @@ SequentialDataRefIter SequentialDataRef::at(Value<UInt64> pos) {
 
 SequentialDataRefIter SequentialDataRef::end() { return at(this->getTotalNumberOfEntries()); }
 
-SequentialDataRefIter::SequentialDataRefIter(const SequentialDataRef& sequentialDataRef) : pos(0UL), sequentialDataRef(sequentialDataRef) {}
+SequentialDataRefIter::SequentialDataRefIter(const SequentialDataRef& sequentialDataRef)
+    : pos((uint64_t) 0UL), sequentialDataRef(sequentialDataRef) {}
 
 SequentialDataRefIter::SequentialDataRefIter(const SequentialDataRefIter &it) : pos(it.pos), sequentialDataRef(it.sequentialDataRef) {}
 
