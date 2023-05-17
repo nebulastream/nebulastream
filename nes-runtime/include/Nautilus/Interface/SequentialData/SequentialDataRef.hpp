@@ -12,26 +12,26 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LISTREF_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LISTREF_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALREF_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALREF_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Nautilus::Interface {
 
 // Forward declaration
-class ListRefIter;
+class SequentialDataRefIter;
 
 /**
- * @brief This is a nautilus wrapper for the list data structure.
- * It wraps a memref to the underling list and provides access methods.
+ * @brief This is a nautilus wrapper for the sequential data structure.
+ * It wraps a memref to the underling sequential and provides access methods.
  */
-class ListRef {
+class SequentialDataRef {
   public:
     /**
      * @brief Constructs the wrapper.
      * @param listRef memref to the list
      * @param entrySize size of entries.
      */
-    ListRef(const Value<MemRef>& listRef, uint64_t entrySize);
+    SequentialDataRef(const Value<MemRef>& listRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -81,20 +81,20 @@ class ListRef {
      * @brief Returns an iterator that points to the begin of this listRef
      * @return ListRefIter
      */
-    ListRefIter begin();
+    SequentialDataRefIter begin();
 
     /**
      * @brief Returns an iterator pointing to the entry at pos
      * @param pos
      * @return ListRefIter
      */
-    ListRefIter at(Value<UInt64> pos);
+    SequentialDataRefIter at(Value<UInt64> pos);
 
     /**
      * @brief Returns an iterator that points to the end of this ListRef
      * @return ListRefIter
      */
-    ListRefIter end();
+    SequentialDataRefIter end();
 
 
   private:
@@ -104,28 +104,28 @@ class ListRef {
     uint64_t entriesPerPage;
 };
 
-class ListRefIter {
+class SequentialDataRefIter {
 public:
-    friend class ListRef;
+    friend class SequentialDataRef;
 
     /**
      * @brief Constructor
      * @param listRef
      */
-    ListRefIter(const ListRef& listRef);
+    SequentialDataRefIter(const SequentialDataRef& listRef);
 
     /**
      * @brief Copy constructor
      * @param it
      */
-    ListRefIter(const ListRefIter& it);
+    SequentialDataRefIter(const SequentialDataRefIter& it);
 
     /**
      * @brief Assignment operator
      * @param it
      * @return Reference to ListRefIter
      */
-    ListRefIter& operator=(const ListRefIter& it);
+    SequentialDataRefIter& operator=(const SequentialDataRefIter& it);
 
     /**
      * @brief Dereference operator that points to a given entry in the ListRef
@@ -137,27 +137,27 @@ public:
      * @brief Pre-increment operator that first increments and then returns the reference
      * @return Reference
      */
-    ListRefIter& operator++();
+    SequentialDataRefIter& operator++();
 
     /**
      * @brief Post-increment count that first returns the reference and then increments
      * @return Iterator
      */
-    ListRefIter operator++(int);
+    SequentialDataRefIter operator++(int);
 
     /**
      * @brief Equality operator
      * @param other
      * @return Boolean
      */
-    bool operator==(const ListRefIter& other) const;
+    bool operator==(const SequentialDataRefIter& other) const;
 
     /**
      * @brief Inequality operator
      * @param other
      * @return Boolean
      */
-    bool operator!=(const ListRefIter& other) const;
+    bool operator!=(const SequentialDataRefIter& other) const;
 
 private:
     /**
@@ -167,9 +167,9 @@ private:
     void setPos(Value<UInt64> newValue);
 
     Value<UInt64> pos;
-    ListRef listRef;
+    SequentialDataRef sequentialDataRef;
 };
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LISTREF_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALREF_HPP_
