@@ -17,7 +17,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/EnumOption.hpp>
+#include <Configurations/details/EnumOptionDetails.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Util/UtilityFunctions.hpp>
