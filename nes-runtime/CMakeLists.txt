@@ -200,8 +200,20 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-# Define map java udf utils class file
-add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/test_data/JavaUdfTestData/")
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    # Define map java udf utils class file
+    if (NES_JAVA_UDF_UTILS_PATH)
+        # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
+        add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+        message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+
+        # Install Java deserialization helper.
+        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
+    else()
+        # Use Java helpers from test directory when working in CLion.
+        add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
+    endif()
+endif()
 
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)
