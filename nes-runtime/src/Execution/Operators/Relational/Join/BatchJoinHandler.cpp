@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
+#include <Nautilus/Interface/List/List.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators {
 
 BatchJoinHandler::BatchJoinHandler() = default;
 
-Nautilus::Interface::Stack* BatchJoinHandler::getThreadLocalState(uint64_t workerId) {
+Nautilus::Interface::List* BatchJoinHandler::getThreadLocalState(uint64_t workerId) {
     auto index = workerId % threadLocalStateStores.size();
     return threadLocalStateStores[index].get();
 }
@@ -33,38 +33,38 @@ void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
     this->valueSize = valueSize;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-        auto stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
-        threadLocalStateStores.emplace_back(std::move(stack));
+        auto list = std::make_unique<Nautilus::Interface::List>(std::move(allocator), entrySize);
+        threadLocalStateStores.emplace_back(std::move(list));
     }
 }
 
 Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
-    // build a global hash-map on top of all thread local stacks.
+    // build a global hash-map on top of all thread local lists.
     // 1. calculate the number of total keys to size the hash-map correctly. This assumes a foreign-key join where keys can only exist one time and avoids hash coalitions
     size_t numberOfKeys = 0;
-    for (auto& stack : threadLocalStateStores) {
-        numberOfKeys += stack->getNumberOfEntries();
+    for (auto& list : threadLocalStateStores) {
+        numberOfKeys += list->getNumberOfEntries();
     }
     // 2. allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     globalMap =
         std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), 4096);
 
-    // 3. iterate over stacks and insert the whole page to the hash table
+    // 3. iterate over lists and insert the whole page to the hash table
     // Note. This dose not perform any memory and only results in a seqential scan over all entries  plus a random lookup in the hash table.
     // TODO this look could be parallelized, but please check if needed.
-    for (auto& stack : threadLocalStateStores) {
-        auto& pages = stack->getPages();
-        NES_ASSERT(!pages.empty(), "stack should not be empty");
+    for (auto& list : threadLocalStateStores) {
+        auto& pages = list->getPages();
+        NES_ASSERT(!pages.empty(), "list should not be empty");
         // currently we assume that page 0 - (n-1) are full and contain capacity entries.
         for (size_t i = 0; i < pages.size() - 1; i++) {
-            auto numberOfEntries = stack->capacityPerPage();
+            auto numberOfEntries = list->capacityPerPage();
             globalMap->insertPage(pages[i], numberOfEntries);
         }
         // insert last page
-        auto numberOfEntries = stack->getNumberOfEntriesOnCurrentPage();
+        auto numberOfEntries = list->getNumberOfEntriesOnCurrentPage();
         globalMap->insertPage(pages[pages.size() - 1], numberOfEntries);
-        stack->clear();
+        list->clear();
     }
     return globalMap.get();
 }
