@@ -73,11 +73,10 @@ TEST_F(StackTest, storeAndRetrieveValues) {
     ASSERT_EQ(stack.getNumberOfEntries(), 1000);
     ASSERT_EQ(stack.getNumberOfPages(), 8);
 
-    for (auto i = 0UL; i < 1000UL; i++) {
-        Value<UInt64> pos((uint64_t) i);
-        Value<UInt64> expectedVal((uint64_t) i);
-        auto ref = stackRef.getEntry(pos);
-        auto resultVal = ref.load<UInt64>();
+    uint64_t i = 0;
+    for (auto it : stackRef) {
+        Value<UInt64> expectedVal((uint64_t) i++);
+        auto resultVal = it.load<UInt64>();
         ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());
     }
 }
