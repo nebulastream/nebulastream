@@ -26,7 +26,8 @@ enum class PlacementStrategy : uint8_t {
     IFCOP = 2,
     ILP = 3,
     Manual = 4,
-    MlHeuristic = 5
+    MlHeuristic = 5,
+    ExternalICCS = 6
     // FIXME: enable them with issue #755
     // LowLatency,
     //  HighThroughput,
