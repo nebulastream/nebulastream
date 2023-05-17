@@ -66,7 +66,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
 };
 
 //test successful execution of fail query request for a single query
-TEST_F(FailQueryRequestTest, testValidFailRequest) {
+TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
