@@ -28,10 +28,10 @@ class SequentialDataRef {
   public:
     /**
      * @brief Constructs the wrapper.
-     * @param listRef memref to the list
+     * @param sequentialDataRef memref to the list
      * @param entrySize size of entries.
      */
-    SequentialDataRef(const Value<MemRef>& listRef, uint64_t entrySize);
+    SequentialDataRef(const Value<MemRef>& sequentialDataRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -99,7 +99,7 @@ class SequentialDataRef {
 
   private:
     Value<MemRef> getCurrentPage();
-    Value<MemRef> listRef;
+    Value<MemRef> sequentialDataRef;
     uint64_t entrySize;
     uint64_t entriesPerPage;
 };
