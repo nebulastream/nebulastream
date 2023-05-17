@@ -20,8 +20,8 @@
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
-#include <Nautilus/Interface/Stack/ListRef.hpp>
+#include <Nautilus/Interface/List/List.hpp>
+#include <Nautilus/Interface/List/ListRef.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,52 +29,52 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class StackTest : public Testing::NESBaseTest {
+class ListTest : public Testing::NESBaseTest {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("StackTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup StackTest test class.");
+        NES::Logger::setupLogging("ListTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ListTest test class.");
     }
     void SetUp() override { Testing::NESBaseTest::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down StackTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ListTest test class."); }
 };
 
-TEST_F(StackTest, appendValue) {
+TEST_F(ListTest, appendValue) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
-    auto stack = Stack(std::move(allocator), entrySize);
-    auto stackRef = ListRef(Value<MemRef>((int8_t*) &stack), entrySize);
+    auto list = List(std::move(allocator), entrySize);
+    auto listRef = ListRef(Value<MemRef>((int8_t*) &list), entrySize);
 
     for (auto i = 0; i < 1000; i++) {
-        stackRef.allocateEntry();
+        listRef.allocateEntry();
     }
 
-    ASSERT_EQ(stack.getNumberOfEntries(), 1000);
-    ASSERT_EQ(stack.getNumberOfPages(), 8);
+    ASSERT_EQ(list.getNumberOfEntries(), 1000);
+    ASSERT_EQ(list.getNumberOfPages(), 8);
 }
 
-TEST_F(StackTest, storeAndRetrieveValues) {
+TEST_F(ListTest, storeAndRetrieveValues) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
-    auto stack = Stack(std::move(allocator), entrySize);
-    auto stackRef = ListRef(Value<MemRef>((int8_t*) &stack), entrySize);
+    auto list = List(std::move(allocator), entrySize);
+    auto listRef = ListRef(Value<MemRef>((int8_t*) &list), entrySize);
 
     for (auto i = 0UL; i < 1000UL; i++) {
         Value<UInt64> val((uint64_t) i);
-        auto ref = stackRef.allocateEntry();
+        auto ref = listRef.allocateEntry();
         ref.store(val);
     }
 
-    ASSERT_EQ(stack.getNumberOfEntries(), 1000);
-    ASSERT_EQ(stack.getNumberOfPages(), 8);
+    ASSERT_EQ(list.getNumberOfEntries(), 1000);
+    ASSERT_EQ(list.getNumberOfPages(), 8);
 
     uint64_t i = 0;
-    for (auto it : stackRef) {
+    for (auto it : listRef) {
         Value<UInt64> expectedVal((uint64_t) i++);
         auto resultVal = it.load<UInt64>();
         ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());

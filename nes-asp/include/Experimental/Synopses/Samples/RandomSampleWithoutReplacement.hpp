@@ -16,9 +16,9 @@
 #define NES_RANDOMSAMPLEWITHOUTREPLACEMENT_HPP
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/Interface/Stack/ListRef.hpp>
+#include <Nautilus/Interface/List/ListRef.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 
 namespace NES::ASP{
@@ -68,10 +68,10 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
   private:
     /**
      * @brief Calculates the scaling factor from the current number of samples and stored records
-     * @param stackRef
+     * @param listRef
      * @return Scaling factor
      */
-    double getScalingFactor(Nautilus::Interface::ListRef stackRef);
+    double getScalingFactor(Nautilus::Interface::ListRef listRef);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor

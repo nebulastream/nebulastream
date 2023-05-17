@@ -13,27 +13,27 @@
 */
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Stack/Stack.hpp>
-#include <Nautilus/Interface/Stack/ListRef.hpp>
+#include <Nautilus/Interface/List/List.hpp>
+#include <Nautilus/Interface/List/ListRef.hpp>
 
 namespace NES::Nautilus::Interface {
-ListRef::ListRef(const Value<MemRef>& stackRef, uint64_t entrySize)
-    : stackRef(stackRef), entrySize(entrySize), entriesPerPage(Stack::PAGE_SIZE / entrySize) {}
+ListRef::ListRef(const Value<MemRef>& listRef, uint64_t entrySize)
+    : listRef(listRef), entrySize(entrySize), entriesPerPage(List::PAGE_SIZE / entrySize) {}
 
-void allocateNewPageProxy(void* stackPtr) {
-    auto* stack = (Stack*) stackPtr;
-    stack->appendPage();
+void allocateNewPageProxy(void* listPtr) {
+    auto* list = (List*) listPtr;
+    list->appendPage();
 }
 
-void* getStackPageProxy(void* stackPtr, uint64_t pagePos) {
-    auto* stack = (Stack*) stackPtr;
-    return stack->getPages()[pagePos];
+void* getListPageProxy(void* listPtr, uint64_t pagePos) {
+    auto* list = (List*) listPtr;
+    return list->getPages()[pagePos];
 }
 
 Value<MemRef> ListRef::allocateEntry() {
     // check if we should allocate a new page
     if (getNumberOfEntries() >= entriesPerPage) {
-        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, stackRef);
+        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, listRef);
     }
     // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
@@ -43,14 +43,14 @@ Value<MemRef> ListRef::allocateEntry() {
     return entry.as<MemRef>();
 }
 
-Value<MemRef> ListRef::getCurrentPage() { return getMember(stackRef, Stack, currentPage).load<MemRef>(); }
+Value<MemRef> ListRef::getCurrentPage() { return getMember(listRef, List, currentPage).load<MemRef>(); }
 
-Value<UInt64> ListRef::getNumberOfEntries() { return getMember(stackRef, Stack, numberOfEntries).load<UInt64>(); }
+Value<UInt64> ListRef::getNumberOfEntries() { return getMember(listRef, List, numberOfEntries).load<UInt64>(); }
 
-Value<UInt64> ListRef::getTotalNumberOfEntries() { return getMember(stackRef, Stack, totalNumberOfEntries).load<UInt64>(); }
+Value<UInt64> ListRef::getTotalNumberOfEntries() { return getMember(listRef, List, totalNumberOfEntries).load<UInt64>(); }
 
 Value<MemRef> ListRef::getPage(const Value<>& pos) {
-    return (getMember(stackRef, Stack, firstPage).load<MemRef>() + (pos * 8)).as<MemRef>();
+    return (getMember(listRef, List, firstPage).load<MemRef>() + (pos * 8)).as<MemRef>();
 }
 
 Value<MemRef> ListRef::getEntry(const Value<UInt64>& pos) {
@@ -58,34 +58,29 @@ Value<MemRef> ListRef::getEntry(const Value<UInt64>& pos) {
     auto positionOnPage = pos - (pagePos * entriesPerPage);
 
     // TODO change this later to
-    auto page = Nautilus::FunctionCall("getStackPageProxy", getStackPageProxy, stackRef, Value<UInt64>(pagePos));
+    auto page = Nautilus::FunctionCall("getListPageProxy", getListPageProxy, listRef, Value<UInt64>(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
     return retPos.as<MemRef>();
 }
 
-void ListRef::setNumberOfEntries(const Value<>& val) { getMember(stackRef, Stack, numberOfEntries).store(val); }
+void ListRef::setNumberOfEntries(const Value<>& val) { getMember(listRef, List, numberOfEntries).store(val); }
 
-void ListRef::setNumberOfTotalEntries(const Value<>& val) { getMember(stackRef, Stack, totalNumberOfEntries).store(val); }
+void ListRef::setNumberOfTotalEntries(const Value<>& val) { getMember(listRef, List, totalNumberOfEntries).store(val); }
 
-
-ListRefIter ListRef::begin() {
-    return {*this};
-}
+ListRefIter ListRef::begin() { return {*this}; }
 
 ListRefIter ListRef::at(Value<UInt64> pos) {
-    ListRefIter stackRefIter(*this);
-    stackRefIter.setPos(pos);
-    return stackRefIter;
+    ListRefIter listRefIter(*this);
+    listRefIter.setPos(pos);
+    return listRefIter;
 }
 
-ListRefIter ListRef::end() {
-    return at(this->getTotalNumberOfEntries());
-}
+ListRefIter ListRef::end() { return at(this->getTotalNumberOfEntries()); }
 
-ListRefIter::ListRefIter(const ListRef& stackRef) : pos(0UL), stackRef(stackRef) {}
+ListRefIter::ListRefIter(const ListRef& listRef) : pos(0UL), listRef(listRef) {}
 
-ListRefIter::ListRefIter(const ListRefIter &it) : pos(it.pos), stackRef(it.stackRef) {}
+ListRefIter::ListRefIter(const ListRefIter &it) : pos(it.pos), listRef(it.listRef) {}
 
 ListRefIter& ListRefIter::operator=(const ListRefIter &it) {
     if (this == &it) {
@@ -97,7 +92,7 @@ ListRefIter& ListRefIter::operator=(const ListRefIter &it) {
 }
 
 Value<MemRef> ListRefIter::operator*() {
-    return stackRef.getEntry(pos);
+    return listRef.getEntry(pos);
 }
 
 ListRefIter& ListRefIter::operator++() {

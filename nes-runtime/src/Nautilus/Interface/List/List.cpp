@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/Stack/Stack.hpp>
+#include <Nautilus/Interface/List/List.hpp>
 #include <cstring>
 
 namespace NES::Nautilus::Interface {
 
-Stack::Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
+List::List(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
     : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
     appendPage();
     firstPage = &pages[0];
 }
 
-int8_t* Stack::appendPage() {
+int8_t* List::appendPage() {
     auto page = reinterpret_cast<int8_t*>(allocator->allocate(PAGE_SIZE));
     pages.emplace_back(page);
     currentPage = page;
@@ -30,34 +30,34 @@ int8_t* Stack::appendPage() {
     return page;
 }
 
-int8_t* Stack::getEntry(uint64_t pos) {
+int8_t* List::getEntry(uint64_t pos) {
     auto pagePos = pos / capacityPerPage();
     auto positionOnPage = pos % capacityPerPage();
 
     return (pages[pagePos] + positionOnPage * entrySize);
 }
 
-Stack::~Stack() {
+List::~List() {
     for (auto* page : pages) {
         allocator->deallocate(page, PAGE_SIZE);
     }
 }
-size_t Stack::getNumberOfEntries() { return totalNumberOfEntries; }
+size_t List::getNumberOfEntries() { return totalNumberOfEntries; }
 
-size_t Stack::getNumberOfPages() { return pages.size(); }
+size_t List::getNumberOfPages() { return pages.size(); }
 
-size_t Stack::capacityPerPage() { return PAGE_SIZE / entrySize; }
+size_t List::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
-const std::vector<int8_t*> Stack::getPages() { return pages; }
+const std::vector<int8_t*> List::getPages() { return pages; }
 
-void Stack::moveTo(uint64_t oldPos, uint64_t newPos) {
+void List::moveTo(uint64_t oldPos, uint64_t newPos) {
     auto oldPosEntry = getEntry(oldPos);
     auto newPosEntry = getEntry(newPos);
     std::memcpy(newPosEntry, oldPosEntry, entrySize);
 }
 
-void Stack::clear() { pages.clear(); }
+void List::clear() { pages.clear(); }
 
-size_t Stack::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
+size_t List::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
 
 }// namespace NES::Nautilus::Interface
