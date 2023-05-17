@@ -34,6 +34,12 @@ namespace NES::Runtime::Execution::Operators {
     }
 
     void NLJOperatorHandler::createNewWindow(uint64_t timestamp) {
+        // First, we check if a window exists
+        auto window = getWindowByTimestamp(timestamp);
+        if (window.has_value()) {
+            return;
+        }
+
         auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
         auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
         nljWindows.emplace_back(windowStart, windowEnd);

@@ -23,14 +23,34 @@
 
 namespace NES::Runtime::Execution {
 
+/**
+ * @brief This class represents a single window for the nested loop join. It stores all values for the left and right stream.
+ * Later on this class can be reused for a slice.
+ */
 class NLJWindow {
 public:
 
     enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_NLJ_SINK};
 
+    /**
+     * @brief Constructor for creating a window
+     * @param windowStart
+     * @param windowEnd
+     */
     explicit NLJWindow(uint64_t windowStart, uint64_t windowEnd);
 
+    /**
+     * @brief Compares if two windows are equal
+     * @param rhs
+     * @return Boolean
+     */
     bool operator==(const NLJWindow &rhs) const;
+
+    /**
+     * @brief Compares if two windows are NOT equal
+     * @param rhs
+     * @return Boolean
+     */
     bool operator!=(const NLJWindow &rhs) const;
 
     /**
@@ -77,12 +97,6 @@ public:
     uint64_t getWindowIdentifier() const;
 
     /**
-     * @brief Retrieving the window state
-     * @return WindowState
-     */
-    WindowState getWindowState() const;
-
-    /**
      * @brief Wrapper for std::atomic<T>::compare_exchange_strong
      * @param expectedState
      * @param newWindowState
@@ -104,7 +118,6 @@ public:
     std::mutex rightTuplesMutex;
     uint64_t windowStart;
     uint64_t windowEnd;
-
 };
 } // namespace NES::Runtime::Execution
 

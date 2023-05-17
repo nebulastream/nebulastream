@@ -41,6 +41,10 @@ class HashJoinBuild : public ExecutableOperator {
     HashJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
                   const std::string& timeStampField, SchemaPtr schema);
 
+    /**
+     * @brief Setting up the pipeline by initializing the operator handler
+     * @param executionCtx
+     */
     void setup(ExecutionContext& executionCtx) const override;
 
     /**

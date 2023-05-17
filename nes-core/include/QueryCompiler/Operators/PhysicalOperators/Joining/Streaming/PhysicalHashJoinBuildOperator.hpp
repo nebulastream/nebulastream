@@ -75,14 +75,33 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
                                            JoinBuildSideType buildSide,
                                            std::string timeStampFieldName);
 
+    /**
+     * @brief Deconstructor
+     */
     ~PhysicalHashJoinBuildOperator() noexcept override = default;
 
+    /**
+     * @brief Returns a string containing the name of this physical operator
+     * @return String
+     */
     [[nodiscard]] std::string toString() const override;
 
+    /**
+     * @brief Performs a deep copy of this physical operator
+     * @return OperatorNodePtr
+     */
     OperatorNodePtr copy() override;
 
+    /**
+     * @brief Getter for the build side, either left or right
+     * @return JoinBuildSideType
+     */
     JoinBuildSideType getBuildSide() const;
 
+    /**
+     * @brief Getter for the timestamp fieldname
+     * @return String
+     */
     const std::string& getTimeStampFieldName() const;
 
   private:

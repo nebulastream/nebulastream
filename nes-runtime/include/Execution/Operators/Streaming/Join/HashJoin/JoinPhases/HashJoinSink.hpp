@@ -33,7 +33,8 @@ class HashJoinSink : public Operator {
     explicit HashJoinSink(uint64_t handlerIndex);
 
     /**
-     * @brief receives a record buffer and then performs the join for the corresponding bucket. Currently, this method emits a buffer
+     * @brief receives a record buffer and then performs the join for the corresponding bucket. Currently,
+     * this method emits a buffer
      * @param executionCtx
      * @param recordBuffer
      */

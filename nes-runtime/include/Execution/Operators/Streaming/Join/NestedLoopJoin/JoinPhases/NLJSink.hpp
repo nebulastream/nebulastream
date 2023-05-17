@@ -16,12 +16,31 @@
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-class NLJSink : public Operator {
 
+
+/**
+ * @brief This class is the second and final phase for a nested loop join. We join the tuples via two nested loops and
+ * calling the child with the newly created joined records.
+ */
+class NLJSink : public Operator {
 public:
+    /**
+     * @brief Constructor for a NLJSink
+     * @param operatorHandlerIndex
+     * @param leftSchema
+     * @param rightSchema
+     * @param joinSchema
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
+     */
     explicit NLJSink(uint64_t operatorHandlerIndex, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr joinSchema,
                      std::string joinFieldNameLeft, std::string joinFieldNameRight);
 
+    /**
+     * @brief Receives a record buffer containing a window identifier for a window that is ready to be joined
+     * @param ctx
+     * @param recordBuffer
+     */
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
