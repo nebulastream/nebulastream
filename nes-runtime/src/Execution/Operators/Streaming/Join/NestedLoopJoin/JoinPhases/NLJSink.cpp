@@ -115,8 +115,8 @@ namespace NES::Runtime::Execution::Operators {
         auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/1, leftSchema);
         auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/1, rightSchema);
 
-        for (Value<UInt64> leftPos(0UL); leftPos < numberOfTuplesLeft; leftPos = leftPos + 1){
-            for (Value<UInt64> rightPos(0UL); rightPos < numberOfTuplesRight; rightPos = rightPos + 1){
+        for (Value<UInt64> leftPos((uint64_t) 0); leftPos < numberOfTuplesLeft; leftPos = leftPos + 1){
+            for (Value<UInt64> rightPos((uint64_t) 0); rightPos < numberOfTuplesRight; rightPos = rightPos + 1){
                 auto leftRecord = leftMemProvider->read({}, firstTupleLeft, leftPos);
                 auto rightRecord = rightMemProvider->read({}, firstTupleRight, rightPos);
 

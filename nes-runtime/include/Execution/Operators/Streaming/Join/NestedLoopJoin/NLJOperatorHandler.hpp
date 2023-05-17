@@ -19,8 +19,8 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <optional>
 #include <list>
+#include <optional>
 
 namespace NES::Runtime::Execution::Operators {
 /**
