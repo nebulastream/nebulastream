@@ -25,8 +25,8 @@ class SortScan : public ExecutableOperator {
   public:
     SortScan(const uint64_t operatorHandlerIndex);
 
-    void execute(ExecutionContext& executionCtx, Record& record) const override;
-    void close(ExecutionContext& executionCtx,  RecordBuffer& recordBuffer) const override;
+    void setup(ExecutionContext& executionCtx) const override;
+    void open(ExecutionContext& executionCtx,  RecordBuffer& recordBuffer) const override;
 
   private:
     const uint64_t operatorHandlerIndex;

@@ -23,21 +23,15 @@ namespace NES::Runtime::Execution::Operators {
 
 class Sort : public ExecutableOperator {
   public:
-
     Sort(const uint64_t operatorHandlerIndex,
-         const std::vector<Expressions::ExpressionPtr>& sortExpressions,
-         const std::vector<PhysicalTypePtr>& sortDataTypes);
+         const std::vector<PhysicalTypePtr>& dataTypes);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-    void close(ExecutionContext& executionCtx,  RecordBuffer& recordBuffer) const override;
-
   private:
     const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-    uint64_t keySize;
 
     const uint64_t operatorHandlerIndex;
-    const std::vector<Expressions::ExpressionPtr> sortExpressions;
-    const std::vector<PhysicalTypePtr> sortDataTypes;
+    const std::vector<PhysicalTypePtr> dataTypes;
 };
 
 }// namespace NES::Runtime::Execution::Operators
