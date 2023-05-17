@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Stack/Stack.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/Stack/ListRef.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -48,7 +48,7 @@ TEST_F(StackTest, appendValue) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
     auto stack = Stack(std::move(allocator), entrySize);
-    auto stackRef = StackRef(Value<MemRef>((int8_t*) &stack), entrySize);
+    auto stackRef = ListRef(Value<MemRef>((int8_t*) &stack), entrySize);
 
     for (auto i = 0; i < 1000; i++) {
         stackRef.allocateEntry();
@@ -62,7 +62,7 @@ TEST_F(StackTest, storeAndRetrieveValues) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
     auto stack = Stack(std::move(allocator), entrySize);
-    auto stackRef = StackRef(Value<MemRef>((int8_t*) &stack), entrySize);
+    auto stackRef = ListRef(Value<MemRef>((int8_t*) &stack), entrySize);
 
     for (auto i = 0UL; i < 1000UL; i++) {
         Value<UInt64> val((uint64_t) i);

@@ -24,7 +24,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/Stack/ListRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
@@ -84,7 +84,7 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
     // TODO this can be pulled out of this function and into the open() #3743
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
-    auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
+    auto stackRef = Nautilus::Interface::ListRef(stackMemRef, recordSize);
 
     auto entryMemRef = stackRef.allocateEntry();
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
@@ -102,7 +102,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
                                                                                  Runtime::BufferManagerPtr bufferManager) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
-    auto stackRef = Nautilus::Interface::StackRef(stackMemRef, recordSize);
+    auto stackRef = Nautilus::Interface::ListRef(stackMemRef, recordSize);
 
     auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, stackMemRef,
                                                           Nautilus::Value<Nautilus::UInt64>((uint64_t)sampleSize));
@@ -149,7 +149,7 @@ void RandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execu
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
 }
 
-double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::StackRef stackRef){
+double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::ListRef stackRef){
     double retValue = 1;
 
     if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {

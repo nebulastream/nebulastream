@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACK_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACK_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LIST_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LIST_HPP_
 #include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
 namespace NES::Nautilus::Interface {
-class StackRef;
+class ListRef;
 
 /**
  * @brief This class provides a dynamically growing stack/list data structure of entries.
@@ -27,20 +27,20 @@ class StackRef;
  * Each page can contain page_size/entry_size entries.
  * TODO check if we should use FixedPage.cpp or introduce specific page class
  */
-class Stack {
+class List {
   public:
     static const uint64_t PAGE_SIZE = 4096;
 
     /**
-     * @brief Creates a new stack with a specific entry size
+     * @brief Creates a new list with a specific entry size
      * @param allocator the allocator
      * @param entrySize the size of an entry.
-     * TODO pass page size dynamically and adjust StackRef if needed.
+     * TODO pass page size dynamically and adjust ListRef if needed.
      */
-    Stack(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
+    List(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
 
     /**
-     * @brief Return the number of pages in the stack
+     * @brief Return the number of pages in the list
      * @return size_t
      */
     size_t getNumberOfPages();
@@ -94,10 +94,10 @@ class Stack {
      */
     int8_t* getEntry(uint64_t pos);
 
-    ~Stack();
+    ~List();
 
   private:
-    friend StackRef;
+    friend ListRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
     std::vector<int8_t*> pages;
@@ -109,4 +109,4 @@ class Stack {
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACK_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LIST_HPP_

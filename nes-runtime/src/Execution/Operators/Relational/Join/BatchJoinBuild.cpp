@@ -20,7 +20,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/Stack/ListRef.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -38,9 +38,9 @@ void setupJoinBuildHandler(void* ss, void* ctx, uint64_t entrySize, uint64_t key
 
 class LocalJoinBuildState : public Operators::OperatorState {
   public:
-    explicit LocalJoinBuildState(Interface::StackRef stack) : stack(std::move(stack)){};
+    explicit LocalJoinBuildState(Interface::ListRef stack) : stack(std::move(stack)){};
 
-    Interface::StackRef stack;
+    Interface::ListRef stack;
 };
 
 BatchJoinBuild::BatchJoinBuild(uint64_t operatorHandlerIndex,
@@ -81,7 +81,7 @@ void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // 2. load the thread local stack according to the worker id.
     auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler, ctx.getWorkerId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
-    auto stack = Interface::StackRef(state, entrySize);
+    auto stack = Interface::ListRef(state, entrySize);
     // 3. store the reference to the stack in the local operator state.
     auto sliceStoreState = std::make_unique<LocalJoinBuildState>(stack);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
