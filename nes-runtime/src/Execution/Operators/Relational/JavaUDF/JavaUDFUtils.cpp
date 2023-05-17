@@ -117,7 +117,7 @@ void startOrAttachVMWithByteList(void* state) {
 
     std::string utilsPath = std::string(JAVA_UDF_UTILS);
     JavaVMInitArgs args{};
-    std::vector<std::string> opt{"-verbose:jni", "-verbose:class", "-Djava.class.path=" + utilsPath};
+    std::vector<std::string> opt{"-Djava.class.path=" + utilsPath};
     std::vector<JavaVMOption> options;
     for (const auto& s : opt) {
         options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
