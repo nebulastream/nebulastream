@@ -70,7 +70,16 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator,
                                  SchemaPtr outputSchema,
                                  Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler);
 
+    /**
+     * @brief Creates a string containing the name of this physical operator
+     * @return String
+     */
     [[nodiscard]] std::string toString() const override;
+
+    /**
+     * @brief Performs a deep copy of this physical operator
+     * @return OperatorNodePtr
+     */
     OperatorNodePtr copy() override;
 };
 

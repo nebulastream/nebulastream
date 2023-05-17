@@ -29,9 +29,7 @@
 #include <memory>
 #include <vector>
 
-namespace NES {
-namespace Windowing {}// namespace Windowing
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 class ExpressionProvider;
 
 /**
@@ -64,21 +62,12 @@ class LowerPhysicalToNautilusOperators {
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
+    /**
+     * @brief Deconstructor for this class
+     */
     ~LowerPhysicalToNautilusOperators();
 
   private:
-    /**
-     * @brief Inserts streamJoinOperatorHandler into operatorHandlers, if it does not already exist
-     * @param operatorHandlers
-     * @param operatorId
-     * @param streamJoinOperatorHandler
-     * @return handlerIndex of the streamJoinOperatorHandler
-     */
-    uint64_t insertHashJoinOperatorHandlerIfNeeded(
-        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-        OperatorId operatorId,
-        const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& streamJoinOperatorHandler);
-
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
@@ -175,6 +164,12 @@ class LowerPhysicalToNautilusOperators {
 #endif// ENABLE_JNI
 
 #ifdef TFDEF
+    /**
+     * @brief Creates an executable operator for an inference operation
+     * @param physicalOperator
+     * @param operatorHandlers
+     * @return A shared pointer to an ExecutableOperator object that represents the infer model
+     */
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
@@ -183,6 +178,5 @@ class LowerPhysicalToNautilusOperators {
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_

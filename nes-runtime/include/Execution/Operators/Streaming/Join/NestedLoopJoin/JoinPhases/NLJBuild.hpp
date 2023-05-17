@@ -19,15 +19,39 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Expressions/Expression.hpp>
 
-
 namespace NES::Runtime::Execution::Operators {
+
+/**
+ * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
+ * corresponding window one after the other. Afterwards, the second phase (NLJSink) will start joining the tuples
+ * via two nested loops.
+ */
 class NLJBuild : public ExecutableOperator {
 
 public:
+    /**
+     * @brief Constructor for a NLJBuild
+     * @param operatorHandlerIndex
+     * @param schema
+     * @param joinFieldName
+     * @param timeStampField
+     * @param isLeftSide
+     */
     NLJBuild(uint64_t operatorHandlerIndex, const SchemaPtr &schema, const std::string &joinFieldName,
              const std::string &timeStampField, bool isLeftSide);
 
+    /**
+     * @brief Stores the record in the corresponding window
+     * @param ctx
+     * @param record
+     */
     void execute(ExecutionContext &ctx, Record &record) const override;
+
+    /**
+     * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
+     * @param ctx
+     * @param recordBuffer
+     */
     void close(ExecutionContext &ctx, RecordBuffer& recordBuffer) const override;
 
 private:
