@@ -38,22 +38,27 @@ class SortOperatorHandler : public Runtime::Execution::OperatorHandler,
         tempStack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
     }
 
+    void start(Runtime::Execution::PipelineExecutionContextPtr,
+               Runtime::StateManagerPtr,
+               uint32_t) override {};
+
+    void stop(Runtime::QueryTerminationType,
+              Runtime::Execution::PipelineExecutionContextPtr) override {};
+
     uint64_t getCount() { return stack->getNumberOfEntries(); }
 
-    Nautilus::Interface::StackRef getState() {
-        return Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) &stack), entrySize);
-    }
-
-    Nautilus::Interface::StackRef getTempState() {
+    Nautilus::Interface::Stack *getState() { return stack.get(); }
+    Nautilus::Interface::StackRef getStateRef() {
         return Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) &tempStack), entrySize);
     }
 
-    uint64_t getEntrySize() { return entrySize; }
+    Nautilus::Interface::Stack *getTempState() { return tempStack.get(); }
+
+    uint64_t getEntrySize() const { return entrySize; }
 
   private:
     std::unique_ptr<Nautilus::Interface::Stack> stack;
     std::unique_ptr<Nautilus::Interface::Stack> tempStack;
-    //us::Interface::StackRef stack;
     uint64_t entrySize;
 };
 }// namespace NES::Runtime::Execution::Operators
