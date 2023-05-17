@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACKREF_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACKREF_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LISTREF_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LISTREF_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Nautilus::Interface {
 
@@ -21,17 +21,17 @@ namespace NES::Nautilus::Interface {
 class ListRefIter;
 
 /**
- * @brief This is a nautilus wrapper for the stack data structure.
- * It wraps a memref to the underling stack and provides access methods.
+ * @brief This is a nautilus wrapper for the list data structure.
+ * It wraps a memref to the underling list and provides access methods.
  */
 class ListRef {
   public:
     /**
      * @brief Constructs the wrapper.
-     * @param stackRef memref to the stack
+     * @param listRef memref to the list
      * @param entrySize size of entries.
      */
-    ListRef(const Value<MemRef>& stackRef, uint64_t entrySize);
+    ListRef(const Value<MemRef>& listRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -65,7 +65,7 @@ class ListRef {
     void setNumberOfTotalEntries(const Value<>& totalEntries);
 
     /**
-     * @brief Returns the total number of entries for this stack.
+     * @brief Returns the total number of entries for this list.
      * @return Value<UInt64>
      */
     Value<UInt64> getTotalNumberOfEntries();
@@ -78,28 +78,28 @@ class ListRef {
     Value<MemRef> getPage(const Value<>& pos);
 
     /**
-     * @brief Returns an iterator that points to the begin of this StackRef
-     * @return StackRefIter
+     * @brief Returns an iterator that points to the begin of this listRef
+     * @return ListRefIter
      */
     ListRefIter begin();
 
     /**
      * @brief Returns an iterator pointing to the entry at pos
      * @param pos
-     * @return StackRefIter
+     * @return ListRefIter
      */
     ListRefIter at(Value<UInt64> pos);
 
     /**
-     * @brief Returns an iterator that points to the end of this StackRef
-     * @return StackRefIter
+     * @brief Returns an iterator that points to the end of this ListRef
+     * @return ListRefIter
      */
     ListRefIter end();
 
 
   private:
     Value<MemRef> getCurrentPage();
-    Value<MemRef> stackRef;
+    Value<MemRef> listRef;
     uint64_t entrySize;
     uint64_t entriesPerPage;
 };
@@ -110,9 +110,9 @@ public:
 
     /**
      * @brief Constructor
-     * @param stackRef
+     * @param listRef
      */
-    ListRefIter(const ListRef& stackRef);
+    ListRefIter(const ListRef& listRef);
 
     /**
      * @brief Copy constructor
@@ -123,12 +123,12 @@ public:
     /**
      * @brief Assignment operator
      * @param it
-     * @return Reference to StackRefIter
+     * @return Reference to ListRefIter
      */
     ListRefIter& operator=(const ListRefIter& it);
 
     /**
-     * @brief Dereference operator that points to a given entry in the StackRef
+     * @brief Dereference operator that points to a given entry in the ListRef
      * @return Value<MemRef>
      */
     Value<MemRef> operator*();
@@ -167,10 +167,9 @@ private:
     void setPos(Value<UInt64> newValue);
 
     Value<UInt64> pos;
-    ListRef stackRef;
-
+    ListRef listRef;
 };
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_STACK_STACKREF_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_LIST_LISTREF_HPP_
