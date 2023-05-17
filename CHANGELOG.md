@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.81](https://github.com/nebulastream/nebulastream/tree/v0.5.81) (2023-05-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.80...v0.5.81)
+
+**Implemented enhancements:**
+
+- \[Feature\] Query Fail Request Implementation [\#3635](https://github.com/nebulastream/nebulastream/issues/3635)
+
 ## [v0.5.80](https://github.com/nebulastream/nebulastream/tree/v0.5.80) (2023-05-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.79...v0.5.80)
