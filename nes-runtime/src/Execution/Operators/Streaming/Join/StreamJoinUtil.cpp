@@ -85,8 +85,8 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
     const auto numberOfSchemaFields = schema->fields.size();
     const auto physicalTypes = getPhysicalTypes(schema);
 
-    auto sequenceNumber = 0UL;
-    auto watermarkTS = 0UL;
+    uint64_t sequenceNumber = 0;
+    uint64_t watermarkTS = 0;
     do {
         std::string line = *it;
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
