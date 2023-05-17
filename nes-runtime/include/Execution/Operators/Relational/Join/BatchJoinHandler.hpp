@@ -15,7 +15,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/List/List.hpp>
+#include <Nautilus/Interface/SequentialData/SequentialData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
@@ -62,7 +62,7 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
      * @param workerId
      * @return  Nautilus::Interface::List*
      */
-    Nautilus::Interface::List* getThreadLocalState(uint64_t workerId);
+    Nautilus::Interface::SequentialData* getThreadLocalState(uint64_t workerId);
 
     /**
      * @brief This function creates the global hash map. To this end, it builds a new hash map based on the thread local lists.
@@ -81,7 +81,7 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
   private:
-    std::vector<std::unique_ptr<Nautilus::Interface::List>> threadLocalStateStores;
+    std::vector<std::unique_ptr<Nautilus::Interface::SequentialData>> threadLocalStateStores;
     std::unique_ptr<Nautilus::Interface::ChainedHashMap> globalMap;
     uint64_t keySize;
     uint64_t valueSize;
