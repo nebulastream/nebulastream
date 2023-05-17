@@ -18,20 +18,20 @@
 namespace NES::Nautilus::Interface {
 
 // Forward declaration
-class StackRefIter;
+class ListRefIter;
 
 /**
  * @brief This is a nautilus wrapper for the stack data structure.
  * It wraps a memref to the underling stack and provides access methods.
  */
-class StackRef {
+class ListRef {
   public:
     /**
      * @brief Constructs the wrapper.
      * @param stackRef memref to the stack
      * @param entrySize size of entries.
      */
-    StackRef(const Value<MemRef>& stackRef, uint64_t entrySize);
+    ListRef(const Value<MemRef>& stackRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -81,20 +81,20 @@ class StackRef {
      * @brief Returns an iterator that points to the begin of this StackRef
      * @return StackRefIter
      */
-    StackRefIter begin();
+    ListRefIter begin();
 
     /**
      * @brief Returns an iterator pointing to the entry at pos
      * @param pos
      * @return StackRefIter
      */
-    StackRefIter at(Value<UInt64> pos);
+    ListRefIter at(Value<UInt64> pos);
 
     /**
      * @brief Returns an iterator that points to the end of this StackRef
      * @return StackRefIter
      */
-    StackRefIter end();
+    ListRefIter end();
 
 
   private:
@@ -104,28 +104,28 @@ class StackRef {
     uint64_t entriesPerPage;
 };
 
-class StackRefIter {
+class ListRefIter {
 public:
-    friend class StackRef;
+    friend class ListRef;
 
     /**
      * @brief Constructor
      * @param stackRef
      */
-    StackRefIter(const StackRef& stackRef);
+    ListRefIter(const ListRef& stackRef);
 
     /**
      * @brief Copy constructor
      * @param it
      */
-    StackRefIter(const StackRefIter& it);
+    ListRefIter(const ListRefIter& it);
 
     /**
      * @brief Assignment operator
      * @param it
      * @return Reference to StackRefIter
      */
-    StackRefIter& operator=(const StackRefIter& it);
+    ListRefIter& operator=(const ListRefIter& it);
 
     /**
      * @brief Dereference operator that points to a given entry in the StackRef
@@ -137,27 +137,27 @@ public:
      * @brief Pre-increment operator that first increments and then returns the reference
      * @return Reference
      */
-    StackRefIter& operator++();
+    ListRefIter& operator++();
 
     /**
      * @brief Post-increment count that first returns the reference and then increments
      * @return Iterator
      */
-    StackRefIter operator++(int);
+    ListRefIter operator++(int);
 
     /**
      * @brief Equality operator
      * @param other
      * @return Boolean
      */
-    bool operator==(const StackRefIter& other) const;
+    bool operator==(const ListRefIter& other) const;
 
     /**
      * @brief Inequality operator
      * @param other
      * @return Boolean
      */
-    bool operator!=(const StackRefIter& other) const;
+    bool operator!=(const ListRefIter& other) const;
 
 private:
     /**
@@ -167,7 +167,7 @@ private:
     void setPos(Value<UInt64> newValue);
 
     Value<UInt64> pos;
-    StackRef stackRef;
+    ListRef stackRef;
 
 };
 

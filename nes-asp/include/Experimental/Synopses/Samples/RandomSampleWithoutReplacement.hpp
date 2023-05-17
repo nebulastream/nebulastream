@@ -18,7 +18,7 @@
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/Stack/ListRef.hpp>
 
 
 namespace NES::ASP{
@@ -71,7 +71,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param stackRef
      * @return Scaling factor
      */
-    double getScalingFactor(Nautilus::Interface::StackRef stackRef);
+    double getScalingFactor(Nautilus::Interface::ListRef stackRef);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor
