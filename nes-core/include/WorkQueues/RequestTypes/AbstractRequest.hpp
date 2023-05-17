@@ -54,7 +54,6 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 class AbstractRequest {
   public:
-
     /**
      * @brief constructor
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request

@@ -14,6 +14,7 @@
 
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -26,7 +27,6 @@
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <utility>
 
 using namespace NES;
@@ -255,7 +255,7 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         auto subQueryId = request->subqueryid();
         try {
             queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId);
-        } catch (std::exception &e) {
+        } catch (std::exception& e) {
             NES_ERROR2("Unable to mark queries for failure :: subQueryId={}", subQueryId);
             return Status::CANCELLED;
         }

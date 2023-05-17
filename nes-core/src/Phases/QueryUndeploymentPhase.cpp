@@ -49,7 +49,8 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
 
     if (executionNodes.empty()) {
         NES_ERROR2("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
-        throw QueryUndeploymentException("Unable to find ExecutionNodes where the query " + std::to_string(queryId) + " is deployed");
+        throw QueryUndeploymentException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
+                                         + " is deployed");
     }
 
     NES_DEBUG2("QueryUndeploymentPhase:removeQuery: stop query");
