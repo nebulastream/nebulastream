@@ -17,7 +17,6 @@
 #include <Nautilus/Interface/Stack/StackRef.hpp>
 
 namespace NES::Nautilus::Interface {
-
 StackRef::StackRef(const Value<MemRef>& stackRef, uint64_t entrySize)
     : stackRef(stackRef), entrySize(entrySize), entriesPerPage(Stack::PAGE_SIZE / entrySize) {}
 
@@ -102,7 +101,7 @@ Value<MemRef> StackRefIter::operator*() {
 }
 
 StackRefIter& StackRefIter::operator++() {
-    pos + pos + 1;
+    pos = pos + 1;
     return *this;
 }
 
@@ -127,7 +126,4 @@ bool StackRefIter::operator!=(const StackRefIter &other) const {
 void StackRefIter::setPos(Value<UInt64> newValue) {
     pos = newValue;
 }
-
-
-
 }// namespace NES::Nautilus::Interface
