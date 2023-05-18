@@ -702,3 +702,117 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }
+
+TEST_F(FilterPushDownRuleTest, DISABLED_testPushingOneFilterBelowWindow) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query = Query::from("vehicles")
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)))
+                      .apply(Count()->as(Attribute("count_value")))
+                      .filter(Attribute("engine_hp") < 40)
+                      .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr windowOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(windowOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, DISABLED_testPushingOneFilterBelowJoinAndWindowOperator) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query = Query::from("vehicles")
+                      .joinWith(Query::from("accessories")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(2))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
+                      .map(Attribute("value") = 80)
+                      .filter(Attribute("id") > 45)
+                      .sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr mapOperator = (*itr);
+    ++itr;
+    const NodePtr windowOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkAssignerOperator = (*itr);
+    ++itr;
+    const NodePtr joinOperator = (*itr);
+    ++itr;
+    const NodePtr watermarkAssignerOperatorSubQuery = (*itr);
+    ++itr;
+    const NodePtr srcOperatorSubQuery = (*itr);
+    ++itr;
+    const NodePtr watermarkAssignerOperatorMainQuery = (*itr);
+    ++itr;
+    const NodePtr srcOperatorMainQuery = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(windowOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkAssignerOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(joinOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkAssignerOperatorSubQuery->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorSubQuery->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(watermarkAssignerOperatorMainQuery->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorMainQuery->equal((*itr)));
+}
