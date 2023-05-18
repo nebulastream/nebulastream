@@ -38,15 +38,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
     auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
                  const CompilationOptions& options = CompilationOptions(), 
-                 const DumpHelper& dumpHelper = DumpHelper::create("", true, false, "")) {
-        executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-        NES_DEBUG(*executionTrace.get());
-        auto ir = irCreationPhase.apply(executionTrace);
-        std::cout << ir->toString() << std::endl;
-        auto param = this->GetParam();
-        auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
-        return compiler->compile(ir, options, dumpHelper);
-    }
+                 const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
 };
 }// namespace NES::Nautilus
 
