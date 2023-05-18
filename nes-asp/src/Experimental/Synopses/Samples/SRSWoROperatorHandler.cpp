@@ -18,11 +18,11 @@
 
 namespace NES::ASP {
 
-void* SRSWoROperatorHandler::getStackRef() { return stack.get(); }
+void* SRSWoROperatorHandler::getPagedVectorRef() { return pagedVector.get(); }
 
 void SRSWoROperatorHandler::setup(uint64_t entrySize) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
-    stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
+    pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
 }
 void SRSWoROperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                   Runtime::StateManagerPtr,

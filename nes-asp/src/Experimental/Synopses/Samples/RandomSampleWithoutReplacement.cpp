@@ -23,7 +23,8 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/List/ListRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
@@ -31,9 +32,9 @@
 namespace NES::ASP {
 
 
-uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
-    auto* stack = (Nautilus::Interface::Stack*) stackPtr;
-    const auto numberOfTuples = stack->getNumberOfEntries();
+uint64_t createSampleProxy(void* pagedVectorPtr, uint64_t sampleSize) {
+    auto* pagedVector = (Nautilus::Interface::PagedVector*) pagedVectorPtr;
+    const auto numberOfTuples = pagedVector->getNumberOfEntries();
 
     // Generating a uniform random distribution
     std::mt19937 generator(GENERATOR_SEED_DEFAULT);
@@ -55,7 +56,7 @@ uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
     std::sort(allRandomPositions.begin(), allRandomPositions.end());
     for (const auto randomPos : allRandomPositions) {
         if (randomPos != cnt) {
-            stack->moveTo(randomPos, cnt);
+            pagedVector->moveTo(randomPos, cnt);
         }
         cnt += 1;
     }
@@ -63,9 +64,9 @@ uint64_t createSampleProxy(void* stackPtr, uint64_t sampleSize) {
     return numberOfRecordsInSample;
 }
 
-void* getStackRefProxy(void* opHandlerPtr) {
+void* getPagedVectorRefProxy(void* opHandlerPtr) {
     auto* opHandler = (SRSWoROperatorHandler*) opHandlerPtr;
-    return opHandler->getStackRef();
+    return opHandler->getPagedVectorRef();
 }
 
 void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
@@ -82,10 +83,10 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
 
     // TODO this can be pulled out of this function and into the open() #3743
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
-    auto stackRef = Nautilus::Interface::ListRef(stackMemRef, recordSize);
+    auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, recordSize);
 
-    auto entryMemRef = stackRef.allocateEntry();
+    auto entryMemRef = pagedVectorRef.allocateEntry();
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : inputSchema->fields) {
         auto const fieldName = field->getName();
@@ -100,10 +101,10 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
                                                                                  Runtime::Execution::ExecutionContext& ctx,
                                                                                  Runtime::BufferManagerPtr bufferManager) {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto stackMemRef = Nautilus::FunctionCall("getStackRefProxy", getStackRefProxy, opHandlerMemRef);
-    auto stackRef = Nautilus::Interface::ListRef(stackMemRef, recordSize);
+    auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, recordSize);
 
-    auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, stackMemRef,
+    auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, pagedVectorMemRef,
                                                           Nautilus::Value<Nautilus::UInt64>((uint64_t)sampleSize));
 
     // Approximate over the sample and write the approximation into record
@@ -114,7 +115,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
                                                                                                    inputSchema);
 
     Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
-    for (auto it = stackRef.begin(); it != stackRef.at(numberOfRecordsInSample); ++it) {
+    for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.at(numberOfRecordsInSample); ++it) {
         auto entryMemRef = *it;
         auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
         aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
@@ -123,7 +124,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
     // Lower the aggregation
     Nautilus::Record record;
     aggregationFunction->lower(aggregationValueMemRef, record);
-    auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor(stackRef));
+    auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor(pagedVectorRef));
     auto approximatedValue = multiplyWithScalingFactor(record.read(fieldNameApproximate), scalingFactor);
     record.write(fieldNameApproximate, approximatedValue);
 
@@ -148,11 +149,11 @@ void RandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execu
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
 }
 
-double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::ListRef stackRef){
+double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::PagedVectorRef pagedVectorRef){
     double retValue = 1;
 
     if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {
-        auto numberOfTuplesInWindow = (double)stackRef.getTotalNumberOfEntries().getValue().getRawInt();
+        auto numberOfTuplesInWindow = (double)pagedVectorRef.getTotalNumberOfEntries().getValue().getRawInt();
         double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);
     }
