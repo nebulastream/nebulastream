@@ -16,11 +16,11 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 
 namespace NES {
-  class DumpHelper;
-  namespace Nautilus {
-    class CompilationOptions;
-  }
+class DumpHelper;
+namespace Nautilus {
+class CompilationOptions;
 }
+}// namespace NES
 
 #include <llvm/IR/Module.h>
 #include <mlir/IR/BuiltinOps.h>
