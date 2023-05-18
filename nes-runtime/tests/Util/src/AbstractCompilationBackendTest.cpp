@@ -17,8 +17,8 @@
 namespace NES::Nautilus {
 std::unique_ptr<Nautilus::Backends::Executable>
 AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
-                 const CompilationOptions& options, 
-                 const DumpHelper& dumpHelper) {
+                                        const CompilationOptions& options,
+                                        const DumpHelper& dumpHelper) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     NES_DEBUG2("{}", executionTrace.get()->toString());
     auto ir = irCreationPhase.apply(executionTrace);

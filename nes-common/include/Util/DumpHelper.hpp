@@ -45,7 +45,7 @@ class DumpHelper {
     /**
      * @brief get outputPath
      */
-     const std::string& getOutputPath() const;
+    const std::string& getOutputPath() const;
 
   private:
     explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);

@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/DumpHelper.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -21,9 +19,11 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
@@ -74,12 +74,13 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {
     options.setDumpOutputPath(std::filesystem::temp_directory_path().string());
     options.setIdentifier("ProxyInliningCompilationTest.ll");
     auto dumpHelper = DumpHelper::create(options.getIdentifier(), true, true, options.getDumpOutputPath());
-    
+
     // Execute the getNumberOfTuples() function.
     executeFunctionWithOptions(options, dumpHelper);
 
     // When compiling with O0, the generated code should contain a function call to getNumberOfTuples.
-    std::ifstream generatedProxyIR(dumpHelper.getOutputPath() +  std::filesystem::path::preferred_separator + options.getIdentifier());
+    std::ifstream generatedProxyIR(dumpHelper.getOutputPath() + std::filesystem::path::preferred_separator
+                                   + options.getIdentifier());
     NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
 
     // When compiling with O1+, the generated LLVM IR should not contain a function call.
@@ -117,7 +118,8 @@ TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningWithoutOpt
     executeFunctionWithOptions(options, dumpHelper);
 
     // Check if a file that contains the generated LLVM IR (generated function code linked with proxy functions).
-    std::ifstream generatedProxyIR(dumpHelper.getOutputPath() +  std::filesystem::path::preferred_separator + options.getIdentifier());
+    std::ifstream generatedProxyIR(dumpHelper.getOutputPath() + std::filesystem::path::preferred_separator
+                                   + options.getIdentifier());
     NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
 
     // When compiling with O0, the generated LLVM IR should contain a function call to getNumberOfTuples.
