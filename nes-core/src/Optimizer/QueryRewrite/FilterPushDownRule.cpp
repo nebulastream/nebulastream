@@ -42,8 +42,6 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     const auto rootOperators = queryPlan->getRootOperators();
     std::vector<FilterLogicalOperatorNodePtr> filterOperators;
     for (const auto& rootOperator : rootOperators) {
-        //FIXME: this will result in adding same filter operator twice in the vector
-        // remove the duplicate filters from the vector
         auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
         filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
     }
@@ -53,6 +51,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
               [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
                   return lhs->getId() < rhs->getId();
               });
+    filterOperators.erase( unique( filterOperators.begin(), filterOperators.end() ), filterOperators.end() );
     NES_DEBUG2("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (const auto& filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
