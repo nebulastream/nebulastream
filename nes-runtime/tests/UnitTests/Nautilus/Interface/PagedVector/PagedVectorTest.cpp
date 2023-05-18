@@ -20,8 +20,8 @@
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/SequentialData/SequentialData.hpp>
-#include <Nautilus/Interface/SequentialData/SequentialDataRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,52 +29,52 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class SequentialDataTest : public Testing::NESBaseTest {
+class PagedVectorTest : public Testing::NESBaseTest {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SequentialDataTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SequentialDataTest test class.");
+        NES::Logger::setupLogging("PagedVectorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup PagedVectorTest test class.");
     }
     void SetUp() override { Testing::NESBaseTest::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SequentialDataTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down PagedVectorTest test class."); }
 };
 
-TEST_F(SequentialDataTest, appendValue) {
+TEST_F(PagedVectorTest, appendValue) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
-    auto sequentialData = SequentialData(std::move(allocator), entrySize);
-    auto sequentialDataRef = SequentialDataRef(Value<MemRef>((int8_t*) &sequentialData), entrySize);
+    auto pagedVector = PagedVector(std::move(allocator), entrySize);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
 
     for (auto i = 0; i < 1000; i++) {
-        sequentialDataRef.allocateEntry();
+        pagedVectorRef.allocateEntry();
     }
 
-    ASSERT_EQ(sequentialData.getNumberOfEntries(), 1000);
-    ASSERT_EQ(sequentialData.getNumberOfPages(), 8);
+    ASSERT_EQ(pagedVector.getNumberOfEntries(), 1000);
+    ASSERT_EQ(pagedVector.getNumberOfPages(), 8);
 }
 
-TEST_F(SequentialDataTest, storeAndRetrieveValues) {
+TEST_F(PagedVectorTest, storeAndRetrieveValues) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto entrySize = 32;
-    auto sequentialData = SequentialData(std::move(allocator), entrySize);
-    auto sequentialDataRef = SequentialDataRef(Value<MemRef>((int8_t*) &sequentialData), entrySize);
+    auto pagedVector = PagedVector(std::move(allocator), entrySize);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
 
     for (auto i = 0UL; i < 1000UL; i++) {
         Value<UInt64> val((uint64_t) i);
-        auto ref = sequentialDataRef.allocateEntry();
+        auto ref = pagedVectorRef.allocateEntry();
         ref.store(val);
     }
 
-    ASSERT_EQ(sequentialData.getNumberOfEntries(), 1000);
-    ASSERT_EQ(sequentialData.getNumberOfPages(), 8);
+    ASSERT_EQ(pagedVector.getNumberOfEntries(), 1000);
+    ASSERT_EQ(pagedVector.getNumberOfPages(), 8);
 
     uint64_t i = 0;
-    for (auto it : sequentialDataRef) {
+    for (auto it : pagedVectorRef) {
         Value<UInt64> expectedVal((uint64_t) i++);
         auto resultVal = it.load<UInt64>();
         ASSERT_EQ(resultVal.getValue().getValue(), expectedVal.getValue().getValue());

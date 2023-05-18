@@ -19,4 +19,4 @@ add_source_files(nes-runtime
 add_subdirectory(Hash)
 add_subdirectory(HashMap)
 add_subdirectory(DataTypes)
-add_subdirectory(SequentialData)
+add_subdirectory(PagedVector)

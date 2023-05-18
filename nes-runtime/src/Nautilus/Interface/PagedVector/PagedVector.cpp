@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/SequentialData/SequentialData.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <cstring>
 
 namespace NES::Nautilus::Interface {
 
-SequentialData::SequentialData(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
+PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
     : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
     appendPage();
     firstPage = &pages[0];
 }
 
-int8_t* SequentialData::appendPage() {
+int8_t* PagedVector::appendPage() {
     auto page = reinterpret_cast<int8_t*>(allocator->allocate(PAGE_SIZE));
     pages.emplace_back(page);
     currentPage = page;
@@ -30,34 +30,34 @@ int8_t* SequentialData::appendPage() {
     return page;
 }
 
-int8_t* SequentialData::getEntry(uint64_t pos) {
+int8_t* PagedVector::getEntry(uint64_t pos) {
     auto pagePos = pos / capacityPerPage();
     auto positionOnPage = pos % capacityPerPage();
 
     return (pages[pagePos] + positionOnPage * entrySize);
 }
 
-SequentialData::~SequentialData() {
+PagedVector::~PagedVector() {
     for (auto* page : pages) {
         allocator->deallocate(page, PAGE_SIZE);
     }
 }
-size_t SequentialData::getNumberOfEntries() { return totalNumberOfEntries; }
+size_t PagedVector::getNumberOfEntries() { return totalNumberOfEntries; }
 
-size_t SequentialData::getNumberOfPages() { return pages.size(); }
+size_t PagedVector::getNumberOfPages() { return pages.size(); }
 
-size_t SequentialData::capacityPerPage() { return PAGE_SIZE / entrySize; }
+size_t PagedVector::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
-const std::vector<int8_t*> SequentialData::getPages() { return pages; }
+const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
-void SequentialData::moveTo(uint64_t oldPos, uint64_t newPos) {
+void PagedVector::moveTo(uint64_t oldPos, uint64_t newPos) {
     auto oldPosEntry = getEntry(oldPos);
     auto newPosEntry = getEntry(newPos);
     std::memcpy(newPosEntry, oldPosEntry, entrySize);
 }
 
-void SequentialData::clear() { pages.clear(); }
+void PagedVector::clear() { pages.clear(); }
 
-size_t SequentialData::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
+size_t PagedVector::getNumberOfEntriesOnCurrentPage() { return numberOfEntries; }
 
 }// namespace NES::Nautilus::Interface

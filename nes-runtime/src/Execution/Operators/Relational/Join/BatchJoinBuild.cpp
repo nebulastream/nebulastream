@@ -20,7 +20,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Nautilus/Interface/SequentialData/SequentialDataRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -38,9 +38,9 @@ void setupJoinBuildHandler(void* ss, void* ctx, uint64_t entrySize, uint64_t key
 
 class LocalJoinBuildState : public Operators::OperatorState {
   public:
-    explicit LocalJoinBuildState(Interface::SequentialDataRef sequentialData) : sequentialData(std::move(sequentialData)){};
+    explicit LocalJoinBuildState(Interface::PagedVectorRef pagedVector) : pagedVector(std::move(pagedVector)){};
 
-    Interface::SequentialDataRef sequentialData;
+    Interface::PagedVectorRef pagedVector;
 };
 
 BatchJoinBuild::BatchJoinBuild(uint64_t operatorHandlerIndex,
@@ -75,15 +75,15 @@ void BatchJoinBuild::setup(ExecutionContext& executionCtx) const {
 
 void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local sequentialData and store it in the local state.
+    // We use this here, to load the thread local pagedVector and store it in the local state.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local sequentialData according to the worker id.
+    // 2. load the thread local pagedVector according to the worker id.
     auto state = Nautilus::FunctionCall("getListProxy", getListProxy, globalOperatorHandler, ctx.getWorkerId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
-    auto sequentialData = Interface::SequentialDataRef(state, entrySize);
-    // 3. store the reference to the sequentialData in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalJoinBuildState>(sequentialData);
+    auto pagedVector = Interface::PagedVectorRef(state, entrySize);
+    // 3. store the reference to the pagedVector in the local operator state.
+    auto sliceStoreState = std::make_unique<LocalJoinBuildState>(pagedVector);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
 
@@ -94,17 +94,17 @@ void BatchJoinBuild::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
         keyValues.emplace_back(exp->execute(record));
     }
 
-    // 3. load the reference to the sequentialData.
+    // 3. load the reference to the pagedVector.
     auto state = reinterpret_cast<LocalJoinBuildState*>(ctx.getLocalState(this));
-    auto& sequentialData = state->sequentialData;
+    auto& pagedVector = state->pagedVector;
 
-    // 4. store entry in the sequentialData
+    // 4. store entry in the pagedVector
 
     // 4.1 calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 4.2 create entry and store it in sequentialData
-    auto entry = sequentialData.allocateEntry();
+    // 4.2 create entry and store it in pagedVector
+    auto entry = pagedVector.allocateEntry();
     // 4.3a store hash value at next offset
     auto hashPtr = (entry + (uint64_t) sizeof(int64_t)).as<MemRef>();
     hashPtr.store(hash);
