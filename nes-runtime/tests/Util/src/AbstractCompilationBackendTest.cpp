@@ -15,7 +15,8 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 
 namespace NES::Nautilus {
-auto AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
+std::unique_ptr<Nautilus::Backends::Executable>
+AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
                  const CompilationOptions& options, 
                  const DumpHelper& dumpHelper) {
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
