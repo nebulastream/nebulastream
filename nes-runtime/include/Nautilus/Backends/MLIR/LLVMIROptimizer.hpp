@@ -36,7 +36,6 @@ class LLVMIROptimizer {
 
     static std::function<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(const CompilationOptions& options,
                                                                               const DumpHelper& dumpHelper);
-
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_

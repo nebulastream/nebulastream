@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Util/DumpHelper.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
@@ -53,10 +53,8 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
         llvm::SMDiagnostic Err;
 
         // Load LLVM IR module from proxy inlining input path (We assert that it exists in CompilationOptions).
-        if(options.isProxyInlining()) {
-            auto proxyFunctionsIR = llvm::parseIRFile(options.getProxyInliningInputPath(),
-                                                        Err,
-                                                        llvmIRModule->getContext());
+        if (options.isProxyInlining()) {
+            auto proxyFunctionsIR = llvm::parseIRFile(options.getProxyInliningInputPath(), Err, llvmIRModule->getContext());
             // Link the module with our generated LLVM IR module and optimize the linked LLVM IR module (inlining happens during optimization).
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR), llvm::Linker::Flags::OverrideFromSrc);
         }
@@ -64,7 +62,7 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
         auto optimizedModule = optPipeline(llvmIRModule);
 
         // Print debug information to file/console if set in options.
-        if(options.isDumpToConsole() || options.isDumpToFile()) {
+        if (options.isDumpToConsole() || options.isDumpToFile()) {
             // Write the llvmIRModule to a string.
             std::string llvmIRString;
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
