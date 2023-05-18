@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.83](https://github.com/nebulastream/nebulastream/tree/v0.5.83) (2023-05-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.82...v0.5.83)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable using CompilerOptions for the LLVM Optimization Pipeline [\#3709](https://github.com/nebulastream/nebulastream/issues/3709)
+
 ## [v0.5.82](https://github.com/nebulastream/nebulastream/tree/v0.5.82) (2023-05-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.81...v0.5.82)
