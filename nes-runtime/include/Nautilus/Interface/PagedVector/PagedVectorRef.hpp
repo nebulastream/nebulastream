@@ -12,26 +12,26 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALREF_HPP_
-#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALREF_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Nautilus::Interface {
 
 // Forward declaration
-class SequentialDataRefIter;
+class PagedVectorRefIter;
 
 /**
  * @brief This is a nautilus wrapper for the sequential data structure.
  * It wraps a memref to the underling sequential and provides access methods.
  */
-class SequentialDataRef {
+class PagedVectorRef {
   public:
     /**
      * @brief Constructs the wrapper.
-     * @param sequentialDataRef memref to the list
+     * @param pagedVectorRef memref to the list
      * @param entrySize size of entries.
      */
-    SequentialDataRef(const Value<MemRef>& sequentialDataRef, uint64_t entrySize);
+    PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
@@ -81,51 +81,51 @@ class SequentialDataRef {
      * @brief Returns an iterator that points to the begin of this listRef
      * @return ListRefIter
      */
-    SequentialDataRefIter begin();
+    PagedVectorRefIter begin();
 
     /**
      * @brief Returns an iterator pointing to the entry at pos
      * @param pos
      * @return ListRefIter
      */
-    SequentialDataRefIter at(Value<UInt64> pos);
+    PagedVectorRefIter at(Value<UInt64> pos);
 
     /**
      * @brief Returns an iterator that points to the end of this ListRef
      * @return ListRefIter
      */
-    SequentialDataRefIter end();
+    PagedVectorRefIter end();
 
 
   private:
     Value<MemRef> getCurrentPage();
-    Value<MemRef> sequentialDataRef;
+    Value<MemRef> pagedVectorRef;
     uint64_t entrySize;
     uint64_t entriesPerPage;
 };
 
-class SequentialDataRefIter {
+class PagedVectorRefIter {
 public:
-    friend class SequentialDataRef;
+    friend class PagedVectorRef;
 
     /**
      * @brief Constructor
      * @param listRef
      */
-    SequentialDataRefIter(const SequentialDataRef& listRef);
+    PagedVectorRefIter(const PagedVectorRef& listRef);
 
     /**
      * @brief Copy constructor
      * @param it
      */
-    SequentialDataRefIter(const SequentialDataRefIter& it);
+    PagedVectorRefIter(const PagedVectorRefIter& it);
 
     /**
      * @brief Assignment operator
      * @param it
      * @return Reference to ListRefIter
      */
-    SequentialDataRefIter& operator=(const SequentialDataRefIter& it);
+    PagedVectorRefIter& operator=(const PagedVectorRefIter& it);
 
     /**
      * @brief Dereference operator that points to a given entry in the ListRef
@@ -137,27 +137,27 @@ public:
      * @brief Pre-increment operator that first increments and then returns the reference
      * @return Reference
      */
-    SequentialDataRefIter& operator++();
+    PagedVectorRefIter& operator++();
 
     /**
      * @brief Post-increment count that first returns the reference and then increments
      * @return Iterator
      */
-    SequentialDataRefIter operator++(int);
+    PagedVectorRefIter operator++(int);
 
     /**
      * @brief Equality operator
      * @param other
      * @return Boolean
      */
-    bool operator==(const SequentialDataRefIter& other) const;
+    bool operator==(const PagedVectorRefIter& other) const;
 
     /**
      * @brief Inequality operator
      * @param other
      * @return Boolean
      */
-    bool operator!=(const SequentialDataRefIter& other) const;
+    bool operator!=(const PagedVectorRefIter& other) const;
 
 private:
     /**
@@ -167,9 +167,9 @@ private:
     void setPos(Value<UInt64> newValue);
 
     Value<UInt64> pos;
-    SequentialDataRef sequentialDataRef;
+    PagedVectorRef pagedVectorRef;
 };
 
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_SEQUENTIALDATA_SEQUENTIALREF_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
