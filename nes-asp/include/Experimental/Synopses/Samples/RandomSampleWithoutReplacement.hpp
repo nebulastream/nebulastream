@@ -17,7 +17,7 @@
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/Interface/List/ListRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 
@@ -71,7 +71,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param listRef
      * @return Scaling factor
      */
-    double getScalingFactor(Nautilus::Interface::ListRef listRef);
+    double getScalingFactor(Nautilus::Interface::PagedVectorRef listRef);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor

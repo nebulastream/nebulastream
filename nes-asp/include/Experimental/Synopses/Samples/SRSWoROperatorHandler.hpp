@@ -16,7 +16,7 @@
 #ifndef NES_SRSWOROPERATORHANDLER_HPP
 #define NES_SRSWOROPERATORHANDLER_HPP
 
-#include <Nautilus/Interface/Stack/Stack.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::ASP {
@@ -27,13 +27,13 @@ class SRSWoROperatorHandler : public Runtime::Execution::OperatorHandler {
 
   public:
     /**
-     * @brief Getter for the stackRef
-     * @return Returns the pointer to the stack
+     * @brief Getter for the pagedVectorRef
+     * @return Returns the pointer to the pagedVector
      */
-    void* getStackRef();
+    void* getPagedVectorRef();
 
     /**
-     * @brief Initializes the stack
+     * @brief Initializes the pagedVector
      * @param entrySize
      */
     void setup(uint64_t entrySize);
@@ -56,7 +56,7 @@ class SRSWoROperatorHandler : public Runtime::Execution::OperatorHandler {
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
   private:
-    std::unique_ptr<Nautilus::Interface::Stack> stack;
+    std::unique_ptr<Nautilus::Interface::PagedVector> pagedVector;
 
 };
 } // namespace NES::ASP
