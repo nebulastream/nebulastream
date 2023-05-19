@@ -29,9 +29,9 @@ class OpenAuctionGenerator : public DataGenerator {
     explicit OpenAuctionGenerator(uint64_t numberOfRecords);
 
     /**
-     * @brief creates uniformed data with the schema "id, value, payload, timestamp"
-     * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
-     * randomly from a uniform distribution in the range [minValue, maxValue]
+     * @brief creates data with the schema "id, reserve, privacy, sellerId, category, quantity, type, startTime, endTime"
+     * from the auctions vector of dependencyGeneratorInstance. All values except sellerId, startTime and endTime are drawn
+     * randomly from uniform distributions in a predefined range
      * @param numberOfBuffers
      * @param bufferSize
      * @return the TupleBuffer

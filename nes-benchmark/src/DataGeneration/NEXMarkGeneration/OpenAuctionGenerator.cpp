@@ -62,7 +62,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
             dynamicBuffer[curRecord]["id"].write<uint64_t>(processedAuctions);
             dynamicBuffer[curRecord]["reserve"].write<uint64_t>(reserve);
             dynamicBuffer[curRecord]["privacy"].write<bool>(privacy);
-            dynamicBuffer[curRecord]["seller"].write<uint64_t>(std::get<0>(auctions[auctionsIndex]));
+            dynamicBuffer[curRecord]["sellerId"].write<uint64_t>(std::get<0>(auctions[auctionsIndex]));
             dynamicBuffer[curRecord]["category"].write<uint16_t>(category);
             dynamicBuffer[curRecord]["quantity"].write<uint8_t>(quantity);
             dynamicBuffer[curRecord]["type"].write<std::string>(type);
@@ -82,7 +82,7 @@ SchemaPtr OpenAuctionGenerator::getSchema() {
         ->addField(createField("id", BasicType::UINT64))
         ->addField(createField("reserve", BasicType::UINT64))
         ->addField(createField("privacy", BasicType::BOOLEAN))
-        ->addField(createField("seller", BasicType::UINT64))
+        ->addField(createField("sellerId", BasicType::UINT64))
         ->addField(createField("category", BasicType::UINT16))
         ->addField(createField("quantity", BasicType::UINT8))
         ->addField(createField("type", BasicType::TEXT))

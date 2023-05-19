@@ -30,9 +30,7 @@ class PersonGenerator : public DataGenerator {
     explicit PersonGenerator(uint64_t numberOfRecords);
 
     /**
-     * @brief creates uniformed data with the schema "id, value, payload, timestamp"
-     * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
-     * randomly from a uniform distribution in the range [minValue, maxValue]
+     * @brief creates data
      * @param numberOfBuffers
      * @param bufferSize
      * @return the TupleBuffer
@@ -58,6 +56,7 @@ class PersonGenerator : public DataGenerator {
     std::string toString() override;
 
   private:
+    uint64_t numberOfRecords;
     NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
