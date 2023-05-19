@@ -911,10 +911,11 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
-    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
+    // TODO: util to parse the example json, translate to the placement matrix
+    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false}, // node
                                                      {false, true, true, false, false},
                                                      {false, false, false, true, true}};
-
+                                                     // col = operator
     NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
 
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
