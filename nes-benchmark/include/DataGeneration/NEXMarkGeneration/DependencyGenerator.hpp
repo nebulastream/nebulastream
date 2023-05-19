@@ -25,26 +25,26 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 class DependencyGenerator {
   public:
     /**
-     * @brief returns the single instance of the class
+     * @brief returns the single instance of the class. Calls the constructor if needed
      * @param numberOfRecords
      * @return DependencyGenerator instance
      */
     static DependencyGenerator& getInstance(uint64_t numberOfRecords);
 
     /**
-     * @brief getter for persons
+     * @brief getter for persons vector
      * @return persons
      */
     std::vector<uint64_t>& getPersons();
 
     /**
-     * @brief getter for auctions
+     * @brief getter for auctions vector
      * @return auctions
      */
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getAuctions();
 
     /**
-     * @brief getter for bids
+     * @brief getter for bids vector
      * @return bids
      */
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getBids();
@@ -64,32 +64,32 @@ class DependencyGenerator {
     DependencyGenerator& operator=(const DependencyGenerator&) = delete;
 
     /**
-     * @brief creates a timestamp for every person and adds it to 'persons'
+     * @brief creates a timestamp for every person and adds it to persons vector
      * @param curTime
      * @param numPersons
      */
-    void generatePersonDependencies(uint64_t* curTime, uint64_t numPersons);
+    void generatePersonDependencies(uint64_t& curTime, uint64_t numPersons);
 
     /**
-     * @brief creates start and end timestamps as well as a random seller id and an initial price and adds the element to 'auctions'
+     * @brief creates start and end timestamps as well as a random seller id and an initial price and adds the element to auctions vector
      * @param curTime
      * @param numOpenAuctions
      */
-    void generateOpenAuctionDependencies(uint64_t* curTime, uint64_t numOpenAuctions);
+    void generateOpenAuctionDependencies(uint64_t& curTime, uint64_t numOpenAuctions);
 
     /**
-     * @brief creates a timestamp as well as a random auction id, bidder id and a new bid and adds the element to 'bids'
+     * @brief creates a timestamp as well as a random auction id, bidder id and a new bid and adds the element to bids vector
      * @param curTime
      * @param numBids
      */
-    void generateBidDependencies(uint64_t* curTime, uint64_t numBids);
+    void generateBidDependencies(uint64_t& curTime, uint64_t numBids);
 
     /**
      * @brief increments the current time up to 60 seconds
      * @param curTimeInSec
      * @return incremented time
      */
-    uint64_t incrementTime(uint64_t curTimeInSec);
+    static uint64_t incrementTime(uint64_t curTimeInSec);
 
     /**
      * @brief a persons element is a timestamp

@@ -27,26 +27,26 @@ DependencyGenerator::DependencyGenerator(uint64_t numberOfRecords) {
 
     // first generate some persons and open auctions that can be bid on
     for (auto i = 0; i < 50; ++i) {
-        generatePersonDependencies(&timeInSec, 1);
+        generatePersonDependencies(timeInSec, 1);
     }
     for (auto i = 0; i < 50; ++i) {
-        generateOpenAuctionDependencies(&timeInSec, 1);
+        generateOpenAuctionDependencies(timeInSec, 1);
     }
 
     // now generate approximately numberOfRecords many auctions as well as corresponding persons and bids
     for (auto i = 0UL; i < numberOfRecords; ++i) {
         // create on average one person per ten auctions
         if (uniformPersonGenerationDistribution(generator) == 0) {
-            generatePersonDependencies(&timeInSec, 1);
+            generatePersonDependencies(timeInSec, 1);
         }
 
         // create on average one open auction
         auto numOpenAuctions = uniformOpenAuctionGenerationDistribution(generator);
-        generateOpenAuctionDependencies(&timeInSec, numOpenAuctions);
+        generateOpenAuctionDependencies(timeInSec, numOpenAuctions);
 
         // create on average ten bids per auction
         auto numBids = uniformBidGenerationDistribution(generator);
-        generateBidDependencies(&timeInSec, numBids);
+        generateBidDependencies(timeInSec, numBids);
     }
 }
 
@@ -56,16 +56,19 @@ DependencyGenerator& DependencyGenerator::getInstance(uint64_t numberOfRecords) 
     return instance;
 }
 
-void DependencyGenerator::generatePersonDependencies(uint64_t* curTime, uint64_t numPersons) {
-    *curTime = incrementTime(*curTime);
+void DependencyGenerator::generatePersonDependencies(uint64_t& curTime, uint64_t numPersons) {
+    curTime = incrementTime(curTime);
+    auto copyOfCurTime = curTime;
 
     for (uint64_t i = 0; i < numPersons; ++i) {
-        persons.emplace_back(*curTime);
+        // create a new element for the persons vector
+        persons.emplace_back(copyOfCurTime);
     }
 }
 
-void DependencyGenerator::generateOpenAuctionDependencies(uint64_t* curTime, uint64_t numOpenAuctions) {
-    *curTime = incrementTime(*curTime);
+void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uint64_t numOpenAuctions) {
+    curTime = incrementTime(curTime);
+    auto copyOfCurTime = curTime;
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
 
@@ -82,14 +85,16 @@ void DependencyGenerator::generateOpenAuctionDependencies(uint64_t* curTime, uin
     for (uint64_t i = 0; i < numOpenAuctions; ++i) {
         auto sellerId = uniformPersonIdDistribution(generator);
         auto curPrice = uniformCurPriceDistribution(generator);
-        auto endTime = *curTime + uniformEndTimeDistribution(generator);
-        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> auctionRecord = std::make_tuple(sellerId, curPrice, *curTime, endTime);
+        auto endTime = curTime + uniformEndTimeDistribution(generator);
+        // create a new element for the auctions vector
+        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> auctionRecord = std::make_tuple(sellerId, curPrice, copyOfCurTime, endTime);
         auctions.emplace_back(auctionRecord);
     }
 }
 
-void DependencyGenerator::generateBidDependencies(uint64_t* curTime, uint64_t numBids) {
-    *curTime = incrementTime(*curTime);
+void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t numBids) {
+    curTime = incrementTime(curTime);
+    auto copyOfCurTime = curTime;
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
 
@@ -107,13 +112,13 @@ void DependencyGenerator::generateBidDependencies(uint64_t* curTime, uint64_t nu
     for (uint64_t i = 0; i < numBids; ++i) {
         auto auctionId = uniformAuctionIdDistribution(generator);
         auto bidderId = uniformPersonIdDistribution(generator);
-        auto curPrice = std::get<1>(auctions[auctionId]);
+        // get latest bid on the auction, generate a higher bid and update the auction record in auctions vector
+        auto& curPrice = std::get<1>(auctions[auctionId]);
         auto newBid = curPrice + uniformNewBidDistribution(generator);
-        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> bidRecord = std::make_tuple(auctionId, bidderId, newBid, *curTime);
+        curPrice = newBid;
+        // create a new element for the bids vector
+        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> bidRecord = std::make_tuple(auctionId, bidderId, newBid, copyOfCurTime);
         bids.emplace_back(bidRecord);
-
-        auto &auction = auctions[auctionId];
-        std::get<1>(auction) = newBid;
     }
 }
 
