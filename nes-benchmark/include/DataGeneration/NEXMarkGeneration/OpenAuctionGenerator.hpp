@@ -57,6 +57,7 @@ class OpenAuctionGenerator : public DataGenerator {
     std::string toString() override;
 
   private:
+    uint64_t numberOfRecords;
     NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
