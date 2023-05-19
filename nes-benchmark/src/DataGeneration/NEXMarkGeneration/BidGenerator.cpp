@@ -19,7 +19,7 @@
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 BidGenerator::BidGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
+    : DataGenerator(), numberOfRecords(numberOfRecords), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
 
 std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
@@ -27,22 +27,23 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
 
+    auto bids = dependencyGeneratorInstance.getBids();
+    auto processedBids = 0UL;
+
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        //uint64_t bidderId = personGenerator.getId();
-        //uint64_t auctionId = openAuctionGenerator.getId();
-
-        std::random_device randomDevice;
-        std::mt19937_64 generator(randomDevice());
-        std::uniform_int_distribution<> uniformIntDistribution(0, bidderId);
-
+        // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
         for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(curRecord);
-            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(uniformIntDistribution(generator));
-            dynamicBuffer[curRecord]["price"].write<uint64_t>(curRecord);
-            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            // TODO what if numberOfRecords is smaller than the number of records we can fit in the buffers? Timestamp would be reset
+            // TODO what if numberOfRecords is larger than the number of records we can fit in the buffers? We might get bids that reference auction id's or bidder id's that haven't been created yet
+            auto bidsIndex = processedBids++ % bids.size();
+
+            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(std::get<0>(bids[bidsIndex]));
+            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(std::get<1>(bids[bidsIndex]));
+            dynamicBuffer[curRecord]["price"].write<uint64_t>(std::get<2>(bids[bidsIndex]));
+            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(std::get<3>(bids[bidsIndex]));
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -65,7 +66,7 @@ std::string BidGenerator::getName() { return "NEXMarkBid"; }
 std::string BidGenerator::toString() {
     std::ostringstream oss;
 
-    oss << getName();
+    oss << getName() << " (" << numberOfRecords << ")";
 
     return oss.str();
 }

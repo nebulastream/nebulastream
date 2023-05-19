@@ -29,9 +29,7 @@ class BidGenerator : public DataGenerator {
     explicit BidGenerator(uint64_t numberOfRecords);
 
     /**
-     * @brief creates uniformed data with the schema "id, value, payload, timestamp"
-     * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
-     * randomly from a uniform distribution in the range [minValue, maxValue]
+     * @brief creates data with the schema "auctionId, bidderId, price, timestamp" from the bids vector of dependencyGeneratorInstance
      * @param numberOfBuffers
      * @param bufferSize
      * @return the TupleBuffer
@@ -57,6 +55,7 @@ class BidGenerator : public DataGenerator {
     std::string toString() override;
 
   private:
+    uint64_t numberOfRecords;
     NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration

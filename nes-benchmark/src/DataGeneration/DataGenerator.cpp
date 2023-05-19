@@ -101,7 +101,7 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         return std::make_unique<NEXMarkGeneration::BidGenerator>(numberOfRecords);
 
     } else {
-        NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
+        NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " is not supported and could not be parsed!");
     }
 }
 
