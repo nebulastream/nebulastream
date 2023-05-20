@@ -339,7 +339,7 @@ bool NesWorker::connect() {
     // add this newly assigned workerId value in the corresponding yaml file
     if (workerConfig->workerId.getValue() == -1 && successPRCRegister) {
         std::string pathToYaml = workerConfig->configPath;
-        std::string yamlKeyString = "workerId: ";
+        std::string yamlKeyString = "\nworkerId: ";
         std::string yamlValueString = std::to_string(workerId);
         std::string yamlConfigValue = yamlKeyString + yamlValueString;
         if (!pathToYaml.empty() && std::filesystem::exists(pathToYaml)) {
