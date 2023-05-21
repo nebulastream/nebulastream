@@ -84,16 +84,27 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
 nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
     auto nodeVector = locationIndex->getAllNodeLocations();
     auto locMapJson = nlohmann::json::array();
-    size_t count = 0;
+    auto mobileEdgesJson = nlohmann::json::array();
+    uint32_t count = 0;
+    uint32_t edgeCount = 0;
     for (auto& [nodeId, location] : nodeVector) {
         auto topologyNode = topology->findNodeWithId(nodeId);
         if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
             locMapJson[count] = nodeInfo;
+            for (auto& parent : topologyNode->getParents()) {
+                nlohmann::json edge;
+                edge["source"] = nodeId;
+                edge["target"] = parent->as<TopologyNode>()->getId();
+                mobileEdgesJson[edgeCount++] = edge;
+            }
             ++count;
         }
     }
-    return locMapJson;
+    nlohmann::json response;
+    response["nodes"] = locMapJson;
+    response["edges"] = mobileEdgesJson;
+    return response;
 }
 
 nlohmann::json LocationService::convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
