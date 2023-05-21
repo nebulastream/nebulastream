@@ -66,7 +66,7 @@ class FailQueryRequestTest : public Testing::NESBaseTest {
 };
 
 //test successful execution of fail query request for a single query
-TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
+TEST_F(FailQueryRequestTest, testValidFailRequest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -95,6 +95,8 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
     ASSERT_TRUE(retStart1);
     NES_INFO2("Fail Query Request Test: Worker1 started successfully");
 
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 100, 1));
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -119,12 +121,12 @@ TEST_F(FailQueryRequestTest, DISABLED_testValidFailRequest) {
 
     //wait until query has been succesfully deployed on worker at coordinator
     start_timestamp = std::chrono::system_clock::now();
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
+    while (crd->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
-    ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    ASSERT_EQ(crd->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
     start_timestamp = std::chrono::system_clock::now();
@@ -245,6 +247,8 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
     ASSERT_TRUE(retStart1);
     NES_INFO2("Fail Query Request Test: Worker1 started successfully");
 
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 100, 1));
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -269,12 +273,12 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     //wait until query has been succesfully deployed on worker at coordinator
     start_timestamp = std::chrono::system_clock::now();
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
+    while (crd->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
-    ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    ASSERT_EQ(crd->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
     start_timestamp = std::chrono::system_clock::now();
@@ -354,6 +358,8 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     ASSERT_TRUE(retStart1);
     NES_INFO2("Fail Query Request Test: Worker1 started successfully");
 
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 100, 1));
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -378,12 +384,12 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
 
     //wait until query has been succesfully deployed on worker at coordinator
     start_timestamp = std::chrono::system_clock::now();
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
+    while (crd->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
-    ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    ASSERT_EQ(crd->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
     start_timestamp = std::chrono::system_clock::now();
@@ -466,6 +472,8 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     ASSERT_TRUE(retStart1);
     NES_INFO2("Fail Query Request Test: Worker1 started successfully");
 
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 100, 1));
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -490,12 +498,12 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
 
     //wait until query has been succesfully deployed on worker at coordinator
     start_timestamp = std::chrono::system_clock::now();
-    while (wrk1->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
+    while (crd->getNodeEngine()->getQueryStatus(queryId) != NES::Runtime::Execution::ExecutableQueryPlanStatus::Running
            && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG2("query not running yet")
         std::this_thread::sleep_for(sleepDuration);
     }
-    ASSERT_EQ(wrk1->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    ASSERT_EQ(crd->getNodeEngine()->getQueryStatus(queryId), NES::Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
     //check status of query in the query catalog
     start_timestamp = std::chrono::system_clock::now();
