@@ -57,8 +57,8 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
     ASSERT_TRUE(mapUdfLogicalOperatorNode->getInputSchema()->equals(inputSchema));
 
     // The output schema of the operator should be prefixed with source name.
-    auto expectedOutputSchema = std::make_shared<Schema>()->addField(sourceName + "$outputAttribute",
-                                                                     DataTypeFactory::createBoolean());
+    auto expectedOutputSchema =
+        std::make_shared<Schema>()->addField(sourceName + "$outputAttribute", DataTypeFactory::createBoolean());
     ASSERT_TRUE(mapUdfLogicalOperatorNode->getOutputSchema()->equals(expectedOutputSchema));
 }
 
