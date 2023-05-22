@@ -73,7 +73,7 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
                                      + " in the global query plan");
     }
 
-    queryCatalogService = storageHandle.getQueryCatalogHandle();
+    queryCatalogService = storageHandle.getQueryCatalogServiceHandle();
 
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 

@@ -88,11 +88,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         //undeploy SQP
-        bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-        if (!undeploymentSuccessful) {
-            std::exception e = std::runtime_error("Failed to undeploy query");
-            throw e;
-        }
+        queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
