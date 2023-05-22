@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.85](https://github.com/nebulastream/nebulastream/tree/v0.5.85) (2023-05-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.84...v0.5.85)
+
+**Implemented enhancements:**
+
+- \[TASK\] Iterator for StackRef [\#3735](https://github.com/nebulastream/nebulastream/issues/3735)
+
+## [v0.5.84](https://github.com/nebulastream/nebulastream/tree/v0.5.84) (2023-05-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.83...v0.5.84)
+
 ## [v0.5.83](https://github.com/nebulastream/nebulastream/tree/v0.5.83) (2023-05-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.82...v0.5.83)
@@ -30,7 +42,7 @@
 
 **Implemented enhancements:**
 
-- \[TASK\] Replace std::vector with a PagedVector implementation in SampleRandomWithoutReplacement [\#3677](https://github.com/nebulastream/nebulastream/issues/3677)
+- \[TASK\] Replace std::vector with a StackRef implementation in SampleRandomWithoutReplacement [\#3677](https://github.com/nebulastream/nebulastream/issues/3677)
 
 ## [v0.5.79](https://github.com/nebulastream/nebulastream/tree/v0.5.79) (2023-05-12)
 
