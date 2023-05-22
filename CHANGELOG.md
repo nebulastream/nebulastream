@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.86](https://github.com/nebulastream/nebulastream/tree/v0.5.86) (2023-05-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.85...v0.5.86)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement trigonometric query functions required for ELEGANT use case end-to-end [\#3603](https://github.com/nebulastream/nebulastream/issues/3603)
+
 ## [v0.5.85](https://github.com/nebulastream/nebulastream/tree/v0.5.85) (2023-05-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.84...v0.5.85)
