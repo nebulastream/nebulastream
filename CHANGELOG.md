@@ -30,7 +30,7 @@
 
 **Implemented enhancements:**
 
-- \[TASK\] Replace std::vector with a SequentialDataRef implementation in SampleRandomWithoutReplacement [\#3677](https://github.com/nebulastream/nebulastream/issues/3677)
+- \[TASK\] Replace std::vector with a PagedVector implementation in SampleRandomWithoutReplacement [\#3677](https://github.com/nebulastream/nebulastream/issues/3677)
 
 ## [v0.5.79](https://github.com/nebulastream/nebulastream/tree/v0.5.79) (2023-05-12)
 

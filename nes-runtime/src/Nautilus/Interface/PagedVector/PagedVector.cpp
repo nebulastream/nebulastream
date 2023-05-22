@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 
 namespace NES::Nautilus::Interface {
@@ -20,6 +21,8 @@ PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, u
     : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
     appendPage();
     firstPage = &pages[0];
+    NES_ASSERT2_FMT(entrySize > 0, "Entrysize for a pagedVector has to be larger than 0!");
+    NES_ASSERT2_FMT(capacityPerPage() > 0, "There has to fit at least one tuple on a page!");
 }
 
 int8_t* PagedVector::appendPage() {
@@ -50,7 +53,7 @@ size_t PagedVector::capacityPerPage() { return PAGE_SIZE / entrySize; }
 
 const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 
-void PagedVector::moveTo(uint64_t oldPos, uint64_t newPos) {
+void PagedVector::moveFromTo(uint64_t oldPos, uint64_t newPos) {
     auto oldPosEntry = getEntry(oldPos);
     auto newPosEntry = getEntry(newPos);
     std::memcpy(newPosEntry, oldPosEntry, entrySize);

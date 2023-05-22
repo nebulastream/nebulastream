@@ -71,7 +71,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param listRef
      * @return Scaling factor
      */
-    double getScalingFactor(Nautilus::Interface::PagedVectorRef listRef);
+    double getScalingFactor(Nautilus::Interface::PagedVectorRef& pagedVecRef);
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor

@@ -33,38 +33,38 @@ void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
     this->valueSize = valueSize;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-        auto list = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
-        threadLocalStateStores.emplace_back(std::move(list));
+        auto pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
+        threadLocalStateStores.emplace_back(std::move(pagedVector));
     }
 }
 
 Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
-    // build a global hash-map on top of all thread local lists.
+    // build a global hash-map on top of all thread local pagedVectors.
     // 1. calculate the number of total keys to size the hash-map correctly. This assumes a foreign-key join where keys can only exist one time and avoids hash coalitions
     size_t numberOfKeys = 0;
-    for (auto& list : threadLocalStateStores) {
-        numberOfKeys += list->getNumberOfEntries();
+    for (const auto& pagedVector : threadLocalStateStores) {
+        numberOfKeys += pagedVector->getNumberOfEntries();
     }
     // 2. allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     globalMap =
         std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), 4096);
 
-    // 3. iterate over lists and insert the whole page to the hash table
+    // 3. iterate over pagedVectors and insert the whole page to the hash table
     // Note. This dose not perform any memory and only results in a seqential scan over all entries  plus a random lookup in the hash table.
     // TODO this look could be parallelized, but please check if needed.
-    for (auto& list : threadLocalStateStores) {
-        auto& pages = list->getPages();
-        NES_ASSERT(!pages.empty(), "list should not be empty");
+    for (const auto& pagedVector : threadLocalStateStores) {
+        auto& pages = pagedVector->getPages();
+        NES_ASSERT(!pages.empty(), "pagedVector should not be empty");
         // currently we assume that page 0 - (n-1) are full and contain capacity entries.
         for (size_t i = 0; i < pages.size() - 1; i++) {
-            auto numberOfEntries = list->capacityPerPage();
+            auto numberOfEntries = pagedVector->capacityPerPage();
             globalMap->insertPage(pages[i], numberOfEntries);
         }
         // insert last page
-        auto numberOfEntries = list->getNumberOfEntriesOnCurrentPage();
+        auto numberOfEntries = pagedVector->getNumberOfEntriesOnCurrentPage();
         globalMap->insertPage(pages[pages.size() - 1], numberOfEntries);
-        list->clear();
+        pagedVector->clear();
     }
     return globalMap.get();
 }

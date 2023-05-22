@@ -98,6 +98,7 @@ class PagedVectorRef {
 
 
   private:
+    static constexpr auto POSITION_GRANULARITY = 8;
     Value<MemRef> getCurrentPage();
     Value<MemRef> pagedVectorRef;
     uint64_t entrySize;

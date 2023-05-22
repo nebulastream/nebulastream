@@ -16,12 +16,9 @@ add_compile_definitions(TEST_CONFIGS_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test-configs")
 
 # Adding unit test for SynopsisConfigurationTest
-add_nes_runtime_test(synopsis-configuration-test "UnitTests/Experimental/Parsing/SynopsisConfigurationTest.cpp")
+add_nes_runtime_test(synopsis-configuration-test "UnitTests/Experimental/Parsing/SynopsisConfigurationTest.cpp"
+        "UnitTests/Experimental/Parsing/SynopsisAggregationConfigTest.cpp")
 target_link_libraries(synopsis-configuration-test PRIVATE nes-asp)
-
-# Adding unit test for SynopsisAggregationConfigTest
-add_nes_runtime_test(synopsis-aggregation-config-test "UnitTests/Experimental/Parsing/SynopsisAggregationConfigTest.cpp")
-target_link_libraries(synopsis-aggregation-config-test PRIVATE nes-asp)
 
 # Adding unit test for MicroBenchmarkASPUtilTest
 add_nes_runtime_test(micro-benchmarking-asp-util-test "UnitTests/Experimental/Benchmarking/MicroBenchmarkASPUtilTest.cpp")

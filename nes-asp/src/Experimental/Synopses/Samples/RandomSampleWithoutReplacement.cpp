@@ -54,9 +54,9 @@ uint64_t createSampleProxy(void* pagedVectorPtr, uint64_t sampleSize) {
     // Sorting the random positions so that we can iterate through the vector and move all the records at the random positions to the front
     auto cnt = 0UL;
     std::sort(allRandomPositions.begin(), allRandomPositions.end());
-    for (const auto randomPos : allRandomPositions) {
+    for (const auto& randomPos : allRandomPositions) {
         if (randomPos != cnt) {
-            pagedVector->moveTo(randomPos, cnt);
+            pagedVector->moveFromTo(randomPos, cnt);
         }
         cnt += 1;
     }
@@ -88,7 +88,7 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
 
     auto entryMemRef = pagedVectorRef.allocateEntry();
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
-    for (auto& field : inputSchema->fields) {
+    for (const auto& field : inputSchema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 
@@ -149,12 +149,12 @@ void RandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execu
                            Nautilus::Value<Nautilus::UInt64>(inputSchema->getSchemaSizeInBytes()));
 }
 
-double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::PagedVectorRef pagedVectorRef){
+double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::PagedVectorRef& pagedVecRef){
     double retValue = 1;
 
     if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {
-        auto numberOfTuplesInWindow = (double)pagedVectorRef.getTotalNumberOfEntries().getValue().getRawInt();
-        double minSize = std::min((double) sampleSize, numberOfTuplesInWindow);
+        auto numberOfTuplesInWindow = pagedVecRef.getTotalNumberOfEntries().getValue().getRawInt();
+        auto minSize = std::min(sampleSize, (uint64_t) numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);
     }
 
