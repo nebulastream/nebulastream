@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.87](https://github.com/nebulastream/nebulastream/tree/v0.5.87) (2023-05-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.86...v0.5.87)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Use qualified field name in output schema [\#3502](https://github.com/nebulastream/nebulastream/issues/3502)
+
 ## [v0.5.86](https://github.com/nebulastream/nebulastream/tree/v0.5.86) (2023-05-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.85...v0.5.86)
