@@ -74,7 +74,7 @@ TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto query = TestQuery::from(testSourceDescriptor).map(Attribute("id") = Attribute("id") * 2).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool)source);
+    ASSERT_TRUE((bool) source);
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
@@ -110,7 +110,7 @@ TEST_P(MapQueryExecutionTest, MapLogarithmicFunctions) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool)source);
+    ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -151,7 +151,7 @@ TEST_P(MapQueryExecutionTest, TwoMapQuery) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool)source);
+    ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -177,23 +177,19 @@ TEST_P(MapQueryExecutionTest, TwoMapQuery) {
 TEST_P(MapQueryExecutionTest, MapAbsFunction) {
     auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
 
-    auto resultSchema = Schema::create()
-                            ->addField("test$id", BasicType::FLOAT64)
-                            ->addField("test$abs", BasicType::FLOAT64);
+    auto resultSchema = Schema::create()->addField("test$id", BasicType::FLOAT64)->addField("test$abs", BasicType::FLOAT64);
     auto testSink = executionEngine->createDataSink(resultSchema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .map(Attribute("abs") = ABS(Attribute("id")))
-                     .sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).map(Attribute("abs") = ABS(Attribute("id"))).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool)source);
+    ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        inputBuffer[recordIndex]["test$id"].write<double>((double)-recordIndex);
+        inputBuffer[recordIndex]["test$id"].write<double>((double) -recordIndex);
     }
     inputBuffer.setNumberOfTuples(10);
     source->emitBuffer(inputBuffer);
@@ -212,9 +208,7 @@ TEST_P(MapQueryExecutionTest, MapAbsFunction) {
 }
 
 TEST_P(MapQueryExecutionTest, MapPowerFunction) {
-    auto schema = Schema::create()
-                      ->addField("test$left$id", BasicType::FLOAT64)
-                      ->addField("test$right$id", BasicType::FLOAT64);
+    auto schema = Schema::create()->addField("test$left$id", BasicType::FLOAT64)->addField("test$right$id", BasicType::FLOAT64);
 
     auto resultSchema = Schema::create()
                             ->addField("test$left$id", BasicType::FLOAT64)
@@ -229,12 +223,12 @@ TEST_P(MapQueryExecutionTest, MapPowerFunction) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool)source);
+    ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        inputBuffer[recordIndex]["test$left$id"].write<double>((double)2 * recordIndex);
-        inputBuffer[recordIndex]["test$right$id"].write<double>((double)recordIndex);
+        inputBuffer[recordIndex]["test$left$id"].write<double>((double) 2 * recordIndex);
+        inputBuffer[recordIndex]["test$right$id"].write<double>((double) recordIndex);
     }
     inputBuffer.setNumberOfTuples(10);
     source->emitBuffer(inputBuffer);
@@ -271,7 +265,7 @@ TEST_P(MapQueryExecutionTest, MapTrigonometricFunctions) {
                      .sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
-    ASSERT_TRUE((bool)source);
+    ASSERT_TRUE((bool) source);
     // add buffer
     auto inputBuffer = executionEngine->getBuffer(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
