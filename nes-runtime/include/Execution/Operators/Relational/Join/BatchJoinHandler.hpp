@@ -26,10 +26,10 @@ namespace NES::Runtime::Execution::Operators {
  * Morsel-Driven Parallelism: A NUMA-Aware Query Evaluation Framework for the Many-Core Age
  * https://db.in.tum.de/~leis/papers/morsels.pdf
  *
- * The build phase, consumes input records from the build side and materializes hash-entries in a thread local list.
+ * The build phase, consumes input records from the build side and materializes hash-entries in a thread local paged vector.
  * If all records, are consumed, we build a global hash-map on top of all materialized values (see mergeState).
  * The final probe phase, consumes the probe side and performs key lookups in the global hash-map.
- * TODO: We could further, improve this operator by adding support for concurrent merges of the local lists to the hash table.
+ * TODO: We could further, improve this operator by adding support for concurrent merges of the local paged vectors to the hash table.
  * This code improve performance, but it should first investigated if the merging becomes a performance bottleneck.
  */
 class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
@@ -60,12 +60,12 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
     /**
      * @brief Returns the thread local state for a  specific worker thread id
      * @param workerId
-     * @return  Nautilus::Interface::List*
+     * @return Nautilus::Interface::PagedVector*
      */
     Nautilus::Interface::PagedVector* getThreadLocalState(uint64_t workerId);
 
     /**
-     * @brief This function creates the global hash map. To this end, it builds a new hash map based on the thread local lists.
+     * @brief This function creates the global hash map. To this end, it builds a new hash map based on the thread local paged vectors.
      * @return ChainedHashMap*
      */
     Nautilus::Interface::ChainedHashMap* mergeState();

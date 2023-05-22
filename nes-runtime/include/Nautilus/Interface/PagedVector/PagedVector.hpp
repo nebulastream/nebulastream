@@ -32,7 +32,7 @@ class PagedVector {
     static const uint64_t PAGE_SIZE = 4096;
 
     /**
-     * @brief Creates a new sequential data with a specific entry size
+     * @brief Creates a new paged vector with a specific entry size
      * @param allocator the allocator
      * @param entrySize the size of an entry.
      * TODO pass page size dynamically and adjust PagedVectorRef if needed.
@@ -85,7 +85,7 @@ class PagedVector {
      * @param oldPos
      * @param newPos
      */
-    void moveTo(uint64_t oldPos, uint64_t newPos);
+    void moveFromTo(uint64_t oldPos, uint64_t newPos);
 
     /**
      * @brief Returns the pointer to the first field of the record at pos
