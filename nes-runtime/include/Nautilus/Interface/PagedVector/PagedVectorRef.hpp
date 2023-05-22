@@ -71,13 +71,6 @@ class PagedVectorRef {
     Value<UInt64> getTotalNumberOfEntries();
 
     /**
-     * @brief Returns the memref to the page at position pos
-     * @param pos
-     * @return MemRef
-     */
-    Value<MemRef> getPage(const Value<>& pos);
-
-    /**
      * @brief Returns an iterator that points to the begin of this listRef
      * @return ListRefIter
      */
