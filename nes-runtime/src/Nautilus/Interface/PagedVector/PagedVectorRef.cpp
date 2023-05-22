@@ -45,23 +45,32 @@ Value<MemRef> PagedVectorRef::allocateEntry() {
 
 Value<MemRef> PagedVectorRef::getCurrentPage() { return getMember(pagedVectorRef, PagedVector, currentPage).load<MemRef>(); }
 
-Value<UInt64> PagedVectorRef::getNumberOfEntries() { return getMember(pagedVectorRef, PagedVector, numberOfEntries).load<UInt64>(); }
+Value<UInt64> PagedVectorRef::getNumberOfEntries() {
+    return getMember(pagedVectorRef, PagedVector, numberOfEntries).load<UInt64>();
+}
 
-Value<UInt64> PagedVectorRef::getTotalNumberOfEntries() { return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).load<UInt64>(); }
+Value<UInt64> PagedVectorRef::getTotalNumberOfEntries() {
+    return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).load<UInt64>();
+}
 
 Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos) {
     auto pagePos = (pos / entriesPerPage).as<UInt64>();
     auto positionOnPage = pos - (pagePos * entriesPerPage);
 
-    auto page = Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
+    auto page =
+        Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
     return retPos.as<MemRef>();
 }
 
-void PagedVectorRef::setNumberOfEntries(const Value<>& val) { getMember(pagedVectorRef, PagedVector, numberOfEntries).store(val); }
+void PagedVectorRef::setNumberOfEntries(const Value<>& val) {
+    getMember(pagedVectorRef, PagedVector, numberOfEntries).store(val);
+}
 
-void PagedVectorRef::setNumberOfTotalEntries(const Value<>& val) { getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).store(val); }
+void PagedVectorRef::setNumberOfTotalEntries(const Value<>& val) {
+    getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).store(val);
+}
 
 PagedVectorRefIter PagedVectorRef::begin() { return {*this}; }
 
@@ -76,9 +85,9 @@ PagedVectorRefIter PagedVectorRef::end() { return at(this->getTotalNumberOfEntri
 PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRef& pagedVectorRef)
     : pos((uint64_t) 0UL), pagedVectorRef(pagedVectorRef) {}
 
-PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRefIter &it) : pos(it.pos), pagedVectorRef(it.pagedVectorRef) {}
+PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRefIter& it) : pos(it.pos), pagedVectorRef(it.pagedVectorRef) {}
 
-PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter &it) {
+PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter& it) {
     if (this == &it) {
         return *this;
     }
@@ -87,9 +96,7 @@ PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter &it) 
     return *this;
 }
 
-Value<MemRef> PagedVectorRefIter::operator*() {
-    return pagedVectorRef.getEntry(pos);
-}
+Value<MemRef> PagedVectorRefIter::operator*() { return pagedVectorRef.getEntry(pos); }
 
 PagedVectorRefIter& PagedVectorRefIter::operator++() {
     pos = pos + 1;
@@ -102,7 +109,7 @@ PagedVectorRefIter PagedVectorRefIter::operator++(int) {
     return copy;
 }
 
-bool PagedVectorRefIter::operator==(const PagedVectorRefIter &other) const {
+bool PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const {
     if (this == &other) {
         return true;
     }
@@ -110,11 +117,7 @@ bool PagedVectorRefIter::operator==(const PagedVectorRefIter &other) const {
     return pos == other.pos;
 }
 
-bool PagedVectorRefIter::operator!=(const PagedVectorRefIter &other) const {
-    return !(*this == other);
-}
+bool PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const { return !(*this == other); }
 
-void PagedVectorRefIter::setPos(Value<UInt64> newValue) {
-    pos = newValue;
-}
+void PagedVectorRefIter::setPos(Value<UInt64> newValue) { pos = newValue; }
 }// namespace NES::Nautilus::Interface

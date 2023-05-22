@@ -89,7 +89,6 @@ class PagedVectorRef {
      */
     PagedVectorRefIter end();
 
-
   private:
     static constexpr auto POSITION_GRANULARITY = 8;
     Value<MemRef> getCurrentPage();
@@ -99,7 +98,7 @@ class PagedVectorRef {
 };
 
 class PagedVectorRefIter {
-public:
+  public:
     friend class PagedVectorRef;
 
     /**
@@ -153,7 +152,7 @@ public:
      */
     bool operator!=(const PagedVectorRefIter& other) const;
 
-private:
+  private:
     /**
      * @brief Sets the position with the newValue
      * @param newValue

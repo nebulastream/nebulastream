@@ -79,8 +79,7 @@ void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local pagedVector according to the worker id.
-    auto state = Nautilus::FunctionCall("getPagedVectorProxy", getPagedVectorProxy, globalOperatorHandler,
-                                        ctx.getWorkerId());
+    auto state = Nautilus::FunctionCall("getPagedVectorProxy", getPagedVectorProxy, globalOperatorHandler, ctx.getWorkerId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
     auto pagedVector = Interface::PagedVectorRef(state, entrySize);
     // 3. store the reference to the pagedVector in the local operator state.
