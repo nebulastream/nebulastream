@@ -99,9 +99,9 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
             //3.3.2. Perform placement of updated shared query plan
             auto queryPlan = sharedQueryPlan->getQueryPlan();
             NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
-            //todo: 3726 Where to get the placement strategy? Currently it is supplied with the run query request
-            //todo: 3726 store placement strategy in shared query plan; do this in a separate issue
-            //todo: 3726 add placement strategy to index for sqp identification
+            //todo: #3726 Where to get the placement strategy? Currently it is supplied with the run query request
+            //todo: #3726 store placement strategy in shared query plan; do this in a separate issue
+            //todo: #3726 add placement strategy to index for sqp identification
             //could we move it to the SQP? Since one SQP should have the same placement strategy, right?
             //otherwise maybe add it to an individual query plan?
             bool placementSuccessful = queryPlacementPhase->execute(PlacementStrategy::TopDown, sharedQueryPlan);
