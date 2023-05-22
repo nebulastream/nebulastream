@@ -40,7 +40,7 @@ class MapJavaUDF : public ExecutableOperator {
      */
     MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema)
         : operatorHandlerIndex(operatorHandlerIndex), operatorInputSchema(operatorInputSchema),
-          operatorOutputSchema(operatorOutputSchema) { }
+          operatorOutputSchema(operatorOutputSchema) {}
     void execute(ExecutionContext& ctx, Record& record) const override;
     void terminate(ExecutionContext& ctx) const override;
 
