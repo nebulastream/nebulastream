@@ -1,3 +1,17 @@
+/*
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
 #include "API/Schema.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
@@ -15,16 +29,18 @@ namespace NES::Runtime::MemoryLayouts {
 
 CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
     : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    compressedSizes = std::vector<size_t>{};
-    totalOriginalSize = this->getMemoryLayout()->getTupleSize() * this->getNumberOfTuples();
+    baseDstPointer = (uint8_t*) malloc(getBuffer().getBufferSize());
     offsets = getOffsets(memoryLayout);
+    compressedSizes = std::vector<size_t>(offsets.size(), 0);
+    compressionAlgorithms = std::vector<CompressionAlgorithm>(offsets.size(), CompressionAlgorithm::NONE);
+    totalOriginalSize = getMemoryLayout()->getTupleSize() * getNumberOfTuples();
+    columnTypes = getMemoryLayout()->getPhysicalTypes();
     // set default compression mode
-    auto rowLayout = dynamic_cast<RowLayout*>(this->getMemoryLayout().get());
+    auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
     if (rowLayout != nullptr) {
         compressionMode = CompressionMode::HORIZONTAL;
     }
-    auto columnLayout = dynamic_cast<ColumnLayout*>(this->getMemoryLayout().get());
+    auto columnLayout = dynamic_cast<ColumnLayout*>(getMemoryLayout().get());
     if (columnLayout != nullptr) {
         compressionMode = CompressionMode::VERTICAL;
     }
@@ -32,30 +48,25 @@ CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr
 
 CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout,
                                                            TupleBuffer buffer,
-                                                           CompressionMode cm)
+                                                           const CompressionMode& compressionMode)
     : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    compressionMode = cm;
-    compressedSizes = std::vector<size_t>{};
-    totalOriginalSize = this->getMemoryLayout()->getTupleSize() * this->getNumberOfTuples();
+    baseDstPointer = (uint8_t*) malloc(getBuffer().getBufferSize());
     offsets = getOffsets(memoryLayout);
+    compressedSizes = std::vector<size_t>(offsets.size(), 0);
+    compressionAlgorithms = std::vector<CompressionAlgorithm>(offsets.size(), CompressionAlgorithm::NONE);
+    totalOriginalSize = getMemoryLayout()->getTupleSize() * getNumberOfTuples();
+    columnTypes = getMemoryLayout()->getPhysicalTypes();
+    this->compressionMode = compressionMode;
 }
 
-CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout,
-                                                           TupleBuffer buffer,
-                                                           [[maybe_unused]] CompressionAlgorithm ca,
-                                                           [[maybe_unused]] CompressionMode cm)
-    : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
-    NES_NOT_IMPLEMENTED();
-    // TODO compress
-}
+CompressedDynamicTupleBuffer::~CompressedDynamicTupleBuffer() { free(baseDstPointer); }
 
 void CompressedDynamicTupleBuffer::setNumberOfTuples(uint64_t value) {
     DynamicTupleBuffer::setNumberOfTuples(value);
-    totalOriginalSize = this->getMemoryLayout()->getTupleSize() * this->getNumberOfTuples();
+    totalOriginalSize = getMemoryLayout()->getTupleSize() * getNumberOfTuples();
 }
 
-CompressionAlgorithm CompressedDynamicTupleBuffer::getCompressionAlgorithm() { return compressionAlgorithm; }
+std::vector<CompressionAlgorithm> CompressedDynamicTupleBuffer::getCompressionAlgorithms() { return compressionAlgorithms; }
 CompressionMode CompressedDynamicTupleBuffer::getCompressionMode() { return compressionMode; }
 std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets() { return offsets; }
 std::vector<size_t> CompressedDynamicTupleBuffer::getCompressedSize() { return compressedSizes; }
@@ -66,9 +77,18 @@ double CompressedDynamicTupleBuffer::getCompressionRatio() {
     return (double) totalOriginalSize / (double) compressedSize;
 }
 
+void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t start, const size_t end) {
+    for (size_t i = start; i < end; i++)
+        buf[i] = '\0';
+}
+
+void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t size) {
+    for (size_t i = 0; i < size; i++)
+        buf[i] = '\0';
+}
+
 std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayoutPtr& memoryLayout) {
-    if (auto rowLayout = dynamic_cast<RowLayout*>(memoryLayout.get())) {
-        //offsets = rowLayout->getFieldOffSets();
+    if (dynamic_cast<RowLayout*>(memoryLayout.get())) {
         return {0};
     } else if (auto columnLayout = dynamic_cast<ColumnLayout*>(memoryLayout.get())) {
         return columnLayout->getColumnOffsets();
@@ -76,85 +96,83 @@ std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayou
     NES_NOT_IMPLEMENTED();
 }
 
-void CompressedDynamicTupleBuffer::clearBuffer() { clearBuffer(0); }
-
-void CompressedDynamicTupleBuffer::clearBuffer(size_t start) {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    for (size_t i = start; i < this->getBuffer().getBufferSize(); i++) {
-        baseSrcPointer[i] = '\0';
+void CompressedDynamicTupleBuffer::concatColumns() {
+    if (offsets.size() == 1)
+        return;
+    uint8_t* baseSrcPointer = getBuffer().getBuffer();
+    std::vector<size_t> newOffsets{};
+    size_t newOffset = 0;
+    for (size_t i = 0; i < offsets.size(); i++) {
+        const size_t dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+        memcpy(baseDstPointer + newOffset, baseSrcPointer + offsets[i], dstSize);
+        newOffsets.push_back(newOffset);
+        newOffset += dstSize;
     }
+    clearBuffer(baseSrcPointer, getBuffer().getBufferSize());
+    memcpy(baseSrcPointer, baseDstPointer, getBuffer().getBufferSize());
+    clearBuffer(baseDstPointer, getBuffer().getBufferSize());
+    offsets = newOffsets;
 }
 
-void CompressedDynamicTupleBuffer::compress(CompressionAlgorithm targetCa) { compress(targetCa, compressionMode); }
-void CompressedDynamicTupleBuffer::compress(CompressionAlgorithm targetCa, CompressionMode targetCm) {
-    compressionMode = targetCm;
-    auto rowLayout = dynamic_cast<RowLayout*>(this->getMemoryLayout().get());
+void CompressedDynamicTupleBuffer::compress(const CompressionAlgorithm ca) { compress(compressionMode, ca); }
+void CompressedDynamicTupleBuffer::compress(const std::vector<CompressionAlgorithm>& cas) { compress(compressionMode, cas); }
+
+void CompressedDynamicTupleBuffer::compress(const CompressionMode cm, const CompressionAlgorithm ca) {
+    std::vector<CompressionAlgorithm> cas;
+    for (size_t i = 0; i < offsets.size(); i++)
+        cas.push_back(ca);
+    compress(cm, {cas});
+}
+
+void CompressedDynamicTupleBuffer::compress(const CompressionMode cm, const std::vector<CompressionAlgorithm>& cas) {
+    compressionMode = cm;
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
     if (rowLayout != nullptr) {
-        switch (targetCm) {
+        if (cas[0] == CompressionAlgorithm::NONE)
+            return;
+        switch (cm) {
             case CompressionMode::HORIZONTAL: {
-                compressHorizontal(targetCa);
+                offsets = getOffsets(getMemoryLayout());
+                compressHorizontal(cas[0]);
                 break;
             }
             case CompressionMode::VERTICAL: {
                 NES_THROW_RUNTIME_ERROR("Vertical compression cannot be performed on row layout.");
             }
         }
+        currColumn = 0;
         return;
     }
-    auto columnLayout = dynamic_cast<ColumnLayout*>(this->getMemoryLayout().get());
+
+    const auto columnLayout = dynamic_cast<ColumnLayout*>(getMemoryLayout().get());
     if (columnLayout != nullptr) {
-        switch (targetCm) {
+        switch (cm) {
             case CompressionMode::HORIZONTAL: {
+                if (cas[0] == CompressionAlgorithm::NONE)
+                    return;
                 concatColumns();
-                compressHorizontal(targetCa);
+                compressHorizontal(cas[0]);
                 break;
             }
             case CompressionMode::VERTICAL: {
-                compressVertical(targetCa);
+                if (cas.size() != offsets.size())
+                    NES_THROW_RUNTIME_ERROR("Number of compression algorithms ("
+                                            << cas.size() << ") does match number of offsets (" << offsets.size() << ").");
+                offsets = getOffsets(getMemoryLayout());
+                compressVertical(cas);
             }
         }
+        currColumn = 0;
         return;
     }
     NES_THROW_RUNTIME_ERROR("Invalid memory layout.");
 }
 
-void CompressedDynamicTupleBuffer::compressHorizontal(CompressionAlgorithm targetCa) {
-    if (compressionAlgorithm == CompressionAlgorithm::NONE) {
-        switch (targetCa) {
-            case CompressionAlgorithm::NONE: break;// TODO
-            case CompressionAlgorithm::LZ4: compressLz4Horizontal(); break;
-            case CompressionAlgorithm::SNAPPY: compressSnappyHorizontal(); break;
-            case CompressionAlgorithm::FSST: compressFsstHorizontal(); break;
-            case CompressionAlgorithm::RLE: compressRleHorizontal(); break;
-            case CompressionAlgorithm::SPRINTZ: compressSprintzHorizontal(); break;
-        }
-    } else {
-        NES_THROW_RUNTIME_ERROR(printf("Cannot compress from %s to %s.",
-                                       getCompressionAlgorithmName(compressionAlgorithm),
-                                       getCompressionAlgorithmName(targetCa)));
-    }
-}
-
-void CompressedDynamicTupleBuffer::compressVertical(CompressionAlgorithm targetCa) {
-    if (compressionAlgorithm == CompressionAlgorithm::NONE) {
-        switch (targetCa) {
-            case CompressionAlgorithm::NONE: break;// TODO
-            case CompressionAlgorithm::LZ4: compressLz4Vertical(); break;
-            case CompressionAlgorithm::SNAPPY: compressSnappyVertical(); break;
-            case CompressionAlgorithm::FSST: compressFsstVertical(); break;
-            case CompressionAlgorithm::RLE: compressRleVertical(); break;
-            case CompressionAlgorithm::SPRINTZ: compressSprintzVertical(); break;
-        }
-    } else {
-        NES_THROW_RUNTIME_ERROR(printf("Cannot compress from %s to %s.",
-                                       getCompressionAlgorithmName(compressionAlgorithm),
-                                       getCompressionAlgorithmName(targetCa)));
-    }
-}
-
 void CompressedDynamicTupleBuffer::decompress() {
-    auto rowLayout = dynamic_cast<RowLayout*>(this->getMemoryLayout().get());
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
     if (rowLayout != nullptr) {
+        if (compressionAlgorithms[currColumn] == CompressionAlgorithm::NONE)
+            return;
         switch (compressionMode) {
             case CompressionMode::HORIZONTAL: {
                 decompressHorizontal();
@@ -164,632 +182,536 @@ void CompressedDynamicTupleBuffer::decompress() {
                 NES_THROW_RUNTIME_ERROR("Vertical decompression cannot be performed on row layout.");
             }
         }
+        memcpy(getBuffer().getBuffer(), baseDstPointer, getBuffer().getBufferSize());
+        clearBuffer(baseDstPointer, getBuffer().getBufferSize());
         return;
     }
-    auto columnLayout = dynamic_cast<ColumnLayout*>(this->getMemoryLayout().get());
+
+    const auto columnLayout = dynamic_cast<ColumnLayout*>(getMemoryLayout().get());
     if (columnLayout != nullptr) {
         switch (compressionMode) {
             case CompressionMode::HORIZONTAL: {
+                if (compressionAlgorithms[currColumn] == CompressionAlgorithm::NONE)
+                    return;
                 decompressHorizontal();
+                offsets = getOffsets(getMemoryLayout());
                 break;
             }
             case CompressionMode::VERTICAL: {
                 decompressVertical();
+                break;
             }
         }
+        memcpy(getBuffer().getBuffer(), baseDstPointer, getBuffer().getBufferSize());
+        clearBuffer(baseDstPointer, getBuffer().getBufferSize());
         return;
     }
     NES_THROW_RUNTIME_ERROR("Invalid memory layout.");
 }
 
+void CompressedDynamicTupleBuffer::compressHorizontal(const CompressionAlgorithm& ca) {
+    if (compressionAlgorithms[currColumn] == CompressionAlgorithm::NONE) {
+        switch (ca) {
+            case CompressionAlgorithm::NONE: break;
+            case CompressionAlgorithm::LZ4: compressLz4(0, totalOriginalSize); break;
+            case CompressionAlgorithm::SNAPPY: compressSnappy(0, totalOriginalSize); break;
+            case CompressionAlgorithm::BINARY_RLE: compressBinaryRle(0, totalOriginalSize); break;
+            case CompressionAlgorithm::FSST: {
+                compressFsst1(0, totalOriginalSize);
+                compressedWithFsst = true;
+                break;
+            }
+            case CompressionAlgorithm::SPRINTZ: compressSprintz(0, totalOriginalSize); break;
+        }
+    } else {
+        // TODO future work
+        NES_THROW_RUNTIME_ERROR(printf("Cannot compress from %s to %s.",
+                                       getCompressionAlgorithmName(compressionAlgorithms[currColumn]),
+                                       getCompressionAlgorithmName(ca)));
+    }
+}
+
+void CompressedDynamicTupleBuffer::compressVertical(const std::vector<CompressionAlgorithm>& cas) {
+    if (cas.size() == 1) {// TODO needless?
+        compressHorizontal(cas[0]);
+    } else {
+        for (auto ca : cas) {
+            const size_t end = offsets[currColumn] + getNumberOfTuples() * columnTypes[currColumn].get()->size();
+            switch (ca) {
+                case CompressionAlgorithm::NONE: break;
+                case CompressionAlgorithm::LZ4: compressLz4(offsets[currColumn], end); break;
+                case CompressionAlgorithm::SNAPPY: compressSnappy(offsets[currColumn], end); break;
+                case CompressionAlgorithm::BINARY_RLE: compressBinaryRle(offsets[currColumn], end); break;
+                case CompressionAlgorithm::FSST: {
+                    // FSST is a special case, since it compresses over all columns simultaneously
+                    if (!compressedWithFsst) {
+                        std::vector<size_t> fsstColumns;
+                        fsstColumns.reserve(offsets.size());
+                        size_t i = 0;
+                        for (auto ca2 : cas) {
+                            if (ca2 == CompressionAlgorithm::FSST)
+                                fsstColumns.push_back(i);
+                            i++;
+                        }
+                        if (fsstColumns.size() == 1)
+                            compressFsst1(offsets[currColumn], end);
+                        if (fsstColumns.size() > 1)
+                            compressFsstN(fsstColumns);
+                        compressedWithFsst = true;
+                    }
+                    break;
+                }
+                case CompressionAlgorithm::SPRINTZ: compressSprintz(offsets[currColumn], end); break;
+            }
+            currColumn++;
+        }
+    }
+    currColumn = 0;
+}
+
 void CompressedDynamicTupleBuffer::decompressHorizontal() {
-    switch (compressionAlgorithm) {
+    switch (compressionAlgorithms[currColumn]) {
         case CompressionAlgorithm::NONE: break;
-        case CompressionAlgorithm::LZ4: decompressLz4Horizontal(); break;
-        case CompressionAlgorithm::SNAPPY: decompressSnappyHorizontal(); break;
-        case CompressionAlgorithm::FSST: decompressFsstHorizontal(); break;
-        case CompressionAlgorithm::RLE: decompressRleHorizontal(); break;
-        case CompressionAlgorithm::SPRINTZ: decompressSprintzHorizontal(); break;
+        case CompressionAlgorithm::LZ4: decompressLz4(0, totalOriginalSize); break;
+        case CompressionAlgorithm::SNAPPY: decompressSnappy(0, totalOriginalSize); break;
+        case CompressionAlgorithm::BINARY_RLE: decompressBinaryRle(0, totalOriginalSize); break;
+        case CompressionAlgorithm::FSST: {
+            decompressFsst1(0, totalOriginalSize);
+            compressedWithFsst = false;
+            break;
+        }
+        case CompressionAlgorithm::SPRINTZ: decompressSprintz(0, totalOriginalSize); break;
     }
 }
 
 void CompressedDynamicTupleBuffer::decompressVertical() {
-    switch (compressionAlgorithm) {
-        case CompressionAlgorithm::NONE: break;
-        case CompressionAlgorithm::LZ4: decompressLz4Vertical(); break;
-        case CompressionAlgorithm::SNAPPY: decompressSnappyVertical(); break;
-        case CompressionAlgorithm::FSST: decompressFsstVertical(); break;
-        case CompressionAlgorithm::RLE: decompressRleVertical(); break;
-        case CompressionAlgorithm::SPRINTZ: decompressSprintzVertical(); break;
+    for (auto ca : compressionAlgorithms) {
+        const size_t dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+        switch (ca) {
+            case CompressionAlgorithm::NONE: {
+                memcpy(baseDstPointer + offsets[currColumn], getBuffer().getBuffer() + offsets[currColumn], dstSize);
+                break;
+            }
+            case CompressionAlgorithm::LZ4: decompressLz4(offsets[currColumn], dstSize); break;
+            case CompressionAlgorithm::SNAPPY: decompressSnappy(offsets[currColumn], dstSize); break;
+            case CompressionAlgorithm::FSST: {
+                // FSST is a special case, since it compresses over all columns simultaneously
+                if (compressedWithFsst) {
+                    std::vector<size_t> fsstColumns;
+                    fsstColumns.reserve(offsets.size());
+                    size_t i = 0;
+                    for (auto ca2 : compressionAlgorithms) {
+                        if (ca2 == CompressionAlgorithm::FSST)
+                            fsstColumns.push_back(i);
+                        i++;
+                    }
+                    if (fsstColumns.size() == 1)
+                        decompressFsst1(offsets[currColumn], dstSize);
+                    if (fsstColumns.size() > 1)
+                        decompressFsstN(fsstColumns);
+                    compressedWithFsst = false;
+                }
+                break;
+            }
+            case CompressionAlgorithm::BINARY_RLE: decompressBinaryRle(offsets[currColumn], dstSize); break;
+            case CompressionAlgorithm::SPRINTZ: decompressSprintz(offsets[currColumn], dstSize); break;
+        }
+        currColumn++;
     }
-}
-
-void CompressedDynamicTupleBuffer::concatColumns() {
-    if (offsets.size() == 1)
-        return;
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    std::vector<uint64_t> newOffsets{};
-    // create one string to be compressed (could increase chances of better compression)
-    size_t newOffset = 0;
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-    for (size_t i = 0; i < offsets.size(); i++) {
-        size_t typeSize = types[i].get()->size();
-        size_t dstSize = typeSize * this->getNumberOfTuples();
-        memcpy(baseSrcPointer + newOffset, baseSrcPointer + offsets[i], dstSize);
-        newOffsets.push_back(newOffset);
-        newOffset += dstSize;
-    }
-    clearBuffer(newOffset);
-    offsets = newOffsets;
+    currColumn = 0;
 }
 
 // ===================================
 // LZ4
 // ===================================
-void CompressedDynamicTupleBuffer::compressLz4Horizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
+void CompressedDynamicTupleBuffer::compressLz4(const size_t start, const size_t end) {
+    uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
+    const int srcSize = int(end - start);
     auto src = reinterpret_cast<const char*>(baseSrcPointer);
-    const int dstCapacity = LZ4_compressBound((int) totalOriginalSize);
+    const int dstCapacity = LZ4_compressBound(srcSize);
     char* compressed = (char*) calloc(1, dstCapacity);
-    const size_t compressedSize = LZ4_compress_default(src, compressed, (int) totalOriginalSize, dstCapacity);
+    const size_t compressedSize = LZ4_compress_default(src, compressed, srcSize, dstCapacity);
     if (compressedSize <= 0)
         NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
-    if (compressedSize > totalOriginalSize) {
+    if (compressedSize > (size_t) srcSize) {
         // TODO do not compress and return original buffer
         NES_THROW_RUNTIME_ERROR("LZ4 compression failed: compressed size ("
-                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
+                                << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
-    clearBuffer();
+    clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
     memcpy(baseSrcPointer, compressed, compressedSize);
-    compressedSizes = {compressedSize};
-    compressionAlgorithm = CompressionAlgorithm::LZ4;
+    compressedSizes[currColumn] = compressedSize;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::LZ4;
     free(compressed);
 }
 
-void CompressedDynamicTupleBuffer::decompressLz4Horizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    const char* compressed = reinterpret_cast<const char*>(baseSrcPointer);
-    const size_t compressedSize = compressedSizes[0];
-    char* decompressed = (char*) malloc(this->getBuffer().getBufferSize());
-    const int decompressedSize =
-        LZ4_decompress_safe(compressed, decompressed, (int) compressedSize, (int) this->getBuffer().getBufferSize());
+void CompressedDynamicTupleBuffer::decompressLz4(const size_t start, size_t dstSize) {
+    const char* compressed = reinterpret_cast<const char*>(getBuffer().getBuffer() + start);
+    char* decompressed = (char*) malloc(dstSize);
+    const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, (int) compressedSizes[currColumn], (int) dstSize);
     if (decompressedSize <= 0)
         NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
-    if ((size_t) decompressedSize != totalOriginalSize)
-        NES_THROW_RUNTIME_ERROR("LZ4 decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                << totalOriginalSize << ").");
-    clearBuffer();
-    if (offsets.size() == 1) {
-        memcpy(baseSrcPointer, decompressed, decompressedSize);
+    if (compressionMode == CompressionMode::VERTICAL) {
+        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
     } else {
-        auto newOffsets = getOffsets(this->getMemoryLayout());
-        auto types = this->getMemoryLayout()->getPhysicalTypes();
-        for (size_t i = 0; i < offsets.size(); i++) {
-            size_t typeSize = types[i].get()->size();
-            size_t dstSize = typeSize * this->getNumberOfTuples();
-            memcpy(baseSrcPointer + newOffsets[i], decompressed + offsets[i], dstSize);
-        }
-        offsets = newOffsets;
+        dstSize = totalOriginalSize;
     }
-    compressedSizes = {};
-    compressionAlgorithm = CompressionAlgorithm::NONE;
+    if ((size_t) decompressedSize != dstSize)
+        NES_THROW_RUNTIME_ERROR("LZ4 decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+                                                                                << dstSize << ").");
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
+    if (rowLayout != nullptr) {
+        memcpy(baseDstPointer, decompressed, decompressedSize);
+    } else {
+        const auto origOffsets = getOffsets(getMemoryLayout());
+        if (compressionMode == CompressionMode::VERTICAL) {
+            memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
+        } else {
+            for (size_t i = 0; i < offsets.size(); i++) {
+                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
+            }
+        }
+    }
+    compressedSizes[currColumn] = 0;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
     free(decompressed);
-}
-
-void CompressedDynamicTupleBuffer::compressLz4Vertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-
-    size_t dstLength = 0;
-    size_t totalCompressedSize = 0;
-    for (size_t i = 0; i < offsets.size(); i++) {
-        auto src = reinterpret_cast<const char*>(baseSrcPointer + offsets[i]);
-        const size_t srcSize = types[i].get()->size() * this->getNumberOfTuples();
-        const int maxDstSize = LZ4_compressBound((int) srcSize);
-        char* compressed = (char*) malloc((size_t) maxDstSize);
-        const int compressedSize = LZ4_compress_default(src, compressed, (int) srcSize, maxDstSize);
-        if (compressedSize <= 0)
-            NES_THROW_RUNTIME_ERROR("LZ4 compression failed.");
-        totalCompressedSize += compressedSize;
-        if (totalCompressedSize > totalOriginalSize) {
-            // TODO do not compress and return original buffer
-            NES_THROW_RUNTIME_ERROR("LZ4 compression failed: compressed size ("
-                                    << totalCompressedSize << ") is larger than original size (" << totalOriginalSize << ").");
-        }
-        compressedSizes.push_back(compressedSize);
-        dstLength += compressedSize;
-        memcpy(baseDstPointer + offsets[i], compressed, compressedSize);
-        free(compressed);
-    }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::LZ4;
-    free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::decompressLz4Vertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    auto baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-    for (size_t i = 0; i < offsets.size(); i++) {
-        const char* compressed = reinterpret_cast<const char*>(baseSrcPointer + offsets[i]);
-        const size_t dstSize = types[i].get()->size() * this->getNumberOfTuples();
-        char* decompressed = (char*) malloc(dstSize);
-        const int decompressedSize = LZ4_decompress_safe(compressed, decompressed, (int) compressedSizes[i], dstSize);
-        if (decompressedSize < 0)
-            NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
-        if ((size_t) decompressedSize != dstSize)
-            NES_THROW_RUNTIME_ERROR("LZ4 decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                    << dstSize << ").");
-        memcpy(baseDstPointer + offsets[i], decompressed, decompressedSize);
-        free(decompressed);
-    }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    compressedSizes = {};
-    free(baseDstPointer);
 }
 
 // ===================================
 // Snappy
 // ===================================
-void CompressedDynamicTupleBuffer::compressSnappyHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    auto src = reinterpret_cast<char*>(baseSrcPointer);
-    const size_t dstCapacity = snappy::MaxCompressedLength(totalOriginalSize);
-    char* compressed = (char*) malloc(dstCapacity);
-    size_t compressedSize;
-    snappy::RawCompress(src, totalOriginalSize, compressed, &compressedSize);
-    if (compressedSize > totalOriginalSize) {
+void CompressedDynamicTupleBuffer::compressSnappy(const size_t start, const size_t end) {
+    uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
+    const int srcSize = int(end - start);
+    auto src = reinterpret_cast<const char*>(baseSrcPointer);
+    const size_t dstCapacity = snappy::MaxCompressedLength(srcSize);
+    char* compressed = (char*) calloc(1, dstCapacity);
+    size_t compressedSize = 0;
+    snappy::RawCompress(src, srcSize, compressed, &compressedSize);
+    if (compressedSize <= 0)
+        NES_THROW_RUNTIME_ERROR("Snappy compression failed.");
+    if (compressedSize > (size_t) srcSize) {
         // TODO do not compress and return original buffer
         NES_THROW_RUNTIME_ERROR("Snappy compression failed: compressed size ("
-                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
+                                << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
-    compressedSizes.push_back(compressedSize);
-    clearBuffer();
+    clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
     memcpy(baseSrcPointer, compressed, compressedSize);
-    compressionAlgorithm = CompressionAlgorithm::SNAPPY;
+    compressedSizes[currColumn] = compressedSize;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::SNAPPY;
     free(compressed);
 }
 
-void CompressedDynamicTupleBuffer::decompressSnappyHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    const char* compressed = reinterpret_cast<const char*>(baseSrcPointer);
-    size_t decompressedSize;
-    bool success = snappy::GetUncompressedLength(compressed, compressedSizes[0], &decompressedSize);
-    if (!success)
-        NES_THROW_RUNTIME_ERROR("Snappy decompression failed: could not get decompressed length.");
-    char* decompressed = (char*) malloc(decompressedSize);
-    success = snappy::RawUncompress(compressed, compressedSizes[0], decompressed);
+void CompressedDynamicTupleBuffer::decompressSnappy(const size_t start, size_t dstSize) {
+    const char* compressed = reinterpret_cast<const char*>(getBuffer().getBuffer() + start);
+    char* decompressed = (char*) calloc(offsets.size(), dstSize);
+    bool success = snappy::RawUncompress(compressed, compressedSizes[currColumn], decompressed);
     if (!success)
         NES_THROW_RUNTIME_ERROR("Snappy decompression failed.");
-    if ((size_t) decompressedSize != totalOriginalSize)
-        NES_THROW_RUNTIME_ERROR("Snappy decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                   << totalOriginalSize << ").");
-    clearBuffer();
-    if (offsets.size() == 1) {
-        memcpy(baseSrcPointer, decompressed, decompressedSize);
+    if (compressionMode == CompressionMode::VERTICAL) {
+        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
     } else {
-        auto newOffsets = getOffsets(this->getMemoryLayout());
-        auto types = this->getMemoryLayout()->getPhysicalTypes();
-        for (size_t i = 0; i < offsets.size(); i++) {
-            size_t typeSize = types[i].get()->size();
-            size_t dstSize = typeSize * this->getNumberOfTuples();
-            memcpy(baseSrcPointer + newOffsets[i], decompressed + offsets[i], dstSize);
-        }
-        offsets = newOffsets;
+        dstSize = totalOriginalSize;
     }
-    compressedSizes = {};
-    compressionAlgorithm = CompressionAlgorithm::NONE;
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
+    if (rowLayout != nullptr) {
+        memcpy(baseDstPointer, decompressed, dstSize);
+    } else {
+        const auto origOffsets = getOffsets(getMemoryLayout());
+        if (compressionMode == CompressionMode::VERTICAL) {
+            memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
+        } else {
+            for (size_t i = 0; i < offsets.size(); i++) {
+                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
+            }
+        }
+    }
+    compressedSizes[currColumn] = 0;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
     free(decompressed);
 }
 
-void CompressedDynamicTupleBuffer::compressSnappyVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    auto* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-
-    size_t compressedSize;
-    size_t totalCompressedSize = 0;
-    for (size_t i = 0; i < offsets.size(); i++) {
-        auto src = reinterpret_cast<char*>(baseSrcPointer + offsets[i]);
-        const size_t srcSize = types[i].get()->size() * this->getNumberOfTuples();
-        const size_t dstCapacity = snappy::MaxCompressedLength(srcSize);
-        char* compressed = (char*) malloc(dstCapacity);
-        snappy::RawCompress(src, srcSize, compressed, &compressedSize);
-        totalCompressedSize += compressedSize;
-        if (totalCompressedSize > totalOriginalSize) {
-            // TODO do not compress and return original buffer
-            NES_THROW_RUNTIME_ERROR("Snappy compression failed: compressed size ("
-                                    << totalCompressedSize << ") is larger than original size (" << totalOriginalSize << ").");
-        }
-        memcpy(baseDstPointer + offsets[i], compressed, compressedSize);
-        compressedSizes.push_back(compressedSize);
-        free(compressed);
+// ===================================
+// BINARY_RLE
+// ===================================
+void CompressedDynamicTupleBuffer::compressBinaryRle(size_t start, size_t end) {
+    uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
+    const int srcSize = int(end - start);
+    const size_t dstSize = std::ceil(1.16 * (double) srcSize);// as specified in docs
+    uint8_t* compressedEnd = pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer);
+    const size_t compressedSize = std::distance(baseDstPointer, compressedEnd);
+    if (compressedSize > (size_t) srcSize) {
+        // TODO do not compress and return original buffer
+        NES_THROW_RUNTIME_ERROR("Binary RLE compression failed: compressed size ("
+                                << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::SNAPPY;
-    free(baseDstPointer);
+    clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
+    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
+    compressedSizes[currColumn] = compressedSize;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::BINARY_RLE;
+    //free(compressedEnd);
 }
 
-void CompressedDynamicTupleBuffer::decompressSnappyVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    auto* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-    for (size_t i = 0; i < offsets.size(); i++) {
-        const char* compressed = reinterpret_cast<const char*>(baseSrcPointer + offsets[i]);
-        size_t decompressedSize;
-        bool success = snappy::GetUncompressedLength(compressed, compressedSizes[i], &decompressedSize);
-        if (!success)
-            NES_THROW_RUNTIME_ERROR("Snappy decompression failed: could not get decompressed length.");
-        char* decompressed = (char*) malloc(decompressedSize);
-        success = snappy::RawUncompress(compressed, compressedSizes[i], decompressed);
-        if (!success)
-            NES_THROW_RUNTIME_ERROR("Snappy decompression failed.");
-        const size_t dstSize = types[i].get()->size() * this->getNumberOfTuples();
-        if (decompressedSize != dstSize)
-            NES_THROW_RUNTIME_ERROR("RLE decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                    << dstSize << ").");
-        memcpy(baseDstPointer + offsets[i], decompressed, decompressedSize);
-        free(decompressed);
+void CompressedDynamicTupleBuffer::decompressBinaryRle(size_t start, size_t dstSize) {
+    const uint8_t* compressed = getBuffer().getBuffer() + start;
+    uint8_t* decompressed = (uint8_t*) calloc(1, dstSize);
+    uint8_t* decompressedEnd = pg::brle::decode(compressed, compressed + compressedSizes[currColumn], decompressed);
+    const size_t decompressedSize = std::distance(decompressed, decompressedEnd);
+    if (compressionMode == CompressionMode::VERTICAL) {
+        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+    } else {
+        dstSize = totalOriginalSize;
     }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    compressedSizes = {};
-    free(baseDstPointer);
+    if ((size_t) decompressedSize != dstSize)
+        NES_THROW_RUNTIME_ERROR("Binary RLE decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+                                                                                << dstSize << ").");
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
+    if (rowLayout != nullptr) {
+        memcpy(baseDstPointer, decompressed, decompressedSize);
+    } else {
+        const auto origOffsets = getOffsets(getMemoryLayout());
+        if (compressionMode == CompressionMode::VERTICAL) {
+            memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
+        } else {
+            for (size_t i = 0; i < offsets.size(); i++) {
+                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
+            }
+        }
+    }
+    compressedSizes[currColumn] = 0;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
+    free(decompressed);
 }
 
 // ===================================
 // FSST
 // ===================================
-void CompressedDynamicTupleBuffer::compressFsstHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) malloc(this->getBuffer().getBufferSize());
-
-    // prepare encoder and input data
-    unsigned char* input = baseSrcPointer;
-    fsstEncoder = fsst_create(1, &totalOriginalSize, &input, false);
+void CompressedDynamicTupleBuffer::compressFsst1(const size_t start, const size_t end) {
+    uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
+    size_t srcSize = int(end - start);
 
     // prepare compression
-    compressedSizes.resize(1);
-    fsstOutSize = 7 + 2 * totalOriginalSize;// as specified in fsst.h
-    auto outputPtr = (unsigned char*) malloc(fsstOutSize);
+    fsstEncoder = fsst_create(1, &srcSize, &baseSrcPointer, false);
+    size_t compressedSize = 0;
+    fsstOutSize = 7 + 2 * srcSize;// as specified in fsst.h
+    auto compressed = (unsigned char*) malloc(fsstOutSize);
     std::string output;
     output.resize(fsstOutSize);
 
     // compress
     size_t numCompressed = fsst_compress(fsstEncoder,
                                          1,
-                                         &totalOriginalSize,
-                                         &input,
+                                         &srcSize,
+                                         &baseSrcPointer,
                                          fsstOutSize,
                                          reinterpret_cast<unsigned char*>(output.data()),
-                                         compressedSizes.data(),
-                                         &outputPtr);
+                                         &compressedSize,
+                                         &compressed);
     if (numCompressed < 1)
         NES_THROW_RUNTIME_ERROR("FSST compression failed.");
-    if (compressedSizes[0] > totalOriginalSize) {
+    if (compressedSize > srcSize) {
         // TODO do not compress and return original buffer
         NES_THROW_RUNTIME_ERROR("FSST compression failed: compressed size ("
-                                << compressedSizes[0] << ") is larger than original size (" << totalOriginalSize << ").");
+                                << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
-    memcpy(baseDstPointer, outputPtr, compressedSizes[0]);
-    clearBuffer();
-    std::memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::FSST;
-    free(baseDstPointer);
+    clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
+    memcpy(baseSrcPointer, compressed, compressedSize);
+    compressedSizes[currColumn] = compressedSize;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::FSST;
+    //free(compressed);
 }
 
-void CompressedDynamicTupleBuffer::decompressFsstHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
+void CompressedDynamicTupleBuffer::decompressFsst1(const size_t start, size_t dstSize) {
+    auto compressed = reinterpret_cast<unsigned char*>(getBuffer().getBuffer() + start);
 
     // prepare decompression
     fsst_decoder_t decoder = fsst_decoder(fsstEncoder);
-    auto* output = (unsigned char*) calloc(1, fsstOutSize);
+    auto* decompressed = (unsigned char*) calloc(1, fsstOutSize);
 
     // decompress
-    const size_t decompressedSize = fsst_decompress(&decoder, compressedSizes[0], baseSrcPointer, fsstOutSize, output);
+    const size_t decompressedSize = fsst_decompress(&decoder, compressedSizes[currColumn], compressed, fsstOutSize, decompressed);
     if (decompressedSize < 1)
         NES_THROW_RUNTIME_ERROR("FSST decompression failed.");
-    if ((size_t) decompressedSize != totalOriginalSize)
+    if ((size_t) decompressedSize != dstSize)
         NES_THROW_RUNTIME_ERROR("FSST decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                 << totalOriginalSize << ").");
-    if (offsets.size() == 1) {
-        memcpy(baseDstPointer, output, decompressedSize);
+                                                                                 << dstSize << ").");
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
+    if (rowLayout != nullptr) {
+        memcpy(baseDstPointer, decompressed, dstSize);
     } else {
-        auto newOffsets = getOffsets(this->getMemoryLayout());
-        auto types = this->getMemoryLayout()->getPhysicalTypes();
-        for (size_t i = 0; i < offsets.size(); i++) {
-            size_t typeSize = types[i].get()->size();
-            size_t dstSize = typeSize * this->getNumberOfTuples();
-            memcpy(baseDstPointer + newOffsets[i], output + offsets[i], dstSize);
+        const auto origOffsets = getOffsets(getMemoryLayout());
+        if (compressionMode == CompressionMode::VERTICAL) {
+            memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
+        } else {
+            for (size_t i = 0; i < offsets.size(); i++) {
+                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
+            }
         }
-        offsets = newOffsets;
     }
-    clearBuffer();
-    std::memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    compressedSizes = {};
+
+    compressedSizes[currColumn] = 0;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
+    compressedSizes = std::vector<size_t>(offsets.size(), 0);
     fsstOutSize = 0;
-    free(baseDstPointer);
-    free(output);
+    free(decompressed);
 }
 
-void CompressedDynamicTupleBuffer::compressFsstVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-
+void CompressedDynamicTupleBuffer::compressFsstN(const std::vector<size_t>& fsstColumns) {
     // prepare encoder and input data
-    size_t numStrings = offsets.size();
+    size_t numColumns = fsstColumns.size();
     std::vector<size_t> srcLengths;
-    srcLengths.reserve(numStrings);
+    srcLengths.reserve(numColumns);
     std::vector<unsigned char*> input;
-    input.reserve(numStrings);
-    for (size_t i = 0; i < offsets.size(); i++) {
-        size_t typeSize = types[i].get()->size();
-        size_t srcSize = typeSize * this->getNumberOfTuples();
+    input.reserve(numColumns);
+    for (auto i : fsstColumns) {
+        size_t srcSize = columnTypes[i].get()->size() * getNumberOfTuples();
         srcLengths.push_back(srcSize);
-        input.push_back(baseSrcPointer + offsets[i]);
+        input.push_back(getBuffer().getBuffer() + offsets[i]);
     }
-    fsstEncoder = fsst_create(numStrings, srcLengths.data(), input.data(), false);
+    fsstEncoder = fsst_create(numColumns, srcLengths.data(), input.data(), false);
 
     // prepare compression
-    compressedSizes.resize(numStrings);
     size_t tmpFsstOutSize = 0;
     for (size_t len : srcLengths) {
         tmpFsstOutSize += len;
     }
     fsstOutSize = 7 + 2 * tmpFsstOutSize;// as specified in fsst.h
-    std::vector<unsigned char*> outputPtr;
-    outputPtr.resize(numStrings);
+    std::vector<unsigned char*> compressed;
+    compressed.resize(numColumns);
+    std::vector<size_t> compressedSizesFsst;
+    compressedSizesFsst.reserve(fsstColumns.size());
     std::string output;
     output.resize(fsstOutSize);
 
     // compress
     const size_t numCompressed = fsst_compress(fsstEncoder,
-                                               numStrings,
+                                               numColumns,
                                                srcLengths.data(),
                                                input.data(),
                                                fsstOutSize,
                                                reinterpret_cast<unsigned char*>(output.data()),
-                                               compressedSizes.data(),
-                                               outputPtr.data());
+                                               compressedSizesFsst.data(),
+                                               compressed.data());
     if (numCompressed < 1)
         NES_THROW_RUNTIME_ERROR("FSST compression failed.");
-    size_t totalCompressedSize = 0;
-    for (auto i : compressedSizes)
-        totalCompressedSize += i;
-    if (totalCompressedSize > totalOriginalSize) {
-        // TODO do not compress and return original buffer
-        NES_THROW_RUNTIME_ERROR("FSST compression failed: compressed size ("
-                                << totalCompressedSize << ") is larger than original size (" << totalOriginalSize << ").");
+    for (size_t i = 0; i < srcLengths.size(); i++) {
+        if (compressedSizesFsst[i] > srcLengths[i]) {
+            // TODO do not compress and return original buffer
+            NES_THROW_RUNTIME_ERROR("FSST compression failed: compressed size ("
+                                    << compressedSizesFsst[i] << ") is larger than original size (" << srcLengths[i] << ").");
+        }
     }
-    for (size_t i = 0; i < numStrings; i++) {
-        memcpy(baseDstPointer + offsets[i], outputPtr[i], compressedSizes[i]);
+    size_t j = 0;
+    for (auto fsstColIdx : fsstColumns) {
+        compressedSizes[fsstColIdx] = compressedSizesFsst[j];
+        j++;
     }
-    clearBuffer();
-    std::memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::FSST;
-    free(baseDstPointer);
+
+    size_t i = 0;
+    for (size_t fsstCol : fsstColumns) {
+        auto dest = getBuffer().getBuffer() + offsets[fsstCol];
+        memcpy(dest, compressed[i], compressedSizes[fsstCol]);
+        if (fsstCol == offsets.size() - 1) {
+            clearBuffer(getBuffer().getBuffer(), offsets[fsstCol] + compressedSizes[i], getBuffer().getBufferSize());
+            break;
+        }
+        clearBuffer(getBuffer().getBuffer(), offsets[fsstCol] + compressedSizes[i], offsets[fsstCol + 1]);
+        i++;
+    }
+    for (auto fsstColIdx : fsstColumns)
+        compressionAlgorithms[fsstColIdx] = CompressionAlgorithm::FSST;
 }
 
-void CompressedDynamicTupleBuffer::decompressFsstVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
+void CompressedDynamicTupleBuffer::decompressFsstN(const std::vector<size_t>& fsstColumns) {
+    uint8_t* baseSrcPointer = getBuffer().getBuffer();
 
     // prepare decompression
     fsst_decoder_t decoder = fsst_decoder(fsstEncoder);
-    const size_t outSize = fsstOutSize / offsets.size();
+    const size_t outSize = fsstOutSize / fsstColumns.size();
     auto* output = (unsigned char*) calloc(1, outSize);
 
     // decompress
-    size_t totalDecompressedSize = 0;
-    for (size_t i = 0; i < offsets.size(); i++) {
+    auto origOffsets = getOffsets(getMemoryLayout());
+    for (auto fsstCol : fsstColumns) {
         const size_t decompressedSize =
-            fsst_decompress(&decoder, compressedSizes[i], baseSrcPointer + offsets[i], outSize, output);
+            fsst_decompress(&decoder, compressedSizes[fsstCol], baseSrcPointer + offsets[fsstCol], outSize, output);
         if (decompressedSize < 1)
             NES_THROW_RUNTIME_ERROR("FSST decompression failed.");
-        totalDecompressedSize += decompressedSize;
-        memcpy(baseDstPointer + offsets[i], output, decompressedSize);
+        size_t origSize = columnTypes[fsstCol].get()->size() * getNumberOfTuples();
+        if (decompressedSize != origSize)
+            NES_THROW_RUNTIME_ERROR("FSST decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+                                                                                     << origSize << ").");
+        memcpy(baseDstPointer + origOffsets[fsstCol], output, decompressedSize);
     }
-    if (totalDecompressedSize != totalOriginalSize)
-        NES_THROW_RUNTIME_ERROR("FSST decompression failed: decompressed size ("
-                                << totalDecompressedSize << ") != original size (" << totalOriginalSize << ").");
-    clearBuffer();
-    std::memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    compressedSizes = {};
+    for (auto fsstCol : fsstColumns)
+        std::memcpy(baseSrcPointer + origOffsets[fsstCol],
+                    baseDstPointer + origOffsets[fsstCol],
+                    columnTypes[fsstCol].get()->size() * getNumberOfTuples());
+    for (auto fsstColIdx : fsstColumns) {
+        compressionAlgorithms[fsstColIdx] = CompressionAlgorithm::NONE;
+        compressedSizes[fsstColIdx] = 0;
+    }
+    fsstEncoder = {};
     fsstOutSize = 0;
-    free(baseDstPointer);
     free(output);
-}
-
-// ===================================
-// RLE
-// ===================================
-void CompressedDynamicTupleBuffer::compressRleHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    const size_t dstSize = std::ceil(1.16 * (double) totalOriginalSize);// as specified in docs
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, dstSize);
-
-    uint8_t* end = pg::brle::encode(baseSrcPointer, baseSrcPointer + totalOriginalSize, baseDstPointer);
-    clearBuffer();
-    const size_t compressedSize = std::distance(baseDstPointer, end);
-    if (compressedSize > totalOriginalSize) {
-        // TODO do not compress and return original buffer
-        NES_THROW_RUNTIME_ERROR("RLE compression failed: compressed size ("
-                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
-    }
-    compressedSizes.push_back(compressedSize);
-    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
-    compressionAlgorithm = CompressionAlgorithm::RLE;
-    free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::decompressRleHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    uint8_t* end = pg::brle::decode(baseSrcPointer, baseSrcPointer + compressedSizes[0], baseDstPointer);
-    const size_t decompressedSize = std::distance(baseDstPointer, end);
-    if (decompressedSize != totalOriginalSize)
-        NES_THROW_RUNTIME_ERROR("RLE decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                << totalOriginalSize << ").");
-    clearBuffer();
-    if (offsets.size() == 1) {
-        memcpy(baseSrcPointer, baseDstPointer, decompressedSize);
-    } else {
-        auto newOffsets = getOffsets(this->getMemoryLayout());
-        auto types = this->getMemoryLayout()->getPhysicalTypes();
-        for (size_t i = 0; i < offsets.size(); i++) {
-            const size_t dstSize = types[i].get()->size() * this->getNumberOfTuples();
-            memcpy(baseSrcPointer + newOffsets[i], baseDstPointer + offsets[i], dstSize);
-        }
-        offsets = newOffsets;
-    }
-    compressedSizes = {};
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::compressRleVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-    size_t totalCompressedSize = 0;
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-    for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t srcSize = types[i].get()->size() * this->getNumberOfTuples();
-        uint8_t* src = baseSrcPointer + offsets[i];
-        uint8_t* dst = baseDstPointer + offsets[i];
-        uint8_t* end = pg::brle::encode(src, src + srcSize, dst);
-        const size_t compressedSize = std::distance(dst, end);
-        totalCompressedSize += compressedSize;
-        if (totalCompressedSize > totalOriginalSize) {
-            // TODO do not compress and return original buffer
-            NES_THROW_RUNTIME_ERROR("LZ4 compression failed: compressed size ("
-                                    << totalCompressedSize << ") is larger than original size (" << totalOriginalSize << ").");
-        }
-        compressedSizes.push_back(compressedSize);
-    }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressionAlgorithm = CompressionAlgorithm::RLE;
-    free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::decompressRleVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    auto types = this->getMemoryLayout()->getPhysicalTypes();
-    for (size_t i = 0; i < offsets.size(); i++) {
-        size_t dstSize = types[i].get()->size() * this->getNumberOfTuples();
-        uint8_t* dst = (uint8_t*) calloc(1, dstSize);
-        uint8_t* src = baseSrcPointer + offsets[i];
-        uint8_t* end = pg::brle::decode(src, src + compressedSizes[i], dst);
-        size_t decompressedSize = std::distance(dst, end);
-        if (decompressedSize != dstSize)
-            NES_THROW_RUNTIME_ERROR("RLE decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                    << dstSize << ").");
-        memcpy(baseDstPointer + offsets[i], dst, decompressedSize);
-        free(dst);
-    }
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, this->getBuffer().getBufferSize());
-    compressedSizes = {};
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    free(baseDstPointer);
 }
 
 // ===================================
 // Sprintz
 // ===================================
-void CompressedDynamicTupleBuffer::compressSprintzHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, 1.2 * totalOriginalSize);// TODO magic number
-
-    int64_t compressedSize = sprintz_compress_delta_8b(baseSrcPointer,
-                                                       totalOriginalSize,
-                                                       reinterpret_cast<int8_t*>(baseDstPointer),
-                                                       this->getMemoryLayout()->getTupleSize());
-    if ((size_t) compressedSize > totalOriginalSize) {
+void CompressedDynamicTupleBuffer::compressSprintz(const size_t start, const size_t end) {
+    uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
+    const int srcSize = int(end - start);
+    int8_t* compressed = (int8_t*) calloc(1, 1.2 * srcSize);// TODO magic number
+    uint16_t numDimensions = offsets.size();
+    if (dynamic_cast<ColumnLayout*>(getMemoryLayout().get()))
+        numDimensions = 1;
+    int64_t compressedSize = sprintz_compress_delta_8b(baseSrcPointer, srcSize, compressed, numDimensions, true);
+    if (compressedSize > (int64_t) srcSize) {
         // TODO do not compress and return original buffer
         NES_THROW_RUNTIME_ERROR("Sprintz compression failed: compressed size ("
-                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
+                                << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
-    clearBuffer();
-    compressedSizes.push_back(compressedSize);
-    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
-    this->compressionAlgorithm = CompressionAlgorithm::SPRINTZ;
-    free(baseDstPointer);
+    clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
+    memcpy(baseSrcPointer, compressed, compressedSize);
+    compressedSizes[currColumn] = compressedSize;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::SPRINTZ;
+    free(compressed);
 }
 
-void CompressedDynamicTupleBuffer::decompressSprintzHorizontal() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    const int64_t decompressedSize = sprintz_decompress_delta_8b(reinterpret_cast<const int8_t*>(baseSrcPointer), baseDstPointer);
-    if ((size_t) decompressedSize != totalOriginalSize)
-        NES_THROW_RUNTIME_ERROR("Sprintz decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                    << totalOriginalSize << ").");
-    clearBuffer();
-    if (offsets.size() == 1) {
-        memcpy(baseSrcPointer, baseDstPointer, decompressedSize);
+void CompressedDynamicTupleBuffer::decompressSprintz(const size_t start, size_t dstSize) {
+    int8_t* compressed = reinterpret_cast<int8_t*>(getBuffer().getBuffer() + start);
+    uint8_t* decompressed = (uint8_t*) calloc(1, dstSize);
+    const int64_t decompressedSize = sprintz_decompress_delta_8b(compressed, decompressed);
+    if (compressionMode == CompressionMode::VERTICAL) {
+        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
     } else {
-        auto newOffsets = getOffsets(this->getMemoryLayout());
-        auto types = this->getMemoryLayout()->getPhysicalTypes();
-        for (size_t i = 0; i < offsets.size(); i++) {
-            const size_t dstSize = types[i].get()->size() * this->getNumberOfTuples();
-            memcpy(baseSrcPointer + newOffsets[i], baseDstPointer + offsets[i], dstSize);
+        dstSize = totalOriginalSize;
+    }
+    if ((size_t) decompressedSize != dstSize)
+        NES_THROW_RUNTIME_ERROR("Sprintz decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+                                                                                    << dstSize << ").");
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
+    if (rowLayout != nullptr) {
+        memcpy(baseDstPointer, decompressed, decompressedSize);
+    } else {
+        const auto origOffsets = getOffsets(getMemoryLayout());
+        if (compressionMode == CompressionMode::VERTICAL) {
+            memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
+        } else {
+            for (size_t i = 0; i < offsets.size(); i++) {
+                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
+            }
         }
-        offsets = newOffsets;
     }
-    compressedSizes = {};
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::compressSprintzVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    int64_t compressedSize = sprintz_compress_delta_8b(baseSrcPointer,
-                                                       this->getBuffer().getBufferSize(),
-                                                       reinterpret_cast<int8_t*>(baseDstPointer),
-                                                       1);
-    if ((size_t) compressedSize > totalOriginalSize) {
-        // TODO do not compress and return original buffer
-        NES_THROW_RUNTIME_ERROR("Sprintz compression failed: compressed size ("
-                                << compressedSize << ") is larger than original size (" << totalOriginalSize << ").");
-    }
-    clearBuffer();
-    compressedSizes.push_back(compressedSize);
-    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
-    this->compressionAlgorithm = CompressionAlgorithm::SPRINTZ;
-    free(baseDstPointer);
-}
-
-void CompressedDynamicTupleBuffer::decompressSprintzVertical() {
-    uint8_t* baseSrcPointer = this->getBuffer().getBuffer();
-    uint8_t* baseDstPointer = (uint8_t*) calloc(1, this->getBuffer().getBufferSize());
-
-    const int64_t decompressedSize = sprintz_decompress_delta_8b(reinterpret_cast<const int8_t*>(baseSrcPointer), baseDstPointer);
-    if ((size_t) decompressedSize != this->getBuffer().getBufferSize())
-        NES_THROW_RUNTIME_ERROR("Sprintz decompression failed: decompressed size (" << decompressedSize << ") != buffer size ("
-                                                                                    << this->getBuffer().getBufferSize() << ").");
-    clearBuffer();
-    memcpy(baseSrcPointer, baseDstPointer, decompressedSize);
-    compressedSizes = {};
-    compressionAlgorithm = CompressionAlgorithm::NONE;
-    free(baseDstPointer);
+    compressedSizes[currColumn] = 0;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
+    free(decompressed);
 }
 
 }// namespace NES::Runtime::MemoryLayouts
