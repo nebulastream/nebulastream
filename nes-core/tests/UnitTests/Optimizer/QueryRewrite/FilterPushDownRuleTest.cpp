@@ -608,32 +608,45 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
     // Validate
+    // The order of the branches of the union operator matters and should stay the same.
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = updatedQueryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + sinkOperator->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + mapOperatorPQ1->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + mapOperatorPQ2->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(mergeOperator->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + mergeOperator->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + filterOperatorPQ1->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + filterOperatorPQ2->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + filterOperatorSQ->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
-}
+    NES_DEBUG("Expected Plan Node: " + srcOperatorSQ->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + filterOperatorPQ1->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + filterOperatorPQ2->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + filterOperatorPQ3->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
+    ++itr;
+    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
+    NES_DEBUG("Expected Plan Node: " + srcOperatorPQ->toString() + "\t\tActual in updated Query plan: " + (*itr)->toString());
+    }
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
