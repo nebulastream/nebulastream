@@ -47,11 +47,12 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
                                                                      queryReconfiguration));
 }
 
-bool QueryPlacementPhase::execute(PlacementStrategy placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan) {
+bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO2("QueryPlacementPhase: Perform query placement phase for shared query plan {}",
               std::to_string(sharedQueryPlan->getSharedQueryId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
+    auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
     auto placementStrategyPtr =
         PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase);
 

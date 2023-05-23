@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#include <Util/PlacementStrategy.hpp>
 #include <Common/Identifiers.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -254,6 +255,24 @@ class QueryPlan {
      */
     void setFaultToleranceType(FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
+    /**
+     * @brief Set query placement strategy
+     * @param PlacementStrategy: query placement strategy
+     */
+    void setPlacementStrategy(PlacementStrategy placementStrategy);
+
+    /**
+     * @brief Get the placement strategy for the shared query plan
+     * @return placement strategy
+     */
+    PlacementStrategy getPlacementStrategy() const;
+
+    /**
+     * @brief Get the concatenated source and placement strategy divider is "_"
+     * @return sourceNames_placementStrategy
+     */
+    std::string getConcatenatedSourceAndPlacementStrategy() const;
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -287,6 +306,8 @@ class QueryPlan {
     LineageType lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
+    // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
+    PlacementStrategy placementStrategy = PlacementStrategy::TopDown;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

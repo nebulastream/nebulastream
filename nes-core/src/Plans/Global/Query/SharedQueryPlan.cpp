@@ -43,6 +43,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     sinkOperators = rootOperators;
     queryIds.push_back(queryId);
     hashBasedSignatures = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    placementStrategy = queryPlan->getPlacementStrategy();
 }
 
 SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
@@ -167,5 +168,7 @@ SharedQueryPlanStatus SharedQueryPlan::getStatus() const { return sharedQueryPla
 void SharedQueryPlan::setStatus(SharedQueryPlanStatus sharedQueryPlanStatus) {
     this->sharedQueryPlanStatus = sharedQueryPlanStatus;
 }
+
+PlacementStrategy SharedQueryPlan::getPlacementStrategy() const { return placementStrategy; }
 
 }// namespace NES
