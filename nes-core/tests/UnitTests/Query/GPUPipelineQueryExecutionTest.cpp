@@ -825,34 +825,34 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
     EXPECT_EQ(plan->getPipelines().size(), 1u);
 
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
-    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::RowLayout::create(testSchemaWindowedAggregation, nodeEngine->getBufferManager()->getBufferSize());
-        fillBufferToWindowSchema(buffer, memoryLayout, WindowedAggregationGPUPipelineStage::NUMBER_OF_INPUT_TUPLES);
 
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    ASSERT_FALSE(!buffer);
 
-        ASSERT_EQ(plan->getPipelines()[0]->execute(buffer, workerContext), ExecutionResult::Ok);
+    auto memoryLayout =
+        Runtime::MemoryLayouts::RowLayout::create(testSchemaWindowedAggregation, nodeEngine->getBufferManager()->getBufferSize());
+    fillBufferToWindowSchema(buffer, memoryLayout, WindowedAggregationGPUPipelineStage::NUMBER_OF_INPUT_TUPLES);
 
-        // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    plan->setup();
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+    ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
-        auto resultBuffer = testSink->get(0);
+    ASSERT_EQ(plan->getPipelines()[0]->execute(buffer, workerContext), ExecutionResult::Ok);
 
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), numOutputTuples);
+    // This plan should produce one output buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
 
-        auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
-        auto indexField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, resultMemoryLayout, resultBuffer);
-        auto valueField = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, resultMemoryLayout, resultBuffer);
-        for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples(); recordIndex++) {
-            EXPECT_EQ(indexField[recordIndex], 0x1);
-            EXPECT_EQ(valueField[recordIndex], 8);
-        }
-    } else {
-        FAIL();
+    auto resultBuffer = testSink->get(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), numOutputTuples);
+
+    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto indexField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, resultMemoryLayout, resultBuffer);
+    auto valueField = Runtime::MemoryLayouts::RowLayoutField<uint32_t, true>::create(1, resultMemoryLayout, resultBuffer);
+    for (size_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples(); recordIndex++) {
+        EXPECT_EQ(indexField[recordIndex], 0x1);
+        EXPECT_EQ(valueField[recordIndex], 8);
     }
 
     cleanUpPlan(plan);
