@@ -56,6 +56,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
+#include <fstream>
 
 using namespace NES;
 using namespace z3;
@@ -911,12 +912,10 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
 
-    // TODO: util to parse the example json, translate to the placement matrix
-    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false}, // node
-                                                     {false, true, true, false, false},
-                                                     {false, false, false, true, true}};
-
-    NES::Optimizer::BasePlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
+    std::ifstream jsonFile(std::string(TEST_DATA_DIRECTORY) + "iccs-planner-input.json");
+    std::stringstream buffer;
+    buffer << jsonFile.rdbuf();
+    NES::Optimizer::BasePlacementStrategy::pinICCSPlacement(queryPlan, topology, buffer.str());
 
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
