@@ -157,7 +157,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
             .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan.setPlacementStrategy(NES::PlacementStrategy::MlHeuristic);
+    queryPlan->setPlacementStrategy(NES::PlacementStrategy::MlHeuristic);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
