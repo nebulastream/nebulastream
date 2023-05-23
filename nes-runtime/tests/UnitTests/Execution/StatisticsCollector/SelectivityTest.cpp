@@ -25,7 +25,6 @@ limitations under the License.
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Runtime/BufferManager.hpp>
