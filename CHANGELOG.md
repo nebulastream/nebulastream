@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.90](https://github.com/nebulastream/nebulastream/tree/v0.5.90) (2023-05-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.89...v0.5.90)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Hava to adapt fully qualified Java class names to C JNI syntax [\#3504](https://github.com/nebulastream/nebulastream/issues/3504)
+
 ## [v0.5.89](https://github.com/nebulastream/nebulastream/tree/v0.5.89) (2023-05-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.88...v0.5.89)
