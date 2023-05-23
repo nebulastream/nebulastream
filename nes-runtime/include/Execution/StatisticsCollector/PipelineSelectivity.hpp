@@ -18,7 +18,7 @@ limitations under the License.
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <any>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 
 namespace NES::Runtime::Execution {
 /**
