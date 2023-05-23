@@ -59,6 +59,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
     auto lineageType = queryPlan->getLineageType();
+    auto ftPlacement = queryPlan->getFaultTolerancePlacement();
     NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
 
     //1. Fetch all upstream pinned operators
@@ -75,6 +76,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
                                                                    faultToleranceType,
                                                                    lineageType,
+                                                                   ftPlacement,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());

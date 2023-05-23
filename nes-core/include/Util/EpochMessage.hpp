@@ -21,7 +21,6 @@ class EpochMessage {
   public:
     EpochMessage(uint64_t timestamp, uint64_t replicationLevel);
 
-
     uint64_t getTimestamp() const;
 
     uint64_t getReplicationLevel() const;

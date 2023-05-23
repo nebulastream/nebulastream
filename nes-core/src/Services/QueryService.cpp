@@ -54,7 +54,8 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const std::string& placementStrategyName,
                                                       const FaultToleranceType::Value faultTolerance,
-                                                      const LineageType::Value lineage) {
+                                                      const LineageType::Value lineage,
+                                                      FaultTolerancePlacement::Value ftPlacement) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -66,6 +67,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         queryPlan->setQueryId(queryId);
         queryPlan->setFaultToleranceType(faultTolerance);
         queryPlan->setLineageType(lineage);
+        queryPlan->setFaultTolerancePlacement(ftPlacement);
 
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
@@ -100,7 +102,8 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
                                       const std::string& placementStrategyName,
                                       const FaultToleranceType::Value faultTolerance,
-                                      const LineageType::Value lineage) {
+                                      const LineageType::Value lineage,
+                                      FaultTolerancePlacement::Value ftPlacement) {
 
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     auto promise = std::make_shared<std::promise<QueryId>>();
@@ -110,6 +113,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         queryPlan->setQueryId(queryId);
         queryPlan->setFaultToleranceType(faultTolerance);
         queryPlan->setLineageType(lineage);
+        queryPlan->setFaultTolerancePlacement(ftPlacement);
 
         // assign the id for the query and individual operators
         assignOperatorIds(queryPlan);

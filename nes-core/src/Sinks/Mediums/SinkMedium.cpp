@@ -64,8 +64,7 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
         if (isSync && timestamp) {
             notifyEpochTermination(timestamp);
             isWaiting = false;
-        }
-        else {
+        } else {
             isWaiting = true;
         }
     }

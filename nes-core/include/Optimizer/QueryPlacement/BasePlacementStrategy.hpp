@@ -18,6 +18,7 @@
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/FaultTolerancePlacement.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <chrono>
@@ -28,6 +29,18 @@
 #include <vector>
 
 namespace NES {
+
+struct resourcesPerPath {
+    double maxMemory;
+    double minMemory;
+    double requiredMemory;
+    double maxNetwork;
+    double minNetwork;
+    double requiredNetwork;
+    double providedSafety;
+};
+
+typedef struct resourcesPerPath ResourcesPerPath;
 
 class NESExecutionPlan;
 using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
@@ -77,6 +90,8 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 
 const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 const std::string PLACED = "PLACED";
+const double TUPLE_SIZE = 0.131;
+const double NETWORK_DELAY = 0.2;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -114,6 +129,7 @@ class BasePlacementStrategy {
      * @param queryId: id of the query
      * @param faultToleranceType: fault tolerance type
      * @param lineageType: lineage type
+     * @param ftPlacement: fault tolerance placement
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @return true if successful else false
@@ -121,6 +137,7 @@ class BasePlacementStrategy {
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
                                            FaultToleranceType::Value faultToleranceType,
                                            LineageType::Value lineageType,
+                                           FaultTolerancePlacement::Value ftPlacement,
                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
@@ -139,7 +156,8 @@ class BasePlacementStrategy {
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
     void performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
-                              const std::vector<OperatorNodePtr>& downStreamPinnedOperators, FaultToleranceType::Value faultToleranceType);
+                              const std::vector<OperatorNodePtr>& downStreamPinnedOperators,
+                              FaultTolerancePlacement::Value ftPlacement);
 
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the
@@ -206,6 +224,11 @@ class BasePlacementStrategy {
     std::map<uint64_t, TopologyNodePtr> topologyMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
+    double w_memory = 0.33;
+    double w_network = 0.33;
+    double w_safety = 0.33;
+
+    std::function<void(std::vector<TopologyNodePtr>)> adaptEpochCallback;
 
   private:
     /**
@@ -215,8 +238,10 @@ class BasePlacementStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    static OperatorNodePtr
-    createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId, const TopologyNodePtr& sourceTopologyNode, const TopologyNodePtr& currentNode);
+    static OperatorNodePtr createNetworkSinkOperator(QueryId queryId,
+                                                     uint64_t sourceOperatorId,
+                                                     const TopologyNodePtr& sourceTopologyNode,
+                                                     const TopologyNodePtr& currentNode);
 
     /**
      * @brief create a new network source operator
@@ -242,10 +267,39 @@ class BasePlacementStrategy {
                               const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
-     * @brief place fault tolerance
+     * @brief place fault tolerance in naive way
      * @param availablePaths : available paths between pinned operators
      */
-    uint64_t placeFaultTolerance(const std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType);
+    std::vector<TopologyNodePtr> placeFaultToleranceNaive(std::vector<std::vector<TopologyNodePtr>> availablePaths);
+
+    /**
+     * @brief place fault tolerance in elaborative way
+     * @param availablePaths : available paths between pinned operators
+     * @return selected placement
+     */
+    std::vector<TopologyNodePtr> placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths);
+
+    /**
+     * @brief place fault tolerance in elaborative way
+     * @param pathId: id of the path
+     * @param subPathForPlacement : available paths between pinned operators
+     */
+    std::pair<double, std::vector<TopologyNodePtr>> placeFaultTolerance(std::vector<TopologyNodePtr> subPathForPlacement);
+
+    /**
+     * Calculates the score based on the node location on a path
+     * @param pathForPlacement : path that is considered for placement
+     * @param topologyNode : topology node
+     * @return score that equals distance from the root node
+     */
+    uint64_t distanceScore(std::vector<TopologyNodePtr> pathForPlacement, const TopologyNodePtr& topologyNode);
+
+    /**
+     * Calculates the optimal epoch parameter considering the smallest device on the path
+     * @param pathForPlacement path that was chosen for placement
+     * @return new epoch
+     */
+    void adaptEpoch(std::vector<TopologyNodePtr> pathForPlacement);
 
     /**
      * Check if operator present in the given collection
@@ -255,6 +309,13 @@ class BasePlacementStrategy {
      */
     bool operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
                                      const std::vector<OperatorNodePtr>& operatorCollection);
+
+    /**
+ * @brief finds network, memory, safety available per path
+ * @param path
+ * @return max and min available network, memory and safety on one path
+ */
+    ResourcesPerPath findResourcesAvailable(const std::vector<TopologyNodePtr> path);
 
     /**
      * @brief Add an execution node as root of the global execution plan

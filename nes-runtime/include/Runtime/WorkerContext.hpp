@@ -23,9 +23,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 #include <folly/ThreadLocal.h>
+#include <fstream>
 #include <memory>
 #include <queue>
-#include <fstream>
 #include <unordered_map>
 
 namespace NES::Runtime {

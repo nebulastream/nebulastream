@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -204,8 +204,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             records[u].timestamp2 = value.count();
         }
     };
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), workerConfig->numberOfBuffersToProduce, workerConfig->sourceGatheringInterval, GatheringMode::INGESTION_RATE_MODE);
-    switch(workerConfig->lambdaSource) {
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1),
+                                                      workerConfig->numberOfBuffersToProduce,
+                                                      workerConfig->sourceGatheringInterval,
+                                                      GatheringMode::INGESTION_RATE_MODE);
+    switch (workerConfig->lambdaSource) {
         case 1: {
             auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
@@ -445,6 +448,12 @@ bool NesWorker::connect() {
     registrationRequest.set_grpcport(localWorkerRpcPort.load());
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
     registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());
+    registrationRequest.set_memorycapacity(workerConfig->memoryCapacity.getValue());
+    registrationRequest.set_mtbfvalue(workerConfig->mtbfValue.getValue());
+    registrationRequest.set_launchtime(workerConfig->launchTime.getValue());
+    registrationRequest.set_epochvalue(workerConfig->numberOfBuffersPerEpoch.getValue());
+    registrationRequest.set_ingestionrate(workerConfig->ingestionRate.getValue());
+    registrationRequest.set_networkcapacity(workerConfig->networkCapacity.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(monitoringAgent->getRegistrationMetrics().serialize().get());
     //todo: what about this?
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());

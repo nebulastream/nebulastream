@@ -78,9 +78,9 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
 
     gettimeofday(&tv, NULL);
 
-    millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
-    if (millisec>=1000) { // Allow for rounding up to nearest second
-        millisec -=1000;
+    millisec = lrint(tv.tv_usec / 1000.0);// Round to nearest millisec
+    if (millisec >= 1000) {               // Allow for rounding up to nearest second
+        millisec -= 1000;
         tv.tv_sec++;
     }
 
@@ -144,8 +144,7 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
             auto topWatermark = pq.top().getWatermark();
             if (topWatermark <= timestamp) {
                 pq.pop();
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -168,9 +167,9 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
 
         gettimeofday(&tv, NULL);
 
-        millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
-        if (millisec>=1000) { // Allow for rounding up to nearest second
-            millisec -=1000;
+        millisec = lrint(tv.tv_usec / 1000.0);// Round to nearest millisec
+        if (millisec >= 1000) {               // Allow for rounding up to nearest second
+            millisec -= 1000;
             tv.tv_sec++;
         }
 
@@ -192,7 +191,6 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         storageFile.flush();
     }
 }
-
 
 bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);

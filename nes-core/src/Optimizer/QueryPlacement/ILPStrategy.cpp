@@ -55,13 +55,14 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             FaultToleranceType::Value faultToleranceType,
                                             LineageType::Value lineageType,
+                                            FaultTolerancePlacement::Value ftPlacement,
                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
 
     // 1. Find the path where operators need to be placed
-    performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType);
+    performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, ftPlacement);
 
     z3::optimize opt(*z3Context);
     std::map<std::string, z3::expr> placementVariables;

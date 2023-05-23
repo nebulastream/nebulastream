@@ -64,6 +64,10 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     faultToleranceType.set_value(FaultToleranceType::toString(config.getFaultToleranceType()));
     context["faultTolerance"] = faultToleranceType;
 
+    auto ftPlacement = google::protobuf::Any();
+    ftPlacement.set_value(FaultTolerancePlacement::toString(config.getFTPlacement()));
+    context["ftPlacement"] = ftPlacement;
+
     std::string message = request.SerializeAsString();
     auto path = "query/execute-query-ex";
 

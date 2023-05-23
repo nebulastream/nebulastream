@@ -28,6 +28,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
@@ -54,6 +55,10 @@ std::string Util::escapeJson(const std::string& str) {
         }
     }
     return o.str();
+}
+
+bool Util::pathComparator(const std::vector<TopologyNodePtr>& lhs, const std::vector<TopologyNodePtr>& rhs) {
+    return lhs.size() < rhs.size();
 }
 
 std::string Util::trim(std::string str) {

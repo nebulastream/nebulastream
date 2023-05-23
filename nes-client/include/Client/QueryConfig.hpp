@@ -15,6 +15,7 @@
 #ifndef NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 #define NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 
+#include <Util/FaultTolerancePlacement.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <Util/PlacementStrategy.hpp>
@@ -36,6 +37,12 @@ class QueryConfig {
      * @return FaultToleranceType
      */
     FaultToleranceType::Value getFaultToleranceType() const;
+
+    /**
+     * @brief Returns the level of fault tolerance.
+     * @return FaultToleranceType
+     */
+    FaultTolerancePlacement::Value getFTPlacement() const;
 
     /**
      * @brief Sets the level of fault tolerance.
@@ -69,6 +76,7 @@ class QueryConfig {
 
   private:
     FaultToleranceType::Value faultToleranceType;
+    FaultTolerancePlacement::Value ftPlacement;
     LineageType::Value lineageType;
     PlacementStrategy::Value placementType;
 };

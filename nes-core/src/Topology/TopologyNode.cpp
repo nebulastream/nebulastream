@@ -20,6 +20,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <algorithm>
+#include <math.h>
 #include <utility>
 
 namespace NES {
@@ -28,19 +29,44 @@ TopologyNode::TopologyNode(uint64_t id,
                            std::string ipAddress,
                            uint32_t grpcPort,
                            uint32_t dataPort,
-                           uint16_t resources,
+                           uint64_t resources,
+                           uint64_t memoryCapacity,
+                           uint64_t mtbfValue,
+                           uint64_t launchTime,
+                           uint64_t epochValue,
+                           uint64_t ingestionRate,
+                           uint64_t networkCapacity,
                            std::map<std::string, std::any> properties)
-    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      nodeProperties(std::move(properties)) {}
+    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources),
+      memoryCapacity(memoryCapacity), initialMemoryCapacity(memoryCapacity), mtbfValue(mtbfValue), launchTime(launchTime),
+      epochValue(epochValue), ingestionRate(ingestionRate), initialNetworkCapacity(networkCapacity),
+      networkCapacity(networkCapacity), usedResources(0), nodeProperties(std::move(properties)) {}
 
 TopologyNodePtr TopologyNode::create(const uint64_t id,
                                      const std::string& ipAddress,
                                      const uint32_t grpcPort,
                                      const uint32_t dataPort,
-                                     const uint16_t resources,
+                                     const uint64_t resources,
+                                     const uint64_t memoryCapacity,
+                                     const uint64_t mtbfValue,
+                                     const uint64_t launchTime,
+                                     const uint64_t epochValue,
+                                     const uint64_t ingestionRate,
+                                     const uint64_t networkCapacity,
                                      std::map<std::string, std::any> properties) {
     NES_DEBUG("TopologyNode: Creating node with ID " << id << " and resources " << resources);
-    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, properties);
+    return std::make_shared<TopologyNode>(id,
+                                          ipAddress,
+                                          grpcPort,
+                                          dataPort,
+                                          resources,
+                                          memoryCapacity,
+                                          mtbfValue,
+                                          launchTime,
+                                          epochValue,
+                                          ingestionRate,
+                                          networkCapacity,
+                                          properties);
 }
 
 uint64_t TopologyNode::getId() const { return id; }
@@ -49,20 +75,45 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
-uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
+uint64_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
+
+uint64_t TopologyNode::getMemoryCapacity() const { return memoryCapacity; }
+
+uint64_t TopologyNode::getMTBFValue() const { return mtbfValue; }
+
+uint64_t TopologyNode::getLaunchTime() const { return launchTime; }
+
+uint64_t TopologyNode::getEpochValue() const { return epochValue; }
+
+uint64_t TopologyNode::getIngestionRate() const { return ingestionRate; }
+
+uint64_t TopologyNode::getInitialMemoryCapacity() const { return initialMemoryCapacity; }
+
+uint64_t TopologyNode::getInitialNetworkCapacity() const { return initialNetworkCapacity; }
+
+uint64_t TopologyNode::getNetworkCapacity() const { return networkCapacity; }
+
+double TopologyNode::calculateReliability() const {
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::seconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::seconds>(epoch);
+    double deviceRunningTime = (value.count() - launchTime) / 3600;
+    return exp(-(deviceRunningTime / mtbfValue));
+}
 
 bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodeProperties[NES::Worker::Properties::MAINTENANCE]); };
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
-void TopologyNode::increaseResources(uint16_t freedCapacity) {
+void TopologyNode::increaseResources(uint64_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
     NES_ASSERT(freedCapacity <= usedResources,
                "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
     usedResources = usedResources - freedCapacity;
 }
 
-void TopologyNode::reduceResources(uint16_t usedCapacity) {
+void TopologyNode::reduceResources(uint64_t usedCapacity) {
     NES_DEBUG("TopologyNode: Reducing resources " << usedCapacity << " of " << resources);
     if (usedCapacity > resources) {
         NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
@@ -74,9 +125,35 @@ void TopologyNode::reduceResources(uint16_t usedCapacity) {
     usedResources = usedResources + usedCapacity;
 }
 
+void TopologyNode::reduceMemoryCapacity(uint64_t usedMemory) {
+    NES_DEBUG("TopologyNode: Reducing memory " << memoryCapacity << " of " << usedMemory);
+    if (usedMemory > memoryCapacity) {
+        NES_WARNING("PhysicalNode: amount of memory to be used should not be more than actual memory");
+    }
+    memoryCapacity -= usedMemory;
+}
+
+void TopologyNode::reduceNetworkCapacity(uint64_t usedNetwork) {
+    NES_DEBUG("TopologyNode: Reducing network " << networkCapacity << " of " << usedNetwork);
+    if (usedNetwork > networkCapacity) {
+        NES_WARNING("PhysicalNode: amount of network to be used should not be more than actual network");
+    }
+    networkCapacity -= usedNetwork;
+}
+
 TopologyNodePtr TopologyNode::copy() {
-    TopologyNodePtr copy =
-        std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources, nodeProperties));
+    TopologyNodePtr copy = std::make_shared<TopologyNode>(TopologyNode(id,
+                                                                       ipAddress,
+                                                                       grpcPort,
+                                                                       dataPort,
+                                                                       resources,
+                                                                       memoryCapacity,
+                                                                       mtbfValue,
+                                                                       launchTime,
+                                                                       epochValue,
+                                                                       ingestionRate,
+                                                                       networkCapacity,
+                                                                       nodeProperties));
     copy->reduceResources(usedResources);
     copy->linkProperties = this->linkProperties;
     return copy;
@@ -109,6 +186,16 @@ bool TopologyNode::containAsChild(NodePtr node) {
 
 void TopologyNode::addNodeProperty(const std::string& key, const std::any& value) {
     nodeProperties.insert(std::make_pair(key, value));
+}
+
+void TopologyNode::updateNodeProperty(const std::string& key, const std::any& value) {
+    auto iter = nodeProperties.find(key);
+    if (iter == nodeProperties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
+    } else {
+        iter->second = value;
+    }
 }
 
 bool TopologyNode::hasNodeProperty(const std::string& key) {

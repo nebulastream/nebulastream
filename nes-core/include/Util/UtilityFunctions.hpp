@@ -112,6 +112,14 @@ struct SplitFunctionHelper<double> {
 std::string escapeJson(const std::string& str);
 
 /**
+ * @brief compares vectors based on size
+ * @param lhr
+ * @param rhs
+ * @return result of comparison
+ */
+bool pathComparator(const std::vector<TopologyNodePtr>& lhs, const std::vector<TopologyNodePtr>& rhs);
+
+/**
  * @brief removes leading and trailing whitespaces
  */
 std::string trim(std::string s);

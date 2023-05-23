@@ -204,7 +204,7 @@ double IFCOPStrategy::getCost(const PlacementMatrix& placementCandidate, NES::Qu
         auto currentTopologyNode = (*topoItr)->as<TopologyNode>();
 
         // count the total number of operator assigned to the current topology node (i.e., which has the placement decision = true
-        auto totalAssignedOperators =
+        uint64_t totalAssignedOperators =
             std::count_if(placementCandidate[nodeIndex].begin(), placementCandidate[nodeIndex].end(), [](bool item) {
                 return item;
             });
@@ -317,6 +317,7 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
 bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                               FaultToleranceType::Value /*faultToleranceType*/,
                                               LineageType::Value /*lineageType*/,
+                                              FaultTolerancePlacement::Value,
                                               const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
                                               const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
     NES_NOT_IMPLEMENTED();

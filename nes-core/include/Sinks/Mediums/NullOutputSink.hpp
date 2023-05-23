@@ -15,12 +15,12 @@
 #ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_
 
+#include <Runtime/NodeEngine.hpp>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <sstream>
-#include <Runtime/NodeEngine.hpp>
 #include <string>
-#include <chrono>
 #include <thread>
 
 #include <Sinks/Mediums/SinkMedium.hpp>

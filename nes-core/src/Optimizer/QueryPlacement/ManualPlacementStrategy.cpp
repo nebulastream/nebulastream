@@ -46,12 +46,13 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
     FaultToleranceType::Value faultToleranceType /*faultToleranceType*/,
     LineageType::Value lineageType /*lineageType*/,
+    FaultTolerancePlacement::Value ftPlacement,
     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
 
     try {
         // 1. Find the path where operators need to be placed
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType);
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, ftPlacement);
 
         // 2. Place the operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

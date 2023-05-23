@@ -17,6 +17,7 @@
 #include <Common/Identifiers.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Util/FaultTolerancePlacement.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <memory>
@@ -241,6 +242,12 @@ class QueryPlan {
     FaultToleranceType::Value getFaultToleranceType() const;
 
     /**
+     * @brief Get current fault tolerance placement
+     * @return FaultTolerancePlacement: type of fault tolerance placement for a given query
+     */
+    FaultTolerancePlacement::Value getFaultTolerancePlacement() const;
+
+    /**
      * @brief Set current lineage flag
      * @param LineageType: type of lineage for a given query
      */
@@ -257,6 +264,12 @@ class QueryPlan {
      * @param FaultToleranceType: type of fault-tolerance for a given query
      */
     void setFaultToleranceType(FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE);
+
+    /**
+     * @brief Set current fault tolerance placement
+     * @param FaultTolerancePlacement: type of fault tolerance placement for a given query
+     */
+    void setFaultTolerancePlacement(FaultTolerancePlacement::Value ftPlacement = FaultTolerancePlacement::NONE);
 
   private:
     /**
@@ -288,6 +301,7 @@ class QueryPlan {
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
     FaultToleranceType::Value faultToleranceType;
+    FaultTolerancePlacement::Value ftPlacement;
     LineageType::Value lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;

@@ -51,6 +51,12 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto grpcPort = registrationRequest->grpcport();
     auto dataPort = registrationRequest->dataport();
     auto slots = registrationRequest->numberofslots();
+    auto memoryCapacity = registrationRequest->memorycapacity();
+    auto mtbfValue = registrationRequest->mtbfvalue();
+    auto launchTime = registrationRequest->launchtime();
+    auto epochValue = registrationRequest->epochvalue();
+    auto ingestionRate = registrationRequest->ingestionrate();
+    auto networkCapacity = registrationRequest->networkcapacity();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
     workerProperties[NES::Worker::Properties::MAINTENANCE] =
@@ -61,7 +67,17 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
-    uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
+    uint64_t workerId = topologyManagerService->registerWorker(address,
+                                                               grpcPort,
+                                                               dataPort,
+                                                               slots,
+                                                               memoryCapacity,
+                                                               mtbfValue,
+                                                               launchTime,
+                                                               epochValue,
+                                                               ingestionRate,
+                                                               networkCapacity,
+                                                               workerProperties);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());

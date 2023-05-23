@@ -16,7 +16,8 @@
 
 namespace NES {
 
-EpochMessage::EpochMessage(uint64_t timestamp, uint64_t replicationLevel) : timestamp(timestamp), replicationLevel(replicationLevel) {}
+EpochMessage::EpochMessage(uint64_t timestamp, uint64_t replicationLevel)
+    : timestamp(timestamp), replicationLevel(replicationLevel) {}
 
 uint64_t EpochMessage::getTimestamp() const { return timestamp; }
 

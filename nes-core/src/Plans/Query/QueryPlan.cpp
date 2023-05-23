@@ -264,6 +264,7 @@ QueryPlanPtr QueryPlan::copy() {
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setFaultToleranceType(faultToleranceType);
     newQueryPlan->setLineageType(lineageType);
+    newQueryPlan->setFaultTolerancePlacement(ftPlacement);
     return newQueryPlan;
 }
 
@@ -276,6 +277,10 @@ FaultToleranceType::Value QueryPlan::getFaultToleranceType() const { return faul
 void QueryPlan::setFaultToleranceType(FaultToleranceType::Value faultToleranceType) {
     this->faultToleranceType = faultToleranceType;
 }
+
+FaultTolerancePlacement::Value QueryPlan::getFaultTolerancePlacement() const { return ftPlacement; }
+
+void QueryPlan::setFaultTolerancePlacement(FaultTolerancePlacement::Value ftPlacement) { this->ftPlacement = ftPlacement; }
 
 LineageType::Value QueryPlan::getLineageType() const { return lineageType; }
 

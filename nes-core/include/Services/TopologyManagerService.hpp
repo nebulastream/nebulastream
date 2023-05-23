@@ -61,7 +61,13 @@ class TopologyManagerService {
     uint64_t registerWorker(const std::string& address,
                             int64_t grpcPort,
                             int64_t dataPort,
-                            uint16_t numberOfSlots,
+                            uint64_t numberOfSlots,
+                            uint64_t memoryCapacity,
+                            uint64_t mtbfValue,
+                            uint64_t launchTime,
+                            uint64_t epochValue,
+                            uint64_t ingestionRate,
+                            uint64_t networkCapacity,
                             std::map<std::string, std::any> workerProperties);
 
     /**

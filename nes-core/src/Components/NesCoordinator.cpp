@@ -81,7 +81,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker),
       numberOfBuffersInSourceLocalBufferPool(this->coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool),
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
-      enableMonitoring(this->coordinatorConfiguration->enableMonitoring), numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch) {
+      enableMonitoring(this->coordinatorConfiguration->enableMonitoring),
+      numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -190,11 +191,14 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     // Ensure that coordinator and internal worker enable/disable monitoring together.
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
     coordinatorConfiguration->worker.numberOfBuffersPerEpoch = numberOfBuffersPerEpoch;
-    coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = coordinatorConfiguration->numberOfBuffersInGlobalBufferManager;
-    coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool;
+    coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager =
+        coordinatorConfiguration->numberOfBuffersInGlobalBufferManager;
+    coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool =
+        coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool;
     coordinatorConfiguration->worker.numWorkerThreads = coordinatorConfiguration->numWorkerThreads;
     coordinatorConfiguration->worker.bufferSizeInBytes = coordinatorConfiguration->bufferSizeInBytes;
     coordinatorConfiguration->worker.numberOfBuffersPerWorker = coordinatorConfiguration->numberOfBuffersPerWorker;
+    coordinatorConfiguration->worker.numberOfSlots = numberOfSlots;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
     worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());

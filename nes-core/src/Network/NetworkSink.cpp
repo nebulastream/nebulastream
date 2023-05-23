@@ -50,7 +50,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
-    if ((faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::AT_MOST_ONCE) && isBuffering) {
+    if ((faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::AT_MOST_ONCE)
+        && isBuffering) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
@@ -185,8 +186,7 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
 
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
-    }
-    else if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+    } else if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
         auto propagationDelay = epochEvent->propagationDelayValue();
@@ -199,8 +199,7 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
             } else {
                 NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
             }
-        }
-        else {
+        } else {
             NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
         }
     }
@@ -211,7 +210,6 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
         "NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: " << this->uniqueNetworkSinkDescriptorId);
     // this function currently has no usage
     onEvent(event);
-
 }
 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }

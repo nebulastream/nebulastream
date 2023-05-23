@@ -41,6 +41,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType::Value faultToleranceType,
                                    LineageType::Value lineageType,
+                                   FaultTolerancePlacement::Value ftPlacement,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
@@ -59,7 +60,6 @@ class BottomUpStrategy : public BasePlacementStrategy {
     void pinOperators(QueryId queryId,
                       const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
-
 
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator

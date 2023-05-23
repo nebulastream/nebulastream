@@ -50,7 +50,13 @@ class TopologyNode : public Node {
                                   const std::string& ipAddress,
                                   const uint32_t grpcPort,
                                   const uint32_t dataPort,
-                                  const uint16_t resources,
+                                  const uint64_t resources,
+                                  const uint64_t memoryCapacity,
+                                  const uint64_t mtbfValue,
+                                  const uint64_t launchTime,
+                                  const uint64_t epochValue,
+                                  const uint64_t ingestionRate,
+                                  const uint64_t networkCapacity,
                                   std::map<std::string, std::any> properties);
 
     virtual ~TopologyNode() = default;
@@ -65,19 +71,87 @@ class TopologyNode : public Node {
      * @brief method to get the overall cpu capacity of the node
      * @return uint64_t cpu capacity
      */
-    uint16_t getAvailableResources() const;
+    uint64_t getAvailableResources() const;
+
+
+    /**
+     * @brief method to get the overall memory capacity of the node
+     * @return uint64_t memory capacity
+     */
+    uint64_t getMemoryCapacity() const;
+
+    /**
+     * @brief method to get the memory capacity of the node
+     * @return uint64_t initial memory capacity
+     */
+    uint64_t getInitialMemoryCapacity() const;
+
+    /**
+     * @brief method to reduce the memory capacity of the node
+     * @param uint64_t used memory
+     */
+    void reduceMemoryCapacity(uint64_t usedMemory);
+
+    /**
+     * @brief method to reduce the network capacity of the node
+     * @param uint64_t used network
+     */
+    void reduceNetworkCapacity(uint64_t usedNetwork);
+
+    /**
+     * @brief method to get the mtbf value of the node
+     * @return uint64_t mtbf value
+     */
+    uint64_t getMTBFValue() const;
+
+    /**
+     * @brief calculates propbability of the device failure
+     * @param topologyNode
+     * @return probability of failure
+     */
+    double calculateReliability() const;
+
+    /**
+     * @brief method to get the launch time of the node
+     * @return uint64_t launch time
+     */
+    uint64_t getLaunchTime() const;
+
+    /**
+     * @brief method to get the epoch value
+     * @return uint64_t epoch value
+     */
+    uint64_t getEpochValue() const;
+
+    /**
+     * @brief method to get the ingestion rate of the node
+     * @return uint64_t ingestion rate
+     */
+    uint64_t getIngestionRate() const;
+
+    /**
+     * @brief method to get the network capacity of the node
+     * @return uint64_t network capacity
+     */
+    uint64_t getNetworkCapacity() const;
+
+    /**
+     * @brief method to get the intial network capacity of the node
+     * @return uint64_t initial network capacity
+     */
+    uint64_t getInitialNetworkCapacity() const;
 
     /**
      * @brief method to reduce the cpu capacity of the node
      * @param uint64_t of the value that has to be subtracted
      */
-    void reduceResources(uint16_t usedCapacity);
+    void reduceResources(uint64_t usedCapacity);
 
     /**
      * @brief method to increase CPU capacity
      * @param uint64_t of the vlaue that has to be added
      */
-    void increaseResources(uint16_t freedCapacity);
+    void increaseResources(uint64_t freedCapacity);
 
     /**
      * @brief Get ip address of the node
@@ -121,7 +195,13 @@ class TopologyNode : public Node {
                           std::string ipAddress,
                           uint32_t grpcPort,
                           uint32_t dataPort,
-                          uint16_t resources,
+                          uint64_t resources,
+                          uint64_t memoryCapacity,
+                          uint64_t mtbfValue,
+                          uint64_t launchTime,
+                          uint64_t epochValue,
+                          uint64_t ingestionRate,
+                          uint64_t networkCapacity,
                           std::map<std::string, std::any> properties);
 
     bool containAsParent(NodePtr node) override;
@@ -134,6 +214,15 @@ class TopologyNode : public Node {
      * @param value value of the new property
      */
     void addNodeProperty(const std::string& key, const std::any& value);
+
+
+    /**
+     * @brief Add a new property to the stored properties map
+     * @param key key of the new property
+     * @param value value of the new property
+     */
+    void updateNodeProperty(const std::string& key, const std::any& value);
+
 
     /**
      * @brief Check if a Node property exists
@@ -197,8 +286,16 @@ class TopologyNode : public Node {
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;
-    uint16_t resources;
-    uint16_t usedResources;
+    uint64_t resources;
+    uint64_t memoryCapacity;
+    uint64_t initialMemoryCapacity;
+    uint64_t mtbfValue;
+    uint64_t launchTime;
+    uint64_t epochValue;
+    uint64_t ingestionRate;
+    uint64_t initialNetworkCapacity;
+    uint64_t networkCapacity;
+    uint64_t usedResources;
 
     /**
      * @brief A field to store a map of node properties

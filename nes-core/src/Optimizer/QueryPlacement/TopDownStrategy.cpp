@@ -46,12 +46,13 @@ TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 FaultToleranceType::Value faultToleranceType,
                                                 LineageType::Value lineageType,
+                                                FaultTolerancePlacement::Value ftPlacement,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, faultToleranceType);
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators, ftPlacement);
 
         // 2. Place operators on the selected path
         pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

@@ -73,11 +73,17 @@ message RegisterWorkerRequest {
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
-  SerializableRegistrationMetrics registrationMetrics = 5;
-  NES.Spatial.Protobuf.Waypoint waypoint = 6;
-  NES.Spatial.Protobuf.SpatialType spatialType = 7;
-  bool tfSupported = 8;
-  bool javaUDFSupported = 9;
+  uint32 memoryCapacity = 5;
+  uint32 mtbfValue = 6;
+  uint64 launchTime = 7;
+  uint32 epochValue = 8;
+  uint32 ingestionRate = 9;
+  uint32 networkCapacity = 10;
+  SerializableRegistrationMetrics registrationMetrics = 11;
+  NES.Spatial.Protobuf.Waypoint waypoint = 12;
+  NES.Spatial.Protobuf.SpatialType spatialType = 13;
+  bool tfSupported = 14;
+  bool javaUDFSupported = 15;
 }
 
 message RegisterWorkerReply {

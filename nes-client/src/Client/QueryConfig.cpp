@@ -27,6 +27,8 @@ void QueryConfig::setFaultToleranceType(FaultToleranceType::Value faultTolerance
     QueryConfig::faultToleranceType = faultToleranceType;
 }
 
+FaultTolerancePlacement::Value QueryConfig::getFTPlacement() const { return ftPlacement; }
+
 LineageType::Value QueryConfig::getLineageType() const { return lineageType; }
 
 void QueryConfig::setLineageType(LineageType::Value lineageType) { QueryConfig::lineageType = lineageType; }

@@ -65,10 +65,18 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
 
 void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
                                                  const std::vector<OperatorNodePtr>& downStreamPinnedOperators,
-                                                 FaultToleranceType::Value faultToleranceType) {
+                                                 FaultTolerancePlacement::Value ftPlacement) {
 
     //1. Find the topology nodes that will host upstream operators
 
+    if (ftPlacement == FaultTolerancePlacement::MFTPH) {
+        adaptEpochCallback = [this](std::vector<TopologyNodePtr> pathForPlacement) {
+            adaptEpoch(pathForPlacement);
+        };
+    } else {
+        adaptEpochCallback = [](std::vector<TopologyNodePtr>) {
+        };
+    }
     std::set<TopologyNodePtr> topologyNodesWithUpStreamPinnedOperators;
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
@@ -105,38 +113,76 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
                                       topologyNodesWithUpStreamPinnedOperators.end());
     std::vector downstreamTopologyNodes(topologyNodesWithDownStreamPinnedOperators.begin(),
                                         topologyNodesWithDownStreamPinnedOperators.end());
-    std::optional<TopologyNodePtr> topologiesForPlacement;
-    for (auto upstreamTopologyNode: upstreamTopologyNodes) {
-        for (auto downstreamTopologyNode: downstreamTopologyNodes) {
-            topologiesForPlacement =
-                topology->findAllPathBetween(upstreamTopologyNode, downstreamTopologyNode);
-        }
-    }
-    if (!topologiesForPlacement.has_value()) {
+
+    std::vector<TopologyNodePtr> selectedTopologyForPlacement =
+        topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
+    if (selectedTopologyForPlacement.empty()) {
         throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
     }
-    std::vector<std::vector<TopologyNodePtr>> availablePaths;
-    auto rootNode = topologiesForPlacement.value()->getAllRootNodes()[0];
-    for (auto child : rootNode->getChildren()) {
-        std::vector<TopologyNodePtr> path;
-        path.emplace_back(rootNode->as<TopologyNode>());
-        auto topologyIterator = NES::DepthFirstNodeIterator(child).begin();
-        while (topologyIterator != DepthFirstNodeIterator::end()) {
-            // get the ExecutionNode for the current topology Node
-            auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-            path.emplace_back(currentTopologyNode);
-            ++topologyIterator;
-        }
-        availablePaths.emplace_back(path);
-    }
 
-    uint64_t chosenPathId = placeFaultTolerance(availablePaths, faultToleranceType);
+    uint64_t chosenPathId = 0;
+    if (ftPlacement == FaultTolerancePlacement::MFTP) {
+        std::optional<TopologyNodePtr> topologiesForPlacement;
+        std::vector<std::vector<TopologyNodePtr>> availablePaths;
+        for (auto upstreamTopologyNode : upstreamTopologyNodes) {
+            for (auto downstreamTopologyNode : downstreamTopologyNodes) {
+                topologiesForPlacement = topology->findAllPathBetween(upstreamTopologyNode, downstreamTopologyNode);
+            }
+            if (!topologiesForPlacement.has_value()) {
+                throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
+            }
+            auto rootNode = topologiesForPlacement.value()->getAllRootNodes()[0];
+            for (auto child : rootNode->getChildren()) {
+                std::vector<TopologyNodePtr> path;
+                path.emplace_back(rootNode->as<TopologyNode>());
+                auto topologyIterator = NES::DepthFirstNodeIterator(child).begin();
+                while (topologyIterator != DepthFirstNodeIterator::end()) {
+                    // get the ExecutionNode for the current topology Node
+                    auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+                    path.emplace_back(currentTopologyNode);
+                    ++topologyIterator;
+                }
+                availablePaths.emplace_back(path);
+            }
+        }
+        if (ftPlacement == FaultTolerancePlacement::NAIVE) {
+            placeFaultToleranceNaive(availablePaths);
+        } else {
+            selectedTopologyForPlacement = placeFaultToleranceMFTP(availablePaths);
+        }
+    } else if (ftPlacement == FaultTolerancePlacement::MFTPH) {
+        std::optional<TopologyNodePtr> topologiesForPlacement;
+        std::vector<std::vector<TopologyNodePtr>> availablePaths;
+        for (auto upstreamTopologyNode : upstreamTopologyNodes) {
+            for (auto downstreamTopologyNode : downstreamTopologyNodes) {
+                topologiesForPlacement = topology->findAllPathBetween(upstreamTopologyNode, downstreamTopologyNode);
+            }
+            if (!topologiesForPlacement.has_value()) {
+                throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
+            }
+            auto rootNode = topologiesForPlacement.value()->getAllRootNodes()[0];
+            for (auto child : rootNode->getChildren()) {
+                std::vector<TopologyNodePtr> path;
+                path.emplace_back(rootNode->as<TopologyNode>());
+                auto topologyIterator = NES::DepthFirstNodeIterator(child).begin();
+                while (topologyIterator != DepthFirstNodeIterator::end()) {
+                    // get the ExecutionNode for the current topology Node
+                    auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+                    path.emplace_back(currentTopologyNode);
+                    ++topologyIterator;
+                }
+                availablePaths.emplace_back(path);
+            }
+        }
+        selectedTopologyForPlacement = placeFaultToleranceMFTP(availablePaths);
+    }
     //4. Map nodes in the selected topology by their ids.
 
     topologyMap.clear();
     // fetch root node from the identified path
-    auto topologyIterator = availablePaths[chosenPathId].begin();
-    while (topologyIterator != availablePaths[chosenPathId].end()) {
+    auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
+    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
+    while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
@@ -144,22 +190,173 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
     }
 }
 
-uint64_t BasePlacementStrategy::placeFaultTolerance(const std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType) {
-    for (auto path: availablePaths) {
-        if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
-            auto endNodeIterator = --path.end();
-            auto currentTopologyNode = (*endNodeIterator)->as<TopologyNode>();
-            currentTopologyNode->addNodeProperty("isBuffering", 1);
+std::vector<TopologyNodePtr>
+BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<TopologyNodePtr>> availablePaths) {
+    auto maxScore = 0;
+    auto selectedPath = std::vector<TopologyNodePtr>();
+    for (auto path : availablePaths) {
+        auto topologyIterator = path.begin();
+        auto pathScore = 0;
+        while (topologyIterator != path.end()) {
+            auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+            uint64_t availableSlot = currentTopologyNode->getAvailableResources();
+
+            if (availableSlot != 0) {
+                pathScore += distanceScore(path, currentTopologyNode);
+            }
+            ++topologyIterator;
+        }
+        if (pathScore > maxScore) {
+            selectedPath = path;
+        }
+    }
+    for (auto currentTopologyNode : selectedPath) {
+        currentTopologyNode->addNodeProperty("isBuffering", 1);
+        currentTopologyNode->reduceResources(1);
+    }
+    return selectedPath;
+}
+
+std::vector<TopologyNodePtr>
+BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths) {
+    auto longestPath = std::max_element(availablePaths.begin(), availablePaths.end(), Util::pathComparator);
+    std::pair<double, std::vector<TopologyNodePtr>> maxFaultTolerancePlacementScore = {0, std::vector<TopologyNodePtr>()};
+    auto selectedTopologyForPlacement = std::vector<TopologyNodePtr>();
+    for (auto path : availablePaths) {
+        auto currentPath = path;
+        currentPath.erase(currentPath.begin());
+        auto placementScore = placeFaultTolerance(currentPath);
+        if (placementScore.first > maxFaultTolerancePlacementScore.first) {
+            maxFaultTolerancePlacementScore = placementScore;
+            selectedTopologyForPlacement = path;
+        }
+    }
+    auto ftPlacement = maxFaultTolerancePlacementScore.second;
+    auto topologyIterator = ftPlacement.begin();
+    while (topologyIterator != ftPlacement.end()) {
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        auto epochValue = currentTopologyNode->getEpochValue();
+        auto ingestionRate = currentTopologyNode->getIngestionRate();
+        auto memoryToReduce = ingestionRate / epochValue * TUPLE_SIZE;
+        auto networkToReduce = (ingestionRate * NETWORK_DELAY + epochValue) * TUPLE_SIZE;
+        if (memoryToReduce > currentTopologyNode->getMemoryCapacity()
+            || networkToReduce > currentTopologyNode->getNetworkCapacity()) {
+            NES_ERROR("Cannot place fault tolerance. Not enough resources.");
+            throw Exceptions::RuntimeException("Cannot place fault tolerance. Not enough resources.");
         } else {
-            auto topologyIterator = path.begin();
-            while (topologyIterator != path.end()) {
-                auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-                currentTopologyNode->addNodeProperty("isBuffering", 1);
-                ++topologyIterator;
+            currentTopologyNode->reduceMemoryCapacity(memoryToReduce);
+            currentTopologyNode->reduceNetworkCapacity(networkToReduce);
+            currentTopologyNode->addNodeProperty("isBuffering", 1);
+        }
+        ++topologyIterator;
+    }
+    return selectedTopologyForPlacement;
+}
+
+std::pair<double, std::vector<TopologyNodePtr>>
+BasePlacementStrategy::placeFaultTolerance(std::vector<TopologyNodePtr> subPathForPlacement) {
+    adaptEpochCallback(subPathForPlacement);
+    std::vector<TopologyNodePtr> initialPlacement;
+    auto firstNode = (*subPathForPlacement.rbegin())->as<TopologyNode>();
+    initialPlacement.push_back(firstNode);
+    std::vector<std::vector<TopologyNodePtr>> subsets{std::vector<TopologyNodePtr>(initialPlacement)};
+    double failureProbability = firstNode->calculateReliability();
+    auto resourcesPerPath = findResourcesAvailable(initialPlacement);
+    std::vector<TopologyNodePtr>::reverse_iterator pathIterator = subPathForPlacement.rbegin();
+    while ((firstNode->getMemoryCapacity() < resourcesPerPath.requiredMemory
+            || firstNode->getNetworkCapacity() < resourcesPerPath.requiredNetwork)
+           && pathIterator != subPathForPlacement.rend()) {
+        subPathForPlacement.pop_back();
+        auto firstNode = (*subPathForPlacement.rbegin())->as<TopologyNode>();
+        initialPlacement.push_back(firstNode);
+        std::vector<std::vector<TopologyNodePtr>> subsets{std::vector<TopologyNodePtr>(initialPlacement)};
+        double failureProbability = firstNode->calculateReliability();
+        auto resourcesPerPath = findResourcesAvailable(initialPlacement);
+        ++pathIterator;
+    }
+    double score = w_network
+            * ((resourcesPerPath.maxNetwork - firstNode->getNetworkCapacity())
+               / (resourcesPerPath.maxNetwork - resourcesPerPath.minNetwork))
+        + w_memory
+            * ((resourcesPerPath.maxMemory - firstNode->getMemoryCapacity())
+               / (resourcesPerPath.maxMemory - resourcesPerPath.minMemory))
+        + w_safety * resourcesPerPath.providedSafety;
+    std::pair<double, std::vector<TopologyNodePtr>> currentMaxScore = std::pair(score, initialPlacement);
+    subPathForPlacement.pop_back();
+    auto memoryCost = 0;
+    for (std::vector<TopologyNodePtr>::reverse_iterator pathIterator = subPathForPlacement.rbegin();
+         pathIterator != subPathForPlacement.rend();
+         ++pathIterator) {
+        auto currentTopologyNode = (*pathIterator)->as<TopologyNode>();
+        std::vector<std::vector<TopologyNodePtr>> ssCopies = subsets;
+        for (auto&& subsetCopy : ssCopies) {
+            subsetCopy.push_back(currentTopologyNode);
+            subsets.push_back(subsetCopy);
+            resourcesPerPath = findResourcesAvailable(subsetCopy);
+            score = w_network
+                    * ((resourcesPerPath.maxNetwork - firstNode->getNetworkCapacity())
+                       / (resourcesPerPath.maxNetwork - resourcesPerPath.minNetwork))
+                + w_memory
+                    * ((resourcesPerPath.maxMemory - firstNode->getMemoryCapacity())
+                       / (resourcesPerPath.maxMemory - resourcesPerPath.minMemory))
+                + w_safety * resourcesPerPath.providedSafety;
+
+            if (score > currentMaxScore.first) {
+                currentMaxScore = std::pair(score, subsetCopy);
             }
         }
     }
-    return 0;
+    return currentMaxScore;
+}
+
+ResourcesPerPath BasePlacementStrategy::findResourcesAvailable(const std::vector<TopologyNodePtr> path) {
+    ResourcesPerPath resourcesPerPath = {0, 0, 0, 0, 0, 0, 0};
+    auto topologyIterator = path.begin();
+    while (topologyIterator != path.end()) {
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        auto currentNodeMemory = currentTopologyNode->getMemoryCapacity();
+        auto currentNodeNetwork = currentTopologyNode->getNetworkCapacity();
+        auto epochValue = currentTopologyNode->getEpochValue();
+        auto ingestionRate = currentTopologyNode->getIngestionRate();
+
+        resourcesPerPath.maxNetwork += currentTopologyNode->getNetworkCapacity();
+        resourcesPerPath.requiredNetwork += ingestionRate / epochValue * TUPLE_SIZE;
+
+        resourcesPerPath.maxMemory += currentTopologyNode->getMemoryCapacity();
+        resourcesPerPath.requiredMemory += (ingestionRate * NETWORK_DELAY + epochValue) * TUPLE_SIZE;
+
+        auto failureProbability = currentTopologyNode->calculateReliability();
+
+        if (topologyIterator == path.begin()) {
+            resourcesPerPath.providedSafety = failureProbability;
+        } else {
+            resourcesPerPath.providedSafety = failureProbability + (resourcesPerPath.providedSafety * (1 - failureProbability));
+        }
+        ++topologyIterator;
+    }
+    return resourcesPerPath;
+}
+
+uint64_t BasePlacementStrategy::distanceScore(std::vector<TopologyNodePtr> pathForPlacement,
+                                              const TopologyNodePtr& topologyNode) {
+    auto pathIterator = std::find(pathForPlacement.begin(), pathForPlacement.end(), topologyNode);
+    return std::distance(pathForPlacement.begin(), pathIterator);
+}
+
+void BasePlacementStrategy::adaptEpoch(std::vector<TopologyNodePtr> pathForPlacement) {
+    auto nodeIterator = pathForPlacement.rbegin();
+    auto firstNode = (*nodeIterator)->as<TopologyNode>();
+    auto currentEpoch = firstNode->getEpochValue();
+    auto smallestMemoryCapacity = firstNode->getMemoryCapacity();
+    auto smallestNetworkCapacity = firstNode->getNetworkCapacity();
+    auto initialMemoryCapacity = firstNode->getInitialMemoryCapacity();
+    auto initialNetworkCapacity = firstNode->getInitialNetworkCapacity();
+    double newEpoch = std::min(smallestMemoryCapacity / initialMemoryCapacity, smallestNetworkCapacity / initialNetworkCapacity) * currentEpoch;
+    while (nodeIterator != pathForPlacement.rend()) {
+        auto currentNode = (*nodeIterator)->as<TopologyNode>();
+        currentNode->addNodeProperty("epoch", newEpoch);
+        nodeIterator++;
+    }
 }
 
 void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
@@ -345,10 +542,14 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
     if (currentNode->hasNodeProperty("isBuffering")) {
-        return LogicalOperatorFactory::createSinkOperator(
-            Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES, FaultToleranceType::NONE, 1, true));
-    }
-    else {
+        return LogicalOperatorFactory::createSinkOperator(Network::NetworkSinkDescriptor::create(nodeLocation,
+                                                                                                 nesPartition,
+                                                                                                 SINK_RETRY_WAIT,
+                                                                                                 SINK_RETRIES,
+                                                                                                 FaultToleranceType::NONE,
+                                                                                                 1,
+                                                                                                 true));
+    } else {
         return LogicalOperatorFactory::createSinkOperator(
             Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES));
     }
@@ -543,7 +744,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
 
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: add network sink operator");
                     sourceOperatorId = Util::getNextOperatorId();
-                    OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1], nodesBetween[i]);
+                    OperatorNodePtr networkSink =
+                        createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1], nodesBetween[i]);
                     querySubPlan->appendOperatorAsNewRoot(networkSink);
                     operatorToSubPlan[networkSink->getId()] = querySubPlan;
 

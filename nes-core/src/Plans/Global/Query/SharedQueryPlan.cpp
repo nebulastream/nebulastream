@@ -32,6 +32,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     this->queryPlan = QueryPlan::create();
     this->queryPlan->setFaultToleranceType(queryPlan->getFaultToleranceType());
     this->queryPlan->setLineageType(queryPlan->getLineageType());
+    this->queryPlan->setFaultTolerancePlacement(queryPlan->getFaultTolerancePlacement());
     auto rootOperators = queryPlan->getRootOperators();
     for (const auto& rootOperator : rootOperators) {
         this->queryPlan->addRootOperator(rootOperator);

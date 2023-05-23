@@ -26,7 +26,8 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              bool isBuffering,
                                              uint64_t uniqueNetworkSinkDescriptorId)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), isBuffering(isBuffering), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
+      waitTime(waitTime), retryTimes(retryTimes), isBuffering(isBuffering),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,

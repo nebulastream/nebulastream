@@ -43,7 +43,13 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
 uint64_t TopologyManagerService::registerWorker(const std::string& address,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
-                                                const uint16_t numberOfSlots,
+                                                const uint64_t numberOfSlots,
+                                                const uint64_t memoryCapacity,
+                                                const uint64_t mtbfValue,
+                                                const uint64_t launchTime,
+                                                const uint64_t epochValue,
+                                                const uint64_t ingestionRate,
+                                                const uint64_t networkCapacity,
                                                 std::map<std::string, std::any> workerProperties) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
@@ -60,7 +66,18 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     NES_DEBUG("TopologyManagerService::registerWorker: register node");
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
-    TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots, workerProperties);
+    TopologyNodePtr newTopologyNode = TopologyNode::create(id,
+                                                           address,
+                                                           grpcPort,
+                                                           dataPort,
+                                                           numberOfSlots,
+                                                           memoryCapacity,
+                                                           mtbfValue,
+                                                           launchTime,
+                                                           epochValue,
+                                                           ingestionRate,
+                                                           networkCapacity,
+                                                           workerProperties);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");

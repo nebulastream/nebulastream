@@ -101,6 +101,15 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for the NES Worker."};
 
+    UIntOption memoryCapacity = {MEMORY_CAPACITY, UINT16_MAX, "Number of memory for the NES Worker."};
+
+    UIntOption mtbfValue = {MTBF_VALUE, UINT16_MAX, "MTBF value for the NES Worker."};
+
+    UIntOption launchTime = {LAUNCH_TIME, UINT16_MAX, "Launch time for the NES Worker."};
+
+    UIntOption ingestionRate = {INGESTION_RATE, UINT16_MAX, "Launch time for the NES Worker."};
+
+    UIntOption networkCapacity = {NETWORK_CAPACITY, UINT16_MAX, "Network capacity for the NES Worker."};
     /**
      * @brief Configures the number of worker threads.
      */
@@ -267,6 +276,11 @@ class WorkerConfiguration : public BaseConfiguration {
                 &dataPort,
                 &coordinatorPort,
                 &numberOfSlots,
+                &memoryCapacity,
+                &mtbfValue,
+                &launchTime,
+                &ingestionRate,
+                &networkCapacity,
                 &numWorkerThreads,
                 &numberOfBuffersInGlobalBufferManager,
                 &numberOfBuffersPerWorker,

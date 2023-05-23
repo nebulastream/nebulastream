@@ -35,6 +35,7 @@ class IFCOPStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType::Value faultToleranceType,
                                    LineageType::Value lineageType,
+                                   FaultTolerancePlacement::Value ftPlacement,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 

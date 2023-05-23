@@ -44,6 +44,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         // test if elements already exist
         NES_DEBUG("AbstractQueryManager: resolving sources for query " << qep << " with sources=" << qep->getSources().size());
 
+
         for (const auto& source : qep->getSources()) {
             // source already exists, add qep to source set if not there
             OperatorId sourceOperatorId = source->getOperatorId();
@@ -71,7 +72,6 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
                                                                                     << qep->getQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
-
 
     // 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start(std::move(stateManager))) {
@@ -473,7 +473,9 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
-bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay) {
+bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId,
+                                                       uint64_t epochBarrier,
+                                                       uint64_t propagationDelay) {
     std::unique_lock queryLock(queryMutex);
     bool isPropagated = false;
     auto queryId = getQueryId(querySubPlanId);
@@ -498,7 +500,7 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, 
     return false;
 }
 
-bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay) {
+bool AbstractQueryManager::propagateEpochBackwards(uint64_t querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay) {
     std::unique_lock queryLock(queryMutex);
     auto queryId = getQueryId(querySubPlanId);
     auto qep = getQueryExecutionPlan(querySubPlanId);
