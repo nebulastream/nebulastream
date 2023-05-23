@@ -54,11 +54,11 @@ class JavaUDFOperatorHandler : public OperatorHandler {
                                     SchemaPtr udfInputSchema,
                                     SchemaPtr udfOutputSchema,
                                     const std::optional<std::string>& javaPath)
-        : className(className), classJNIName(convertToJNIName(className)),methodName(methodName), inputClassName(inputClassName),
+        : className(className), classJNIName(convertToJNIName(className)), methodName(methodName), inputClassName(inputClassName),
           inputClassJNIName(convertToJNIName(inputClassName)), outputClassName(outputClassName),
-          outputClassJNIName(convertToJNIName(outputClassName)),
-          byteCodeList(byteCodeList), serializedInstance(serializedInstance), udfInputSchema(udfInputSchema),
-          udfOutputSchema(udfOutputSchema), javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
+          outputClassJNIName(convertToJNIName(outputClassName)), byteCodeList(byteCodeList),
+          serializedInstance(serializedInstance), udfInputSchema(udfInputSchema), udfOutputSchema(udfOutputSchema),
+          javaPath(javaPath), flatMapUDFMethodId(nullptr), flatMapUDFObject(nullptr) {}
 
     /**
      * @brief Convert a Java class name from Java notation (e.g., java.lang.Object), to JNI notation (e.g., java/lang/Object).

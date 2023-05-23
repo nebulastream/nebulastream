@@ -15,8 +15,8 @@
 #ifdef ENABLE_JNI
 
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
-#include <string>
 #include <algorithm>
+#include <string>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -26,6 +26,6 @@ const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& ja
     return copy;
 }
 
-}
+}// namespace NES::Runtime::Execution::Operators
 
-#endif // ENABLE_JNI
+#endif// ENABLE_JNI
