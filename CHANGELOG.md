@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.89](https://github.com/nebulastream/nebulastream/tree/v0.5.89) (2023-05-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.88...v0.5.89)
+
+### Bug Fixes 🐛
+
+- \[BUG\] JVM cannot access required helper classes [\#3505](https://github.com/nebulastream/nebulastream/issues/3505)
+
 ## [v0.5.88](https://github.com/nebulastream/nebulastream/tree/v0.5.88) (2023-05-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.87...v0.5.88)
