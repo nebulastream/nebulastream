@@ -28,8 +28,9 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/json.hpp>
 #include <algorithm>
-#include <stack>
+#include <unordered_set>
 #include <utility>
 
 namespace NES::Optimizer {
