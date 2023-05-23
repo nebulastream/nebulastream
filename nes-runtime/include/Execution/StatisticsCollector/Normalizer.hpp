@@ -16,8 +16,9 @@ limitations under the License.
 #define NES_RUNTIME_INCLUDE_EXECUTION_NORMALIZER_HPP_
 
 #include <cstdint>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 #include <vector>
+#include <memory>
 
 namespace NES::Runtime::Execution {
 /**
@@ -28,9 +29,9 @@ class Normalizer {
     /**
     * @brief Initialize class that normalizes the values of the statistics.
     * @param windowSize size of the window used to find the maximum for normalization.
-    * @param changeDetectorWrapper change detector to which normalized values are added.
+    * @param changeDetector change detector to which normalized values are added.
     */
-    Normalizer(uint64_t windowSize, std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper);
+    Normalizer(uint64_t windowSize, std::unique_ptr<ChangeDetector> changeDetector);
 
     /**
     * @brief Normalize the value.
@@ -48,7 +49,7 @@ class Normalizer {
 
     size_t windowSize;
     std::vector<uint64_t> window;
-    std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
+    std::unique_ptr<ChangeDetector> changeDetector;
     uint64_t max;
 };
 }// namespace NES::Runtime::Execution

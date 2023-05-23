@@ -125,17 +125,15 @@ TEST_P(SelectivityTest, branchMissesTest) {
         auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         auto adwinBranchMisses = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(adwinBranchMisses));
-
         auto profiler = std::make_shared<Profiler>();
         nautilusExecutablePipelineStage->setProfiler(profiler);
 
         // initialize statistic branch misses
-        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 10);
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(adwinBranchMisses), profiler, 10);
 
+        // initialize statistic selectivity
         auto adwin = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
-        auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+        auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(adwin), nautilusExecutablePipelineStage);
 
         csvFile << "Selectivity\t" << ((double) j / 100);
         double sel = 0.0;
@@ -222,12 +220,10 @@ TEST_P(SelectivityTest, runtimeTest) {
         auto nautilusExecutablePipelineStage =
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-        auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
-
         // initialize statistic pipeline runtime
+        auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
         auto runtime =
-            std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 1000);
+            std::make_unique<PipelineRuntime>(std::move(adwinRuntime), nautilusExecutablePipelineStage, 1000);
 
         csvFile << "Selectivity " << ((double) j / 100);
 

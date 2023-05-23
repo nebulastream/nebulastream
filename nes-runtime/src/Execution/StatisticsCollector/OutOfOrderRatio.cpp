@@ -17,9 +17,9 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-OutOfOrderRatio::OutOfOrderRatio(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+OutOfOrderRatio::OutOfOrderRatio(std::unique_ptr<ChangeDetector> changeDetector,
                                  std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler)
-    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
+    : changeDetector(std::move(changeDetector)),
       outOfOrderOperatorHandler(std::move(outOfOrderOperatorHandler)) {}
 
 bool OutOfOrderRatio::collect() {
@@ -29,7 +29,7 @@ bool OutOfOrderRatio::collect() {
     if(numRecords != 0){
         outOfOrderRatio = (double) numOutOfOrderRecords / numRecords;
 
-        return changeDetectorWrapper->insertValue(outOfOrderRatio);
+        return changeDetector->insertValue(outOfOrderRatio);
     }
     return false;
 }

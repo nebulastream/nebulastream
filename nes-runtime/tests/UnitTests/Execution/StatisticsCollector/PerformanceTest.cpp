@@ -12,16 +12,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/OutOfOrderRatio/OutOfOrderRatioOperator.hpp>
 #include <Execution/Operators/OutOfOrderRatio/OutOfOrderRatioOperatorHandler.hpp>
-#include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -30,7 +27,6 @@ limitations under the License.
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/SeqDrift2/SeqDrift2.hpp>
 #include <Execution/StatisticsCollector/OutOfOrderRatio.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
@@ -53,6 +49,7 @@ class PerformanceTest : public testing::Test, public AbstractPipelineExecutionTe
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
+    uint64_t numberOfTuplesInBuffer = 100; // 100, 1000 // 64000
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -102,7 +99,7 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -138,11 +135,10 @@ TEST_P(PerformanceTest, selectivityAdwinPerformanceTest) {
 
         // initialize change detector
         auto adwin = std::make_unique<Adwin>(0.001, 5);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
 
         // initialize statistics selectivity and add to statistics collector
         auto pipelineSelectivity =
-            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+            std::make_unique<PipelineSelectivity>(std::move(adwin), nautilusExecutablePipelineStage);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
 
@@ -192,7 +188,7 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -228,11 +224,10 @@ TEST_P(PerformanceTest, selectivitySeqDriftPerformanceTest) {
 
         // initialize change detector
         auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
 
         // initialize statistics selectivity and add to statistics collector
         auto pipelineSelectivity =
-            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+            std::make_unique<PipelineSelectivity>(std::move(seqDrift), nautilusExecutablePipelineStage);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
 
@@ -283,7 +278,7 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -318,11 +313,10 @@ TEST_P(PerformanceTest, collectionRuntimePerformanceTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
+        auto adwinRuntime = std::make_unique<Adwin>(0.01, 5);
 
         // initialize statistic runtime
-        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 4);
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(adwinRuntime), nautilusExecutablePipelineStage, 4);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(runtime));
 
@@ -371,7 +365,7 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -407,10 +401,9 @@ TEST_P(PerformanceTest, collectionRuntimeSeqDriftPerformanceTest) {
 
         // initialize change detector
         auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
 
         // initialize statistic runtime
-        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, 4);
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(seqDrift), nautilusExecutablePipelineStage, 4);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(runtime));
 
@@ -461,7 +454,7 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -496,15 +489,14 @@ TEST_P(PerformanceTest, branchMissesAdwinTest) {
             std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
         // initialize change detector
-        auto adwin = std::make_unique<Adwin>(0.001, 5);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+        auto adwin = std::make_unique<Adwin>(0.01, 5);
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
         nautilusExecutablePipelineStage->setProfiler(profiler);
 
         // initialize statistics branch misses
-        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapper), profiler, 4);
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(adwin), profiler, 4);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
 
@@ -555,7 +547,7 @@ TEST_P(PerformanceTest, branchMissesTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -591,14 +583,13 @@ TEST_P(PerformanceTest, branchMissesTest) {
 
         // initialize change detector
         auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftBranchMisses));
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
         nautilusExecutablePipelineStage->setProfiler(profiler);
 
         // initialize statistics branch misses
-        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(seqDriftBranchMisses), profiler, 4);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(branchMisses));
 
@@ -648,7 +639,7 @@ TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++)  {
                     if(((j * fieldValuesSize) + k + 1) % 100 == 0) {
@@ -687,14 +678,11 @@ TEST_P(PerformanceTest, outOfOrderRatioPerformanceTest) {
         pipeline->setRootOperator(scanOperator);
 
         // initialize change detector
-        auto adwin = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+        auto adwin = std::make_unique<Adwin>(0.01, 5);
 
-        // initialize statistics selectivity and add to statistics collector
-        auto record = Record({{"time", Value<>(0)}});
-        auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
-
-        auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(changeDetectorWrapper), handler);
+        // initialize statistic out-of-order ratio and add to statistics collector
+        auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>();
+        auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(adwin), handler);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
 
         auto executablePipeline = provider->create(pipeline);
@@ -752,7 +740,7 @@ TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++)  {
                     if(((j * fieldValuesSize) + k + 1) % 100 == 0) {
@@ -792,13 +780,10 @@ TEST_P(PerformanceTest, outOfOrderRatioSeqDriftPerformanceTest) {
 
         // initialize change detector
         auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
 
-        // initialize statistics selectivity and add to statistics collector
-        auto record = Record({{"time", Value<>(0)}});
-        auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
-
-        auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(changeDetectorWrapper), handler);
+        // initialize statistic out-of-order-ratio and add to statistics collector
+        auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>();
+        auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(seqDrift), handler);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
 
         auto executablePipeline = provider->create(pipeline);
@@ -856,7 +841,7 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -892,9 +877,7 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
 
         // initialize change detectors
         auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
         auto seqDriftRuntime = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftRuntime));
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -902,8 +885,8 @@ TEST_P(PerformanceTest, selectivityRuntimeTest) {
 
         // initialize statistics selectivity and runtime
         auto pipelineSelectivity =
-            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-        auto runtime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 4);
+            std::make_unique<PipelineSelectivity>(std::move(seqDrift), nautilusExecutablePipelineStage);
+        auto runtime = std::make_unique<PipelineRuntime>(std::move(seqDriftRuntime), nautilusExecutablePipelineStage, 4);
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
         statisticsCollector->addStatistic(pipelineId, std::move(runtime));
@@ -954,7 +937,7 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);
@@ -990,9 +973,7 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
 
         // initialize change detectors
         auto seqDrift = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(seqDrift));
         auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 50);
-        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(seqDriftBranchMisses));
 
         // initialize profiler
         auto profiler = std::make_shared<Profiler>();
@@ -1000,8 +981,8 @@ TEST_P(PerformanceTest, selectivityBranchMissesTest) {
 
         // initialize statistics selectivity and branch misses
         auto pipelineSelectivity =
-            std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-        auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 4);
+            std::make_unique<PipelineSelectivity>(std::move(seqDrift), nautilusExecutablePipelineStage);
+        auto branchMisses = std::make_unique<BranchMisses>(std::move(seqDriftBranchMisses), profiler, 4);
 
         auto statisticsCollector = std::make_shared<StatisticsCollector>();
         statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
@@ -1053,7 +1034,7 @@ TEST_P(PerformanceTest, pipelinePerformanceTest) {
             auto buffer = bm->getBufferBlocking();
             bufferVector.push_back(buffer);
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-            for (uint64_t j = 0; j < 640; j++) {
+            for (uint64_t j = 0; j < numberOfTuplesInBuffer/100; j++) {
                 std::shuffle(std::begin(fieldValues), std::end(fieldValues), rng);
                 for (uint64_t k = 0; k < fieldValuesSize; k++) {
                     dynamicBuffer[(j * fieldValuesSize) + k]["f1"].write(fieldValues[k]);

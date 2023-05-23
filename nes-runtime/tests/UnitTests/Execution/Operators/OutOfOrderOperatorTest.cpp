@@ -108,9 +108,7 @@ TEST_P(OutOfOrderOperatorTest, outOfOrderOperatorTest) {
     }
 
     auto executablePipeline = provider->create(pipeline);
-
-    auto record = Record({{"time", Value<>(10)}});
-    auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
+    auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>();
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

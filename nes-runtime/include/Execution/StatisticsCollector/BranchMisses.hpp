@@ -19,7 +19,7 @@ limitations under the License.
 #include <Execution/StatisticsCollector/Normalizer.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 
 namespace NES::Runtime::Execution {
 /**
@@ -29,9 +29,10 @@ class BranchMisses : public Statistic {
   public:
     /**
     * @brief Initialize to collect the branch misses of an operator.
-    * @param profiler instance of profiler that measures the cache misses.
+    * @param changeDetector that monitors the branch misses for changes.
+    * @param profiler instance of profiler that measures the branch misses.
     */
-    BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+    BranchMisses(std::unique_ptr<ChangeDetector> changeDetector,
                  const std::shared_ptr<Profiler>& profiler,
                  uint64_t normalizationWindowSize);
     bool collect() override;
@@ -39,7 +40,7 @@ class BranchMisses : public Statistic {
     std::any getStatisticValue() override;
 
   private:
-    std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
+    std::unique_ptr<ChangeDetector> changeDetector;
     std::shared_ptr<Profiler> profiler;
     Normalizer normalizer;
     uint64_t eventId;

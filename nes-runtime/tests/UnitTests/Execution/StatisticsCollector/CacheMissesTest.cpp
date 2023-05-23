@@ -14,8 +14,6 @@ limitations under the License.
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
@@ -28,11 +26,8 @@ limitations under the License.
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/CacheMisses.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
-#include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -151,14 +146,12 @@ TEST_P(CacheMissesTest, cacheMissesTest) {
 
         // initialize statistic cache misses
         auto adwinCacheMisses = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(adwinCacheMisses));
         auto profiler = std::make_shared<Profiler>();
         nautilusExecutablePipelineStage->setProfiler(profiler);
-        auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperBranch), profiler, 100);
+        auto cacheMisses = std::make_unique<CacheMisses>(std::move(adwinCacheMisses), profiler, 100);
 
-        auto adwin = std::make_unique<Adwin>(0.001, 4);
-        auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
-        auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+        auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
+        auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(adwinSelectivity), nautilusExecutablePipelineStage);
 
         double sel;
         auto sum = 0;
@@ -175,8 +168,7 @@ TEST_P(CacheMissesTest, cacheMissesTest) {
         }
         executablePipelineStage->stop(pipelineContext);
 
-        // collect mean only
-        //double mean = (double) sum / (double) pipelineContext.buffers.size();
+        // write sum to csv
         csvFile << sel << ";" << sum << "\n";
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();

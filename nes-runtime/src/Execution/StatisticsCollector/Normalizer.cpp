@@ -18,11 +18,11 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-Normalizer::Normalizer(uint64_t windowSize, std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper) :
-        windowSize(windowSize), window(0), changeDetectorWrapper(std::move(changeDetectorWrapper)), max(0) {}
+Normalizer::Normalizer(uint64_t windowSize, std::unique_ptr<ChangeDetector> changeDetector) :
+        windowSize(windowSize), window(0), changeDetector(std::move(changeDetector)), max(0) {}
 
 bool Normalizer::normalizeValue(uint64_t value){
-    std::lock_guard<std::mutex> lock(changeDetectorWrapper->mutex);
+    std::lock_guard<std::mutex> lock(changeDetector->mutex);
     if (window.size() < windowSize) {
         window.push_back(value);
 
@@ -36,19 +36,19 @@ bool Normalizer::normalizeValue(uint64_t value){
 
     double normalizedValue = (double) value /(double) max;
     if (normalizedValue >= 1){
-        changeDetectorWrapper->reset();
+        changeDetector->reset();
         max = value;
         normalizedValue = (double) value /(double) max;
     }
 
-    return changeDetectorWrapper->insertValue(normalizedValue);
+    return changeDetector->insertValue(normalizedValue);
 }
 
 bool Normalizer::addNormalizedValuesToChangeDetection(){
     bool change = false;
     for (auto value : window) {
         auto normalizedValue = (double) value / (double) max ;
-        if (changeDetectorWrapper->insertValue(normalizedValue)) {
+        if (changeDetector->insertValue(normalizedValue)) {
             change = true;
         }
     }

@@ -18,9 +18,9 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetector> changeDetector,
                                          std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage)
-    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
+    : changeDetector(std::move(changeDetector)),
       nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)){}
 
 bool PipelineSelectivity::collect() {
@@ -32,7 +32,7 @@ bool PipelineSelectivity::collect() {
 
         //std::cout << "Selectivity " << selectivity << std::endl;
 
-        return changeDetectorWrapper->insertValue(selectivity);
+        return changeDetector->insertValue(selectivity);
     }
     return false;
 }

@@ -18,7 +18,7 @@ limitations under the License.
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Operators/OutOfOrderRatio/OutOfOrderRatioOperatorHandler.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 
 namespace NES::Runtime::Execution {
 /**
@@ -28,15 +28,15 @@ class OutOfOrderRatio : public Statistic {
   public:
     /**
     * @brief Initialize statistic to collect the selectivity of a pipeline.
-    * @param changeDetectorWrapper
+    * @param changeDetector that monitors the out-of-order ratio for changes.
     */
-    OutOfOrderRatio(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+    OutOfOrderRatio(std::unique_ptr<ChangeDetector> changeDetector,
                     std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler);
     bool collect() override;
     std::any getStatisticValue() override;
 
   private:
-    std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
+    std::unique_ptr<ChangeDetector> changeDetector;
     std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler;
     double outOfOrderRatio{};
 };

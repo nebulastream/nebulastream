@@ -28,15 +28,16 @@ class PipelineSelectivity : public Statistic {
   public:
     /**
      * @brief Initialize statistic to collect the selectivity of a pipeline.
+     * @param changeDetector that monitors the selectivity for changes.
      * @param nautilusExecutablePipelineStage
      */
-    PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+    PipelineSelectivity(std::unique_ptr<ChangeDetector> changeDetector,
                         std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage);
     bool collect() override;
     std::any getStatisticValue() override;
 
   private:
-    std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
+    std::unique_ptr<ChangeDetector> changeDetector;
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
     double selectivity {};
 };

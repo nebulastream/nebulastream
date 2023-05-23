@@ -152,28 +152,22 @@ TEST_P(MultiplePipelinesTest, multiplePipelines) {
     auto pipelineContext = MockedPipelineExecutionContext();
 
     auto adwin = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
-
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(adwin), nautilusExecutablePipelineStage);
 
     auto pipelineId = 1;
-
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
 
     // pipeline 2
     auto executablePipeline2 = provider->create(pipeline2);
     auto pipelineContext2 = MockedPipelineExecutionContext();
 
     auto adwinP2 = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapperP2 = std::make_unique<ChangeDetectorWrapper>(std::move(adwinP2));
-
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage2 = std::move(executablePipeline2);
     auto nautilusExecutablePipelineStageP2 = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage2);
+    auto pipelineSelectivityP2 = std::make_unique<PipelineSelectivity>(std::move(adwinP2), nautilusExecutablePipelineStageP2);
 
     auto pipelineIdP2 = 2;
-
-    auto pipelineSelectivityP2 = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapperP2), nautilusExecutablePipelineStageP2);
 
     // add statistics of both pipelines to statistics collector
     auto statisticsCollector = std::make_shared<StatisticsCollector>();

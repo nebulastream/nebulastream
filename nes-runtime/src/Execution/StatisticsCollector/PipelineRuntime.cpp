@@ -19,11 +19,11 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-PipelineRuntime::PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+PipelineRuntime::PipelineRuntime(std::unique_ptr<ChangeDetector> changeDetector,
                                  std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                                  uint64_t normalizationWindowSize)
     : nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)),
-      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)),
+      normalizer(normalizationWindowSize, std::move(changeDetector)),
       runtime(0){}
 
 bool PipelineRuntime::collect() {

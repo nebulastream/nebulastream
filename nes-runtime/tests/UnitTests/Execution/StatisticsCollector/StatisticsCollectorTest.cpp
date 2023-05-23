@@ -137,14 +137,12 @@ TEST_P(StatisticsCollectorTest, selectivityTest) {
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
-
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     // initialize statistics pipeline selectivity
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(adwinSelectivity), nautilusExecutablePipelineStage);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (size_t i = 0; i < bufferVector.size(); i++) {
@@ -224,14 +222,12 @@ TEST_P(StatisticsCollectorTest, runtimeTest) {
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
 
-    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
-
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     // initialize statistic pipeline runtime
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, 5);
+    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(adwinRuntime), nautilusExecutablePipelineStage, 5);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (auto& buffer : bufferVector) {
@@ -315,14 +311,12 @@ TEST_P(StatisticsCollectorTest, branchAndCacheMissesTest) {
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     auto adwinBranch = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(adwinBranch));
     auto adwinCache = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapperCache = std::make_unique<ChangeDetectorWrapper>(std::move(adwinCache));
-
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
-    auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler, 5);
-    auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperCache), profiler, 5);
+
+    auto branchMisses = std::make_unique<BranchMisses>(std::move(adwinBranch), profiler, 5);
+    auto cacheMisses = std::make_unique<CacheMisses>(std::move(adwinCache), profiler, 5);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (auto& buffer : bufferVector) {
@@ -396,13 +390,10 @@ TEST_P(StatisticsCollectorTest, outOfOrderRatioTest) {
     }
 
     auto executablePipeline = provider->create(pipeline);
-
-    auto record = Record({{"time", Value<>(10)}});
-    auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
+    auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>();
 
     auto adwin = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
-    auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(changeDetectorWrapper), handler);
+    auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(adwin), handler);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -474,9 +465,7 @@ TEST_P(StatisticsCollectorTest, triggerStatisticsTest) {
     }
 
     auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
     auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -486,8 +475,8 @@ TEST_P(StatisticsCollectorTest, triggerStatisticsTest) {
 
     auto pipelineId = pipelineContext.getPipelineID();
 
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 10);
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(adwinSelectivity), nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(adwinRuntime), nautilusExecutablePipelineStage, 10);
 
     // create a statistics collector and add the statistics to its list
     auto statisticsCollector = std::make_shared<StatisticsCollector>();

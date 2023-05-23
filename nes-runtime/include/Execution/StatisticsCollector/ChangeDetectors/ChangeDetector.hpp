@@ -15,8 +15,12 @@ limitations under the License.
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_CHANGEDETECTOR_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_CHANGEDETECTOR_HPP_
 
-namespace NES::Runtime::Execution {
+#include <mutex>
 
+namespace NES::Runtime::Execution {
+/**
+ * @brief Wrapper class for change detectors.
+ */
 class ChangeDetector{
 
   public:
@@ -32,8 +36,15 @@ class ChangeDetector{
      * @return estimated mean
      */
     virtual double getMeanEstimation() = 0;
-    virtual ~ChangeDetector() = default;
+
+    /**
+     * @brief Reset change detector, e.g., after Normalizer found new maximum value for normalization.
+     */
     virtual void reset() = 0;
+
+    virtual ~ChangeDetector() = default;
+
+    std::mutex mutex;
 
 };
 } // namespace NES::Runtime::Execution

@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution::Operators {
 */
 class OutOfOrderRatioOperatorHandler : public OperatorHandler {
   public:
-    explicit OutOfOrderRatioOperatorHandler(Record record) : lastRecord(record) {}
+    explicit OutOfOrderRatioOperatorHandler() {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
 
@@ -36,7 +36,6 @@ class OutOfOrderRatioOperatorHandler : public OperatorHandler {
     uint64_t numberOfRecords = 0;
     uint64_t numberOfOutOfOrderRecords = 0;
     uint64_t lastRecordTs = 0;
-    Nautilus::Record lastRecord;
     std::mutex mutex;
 };
 

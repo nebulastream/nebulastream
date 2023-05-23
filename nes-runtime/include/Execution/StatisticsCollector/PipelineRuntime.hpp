@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <Execution/StatisticsCollector/Normalizer.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 
 namespace NES::Runtime::Execution {
@@ -28,9 +28,10 @@ class PipelineRuntime : public Statistic {
   public:
     /**
      * @brief Initialize statistic to collect the runtime of a pipeline.
+     * @param changeDetector that monitors the runtime for changes.
      * @param nautilusExecutablePipelineStage
      */
-    PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+    PipelineRuntime(std::unique_ptr<ChangeDetector> changeDetector,
                     std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                     uint64_t normalizationWindowSize);
     bool collect() override;
