@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <string>
 #include <algorithm>
@@ -25,3 +27,5 @@ const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& ja
 }
 
 }
+
+#endif // ENABLE_JNI
