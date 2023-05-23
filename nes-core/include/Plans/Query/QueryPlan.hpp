@@ -271,6 +271,18 @@ class QueryPlan {
      */
     void setFaultTolerancePlacement(FaultTolerancePlacement::Value ftPlacement = FaultTolerancePlacement::NONE);
 
+    /**
+     * @brief Set epoch value
+     * @param epochValue: epochValue
+     */
+    void setEpochValue(uint64_t epochValue = 0);
+
+    /**
+     * @brief Get epoch value
+     * @return epochValue: epochValue
+     */
+    uint64_t getEpochValue() const;
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -302,6 +314,7 @@ class QueryPlan {
     QueryId queryId;
     FaultToleranceType::Value faultToleranceType;
     FaultTolerancePlacement::Value ftPlacement;
+    uint64_t epochValue;
     LineageType::Value lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;

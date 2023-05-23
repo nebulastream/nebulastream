@@ -45,6 +45,10 @@ bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/
 void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix& matrix) {
     std::vector<TopologyNodePtr> topologyNodes;
     auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
+    auto currentTopologyNode = (*topologyIterator.begin())->as<TopologyNode>();
+    if (currentTopologyNode->hasNodeProperty("epoch")) {
+        queryPlan->setEpochValue(std::any_cast<uint64_t>(currentTopologyNode->getNodeProperty("epoch")));
+    }
     for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         topologyNodes.emplace_back((*itr)->as<TopologyNode>());
     }

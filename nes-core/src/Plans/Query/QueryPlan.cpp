@@ -265,6 +265,7 @@ QueryPlanPtr QueryPlan::copy() {
     newQueryPlan->setFaultToleranceType(faultToleranceType);
     newQueryPlan->setLineageType(lineageType);
     newQueryPlan->setFaultTolerancePlacement(ftPlacement);
+    newQueryPlan->setEpochValue(epochValue);
     return newQueryPlan;
 }
 
@@ -277,6 +278,12 @@ FaultToleranceType::Value QueryPlan::getFaultToleranceType() const { return faul
 void QueryPlan::setFaultToleranceType(FaultToleranceType::Value faultToleranceType) {
     this->faultToleranceType = faultToleranceType;
 }
+
+void QueryPlan::setEpochValue(uint64_t epochValue) {
+    this->epochValue = epochValue;
+}
+
+uint64_t QueryPlan::getEpochValue() const { return epochValue; }
 
 FaultTolerancePlacement::Value QueryPlan::getFaultTolerancePlacement() const { return ftPlacement; }
 
