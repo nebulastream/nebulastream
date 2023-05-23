@@ -47,6 +47,8 @@
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -89,7 +91,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling {
     void TearDown() override {
         NES_DEBUG2("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
