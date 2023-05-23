@@ -41,7 +41,8 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
     //Iterate over all query plans to identify the potential sharing opportunities
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
-        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
+        auto hostSharedQueryPlans =
+            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getConcatenatedSourceAndPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             //TODO: we need to check how this will pan out when we will have more than 1 sink
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();

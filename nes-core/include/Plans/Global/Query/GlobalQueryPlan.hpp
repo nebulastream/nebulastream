@@ -138,16 +138,17 @@ class GlobalQueryPlan {
     bool clearQueryPlansToAdd();
 
     /**
-     * Fetch the Shared query plan consuming the sources with the input source names
-     * @param sourceNames: the concatenated names of the logical sources
+     * Fetch the Shared query plan consuming the sources and having the same placement Strategy with the input source names and the placement strategy
+     * @param sourceNamesAndPlacementStrategy: the concatenated names of the logical sources and an appended "_" followed by the placement strategy
      * @return pointer to the Shared Query Plan or nullptr
      */
-    std::vector<SharedQueryPlanPtr> getSharedQueryPlansConsumingSources(std::string sourceNames);
+    std::vector<SharedQueryPlanPtr>
+    getSharedQueryPlansConsumingSourcesAndPlacementStrategy(std::string sourceNamesAndPlacementStrategy);
 
   private:
     GlobalQueryPlan();
 
-    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesToSharedQueryPlanMap;
+    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesAndPlacementStrategyToSharedQueryPlanMap;
     std::vector<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;

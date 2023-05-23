@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
+#include <Util/PlacementStrategy.hpp>
 #include <Common/Identifiers.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
@@ -189,6 +190,12 @@ class SharedQueryPlan {
      */
     void setStatus(SharedQueryPlanStatus sharedQueryPlanStatus);
 
+    /**
+     * @brief Get the placement strategy for the shared query plan
+     * @return placement strategy
+     */
+    PlacementStrategy getPlacementStrategy() const;
+
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
@@ -208,6 +215,7 @@ class SharedQueryPlan {
     SharedQueryPlanChangeLogPtr changeLog;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
+    PlacementStrategy placementStrategy;
 };
 }// namespace NES
 

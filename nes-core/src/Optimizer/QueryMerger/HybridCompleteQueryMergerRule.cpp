@@ -47,7 +47,8 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
-        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
+        auto hostSharedQueryPlans =
+            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getConcatenatedSourceAndPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             auto hostHashSignature = hostSharedQueryPlan->getHashBasedSignature();

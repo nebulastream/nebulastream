@@ -43,7 +43,8 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
     //Iterate over all query plans to identify the potential sharing opportunities
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
-        auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
+        auto hostSharedQueryPlans =
+            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getConcatenatedSourceAndPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             auto hostSignature = hostSharedQueryPlan->getHashBasedSignature();
