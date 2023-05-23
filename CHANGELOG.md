@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.88](https://github.com/nebulastream/nebulastream/tree/v0.5.88) (2023-05-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.87...v0.5.88)
+
+### Bug Fixes 🐛
+
+- \[BUG\] UDF deserialization does not work [\#3729](https://github.com/nebulastream/nebulastream/issues/3729)
+
 ## [v0.5.87](https://github.com/nebulastream/nebulastream/tree/v0.5.87) (2023-05-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.86...v0.5.87)
