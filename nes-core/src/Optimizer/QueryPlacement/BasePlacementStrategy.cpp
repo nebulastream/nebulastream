@@ -28,8 +28,9 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/json.hpp>
 #include <algorithm>
-#include <stack>
+#include <unordered_set>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -62,6 +63,37 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
         }
     }
 }
+
+void BasePlacementStrategy::pinICCSPlacement(QueryPlanPtr queryPlan, TopologyPtr topology, const std::string& iccsInput) {
+    std::vector<TopologyNodePtr> topologyNodes;
+    auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
+    for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+        topologyNodes.emplace_back((*itr)->as<TopologyNode>());
+    }
+
+    auto operators = QueryPlanIterator(std::move(queryPlan)).snapshot();
+
+    auto iccsJson = nlohmann::json::parse(iccsInput);
+    auto jsonData = iccsJson["placement"];
+
+    // fill with true where nodeId is present
+    std::unordered_map<std::string, std::vector<std::string>> operatorMap;
+    for (const auto& placement : jsonData) {
+        operatorMap[placement["operatorId"]].push_back(placement["nodeId"]);
+    }
+
+    auto topoZero = topologyNodes[0]->as<TopologyNode>()->getId();
+    for (uint64_t j = 0; j < operators.size(); j++) {
+        std::string opId = std::to_string(operators[j]->as<OperatorNode>()->getId());
+        if (operatorMap.find(opId) != operatorMap.end()){
+            std::vector<std::string> associatedNodeIds = operatorMap[opId];
+            for (std::string associatedNodeId : associatedNodeIds) {
+                operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", std::stoull(associatedNodeId));
+            }
+        }
+    }
+}
+
 
 void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
                                                  const std::vector<OperatorNodePtr>& downStreamPinnedOperators) {
