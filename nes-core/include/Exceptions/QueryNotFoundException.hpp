@@ -17,14 +17,17 @@
 
 #include <stdexcept>
 #include <string>
+#include <Exceptions/BaseRequestExecutionException.hpp>
 
 namespace NES {
 /**
  * @brief This exception is raised when the query you are looking for is not found
  */
-class QueryNotFoundException : public std::runtime_error {
+class QueryNotFoundException : public std::runtime_error, BaseRequestExecutionException {
   public:
     explicit QueryNotFoundException(const std::string& message);
+
+    const char * what() const noexcept override;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_

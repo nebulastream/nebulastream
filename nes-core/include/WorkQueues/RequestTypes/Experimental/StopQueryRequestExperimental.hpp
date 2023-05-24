@@ -83,9 +83,9 @@ class StopQueryRequestExperimental : public Request, public AbstractRequest {
     create(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
 
     void executeRequestLogic(StorageHandler& storageHandle) override;
-    void preRollbackHandle(std::exception ex, StorageHandler& storageHandle) override;
-    void postRollbackHandle(std::exception ex, StorageHandler& storageHandle) override;
-    void rollBack(std::exception& ex, StorageHandler& storageHandle) override;
+    void preRollbackHandle(BaseRequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void postRollbackHandle(BaseRequestExecutionException& ex, StorageHandler& storageHandle) override;
+    void rollBack(BaseRequestExecutionException& ex, StorageHandler& storageHandle) override;
     void preExecution(StorageHandler& storageHandle) override;
     void postExecution(StorageHandler& storageHandle) override;
     std::string toString() override;

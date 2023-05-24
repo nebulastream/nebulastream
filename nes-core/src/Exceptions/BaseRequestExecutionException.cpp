@@ -11,11 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include "Exceptions/QueryNotFoundException.hpp"
-
+#include <Exceptions/BaseRequestExecutionException.hpp>
 namespace NES {
-QueryNotFoundException::QueryNotFoundException(const std::string& message) : std::runtime_error(message) {}
 
-const char* QueryNotFoundException::what() const noexcept { return BaseRequestExecutionException::what(); }
-}// namespace NES
+//const char* BaseRequestExecutionException::what() const noexcept { return "An error occurred during the execution of the request"; }
+
+}

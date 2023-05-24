@@ -17,11 +17,14 @@
 
 #include <stdexcept>
 #include <string>
+#include <Exceptions/BaseRequestExecutionException.hpp>
 
 namespace NES {
-class QueryUndeploymentException : public std::runtime_error {
+class QueryUndeploymentException : public std::runtime_error, BaseRequestExecutionException {
   public:
     explicit QueryUndeploymentException(const std::string& message);
+
+    const char * what() const noexcept override;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

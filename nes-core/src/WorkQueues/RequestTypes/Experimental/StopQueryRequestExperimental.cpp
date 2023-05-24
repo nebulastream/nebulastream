@@ -68,7 +68,7 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
         queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
         queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
         NES_TRACE2("Phases created. Stop request initialized.");
-    } catch (std::exception& e) {
+    } catch (BaseRequestExecutionException& e) {
         NES_TRACE2("Failed to acquire resources.");
         handleError(e, storageHandler);
     }
@@ -134,7 +134,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
 
-    } catch (std::exception& e) {
+    } catch (BaseRequestExecutionException& e) {
         handleError(e, storageHandler);
     }
 }
@@ -149,14 +149,14 @@ std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest 
  * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
  * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
 */
-void StopQueryRequestExperimental::preRollbackHandle(std::exception ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::preRollbackHandle(BaseRequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
 }
-void StopQueryRequestExperimental::postRollbackHandle(std::exception ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::postRollbackHandle(BaseRequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
-void StopQueryRequestExperimental::rollBack(std::exception& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::rollBack(BaseRequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }
