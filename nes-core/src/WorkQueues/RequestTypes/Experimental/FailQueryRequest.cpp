@@ -36,11 +36,11 @@ FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
                       maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId), workerRpcClient(std::move(workerRpcClient)) {}
 
-void FailQueryRequest::preRollbackHandle(BaseRequestExecutionException&, NES::StorageHandler&) {}
+void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {}
 
-void FailQueryRequest::rollBack(BaseRequestExecutionException&, StorageHandler&) {}
+void FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {}
 
-void FailQueryRequest::postRollbackHandle(BaseRequestExecutionException& ex, NES::StorageHandler& storageHandler) {
+void FailQueryRequest::postRollbackHandle(RequestExecutionException& ex, NES::StorageHandler& storageHandler) {
     (void) ex;
     (void) storageHandler;
 

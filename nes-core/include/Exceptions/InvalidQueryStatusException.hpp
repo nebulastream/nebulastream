@@ -16,15 +16,15 @@
 #define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <vector>
-#include <Exceptions/BaseRequestExecutionException.hpp>
 
 namespace NES {
 /**
  * @brief Exception is raised when the query is in an Invalid status
  */
-class InvalidQueryStatusException : public BaseRequestExecutionException {
+class InvalidQueryStatusException : public RequestExecutionException {
   public:
     explicit InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatus, QueryStatus actualStatus);
     [[nodiscard]] const char* what() const noexcept override;
