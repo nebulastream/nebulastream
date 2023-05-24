@@ -22,12 +22,17 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/Stack/Stack.hpp>
 #include <Nautilus/Interface/Stack/StackRef.hpp>
-#include <cstring>
 
 namespace NES::Runtime::Execution::Operators {
 
 Sort::Sort(const uint64_t operatorHandlerIndex, const std::vector<PhysicalTypePtr>& dataTypes)
     : operatorHandlerIndex(operatorHandlerIndex), dataTypes(dataTypes) { }
+
+void setupHandler(void* op, void* ctx) {
+    auto handler = static_cast<SortOperatorHandler*>(op);
+    auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
+    handler->setup(*pipelineExecutionContext);
+}
 
 void* getStackProxy(void* op) {
     auto handler = static_cast<SortOperatorHandler*>(op);
@@ -39,51 +44,26 @@ uint64_t getEntrySize(void* op) {
     return handler->getEntrySize();
 }
 
+void Sort::setup(ExecutionContext& ctx) const {
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("setupHandler", setupHandler, globalOperatorHandler, ctx.getPipelineContext());
+}
+
 void Sort::execute(ExecutionContext& ctx, Record& record) const {
     // get local state
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler);
-    auto entrySize = Nautilus::FunctionCall("getEntrySize", getEntrySize, globalOperatorHandler);
-    auto stack = Interface::StackRef(state, entrySize);
-    // create entry and store it in stack
-    auto entry = stack.allocateEntry();
 
+    auto entrySize = Nautilus::FunctionCall("getEntrySize", getEntrySize, globalOperatorHandler);
+    auto stack = Interface::StackRef(state, entrySize->getValue());
+
+    // create entry and store it in state
+    auto entry = stack.allocateEntry();
     auto fields = record.getAllFields();
     for (size_t i = 0; i < fields.size(); ++i) {
         auto val = record.read(fields[i]);
         entry.store(val);
         entry = entry + dataTypes[i]->size();
     }
-
-// Radix Sort
-// Byte-by-byte sorting
-
-// 1. derive sort values
-/*std::vector<Value<>> SortValues;
-for (const auto& exp : sortExpressions) {
-    sortValues.emplace_back(exp->execute(record));
-}*/
-
-// 2. Store them on the
-
-// TODO: support multicolumn sorting
-// TODO: support descending order
-// TODO: support column oriented record layouts
-// TODO: depending on the data characteristics, we may want to use a different sorting algorithm
-
-// Morsel Driven Parallelism
-// 1. Split data into morsels
-// 2. Sort morsels in parallel
-// 3. Merge morsels
-// 4. Repeat 2-3 until only one morsel is left
-
-
-// K-way merge
-
-// evaluate expression and call child operator if expression is valid
-/*if (expression->execute(record)) {
-    if (child != nullptr) {
-        child->execute(ctx, record);
-    }
-}*/
+}
 }// namespace NES::Runtime::Execution::Operators

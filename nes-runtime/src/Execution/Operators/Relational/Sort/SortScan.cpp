@@ -12,8 +12,12 @@
     limitations under the License.
 */
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/Relational/Sort/SortOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Sort/SortScan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -22,6 +26,7 @@ namespace NES::Runtime::Execution::Operators {
 
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
+const uint64_t COL_SIZE = 8;
 
 template <typename T>
 T MaxValue(T a, T b) {
@@ -30,21 +35,20 @@ T MaxValue(T a, T b) {
 
 /**
  * @brief Radix sort implementation as most significant digit (msd) radix sort
- * Code take from DuckDB:
- *  https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp#L239
- * @param orig_ptr -> data pointer
- * @param temp_ptr -> temporary data pointer -> buffer_manager.Allocate(MaxValue(count * sort_layout.entry_size, (idx_t)Storage::BLOCK_SIZE));
- * @param count -> count of records
- * @param col_offset -> column offset for column to sort on
- * @param row_width -> x -> entry size
- * @param comp_width sorting_size -> size of the column to sort on
- * @param offset  -> init 0
- * @param locations -> unique_ptr<idx_t[]>(new idx_t[sorting_size * MSD_RADIX_LOCATIONS])
- * @param swap -> false
+ * Code take from DuckDB (MIT license):
+ * https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp#L239
+ * @param orig_ptr pointer to original data
+ * @param temp_ptr pointer to temporary data as working memory
+ * @param count count of records
+ * @param col_offset column offset for column to sort on
+ * @param row_width size of a row
+ * @param comp_width  size of the column
+ * @param offset sort offset
+ * @param locations locations array as working memory
+ * @param swap swap temp and orig
  */
 void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const uint64_t &col_offset,
                   const uint64_t &row_width, const uint64_t &comp_width, const uint64_t &offset, uint64_t locations[], bool swap) {
-
     // Set source and target pointers based on the swap flag
     uint8_t *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
     uint8_t *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
@@ -113,30 +117,43 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
     }
 }
 
-void RadixSortMSD_(void *op) {
+void RadixSortMSDProxy(void *op) {
     auto handler = static_cast<SortOperatorHandler*>(op);
-    // TODO: add support for data larger than page size
+    // TODO: issue X add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
-    auto count = handler->getCount();
-    // TODO: add support for columns other than the first one
-    auto colOffset = 0; // handler->getColumnOffset();
+    auto count = handler->getState()->getNumberOfEntries();
+    // TODO: issue X add support for columns other than the first one
+    auto colOffset = 0;
     auto rowWidth = handler->getEntrySize();
-    // TODO: add support for columns other sizes
-    auto compWidth = 8;//handler-getColumnSize();
-    auto offset = 0; // init 0
+    // TODO: issue X add support for columns other sizes
+    auto compWidth = COL_SIZE;
+    auto offset = 0; // init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
     auto swap = false; // init false
     RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
 }
 
+uint64_t getAndIterateEntryIndex(void *op){
+    auto handler = static_cast<SortOperatorHandler*>(op);
+    auto entryIndex = handler->getAndIncrementCurrentEntryIndex();
+    return entryIndex;
+}
 
-SortScan::SortScan(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex) {}
+void *getStateProxy(void *op){
+    auto handler = static_cast<SortOperatorHandler*>(op);
+    return handler->getState();
+}
+
+uint64_t getSortEntrySize(void *op){
+    auto handler = static_cast<SortOperatorHandler*>(op);
+    return handler->getEntrySize();
+}
 
 void SortScan::setup(ExecutionContext& ctx) const {
     // perform sort
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("RadixSortMSD_", RadixSortMSD_, globalOperatorHandler);
+    Nautilus::FunctionCall("RadixSortMSDProxy", RadixSortMSDProxy, globalOperatorHandler);
 }
 
 void SortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
@@ -146,13 +163,19 @@ void SortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2. load the local state.
-    //auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerId());
+    auto stateProxy = Nautilus::FunctionCall("getStateProxy", getStateProxy, globalOperatorHandler);
+    auto entrySize = Nautilus::FunctionCall("getSortEntrySize", getSortEntrySize, globalOperatorHandler);
+    auto state = Nautilus::Interface::StackRef(stateProxy, entrySize->getValue());
+    auto currentEntryIndex = Nautilus::FunctionCall("getAndIterateEntryIndex", getAndIterateEntryIndex, globalOperatorHandler);
 
-    // TODO: 3. write sorted state to record buffer
-    Record result;
-    auto i = Value<>(0);
-    result.write("test", i);
-    child->execute(ctx, result);
+    Record record;
+    auto entry  = state.getEntry(Value<UInt64>(currentEntryIndex));
+    for (size_t i = 0; i < fieldIdentifiers.size(); i++) {
+        auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
+        record.write(fieldIdentifiers[i], value);
+        entry = entry + dataTypes[i]->size();
+    }
+    child->execute(ctx, record);
 }
 
 }// namespace NES::Runtime::Execution::Operators
