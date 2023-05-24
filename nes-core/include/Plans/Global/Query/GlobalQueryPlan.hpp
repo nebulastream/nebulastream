@@ -80,6 +80,12 @@ class GlobalQueryPlan {
     void removeFailedOrStoppedSharedQueryPlans();
 
     /**
+     * @brief This method will remove the shared query plan if all involved queries are either stopped or failed
+     * @param sharedQueryPlanId id of the shared query plan to be removed
+     */
+    void removeSharedQueryPlan(QueryId sharedQueryPlanId);
+
+    /**
      * @brief Get the all the Query Meta Data to be deployed
      * @return vector of global query meta data to be deployed
      */

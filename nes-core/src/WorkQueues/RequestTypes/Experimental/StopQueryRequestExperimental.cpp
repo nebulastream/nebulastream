@@ -97,7 +97,7 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
                 queryCatalogService->updateQueryStatus(involvedQueryIds, QueryStatus::STOPPED, "Hard Stopped");
             }
-            //todo: #3728 remove shared query plan
+            globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
             //3.3.2. Perform placement of updated shared query plan
             auto queryPlan = sharedQueryPlan->getQueryPlan();

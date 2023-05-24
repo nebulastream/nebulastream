@@ -273,7 +273,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
     queryCatalogService->checkAndMarkForHardStop(2);
-    auto catalogEntry3 = queryCatalog->getQueryCatalogEntry(2);
 
     auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     auto nesRequest2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
@@ -404,5 +403,74 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
+}
+
+/**
+ * @brief  In this test we execute query merger phase on multiple query requests with add and later remove the shared query plan by id
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQueryRequestsWithRemovalById) {
+    //Setup source catalog
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", BasicType::UINT64)
+                                ->addField("val", BasicType::UINT64)
+                                ->addField("X", BasicType::UINT64)
+                                ->addField("Y", BasicType::UINT64);
+    sourceCatalog->addLogicalSource("example", schema);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
+    auto physicalSource = PhysicalSource::create("example", "test1");
+    auto logicalSource = sourceCatalog->getLogicalSource("example");
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
+    sourceCatalog->addPhysicalSource("example", sourceCatalogEntry1);
+
+    //Prepare
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create two valid queryIdAndCatalogEntryMapping.");
+    const auto* queryString1 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    q1.getQueryPlan()->setQueryId(1);
+    const auto* queryString2 = R"(Query::from("example").sink(PrintSinkDescriptor::create()))";
+    auto q2 = Query::from("example").sink(PrintSinkDescriptor::create());
+    q2.getQueryPlan()->setQueryId(2);
+    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+                                                               queryCatalogService,
+                                                               sourceCatalog,
+                                                               globalQueryPlan,
+                                                               context,
+                                                               optimizerConfiguration,
+                                                               udfCatalog);
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
+    auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
+    auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
+    queryCatalogService->checkAndMarkForHardStop(2);
+
+    auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest2 = RunQueryRequest::create(catalogEntry2->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
+    auto nesRequest3 = StopQueryRequest::create(catalogEntry2->getInputQueryPlan()->getQueryId());
+
+    std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1, nesRequest2};
+    auto resultPlan = phase->execute(batchOfQueryRequests);
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
+
+    ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 2u);
+
+    auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(catalogEntry2->getInputQueryPlan()->getQueryId());
+    auto sharedQueryPlanId1 = globalQueryPlan->getSharedQueryId(catalogEntry1->getInputQueryPlan()->getQueryId());
+    NES_INFO2("Id2 {}, id1 {}", sharedQueryPlanId, sharedQueryPlanId1);
+    resultPlan = phase->execute({nesRequest3});
+    resultPlan->removeSharedQueryPlan(sharedQueryPlanId);
+
+    //Assert
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
+    const auto& sharedQueryMetadataToDeploy2 = resultPlan->getSharedQueryPlansToDeploy();
+    ASSERT_EQ(sharedQueryMetadataToDeploy2.size(), 1u);
 }
 }// namespace NES

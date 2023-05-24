@@ -135,6 +135,18 @@ void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
     }
 }
 
+void GlobalQueryPlan::removeSharedQueryPlan(QueryId sharedQueryPlanId) {
+    NES_INFO2("GlobalQueryPlan: remove metadata information for empty shared query plan id {}", sharedQueryPlanId);
+    if (sharedQueryPlanId == INVALID_SHARED_QUERY_ID) {
+        throw Exceptions::RuntimeException("GlobalQueryPlan: Cannot remove shared query plan with invalid id.");
+    }
+    auto sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryPlanId];
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed) {
+        NES_TRACE2("GlobalQueryPlan: Removing! found an empty query meta data.");
+        sharedQueryIdToPlanMap.erase(sharedQueryPlanId);
+    }
+}
+
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
     NES_INFO2("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> sharedQueryPlans;
