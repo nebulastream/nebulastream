@@ -16,7 +16,7 @@
 
 #include <WorkQueues/StorageHandles/ResourceType.hpp>
 #include <WorkQueues/StorageHandles/StorageHandler.hpp>
-#include <exception>
+#include <Exceptions/BaseRequestExecutionException.hpp>
 #include <memory>
 #include <vector>
 
@@ -73,14 +73,14 @@ class AbstractRequest {
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    virtual void rollBack(std::exception& ex, StorageHandler& storageHandle) = 0;
+    virtual void rollBack(BaseRequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Calls rollBack and executes additional error handling based on the exception if necessary
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    void handleError(std::exception ex, StorageHandler& storageHandle);
+    void handleError(BaseRequestExecutionException& ex, StorageHandler& storageHandle);
 
     /**
      * @brief Check if the request has already reached the maximum allowed retry attempts or if it can be retried again. If the
@@ -95,14 +95,14 @@ class AbstractRequest {
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void preRollbackHandle(std::exception ex, StorageHandler& storageHandle) = 0;
+    virtual void preRollbackHandle(BaseRequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    virtual void postRollbackHandle(std::exception ex, StorageHandler& storageHandle) = 0;
+    virtual void postRollbackHandle(BaseRequestExecutionException& ex, StorageHandler& storageHandle) = 0;
 
     /**
      * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
