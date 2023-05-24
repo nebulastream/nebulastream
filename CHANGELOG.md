@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.91](https://github.com/nebulastream/nebulastream/tree/v0.5.91) (2023-05-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.90...v0.5.91)
+
+**Implemented enhancements:**
+
+- \[Feature\] Query Stop Request Implementation [\#3634](https://github.com/nebulastream/nebulastream/issues/3634)
+
 ## [v0.5.90](https://github.com/nebulastream/nebulastream/tree/v0.5.90) (2023-05-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.89...v0.5.90)
