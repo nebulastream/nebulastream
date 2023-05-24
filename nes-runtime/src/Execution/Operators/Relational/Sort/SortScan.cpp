@@ -24,6 +24,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+// issue #3773: get rid of hard-coded parameters
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
 const uint64_t COL_SIZE = 8;
@@ -119,14 +120,14 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
 
 void RadixSortMSDProxy(void *op) {
     auto handler = static_cast<SortOperatorHandler*>(op);
-    // TODO: issue X add support for data larger than page size
+    // issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
-    // TODO: issue X add support for columns other than the first one
+    // issue #3773 add support for columns other than the first one
     auto colOffset = 0;
     auto rowWidth = handler->getEntrySize();
-    // TODO: issue X add support for columns other sizes
+    // issue #3773 add support for columns other sizes
     auto compWidth = COL_SIZE;
     auto offset = 0; // init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
