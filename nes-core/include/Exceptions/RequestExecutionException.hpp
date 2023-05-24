@@ -11,20 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_BASEREQUESTEXECUTIONEXCEPTION_HPP
-#define NES_BASEREQUESTEXECUTIONEXCEPTION_HPP
+#ifndef NES_REQUESTEXECUTIONEXCEPTION_HPP
+#define NES_REQUESTEXECUTIONEXCEPTION_HPP
 
 #include <exception>
 #include <string>
 
 namespace NES {
 
-class BaseRequestExecutionException : public std::exception {
+/**
+ * @brief This is the base class for exceptions thrown during the execution of coordinator side requests which
+ * indicate an error that possibly needs to be handled by executing specifc request logic. It provides an instance of function,
+ * to allow the request to perform error handling which is specific to the error that occurred.
+ */
+class RequestExecutionException : public std::exception {
 
   public:
     /**
      * @brief Checks if this object is of type ExceptionType
-     * @tparam ExceptionType: a subclass ob BaseRequestExecutionException
+     * @tparam ExceptionType: a subclass ob RequestExecutionException
      * @return bool true if object is of type ExceptionType
      */
     template<class ExceptionType>
@@ -34,10 +39,7 @@ class BaseRequestExecutionException : public std::exception {
         };
         return false;
     };
-
-    //[[nodiscard]] const char* what() const noexcept override;
 };
-
 }
 
-#endif//NES_BASEREQUESTEXECUTIONEXCEPTION_HPP
+#endif//NES_REQUESTEXECUTIONEXCEPTION_HPP

@@ -17,5 +17,5 @@
 namespace NES {
 QueryUndeploymentException::QueryUndeploymentException(const std::string& message) : std::runtime_error(message) {}
 
-const char* QueryUndeploymentException::what() const noexcept { return BaseRequestExecutionException::what(); }
+const char* QueryUndeploymentException::what() const noexcept { return RequestExecutionException::what(); }
 }// namespace NES

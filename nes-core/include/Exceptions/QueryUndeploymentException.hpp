@@ -15,12 +15,12 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
-#include <Exceptions/BaseRequestExecutionException.hpp>
 
 namespace NES {
-class QueryUndeploymentException : public std::runtime_error, BaseRequestExecutionException {
+class QueryUndeploymentException : public std::runtime_error, public RequestExecutionException {
   public:
     explicit QueryUndeploymentException(const std::string& message);
 

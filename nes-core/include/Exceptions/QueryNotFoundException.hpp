@@ -15,15 +15,15 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
-#include <Exceptions/BaseRequestExecutionException.hpp>
 
 namespace NES {
 /**
  * @brief This exception is raised when the query you are looking for is not found
  */
-class QueryNotFoundException : public std::runtime_error, BaseRequestExecutionException {
+class QueryNotFoundException : public std::runtime_error, public RequestExecutionException {
   public:
     explicit QueryNotFoundException(const std::string& message);
 
