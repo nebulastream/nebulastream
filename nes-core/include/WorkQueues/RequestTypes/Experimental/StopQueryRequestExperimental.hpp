@@ -79,7 +79,6 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 class StopQueryRequestExperimental : public Request, public AbstractRequest {
 
   public:
-
     static StopQueryRequestPtr
     create(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
 
@@ -94,7 +93,10 @@ class StopQueryRequestExperimental : public Request, public AbstractRequest {
     ~StopQueryRequestExperimental() override = default;
 
   private:
-    StopQueryRequestExperimental(QueryId queryId, size_t maxRetries, const WorkerRPCClientPtr& workerRpcClient, bool queryReconfiguration);
+    StopQueryRequestExperimental(QueryId queryId,
+                                 size_t maxRetries,
+                                 const WorkerRPCClientPtr& workerRpcClient,
+                                 bool queryReconfiguration);
     const WorkerRPCClientPtr& workerRpcClient;
     QueryId queryId;
     GlobalExecutionPlanPtr globalExecutionPlan;

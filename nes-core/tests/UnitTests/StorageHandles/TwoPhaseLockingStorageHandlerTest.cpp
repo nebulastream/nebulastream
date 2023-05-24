@@ -191,8 +191,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle().get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle().get(), std::exception);
     thread = std::make_shared<std::thread>([&twoPLAccessHandle2]() {
-        ASSERT_NO_THROW(twoPLAccessHandle2->acquireResources(
-            {ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
+        ASSERT_NO_THROW(twoPLAccessHandle2->acquireResources({ResourceType::SourceCatalog, ResourceType::UdfCatalog}));
     });
     thread->join();
 

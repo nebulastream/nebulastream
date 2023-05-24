@@ -25,8 +25,8 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequestExperimental.hpp>
-#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <WorkQueues/StorageHandles/LockManager.hpp>
+#include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 
 namespace z3 {
@@ -65,7 +65,12 @@ TEST_F(StopQueryRequestTest, testAccessToLockedResourcesDenied) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto lockManager = std::make_shared<LockManager>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
+    auto lockManager = std::make_shared<LockManager>(globalExecutionPlan,
+                                                     topology,
+                                                     queryCatalogService,
+                                                     globalQueryPlan,
+                                                     sourceCatalog,
+                                                     udfCatalog);
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
     auto twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     //if thread 1 holds a handle to the topology, thread 2 should not be able to acquire a handle at the same time

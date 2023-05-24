@@ -48,7 +48,9 @@ GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle() {
 
 TopologyHandle SerialStorageHandler::getTopologyHandle() { return {&*topology, UnlockDeleter()}; }
 
-QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogServiceHandle() { return {&*queryCatalogService, UnlockDeleter()}; }
+QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogServiceHandle() {
+    return {&*queryCatalogService, UnlockDeleter()};
+}
 
 GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle() { return {&*globalQueryPlan, UnlockDeleter()}; }
 

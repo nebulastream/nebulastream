@@ -29,9 +29,9 @@
 namespace NES {
 
 StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
-                                   size_t maxRetries,
-                                   const WorkerRPCClientPtr& workerRpcClient,
-                                   bool queryReconfiguration)
+                                                           size_t maxRetries,
+                                                           const WorkerRPCClientPtr& workerRpcClient,
+                                                           bool queryReconfiguration)
     : AbstractRequest(
         {
             ResourceType::QueryCatalogService,
@@ -45,10 +45,11 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId), queryReconfiguration(queryReconfiguration) {}
 
 StopQueryRequestPtr StopQueryRequestExperimental::create(QueryId queryId,
-                                             size_t maxRetries,
-                                             const WorkerRPCClientPtr& workerRpcClient,
-                                             bool queryReconfiguration) {
-    return std::make_shared<StopQueryRequestExperimental>(StopQueryRequestExperimental(queryId, maxRetries, workerRpcClient, queryReconfiguration));
+                                                         size_t maxRetries,
+                                                         const WorkerRPCClientPtr& workerRpcClient,
+                                                         bool queryReconfiguration) {
+    return std::make_shared<StopQueryRequestExperimental>(
+        StopQueryRequestExperimental(queryId, maxRetries, workerRpcClient, queryReconfiguration));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
@@ -138,7 +139,9 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
     }
 }
 
-void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) { NES_TRACE2("Release locks."); }
+void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) {
+    NES_TRACE2("Release locks.");
+}
 
 std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
