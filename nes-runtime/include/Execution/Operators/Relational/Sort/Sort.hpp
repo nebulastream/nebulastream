@@ -27,6 +27,7 @@ class Sort : public ExecutableOperator {
          const std::vector<PhysicalTypePtr>& dataTypes);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void setup(ExecutionContext& executionCtx) const override;
   private:
     const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 
