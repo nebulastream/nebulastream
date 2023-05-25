@@ -43,16 +43,16 @@ TEST_F(Fixed2DArrayTest, insertSimpleDataTypes) {
     Fixed2DArray fixed2DArray(*allocator, numRows, numCols, entrySize);
     Fixed2DArrayRef fixed2DArrayRef(Value<MemRef>((int8_t*) &fixed2DArray), entrySize, numCols);
 
-    for (Value<UInt64> row = 0UL; row < numRows; row = row + 1) {
-        for (Value<UInt64> col = 0UL; col < numCols; col = col + 1) {
+    for (Value<UInt64> row = 0UL; row < (uint64_t)numRows; row = row + 1) {
+        for (Value<UInt64> col = 0UL; col < (uint64_t)numCols; col = col + 1) {
             Value<UInt64> expectedValue(col.getValue().getValue() + row.getValue().getValue() * numCols);
             auto cell = fixed2DArrayRef[row][col];
             cell.store(expectedValue);
         }
     }
 
-    for (Value<UInt64> row = 0UL; row < numRows; row = row + 1) {
-        for (Value<UInt64> col = 0UL; col < numCols; col = col + 1) {
+    for (Value<UInt64> row = 0UL; row < (uint64_t)numRows; row = row + 1) {
+        for (Value<UInt64> col = 0UL; col < (uint64_t)numCols; col = col + 1) {
             Value<UInt64> expectedValue(col.getValue().getValue() + row.getValue().getValue() * numCols);
             auto cell = fixed2DArrayRef[row][col];
             auto resultValue = cell.load<UInt64>();
