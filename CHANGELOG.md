@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.92](https://github.com/nebulastream/nebulastream/tree/v0.5.92) (2023-05-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.91...v0.5.92)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Nested Loop Join  [\#3650](https://github.com/nebulastream/nebulastream/issues/3650)
+
 ## [v0.5.91](https://github.com/nebulastream/nebulastream/tree/v0.5.91) (2023-05-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.90...v0.5.91)
