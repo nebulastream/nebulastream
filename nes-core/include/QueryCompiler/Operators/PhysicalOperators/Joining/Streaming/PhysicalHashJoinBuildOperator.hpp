@@ -39,7 +39,7 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler,
+                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName);
 
@@ -55,7 +55,7 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler,
+                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName);
 
@@ -71,7 +71,7 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
     explicit PhysicalHashJoinBuildOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
-                                           Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler,
+                                           Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
                                            JoinBuildSideType buildSide,
                                            std::string timeStampFieldName);
 

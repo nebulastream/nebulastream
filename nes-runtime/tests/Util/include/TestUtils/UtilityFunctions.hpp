@@ -87,14 +87,47 @@ void writeNautilusRecord(uint64_t recordIndex,
 }
 
 /**
-     * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
-     * contain as much tuples as possible. Additionally, there are only tuples in a buffer that belong to the same window
-     * @param buffers
-     * @param schema
-     * @param timeStampFieldName
-     * @param bufferManager
-     * @return buffer of tuples
-     */
+ * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
+ *        buffers that do not fit will be discarded.
+ * @param buffersToBeMerged
+ * @param schema
+ * @param bufferManager
+ * @return merged TupleBuffer
+ */
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
+                                  Runtime::BufferManagerPtr bufferManager) {
+
+    auto retBuffer = bufferManager->getBufferBlocking();
+    auto retBufferPtr = retBuffer.getBuffer();
+
+    auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    auto cnt = 0UL;
+    for (auto& buffer : buffersToBeMerged) {
+        cnt += buffer.getNumberOfTuples();
+        if (cnt > maxPossibleTuples) {
+            NES_WARNING("Too many tuples to fit in a single buffer.");
+            return retBuffer;
+        }
+
+        auto bufferSize = buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
+        std::memcpy(retBufferPtr, buffer.getBuffer(), bufferSize);
+
+        retBufferPtr += bufferSize;
+        retBuffer.setNumberOfTuples(cnt);
+    }
+
+    return retBuffer;
+}
+
+/**
+ * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
+ * contain as much tuples as possible. Additionally, there are only tuples in a buffer that belong to the same window
+ * @param buffers
+ * @param schema
+ * @param timeStampFieldName
+ * @param bufferManager
+ * @return buffer of tuples
+ */
 std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::TupleBuffer>& buffers,
                                                          SchemaPtr schema,
                                                          const std::string& timeStampFieldName,

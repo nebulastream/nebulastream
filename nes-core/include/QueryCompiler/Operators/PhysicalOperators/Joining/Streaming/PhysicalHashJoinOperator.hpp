@@ -14,7 +14,7 @@
 #ifndef NES_PHYSICALHASHJOINOPERATOR_HPP
 #define NES_PHYSICALHASHJOINOPERATOR_HPP
 
-#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
@@ -29,7 +29,7 @@ class PhysicalHashJoinOperator : public AbstractEmitOperator {
      * @brief Getter for the HashJoinOperatorHandler
      * @return HashJoinOperatorHandler
      */
-    [[nodiscard]] Runtime::Execution::Operators::HashJoinOperatorHandlerPtr getOperatorHandler() const;
+    [[nodiscard]] Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr getOperatorHandler() const;
 
     /**
      * @brief virtual deconstructor of PhysicalHashJoinOperator
@@ -41,11 +41,11 @@ class PhysicalHashJoinOperator : public AbstractEmitOperator {
      * @param operatorHandler
      * @param id
      */
-    explicit PhysicalHashJoinOperator(Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler,
+    explicit PhysicalHashJoinOperator(Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler,
                                       OperatorId id);
 
   protected:
-    Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler;
+    Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

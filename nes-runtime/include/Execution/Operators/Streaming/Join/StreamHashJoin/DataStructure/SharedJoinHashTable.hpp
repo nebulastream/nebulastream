@@ -15,8 +15,8 @@
 #define NES_SHAREDJOINHASHTABLE_HPP
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPage.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/BloomFilter.hpp>
 #include <atomic>

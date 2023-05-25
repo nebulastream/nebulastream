@@ -15,8 +15,8 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
@@ -27,7 +27,6 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
-#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstring>
@@ -258,24 +257,24 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     auto numberOfTuplesToProduce = windowSize * 20;
 
     auto handlerIndex = 0;
-    auto joinBuildLeft = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
+    auto joinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
                                                                       /*isLeftSide*/ true,
-                                                                      joinFieldNameLeft,
-                                                                      timeStampField,
-                                                                      leftSchema);
-    auto joinBuildRight = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
+                                                                          joinFieldNameLeft,
+                                                                          timeStampField,
+                                                                          leftSchema);
+    auto joinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
                                                                        /*isLeftSide*/ false,
-                                                                       joinFieldNameRight,
-                                                                       timeStampField,
-                                                                       rightSchema);
-    auto joinSink = std::make_shared<Operators::HashJoinSink>(handlerIndex);
-    auto hashJoinOpHandler = Operators::HashJoinOperatorHandler::create(leftSchema,
-                                                                            rightSchema,
-                                                                            joinFieldNameLeft,
-                                                                            joinFieldNameRight,
+                                                                           joinFieldNameRight,
+                                                                           timeStampField,
+                                                                           rightSchema);
+    auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
+    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(leftSchema,
+                                                                              rightSchema,
+                                                                              joinFieldNameLeft,
+                                                                              joinFieldNameRight,
                                                                             numSourcesLeft + numSourcesRight,
-                                                                            windowSize,
-                                                                            joinSizeInByte);
+                                                                              windowSize,
+                                                                              joinSizeInByte);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);

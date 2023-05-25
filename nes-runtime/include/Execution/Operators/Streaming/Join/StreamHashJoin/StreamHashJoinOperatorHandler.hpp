@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_HASHJOINOPERATORHANDLER_HPP
-#define NES_HASHJOINOPERATORHANDLER_HPP
+#ifndef NES_STREAMHASHJOINOPERATORHANDLER_HPP
+#define NES_STREAMHASHJOINOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/SharedJoinHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/HashJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -29,7 +29,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * This is a description of the StreamJoin and its data structure. The stream join consists of two phases, build and sink.
+ * This is a description of the StreamHashJoin and its data structure. The stream join consists of two phases, build and sink.
  * In the build phase, each thread builds a local hash table and once it is done, e.g., seen all tuples of a window, it
  * appends its buckets to a global hash table. Once both sides (left and right) have finished appending all buckets to
  * the global hash table, a buffer will be created with the bucket id (partition id) and the corresponding window id.
@@ -40,9 +40,9 @@ namespace NES::Runtime::Execution::Operators {
  * thus, the StreamJoin only has to allocate memory once.
  * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
  */
-class HashJoinOperatorHandler;
-using HashJoinOperatorHandlerPtr = std::shared_ptr<HashJoinOperatorHandler>;
-class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
+class StreamHashJoinOperatorHandler;
+using StreamHashJoinOperatorHandlerPtr = std::shared_ptr<StreamHashJoinOperatorHandler>;
+class StreamHashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
   public:
     /**
@@ -57,15 +57,15 @@ class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
      * @param pageSize
      * @param numPartitions
      */
-    explicit HashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
-                                     SchemaPtr joinSchemaRight,
-                                     std::string joinFieldNameLeft,
-                                     std::string joinFieldNameRight,
-                                     uint64_t counterFinishedBuildingStart,
-                                     size_t windowSize,
-                                     size_t totalSizeForDataStructures,
-                                     size_t pageSize,
-                                     size_t numPartitions);
+    explicit StreamHashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
+                                           SchemaPtr joinSchemaRight,
+                                           std::string joinFieldNameLeft,
+                                           std::string joinFieldNameRight,
+                                           uint64_t counterFinishedBuildingStart,
+                                           size_t windowSize,
+                                           size_t totalSizeForDataStructures,
+                                           size_t pageSize,
+                                           size_t numPartitions);
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
@@ -80,15 +80,15 @@ class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
      * @param numPartitions
      * @return StreamJoinOperatorHandlerPtr
      */
-    static HashJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
-                                               const SchemaPtr& joinSchemaRight,
-                                               const std::string& joinFieldNameLeft,
-                                               const std::string& joinFieldNameRight,
-                                               uint64_t counterFinishedBuildingStart,
-                                               size_t windowSize,
-                                               size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
-                                               size_t pageSize = CHUNK_SIZE,
-                                               size_t numPartitions = NUM_PARTITIONS);
+    static StreamHashJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
+                                                   const SchemaPtr& joinSchemaRight,
+                                                   const std::string& joinFieldNameLeft,
+                                                   const std::string& joinFieldNameRight,
+                                                   uint64_t counterFinishedBuildingStart,
+                                                   size_t windowSize,
+                                                   size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
+                                                   size_t pageSize = CHUNK_SIZE,
+                                                   size_t numPartitions = NUM_PARTITIONS);
 
     /**
      * @brief Getter for the left join schema
@@ -163,7 +163,7 @@ class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
      * @param timeStamp
      * @return Reference to the Window
      */
-    HashJoinWindow& getWindow(uint64_t timeStamp);
+    StreamHashJoinWindow& getWindow(uint64_t timeStamp);
 
     /**
      * @brief Returning the number of active windows
@@ -176,7 +176,7 @@ class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
      * @param isLeftSide
      * @return Reference to the current window that gets filled
      */
-    HashJoinWindow& getWindowToBeFilled(bool isLeftSide);
+    StreamHashJoinWindow& getWindowToBeFilled(bool isLeftSide);
 
     /**
      * @brief Increments the timeStamp of either the left or right side
@@ -228,7 +228,7 @@ class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
-    std::list<HashJoinWindow> hashJoinWindows;
+    std::list<StreamHashJoinWindow> hashJoinWindows;
     size_t numberOfWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
@@ -242,4 +242,4 @@ class HashJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_HASHJOINOPERATORHANDLER_HPP
+#endif//NES_STREAMHASHJOINOPERATORHANDLER_HPP

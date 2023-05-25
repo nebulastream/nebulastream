@@ -18,8 +18,8 @@
 #include <atomic>
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPage.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 

@@ -15,19 +15,19 @@
 #define NES_STREAMJOINBUILD_HPP
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-class HashJoinBuild;
-using HashJoinBuildPtr = std::shared_ptr<HashJoinBuild>;
+class StreamHashJoinBuild;
+using StreamHashJoinBuildPtr = std::shared_ptr<StreamHashJoinBuild>;
 
 /**
  * @brief This class is the first phase of the StreamJoin. Each thread builds a LocalHashTable until the window is finished.
  * Then, each threads inserts the LocalHashTable into the SharedHashTable.
  * Afterwards, the second phase (StreamJoinSink) will start if both sides of the join have seen the end of the window.
  */
-class HashJoinBuild : public ExecutableOperator {
+class StreamHashJoinBuild : public ExecutableOperator {
 
   public:
     /**
@@ -38,8 +38,8 @@ class HashJoinBuild : public ExecutableOperator {
      * @param timeStampField
      * @param schema
      */
-    HashJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
-                  const std::string& timeStampField, SchemaPtr schema);
+    StreamHashJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
+                        const std::string& timeStampField, SchemaPtr schema);
 
     /**
      * @brief Setting up the pipeline by initializing the operator handler

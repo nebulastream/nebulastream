@@ -17,9 +17,9 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinSink.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -69,7 +69,7 @@ struct HashJoinBuildHelper {
     size_t totalNumSources;
     size_t joinSizeInByte;
     size_t windowSize;
-    Operators::HashJoinBuildPtr hashJoinBuild;
+    Operators::StreamHashJoinBuildPtr hashJoinBuild;
     std::string joinFieldName;
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
@@ -77,7 +77,7 @@ struct HashJoinBuildHelper {
     HashJoinOperatorTest* hashJoinOperatorTest;
     bool isLeftSide;
 
-    HashJoinBuildHelper(Operators::HashJoinBuildPtr hashJoinBuild,
+    HashJoinBuildHelper(Operators::StreamHashJoinBuildPtr hashJoinBuild,
                           const std::string& joinFieldName,
                           BufferManagerPtr bufferManager,
                           SchemaPtr schema,
@@ -93,15 +93,15 @@ struct HashJoinBuildHelper {
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
-    auto hashJoinOpHandler = Operators::HashJoinOperatorHandler::create(buildHelper.schema,
-                                                                        buildHelper.schema,
-                                                                        buildHelper.joinFieldName,
-                                                                        buildHelper.joinFieldName,
-                                                                        buildHelper.totalNumSources,
-                                                                        buildHelper.windowSize,
-                                                                        buildHelper.joinSizeInByte,
-                                                                        buildHelper.pageSize,
-                                                                        buildHelper.numPartitions);
+    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(buildHelper.schema,
+                                                                              buildHelper.schema,
+                                                                              buildHelper.joinFieldName,
+                                                                              buildHelper.joinFieldName,
+                                                                              buildHelper.totalNumSources,
+                                                                              buildHelper.windowSize,
+                                                                              buildHelper.joinSizeInByte,
+                                                                              buildHelper.pageSize,
+                                                                              buildHelper.numPartitions);
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -229,15 +229,15 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                                          hashJoinSinkHelper.bufferManager,
                                                          hashJoinSinkHelper.numberOfBuffersPerWorker);
     auto hashJoinOpHandler =
-        Operators::HashJoinOperatorHandler::create(hashJoinSinkHelper.leftSchema,
-                                                   hashJoinSinkHelper.rightSchema,
-                                                   hashJoinSinkHelper.joinFieldNameLeft,
-                                                   hashJoinSinkHelper.joinFieldNameRight,
+        Operators::StreamHashJoinOperatorHandler::create(hashJoinSinkHelper.leftSchema,
+                                                         hashJoinSinkHelper.rightSchema,
+                                                         hashJoinSinkHelper.joinFieldNameLeft,
+                                                         hashJoinSinkHelper.joinFieldNameRight,
                                                    hashJoinSinkHelper.numSourcesLeft + hashJoinSinkHelper.numSourcesRight,
-                                                   hashJoinSinkHelper.windowSize,
-                                                   hashJoinSinkHelper.joinSizeInByte,
-                                                   hashJoinSinkHelper.pageSize,
-                                                   hashJoinSinkHelper.numPartitions);
+                                                         hashJoinSinkHelper.windowSize,
+                                                         hashJoinSinkHelper.joinSizeInByte,
+                                                         hashJoinSinkHelper.pageSize,
+                                                         hashJoinSinkHelper.numPartitions);
 
     auto hashJoinOperatorTest = hashJoinSinkHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -257,17 +257,17 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
     auto handlerIndex = 0UL;
-    auto hashJoinBuildLeft = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
+    auto hashJoinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
                                                                             /*isLeftSide*/ true,
-                                                                            hashJoinSinkHelper.joinFieldNameLeft,
-                                                                            hashJoinSinkHelper.timeStampField,
-                                                                            hashJoinSinkHelper.leftSchema);
-    auto hashJoinBuildRight = std::make_shared<Operators::HashJoinBuild>(handlerIndex,
+                                                                              hashJoinSinkHelper.joinFieldNameLeft,
+                                                                              hashJoinSinkHelper.timeStampField,
+                                                                              hashJoinSinkHelper.leftSchema);
+    auto hashJoinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
                                                                              /*isLeftSide*/ false,
-                                                                             hashJoinSinkHelper.joinFieldNameRight,
-                                                                             hashJoinSinkHelper.timeStampField,
-                                                                             hashJoinSinkHelper.rightSchema);
-    auto hashJoinSink = std::make_shared<Operators::HashJoinSink>(handlerIndex);
+                                                                               hashJoinSinkHelper.joinFieldNameRight,
+                                                                               hashJoinSinkHelper.timeStampField,
+                                                                               hashJoinSinkHelper.rightSchema);
+    auto hashJoinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
 
     hashJoinBuildLeft->setup(executionContext);
     hashJoinBuildRight->setup(executionContext);
@@ -475,7 +475,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTest) {
 
     auto handlerIndex = 0;
     auto hashJoinBuild =
-        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
+        std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
 
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
@@ -495,7 +495,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestRight) {
 
     auto handlerIndex = 0;
     auto hashJoinBuild =
-        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight, timeStampField, rightSchema);
+        std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight, timeStampField, rightSchema);
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
 
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
@@ -515,7 +515,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
 
     auto handlerIndex = 0;
     auto hashJoinBuild =
-        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
+        std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
 
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2;
@@ -538,7 +538,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto isLeftSide = true;
 
     auto hashJoinBuild =
-        std::make_shared<Operators::HashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
+        std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft, timeStampField, leftSchema);
 
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2, buildHelper.numPartitions = 1;

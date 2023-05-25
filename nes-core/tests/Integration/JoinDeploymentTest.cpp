@@ -144,7 +144,7 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -209,7 +209,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -274,7 +274,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -338,7 +338,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -406,7 +406,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 40);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -473,7 +473,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 40);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
@@ -541,7 +541,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 2);
-    auto resultBuffer = Util::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
+    auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
     NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));

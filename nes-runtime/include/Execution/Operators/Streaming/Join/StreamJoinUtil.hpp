@@ -153,6 +153,7 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
                                                                             Runtime::BufferManagerPtr bufferManager,
                                                                             uint64_t originId = 0,
                                                                             const std::string& timestampFieldname = "ts");
+
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
  * @brief casts a value in string format to the correct type and writes it to the TupleBuffer
@@ -199,18 +200,6 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte);
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
-/**
- * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
- *        buffers that do not fit will be discarded.
- * @param buffersToBeMerged
- * @param schema
- * @param bufferManager
- * @return merged TupleBuffer
- */
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
-             BufferManagerPtr bufferManager);
-
 /**
  * @brief create CSV lines from the tuples
  * @param tbuffer the tuple buffer

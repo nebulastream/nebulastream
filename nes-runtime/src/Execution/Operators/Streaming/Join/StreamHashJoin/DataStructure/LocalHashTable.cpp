@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {

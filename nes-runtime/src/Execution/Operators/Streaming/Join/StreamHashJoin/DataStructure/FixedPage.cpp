@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/FixedPage.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <atomic>
 #include <cstring>

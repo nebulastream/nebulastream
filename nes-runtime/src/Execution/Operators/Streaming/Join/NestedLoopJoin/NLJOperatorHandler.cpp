@@ -30,7 +30,7 @@ namespace NES::Runtime::Execution::Operators {
             window = getWindowByTimestamp(timestamp);
         }
         auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
-        return window.value()->insertNewTuple(sizeOfTupleInByte, isLeftSide);
+        return window.value()->allocateNewTuple(sizeOfTupleInByte, isLeftSide);
     }
 
     void NLJOperatorHandler::createNewWindow(uint64_t timestamp) {

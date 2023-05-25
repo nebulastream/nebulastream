@@ -325,31 +325,6 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
 
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, BufferManagerPtr bufferManager) {
-
-    auto retBuffer = bufferManager->getBufferBlocking();
-    auto retBufferPtr = retBuffer.getBuffer();
-
-    auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
-    auto cnt = 0UL;
-    for (auto& buffer : buffersToBeMerged) {
-        cnt += buffer.getNumberOfTuples();
-        if (cnt > maxPossibleTuples) {
-            NES_WARNING("Too many tuples to fit in a single buffer.");
-            return retBuffer;
-        }
-
-        auto bufferSize = buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
-        std::memcpy(retBufferPtr, buffer.getBuffer(), bufferSize);
-
-        retBufferPtr += bufferSize;
-        retBuffer.setNumberOfTuples(cnt);
-    }
-
-    return retBuffer;
-}
-
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

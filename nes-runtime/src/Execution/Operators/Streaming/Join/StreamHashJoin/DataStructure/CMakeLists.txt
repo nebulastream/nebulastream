@@ -10,8 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(DataStructure)
-add_subdirectory(JoinPhases)
-
 add_source_files(nes-runtime
-        HashJoinOperatorHandler.cpp)
+        FixedPage.cpp
+        FixedPagesLinkedList.cpp
+        LocalHashTable.cpp
+        SharedJoinHashTable.cpp
+        StreamHashJoinWindow.cpp)

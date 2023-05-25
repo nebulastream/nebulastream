@@ -27,6 +27,7 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES {
 
@@ -644,6 +645,31 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
     return result;
+}
+
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
+                      Runtime::BufferManagerPtr bufferManager) {
+
+    auto retBuffer = bufferManager->getBufferBlocking();
+    auto retBufferPtr = retBuffer.getBuffer();
+
+    auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    auto cnt = 0UL;
+    for (auto& buffer : buffersToBeMerged) {
+        cnt += buffer.getNumberOfTuples();
+        if (cnt > maxPossibleTuples) {
+            NES_WARNING("Too many tuples to fit in a single buffer.");
+            return retBuffer;
+        }
+
+        auto bufferSize = buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes();
+        std::memcpy(retBufferPtr, buffer.getBuffer(), bufferSize);
+
+        retBufferPtr += bufferSize;
+        retBuffer.setNumberOfTuples(cnt);
+    }
+
+    return retBuffer;
 }
 
 };// namespace TestUtils

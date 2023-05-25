@@ -32,6 +32,7 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
@@ -608,6 +609,17 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
  * @return the json
  */
 [[nodiscard]] nlohmann::json getTopology(uint64_t restPort);
+
+/**
+ * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
+ *        buffers that do not fit will be discarded.
+ * @param buffersToBeMerged
+ * @param schema
+ * @param bufferManager
+ * @return merged TupleBuffer
+ */
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
+                                  Runtime::BufferManagerPtr bufferManager);
 
 };// namespace TestUtils
 
