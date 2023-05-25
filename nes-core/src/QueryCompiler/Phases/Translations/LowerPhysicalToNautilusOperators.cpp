@@ -45,8 +45,8 @@
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/JoinPhases/HashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -269,7 +269,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
-        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::HashJoinSink>(handlerIndex);
+        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinSink>(handlerIndex);
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
 
@@ -287,11 +287,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                      : buildOperator->getOperatorHandler()->getJoinSchemaRight();
 
         auto joinBuildNautilus =
-            std::make_shared<Runtime::Execution::Operators::HashJoinBuild>(handlerIndex,
-                                                                             isLeftSide,
-                                                                             joinFieldName,
-                                                                             buildOperator->getTimeStampFieldName(),
-                                                                             joinSchema);
+            std::make_shared<Runtime::Execution::Operators::StreamHashJoinBuild>(handlerIndex,
+                                                                                 isLeftSide,
+                                                                                 joinFieldName,
+                                                                                 buildOperator->getTimeStampFieldName(),
+                                                                                 joinSchema);
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;

@@ -18,7 +18,7 @@
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-uint8_t* NLJWindow::insertNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
+uint8_t* NLJWindow::allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
     if (leftSide) {
         std::lock_guard<std::mutex> lock(leftTuplesMutex);
         auto currentSize = leftTuples.size();

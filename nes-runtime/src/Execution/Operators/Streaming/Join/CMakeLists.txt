@@ -11,7 +11,7 @@
 # limitations under the License.
 
 
-add_subdirectory(HashJoin)
+add_subdirectory(StreamHashJoin)
 add_subdirectory(NestedLoopJoin)
 
 add_source(nes-runtime

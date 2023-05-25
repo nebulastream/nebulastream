@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
 #include <utility>
 
@@ -22,7 +22,7 @@ PhysicalHashJoinSinkOperator::PhysicalHashJoinSinkOperator(
     SchemaPtr leftSchema,
     SchemaPtr rightSchema,
     SchemaPtr outputSchema,
-    Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler)
+    Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalHashJoinOperator(std::move(operatorHandler), id),
       PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)) {}
 
@@ -36,7 +36,7 @@ PhysicalOperatorPtr
 PhysicalHashJoinSinkOperator::create(const SchemaPtr& leftSchema,
                                      const SchemaPtr& rightSchema,
                                      const SchemaPtr& outputSchema,
-                                     const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler) {
+                                     const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
     return create(Util::getNextOperatorId(), leftSchema, rightSchema, outputSchema, operatorHandler);
 }
 
@@ -45,7 +45,7 @@ PhysicalHashJoinSinkOperator::create(OperatorId id,
                                      const SchemaPtr& leftSchema,
                                      const SchemaPtr& rightSchema,
                                      const SchemaPtr& outputSchema,
-                                     const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler) {
+                                     const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler) {
     return std::make_shared<PhysicalHashJoinSinkOperator>(id, leftSchema, rightSchema, outputSchema, operatorHandler);
 }
 }// namespace NES::QueryCompilation::PhysicalOperators

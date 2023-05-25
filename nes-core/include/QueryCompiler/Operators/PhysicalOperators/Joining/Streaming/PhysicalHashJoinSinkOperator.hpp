@@ -41,7 +41,7 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler);
+                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
      * @brief creates a PhysicalHashJoinSinkOperator that retrieves a new operatorId by calling method
@@ -54,7 +54,7 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator,
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::HashJoinOperatorHandlerPtr& operatorHandler);
+                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
 
     /**
      * @brief Constructor for a PhysicalHashJoinSinkOperator
@@ -68,7 +68,7 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator,
                                  SchemaPtr leftSchema,
                                  SchemaPtr rightSchema,
                                  SchemaPtr outputSchema,
-                                 Runtime::Execution::Operators::HashJoinOperatorHandlerPtr operatorHandler);
+                                 Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr operatorHandler);
 
     /**
      * @brief Creates a string containing the name of this physical operator

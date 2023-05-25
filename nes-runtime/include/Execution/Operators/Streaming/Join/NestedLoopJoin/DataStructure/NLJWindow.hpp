@@ -59,7 +59,7 @@ public:
      * @param sizeOfTupleInByte
      * @return Pointer to start of memory space
      */
-    uint8_t* insertNewTuple(size_t sizeOfTupleInByte, bool leftSide);
+    uint8_t* allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide);
 
     /**
      * @brief Returns the

@@ -19,7 +19,7 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -390,12 +390,12 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
 
-        auto joinOperatorHandler = HashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
-                                                                     joinOperator->getRightInputSchema(),
-                                                                     joinFieldNameLeft,
-                                                                     joinFieldNameRight,
+        auto joinOperatorHandler = StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                                         joinOperator->getRightInputSchema(),
+                                                                         joinFieldNameLeft,
+                                                                         joinFieldNameRight,
                                                                      numSourcesLeft + numSourcesRight,
-                                                                     windowSize);
+                                                                         windowSize);
 
         auto leftInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());

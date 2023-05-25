@@ -60,19 +60,6 @@ void checkWindowsTriggerProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* pt
     }
 }
 
-void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-
-    // Update the watermark for the nlj operator and trigger windows
-    Nautilus::FunctionCall("checkWindowsTriggerProxy", checkWindowsTriggerProxy,
-                           operatorHandlerMemRef,
-                           ctx.getPipelineContext(),
-                           ctx.getWorkerContext(),
-                           recordBuffer.getWatermarkTs(),
-                           recordBuffer.getSequenceNr(),
-                           recordBuffer.getOriginId());
-}
-
 void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -95,6 +82,19 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
+}
+
+void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+
+    // Update the watermark for the nlj operator and trigger windows
+    Nautilus::FunctionCall("checkWindowsTriggerProxy", checkWindowsTriggerProxy,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext(),
+                           ctx.getWorkerContext(),
+                           recordBuffer.getWatermarkTs(),
+                           recordBuffer.getSequenceNr(),
+                           recordBuffer.getOriginId());
 }
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex, const SchemaPtr &schema, const std::string &joinFieldName,
