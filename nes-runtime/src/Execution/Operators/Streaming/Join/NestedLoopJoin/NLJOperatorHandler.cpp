@@ -21,128 +21,127 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-    uint8_t* NLJOperatorHandler::insertNewTuple(uint64_t timestamp, bool isLeftSide) {
-        std::lock_guard<std::mutex> lock(insertNewTupleMutex);
+uint8_t* NLJOperatorHandler::insertNewTuple(uint64_t timestamp, bool isLeftSide) {
+    std::lock_guard<std::mutex> lock(insertNewTupleMutex);
 
-        auto window = getWindowByTimestamp(timestamp);
-        while(!window.has_value()) {
-            createNewWindow(timestamp);
-            window = getWindowByTimestamp(timestamp);
-        }
-        auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
-        return window.value()->allocateNewTuple(sizeOfTupleInByte, isLeftSide);
+    auto window = getWindowByTimestamp(timestamp);
+    while (!window.has_value()) {
+        createNewWindow(timestamp);
+        window = getWindowByTimestamp(timestamp);
+    }
+    auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
+    return window.value()->allocateNewTuple(sizeOfTupleInByte, isLeftSide);
+}
+
+void NLJOperatorHandler::createNewWindow(uint64_t timestamp) {
+    // First, we check if a window exists
+    auto window = getWindowByTimestamp(timestamp);
+    if (window.has_value()) {
+        return;
     }
 
-    void NLJOperatorHandler::createNewWindow(uint64_t timestamp) {
-        // First, we check if a window exists
-        auto window = getWindowByTimestamp(timestamp);
-        if (window.has_value()) {
-            return;
-        }
+    auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
+    auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
+    nljWindows.emplace_back(windowStart, windowEnd);
+}
 
-        auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
-        auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
-        nljWindows.emplace_back(windowStart, windowEnd);
+void NLJOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
+    const auto window = getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        nljWindows.remove(*window.value());
     }
+}
 
-    void NLJOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
-        const auto window = getWindowByWindowIdentifier(windowIdentifier);
-        if (window.has_value()) {
-            nljWindows.remove(*window.value());
-        }
-    }
-
-    std::optional<NLJWindow*> NLJOperatorHandler::getWindowByTimestamp(uint64_t timestamp) {
-        for (auto& curWindow : nljWindows) {
-            if (curWindow.getWindowStart() <= timestamp && timestamp < curWindow.getWindowEnd()) {
-                return &curWindow;
-            }
-        }
-        return std::nullopt;
-    }
-
-    uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
-        const auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
-        const auto window = getWindowByWindowIdentifier(windowIdentifier);
-        if (window.has_value()) {
-            return window.value()->getNumberOfTuples(sizeOfTupleInByte, isLeftSide);
-        }
-
-        return -1;
-    }
-
-    uint8_t* NLJOperatorHandler::getFirstTuple(uint64_t windowIdentifier, bool isLeftSide) {
-        const auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
-        const auto window = getWindowByWindowIdentifier(windowIdentifier);
-        if (window.has_value()) {
-            return window.value()->getTuple(sizeOfTupleInByte, 0, isLeftSide);
-        }
-        return std::nullptr_t();
-    }
-
-    std::optional<NLJWindow*> NLJOperatorHandler::getWindowByWindowIdentifier(uint64_t windowIdentifier) {
-        for (auto& curWindow : nljWindows) {
-            if (curWindow.getWindowIdentifier() == windowIdentifier) {
-                return &curWindow;
-            }
-        }
-        return std::nullopt;
-    }
-
-    SchemaPtr NLJOperatorHandler::getSchema(bool isLeftSide) {
-        if (isLeftSide) {
-            return joinSchemaLeft;
-        } else {
-            return joinSchemaRight;
+std::optional<NLJWindow*> NLJOperatorHandler::getWindowByTimestamp(uint64_t timestamp) {
+    for (auto& curWindow : nljWindows) {
+        if (curWindow.getWindowStart() <= timestamp && timestamp < curWindow.getWindowEnd()) {
+            return &curWindow;
         }
     }
+    return std::nullopt;
+}
 
-    std::pair<uint64_t, uint64_t> NLJOperatorHandler::getWindowStartEnd(uint64_t windowIdentifier) {
-        const auto& window = getWindowByWindowIdentifier(windowIdentifier);
-        if (window.has_value()) {
-            return {window.value()->getWindowStart(), window.value()->getWindowEnd()};
+uint64_t NLJOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {
+    const auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
+    const auto window = getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        return window.value()->getNumberOfTuples(sizeOfTupleInByte, isLeftSide);
+    }
+
+    return -1;
+}
+
+uint8_t* NLJOperatorHandler::getFirstTuple(uint64_t windowIdentifier, bool isLeftSide) {
+    const auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
+    const auto window = getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        return window.value()->getTuple(sizeOfTupleInByte, 0, isLeftSide);
+    }
+    return std::nullptr_t();
+}
+
+std::optional<NLJWindow*> NLJOperatorHandler::getWindowByWindowIdentifier(uint64_t windowIdentifier) {
+    for (auto& curWindow : nljWindows) {
+        if (curWindow.getWindowIdentifier() == windowIdentifier) {
+            return &curWindow;
         }
-        return std::pair<uint64_t, uint64_t>();
     }
+    return std::nullopt;
+}
 
-    NLJOperatorHandler::NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft,
-                                           const SchemaPtr &joinSchemaRight, const std::string &joinFieldNameLeft,
-                                           const std::string &joinFieldNameRight, const std::vector<OriginId>& origins)
-                                           : sliceAssigner(windowSize, windowSize),
-                                           watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
-                                           joinSchemaLeft(joinSchemaLeft),
-                                           joinSchemaRight(joinSchemaRight),
-                                           joinFieldNameLeft(joinFieldNameLeft),
-                                           joinFieldNameRight(joinFieldNameRight){}
-
-    void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-        NES_DEBUG("start HashJoinOperatorHandler");
+SchemaPtr NLJOperatorHandler::getSchema(bool isLeftSide) {
+    if (isLeftSide) {
+        return joinSchemaLeft;
+    } else {
+        return joinSchemaRight;
     }
+}
 
-    void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-        NES_DEBUG("stop HashJoinOperatorHandler");
+std::pair<uint64_t, uint64_t> NLJOperatorHandler::getWindowStartEnd(uint64_t windowIdentifier) {
+    const auto& window = getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        return {window.value()->getWindowStart(), window.value()->getWindowEnd()};
     }
+    return std::pair<uint64_t, uint64_t>();
+}
 
-    std::vector<uint64_t> NLJOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber,
-                                                                  OriginId originId) {
-        std::vector<uint64_t> triggerableWindowIdentifiers;
+NLJOperatorHandler::NLJOperatorHandler(size_t windowSize,
+                                       const SchemaPtr& joinSchemaLeft,
+                                       const SchemaPtr& joinSchemaRight,
+                                       const std::string& joinFieldNameLeft,
+                                       const std::string& joinFieldNameRight,
+                                       const std::vector<OriginId>& origins)
+    : sliceAssigner(windowSize, windowSize), watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
+      joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight), joinFieldNameLeft(joinFieldNameLeft),
+      joinFieldNameRight(joinFieldNameRight) {}
 
-        auto newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
-        NES_DEBUG2("newGlobalWatermark {} watermarkTs {} sequenceNumber {} originId {}", newGlobalWatermark,
-                   watermarkTs, sequenceNumber, originId);
-        for (auto& window : nljWindows) {
-            if (window.getWindowEnd() > newGlobalWatermark) {
-                continue;
-            }
+void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
+    NES_DEBUG("start HashJoinOperatorHandler");
+}
 
-            auto expected = NLJWindow::WindowState::BOTH_SIDES_FILLING;
-            if (window.compareExchangeStrong(expected, NLJWindow::WindowState::EMITTED_TO_NLJ_SINK)) {
-                triggerableWindowIdentifiers.emplace_back(window.getWindowIdentifier());
-                NES_DEBUG2("Added window with id {} to the triggerable windows...", window.getWindowIdentifier());
-            }
+void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop HashJoinOperatorHandler"); }
 
+std::vector<uint64_t> NLJOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
+    std::vector<uint64_t> triggerableWindowIdentifiers;
+
+    auto newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
+    NES_DEBUG2("newGlobalWatermark {} watermarkTs {} sequenceNumber {} originId {}",
+               newGlobalWatermark,
+               watermarkTs,
+               sequenceNumber,
+               originId);
+    for (auto& window : nljWindows) {
+        if (window.getWindowEnd() > newGlobalWatermark) {
+            continue;
         }
 
-        return triggerableWindowIdentifiers;
+        auto expected = NLJWindow::WindowState::BOTH_SIDES_FILLING;
+        if (window.compareExchangeStrong(expected, NLJWindow::WindowState::EMITTED_TO_NLJ_SINK)) {
+            triggerableWindowIdentifiers.emplace_back(window.getWindowIdentifier());
+            NES_DEBUG2("Added window with id {} to the triggerable windows...", window.getWindowIdentifier());
+        }
     }
-} // namespace NES::Runtime::Execution::Operators
+
+    return triggerableWindowIdentifiers;
+}
+}// namespace NES::Runtime::Execution::Operators

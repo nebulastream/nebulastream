@@ -48,32 +48,21 @@ size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
     }
 }
 
-uint64_t NLJWindow::getWindowIdentifier() const {
-    return getWindowEnd();
+uint64_t NLJWindow::getWindowIdentifier() const { return getWindowEnd(); }
+
+uint64_t NLJWindow::getWindowStart() const { return windowStart; }
+
+uint64_t NLJWindow::getWindowEnd() const { return windowEnd; }
+
+NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd)
+    : windowState(WindowState::BOTH_SIDES_FILLING), windowStart(windowStart), windowEnd(windowEnd) {}
+
+bool NLJWindow::operator==(const NLJWindow& rhs) const {
+    return windowState == rhs.windowState && leftTuples == rhs.leftTuples && rightTuples == rhs.rightTuples
+        && windowStart == rhs.windowStart && windowEnd == rhs.windowEnd;
 }
 
-uint64_t NLJWindow::getWindowStart() const {
-    return windowStart;
-}
-
-uint64_t NLJWindow::getWindowEnd() const {
-    return windowEnd;
-}
-
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : windowState(WindowState::BOTH_SIDES_FILLING),
-windowStart(windowStart), windowEnd(windowEnd) {}
-
-bool NLJWindow::operator==(const NLJWindow &rhs) const {
-    return windowState == rhs.windowState &&
-           leftTuples == rhs.leftTuples &&
-           rightTuples == rhs.rightTuples &&
-           windowStart == rhs.windowStart &&
-           windowEnd == rhs.windowEnd;
-}
-
-bool NLJWindow::operator!=(const NLJWindow &rhs) const {
-    return !(rhs == *this);
-}
+bool NLJWindow::operator!=(const NLJWindow& rhs) const { return !(rhs == *this); }
 
 bool NLJWindow::compareExchangeStrong(NLJWindow::WindowState expectedState, NLJWindow::WindowState newWindowState) {
     return windowState.compare_exchange_strong(expectedState, newWindowState);
@@ -81,9 +70,9 @@ bool NLJWindow::compareExchangeStrong(NLJWindow::WindowState expectedState, NLJW
 
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "(windowState: " << magic_enum::enum_name(windowState.load())
-                       << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
+    basicOstringstream << "(windowState: " << magic_enum::enum_name(windowState.load()) << " windowStart: " << windowStart
+                       << " windowEnd: " << windowEnd << ")";
     return basicOstringstream.str();
 }
 
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution

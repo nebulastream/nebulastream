@@ -82,7 +82,8 @@ void StreamHashJoinOperatorHandler::createNewWindow(bool isLeftSide) {
 
     auto windowStart = hashJoinWindows.size() * windowSize;
     auto windowEnd = windowStart + windowSize - 1;
-    NES_DEBUG("HashJoinOperatorHandler: create a new window for the stream hash join [" << windowStart << ", " << windowEnd << "]");
+    NES_DEBUG("HashJoinOperatorHandler: create a new window for the stream hash join [" << windowStart << ", " << windowEnd
+                                                                                        << "]");
 
     hashJoinWindows.emplace_back(numberOfWorkerThreads,
                                  counterFinishedBuildingStart,

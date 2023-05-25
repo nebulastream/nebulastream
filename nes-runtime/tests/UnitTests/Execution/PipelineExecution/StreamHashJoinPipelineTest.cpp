@@ -258,12 +258,12 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
 
     auto handlerIndex = 0;
     auto joinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                      /*isLeftSide*/ true,
+                                                                          /*isLeftSide*/ true,
                                                                           joinFieldNameLeft,
                                                                           timeStampField,
                                                                           leftSchema);
     auto joinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                       /*isLeftSide*/ false,
+                                                                           /*isLeftSide*/ false,
                                                                            joinFieldNameRight,
                                                                            timeStampField,
                                                                            rightSchema);
@@ -272,7 +272,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                                                               rightSchema,
                                                                               joinFieldNameLeft,
                                                                               joinFieldNameRight,
-                                                                            numSourcesLeft + numSourcesRight,
+                                                                              numSourcesLeft + numSourcesRight,
                                                                               windowSize,
                                                                               joinSizeInByte);
 

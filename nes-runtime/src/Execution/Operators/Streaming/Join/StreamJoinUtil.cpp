@@ -15,13 +15,13 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <fstream>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Util {
 
@@ -57,8 +57,10 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
     for (auto& fields : rightSchema->fields) {
         retSchema->addField(fields->getName(), fields->getDataType());
     }
-    NES_DEBUG2("Created joinSchema {} from leftSchema {} and rightSchema {}.", retSchema->toString(),
-               leftSchema->toString(), rightSchema->toString());
+    NES_DEBUG2("Created joinSchema {} from leftSchema {} and rightSchema {}.",
+               retSchema->toString(),
+               leftSchema->toString(),
+               rightSchema->toString());
 
     return retSchema;
 }
@@ -204,7 +206,7 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     //verify that only a single char was transmitted
                     if (inputString.size() > 1) {
                         NES_FATAL_ERROR("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field "
-                                                << inputString.c_str());
+                                        << inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -213,17 +215,17 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
                     NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: "
-                                      << inputString << "to tuple buffer");
+                              << inputString << "to tuple buffer");
 
                     auto sizeOfInputField = inputString.size();
                     auto totalSize = sizeOfInputField + sizeof(uint32_t);
                     auto childTupleBuffer = allocateVariableLengthField(bufferManager, totalSize);
 
                     NES_ASSERT(
-                            childTupleBuffer.getBufferSize() >= totalSize,
-                            "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
-                            "sufficient space available. Required space: "
-                                    << totalSize << ", available space: " << childTupleBuffer.getBufferSize());
+                        childTupleBuffer.getBufferSize() >= totalSize,
+                        "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
+                        "sufficient space available. Required space: "
+                            << totalSize << ", available space: " << childTupleBuffer.getBufferSize());
 
                     // write out the length and the variable-sized text to the child buffer
                     (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfInputField;
@@ -242,8 +244,8 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     if (!value) {
                         if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0")) {
                             NES_FATAL_ERROR2(
-                                    "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
-                                    inputString.c_str());
+                                "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
+                                inputString.c_str());
                             throw std::invalid_argument("Value " + inputString + " is not a boolean");
                         }
                     }
@@ -289,8 +291,7 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
     return retVector;
 }
 
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2,
-                            const uint64_t schemaSizeInByte) {
+bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
         NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
@@ -317,7 +318,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
 
         if (!idxFoundInBuffer2) {
             NES_DEBUG(
-                    "Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: " << idxBuffer1);
+                "Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: " << idxBuffer1);
             return false;
         }
     }
@@ -381,6 +382,5 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     }
     return ss.str();
 }
-
 
 }// namespace NES::Runtime::Execution::Util

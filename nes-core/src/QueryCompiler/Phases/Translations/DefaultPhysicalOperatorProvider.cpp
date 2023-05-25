@@ -394,7 +394,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                                                                          joinOperator->getRightInputSchema(),
                                                                          joinFieldNameLeft,
                                                                          joinFieldNameRight,
-                                                                     numSourcesLeft + numSourcesRight,
+                                                                         numSourcesLeft + numSourcesRight,
                                                                          windowSize);
 
         auto leftInputOperator =
@@ -402,12 +402,11 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto rightInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
 
-        auto leftJoinBuildOperator =
-            PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                     joinOperator->getOutputSchema(),
-                                                                     joinOperatorHandler,
-                                                                     JoinBuildSideType::Left,
-                                                                     timeStampFieldNameLeft);
+        auto leftJoinBuildOperator = PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                                              joinOperator->getOutputSchema(),
+                                                                                              joinOperatorHandler,
+                                                                                              JoinBuildSideType::Left,
+                                                                                              timeStampFieldNameLeft);
         auto rightJoinBuildOperator =
             PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                      joinOperator->getOutputSchema(),

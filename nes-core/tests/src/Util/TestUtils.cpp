@@ -14,6 +14,7 @@
 
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
@@ -27,7 +28,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Runtime/BufferManager.hpp>
 
 namespace NES {
 
@@ -647,8 +647,9 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
     return result;
 }
 
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
-                      Runtime::BufferManagerPtr bufferManager) {
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+                                  const SchemaPtr schema,
+                                  Runtime::BufferManagerPtr bufferManager) {
 
     auto retBuffer = bufferManager->getBufferBlocking();
     auto retBufferPtr = retBuffer.getBuffer();

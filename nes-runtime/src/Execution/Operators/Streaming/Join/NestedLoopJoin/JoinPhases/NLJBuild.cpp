@@ -20,13 +20,11 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-
-
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -40,8 +38,12 @@ void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t times
 /**
  * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
  */
-void checkWindowsTriggerProxy(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx,
-                              uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
+void checkWindowsTriggerProxy(void* ptrOpHandler,
+                              void* ptrPipelineCtx,
+                              void* ptrWorkerCtx,
+                              uint64_t watermarkTs,
+                              uint64_t sequenceNumber,
+                              OriginId originId) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
@@ -68,7 +70,8 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto timestampVal = record.read(timeStampField).as<UInt64>();
 
     // Get the memRef to the new entry
-    auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy", insertEntryMemRefProxy,
+    auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy",
+                                              insertEntryMemRefProxy,
                                               operatorHandlerMemRef,
                                               Value<Boolean>(isLeftSide),
                                               timestampVal);
@@ -88,7 +91,8 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // Update the watermark for the nlj operator and trigger windows
-    Nautilus::FunctionCall("checkWindowsTriggerProxy", checkWindowsTriggerProxy,
+    Nautilus::FunctionCall("checkWindowsTriggerProxy",
+                           checkWindowsTriggerProxy,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
                            ctx.getWorkerContext(),
@@ -97,11 +101,12 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                            recordBuffer.getOriginId());
 }
 
-NLJBuild::NLJBuild(uint64_t operatorHandlerIndex, const SchemaPtr &schema, const std::string &joinFieldName,
-                   const std::string &timeStampField, bool isLeftSide) : operatorHandlerIndex(operatorHandlerIndex),
-                                                                         schema(schema),
-                                                                         joinFieldName(joinFieldName),
-                                                                         timeStampField(timeStampField),
-                                                                         isLeftSide(isLeftSide) {}
+NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
+                   const SchemaPtr& schema,
+                   const std::string& joinFieldName,
+                   const std::string& timeStampField,
+                   bool isLeftSide)
+    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
+      isLeftSide(isLeftSide) {}
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

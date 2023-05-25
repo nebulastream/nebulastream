@@ -16,8 +16,8 @@
 #define NES_NLJBUILD_HPP
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class NLJBuild : public ExecutableOperator {
 
-public:
+  public:
     /**
      * @brief Constructor for a NLJBuild
      * @param operatorHandlerIndex
@@ -37,30 +37,33 @@ public:
      * @param timeStampField
      * @param isLeftSide
      */
-    NLJBuild(uint64_t operatorHandlerIndex, const SchemaPtr &schema, const std::string &joinFieldName,
-             const std::string &timeStampField, bool isLeftSide);
+    NLJBuild(uint64_t operatorHandlerIndex,
+             const SchemaPtr& schema,
+             const std::string& joinFieldName,
+             const std::string& timeStampField,
+             bool isLeftSide);
 
     /**
      * @brief Stores the record in the corresponding window
      * @param ctx
      * @param record
      */
-    void execute(ExecutionContext &ctx, Record &record) const override;
+    void execute(ExecutionContext& ctx, Record& record) const override;
 
     /**
      * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
      * @param ctx
      * @param recordBuffer
      */
-    void close(ExecutionContext &ctx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-private:
+  private:
     const uint64_t operatorHandlerIndex;
     SchemaPtr schema;
     std::string joinFieldName;
     std::string timeStampField;
     const bool isLeftSide;
 };
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif //NES_NLJBUILD_HPP
+#endif//NES_NLJBUILD_HPP

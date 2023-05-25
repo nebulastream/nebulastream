@@ -23,9 +23,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical hash stream join sink operator and gets translated to a HashJoinSink operator
  */
-class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator,
-                                     public PhysicalBinaryOperator,
-                                     public AbstractScanOperator {
+class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
 
   public:
     /**

@@ -28,9 +28,8 @@ namespace NES::Runtime::Execution {
  * Later on this class can be reused for a slice.
  */
 class NLJWindow {
-public:
-
-    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_NLJ_SINK};
+  public:
+    enum class WindowState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_NLJ_SINK };
 
     /**
      * @brief Constructor for creating a window
@@ -44,14 +43,14 @@ public:
      * @param rhs
      * @return Boolean
      */
-    bool operator==(const NLJWindow &rhs) const;
+    bool operator==(const NLJWindow& rhs) const;
 
     /**
      * @brief Compares if two windows are NOT equal
      * @param rhs
      * @return Boolean
      */
-    bool operator!=(const NLJWindow &rhs) const;
+    bool operator!=(const NLJWindow& rhs) const;
 
     /**
      * @brief Makes sure that enough space is available for writing the tuple. This method returns a pointer to the start
@@ -119,6 +118,6 @@ public:
     uint64_t windowStart;
     uint64_t windowEnd;
 };
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution
 
-#endif //NES_NLJWINDOW_HPP
+#endif//NES_NLJWINDOW_HPP

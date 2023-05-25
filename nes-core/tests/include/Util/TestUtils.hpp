@@ -23,6 +23,7 @@
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
@@ -32,7 +33,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
@@ -618,7 +618,8 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
  * @param bufferManager
  * @return merged TupleBuffer
  */
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+                                  const SchemaPtr schema,
                                   Runtime::BufferManagerPtr bufferManager);
 
 };// namespace TestUtils
