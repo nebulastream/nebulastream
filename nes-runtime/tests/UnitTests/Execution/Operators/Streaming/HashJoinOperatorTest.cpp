@@ -78,16 +78,16 @@ struct HashJoinBuildHelper {
     bool isLeftSide;
 
     HashJoinBuildHelper(Operators::StreamHashJoinBuildPtr hashJoinBuild,
-                          const std::string& joinFieldName,
-                          BufferManagerPtr bufferManager,
-                          SchemaPtr schema,
-                          const std::string& timeStampField,
-                          HashJoinOperatorTest* hashJoinOperatorTest,
-                          bool isLeftSide)
+                        const std::string& joinFieldName,
+                        BufferManagerPtr bufferManager,
+                        SchemaPtr schema,
+                        const std::string& timeStampField,
+                        HashJoinOperatorTest* hashJoinOperatorTest,
+                        bool isLeftSide)
         : pageSize(CHUNK_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
-          noWorkerThreads(1), totalNumSources(2), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
-          hashJoinBuild(hashJoinBuild), joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema),
-          timeStampField(timeStampField), hashJoinOperatorTest(hashJoinOperatorTest), isLeftSide(isLeftSide) {}
+          noWorkerThreads(1), totalNumSources(2), joinSizeInByte(1 * 1024 * 1024), windowSize(1000), hashJoinBuild(hashJoinBuild),
+          joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema), timeStampField(timeStampField),
+          hashJoinOperatorTest(hashJoinOperatorTest), isLeftSide(isLeftSide) {}
 };
 
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
@@ -133,7 +133,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = Util::murmurHash(joinKey);
         auto hashTable =
-                hashJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
+            hashJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 
         bool correctlyInserted = false;
@@ -176,12 +176,12 @@ struct HashJoinSinkHelper {
     HashJoinOperatorTest* hashJoinOperatorTest;
 
     HashJoinSinkHelper(const std::string& joinFieldNameLeft,
-                         const std::string& joinFieldNameRight,
-                         BufferManagerPtr bufferManager,
-                         SchemaPtr leftSchema,
-                         SchemaPtr rightSchema,
-                         const std::string& timeStampField,
-                         HashJoinOperatorTest* hashJoinOperatorTest)
+                       const std::string& joinFieldNameRight,
+                       BufferManagerPtr bufferManager,
+                       SchemaPtr leftSchema,
+                       SchemaPtr rightSchema,
+                       const std::string& timeStampField,
+                       HashJoinOperatorTest* hashJoinOperatorTest)
         : pageSize(CHUNK_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
           noWorkerThreads(1), numSourcesLeft(1), numSourcesRight(1), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
           joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager),
@@ -233,7 +233,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                                          hashJoinSinkHelper.rightSchema,
                                                          hashJoinSinkHelper.joinFieldNameLeft,
                                                          hashJoinSinkHelper.joinFieldNameRight,
-                                                   hashJoinSinkHelper.numSourcesLeft + hashJoinSinkHelper.numSourcesRight,
+                                                         hashJoinSinkHelper.numSourcesLeft + hashJoinSinkHelper.numSourcesRight,
                                                          hashJoinSinkHelper.windowSize,
                                                          hashJoinSinkHelper.joinSizeInByte,
                                                          hashJoinSinkHelper.pageSize,
@@ -258,12 +258,12 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
     auto handlerIndex = 0UL;
     auto hashJoinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                            /*isLeftSide*/ true,
+                                                                              /*isLeftSide*/ true,
                                                                               hashJoinSinkHelper.joinFieldNameLeft,
                                                                               hashJoinSinkHelper.timeStampField,
                                                                               hashJoinSinkHelper.leftSchema);
     auto hashJoinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                             /*isLeftSide*/ false,
+                                                                               /*isLeftSide*/ false,
                                                                                hashJoinSinkHelper.joinFieldNameRight,
                                                                                hashJoinSinkHelper.timeStampField,
                                                                                hashJoinSinkHelper.rightSchema);
@@ -315,7 +315,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
     // Delete all buffers that have been emitted from the build phase
     hashJoinOperatorTest->emittedBuffers.erase(hashJoinOperatorTest->emittedBuffers.begin(),
-                                                 hashJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
+                                               hashJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
     auto joinSchema = Util::createJoinSchema(hashJoinSinkHelper.leftSchema,
                                              hashJoinSinkHelper.rightSchema,
@@ -494,8 +494,11 @@ TEST_F(HashJoinOperatorTest, joinBuildTestRight) {
     const auto isLeftSide = false;
 
     auto handlerIndex = 0;
-    auto hashJoinBuild =
-        std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight, timeStampField, rightSchema);
+    auto hashJoinBuild = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
+                                                                          isLeftSide,
+                                                                          joinFieldNameRight,
+                                                                          timeStampField,
+                                                                          rightSchema);
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
 
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));

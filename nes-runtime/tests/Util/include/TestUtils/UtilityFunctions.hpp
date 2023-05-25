@@ -94,7 +94,8 @@ void writeNautilusRecord(uint64_t recordIndex,
  * @param bufferManager
  * @return merged TupleBuffer
  */
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema,
+Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+                                  const SchemaPtr schema,
                                   Runtime::BufferManagerPtr bufferManager) {
 
     auto retBuffer = bufferManager->getBufferBlocking();

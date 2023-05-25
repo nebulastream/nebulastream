@@ -15,10 +15,10 @@
 #define NES_NLJOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
-#include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <list>
 #include <optional>
 
@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Operators {
  * This class provides the two join phases (NLJBuild and NLJSink) with methods for performing a nested loop join.
  */
 class NLJOperatorHandler : public OperatorHandler {
-public:
+  public:
     /**
      * @brief Constructor for a NLJOperatorHandler
      * @param windowSize
@@ -38,8 +38,11 @@ public:
      * @param joinFieldNameRight
      * @param origins
      */
-    NLJOperatorHandler(size_t windowSize, const SchemaPtr &joinSchemaLeft, const SchemaPtr &joinSchemaRight,
-                       const std::string &joinFieldNameLeft, const std::string &joinFieldNameRight,
+    NLJOperatorHandler(size_t windowSize,
+                       const SchemaPtr& joinSchemaLeft,
+                       const SchemaPtr& joinSchemaRight,
+                       const std::string& joinFieldNameLeft,
+                       const std::string& joinFieldNameRight,
                        const std::vector<OriginId>& origins);
 
     /**
@@ -92,7 +95,8 @@ public:
      * @param stateManager
      * @param localStateVariableId
      */
-    void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager,
+    void start(PipelineExecutionContextPtr pipelineExecutionContext,
+               StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
     /**
@@ -112,7 +116,7 @@ public:
      */
     std::vector<uint64_t> checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);
 
-private:
+  private:
     /**
      * @brief Retrieves the window by a window identifier. If no window exists for the windowIdentifier, the optional has no value.
      * @param windowIdentifier
@@ -142,6 +146,6 @@ private:
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
 };
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
-#endif //NES_NLJOPERATORHANDLER_HPP
+#endif//NES_NLJOPERATORHANDLER_HPP

@@ -63,11 +63,7 @@ std::string Record::toString() {
     return tmpStr;
 }
 
-    bool Record::operator==(const Record &rhs) const {
-        return fields == rhs.fields;
-    }
+bool Record::operator==(const Record& rhs) const { return fields == rhs.fields; }
 
-    bool Record::operator!=(const Record &rhs) const {
-        return !(rhs == *this);
-    }
+bool Record::operator!=(const Record& rhs) const { return !(rhs == *this); }
 }// namespace NES::Nautilus

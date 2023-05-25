@@ -19,13 +19,13 @@
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
+#include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <sys/mman.h>
 #include <vector>
-#include <functional>
-#include <filesystem>
-#include <set>
 
 namespace NES {
 class Schema;
@@ -207,7 +207,6 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
  * @return a full string stream as string
  */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
-
 
 }// namespace Util
 }// namespace NES::Runtime::Execution
