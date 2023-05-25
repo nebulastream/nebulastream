@@ -21,7 +21,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
