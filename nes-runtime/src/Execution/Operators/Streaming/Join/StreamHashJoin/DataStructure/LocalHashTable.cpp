@@ -15,26 +15,23 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
 LocalHashTable::LocalHashTable(size_t sizeOfRecord,
                                size_t numPartitions,
                                FixedPagesAllocator& fixedPagesAllocator,
-                               size_t pageSize,
-                               size_t preAllocPageSizeCnt)
+                               size_t pageSize)
     : mask(numPartitions - 1) {
 
     for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(
-            std::make_unique<FixedPagesLinkedList>(fixedPagesAllocator, sizeOfRecord, pageSize, preAllocPageSizeCnt));
+        buckets.emplace_back(std::make_unique<FixedPagesLinkedList>(fixedPagesAllocator, sizeOfRecord, pageSize));
     }
 }
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
-    auto hashedKey = ::NES::Util::murmurHash(key);
-    NES_TRACE("into bucket=" << getBucketPos(hashedKey));
+    auto hashedKey = NES::Util::murmurHash(key);
     return buckets[getBucketPos(hashedKey)]->append(hashedKey);
 }
 
@@ -47,15 +44,8 @@ size_t LocalHashTable::getBucketPos(uint64_t hash) const {
 
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) {
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
-    return buckets[bucketPos].get();
-}
 
-void LocalHashTable::printStatistics() {
-    size_t cnt = 0;
-    for (auto& bucket : buckets) {
-        NES_DEBUG("BUCKET " << cnt++);
-        bucket->printStatistics();
-    }
+    return buckets[bucketPos].get();
 }
 
 }// namespace NES::Runtime::Execution::Operators

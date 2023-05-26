@@ -19,8 +19,8 @@
 #include <Common/Identifiers.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Common.hpp>
-#include <Util/Core.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <chrono>
 
