@@ -148,9 +148,6 @@ void CompressionTest::verifyDecompressed(DynamicTupleBuffer& orig, DynamicTupleB
     auto contentCompressed = reinterpret_cast<const char*>(decompressed.getBuffer().getBuffer());
     bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferManager->getBufferSize()) == 0;
     ASSERT_TRUE(contentIsEqual);
-    for (size_t i = 0; i < orig.getNumberOfTuples(); i++) {
-        ASSERT_EQ(orig[i][0].read<uint8_t>(), decompressed[i][0].read<uint8_t>());
-    }
 }
 
 // ====================================================================================================
@@ -543,7 +540,7 @@ TEST_F(CompressionTest, snappyColumnLayoutVerticalMultiColumnUint8) {
 }
 
 // ====================================================================================================
-// BINARY_RLE
+// rle
 // ====================================================================================================
 // ===================================
 // Horizontal
@@ -557,7 +554,7 @@ TEST_F(CompressionTest, rleRowLayoutHorizontalSingleColumnUint8) {
     fillBufferSingleColumn(buffer);
 
     // compress
-    buffer.compress(CompressionAlgorithm::BINARY_RLE);
+    buffer.compress(CompressionAlgorithm::RLE);
     verifyCompressed(bufferOrig, buffer);
 
     //decompress
@@ -575,7 +572,7 @@ TEST_F(CompressionTest, rleRowLayoutHorizontalMultiColumnUint8) {
     fillBufferMultiColumnRle(buffer);
 
     // compress
-    buffer.compress(CompressionAlgorithm::BINARY_RLE);
+    buffer.compress(CompressionAlgorithm::RLE);
     verifyCompressed(bufferOrig, buffer);
 
     //decompress
@@ -592,7 +589,7 @@ TEST_F(CompressionTest, rleColumnLayoutHorizontalSingleColumnUint8) {
     fillBufferSingleColumn(buffer);
 
     // compress
-    buffer.compress(CompressionMode::HORIZONTAL, CompressionAlgorithm::BINARY_RLE);
+    buffer.compress(CompressionMode::HORIZONTAL, CompressionAlgorithm::RLE);
     verifyCompressed(bufferOrig, buffer);
 
     //decompress
@@ -601,6 +598,137 @@ TEST_F(CompressionTest, rleColumnLayoutHorizontalSingleColumnUint8) {
 }
 
 TEST_F(CompressionTest, rleColumnLayoutHorizontalMultiColumnUint8) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionMode::HORIZONTAL, CompressionAlgorithm::RLE);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+// ===================================
+// Vertical
+// ===================================
+TEST_F(CompressionTest, rleRowLayoutVertical) {
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
+
+    // compress
+    try {
+        buffer.compress(CompressionMode::VERTICAL, CompressionAlgorithm::RLE);
+    } catch (Exceptions::RuntimeException const& err) {
+        using ::testing::HasSubstr;
+        EXPECT_THAT(err.what(), HasSubstr("Vertical compression cannot be performed on row layout."));
+    } catch (...) {
+        FAIL();
+    }
+}
+
+TEST_F(CompressionTest, rleColumnLayoutVerticalSingleColumnUint8) {
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::RLE);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, rleColumnLayoutVerticalMultiColumnUint8) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumn(buffer);
+
+    // compress
+    buffer.compress({CompressionAlgorithm::RLE, CompressionAlgorithm::RLE, CompressionAlgorithm::RLE});
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+// ====================================================================================================
+// BINARY_RLE
+// ====================================================================================================
+// ===================================
+// Horizontal
+// ===================================
+TEST_F(CompressionTest, binaryRleRowLayoutHorizontalSingleColumnUint8) {
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::BINARY_RLE);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, binaryRleRowLayoutHorizontalMultiColumnUint8) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumnRle(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
+    fillBufferMultiColumnRle(buffer);
+
+    // compress
+    buffer.compress(CompressionAlgorithm::BINARY_RLE);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, binaryRleColumnLayoutHorizontalSingleColumnUint8) {
+    SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
+    ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(bufferOrig);
+    auto buffer = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
+    fillBufferSingleColumn(buffer);
+
+    // compress
+    buffer.compress(CompressionMode::HORIZONTAL, CompressionAlgorithm::BINARY_RLE);
+    verifyCompressed(bufferOrig, buffer);
+
+    //decompress
+    buffer.decompress();
+    verifyDecompressed(bufferOrig, buffer);
+}
+
+TEST_F(CompressionTest, binaryRleColumnLayoutHorizontalMultiColumnUint8) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
     ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
@@ -621,7 +749,7 @@ TEST_F(CompressionTest, rleColumnLayoutHorizontalMultiColumnUint8) {
 // ===================================
 // Vertical
 // ===================================
-TEST_F(CompressionTest, rleRowLayoutVerticalSingleColumnUint8) {
+TEST_F(CompressionTest, binaryRleRowLayoutVertical) {
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
     RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
     auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());
@@ -638,7 +766,7 @@ TEST_F(CompressionTest, rleRowLayoutVerticalSingleColumnUint8) {
     }
 }
 
-TEST_F(CompressionTest, rleColumnLayoutVerticalSingleColumnUint8) {
+TEST_F(CompressionTest, binaryRleColumnLayoutVerticalSingleColumnUint8) {
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
     ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
     auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, bufferManager->getBufferBlocking());
@@ -655,7 +783,7 @@ TEST_F(CompressionTest, rleColumnLayoutVerticalSingleColumnUint8) {
     verifyDecompressed(bufferOrig, buffer);
 }
 
-TEST_F(CompressionTest, rleColumnLayoutVerticalMultiColumnUint8) {
+TEST_F(CompressionTest, binaryRleColumnLayoutVerticalMultiColumnUint8) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
     ColumnLayoutPtr columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
@@ -752,7 +880,7 @@ TEST_F(CompressionTest, fsstColumnLayoutHorizontalMultiColumnUint8) {
 // ===================================
 // Vertical
 // ===================================
-TEST_F(CompressionTest, fsstRowLayoutVerticalSingleColumnUint8) {
+TEST_F(CompressionTest, fsstRowLayoutVertical) {
     SchemaPtr schema = Schema::create()->addField("t1", BasicType::UINT8);
     RowLayoutPtr rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
     auto buffer = CompressedDynamicTupleBuffer(rowLayout, bufferManager->getBufferBlocking());

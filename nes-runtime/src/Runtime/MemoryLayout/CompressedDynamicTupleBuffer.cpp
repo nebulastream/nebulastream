@@ -215,6 +215,7 @@ void CompressedDynamicTupleBuffer::compressHorizontal(const CompressionAlgorithm
             case CompressionAlgorithm::NONE: break;
             case CompressionAlgorithm::LZ4: compressLz4(0, totalOriginalSize); break;
             case CompressionAlgorithm::SNAPPY: compressSnappy(0, totalOriginalSize); break;
+            case CompressionAlgorithm::RLE: compressRle(0, totalOriginalSize); break;
             case CompressionAlgorithm::BINARY_RLE: compressBinaryRle(0, totalOriginalSize); break;
             case CompressionAlgorithm::FSST: {
                 compressFsst1(0, totalOriginalSize);
@@ -241,6 +242,7 @@ void CompressedDynamicTupleBuffer::compressVertical(const std::vector<Compressio
                 case CompressionAlgorithm::NONE: break;
                 case CompressionAlgorithm::LZ4: compressLz4(offsets[currColumn], end); break;
                 case CompressionAlgorithm::SNAPPY: compressSnappy(offsets[currColumn], end); break;
+                case CompressionAlgorithm::RLE: compressRle(offsets[currColumn], end); break;
                 case CompressionAlgorithm::BINARY_RLE: compressBinaryRle(offsets[currColumn], end); break;
                 case CompressionAlgorithm::FSST: {
                     // FSST is a special case, since it compresses over all columns simultaneously
@@ -274,6 +276,7 @@ void CompressedDynamicTupleBuffer::decompressHorizontal() {
         case CompressionAlgorithm::NONE: break;
         case CompressionAlgorithm::LZ4: decompressLz4(0, totalOriginalSize); break;
         case CompressionAlgorithm::SNAPPY: decompressSnappy(0, totalOriginalSize); break;
+        case CompressionAlgorithm::RLE: decompressRle(0, totalOriginalSize); break;
         case CompressionAlgorithm::BINARY_RLE: decompressBinaryRle(0, totalOriginalSize); break;
         case CompressionAlgorithm::FSST: {
             decompressFsst1(0, totalOriginalSize);
@@ -313,6 +316,7 @@ void CompressedDynamicTupleBuffer::decompressVertical() {
                 }
                 break;
             }
+            case CompressionAlgorithm::RLE: decompressRle(offsets[currColumn], dstSize); break;
             case CompressionAlgorithm::BINARY_RLE: decompressBinaryRle(offsets[currColumn], dstSize); break;
             case CompressionAlgorithm::SPRINTZ: decompressSprintz(offsets[currColumn], dstSize); break;
         }
@@ -436,15 +440,112 @@ void CompressedDynamicTupleBuffer::decompressSnappy(const size_t start, size_t d
 // ===================================
 // BINARY_RLE
 // ===================================
+namespace rle {
+static size_t compress(const uint8_t* src, size_t srcLen, uint8_t* out) {
+    // TODO refactor redundant writes
+    uint8_t value = src[0];
+    uint8_t count = 1;
+    size_t compressedSize = 0;
+    for (size_t i = 1; i < srcLen; i++) {
+        if (src[i] == value) {
+            count++;
+            if (count == 255) {
+                memcpy(out, &count, 1);
+                out++;
+                memcpy(out, &value, 1);
+                out++;
+                compressedSize += 2;
+                count = 0;
+            }
+        } else {
+            memcpy(out, &count, 1);
+            out++;
+            memcpy(out, &value, 1);
+            out++;
+            compressedSize += 2;
+            value = src[i];
+            count = 1;
+        }
+    }
+    memcpy(out, &count, 1);
+    out++;
+    memcpy(out, &value, 1);
+    compressedSize += 2;
+    return compressedSize;
+}
+
+static size_t decompress(const uint8_t* src, size_t srcLen, uint8_t* out) {
+    uint8_t count = src[0];
+    uint8_t value = src[1];
+    size_t decompressedSize = 0;
+    size_t i = 0;
+    while (i < srcLen) {
+        for (uint8_t j = 0; j < count; j++) {
+            memcpy(out, &value, 1);
+            out++;
+            decompressedSize++;
+        }
+        i += 2;
+        count = src[i];
+        value = src[i + 1];
+    }
+    return decompressedSize;
+}
+}// namespace rle
+
+void CompressedDynamicTupleBuffer::compressRle(size_t start, size_t end) {
+    // TODO 'srcSize', not 'end'
+    uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
+    size_t srcSize = end - start;
+    size_t compressedSize = rle::compress(baseSrcPointer, srcSize, baseDstPointer);
+    if (compressedSize > srcSize) {
+        // TODO do not compress and return original buffer
+        NES_THROW_RUNTIME_ERROR("Binary rle compression failed: compressed size ("
+                                << compressedSize << ") is larger than original size (" << srcSize << ").");
+    }
+    clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
+    memcpy(baseSrcPointer, baseDstPointer, compressedSize);
+    compressedSizes[currColumn] = compressedSize;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::RLE;
+}
+
+void CompressedDynamicTupleBuffer::decompressRle(size_t start, size_t dstSize) {
+    uint8_t* decompressed = (uint8_t*) calloc(1, dstSize);
+    size_t decompressedSize = rle::decompress(getBuffer().getBuffer() + start, compressedSizes[currColumn], decompressed);
+    if (decompressedSize != dstSize)
+        NES_THROW_RUNTIME_ERROR("rle decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+                                                                                << dstSize << ").");
+    const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
+    if (rowLayout != nullptr) {
+        memcpy(baseDstPointer, decompressed, decompressedSize);
+    } else {
+        const auto origOffsets = getOffsets(getMemoryLayout());
+        if (compressionMode == CompressionMode::VERTICAL) {
+            memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
+        } else {
+            for (size_t i = 0; i < offsets.size(); i++) {
+                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
+            }
+        }
+    }
+    compressedSizes[currColumn] = 0;
+    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
+    free(decompressed);
+}
+
+// ===================================
+// BINARY_RLE
+// ===================================
 void CompressedDynamicTupleBuffer::compressBinaryRle(size_t start, size_t end) {
     uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
     const int srcSize = int(end - start);
     const size_t dstSize = std::ceil(1.16 * (double) srcSize);// as specified in docs
-    uint8_t* compressedEnd = pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer);
+    uint8_t* compressedEnd = pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer); // TODO always write to same position
     const size_t compressedSize = std::distance(baseDstPointer, compressedEnd);
     if (compressedSize > (size_t) srcSize) {
         // TODO do not compress and return original buffer
-        NES_THROW_RUNTIME_ERROR("Binary RLE compression failed: compressed size ("
+        NES_THROW_RUNTIME_ERROR("Binary rle compression failed: compressed size ("
                                 << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
     clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
@@ -465,8 +566,8 @@ void CompressedDynamicTupleBuffer::decompressBinaryRle(size_t start, size_t dstS
         dstSize = totalOriginalSize;
     }
     if ((size_t) decompressedSize != dstSize)
-        NES_THROW_RUNTIME_ERROR("Binary RLE decompression failed: decompressed size (" << decompressedSize << ") != original size ("
-                                                                                << dstSize << ").");
+        NES_THROW_RUNTIME_ERROR("Binary rle decompression failed: decompressed size ("
+                                << decompressedSize << ") != original size (" << dstSize << ").");
     const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
     if (rowLayout != nullptr) {
         memcpy(baseDstPointer, decompressed, decompressedSize);

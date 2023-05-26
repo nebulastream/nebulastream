@@ -24,7 +24,7 @@ limitations under the License.
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, BINARY_RLE, FSST, SPRINTZ };
+enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, RLE, BINARY_RLE, FSST, SPRINTZ };
 enum class CompressionMode { HORIZONTAL, VERTICAL };
 
 const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
@@ -32,7 +32,8 @@ const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
         case CompressionAlgorithm::NONE: return "None";
         case CompressionAlgorithm::LZ4: return "LZ4";
         case CompressionAlgorithm::SNAPPY: return "Snappy";
-        case CompressionAlgorithm::BINARY_RLE: return "BINARY RLE";
+        case CompressionAlgorithm::RLE: return "RLE";
+        case CompressionAlgorithm::BINARY_RLE: return "Binary RLE";
         case CompressionAlgorithm::FSST: return "FSST";
         case CompressionAlgorithm::SPRINTZ: return "Sprintz";
     }
@@ -131,6 +132,8 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     void decompressLz4(size_t start, size_t dstSize);
     void compressSnappy(size_t start, size_t end);
     void decompressSnappy(size_t start, size_t dstSize);
+    void compressRle(size_t start, size_t end);
+    void decompressRle(size_t start, size_t dstSize);
     void compressBinaryRle(size_t start, size_t end);
     void decompressBinaryRle(size_t start, size_t dstSize);
     void compressFsst1(size_t start, size_t dstSize);
