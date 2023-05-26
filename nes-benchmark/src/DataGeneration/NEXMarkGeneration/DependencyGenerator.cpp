@@ -35,7 +35,7 @@ DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSi
     auto auctionSchemaSize = OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes();
     auto bidSchemaSize = BidGenerator().getSchema()->getSchemaSizeInBytes();
     auto totalBufferSizeInBytes = numberOfBuffers * bufferSize;
-    uint64_t numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10 + auctionSchemaSize + 10 * bidSchemaSize);
+    numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10 + auctionSchemaSize + 10 * bidSchemaSize);
     NES_ASSERT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
 
     // first generate some persons and open auctions that can be bid on
@@ -151,5 +151,7 @@ std::vector<uint64_t>& DependencyGenerator::getPersons() { return persons; }
 std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& DependencyGenerator::getAuctions() { return auctions; }
 
 std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& DependencyGenerator::getBids() { return bids; }
+
+uint64_t DependencyGenerator::getNumberOfRecords(){ return numberOfRecords; }
 
 } // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration

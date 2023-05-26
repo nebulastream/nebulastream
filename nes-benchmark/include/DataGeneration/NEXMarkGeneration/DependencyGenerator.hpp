@@ -50,6 +50,12 @@ class DependencyGenerator {
      */
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getBids();
 
+    /**
+     * @brief getter for numberOfRecords
+     * @return numberOfRecords
+     */
+    uint64_t getNumberOfRecords();
+
   private:
     /**
      * @brief constructor of a DependencyGenerator
@@ -105,6 +111,8 @@ class DependencyGenerator {
      * @brief a bids element consists of auction id, bidder id, new bid and timestamp
      */
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>> bids;
+
+    uint64_t numberOfRecords;
 };
 } // namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
