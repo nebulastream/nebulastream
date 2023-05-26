@@ -26,10 +26,11 @@ class DependencyGenerator {
   public:
     /**
      * @brief returns the single instance of the class. Calls the constructor if needed
-     * @param numberOfRecords
+     * @param numberOfBuffers
+     * @param bufferSize
      * @return DependencyGenerator instance
      */
-    static DependencyGenerator& getInstance(uint64_t numberOfRecords);
+    static DependencyGenerator& getInstance(size_t numberOfBuffers, size_t bufferSize);
 
     /**
      * @brief getter for persons vector
@@ -52,9 +53,10 @@ class DependencyGenerator {
   private:
     /**
      * @brief constructor of a DependencyGenerator
-     * @param numberOfRecords
+     * @param numberOfBuffers
+     * @param bufferSize
      */
-    explicit DependencyGenerator(uint64_t numberOfRecords);
+    explicit DependencyGenerator(size_t numberOfBuffers, size_t bufferSize);
 
     /**
      * @brief copy constructor and move assignment operator are deleted to prevent creation of multiple instances of the DependencyGenerator.

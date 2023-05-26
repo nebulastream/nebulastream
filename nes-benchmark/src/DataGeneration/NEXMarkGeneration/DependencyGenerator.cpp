@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
+#include "Util/Logger/Logger.hpp"
+#include <DataGeneration/NEXMarkGeneration/BidGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-DependencyGenerator::DependencyGenerator(uint64_t numberOfRecords) {
+DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSize) {
     // using a seed to generate a predictable sequence of values for deterministic behavior
     std::mt19937 generator(103984);
     std::uniform_int_distribution<uint64_t> uniformPersonGenerationDistribution(0, 9);
@@ -24,12 +28,21 @@ DependencyGenerator::DependencyGenerator(uint64_t numberOfRecords) {
     std::uniform_int_distribution<uint64_t> uniformBidGenerationDistribution(0, 20);
 
     auto timeInSec = 0UL;
+    auto recordsInit = 50;
+
+    // calculate how many records to create
+    auto personSchemaSize = PersonGenerator().getSchema()->getSchemaSizeInBytes();
+    auto auctionSchemaSize = OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes();
+    auto bidSchemaSize = BidGenerator().getSchema()->getSchemaSizeInBytes();
+    auto totalBufferSizeInBytes = numberOfBuffers * bufferSize;
+    uint64_t numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10 + auctionSchemaSize + 10 * bidSchemaSize);
+    NES_ASSERT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
 
     // first generate some persons and open auctions that can be bid on
-    for (auto i = 0; i < 50; ++i) {
+    for (auto i = 0; i < recordsInit; ++i) {
         generatePersonDependencies(timeInSec, 1);
     }
-    for (auto i = 0; i < 50; ++i) {
+    for (auto i = 0; i < recordsInit; ++i) {
         generateOpenAuctionDependencies(timeInSec, 1);
     }
 
@@ -50,9 +63,9 @@ DependencyGenerator::DependencyGenerator(uint64_t numberOfRecords) {
     }
 }
 
-DependencyGenerator& DependencyGenerator::getInstance(uint64_t numberOfRecords) {
+DependencyGenerator& DependencyGenerator::getInstance(size_t numberOfBuffers, size_t bufferSize) {
     // C++11 guarantees that static local variables are initialized in a thread-safe manner
-    static DependencyGenerator instance(numberOfRecords);
+    static DependencyGenerator instance(numberOfBuffers, bufferSize);
     return instance;
 }
 
@@ -69,6 +82,7 @@ void DependencyGenerator::generatePersonDependencies(uint64_t& curTime, uint64_t
 void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uint64_t numOpenAuctions) {
     curTime = incrementTime(curTime);
     auto copyOfCurTime = curTime;
+
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
 
@@ -95,6 +109,7 @@ void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uin
 void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t numBids) {
     curTime = incrementTime(curTime);
     auto copyOfCurTime = curTime;
+
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
 
