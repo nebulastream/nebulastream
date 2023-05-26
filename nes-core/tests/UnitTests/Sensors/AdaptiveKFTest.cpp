@@ -75,7 +75,7 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        NES_INFO2("Tear down AdaptiveKFTest class.");
+        NES_INFO("Tear down AdaptiveKFTest class.");
         NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
         Testing::NESBaseTest::TearDown();
