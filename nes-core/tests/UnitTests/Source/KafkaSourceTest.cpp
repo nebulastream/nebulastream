@@ -54,12 +54,12 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KAFKASourceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("KAFKASOURCETEST::SetUpTestCase()");
+        NES_DEBUG2("KAFKASOURCETEST::SetUpTestCase()");
     }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
+        NES_DEBUG2("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         kafkaSourceType = KafkaSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
@@ -72,11 +72,11 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         Testing::NESBaseTest::TearDown();
-        NES_DEBUG("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
+        NES_DEBUG2("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("KAFKASOURCETEST::TearDownTestCases() Tear down KAFKASourceTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("KAFKASOURCETEST::TearDownTestCases() Tear down KAFKASourceTest test class."); }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 

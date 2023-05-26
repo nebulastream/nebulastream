@@ -63,7 +63,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
@@ -114,7 +114,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -170,7 +170,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);

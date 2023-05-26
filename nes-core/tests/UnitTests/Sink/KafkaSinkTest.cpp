@@ -57,13 +57,13 @@ class KafkaSinkTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KafkaSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("KafkaSinkTest::SetUpTestCase()");
+        NES_DEBUG2("KafkaSinkTest::SetUpTestCase()");
     }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
-        NES_DEBUG("Setup KafkaSinkTest test case.");
+        NES_DEBUG2("Setup KafkaSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
@@ -79,12 +79,12 @@ class KafkaSinkTest : public Testing::NESBaseTest {
     void TearDown() override {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
-        NES_DEBUG("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
+        NES_DEBUG2("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
         Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("KafkaSinkTest::TearDownTestCases() Tear down KafkaSinkTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("KafkaSinkTest::TearDownTestCases() Tear down KafkaSinkTest test class."); }
 
     static NES::Runtime::TupleBuffer createSimpleBuffer(uint64_t bufferSize,
                                                         const std::shared_ptr<Runtime::BufferManager>& buffMgr) {
@@ -127,7 +127,7 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
 
     EXPECT_EQ(kafkaSink->toString(), expected);
 
-    NES_DEBUG("kafka string=" << kafkaSink->toString());
+    NES_DEBUG2("kafka string={}", kafkaSink->toString());
 }
 
 #ifdef RUNNING_KAFKA_INSTANCE
@@ -158,18 +158,18 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
 
     // Print the assigned partitions on assignment
     consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-        NES_DEBUG("Got assigned: " << partitions);
+        NES_DEBUG2("Got assigned: {}", partitions);
     });
 
     // Print the revoked partitions on revocation
     consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-        NES_DEBUG("Got revoked: " << partitions);
+        NES_DEBUG2("Got revoked: {}", partitions);
     });
 
     // Subscribe to the topic
     consumer.subscribe({topic});
 
-    NES_DEBUG("Consuming messages from topic " << topic);
+    NES_DEBUG2("Consuming messages from topic {}", topic);
 
     //write buffer
     auto tuple_bufferJ = kafkaSink->writeData(inputBuffer, workerContext);
@@ -178,7 +178,7 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
     bool pollSuccessFull = false;
     size_t cnt = 0;
     while (!pollSuccessFull) {
-        NES_DEBUG("run =" << cnt++);
+        NES_DEBUG2("run ={}", cnt++);
         if (cnt > 10) {
             break;
         }
@@ -188,15 +188,15 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
             if (msg.get_error()) {
                 // Ignore EOF notifications from rdkafka
                 if (!msg.is_eof()) {
-                    NES_DEBUG("[+] Received error notification: " << msg.get_error());
+                    NES_DEBUG2("[+] Received error notification: {}", msg.get_error());
                 }
             } else {
                 // Print the key (if any)
                 if (msg.get_key()) {
-                    NES_DEBUG(msg.get_key() << " -> ");
+                    NES_DEBUG2("{} -> ", msg.get_key());
                 }
                 // Print the payload
-                NES_DEBUG(msg.get_payload());
+                NES_DEBUG2("{}", msg.get_payload());
 
                 // Now commit the message
                 consumer.commit(msg);

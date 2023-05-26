@@ -80,8 +80,8 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     crd->getSourceCatalogService()->registerLogicalSource("variable_length", testSchema);
 
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("VariableLengthIntegrationTest: Coordinator started successfully");
-    NES_DEBUG("VariableLengthIntegrationTest: Start worker 1");
+    NES_DEBUG2("VariableLengthIntegrationTest: Coordinator started successfully");
+    NES_DEBUG2("VariableLengthIntegrationTest: Start worker 1");
 
     // setup csv sources
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();

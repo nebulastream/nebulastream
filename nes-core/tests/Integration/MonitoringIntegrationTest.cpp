@@ -113,7 +113,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
         auto json = jsons[std::to_string(i)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        NES_DEBUG2("MonitoringIntegrationTest: JSON for node {}:\n{}", i, json);
         auto jsonString = json.dump();
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
         ASSERT_TRUE(
@@ -155,7 +155,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
         auto json = jsons[std::to_string(i)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        NES_DEBUG2("MonitoringIntegrationTest: JSON for node {}:\n{}", i, json);
         auto jsonRegistration = json["registration"][0]["value"];
         auto jsonString = jsonRegistration.dump();
         nlohmann::json jsonRegistrationLohmann = nlohmann::json::parse(jsonString);
@@ -223,7 +223,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
         auto json = jsonMetrics[std::to_string(i)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        NES_DEBUG2("MonitoringIntegrationTest: JSON for node {}:\n{}", i, json);
         auto jsonString = json.dump();
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
         ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),

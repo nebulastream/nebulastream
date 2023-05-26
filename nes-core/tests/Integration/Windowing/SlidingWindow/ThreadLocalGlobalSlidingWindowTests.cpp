@@ -129,7 +129,7 @@ class DataGenerator {
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
                 }
                 counter++;
-                NES_DEBUG("Counter: " << counter)
+                NES_DEBUG2("Counter: {}", counter)
                 buffer.setNumberOfTuples(numberOfTuplesToProduce);
             },
             numberOfBuffers,

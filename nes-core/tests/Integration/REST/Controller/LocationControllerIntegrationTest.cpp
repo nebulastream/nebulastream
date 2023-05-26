@@ -297,7 +297,7 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG(res);
+    NES_DEBUG2("{}", res);
     ASSERT_TRUE(res.is_array());
     ASSERT_TRUE(res.size() == 2);
     auto locationData = std::vector<double>(2, 0);

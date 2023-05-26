@@ -32,7 +32,7 @@ class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LockFreeWatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup LockFreeWatermarkManagerTest test class.");
+        NES_DEBUG2("Setup LockFreeWatermarkManagerTest test class.");
     }
 };
 

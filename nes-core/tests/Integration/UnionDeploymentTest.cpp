@@ -54,14 +54,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
@@ -220,14 +220,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
@@ -386,14 +386,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
@@ -551,14 +551,14 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
-    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("UnionDeploymentTest: Start worker 1");
+    NES_DEBUG2("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
@@ -624,15 +624,15 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -745,19 +745,19 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Test finished");
@@ -776,15 +776,15 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -865,19 +865,19 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Test finished");
@@ -896,15 +896,15 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
@@ -1004,19 +1004,19 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
+    NES_DEBUG2("UnionDeploymentTest For Filter-Push-Down: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Test finished");

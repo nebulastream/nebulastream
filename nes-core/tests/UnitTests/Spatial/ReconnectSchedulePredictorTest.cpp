@@ -54,18 +54,18 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
 
     //we chose a point on the path as a covering point. so its coverage should be equal to the supplied coverage
     coveringPointOnLine = path.Interpolate(0.5);
-    NES_DEBUG("coordinates of covering point on line: " << S2LatLng(coveringPointOnLine))
+    NES_DEBUG2("coordinates of covering point on line: {}", S2LatLng(coveringPointOnLine))
     std::pair<S2Point, S1Angle> resultOnLinePoint =
         NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointOnLine, coverage);
-    NES_DEBUG("point on line coverage in meters: " << S2Earth::ToMeters(resultOnLinePoint.second))
+    NES_DEBUG2("point on line coverage in meters: {}", S2Earth::ToMeters(resultOnLinePoint.second))
     EXPECT_TRUE(
         S2::ApproxEquals(resultOnLinePoint.first, S2::GetPointOnLine(coveringPointOnLine, lineEnd, coverage), allowedError));
     ASSERT_TRUE(abs(resultOnLinePoint.second - coverage) < allowedError);
-    NES_DEBUG("coverage end for point on line: " << S2LatLng(resultOnLinePoint.first))
+    NES_DEBUG2("coverage end for point on line: {}", S2LatLng(resultOnLinePoint.first))
 
     //create a point whose unit vector is orthogonal to start and end of the polyline
     auto ortoVec = S2::RobustCrossProd(lineStart, lineEnd);
-    NES_DEBUG("Orthogonal vector: " << ortoVec)
+    NES_DEBUG2("Orthogonal vector: {}", ortoVec)
     ortoVec = ortoVec.Normalize();
 
     //we can use the orthogonal vector as a target to move away from the line in an angle of 90 degrees
@@ -80,15 +80,15 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
     //test different distances from the line which are greater than zero but smaller than coverage
     for (int i = 1; i < 100; ++i) {
         double coverageFactor = 0.01 * i;
-        NES_DEBUG("testing coverage of point which is coverage * " << coverageFactor << " away from path")
+        NES_DEBUG2("testing coverage of point which is coverage * {} away from path", coverageFactor)
         auto coveringPointAwayFromPath = S2::GetPointOnLine(coveringPointOnLine, ortoVec, coverage * coverageFactor);
-        NES_DEBUG("covering point coordinates are: " << S2LatLng(coveringPointAwayFromPath))
+        NES_DEBUG2("covering point coordinates are: {}", S2LatLng(coveringPointAwayFromPath))
         auto result =
             NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path,
                                                                                                coveringPointAwayFromPath,
                                                                                                coverage);
-        NES_DEBUG("coverage on line in meters is: " << S2Earth::ToMeters(result.second))
-        NES_DEBUG("coverage end coordinates are: " << S2LatLng(result.first))
+        NES_DEBUG2("coverage on line in meters is: {}", S2Earth::ToMeters(result.second))
+        NES_DEBUG2("coverage end coordinates are: {}", S2LatLng(result.first))
         auto comparePoint = S2::GetPointOnLine(coveringPointOnLine, lineEnd, result.second);
         //check that the returned coverage end point is on the path and that the distance covered on line matches
         EXPECT_TRUE(S2::ApproxEquals(result.first, comparePoint, allowedError));

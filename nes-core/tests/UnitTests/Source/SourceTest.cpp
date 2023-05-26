@@ -1854,14 +1854,14 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    NES_DEBUG("E2EBase: Start coordinator");
+    NES_DEBUG2("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
-    NES_DEBUG("E2EBase: Start worker 1");
+    NES_DEBUG2("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->bufferSizeInBytes = (72);
@@ -1980,14 +1980,14 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("E2EBase: Stop worker 1");
+    NES_DEBUG2("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     ASSERT_TRUE(retStopWrk1);
 
-    NES_DEBUG("E2EBase: Stop Coordinator");
+    NES_DEBUG2("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    NES_DEBUG("E2EBase: Test finished");
+    NES_DEBUG2("E2EBase: Test finished");
 }
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {

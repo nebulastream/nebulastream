@@ -44,7 +44,7 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
 
     static void verifyResponseResult(const cpr::Response& response, const nlohmann::json expected) {
-        NES_DEBUG(response.text);
+        NES_DEBUG2("{}", response.text);
         nlohmann::json responseJson;
         ASSERT_NO_THROW(responseJson = nlohmann::json::parse(response.text));
         ASSERT_TRUE(responseJson == expected);

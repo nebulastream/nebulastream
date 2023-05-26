@@ -261,8 +261,7 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
             NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
             return true;
         }
-        NES_DEBUG("checkStoppedOrTimeout: status not reached for "
-                  << queryId << " as status is=" << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}", queryId, queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -282,7 +281,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkFailedOrTimeout: check query status");
         if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::FAILED) {
-            NES_DEBUG("checkFailedOrTimeout: status reached stopped");
+            NES_DEBUG2("checkFailedOrTimeout: status reached stopped");
             return true;
         }
         NES_TRACE("checkFailedOrTimeout: status not reached as status is="
@@ -452,7 +451,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     nlohmann::json json_return;
     std::string currentStatus;
 
-    NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
+    NES_DEBUG2("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
@@ -466,13 +465,13 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
                 break;
             }
         }
-        NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
+        NES_DEBUG2("checkCompleteOrTimeout: sleep because current status ={}", currentStatus);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
-    NES_DEBUG("checkCompleteOrTimeout: end with status =" << currentStatus);
+    NES_DEBUG2("checkCompleteOrTimeout: end with status ={}", currentStatus);
 
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
+        NES_DEBUG2("checkCompleteOrTimeout: check result NodeEnginePtr");
 
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/getNumberOfProducedBuffers";
         nlohmann::json jsonReturn;
@@ -483,15 +482,15 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         if (response.status_code == cpr::status::HTTP_OK && result.contains("producedBuffers")) {
             currentResult = result["producedBuffers"];
             if (currentResult >= expectedNumberBuffers) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct");
+                NES_DEBUG2("checkCompleteOrTimeout: results are correct");
                 return true;
             }
         }
-        NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << currentResult << " < " << expectedNumberBuffers);
+        NES_DEBUG2("checkCompleteOrTimeout: sleep because val={} < {}", currentResult, expectedNumberBuffers);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
-    NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult="
-              << currentResult << " expectedNumberBuffers=" << expectedNumberBuffers);
+    NES_DEBUG2("checkCompleteOrTimeout: QueryId expected results are not reached after timeout currentResult={}"
+               " expectedNumberBuffers={}", currentResult, expectedNumberBuffers);
     return false;
 }
 
@@ -507,7 +506,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     nlohmann::json json_return;
     std::string currentStatus;
 
-    NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
+    NES_DEBUG2("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::string url = "http://localhost:" + restPort + "/v1/nes/queryCatalog/status";
         nlohmann::json jsonReturn;
@@ -519,10 +518,10 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
             return true;
         }
-        NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
+        NES_DEBUG2("checkCompleteOrTimeout: sleep because current status ={}", currentStatus);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }
-    NES_DEBUG("checkCompleteOrTimeout: QueryId expected results are not reached after timeout");
+    NES_DEBUG2("checkCompleteOrTimeout: QueryId expected results are not reached after timeout");
     return false;
 }
 
@@ -540,7 +539,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
-    NES_DEBUG("stopQueryViaRest: status =" << result.dump());
+    NES_DEBUG2("stopQueryViaRest: status ={}", result.dump());
 
     return result["success"].get<bool>();
 }
@@ -559,7 +558,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
-    NES_DEBUG("startQueryViaRest: status =" << result.dump());
+    NES_DEBUG2("startQueryViaRest: status ={}", result.dump());
 
     return result;
 }
@@ -576,7 +575,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
-    NES_DEBUG("getAllMonitoringMetricsViaRest: status =" << result.dump());
+    NES_DEBUG2("getAllMonitoringMetricsViaRest: status ={}", result.dump());
 
     return result;
 }
@@ -594,7 +593,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     future.wait();
     cpr::Response response = future.get();
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
-    NES_DEBUG("addLogicalSource: status =" << jsonResponse.dump());
+    NES_DEBUG2("addLogicalSource: status ={}", jsonResponse.dump());
     return jsonResponse["success"].get<bool>();
 }
 
@@ -617,7 +616,7 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
 
             if (nodeNo == expectedWorkers + 1U) {
                 NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
-                NES_DEBUG("TestUtils: Received topology JSON:\n" << jsonResponse.dump());
+                NES_DEBUG2("TestUtils: Received topology JSON:\n{}", jsonResponse.dump());
                 return true;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
@@ -691,7 +690,7 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
     std::string longitudeString;
     std::string timeString;
 
-    NES_DEBUG("Creating list of waypoints with startTime " << startTime)
+    NES_DEBUG2("Creating list of waypoints with startTime {}", startTime)
 
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {

@@ -33,7 +33,7 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FlatMapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup FlatMapJavaUDFQueryExecutionTest test class.");
+        NES_DEBUG2("QueryExecutionTest: Setup FlatMapJavaUDFQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -45,12 +45,12 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void TearDown() override {
         Testing::NESBaseTest::TearDown();
-        NES_DEBUG("QueryExecutionTest: Tear down FlatMapJavaUDFQueryExecutionTest test case.");
+        NES_DEBUG2("QueryExecutionTest: Tear down FlatMapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("FlatMapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("FlatMapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";

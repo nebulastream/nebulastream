@@ -98,7 +98,7 @@ TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
-    NES_DEBUG(queryPlan->toString());
+    NES_DEBUG2("{}", queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
@@ -126,7 +126,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
     queryPlan->addRootOperator(sinkOp2);
     filterOp1->addParent(sinkOp2);
 
-    NES_DEBUG(queryPlan->toString());
+    NES_DEBUG2("{}", queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
@@ -157,7 +157,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
     filterOp1->addChild(filterOp2);
     filterOp2->addChild(sourceOp2);
 
-    NES_DEBUG(queryPlan->toString());
+    NES_DEBUG2("{}", queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
@@ -196,7 +196,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
     sourceOp2->addParent(sinkOp3);
     queryPlan->addRootOperator(sinkOp3);
 
-    NES_DEBUG(queryPlan->toString());
+    NES_DEBUG2("{}", queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
@@ -241,7 +241,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
     filterOp2->addChild(filterOp4);
     filterOp4->addChild(sourceOp1);
 
-    NES_DEBUG(queryPlan->toString());
+    NES_DEBUG2("{}", queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);

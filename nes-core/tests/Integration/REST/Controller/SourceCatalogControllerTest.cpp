@@ -95,7 +95,7 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response;
     ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
-    NES_DEBUG(r.text);
+    NES_DEBUG2("{}", r.text);
     bool found = false;
     for (auto& el : response.items()) {
         if (el.value().contains("test_stream")) {
@@ -110,7 +110,7 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
 TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    NES_DEBUG("SourceCatalogControllerTest: Start worker 1");
+    NES_DEBUG2("SourceCatalogControllerTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType1 = CSVSourceType::create();

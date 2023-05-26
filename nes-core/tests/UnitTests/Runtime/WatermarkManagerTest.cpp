@@ -29,7 +29,7 @@ class WatermarkManagerTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup WatermarkManagerTest test class.");
+        NES_DEBUG2("Setup WatermarkManagerTest test class.");
     }
 };
 

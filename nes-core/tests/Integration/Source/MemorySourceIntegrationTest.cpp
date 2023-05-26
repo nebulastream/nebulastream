@@ -323,7 +323,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
             std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            NES_DEBUG(" line=" << line << " expected=" << expectedString);
+            NES_DEBUG2(" line={} expected={}", line, expectedString);
             ASSERT_EQ(line, expectedString);
         }
         lineCnt++;

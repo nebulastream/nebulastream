@@ -64,7 +64,7 @@ class SimplePatternTest : public Testing::NESBaseTest {
  * TODO: Ariane
  */
 TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
@@ -73,7 +73,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG2("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -121,8 +121,8 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
+    NES_DEBUG2("content={}", content);
+    NES_DEBUG2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -136,7 +136,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
   * Iteration Operator with min and max occurrences of the event
  */
 TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
@@ -144,7 +144,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG2("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -201,8 +201,8 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
+    NES_DEBUG2("content={}", content);
+    NES_DEBUG2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -216,7 +216,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
   * Iteration Operator exact number of event occurrences
  */
 TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
@@ -224,7 +224,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG2("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -280,8 +280,8 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
+    NES_DEBUG2("content={}", content);
+    NES_DEBUG2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -295,7 +295,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
   * Iteration Operator unbounded event occurrences
  */
 TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
@@ -303,7 +303,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG2("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -356,8 +356,8 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
+    NES_DEBUG2("content={}", content);
+    NES_DEBUG2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -371,7 +371,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
   * Iteration Operator unbounded event occurrences, special case (0,5)
  */
 TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
@@ -379,7 +379,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG2("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -435,8 +435,8 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
+    NES_DEBUG2("content={}", content);
+    NES_DEBUG2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -450,7 +450,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
   * Iteration Operator unbounded event occurrences, special case (5,0)
  */
 TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
@@ -458,7 +458,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    NES_DEBUG("coordinator started successfully");
+    NES_DEBUG2("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -515,8 +515,8 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_DEBUG("content=" << content);
-    NES_DEBUG("expContent=" << expectedContent);
+    NES_DEBUG2("content={}", content);
+    NES_DEBUG2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);

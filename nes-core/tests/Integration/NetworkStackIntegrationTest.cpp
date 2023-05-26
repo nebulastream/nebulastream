@@ -566,7 +566,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
         while (static_cast<std::size_t>(bufferCnt.load()) < numSendingThreads * totalNumBuffer / 2) {
             if (bufferCnt.load() != prevCount) {
                 prevCount = bufferCnt.load();
-                NES_DEBUG("Count before buffer: " << prevCount);
+                NES_DEBUG2("Count before buffer: {}", prevCount);
             }
         }
         auto bufferReconfigMsg = Runtime::ReconfigurationMessage(0,
@@ -579,12 +579,12 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
         sleep(1);
         auto lastBufferCnt = bufferCnt.load();
         for (int i = 0; i < 10; ++i) {
-            NES_DEBUG("Count while buffering: " << bufferCnt.load());
+            NES_DEBUG2("Count while buffering: {}", bufferCnt.load());
             EXPECT_EQ(lastBufferCnt, bufferCnt.load());
             sleep(1);
         }
         sendEngine->stopBufferingAllData();
-        NES_DEBUG("Count after buffer: " << bufferCnt.load());
+        NES_DEBUG2("Count after buffer: {}", bufferCnt.load());
         waitBeforeBufferBarrier->wait();
 
         for (std::thread& t : sendingThreads) {
@@ -792,7 +792,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         ASSERT_EQ(10ULL, testSink->completed.get_future().get());
     }
 
-    NES_DEBUG("All network sinks are completed");
+    NES_DEBUG2("All network sinks are completed");
 
     while (true) {
         auto completedSubQueries = 0u;
@@ -810,7 +810,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
-    NES_DEBUG("All qeps are completed");
+    NES_DEBUG2("All qeps are completed");
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }

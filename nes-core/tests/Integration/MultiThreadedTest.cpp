@@ -52,14 +52,14 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -107,7 +107,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("MultiThreadedTest: Remove query");
+    NES_DEBUG2("MultiThreadedTest: Remove query");
     ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -132,14 +132,14 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -184,7 +184,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("MultipleJoinsTest: Remove query");
+    NES_DEBUG2("MultipleJoinsTest: Remove query");
     ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -209,14 +209,14 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", source);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -290,14 +290,14 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", source);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -367,14 +367,14 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", source);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -441,7 +441,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
@@ -449,9 +449,9 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", BasicType::INT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -504,15 +504,15 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("JoinDeploymentTest: Remove query");
+    NES_DEBUG2("JoinDeploymentTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("JoinDeploymentTest: Stop worker 1");
+    NES_DEBUG2("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("JoinDeploymentTest: Stop Coordinator");
+    NES_DEBUG2("JoinDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("JoinDeploymentTest: Test finished");
@@ -528,7 +528,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
@@ -539,9 +539,9 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", BasicType::INT64))->addField(createField("id3", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -610,18 +610,18 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
         "1000,2000,12,1000,2000,12,1,12,1300,1,12,1001,5,12,1011\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("MultipleJoinsTest: Remove query");
+    NES_DEBUG2("MultipleJoinsTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("MultipleJoinsTest: Test finished");
+    NES_DEBUG2("MultipleJoinsTest: Test finished");
 }
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
@@ -634,7 +634,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
@@ -648,9 +648,9 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", BasicType::UINT64))->addField(createField("id4", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -763,18 +763,18 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
         "2500,3500,11,2500,3500,11,2500,3500,11,9,11,3000,9,11,3000,9,11,3000,9,11,3000\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("MultipleJoinsTest: Remove query");
+    NES_DEBUG2("MultipleJoinsTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("MultipleJoinsTest: Test finished");
+    NES_DEBUG2("MultipleJoinsTest: Test finished");
 }
 /**
  * Test deploying join with different three sources
@@ -789,7 +789,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
@@ -797,9 +797,9 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", BasicType::INT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    NES_DEBUG2("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numWorkerThreads = (numberOfWorkerThreads);
@@ -841,15 +841,15 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    NES_DEBUG("JoinDeploymentTest: Remove query");
+    NES_DEBUG2("JoinDeploymentTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG("JoinDeploymentTest: Stop worker 1");
+    NES_DEBUG2("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("JoinDeploymentTest: Stop Coordinator");
+    NES_DEBUG2("JoinDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("JoinDeploymentTest: Test finished");

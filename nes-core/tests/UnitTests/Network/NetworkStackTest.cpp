@@ -492,7 +492,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
-            NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
+            NES_DEBUG2("NetworkStackTest: Error in registering DataChannel!");
             completedProm.set_value(false);
         } else {
             for (uint64_t i = 0; i < totalNumBuffer; ++i) {
@@ -589,7 +589,7 @@ TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
-            NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
+            NES_DEBUG2("NetworkStackTest: Error in registering DataChannel!");
             completedProm.set_value(false);
         } else {
             for (uint64_t i = 0; i < totalNumBuffer; ++i) {

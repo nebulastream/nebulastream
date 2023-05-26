@@ -87,9 +87,9 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
         R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("Win2", window2);
 
-    NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
+    NES_DEBUG2("SeqOperatorTest: Coordinator started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 1");
+    NES_DEBUG2("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -103,7 +103,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -176,9 +176,9 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
-    NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
+    NES_DEBUG2("SeqOperatorTest: Coordinator started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 1");
+    NES_DEBUG2("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -192,7 +192,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 2");
+    NES_DEBUG2("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -237,7 +237,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents=" << content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
@@ -271,9 +271,9 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
-    NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
+    NES_DEBUG2("SeqOperatorTest: Coordinator started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 1");
+    NES_DEBUG2("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -287,7 +287,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 2");
+    NES_DEBUG2("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -331,9 +331,9 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents=" << content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER=" << n);
 
     string expectedContent =
         "|1543626120000|1543626720000|1|R2000070|1543626480000|73.722221|5|1|R2000073|1543626540000|71.444443|10|1|\n"
@@ -368,9 +368,9 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
-    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
 
-    NES_DEBUG("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -384,7 +384,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
-    NES_DEBUG("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -426,9 +426,9 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents=" << content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER=" << n);
 
     string expectedContent =
         "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n";
@@ -471,9 +471,9 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window3);
 
-    NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
+    NES_DEBUG2("SeqOperatorTest: Coordinator started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 1");
+    NES_DEBUG2("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -487,7 +487,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 2");
+    NES_DEBUG2("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -501,7 +501,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(retStart2);
     NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
-    NES_DEBUG("SeqOperatorTest: Start worker 3");
+    NES_DEBUG2("SeqOperatorTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
@@ -552,7 +552,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents=" << content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 

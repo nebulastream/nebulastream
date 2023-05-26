@@ -48,13 +48,13 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
@@ -78,7 +78,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG("query=" << query);
+    NES_DEBUG2("query={}", query);
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
@@ -95,13 +95,13 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 1");
     auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType = CSVSourceType::create();
@@ -128,7 +128,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query1 =
         R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
-    NES_DEBUG("query=" << query1);
+    NES_DEBUG2("query={}", query1);
     QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, "BottomUp");
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalogService));
 
@@ -184,13 +184,13 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
-    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();

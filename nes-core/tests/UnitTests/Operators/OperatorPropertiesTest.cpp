@@ -30,7 +30,7 @@ class OperatorPropertiesTest : public Testing::NESBaseTest {
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup OperatorPropertiesTest test class.");
+        NES_DEBUG2("Setup OperatorPropertiesTest test class.");
     }
 };
 
