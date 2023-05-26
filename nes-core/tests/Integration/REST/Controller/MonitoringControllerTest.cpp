@@ -70,7 +70,7 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
             succes = true;
             for (auto& query : monitoringQueries) {
                 auto id = query["query_ID"].get<uint>();
-                NES_DEBUG("checking status of query " << id);
+                NES_DEBUG2("checking status of query {}", id);
                 if (!TestUtils::checkRunningOrTimeout(id, std::to_string(restPort))) {
                     succes = false;
                 }

@@ -41,13 +41,13 @@ class ZMQTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ZMQTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ZMQTest test class.");
+        NES_DEBUG2("Setup ZMQTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("Setup ZMQTest test case.");
+        NES_DEBUG2("Setup ZMQTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
@@ -68,12 +68,12 @@ class ZMQTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
-        NES_DEBUG("Setup ZMQTest test case.");
+        NES_DEBUG2("Setup ZMQTest test case.");
         Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down ZMQTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("Tear down ZMQTest test class."); }
 
     Testing::BorrowedPortPtr zmqPort;
 
@@ -100,7 +100,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       0,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    NES_DEBUG(zmq_source->toString());
+    NES_DEBUG2("{}", zmq_source->toString());
     // bufferManager->resizeFixedBufferSize(testDataSize);
 
     // Start thread for receiving the data.
@@ -159,7 +159,7 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
   auto testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE",
                                                                        UINT32);
   auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
-  NES_DEBUG(zmq_sink->toString());
+  NES_DEBUG2("{}", zmq_sink->toString());
 
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[testDataSize];
@@ -225,11 +225,11 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkToSource) {
 
   // Create ZeroMQ Data Sink.
   auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
-  NES_DEBUG(zmq_sink->toString());
+  NES_DEBUG2("{}", zmq_sink->toString());
 
   // Create ZeroMQ Data Source.
   auto zmq_source = createZmqSource(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
-  NES_DEBUG(zmq_source->toString());
+  NES_DEBUG2("{}", zmq_source->toString());
 
   // Start thread for receivingh the data.
   bool receiving_finished = false;

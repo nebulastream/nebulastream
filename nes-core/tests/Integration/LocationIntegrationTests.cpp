@@ -485,8 +485,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}", std::distance(actualWayPoints.cbegin(), actualIt), std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -569,8 +568,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}", std::distance(actualWayPoints.cbegin(), actualIt), std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         ASSERT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -657,8 +655,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}", std::distance(actualWayPoints.cbegin(), actualIt), std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -742,8 +739,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}", std::distance(actualWayPoints.cbegin(), actualIt),
+                                               std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -929,13 +926,13 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         }
         parentId =
             std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
-        NES_DEBUG("parent id = " << parentId);
+        NES_DEBUG2("parent id = {}", parentId);
         if (parentId != oldParentId) {
             actualSequence.push_back(parentId);
             oldParentId = parentId;
         }
         for (auto id : actualSequence) {
-            NES_DEBUG(id);
+            NES_DEBUG2("{}", id);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -1094,7 +1091,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     while (recv_tuples < 5000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv before buffering: " << recv_tuples)
+        NES_DEBUG2("recv before buffering: {}", recv_tuples)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -1107,7 +1104,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     for (int i = 0; i < 5; ++i) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv while buffering: " << recv_tuples)
+        NES_DEBUG2("recv while buffering: {}", recv_tuples)
         ASSERT_EQ(last_recv, recv_tuples);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
@@ -1116,7 +1113,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     while (recv_tuples < 10000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv after buffering: " << recv_tuples)
+        NES_DEBUG2("recv after buffering: {}", recv_tuples)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -1195,7 +1192,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     while (recv_tuples < 5000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv before buffering: " << recv_tuples)
+        NES_DEBUG2("recv before buffering: {}", recv_tuples)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -1208,7 +1205,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     for (int i = 0; i < 5; ++i) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv while buffering: " << recv_tuples)
+        NES_DEBUG2("recv while buffering: {}", recv_tuples)
         ASSERT_EQ(last_recv, recv_tuples);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
@@ -1217,7 +1214,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     while (recv_tuples < 10000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("recv after buffering: " << recv_tuples)
+        NES_DEBUG2("recv after buffering: {}", recv_tuples)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -1393,7 +1390,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     while (recv_tuples < 10000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-        NES_DEBUG("received: " << recv_tuples)
+        NES_DEBUG2("received: {}", recv_tuples)
         sleep(1);
     }
 

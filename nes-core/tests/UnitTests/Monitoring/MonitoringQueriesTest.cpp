@@ -109,10 +109,10 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         EXPECT_NE(port, 0UL);
         //register logical schema
         crd->getSourceCatalogService()->registerLogicalSource("logTestMetricStream", schema);
-        NES_DEBUG("MonitoringQueriesTest: Coordinator started successfully");
+        NES_DEBUG2("MonitoringQueriesTest: Coordinator started successfully");
 
         for (uint64_t i = 0; i < workerCnt; i++) {
-            NES_DEBUG("MonitoringQueriesTest: Start worker 1");
+            NES_DEBUG2("MonitoringQueriesTest: Start worker 1");
             NesWorkerPtr wrk = createWorker(PhysicalSource::create("logTestMetricStream", "physMetricSource", sourceType));
             bool retStart1 = wrk->start(/**blocking**/ false, /**withConnect**/ true);
             EXPECT_TRUE(retStart1);
@@ -135,24 +135,24 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         }
         EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-        NES_DEBUG("MonitoringQueriesTest: Remove query");
+        NES_DEBUG2("MonitoringQueriesTest: Remove query");
         ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
-        NES_DEBUG("MonitoringQueriesTest: Stop query");
+        NES_DEBUG2("MonitoringQueriesTest: Stop query");
         ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
         auto cnt = 1;
         for (auto wrk : workers) {
-            NES_DEBUG("MonitoringQueriesTest: Stop worker " << cnt);
+            NES_DEBUG2("MonitoringQueriesTest: Stop worker {}", cnt);
             bool retStopWrk3 = wrk->stop(true);
             EXPECT_TRUE(retStopWrk3);
         }
 
-        NES_DEBUG("MonitoringQueriesTest: Stop Coordinator");
+        NES_DEBUG2("MonitoringQueriesTest: Stop Coordinator");
         //TODO: If this gets removed we receive random folly exceptions
         std::this_thread::sleep_for(std::chrono::seconds(1));
         bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
-        NES_DEBUG("MonitoringQueriesTest: Test finished");
+        NES_DEBUG2("MonitoringQueriesTest: Test finished");
 
         auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
 

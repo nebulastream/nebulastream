@@ -46,7 +46,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
+        NES_DEBUG2("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
@@ -67,7 +67,7 @@ TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
         metricsJson[i] = asJson(metrics[i]);
     }
 
-    NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);
+    NES_DEBUG2("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
 }
 
 TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
@@ -80,7 +80,7 @@ TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
         Monitoring::MetricPtr metric = collector->readMetric();
         metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
     }
-    NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);
+    NES_DEBUG2("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
 }
 
 }// namespace NES

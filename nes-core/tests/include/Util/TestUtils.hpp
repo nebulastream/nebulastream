@@ -516,28 +516,26 @@ template<typename T>
 
             if (expectedNumberOfContent != currentContentSize) {
                 if (currentContentSize > expectedNumberOfContent) {
-                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
-                              "currentContentSize: "
-                              << currentContentSize << " - expectedNumberOfContent: " << expectedNumberOfContent);
+                    NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
+                              "currentContentSize: {} - expectedNumberOfContent: {}", currentContentSize, expectedNumberOfContent);
                     return false;
                 }
 
-                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines "
-                          << expectedNumberOfContent << " not reached yet with " << currentContent.size()
-                          << " lines content=" << content);
+                NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines {}"
+                          " not reached yet with {} lines content={}", expectedNumberOfContent, currentContent.size(), content);
 
             } else {
-                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
+                NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
                           "number of content");
                 return true;
             }
         }
         if (isQueryStopped) {
-            NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
+            NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
             return false;
         }
     }
-    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
+    NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
     return false;
 }
 

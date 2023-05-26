@@ -57,7 +57,7 @@ class OrOperatorTest : public Testing::NESBaseTest {
  * OR operator standalone
  */
 TEST_F(OrOperatorTest, testPatternOneOr) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -131,9 +131,9 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -149,7 +149,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
  * OR operator in combination with additional map and filter
  */
 TEST_F(OrOperatorTest, testPatternOrMap) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -220,9 +220,9 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
     size_t expResult = 130L;
 
     EXPECT_EQ(n, expResult);
@@ -242,7 +242,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
  * //TODO Disabled waiting for issue #2600
  */
 TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -333,9 +333,9 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     EXPECT_EQ(n, 365L);
 
@@ -356,7 +356,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
  * OR Operators with filters left and right source
  */
 TEST_F(OrOperatorTest, testOrPatternFilter) {
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);

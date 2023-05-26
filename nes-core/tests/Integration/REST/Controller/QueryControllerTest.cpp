@@ -98,7 +98,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG(res.dump());
+    NES_DEBUG2("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("No placement strategy specified. Specify a placement strategy using 'placement'.")
                 != std::string::npos);
@@ -124,7 +124,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG(res.dump());
+    NES_DEBUG2("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Placement Strategy: ") != std::string::npos);
     stopCoordinator();
@@ -150,7 +150,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG(res.dump());
+    NES_DEBUG2("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid fault tolerance Type provided:") != std::string::npos);
     stopCoordinator();
@@ -177,7 +177,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG(res.dump());
+    NES_DEBUG2("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Lineage Mode Type provided:") != std::string::npos);
     stopCoordinator();
@@ -265,7 +265,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG(queryId);
+    NES_DEBUG2("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
@@ -295,7 +295,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response3;
     ASSERT_NO_THROW(response3 = nlohmann::json::parse(r3.text));
-    NES_DEBUG(response3.dump());
+    NES_DEBUG2("{}", response3.dump());
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
     ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
@@ -342,7 +342,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG(queryId);
+    NES_DEBUG2("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
@@ -400,7 +400,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG(queryId);
+    NES_DEBUG2("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
 
@@ -464,7 +464,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
-    NES_DEBUG(queryId);
+    NES_DEBUG2("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
@@ -476,7 +476,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
-    NES_DEBUG(response2.dump());
+    NES_DEBUG2("{}", response2.dump());
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
     ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();

@@ -63,9 +63,9 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG2("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    NES_DEBUG2("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto defaultSourceType1 = DefaultSourceType::create();
@@ -112,9 +112,9 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG2("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    NES_DEBUG2("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
@@ -162,9 +162,9 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG2("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    NES_DEBUG2("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
@@ -272,9 +272,9 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG2("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    NES_DEBUG2("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
@@ -385,9 +385,9 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
                              "addField(createField(\"val2\", BasicType::UINT64))->"
                              "addField(createField(\"val3\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG2("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    NES_DEBUG2("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     std::string testCSV = "1,2,3\n"
@@ -445,9 +445,9 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
                              "addField(createField(\"val2\", BasicType::UINT64))->"
                              "addField(createField(\"val3\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
-    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG2("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    NES_DEBUG2("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     std::string testCSV = "1,2,3\n"

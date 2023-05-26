@@ -30,7 +30,7 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
     static void SetUpTestCase() {
 
         NES::Logger::setupLogging("TopologyIteratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup TopologyIteratorTest test class.");
+        NES_DEBUG2("Setup TopologyIteratorTest test class.");
     }
 
     void SetUp() override {
@@ -71,7 +71,7 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src1));
 
-    NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
+    NES_DEBUG2("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
     auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
     EXPECT_EQ(rootNode, *bfIterator);
@@ -111,7 +111,7 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src2));
 
-    NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
+    NES_DEBUG2("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
     auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
     EXPECT_EQ(rootNode, *bfIterator);
@@ -159,7 +159,7 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src2));
 
-    NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
+    NES_DEBUG2("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
     auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
     EXPECT_EQ(rootNode, *bfIterator);
@@ -211,7 +211,7 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src2));
 
-    NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
+    NES_DEBUG2("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
     auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
     EXPECT_EQ(rootNode, *bfIterator);
@@ -269,7 +269,7 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid3->containAsChild(src1));
 
-    NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
+    NES_DEBUG2("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
     auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
     EXPECT_EQ(rootNode, *bfIterator);
@@ -338,7 +338,7 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src4));
 
-    NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
+    NES_DEBUG2("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
     // BF iteration
     auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();

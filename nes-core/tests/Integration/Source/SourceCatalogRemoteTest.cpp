@@ -47,9 +47,9 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -90,9 +90,9 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
     crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
-    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -133,9 +133,9 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
     crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
-    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -178,9 +178,9 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
     crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
-    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG2("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
+    NES_DEBUG2("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();

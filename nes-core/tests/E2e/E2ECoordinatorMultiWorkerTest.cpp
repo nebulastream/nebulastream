@@ -380,7 +380,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     // but starts the coordinator and workers as extra processes.
     // It checks for a bug that was triggered by a use case provider.
     // We leave it in here, in case we need a further E2E test for this use case.
-    NES_DEBUG("Starting the coordinator.");
+    NES_DEBUG2("Starting the coordinator.");
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     // The next two options disable distributed windowing.
@@ -390,17 +390,17 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
                                                     TestUtils::enableThreadLocalWindowing(true)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    NES_DEBUG("Configure a schema that consists of a timestamp, a grouping key and a value.");
+    NES_DEBUG2("Configure a schema that consists of a timestamp, a grouping key and a value.");
     auto schema = "{\n"
                   "  \"logicalSourceName\": \"test_source\",\n"
                   "  \"schema\": \"Schema::create()->addField(createField(\\\"timestamp\\\", "
                   "UINT64))->addField(createField(\\\"key\\\", BasicType::UINT64))->addField(createField(\\\"value\\\", "
                   "BasicType::UINT64));\"\n"
                   "}";
-    NES_DEBUG("Schema: " << schema);
+    NES_DEBUG22("Schema: {}", schema);
     ASSERT_TRUE(TestUtils::addLogicalSource(schema, std::to_string(*restPort)));
 
-    NES_DEBUG("Create an input CSV file for the worker.");
+    NES_DEBUG2("Create an input CSV file for the worker.");
     auto inputCsvPath = getTestResourceFolder() / "input.csv";
     std::ofstream inputCsvFile(inputCsvPath);
     inputCsvFile << "1100,1,58" << endl
@@ -412,7 +412,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
                  << flush;
     inputCsvFile.close();
 
-    NES_DEBUG("Start the workers.");
+    NES_DEBUG2("Start the workers.");
     std::initializer_list<std::string> workerConfiguration1 = {TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                                                TestUtils::sourceType(SourceType::CSV_SOURCE),
                                                                TestUtils::csvSourceFilePath(inputCsvPath),
@@ -432,7 +432,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     auto worker2 = TestUtils::startWorker(workerConfiguration2);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
-    NES_DEBUG("Execute an aggregation query and write output to a file.");
+    NES_DEBUG2("Execute an aggregation query and write output to a file.");
     auto outputPath = getTestResourceFolder() / "output.csv";
     std::stringstream query;
     query
@@ -444,12 +444,12 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
         << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"));\",\n"
            "  \"placement\": \"BottomUp\"\n"
            "}";
-    NES_DEBUG("Query: " << query.str());
+    NES_DEBUG2("Query: {}", query.str());
     nlohmann::json json_result = TestUtils::startQueryViaRest(query.str(), std::to_string(*restPort));
     QueryId queryId = json_result["queryId"].get<int>();
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    NES_DEBUG("Read in output file: " << outputPath)
+    NES_DEBUG2("Read in output file: {}", outputPath)
     std::ifstream outputFile(outputPath);
     ASSERT_TRUE(outputFile.good());
     // Expected output:

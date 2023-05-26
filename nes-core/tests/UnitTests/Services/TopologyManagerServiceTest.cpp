@@ -44,14 +44,14 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TopologyManager.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup NES TopologyManagerService test class.");
+        NES_DEBUG2("Setup NES TopologyManagerService test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("Setup NES TopologyManagerService test case.");
-        NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
+        NES_DEBUG2("Setup NES TopologyManagerService test case.");
+        NES_DEBUG2("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

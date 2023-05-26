@@ -72,7 +72,7 @@ uint32_t TestSink::getNumberOfResultBuffers() {
 SinkMediumTypes TestSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
 void TestSink::cleanupBuffers() {
-    NES_DEBUG("TestSink: cleanupBuffers()");
+    NES_DEBUG2("TestSink: cleanupBuffers()");
     std::unique_lock lock(m);
     resultBuffers.clear();
 }

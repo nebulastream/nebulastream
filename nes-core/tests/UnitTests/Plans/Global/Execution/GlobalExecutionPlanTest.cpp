@@ -95,7 +95,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto subQuery = Query::from("car");
     auto query = Query::from("truck").unionWith(subQuery).sink(printSinkDescriptor);
@@ -150,7 +150,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
     auto plan1 = query1.getQueryPlan();
@@ -160,7 +160,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     plan1->setQuerySubPlanId(querySubPlanId1);
     executionNode->addNewQuerySubPlan(queryId, plan1);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
@@ -214,7 +214,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
     auto plan1 = query1.getQueryPlan();
@@ -224,7 +224,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     plan1->setQuerySubPlanId(querySubPlanId1);
     executionNode->addNewQuerySubPlan(queryId1, plan1);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
@@ -280,7 +280,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     //query sub plans for query 1
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor11 = PrintSinkDescriptor::create();
     auto query11 = Query::from("default_logical").sink(printSinkDescriptor11);
     auto plan11 = query11.getQueryPlan();
@@ -290,7 +290,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     plan11->setQuerySubPlanId(querySubPlanId11);
     executionNode->addNewQuerySubPlan(queryId1, plan11);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor12 = PrintSinkDescriptor::create();
     auto query12 = Query::from("default_logical").sink(printSinkDescriptor12);
     auto plan12 = query12.getQueryPlan();
@@ -300,7 +300,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     executionNode->addNewQuerySubPlan(queryId1, plan12);
 
     //query sub plans for query 2
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor21 = PrintSinkDescriptor::create();
     auto query21 = Query::from("default_logical").sink(printSinkDescriptor21);
     auto plan21 = query21.getQueryPlan();
@@ -310,7 +310,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     plan21->setQuerySubPlanId(querySubPlanId21);
     executionNode->addNewQuerySubPlan(queryId2, plan21);
 
-    NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor22 = PrintSinkDescriptor::create();
     auto query22 = Query::from("default_logical").sink(printSinkDescriptor22);
     auto plan22 = query22.getQueryPlan();
@@ -385,7 +385,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
@@ -401,7 +401,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -464,7 +464,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
@@ -480,7 +480,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -495,7 +495,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     const ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
 
     //Add sub plan
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto query3 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan3 = query3.getQueryPlan();
     QueryId queryId3 = PlanIdGenerator::getNextQueryId();
@@ -514,7 +514,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     const ExecutionNodePtr executionNode4 = ExecutionNode::createExecutionNode(topologyNode4);
 
     //Add sub plan
-    NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
+    NES_DEBUG2("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto query4 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan4 = query4.getQueryPlan();
     QueryId queryId4 = PlanIdGenerator::getNextQueryId();

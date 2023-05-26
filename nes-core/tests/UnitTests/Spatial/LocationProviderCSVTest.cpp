@@ -173,7 +173,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
 
         //if the movement has not started yet, expect initial location
         if (currentWayPoint.getTimestamp().value() <= initialExpectedWaypoint.getTimestamp().value()) {
-            NES_DEBUG("comparing initial location");
+            NES_DEBUG2("comparing initial location");
             EXPECT_EQ(initialExpectedWaypoint.getLocation(), currentWayPoint.getLocation());
         }
         currentTimeStamp = getTimestamp();

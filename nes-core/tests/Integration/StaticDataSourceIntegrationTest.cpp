@@ -1217,8 +1217,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
     crdConf->worker.numWorkerThreads = 8;
 
-    NES_DEBUG("num work " << crdConf->worker.numWorkerThreads.getValue() << " num buff "
-                          << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
+   NES_DEBUG2("num work {} num buff {}", crdConf->worker.numWorkerThreads.getValue(), crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1648,9 +1647,8 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
     crdConf->worker.numWorkerThreads = 8;
 
-    NES_DEBUG("StaticDataSourceIntegrationTest::testBatchJoinCustomerWithIntTable: num work "
-              << crdConf->worker.numWorkerThreads.getValue() << " num buff "
-              << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
+    NES_DEBUG2("StaticDataSourceIntegrationTest::testBatchJoinCustomerWithIntTable: num work {} num buff {}",
+               crdConf->worker.numWorkerThreads.getValue(), crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1724,7 +1722,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
 
         ifs.seekg(0, ifs.beg);
 
-        NES_DEBUG("numResultTuples: " << numResultTuples << ", numExpectedTuples: " << numExpectedTuples);
+        NES_DEBUG2("numResultTuples: {}, numExpectedTuples: {}", numResultTuples, numExpectedTuples);
         EXPECT_EQ(numResultTuples, numExpectedTuples);
 
         /* Deactivate this potion of the test, as the order might change
@@ -1877,7 +1875,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
 
                 ifs.seekg(0, ifs.beg);
 
-                NES_DEBUG("numResultTuples: " << numResultTuples << ", numExpectedTuples: " << numExpectedTuples);
+                NES_DEBUG2("numResultTuples: {}, numExpectedTuples: {}", numResultTuples, numExpectedTuples);
                 EXPECT_EQ(numResultTuples, numExpectedTuples);
 
                 // extract and print first 10 records

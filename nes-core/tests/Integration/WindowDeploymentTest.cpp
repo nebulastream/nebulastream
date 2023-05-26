@@ -57,9 +57,9 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     std::string input =
         R"(Schema::create()->addField("ysb$user_id", BasicType::UINT64)->addField("ysb$page_id", BasicType::UINT64)->addField("ysb$campaign_id", BasicType::UINT64)->addField("ysb$ad_type", BasicType::UINT64)->addField("ysb$event_type", BasicType::UINT64)->addField("ysb$current_ms", BasicType::UINT64)->addField("ysb$ip", BasicType::UINT64)->addField("ysb$d1", BasicType::UINT64)->addField("ysb$d2", BasicType::UINT64)->addField("ysb$d3", BasicType::UINT32)->addField("ysb$d4", BasicType::UINT16);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->coordinatorPort = port;
 
@@ -373,9 +373,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEv
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -766,9 +766,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -825,9 +825,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedWindowIngestionTime) {
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -921,9 +921,9 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -990,9 +990,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowIngesti
     crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     workerConfig1->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1112,9 +1112,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedTumblingWindowQueryEventTim
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG2("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
@@ -1281,7 +1281,7 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
     crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     ASSERT_EQ(port, *rpcCoordinatorPort);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -1929,7 +1929,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
         }
     };
     auto outputsize = sizeof(Output);
-    NES_DEBUG(outputsize);
+    NES_DEBUG2("{}",outputsize);
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
@@ -2035,7 +2035,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
         }
     };
     auto outputsize = sizeof(Output);
-    NES_DEBUG(outputsize);
+    NES_DEBUG2("{}", outputsize);
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
@@ -2114,8 +2114,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testMultipleAggregationFunctionsOnMultiple
     auto expected = std::vector<Output>{{1000, 2000, 1, 16, 4}, {1000, 2000, 2, 6, 2}, {1000, 2000, 3, 14, 2}};
     auto actual = testHarness.getOutput<Output>(expected.size(), "BottomUp", "NONE", "IN_MEMORY");
     for (auto i : {0, 1, 2}) {
-        NES_DEBUG(i << " = {" << actual[i].start << ", " << actual[i].end << ", " << actual[i].key << ", " << actual[i].sum
-                    << ", " << actual[i].count << "}");
+        NES_DEBUG2("{} = {{},{},{},{},{}}", i, actual[i].start, actual[i].end, actual[i].key, actual[i].sum, actual[i].count);
+        
     }
     EXPECT_EQ(expected.size(), actual.size());
     EXPECT_THAT(actual, ::testing::UnorderedElementsAreArray(expected));

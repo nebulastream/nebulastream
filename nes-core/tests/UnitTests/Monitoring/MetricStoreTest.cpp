@@ -46,7 +46,7 @@ class MetricStoreTest : public Testing::NESBaseTest {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("MetricStoreTest: Setup MetricStoreTest test case.");
+        NES_DEBUG2("MetricStoreTest: Setup MetricStoreTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);

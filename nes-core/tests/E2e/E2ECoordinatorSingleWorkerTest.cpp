@@ -242,7 +242,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                            "1,1\n"
                            "1,1\n";
 
-    NES_DEBUG("expected=" << expected);
+    NES_DEBUG2("expected={}", expected);
     EXPECT_EQ(expected, content);
 }
 
@@ -527,7 +527,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG("start crd with pid=" << coordinator.getPid());
+    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -537,7 +537,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG("start worker with pid=" << worker.getPid());
+    NES_DEBUG2("start worker with pid={}", worker.getPid());
     sleep(5);
     worker.kill();
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -547,7 +547,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG("start crd with pid=" << coordinator.getPid());
+    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -557,7 +557,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG("start worker with pid=" << worker.getPid());
+    NES_DEBUG2("start worker with pid={}", worker.getPid());
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -584,7 +584,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG("start crd with pid=" << coordinator.getPid());
+    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -594,7 +594,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG("start worker with pid=" << worker.getPid());
+    NES_DEBUG2("start worker with pid={}", worker.getPid());
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -624,7 +624,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery)
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG("start crd with pid=" << coordinator.getPid());
+    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -634,7 +634,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery)
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG("start worker with pid=" << worker.getPid());
+    NES_DEBUG2("start worker with pid={}", worker.getPid());
     sleep(5);
     coordinator.kill();
     sleep(5);
@@ -670,7 +670,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    NES_DEBUG("start crd with pid=" << coordinator.getPid());
+    NES_DEBUG2("start crd with pid={}", coordinator.getPid());
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -680,7 +680,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
                                           TestUtils::physicalSourceName("test"),
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-    NES_DEBUG("start worker with pid=" << worker.getPid());
+    NES_DEBUG2("start worker with pid={}", worker.getPid());
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";

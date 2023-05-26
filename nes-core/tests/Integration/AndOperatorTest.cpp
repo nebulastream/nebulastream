@@ -83,7 +83,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     std::string window =
         R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
                                             ->addField(createField("timestamp", BasicType::UINT64));)";
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
     crd->getSourceCatalogService()->registerLogicalSource("Win2", window);
@@ -146,7 +146,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -166,7 +166,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
                                          ->addField(createField("quantity", BasicType::UINT64));)";
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
@@ -233,7 +233,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
@@ -255,7 +255,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
                                          ->addField(createField("quantity", BasicType::UINT64));)";
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
@@ -312,9 +312,9 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     string expectedContent =
         "|1543622520000|1543622820000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
@@ -341,7 +341,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
                                          ->addField(createField("quantity", BasicType::UINT64));)";
     //Setup Coordinator
     coConf->clear();
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
@@ -405,9 +405,9 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -441,7 +441,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
                                          ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
                                          ->addField(createField("quantity", BasicType::UINT64));)";
     coConf->clear();
-    NES_DEBUG("start coordinator");
+    NES_DEBUG2("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
@@ -566,7 +566,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    NES_DEBUG2("contents={}", content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 

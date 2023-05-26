@@ -69,7 +69,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogServiceTest test class.");
+        NES_DEBUG2("QueryExecutionTest: Setup QueryCatalogServiceTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -110,13 +110,13 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
+        NES_DEBUG2("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     Runtime::Execution::ExecutableQueryPlanPtr prepareExecutableQueryPlan(
         QueryPlanPtr queryPlan,
@@ -303,7 +303,7 @@ class WindowSource : public NES::DefaultSource {
         timestamp = timestamp + 10;
         runCnt++;
 
-        NES_DEBUG("QueryExecutionTest: source buffer=" << buffer);
+        NES_DEBUG2("QueryExecutionTest: source buffer={}", buffer);
         return buffer.getBuffer();
     };
 
@@ -985,7 +985,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(outputSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << buffer);
+        NES_DEBUG2("QueryExecutionTest: buffer={}", buffer);
         EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
@@ -1118,7 +1118,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << dynamicTupleBuffer);
+        NES_DEBUG2("QueryExecutionTest: buffer={}", dynamicTupleBuffer);
 
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
@@ -1207,7 +1207,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << dynamicTupleBuffer);
+        NES_DEBUG2("QueryExecutionTest: buffer={}", dynamicTupleBuffer);
 
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
@@ -1718,7 +1718,7 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
 
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(outputSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << buffer);
+        NES_DEBUG2("QueryExecutionTest: buffer={}", buffer);
         EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));

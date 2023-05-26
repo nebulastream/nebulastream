@@ -471,7 +471,7 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
                                   .setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    NES_DEBUG2("TestHarness: topology:{}\n", topology->toString());
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);

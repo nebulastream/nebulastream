@@ -267,7 +267,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
     EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
-    NES_DEBUG(jsonResponse2.dump());
+    NES_DEBUG2("{}", jsonResponse2.dump());
     std::string message2 = "no statistics available for query with ID: " + std::to_string(queryId);
     ASSERT_TRUE(jsonResponse2["message"] == message2);
     stopCoordinator();

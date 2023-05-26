@@ -29,7 +29,7 @@ class StateTest : public Testing::TestWithErrorHandling {
 
         NES_INFO("Setup StateTest test class.");
     }
-    static void TearDownTestCase() { NES_DEBUG("Tear down StateTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("Tear down StateTest test class."); }
 };
 
 TEST_F(StateTest, testAddClear) {

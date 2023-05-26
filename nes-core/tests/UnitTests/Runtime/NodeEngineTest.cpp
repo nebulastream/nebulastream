@@ -209,12 +209,12 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
                                                          << " psum: " << psum << " sum: " << sum);
 
         if (sum == 10) {
-            NES_DEBUG("TEST: result correct");
+            NES_DEBUG2("TEST: result correct");
 
             //TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer(); WAS THIS CODE
             TupleBuffer outputBuffer = wctx.allocateTupleBuffer();
 
-            NES_DEBUG("TEST: got buffer");
+            NES_DEBUG2("TEST: got buffer");
             auto* arr = outputBuffer.getBuffer<uint32_t>();
             arr[0] = static_cast<uint32_t>(sum.load());
             outputBuffer.setNumberOfTuples(1);
@@ -222,11 +222,11 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
             pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
             completedPromise.set_value(true);
         } else {
-            NES_DEBUG("TEST: result wrong ");
+            NES_DEBUG2("TEST: result wrong ");
             completedPromise.set_value(false);
         }
 
-        NES_DEBUG("TEST: return");
+        NES_DEBUG2("TEST: return");
         return ExecutionResult::Ok;
     }
 };
@@ -248,20 +248,20 @@ class NodeEngineTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
+        NES_DEBUG2("Setup OperatorOperatorCodeGenerationTest test case.");
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
+        NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
         Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
@@ -846,7 +846,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
       public:
         virtual ~FailingTextExecutablePipeline() = default;
         ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
-            NES_DEBUG("Going to throw exception");
+            NES_DEBUG2("Going to throw exception");
             throw std::runtime_error("Catch me if you can!");// :P
         }
     };
@@ -919,7 +919,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
         ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
-            NES_DEBUG("Going to throw exception");
+            NES_DEBUG2("Going to throw exception");
             throw 1;
         }
     };
