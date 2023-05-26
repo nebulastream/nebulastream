@@ -92,7 +92,7 @@ std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& input
 
 std::string CsvFormat::toString() { return "CSV_FORMAT"; }
 
-FormatTypes CsvFormat::getSinkFormat() { return CSV_FORMAT; }
+FormatTypes CsvFormat::getSinkFormat() { return FormatTypes::CSV_FORMAT; }
 
 FormatIterator CsvFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 

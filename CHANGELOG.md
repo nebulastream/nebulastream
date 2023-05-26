@@ -1,5 +1,443 @@
 # Changelog
 
+## [v0.5.92](https://github.com/nebulastream/nebulastream/tree/v0.5.92) (2023-05-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.91...v0.5.92)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Nested Loop Join  [\#3650](https://github.com/nebulastream/nebulastream/issues/3650)
+
+## [v0.5.91](https://github.com/nebulastream/nebulastream/tree/v0.5.91) (2023-05-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.90...v0.5.91)
+
+**Implemented enhancements:**
+
+- \[Feature\] Query Stop Request Implementation [\#3634](https://github.com/nebulastream/nebulastream/issues/3634)
+
+## [v0.5.90](https://github.com/nebulastream/nebulastream/tree/v0.5.90) (2023-05-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.89...v0.5.90)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Hava to adapt fully qualified Java class names to C JNI syntax [\#3504](https://github.com/nebulastream/nebulastream/issues/3504)
+
+## [v0.5.89](https://github.com/nebulastream/nebulastream/tree/v0.5.89) (2023-05-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.88...v0.5.89)
+
+### Bug Fixes 🐛
+
+- \[BUG\] JVM cannot access required helper classes [\#3505](https://github.com/nebulastream/nebulastream/issues/3505)
+
+## [v0.5.88](https://github.com/nebulastream/nebulastream/tree/v0.5.88) (2023-05-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.87...v0.5.88)
+
+### Bug Fixes 🐛
+
+- \[BUG\] UDF deserialization does not work [\#3729](https://github.com/nebulastream/nebulastream/issues/3729)
+
+## [v0.5.87](https://github.com/nebulastream/nebulastream/tree/v0.5.87) (2023-05-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.86...v0.5.87)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Use qualified field name in output schema [\#3502](https://github.com/nebulastream/nebulastream/issues/3502)
+
+## [v0.5.86](https://github.com/nebulastream/nebulastream/tree/v0.5.86) (2023-05-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.85...v0.5.86)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement trigonometric query functions required for ELEGANT use case end-to-end [\#3603](https://github.com/nebulastream/nebulastream/issues/3603)
+
+## [v0.5.85](https://github.com/nebulastream/nebulastream/tree/v0.5.85) (2023-05-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.84...v0.5.85)
+
+**Implemented enhancements:**
+
+- \[TASK\] Iterator for StackRef [\#3735](https://github.com/nebulastream/nebulastream/issues/3735)
+
+## [v0.5.84](https://github.com/nebulastream/nebulastream/tree/v0.5.84) (2023-05-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.83...v0.5.84)
+
+## [v0.5.83](https://github.com/nebulastream/nebulastream/tree/v0.5.83) (2023-05-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.82...v0.5.83)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable using CompilerOptions for the LLVM Optimization Pipeline [\#3709](https://github.com/nebulastream/nebulastream/issues/3709)
+
+## [v0.5.82](https://github.com/nebulastream/nebulastream/tree/v0.5.82) (2023-05-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.81...v0.5.82)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add ingestion time support for nautilus window aggregations [\#3706](https://github.com/nebulastream/nebulastream/issues/3706)
+
+## [v0.5.81](https://github.com/nebulastream/nebulastream/tree/v0.5.81) (2023-05-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.80...v0.5.81)
+
+**Implemented enhancements:**
+
+- \[Feature\] Query Fail Request Implementation [\#3635](https://github.com/nebulastream/nebulastream/issues/3635)
+
+## [v0.5.80](https://github.com/nebulastream/nebulastream/tree/v0.5.80) (2023-05-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.79...v0.5.80)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace std::vector with a StackRef implementation in SampleRandomWithoutReplacement [\#3677](https://github.com/nebulastream/nebulastream/issues/3677)
+
+## [v0.5.79](https://github.com/nebulastream/nebulastream/tree/v0.5.79) (2023-05-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.78...v0.5.79)
+
+### Miscellaneous Issues ✌️
+
+- Reduce complexity of test-utils and move implementation to shared-lib [\#3567](https://github.com/nebulastream/nebulastream/issues/3567)
+
+## [v0.5.78](https://github.com/nebulastream/nebulastream/tree/v0.5.78) (2023-05-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.77...v0.5.78)
+
+### Query Optimizer 🔧
+
+- \[Feature\] Containment based query merging - first steps [\#3503](https://github.com/nebulastream/nebulastream/issues/3503)
+
+## [v0.5.77](https://github.com/nebulastream/nebulastream/tree/v0.5.77) (2023-05-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.76...v0.5.77)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate flounder backend [\#3642](https://github.com/nebulastream/nebulastream/issues/3642)
+
+## [v0.5.76](https://github.com/nebulastream/nebulastream/tree/v0.5.76) (2023-05-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.75...v0.5.76)
+
+**Implemented enhancements:**
+
+- Add option to configure whitelisted addresses for CORS [\#1919](https://github.com/nebulastream/nebulastream/issues/1919)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix the github workflow to trigger workflow in the java client repository [\#3716](https://github.com/nebulastream/nebulastream/issues/3716)
+
+## [v0.5.75](https://github.com/nebulastream/nebulastream/tree/v0.5.75) (2023-05-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.74...v0.5.75)
+
+### Bug Fixes 🐛
+
+- \[BUG\] libmlir\_float16\_utils.so.16 not found  [\#3713](https://github.com/nebulastream/nebulastream/issues/3713)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Stabilize MLIR Inlining [\#3020](https://github.com/nebulastream/nebulastream/issues/3020)
+
+## [v0.5.74](https://github.com/nebulastream/nebulastream/tree/v0.5.74) (2023-05-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.73...v0.5.74)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus C++ backend [\#3699](https://github.com/nebulastream/nebulastream/issues/3699)
+
+## [v0.5.73](https://github.com/nebulastream/nebulastream/tree/v0.5.73) (2023-05-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.72...v0.5.73)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve field name inference for window aggregations [\#3668](https://github.com/nebulastream/nebulastream/issues/3668)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Use NES Logging to Print Dumps of MLIR/LLVM Modules [\#3666](https://github.com/nebulastream/nebulastream/issues/3666)
+
+## [v0.5.72](https://github.com/nebulastream/nebulastream/tree/v0.5.72) (2023-05-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.71...v0.5.72)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add List Functions to Nautilus  [\#3131](https://github.com/nebulastream/nebulastream/issues/3131)
+
+## [v0.5.71](https://github.com/nebulastream/nebulastream/tree/v0.5.71) (2023-05-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.70...v0.5.71)
+
+**Implemented enhancements:**
+
+- \[TASK\] Unit Tests for nes-asp [\#3683](https://github.com/nebulastream/nebulastream/issues/3683)
+
+## [v0.5.70](https://github.com/nebulastream/nebulastream/tree/v0.5.70) (2023-05-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.69...v0.5.70)
+
+**Implemented enhancements:**
+
+- For all of us [\#3655](https://github.com/nebulastream/nebulastream/issues/3655)
+
+### Bug Fixes 🐛
+
+- earasing in catalog [\#560](https://github.com/nebulastream/nebulastream/issues/560)
+
+## [v0.5.69](https://github.com/nebulastream/nebulastream/tree/v0.5.69) (2023-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.68...v0.5.69)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix non-terminating upstream backup test [\#3684](https://github.com/nebulastream/nebulastream/issues/3684)
+
+## [v0.5.68](https://github.com/nebulastream/nebulastream/tree/v0.5.68) (2023-05-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.67...v0.5.68)
+
+#### Runtime 
+
+- \[JIT Compiler\] add debug mode to print ir [\#3093](https://github.com/nebulastream/nebulastream/issues/3093)
+
+#### Build Management
+
+- \[Update\] migrate to clang/LLVM 16 [\#3605](https://github.com/nebulastream/nebulastream/issues/3605)
+
+## [v0.5.67](https://github.com/nebulastream/nebulastream/tree/v0.5.67) (2023-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.66...v0.5.67)
+
+## [v0.5.66](https://github.com/nebulastream/nebulastream/tree/v0.5.66) (2023-05-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.65...v0.5.66)
+
+## [v0.5.65](https://github.com/nebulastream/nebulastream/tree/v0.5.65) (2023-05-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.64...v0.5.65)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add more tests to QueryContainmentIdentificationTest [\#3493](https://github.com/nebulastream/nebulastream/issues/3493)
+
+## [v0.5.64](https://github.com/nebulastream/nebulastream/tree/v0.5.64) (2023-04-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.63...v0.5.64)
+
+## [v0.5.63](https://github.com/nebulastream/nebulastream/tree/v0.5.63) (2023-04-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.62...v0.5.63)
+
+## [v0.5.62](https://github.com/nebulastream/nebulastream/tree/v0.5.62) (2023-04-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.61...v0.5.62)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add flatMap Java UDFs [\#3609](https://github.com/nebulastream/nebulastream/issues/3609)
+
+## [v0.5.61](https://github.com/nebulastream/nebulastream/tree/v0.5.61) (2023-04-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.60...v0.5.61)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Start ASP in NebulaStream  [\#3620](https://github.com/nebulastream/nebulastream/issues/3620)
+
+## [v0.5.60](https://github.com/nebulastream/nebulastream/tree/v0.5.60) (2023-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.59...v0.5.60)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add debug info for threshold window boundaries [\#3665](https://github.com/nebulastream/nebulastream/issues/3665)
+
+## [v0.5.59](https://github.com/nebulastream/nebulastream/tree/v0.5.59) (2023-04-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.58...v0.5.59)
+
+**Implemented enhancements:**
+
+- \[TASK\] Port Join Tests to Querycompiler Nautilus [\#3568](https://github.com/nebulastream/nebulastream/issues/3568)
+
+## [v0.5.58](https://github.com/nebulastream/nebulastream/tree/v0.5.58) (2023-04-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.57...v0.5.58)
+
+## [v0.5.57](https://github.com/nebulastream/nebulastream/tree/v0.5.57) (2023-04-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.56...v0.5.57)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve performance of storage handlers by avoiding pointer copies where possible [\#3674](https://github.com/nebulastream/nebulastream/issues/3674)
+- \[TASK\] Include projection order in containment identification [\#3495](https://github.com/nebulastream/nebulastream/issues/3495)
+
+## [v0.5.56](https://github.com/nebulastream/nebulastream/tree/v0.5.56) (2023-04-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.55...v0.5.56)
+
+### Bug Fixes 🐛
+
+- \[BUG\] CSV Source not reading the whole file by default [\#3663](https://github.com/nebulastream/nebulastream/issues/3663)
+
+## [v0.5.55](https://github.com/nebulastream/nebulastream/tree/v0.5.55) (2023-04-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.54...v0.5.55)
+
+### Bug Fixes 🐛
+
+- \[BUG\] testMovingDeviceSimulatedStartTimeInPast [\#3318](https://github.com/nebulastream/nebulastream/issues/3318)
+
+### Miscellaneous Issues ✌️
+
+- Replace cpprestsdk  [\#668](https://github.com/nebulastream/nebulastream/issues/668)
+
+## [v0.5.54](https://github.com/nebulastream/nebulastream/tree/v0.5.54) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.53...v0.5.54)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add window containment [\#3494](https://github.com/nebulastream/nebulastream/issues/3494)
+
+## [v0.5.53](https://github.com/nebulastream/nebulastream/tree/v0.5.53) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.52...v0.5.53)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add conservative two phase locking storage handle [\#3643](https://github.com/nebulastream/nebulastream/issues/3643)
+
+## [v0.5.52](https://github.com/nebulastream/nebulastream/tree/v0.5.52) (2023-04-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.51...v0.5.52)
+
+**Implemented enhancements:**
+
+- \[TASK\] Improve Row-ColumnLayoutTupleBuffer Design [\#3467](https://github.com/nebulastream/nebulastream/issues/3467)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Window operator doesn't work  [\#3640](https://github.com/nebulastream/nebulastream/issues/3640)
+
+## [v0.5.51](https://github.com/nebulastream/nebulastream/tree/v0.5.51) (2023-04-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.50...v0.5.51)
+
+## [v0.5.50](https://github.com/nebulastream/nebulastream/tree/v0.5.50) (2023-04-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.49...v0.5.50)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate infer model operator to Nautilus [\#3624](https://github.com/nebulastream/nebulastream/issues/3624)
+
+## [v0.5.49](https://github.com/nebulastream/nebulastream/tree/v0.5.49) (2023-04-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.48...v0.5.49)
+
+**Implemented enhancements:**
+
+- \[TASK\] create new Coordinator AbstractRequest and StorageAccessHandle classes [\#3601](https://github.com/nebulastream/nebulastream/issues/3601)
+
+## [v0.5.48](https://github.com/nebulastream/nebulastream/tree/v0.5.48) (2023-04-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.47...v0.5.48)
+
+**Implemented enhancements:**
+
+- \[TASK\]\[Nautilus\] Improve Bytecode interpreter [\#3466](https://github.com/nebulastream/nebulastream/issues/3466)
+
+## [v0.5.47](https://github.com/nebulastream/nebulastream/tree/v0.5.47) (2023-04-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.46...v0.5.47)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Infer comparison stamp in compiler backend [\#3631](https://github.com/nebulastream/nebulastream/issues/3631)
+
+## [v0.5.46](https://github.com/nebulastream/nebulastream/tree/v0.5.46) (2023-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.44...v0.5.46)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add ExecutionTest for MapJavaUdf operator [\#3585](https://github.com/nebulastream/nebulastream/issues/3585)
+
+### Bug Fixes 🐛
+
+- \[BUG\] GPU unit tests are outdated [\#3629](https://github.com/nebulastream/nebulastream/issues/3629)
+
+## [v0.5.44](https://github.com/nebulastream/nebulastream/tree/v0.5.44) (2023-04-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.43...v0.5.44)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cannot Start NES Executable Docker Image [\#3644](https://github.com/nebulastream/nebulastream/issues/3644)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add support for multiple aggregation functions [\#3315](https://github.com/nebulastream/nebulastream/issues/3315)
+
+## [v0.5.43](https://github.com/nebulastream/nebulastream/tree/v0.5.43) (2023-04-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.42...v0.5.43)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Must use fully qualified attribute names in threshold window operaotr [\#3596](https://github.com/nebulastream/nebulastream/issues/3596)
+
+## [v0.5.42](https://github.com/nebulastream/nebulastream/tree/v0.5.42) (2023-04-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.41...v0.5.42)
+
+### Miscellaneous Issues ✌️
+
+- Migrate experimental relational Join and Aggregation to Nautilus [\#3444](https://github.com/nebulastream/nebulastream/issues/3444)
+
+## [v0.5.41](https://github.com/nebulastream/nebulastream/tree/v0.5.41) (2023-03-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.40...v0.5.41)
+
+## [v0.5.40](https://github.com/nebulastream/nebulastream/tree/v0.5.40) (2023-03-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.39...v0.5.40)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add class and Type to all enums [\#3600](https://github.com/nebulastream/nebulastream/issues/3600)
+
+## [v0.5.39](https://github.com/nebulastream/nebulastream/tree/v0.5.39) (2023-03-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.38...v0.5.39)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add Pattern Matching Operators SIMILAR TO [\#3193](https://github.com/nebulastream/nebulastream/issues/3193)
+- \[DBPRO\] Add Pattern Matching Operators LIKE [\#3192](https://github.com/nebulastream/nebulastream/issues/3192)
+- \[DBPRO\] Add Regular expression replacing [\#3191](https://github.com/nebulastream/nebulastream/issues/3191)
+- \[DBPRO\] Add Regular expression searching [\#3189](https://github.com/nebulastream/nebulastream/issues/3189)
+- \[DBPRO\] Add Regular expression matching [\#3188](https://github.com/nebulastream/nebulastream/issues/3188)
+- \[DBPRO\] Add Set-Operation-Based Text Similarity Functions [\#3181](https://github.com/nebulastream/nebulastream/issues/3181)
+- \[DBPRO\] Add Edit-Step-Based Text Similarity Functions [\#3180](https://github.com/nebulastream/nebulastream/issues/3180)
+- \[Feature\] Text Regex Function \(Pattern Matching\)  [\#3154](https://github.com/nebulastream/nebulastream/issues/3154)
+- \[Feature\] Text Similarity Functions [\#3153](https://github.com/nebulastream/nebulastream/issues/3153)
+- \[Feature\] Text Functions  [\#3152](https://github.com/nebulastream/nebulastream/issues/3152)
+
 ## [v0.5.38](https://github.com/nebulastream/nebulastream/tree/v0.5.38) (2023-03-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.37...v0.5.38)

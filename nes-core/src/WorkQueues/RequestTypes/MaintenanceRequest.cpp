@@ -12,23 +12,24 @@
     limitations under the License.
 */
 
+#include <Util/magicenum/magic_enum.hpp>
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
 #include <string>
 
 namespace NES::Experimental {
 
-MaintenanceRequestPtr MaintenanceRequest::create(TopologyNodeId nodeId, MigrationType::Value migrationType) {
+MaintenanceRequestPtr MaintenanceRequest::create(TopologyNodeId nodeId, MigrationType migrationType) {
     return std::make_shared<MaintenanceRequest>(MaintenanceRequest(nodeId, migrationType));
 }
 
-MaintenanceRequest::MaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value migrationType)
+MaintenanceRequest::MaintenanceRequest(TopologyNodeId nodeId, MigrationType migrationType)
     : nodeId(nodeId), migrationType(migrationType){};
 
-MigrationType::Value MaintenanceRequest::getMigrationType() { return migrationType; }
+MigrationType MaintenanceRequest::getMigrationType() { return migrationType; }
 
 std::string MaintenanceRequest::toString() {
-    return "MaintenanceRequest { Topology Node: " + std::to_string(nodeId) + ", withBuffer: " + std::to_string(migrationType)
-        + "}";
+    return "MaintenanceRequest { Topology Node: " + std::to_string(nodeId)
+        + ", withBuffer: " + std::string(magic_enum::enum_name(migrationType)) + "}";
 }
 TopologyNodeId MaintenanceRequest::getTopologyNode() { return nodeId; }
 }// namespace NES::Experimental

@@ -12,30 +12,27 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Services/QueryService.hpp>
+#include <Sinks/Mediums//KafkaSink.hpp>
+#include <Sources/KafkaSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <cppkafka/cppkafka.h>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <string>
 #include <thread>
-
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Sinks/Mediums//KafkaSink.hpp>
-#include <Sources/KafkaSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-
-#include <Services/QueryService.hpp>
-#include <Util/TestUtils.hpp>
-#include <Util/TimeMeasurement.hpp>
-
-#include <cppkafka/cppkafka.h>
 
 #ifndef OPERATORID
 #define OPERATORID 1
@@ -63,7 +60,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
-        test_schema = Schema::create()->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", BasicType::UINT32);
         kafkaSourceType = KafkaSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
@@ -259,7 +256,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
 
     //first call to connect
     auto tuple_bufferJ = kafkaSource->receiveData();
@@ -305,7 +302,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source
-    std::string source = R"(Schema::create()->addField(createField("var", UINT32));)";
+    std::string source = R"(Schema::create()->addField(createField("var", BasicType::UINT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
@@ -380,14 +377,14 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     //register logical source qnv
     std::string source =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", UINT64))
-                            ->addField(createField("stationId", UINT64))
-                            ->addField(createField("patientId", UINT64))
-                            ->addField(createField("time", UINT64))
-                            ->addField(createField("healthStatus", UINT8))
-                            ->addField(createField("healthStatusDuration", UINT32))
-                            ->addField(createField("recovered", BOOLEAN))
-                            ->addField(createField("dead", BOOLEAN));)";
+                            ->addField(createField("hospitalId", BasicType::UINT64))
+                            ->addField(createField("stationId", BasicType::UINT64))
+                            ->addField(createField("patientId", BasicType::UINT64))
+                            ->addField(createField("time", BasicType::UINT64))
+                            ->addField(createField("healthStatus", BasicType::UINT8))
+                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
+                            ->addField(createField("recovered", BasicType::BOOLEAN))
+                            ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 

@@ -12,25 +12,23 @@
     limitations under the License.
 */
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#pragma clang diagnostic pop
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <iostream>
-
 using namespace std;
 
 namespace NES {
@@ -48,81 +46,6 @@ class WindowDeploymentTest : public Testing::NESBaseTest {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    workerConfig->coordinatorPort = *rpcCoordinatorPort;
-
-    NES_INFO("WindowDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0ull);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->coordinatorPort = port;
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    auto windowSource = PhysicalSource::create("exdra", "test_stream", sourceConfig);
-    workerConfig->physicalSources.add(windowSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-
-    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
-    remove(outputFilePath.c_str());
-
-    NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").window(TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
-                   "Seconds(10))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"features_properties_capacity\")))"
-                   ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //todo will be removed once the new window source is in place
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-
-    string expectedContent = "exdra$start:INTEGER,exdra$end:INTEGER,exdra$id:INTEGER,exdra$features_properties_capacity:INTEGER\n"
-                             "1262343610000,1262343620000,1,736\n"
-                             "1262343620000,1262343630000,2,1348\n"
-                             "1262343630000,1262343640000,3,4575\n"
-                             "1262343640000,1262343650000,4,1358\n"
-                             "1262343650000,1262343660000,5,1288\n"
-                             "1262343660000,1262343670000,6,3458\n"
-                             "1262343670000,1262343680000,7,1128\n"
-                             "1262343680000,1262343690000,8,1079\n"
-                             "1262343690000,1262343700000,9,2071\n"
-                             "1262343700000,1262343710000,10,2632\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_INFO("WindowDeploymentTest: Remove query");
-    ;
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    NES_INFO("WindowDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("WindowDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("WindowDeploymentTest: Test finished");
-}
-
-/**
- * @brief test central tumbling window and event time
- */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -132,7 +55,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input =
-        R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
+        R"(Schema::create()->addField("ysb$user_id", BasicType::UINT64)->addField("ysb$page_id", BasicType::UINT64)->addField("ysb$campaign_id", BasicType::UINT64)->addField("ysb$ad_type", BasicType::UINT64)->addField("ysb$event_type", BasicType::UINT64)->addField("ysb$current_ms", BasicType::UINT64)->addField("ysb$ip", BasicType::UINT64)->addField("ysb$d1", BasicType::UINT64)->addField("ysb$d2", BasicType::UINT64)->addField("ysb$d3", BasicType::UINT32)->addField("ysb$d4", BasicType::UINT16);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -141,17 +64,17 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     workerConfig->coordinatorPort = port;
 
     auto ysbSchema = Schema::create()
-                         ->addField("ysb$user_id", UINT64)
-                         ->addField("ysb$page_id", UINT64)
-                         ->addField("ysb$campaign_id", UINT64)
-                         ->addField("ysb$ad_type", UINT64)
-                         ->addField("ysb$event_type", UINT64)
-                         ->addField("ysb$current_ms", UINT64)
-                         ->addField("ysb$ip", UINT64)
-                         ->addField("ysb$d1", UINT64)
-                         ->addField("ysb$d2", UINT64)
-                         ->addField("ysb$d3", UINT32)
-                         ->addField("ysb$d4", UINT16);
+                         ->addField("ysb$user_id", BasicType::UINT64)
+                         ->addField("ysb$page_id", BasicType::UINT64)
+                         ->addField("ysb$campaign_id", BasicType::UINT64)
+                         ->addField("ysb$ad_type", BasicType::UINT64)
+                         ->addField("ysb$event_type", BasicType::UINT64)
+                         ->addField("ysb$current_ms", BasicType::UINT64)
+                         ->addField("ysb$ip", BasicType::UINT64)
+                         ->addField("ysb$d1", BasicType::UINT64)
+                         ->addField("ysb$d2", BasicType::UINT64)
+                         ->addField("ysb$d3", BasicType::UINT32)
+                         ->addField("ysb$d4", BasicType::UINT16);
 
     auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
@@ -837,7 +760,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
 
     //creating schema
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
@@ -896,7 +819,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedWindowIngestionTime) {
 
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
@@ -992,7 +915,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
@@ -1061,7 +984,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowIngesti
 
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
@@ -1168,7 +1091,6 @@ TEST_F(WindowDeploymentTest,
         }
     };
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
-
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -1330,28 +1252,29 @@ TEST_F(WindowDeploymentTest, testMultipleWindowAggregation) {
 
     //register logical source qnv
     std::string ktmSchema =
-        R"(Schema::create()->addField(createField("Time",UINT64))->addField(createField("Dist",UINT64))->
-            addField(createField("ABS_Front_Wheel_Press",FLOAT64))->
-            addField(createField("ABS_Rear_Wheel_Press",FLOAT64))->
-            addField(createField("ABS_Front_Wheel_Speed",FLOAT64))->
-            addField(createField("ABS_Rear_Wheel_Speed",FLOAT64))->
-            addField(createField("V_GPS",FLOAT64))->
-            addField(createField("MMDD",FLOAT64))->
-            addField(createField("HHMM",FLOAT64))->
-            addField(createField("LAS_Ax1",FLOAT64))->
-            addField(createField("LAS_Ay1",FLOAT64))->
-            addField(createField("LAS_Az_Vertical_Acc",FLOAT64))->
-            addField(createField("ABS_Lean_Angle",FLOAT64))->
-            addField(createField("ABS_Pitch_Info",FLOAT64))->
-            addField(createField("ECU_Gear_Position",FLOAT64))->
-            addField(createField("ECU_Accel_Position",FLOAT64))->
-            addField(createField("ECU_Engine_Rpm",FLOAT64))->
-            addField(createField("ECU_Water_Temperature",FLOAT64))->
-            addField(createField("ECU_Oil_Temp_Sensor_Data",UINT64))->
-            addField(createField("ECU_Side_StanD",UINT64))->
-            addField(createField("Longitude",FLOAT64))->
-            addField(createField("Latitude",FLOAT64))->
-            addField(createField("Altitude",FLOAT64)))";
+        R"(Schema::create()->addField(createField("Time",BasicType::UINT64))->
+            addField(createField("Dist",BasicType::UINT64))->
+            addField(createField("ABS_Front_Wheel_Press",BasicType::FLOAT64))->
+            addField(createField("ABS_Rear_Wheel_Press",BasicType::FLOAT64))->
+            addField(createField("ABS_Front_Wheel_Speed",BasicType::FLOAT64))->
+            addField(createField("ABS_Rear_Wheel_Speed",BasicType::FLOAT64))->
+            addField(createField("V_GPS",BasicType::FLOAT64))->
+            addField(createField("MMDD",BasicType::FLOAT64))->
+            addField(createField("HHMM",BasicType::FLOAT64))->
+            addField(createField("LAS_Ax1",BasicType::FLOAT64))->
+            addField(createField("LAS_Ay1",BasicType::FLOAT64))->
+            addField(createField("LAS_Az_Vertical_Acc",BasicType::FLOAT64))->
+            addField(createField("ABS_Lean_Angle",BasicType::FLOAT64))->
+            addField(createField("ABS_Pitch_Info",BasicType::FLOAT64))->
+            addField(createField("ECU_Gear_Position",BasicType::FLOAT64))->
+            addField(createField("ECU_Accel_Position",BasicType::FLOAT64))->
+            addField(createField("ECU_Engine_Rpm",BasicType::FLOAT64))->
+            addField(createField("ECU_Water_Temperature",BasicType::FLOAT64))->
+            addField(createField("ECU_Oil_Temp_Sensor_Data",BasicType::UINT64))->
+            addField(createField("ECU_Side_StanD",BasicType::UINT64))->
+            addField(createField("Longitude",BasicType::FLOAT64))->
+            addField(createField("Latitude",BasicType::FLOAT64))->
+            addField(createField("Altitude",BasicType::FLOAT64)))";
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -1661,14 +1584,14 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     struct Car {
         uint64_t key;
-        uint64_t value1;
+        double value1;
         uint64_t value2;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
                          ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value1", DataTypeFactory::createUInt64())
+                         ->addField("value1", DataTypeFactory::createDouble())
                          ->addField("value2", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
 
@@ -2020,14 +1943,14 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
     struct Car {
         uint64_t key;
-        uint64_t value;
+        double value;
         uint64_t value2;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
                          ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("value", DataTypeFactory::createDouble())
                          ->addField("value2", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
 

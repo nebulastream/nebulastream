@@ -38,7 +38,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(std::string host,
                                     uint16_t port,
                                     bool internal = false,
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -61,7 +61,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      * @brief getter for fault-tolerance type
      * @return fault-tolerance type
      */
-    FaultToleranceType::Value getFaultToleranceType() const;
+    FaultToleranceType getFaultToleranceType() const;
 
     bool isInternal() const;
     void setInternal(bool internal);
@@ -79,7 +79,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     explicit ZmqSinkDescriptor(std::string host,
                                uint16_t port,
                                bool internal,
-                               NES::FaultToleranceType::Value faultToleranceType,
+                               NES::FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins);
 
     std::string host;

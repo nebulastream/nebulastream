@@ -75,7 +75,7 @@ class QueryCatalogService {
      * @param querySubPlanId : the query sub plan id
      * @param subQueryStatus : the new sub query status
      */
-    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -111,7 +111,7 @@ class QueryCatalogService {
      * @param metaInformation : additional meta information
      * @return true if updated successfully
      */
-    bool updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation);
+    bool updateQueryStatus(QueryId queryId, QueryStatus queryStatus, const std::string& metaInformation);
 
     /**
      * check and mark the query for soft stop
@@ -164,9 +164,10 @@ class QueryCatalogService {
      * Check and mark all query belonging to the shared query plan for failure
      * @param sharedQueryId : id of the shared query plan
      * @param querySubPlanId : id of the sub query plan that failed
-     * @return true if query marked for failure
+     * @throws QueryNotFoundException if no query with the supplied id exists
+     * @throws InvalidQueryStatusException if the query is in status MARKED_FOR_FAILURE, FAILED of STOPPED
      */
-    bool checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
+    void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
   private:
     /**
@@ -176,7 +177,7 @@ class QueryCatalogService {
      * @param subQueryStatus : the new status
      * @return true if successful else false
      */
-    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus);
 
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;

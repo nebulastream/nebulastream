@@ -117,7 +117,7 @@ add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC nes)
+target_link_libraries(nesWorker PUBLIC nes )
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -143,4 +143,4 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nebulastream
 
 install(DIRECTORY ${CLANG_INCLUDE_DIR}
         COMPONENT nesHeaders
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/clang/${LLVM_PACKAGE_VERSION}/include/)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/clang/${LLVM_VERSION_MAJOR}/include/)

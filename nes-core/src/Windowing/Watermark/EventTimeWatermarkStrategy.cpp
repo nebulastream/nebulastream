@@ -26,7 +26,7 @@ EventTimeWatermarkStrategy::EventTimeWatermarkStrategy(FieldAccessExpressionNode
 FieldAccessExpressionNodePtr NES::Windowing::EventTimeWatermarkStrategy::getField() { return onField; }
 uint64_t EventTimeWatermarkStrategy::getAllowedLateness() const { return allowedLateness; }
 
-WatermarkStrategy::Type EventTimeWatermarkStrategy::getType() { return WatermarkStrategy::EventTimeWatermark; }
+WatermarkStrategy::Type EventTimeWatermarkStrategy::getType() { return WatermarkStrategy::Type::EventTimeWatermark; }
 
 EventTimeWatermarkStrategyPtr
 EventTimeWatermarkStrategy::create(const FieldAccessExpressionNodePtr& onField, uint64_t allowedLateness, uint64_t multiplier) {

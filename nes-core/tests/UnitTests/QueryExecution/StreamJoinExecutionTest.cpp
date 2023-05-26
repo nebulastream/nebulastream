@@ -17,36 +17,40 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <Util/TestUtils.hpp>
-
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 namespace NES::Runtime::Execution {
 
-class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
+class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
     }
+
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
         EXPECT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {

@@ -70,7 +70,7 @@ class MQTTSourceTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
-        test_schema = Schema::create()->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", BasicType::UINT32);
         mqttSourceType = MQTTSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
@@ -139,7 +139,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
                            "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
-                           "DATATYPE=0, QOS=1, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=-1. ";
+                           "DATATYPE=JSON, QOS=atLeastOnce, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=-1. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
@@ -153,7 +153,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
  */
 TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
@@ -189,14 +189,14 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     //register logical source qnv
     std::string source =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", UINT64))
-                            ->addField(createField("stationId", UINT64))
-                            ->addField(createField("patientId", UINT64))
-                            ->addField(createField("time", UINT64))
-                            ->addField(createField("healthStatus", UINT8))
-                            ->addField(createField("healthStatusDuration", UINT32))
-                            ->addField(createField("recovered", BOOLEAN))
-                            ->addField(createField("dead", BOOLEAN));)";
+                            ->addField(createField("hospitalId", BasicType::UINT64))
+                            ->addField(createField("stationId", BasicType::UINT64))
+                            ->addField(createField("patientId", BasicType::UINT64))
+                            ->addField(createField("time", BasicType::UINT64))
+                            ->addField(createField("healthStatus", BasicType::UINT8))
+                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
+                            ->addField(createField("recovered", BasicType::BOOLEAN))
+                            ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -255,13 +255,13 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical stream qnv
-    std::string stream = R"(Schema::create()->addField(createField("id", UINT64))
-                                   ->addField(createField("SepalLengthCm", FLOAT32))
-                                   ->addField(createField("SepalWidthCm", FLOAT32))
-                                   ->addField(createField("PetalLengthCm", FLOAT32))
-                                   ->addField(createField("PetalWidthCm", FLOAT32))
-                                   ->addField(createField("SpeciesCode", UINT64))
-                                   ->addField(createField("CreationTime", UINT64));)";
+    std::string stream = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
+                                   ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                                   ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                                   ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                                   ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                                   ->addField(createField("SpeciesCode", BasicType::UINT64))
+                                   ->addField(createField("CreationTime", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("iris", stream);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
@@ -291,7 +291,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
         .inferModel(")"
         + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
         .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||
                 (Attribute("iris1") > Attribute("iris0") && Attribute("iris1") > Attribute("iris2") && (Attribute("SpeciesCode") < 1 || Attribute("SpeciesCode") > 1)) ||
                 (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2), 0.1)

@@ -32,7 +32,7 @@ NetworkMetrics::NetworkMetrics()
 NES::SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
-    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::ROW_LAYOUT)
+    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField(prefix + "node_id", BasicType::UINT64)
 
                                 ->addField(prefix + "name", BasicType::UINT64)

@@ -28,6 +28,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -39,7 +40,7 @@ class TextPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TextPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -105,7 +106,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
@@ -119,7 +120,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TextPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) {
                             return info.param;
                         });

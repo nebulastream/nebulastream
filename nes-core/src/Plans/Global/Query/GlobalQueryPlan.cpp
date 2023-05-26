@@ -19,6 +19,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -39,7 +40,7 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     return true;
 }
 
-void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestType) {
+void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
     NES_DEBUG2("GlobalQueryPlan: Removing query information from the meta data");
 
     if (RequestType::Fail == requestType) {
@@ -76,7 +77,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
                 }));
         }
     } else {
-        NES_ERROR2("Unknown request type {}", RequestType::toString(requestType));
+        NES_ERROR2("Unknown request type {}", std::string(magic_enum::enum_name(requestType)));
         NES_NOT_IMPLEMENTED();
     }
 }

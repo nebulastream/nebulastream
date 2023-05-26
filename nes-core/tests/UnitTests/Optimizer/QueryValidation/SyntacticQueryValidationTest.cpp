@@ -24,7 +24,7 @@
 
 namespace NES {
 
-class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
@@ -35,7 +35,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling<testi
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

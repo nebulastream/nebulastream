@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -22,7 +23,7 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProduce,
     uint64_t gatheringValue,
-    GatheringMode::Value gatheringMode,
+    GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
     std::string logicalSourceName,
@@ -36,7 +37,7 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
-    GatheringMode::Value gatheringMode,
+    GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
     std::string logicalSourceName,
@@ -69,7 +70,7 @@ LambdaSourceDescriptor::getGeneratorFunction() {
 
 uint64_t LambdaSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
-GatheringMode::Value LambdaSourceDescriptor::getGatheringMode() const { return gatheringMode; }
+GatheringMode LambdaSourceDescriptor::getGatheringMode() const { return gatheringMode; }
 
 uint64_t LambdaSourceDescriptor::getGatheringValue() const { return gatheringValue; }
 

@@ -21,6 +21,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <utility>
 
@@ -41,14 +42,15 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
         QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
-bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG2("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
         NES_ERROR2("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
-        return false;
+        throw QueryUndeploymentException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
+                                         + " is deployed");
     }
 
     NES_DEBUG2("QueryUndeploymentPhase:removeQuery: stop query");
@@ -78,12 +80,14 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
         topology->increaseResources(entry.first, entry.second);
     }
 
-    return globalExecutionPlan->removeQuerySubPlans(queryId);
+    if (!globalExecutionPlan->removeQuerySubPlans(queryId)) {
+        throw QueryUndeploymentException("Failed to remove query subplans for the query " + std::to_string(queryId) + '.');
+    }
 }
 
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
                                        const std::vector<ExecutionNodePtr>& executionNodes,
-                                       SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+                                       SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG2("QueryUndeploymentPhase:markQueryForStop queryId= {}", queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
@@ -105,7 +109,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
         } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;
         } else {
-            NES_ERROR2("Unhandled request type {}", SharedQueryPlanStatus::toString(sharedQueryPlanStatus));
+            NES_ERROR2("Unhandled request type {}", std::string(magic_enum::enum_name(sharedQueryPlanStatus)));
             NES_NOT_IMPLEMENTED();
         }
 
@@ -120,7 +124,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
     }
 
     // activate below for async calls
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Stop);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Stop);
     NES_DEBUG2("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
     return true;
 }
@@ -151,7 +155,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
 
         completionQueues[queueForExecutionNode] = 1;
     }
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Unregister);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Unregister);
     NES_DEBUG2("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
     return result;
 }

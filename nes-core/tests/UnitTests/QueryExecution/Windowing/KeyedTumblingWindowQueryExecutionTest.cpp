@@ -17,6 +17,8 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <iostream>
@@ -25,8 +27,11 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class KeyedTumblingWindowQueryExecutionTest
-    : public Testing::TestWithErrorHandling<testing::Test>,
+    : public Testing::TestWithErrorHandling,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -35,16 +40,16 @@ class KeyedTumblingWindowQueryExecutionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down KeyedTumblingWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -52,7 +57,7 @@ class KeyedTumblingWindowQueryExecutionTest
         NES_DEBUG("QueryExecutionTest: Tear down KeyedTumblingWindowQueryExecutionTest test class.");
     }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
@@ -80,8 +85,8 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64))
-                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .byKey(Attribute("test$key", BasicType::INT64))
+                     .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
@@ -122,8 +127,8 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64))
-                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .byKey(Attribute("test$key", BasicType::INT64))
+                     .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -172,8 +177,8 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
-                     .byKey(Attribute("test$key", INT64), Attribute("test$key", INT64))
-                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .byKey(Attribute("test$key", BasicType::INT64), Attribute("test$key", BasicType::INT64))
+                     .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());

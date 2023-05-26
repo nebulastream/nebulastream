@@ -24,11 +24,11 @@ namespace NES::Windowing {
 
 AvgAggregationDescriptor::AvgAggregationDescriptor(FieldAccessExpressionNodePtr field)
     : WindowAggregationDescriptor(std::move(field)) {
-    this->aggregationType = Avg;
+    this->aggregationType = Type::Avg;
 }
 AvgAggregationDescriptor::AvgAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
     : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
-    this->aggregationType = Avg;
+    this->aggregationType = Type::Avg;
 }
 
 WindowAggregationPtr AvgAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,

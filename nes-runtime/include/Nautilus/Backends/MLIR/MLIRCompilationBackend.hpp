@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 namespace NES::Nautilus::Backends::MLIR {
 
 /**
@@ -21,7 +22,8 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class MLIRCompilationBackend : public CompilationBackend {
   public:
-    std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir) override;
+    std::unique_ptr<Executable>
+    compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
 };
 
 }// namespace NES::Nautilus::Backends::MLIR

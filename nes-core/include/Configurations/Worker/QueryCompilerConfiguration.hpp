@@ -34,7 +34,7 @@ namespace NES::Configurations {
 class QueryCompilerConfiguration : public BaseConfiguration {
   public:
     QueryCompilerConfiguration() : BaseConfiguration(){};
-    QueryCompilerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
+    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description){};
 
     /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
@@ -45,19 +45,37 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "Indicates the type for the query compiler [DEFAULT_QUERY_COMPILER|NAUTILUS_QUERY_COMPILER]."};
 
     /**
+     * @brief Sets the dump mode for the query compiler. We differentiate between NONE, CONSOLE, FILE, and FILE_AND_CONSOLE.
+     * @note This setting is only for the nautilus compiler
+     */
+    EnumOption<QueryCompilation::QueryCompilerOptions::DumpMode> queryCompilerDumpMode = {
+        QUERY_COMPILER_DUMP_MODE,
+        QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
+        "Indicates the type for the query compiler [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
+
+    /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::CompilationStrategy> compilationStrategy = {
         QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
         QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE,
-        "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]."};
+        "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE|PROXY_INLINING]."};
+
+    /**
+     * @brief Sets the backend for nautilus. We differentiate between MLIR_COMPILER, INTERPRETER, BC_INTERPRETER, and FLOUNDER_COMPILER compilation.
+     */
+    EnumOption<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend = {
+        QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG,
+        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER,
+        "Indicates the nautilus backend for the nautilus query compiler "
+        "[MLIR_COMPILER|INTERPRETER|BC_INTERPRETER|FLOUNDER_COMPILER]."};
 
     /**
      * @brief Sets the pipelining strategy. We differentiate between an OPERATOR_FUSION and OPERATOR_AT_A_TIME strategy.
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::PipeliningStrategy> pipeliningStrategy = {
         QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
-        QueryCompilation::QueryCompilerOptions::OPERATOR_FUSION,
+        QueryCompilation::QueryCompilerOptions::PipeliningStrategy::OPERATOR_FUSION,
         "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]."};
 
     /**
@@ -65,7 +83,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel> outputBufferOptimizationLevel = {
         QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
-        QueryCompilation::QueryCompilerOptions::ALL,
+        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
         "Indicates the OutputBufferAllocationStrategy "
         "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
         "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
@@ -90,6 +108,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         return {&queryCompilerType,
                 &compilationStrategy,
                 &pipeliningStrategy,
+                &nautilusBackend,
                 &outputBufferOptimizationLevel,
                 &windowingStrategy,
                 &useCompilationCache};

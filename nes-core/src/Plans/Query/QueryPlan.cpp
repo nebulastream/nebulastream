@@ -273,14 +273,12 @@ std::string QueryPlan::getSourceConsumed() const { return sourceConsumed; }
 
 void QueryPlan::setSourceConsumed(const std::string& sourceName) { sourceConsumed = sourceName; }
 
-FaultToleranceType::Value QueryPlan::getFaultToleranceType() const { return faultToleranceType; }
+FaultToleranceType QueryPlan::getFaultToleranceType() const { return faultToleranceType; }
 
-void QueryPlan::setFaultToleranceType(FaultToleranceType::Value faultToleranceType) {
-    this->faultToleranceType = faultToleranceType;
-}
+void QueryPlan::setFaultToleranceType(FaultToleranceType faultToleranceType) { this->faultToleranceType = faultToleranceType; }
 
-LineageType::Value QueryPlan::getLineageType() const { return lineageType; }
+LineageType QueryPlan::getLineageType() const { return lineageType; }
 
-void QueryPlan::setLineageType(LineageType::Value lineageType) { this->lineageType = lineageType; }
+void QueryPlan::setLineageType(LineageType lineageType) { this->lineageType = lineageType; }
 
 }// namespace NES

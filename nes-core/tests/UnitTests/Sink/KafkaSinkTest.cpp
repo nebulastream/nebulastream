@@ -72,7 +72,7 @@ class KafkaSinkTest : public Testing::NESBaseTest {
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-        testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+        testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
     }
 
     /* Will be called after a test is executed. */
@@ -138,7 +138,7 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
     auto kafkaSink =
         createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto inputBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());
     auto testBuffer = createSimpleBuffer(nodeEngine->getBufferManager()->getBufferSize(), nodeEngine->getBufferManager());
     Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);

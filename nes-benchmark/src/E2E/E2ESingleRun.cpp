@@ -54,7 +54,8 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::THREAD_LOCAL;
+    coordinatorConf->worker.queryCompiler.windowingStrategy =
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -272,7 +273,7 @@ void E2ESingleRun::stopQuery() {
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
             NES_TRACE("checkStoppedOrTimeout: check query status for " << id);
-            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::Stopped) {
+            if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::STOPPED) {
                 NES_TRACE("checkStoppedOrTimeout: status for " << id << " reached stopped");
                 break;
             }
@@ -401,23 +402,24 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
             return false;
         }
         NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
+        QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MarkedForHardStop:
-            case QueryStatus::MarkedForSoftStop:
-            case QueryStatus::SoftStopCompleted:
-            case QueryStatus::SoftStopTriggered:
-            case QueryStatus::Stopped:
-            case QueryStatus::Running: {
+            case QueryStatus::MARKED_FOR_HARD_STOP:
+            case QueryStatus::MARKED_FOR_SOFT_STOP:
+            case QueryStatus::SOFT_STOP_COMPLETED:
+            case QueryStatus::SOFT_STOP_TRIGGERED:
+            case QueryStatus::STOPPED:
+            case QueryStatus::RUNNING: {
                 return true;
             }
-            case QueryStatus::Failed: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
+            case QueryStatus::FAILED: {
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found "
+                          + std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                NES_WARNING("Expected: Running or Scheduling but found " + std::string(magic_enum::enum_name(status)));
                 break;
             }
         }

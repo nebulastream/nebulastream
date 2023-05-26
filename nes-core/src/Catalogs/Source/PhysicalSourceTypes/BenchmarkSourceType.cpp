@@ -13,6 +13,8 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -28,31 +30,29 @@ BenchmarkSourceType::BenchmarkSourceType(uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t numBuffersToProduce,
                                          uint64_t gatheringValue,
-                                         GatheringMode::Value gatheringMode,
-                                         SourceMode::Value sourceMode,
+                                         GatheringMode gatheringMode,
+                                         SourceMode sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId)
-    : PhysicalSourceType(BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
-      numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
-      sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+    : PhysicalSourceType(SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+      memoryAreaSize(memoryAreaSize), numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
+      gatheringMode(gatheringMode), sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 BenchmarkSourceTypePtr BenchmarkSourceType::create(uint8_t* memoryArea,
                                                    size_t memoryAreaSize,
                                                    uint64_t numBuffersToProduce,
                                                    uint64_t gatheringValue,
-                                                   const std::string& gatheringMode,
-                                                   const std::string& sourceMode,
+                                                   GatheringMode gatheringMode,
+                                                   SourceMode sourceMode,
                                                    uint64_t sourceAffinity,
                                                    uint64_t taskQueueId) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
-    auto sourceModeEnum = SourceMode::getFromString(sourceMode);
     return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(memoryArea,
                                                                      memoryAreaSize,
                                                                      numBuffersToProduce,
                                                                      gatheringValue,
-                                                                     gatheringModeEnum,
-                                                                     sourceModeEnum,
+                                                                     gatheringMode,
+                                                                     sourceMode,
                                                                      sourceAffinity,
                                                                      taskQueueId));
 }
@@ -63,9 +63,9 @@ size_t BenchmarkSourceType::getMemoryAreaSize() const { return memoryAreaSize; }
 
 uint64_t BenchmarkSourceType::getGatheringValue() const { return gatheringValue; }
 
-GatheringMode::Value BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
+GatheringMode BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
 
-SourceMode::Value BenchmarkSourceType::getSourceMode() const { return sourceMode; }
+SourceMode BenchmarkSourceType::getSourceMode() const { return sourceMode; }
 
 uint64_t BenchmarkSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
@@ -79,8 +79,8 @@ std::string BenchmarkSourceType::toString() {
     ss << "MemoryAreaSize :" << memoryAreaSize;
     ss << "NumberOfBuffersToProduce :" << numberOfBuffersToProduce;
     ss << "GatheringValue :" << gatheringValue;
-    ss << "GatheringMode :" << gatheringMode;
-    ss << "SourceMode :" << sourceMode;
+    ss << "GatheringMode :" << magic_enum::enum_name(gatheringMode);
+    ss << "SourceMode :" << magic_enum::enum_name(sourceMode);
     ss << "SourceAffinity :" << sourceAffinity;
     ss << "taskQueueId :" << taskQueueId;
     ss << "\n}";

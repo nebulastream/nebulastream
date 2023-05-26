@@ -58,7 +58,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration,
-                                                 const Catalogs::UDF::UdfCatalogPtr& udfCatalog)
+                                                 const Catalogs::UDF::UDFCatalogPtr& udfCatalog)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
       udfCatalog(udfCatalog) {
@@ -98,7 +98,7 @@ void RequestProcessorService::start() {
             }
 
             //FIXME: What to do if a different requests contain different placement strategies within a batch?
-            PlacementStrategy::Value placementStrategy;
+            PlacementStrategy placementStrategy;
             if (requests[0]->instanceOf<RunQueryRequest>()) {
                 placementStrategy = requests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
             }
@@ -160,12 +160,7 @@ void RequestProcessorService::start() {
                                     "running.");
 
                                 //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                                bool undeploymentSuccessful =
-                                    queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
-                                if (!undeploymentSuccessful) {
-                                    throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                     + std::to_string(sharedQueryId));
-                                }
+                                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
 
                                 //3.3.2. Perform placement of updated shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
@@ -198,16 +193,11 @@ void RequestProcessorService::start() {
                                            "running.");
 
                                 //3.4.1. Undeploy the running shared query plan
-                                bool undeploymentSuccessful =
-                                    queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-                                if (!undeploymentSuccessful) {
-                                    throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                     + std::to_string(sharedQueryId));
-                                }
+                                queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
 
                                 //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
                                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
                                 }
                             }
 
@@ -230,14 +220,14 @@ void RequestProcessorService::start() {
                         if (queryRequest->instanceOf<StopQueryRequest>()) {
                             auto stopQueryRequest = queryRequest->as<StopQueryRequest>();
                             auto queryId = stopQueryRequest->getQueryId();
-                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::STOPPED, "Hard Stopped");
                         } else if (queryRequest->instanceOf<FailQueryRequest>()) {
                             auto failQueryRequest = queryRequest->as<FailQueryRequest>();
                             auto sharedQueryPlanId = failQueryRequest->getQueryId();
                             auto failureReason = failQueryRequest->getFailureReason();
                             auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
                             for (const auto& queryId : queryIds) {
-                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, failureReason);
+                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, failureReason);
                             }
                         }
                     }
@@ -249,7 +239,7 @@ void RequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
                 }
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR2("QueryRequestProcessingService: QueryDeploymentException: {}", ex.what());
@@ -257,12 +247,12 @@ void RequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR2("QueryRequestProcessingService: TypeInferenceException: {}", ex.what());
                 auto queryId = ex.getQueryId();
-                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
+                queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, ex.what());
             } catch (InvalidQueryStatusException& ex) {
                 NES_ERROR2("QueryRequestProcessingService: InvalidQueryStatusException: {}", ex.what());
             } catch (QueryNotFoundException& ex) {

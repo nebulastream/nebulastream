@@ -33,7 +33,7 @@ using namespace Catalogs::Query;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
@@ -45,7 +45,7 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::T
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         NES_DEBUG("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -89,7 +89,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::REGISTERED);
     EXPECT_TRUE(run.size() == 1U);
 }
 
@@ -121,7 +121,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
     registeredQueries = queryCatalogService->getAllEntriesInStatus("REGISTERED");
     EXPECT_TRUE(registeredQueries.empty());
     std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop =
-        queryCatalogService->getAllEntriesInStatus("MARKED-FOR-HARD-STOP");
+        queryCatalogService->getAllEntriesInStatus("MARKED_FOR_HARD_STOP");
     EXPECT_TRUE(queriesMarkedForStop.size() == 1U);
 }
 
@@ -159,7 +159,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryWithMultipleSinks) {
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::REGISTERED);
     EXPECT_TRUE(run.size() == 1U);
 }
 
@@ -203,7 +203,7 @@ TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
-    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
+    queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
 
     //Assert
     std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus("RUNNING");

@@ -16,6 +16,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -83,8 +84,14 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
         records[i].timestamp = i;
     }
 
-    auto benchmarkSourceType =
-        BenchmarkSourceType::create(memArea, memAreaSize, buffersToASSERT, 0, "interval", "copyBuffer", 0, 0);
+    auto benchmarkSourceType = BenchmarkSourceType::create(memArea,
+                                                           memAreaSize,
+                                                           buffersToASSERT,
+                                                           0,
+                                                           GatheringMode::INTERVAL_MODE,
+                                                           SourceMode::COPY_BUFFER,
+                                                           0,
+                                                           0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -185,7 +192,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    auto benchmarkSourceType = BenchmarkSourceType::create(memArea, memAreaSize, 1, 0, "interval", "copyBuffer", 0, 0);
+    auto benchmarkSourceType =
+        BenchmarkSourceType::create(memArea, memAreaSize, 1, 0, GatheringMode::INTERVAL_MODE, SourceMode::COPY_BUFFER, 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -287,8 +295,14 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
         records[i].timestamp = i;
     }
 
-    auto benchmarkSourceType =
-        BenchmarkSourceType::create(memArea, memAreaSize, buffersToASSERT + 1, 0, "interval", "copyBuffer", 0, 0);
+    auto benchmarkSourceType = BenchmarkSourceType::create(memArea,
+                                                           memAreaSize,
+                                                           buffersToASSERT + 1,
+                                                           0,
+                                                           GatheringMode::INTERVAL_MODE,
+                                                           SourceMode::COPY_BUFFER,
+                                                           0,
+                                                           0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

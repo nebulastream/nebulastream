@@ -18,7 +18,7 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -39,12 +39,12 @@
 
 using namespace NES;
 
-class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {

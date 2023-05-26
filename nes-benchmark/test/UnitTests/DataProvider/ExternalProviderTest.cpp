@@ -71,11 +71,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -120,11 +120,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -177,11 +177,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -234,11 +234,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -284,11 +284,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -334,11 +334,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -386,11 +386,11 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
-                                 ->addField(createField("id", NES::UINT64))
-                                 ->addField(createField("value", NES::UINT64))
-                                 ->addField(createField("payload", NES::UINT64))
-                                 ->addField(createField("timestamp", NES::UINT64));
+        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                                 ->addField(createField("id", BasicType::UINT64))
+                                 ->addField(createField("value", BasicType::UINT64))
+                                 ->addField(createField("payload", BasicType::UINT64))
+                                 ->addField(createField("timestamp", BasicType::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {

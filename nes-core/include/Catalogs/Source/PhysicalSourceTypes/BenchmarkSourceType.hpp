@@ -44,8 +44,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
                                          size_t memoryAreaSize,
                                          uint64_t numberOfBuffersToProduce,
                                          uint64_t gatheringValue,
-                                         const std::string& gatheringMode,
-                                         const std::string& sourceMode,
+                                         GatheringMode gatheringMode,
+                                         SourceMode sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId);
 
@@ -55,9 +55,9 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     uint64_t getGatheringValue() const;
 
-    GatheringMode::Value getGatheringMode() const;
+    GatheringMode getGatheringMode() const;
 
-    SourceMode::Value getSourceMode() const;
+    SourceMode getSourceMode() const;
 
     uint64_t getTaskQueueId() const;
 
@@ -87,8 +87,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
                                  size_t memoryAreaSize,
                                  uint64_t numBuffersToProduce,
                                  uint64_t gatheringValue,
-                                 GatheringMode::Value gatheringMode,
-                                 SourceMode::Value sourceMode,
+                                 GatheringMode gatheringMode,
+                                 SourceMode sourceMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId);
 
@@ -96,8 +96,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
     size_t memoryAreaSize;
     uint64_t numberOfBuffersToProduce;
     uint64_t gatheringValue;
-    GatheringMode::Value gatheringMode;
-    SourceMode::Value sourceMode;
+    GatheringMode gatheringMode;
+    SourceMode sourceMode;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };

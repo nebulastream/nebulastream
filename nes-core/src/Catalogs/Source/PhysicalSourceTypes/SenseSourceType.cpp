@@ -49,7 +49,7 @@ SenseSourceType::SenseSourceType(Yaml::Node yamlConfig) : SenseSourceType() {
 }
 
 SenseSourceType::SenseSourceType()
-    : PhysicalSourceType(SENSE_SOURCE),
+    : PhysicalSourceType(SourceType::SENSE_SOURCE),
       udfs(Configurations::ConfigurationOption<std::string>::create(Configurations::UDFS_CONFIG,
                                                                     "",
                                                                     "udfs, needed for: SenseSource")) {

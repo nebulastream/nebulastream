@@ -23,7 +23,7 @@ concept convertible_to = std::is_convertible_v<_From, _To> && requires { static_
 
 class TypeCastable {
   public:
-    enum Kind {
+    enum class Kind : uint8_t {
         IntegerValue,
         FloatValue,
         BooleanValue,
@@ -40,8 +40,8 @@ class TypeCastable {
 
 template<typename T>
 concept GetType = requires(T a) {
-                      { T::type } -> convertible_to<TypeCastable::Kind>;
-                  };
+    { T::type } -> convertible_to<TypeCastable::Kind>;
+};
 
 template<class X, class Y>
     requires(std::is_base_of<Y, X>::value == false)

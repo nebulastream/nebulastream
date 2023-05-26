@@ -20,14 +20,16 @@
 
 namespace NES {
 
-MonitoringSourceType::MonitoringSourceType(uint64_t metricCollectorType, std::chrono::milliseconds waitTime)
+MonitoringSourceType::MonitoringSourceType(Monitoring::MetricCollectorType metricCollectorType,
+                                           std::chrono::milliseconds waitTime)
     : PhysicalSourceType(SourceType::MONITORING_SOURCE), metricCollectorType(metricCollectorType), waitTime(waitTime) {}
 
-MonitoringSourceTypePtr MonitoringSourceType::create(uint64_t metricCollectorType, std::chrono::milliseconds waitTime) {
+MonitoringSourceTypePtr MonitoringSourceType::create(Monitoring::MetricCollectorType metricCollectorType,
+                                                     std::chrono::milliseconds waitTime) {
     return std::make_shared<MonitoringSourceType>(MonitoringSourceType(metricCollectorType, waitTime));
 }
 
-MonitoringSourceTypePtr MonitoringSourceType::create(uint64_t metricCollectorType) {
+MonitoringSourceTypePtr MonitoringSourceType::create(Monitoring::MetricCollectorType metricCollectorType) {
     return create(metricCollectorType, MonitoringSource::DEFAULT_WAIT_TIME);
 }
 
@@ -35,7 +37,7 @@ std::string MonitoringSourceType::toString() {
     std::stringstream ss;
     ss << "MonitoringSource Type => {\n";
     ss << "waitTimeInMs:" + std::to_string(waitTime.count());
-    ss << "metricCollectorType:" + NES::Monitoring::toString(Monitoring::MetricCollectorType(metricCollectorType));
+    ss << "metricCollectorType:" + std::string(magic_enum::enum_name(Monitoring::MetricCollectorType(metricCollectorType)));
     ss << "\n}";
     return ss.str();
 }
@@ -49,10 +51,14 @@ bool MonitoringSourceType::equal(const PhysicalSourceTypePtr& other) {
 }
 
 void MonitoringSourceType::reset() { setWaitTime(MonitoringSource::DEFAULT_WAIT_TIME); }
+
 std::chrono::milliseconds MonitoringSourceType::getWaitTime() const { return waitTime; }
+
 void MonitoringSourceType::setWaitTime(std::chrono::milliseconds waitTime) { this->waitTime = waitTime; }
-uint64_t MonitoringSourceType::getMetricCollectorType() const { return metricCollectorType; }
-void MonitoringSourceType::setMetricCollectorType(uint64_t metricCollectorType) {
+
+Monitoring::MetricCollectorType MonitoringSourceType::getMetricCollectorType() const { return metricCollectorType; }
+
+void MonitoringSourceType::setMetricCollectorType(Monitoring::MetricCollectorType metricCollectorType) {
     this->metricCollectorType = metricCollectorType;
 }
 

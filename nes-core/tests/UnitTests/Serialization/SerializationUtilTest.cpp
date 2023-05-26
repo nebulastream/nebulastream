@@ -40,7 +40,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Nodes/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -69,7 +69,7 @@
 #include <API/Windowing.hpp>
 #include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -84,7 +84,7 @@ using namespace NES;
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class SerializationUtilTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SerializationUtilTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before any test in this class are executed. */
@@ -187,17 +187,17 @@ TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
     schema->addField("f1", DataTypeFactory::createDouble());
     schema->addField("f2", DataTypeFactory::createInt32());
     schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
-    schema->setLayoutType(NES::Schema::COLUMNAR_LAYOUT);
+    schema->setLayoutType(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(*serializedSchema);
     EXPECT_TRUE(deserializedSchema->equals(schema));
-    EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::COLUMNAR_LAYOUT);
+    EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 }
 
 TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     auto schema = Schema::create();
-    schema->addField("f1", INT32);
+    schema->addField("f1", BasicType::INT32);
 
     {
         auto source = ZmqSourceDescriptor::create(schema, "localhost", 42);
@@ -494,7 +494,7 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
     auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "1"));
     auto argument2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
     std::vector<ExpressionNodePtr> functionArguments = {argument1, argument2};
-    auto expression = UdfCallExpressionNode::create(udfName, functionArguments);
+    auto expression = UDFCallExpressionNode::create(udfName, functionArguments);
 
     auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
     auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(*serializedExpression);
@@ -504,33 +504,11 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
-        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
-        auto javaUdfMap = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfMap);
+        auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
+        auto javaUDFMap = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(javaUdfMap->equal(deserializedOperator));
-    }
-
-    {
-        auto windowType =
-            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(10));
-        auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
-        auto f1 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key1")->as<FieldAccessExpressionNode>();
-        auto f2 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key2")->as<FieldAccessExpressionNode>();
-        std::vector<FieldAccessExpressionNodePtr> onKey = {f1, f2};
-        uint64_t allowedLateness = 1000;
-        OriginId originId = 42;
-
-        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
-        auto javaUdfWindow = LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(javaUdfDescriptor,
-                                                                                        windowType,
-                                                                                        distChar,
-                                                                                        onKey,
-                                                                                        allowedLateness,
-                                                                                        originId);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfWindow);
-        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(javaUdfWindow->equal(deserializedOperator));
+        EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
     }
 
     {
@@ -630,7 +608,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             triggerAction,
             1,
             1,
-            NES::Join::LogicalJoinDefinition::INNER_JOIN);
+            NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
@@ -799,7 +777,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
 TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 
     auto schema = Schema::create();
-    schema->addField("f1", INT32);
+    schema->addField("f1", BasicType::INT32);
     UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
     auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);

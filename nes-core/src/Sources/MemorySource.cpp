@@ -28,6 +28,7 @@
 #include <numaif.h>
 #endif
 #endif
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES {
@@ -42,7 +43,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                            OperatorId operatorId,
                            OriginId originId,
                            size_t numSourceLocalBuffers,
-                           GatheringMode::Value gatheringMode,
+                           GatheringMode gatheringMode,
                            uint64_t sourceAffinity,
                            uint64_t taskQueueId,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -56,13 +57,13 @@ MemorySource::MemorySource(SchemaPtr schema,
                       gatheringMode,
                       std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0) {
-    this->numBuffersToProcess = numBuffersToProcess;
+    this->numberOfBuffersToProduce = numBuffersToProcess;
     if (gatheringMode == GatheringMode::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
-        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));
     }
     this->sourceAffinity = sourceAffinity;
     schemaSize = this->schema->getSchemaSizeInBytes();
@@ -93,7 +94,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG2("MemorySource::receiveData called on operatorId={}", operatorId);
     if (memoryAreaSize > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
-            if (numBuffersToProcess != 0) {
+            if (numberOfBuffersToProduce != 0) {
                 NES_DEBUG2("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
             } else {
@@ -127,5 +128,5 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
 
 std::string MemorySource::toString() const { return "MemorySource"; }
 
-NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
+NES::SourceType MemorySource::getType() const { return SourceType::MEMORY_SOURCE; }
 }// namespace NES

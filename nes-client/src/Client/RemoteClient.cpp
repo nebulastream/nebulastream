@@ -23,6 +23,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
@@ -53,15 +54,15 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     auto& context = *request.mutable_context();
 
     auto placement = google::protobuf::Any();
-    placement.set_value(PlacementStrategy::toString(config.getPlacementType()));
+    placement.set_value(std::string(magic_enum::enum_name(config.getPlacementType())));
     context["placement"] = placement;
 
     auto linageType = google::protobuf::Any();
-    linageType.set_value(LineageType::toString(config.getLineageType()));
+    linageType.set_value(std::string(magic_enum::enum_name(config.getLineageType())));
     context["linage"] = linageType;
 
     auto faultToleranceType = google::protobuf::Any();
-    faultToleranceType.set_value(FaultToleranceType::toString(config.getFaultToleranceType()));
+    faultToleranceType.set_value(std::string(magic_enum::enum_name(config.getFaultToleranceType())));
     context["faultTolerance"] = faultToleranceType;
 
     std::string message = request.SerializeAsString();
@@ -190,8 +191,8 @@ std::string RemoteClient::getQueries() {
     return result.dump();
 }
 
-std::string RemoteClient::getQueries(QueryStatus::Value status) {
-    std::string queryStatus = QueryStatus::toString(status);
+std::string RemoteClient::getQueries(QueryStatus status) {
+    std::string queryStatus = std::string(magic_enum::enum_name(status));
 
     cpr::AsyncResponse future =
         cpr::GetAsync(cpr::Url{getHostName() + "queryCatalog/queries"}, cpr::Parameters{{"status", queryStatus}});

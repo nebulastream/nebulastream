@@ -27,50 +27,50 @@ namespace NES::Client {
  */
 class QueryConfig {
   public:
-    explicit QueryConfig(NES::FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
-                         LineageType::Value lineageType = LineageType::NONE,
-                         PlacementStrategy::Value placementType = PlacementStrategy::BottomUp);
+    explicit QueryConfig(NES::FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                         LineageType lineageType = LineageType::NONE,
+                         PlacementStrategy placementType = PlacementStrategy::BottomUp);
 
     /**
      * @brief Returns the level of fault tolerance.
      * @return FaultToleranceType
      */
-    FaultToleranceType::Value getFaultToleranceType() const;
+    FaultToleranceType getFaultToleranceType() const;
 
     /**
      * @brief Sets the level of fault tolerance.
      * @param faultToleranceType
      */
-    void setFaultToleranceType(FaultToleranceType::Value faultToleranceType);
+    void setFaultToleranceType(FaultToleranceType faultToleranceType);
 
     /**
      * @brief Returns the type of Linage.
      * @return LineageType
      */
-    LineageType::Value getLineageType() const;
+    LineageType getLineageType() const;
 
     /**
      * @brief Sets the linage type
      * @param lineageType
      */
-    void setLineageType(LineageType::Value lineageType);
+    void setLineageType(LineageType lineageType);
 
     /**
      * @brief Returns the placement type.
      * @return PlacementStrategy
      */
-    PlacementStrategy::Value getPlacementType() const;
+    PlacementStrategy getPlacementType() const;
 
     /**
      * @brief Sets the placement type
      * @param placementType
      */
-    void setPlacementType(PlacementStrategy::Value placementType);
+    void setPlacementType(PlacementStrategy placementType);
 
   private:
-    FaultToleranceType::Value faultToleranceType;
-    LineageType::Value lineageType;
-    PlacementStrategy::Value placementType;
+    FaultToleranceType faultToleranceType;
+    LineageType lineageType;
+    PlacementStrategy placementType;
 };
 }// namespace NES::Client
 

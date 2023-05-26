@@ -33,18 +33,30 @@ WindowTypePtr ThresholdWindow::of(ExpressionNodePtr predicate, uint64_t minimumC
 }
 
 bool ThresholdWindow::equal(WindowTypePtr otherWindowType) {
-    if (otherWindowType->isThresholdWindow()) {
-        return std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType)->getPredicate()->equal(this->getPredicate());
+    if (otherWindowType->isContentBasedWindowType()) {
+        auto contentBasedWindowType = std::dynamic_pointer_cast<ContentBasedWindowType>(otherWindowType);
+        return contentBasedWindowType->getContentBasedSubWindowType() == THRESHOLDWINDOW
+            && this->getContentBasedSubWindowType() == THRESHOLDWINDOW
+            && std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType)->getPredicate()->equal(this->getPredicate());
     } else {
         return false;
     }
 }
 
-bool ThresholdWindow::isThresholdWindow() { return true; }
+ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBasedSubWindowType() { return THRESHOLDWINDOW; }
 
 const ExpressionNodePtr& ThresholdWindow::getPredicate() const { return predicate; }
 
 uint64_t ThresholdWindow::getMinimumCount() { return minimumCount; }
+
+bool ThresholdWindow::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+    NES_INFO("inferStamp for ThresholdWindow")
+    predicate->inferStamp(typeInferencePhaseContext, schema);
+    if (!predicate->isPredicate()) {
+        NES_THROW_RUNTIME_ERROR("the threshold expression is not a valid predicate");
+    }
+    return true;
+}
 
 std::string ThresholdWindow::toString() {
     std::stringstream ss;

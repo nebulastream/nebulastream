@@ -29,7 +29,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                            OperatorId operatorId,
                            OriginId originId,
                            size_t numSourceLocalBuffers,
-                           GatheringMode::Value gatheringMode,
+                           GatheringMode gatheringMode,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -82,7 +82,7 @@ void BinarySource::fillBuffer(Runtime::TupleBuffer& buf) {
     generatedTuples += generated_tuples_this_pass;
     generatedBuffers++;
 }
-SourceType BinarySource::getType() const { return BINARY_SOURCE; }
+SourceType BinarySource::getType() const { return SourceType::BINARY_SOURCE; }
 
 const std::string& BinarySource::getFilePath() const { return filePath; }
 }// namespace NES

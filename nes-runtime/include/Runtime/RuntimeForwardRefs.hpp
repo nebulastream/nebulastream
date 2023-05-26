@@ -36,7 +36,7 @@ using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
 }// namespace Configurations
 
-enum PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
+enum class PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
@@ -55,7 +55,7 @@ using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 
 namespace Runtime {
 
-enum class NumaAwarenessFlag { ENABLED, DISABLED };
+enum class NumaAwarenessFlag : uint8_t { ENABLED, DISABLED };
 
 class RuntimeEventListener;
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
@@ -109,7 +109,7 @@ namespace Execution {
 class OperatorHandler;
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 
-enum OperatorHandlerType : uint8_t { WINDOW, CEP, JOIN, BATCH_JOIN, KEY_EVENT_TIME_WINDOW };
+enum class OperatorHandlerType : uint8_t { WINDOW, CEP, JOIN, BATCH_JOIN, KEY_EVENT_TIME_WINDOW };
 
 class ExecutablePipeline;
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
@@ -138,12 +138,6 @@ using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 
 class RowLayout;
 using RowLayoutPtr = std::shared_ptr<RowLayout>;
-
-class ColumnLayoutTupleBuffer;
-using ColumnLayoutBufferPtr = std::shared_ptr<ColumnLayoutTupleBuffer>;
-
-class RowLayoutTupleBuffer;
-using RowLayoutTupleBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
 
 }// namespace MemoryLayouts
 

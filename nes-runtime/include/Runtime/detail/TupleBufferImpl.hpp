@@ -19,6 +19,7 @@
 #include <Runtime/TaggedPointer.hpp>
 #include <atomic>
 #include <functional>
+#include <vector>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>
@@ -245,7 +246,7 @@ class MemorySegment {
     friend class NES::Runtime::BufferManager;
     friend class NES::Runtime::detail::BufferControlBlock;
 
-    enum MemorySegmentType { Native = 0, Wrapped = 1 };
+    enum class MemorySegmentType : uint8_t { Native = 0, Wrapped = 1 };
 
   public:
     MemorySegment(const MemorySegment& other);

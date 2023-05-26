@@ -139,15 +139,15 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
 
     //Infer stamp of window definition
     auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
-    windowType->inferStamp(leftInputSchema);
+    windowType->inferStamp(leftInputSchema, typeInferencePhaseContext);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
     auto sourceNameLeft = leftInputSchema->getQualifierNameForSystemGeneratedFields();
     auto sourceNameRight = rightInputSchema->getQualifierNameForSystemGeneratedFields();
     auto newQualifierForSystemField = sourceNameLeft + sourceNameRight;
-    outputSchema->addField(createField(newQualifierForSystemField + "$start", UINT64));
-    outputSchema->addField(createField(newQualifierForSystemField + "$end", UINT64));
+    outputSchema->addField(createField(newQualifierForSystemField + "$start", BasicType::UINT64));
+    outputSchema->addField(createField(newQualifierForSystemField + "$end", BasicType::UINT64));
     outputSchema->addField(AttributeField::create(newQualifierForSystemField + "$key", leftJoinKey->getStamp()));
 
     // create dynamic fields to store all fields from left and right sources

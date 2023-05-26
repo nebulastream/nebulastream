@@ -42,22 +42,26 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
                                 "Cannot cleanup source " << source->getOperatorId());// just a clean-up op
             }
         }
-        addReconfigurationMessage(
-            qep->getQueryId(),
-            qep->getQuerySubPlanId(),
-            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
-            false);
+        addReconfigurationMessage(qep->getQueryId(),
+                                  qep->getQuerySubPlanId(),
+                                  ReconfigurationMessage(qep->getQueryId(),
+                                                         qep->getQuerySubPlanId(),
+                                                         ReconfigurationType::Destroy,
+                                                         inherited1::shared_from_this()),
+                                  false);
 
         queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),
                                                      qep->getQuerySubPlanId(),
                                                      Execution::ExecutableQueryPlanStatus::Finished);
 
     } else if (status == Execution::ExecutableQueryPlanStatus::ErrorState) {
-        addReconfigurationMessage(
-            qep->getQueryId(),
-            qep->getQuerySubPlanId(),
-            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
-            false);
+        addReconfigurationMessage(qep->getQueryId(),
+                                  qep->getQuerySubPlanId(),
+                                  ReconfigurationMessage(qep->getQueryId(),
+                                                         qep->getQuerySubPlanId(),
+                                                         ReconfigurationType::Destroy,
+                                                         inherited1::shared_from_this()),
+                                  false);
 
         queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),
                                                      qep->getQuerySubPlanId(),

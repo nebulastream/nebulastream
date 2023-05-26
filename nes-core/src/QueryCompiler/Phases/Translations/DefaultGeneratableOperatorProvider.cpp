@@ -54,7 +54,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -162,7 +162,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         return;
     }
 #ifdef PYTHON_UDF_ENABLED
-    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUdfOperator>()) {
+    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>()) {
         return;
     }
 #endif
@@ -251,22 +251,22 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(const QueryPla
 GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperatorProvider::lowerWindowAggregation(
     const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor) {
     switch (windowAggregationDescriptor->getType()) {
-        case Windowing::WindowAggregationDescriptor::Count: {
+        case Windowing::WindowAggregationDescriptor::Type::Count: {
             return GeneratableOperators::GeneratableCountAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Max: {
+        case Windowing::WindowAggregationDescriptor::Type::Max: {
             return GeneratableOperators::GeneratableMaxAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Min: {
+        case Windowing::WindowAggregationDescriptor::Type::Min: {
             return GeneratableOperators::GeneratableMinAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Sum: {
+        case Windowing::WindowAggregationDescriptor::Type::Sum: {
             return GeneratableOperators::GeneratableSumAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Avg: {
+        case Windowing::WindowAggregationDescriptor::Type::Avg: {
             return GeneratableOperators::GeneratableAvgAggregation::create(windowAggregationDescriptor);
         };
-        case Windowing::WindowAggregationDescriptor::Median: {
+        case Windowing::WindowAggregationDescriptor::Type::Median: {
             return GeneratableOperators::GeneratableMedianAggregation::create(windowAggregationDescriptor);
         };
         default:

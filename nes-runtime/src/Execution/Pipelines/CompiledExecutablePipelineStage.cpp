@@ -21,31 +21,36 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::Runtime::Execution {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-    std::string compilationBackend)
-    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend) {}
+    const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
+    const std::string& compilationBackend,
+    const Nautilus::CompilationOptions& options)
+    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend), options(options),
+      pipelineFunction(nullptr) {}
 
 ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
                                                          WorkerContext& workerContext) {
     // wait till pipeline is ready
     executablePipeline.wait();
-    auto& pipeline = executablePipeline.get();
-    auto func = pipeline->getInvocableMember<void, void*, void*, void*>("execute");
-    func((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+
+    pipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
 }
 
 std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline() {
     // compile after setup
-    Timer timer("CompilationBasedPipelineExecutionEngine");
+    auto dumpHelper = DumpHelper::create(options.getIdentifier(),
+                                         options.isDumpToConsole(),
+                                         options.isDumpToFile(),
+                                         options.getDumpOutputPath());
+    Timer timer("CompilationBasedPipelineExecutionEngine " + options.getIdentifier());
     timer.start();
-
     auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) nullptr);
     pipelineExecutionContextRef.ref =
         Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
@@ -67,21 +72,17 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
         rootOperator->open(ctx, recordBuffer);
         rootOperator->close(ctx, recordBuffer);
     });
-
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
-    NES_DEBUG(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_DEBUG(*executionTrace.get());
+    dumpHelper.dump("1. AfterTracing.trace", executionTrace->toString());
     timer.snapshot("Trace Generation");
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_DEBUG(ir->toString());
-    //Nautilus::IR::RemoveBrOnlyBlocksPhase().apply(ir);
-    timer.snapshot("NESIR Generation");
-    NES_DEBUG(ir->toString());
+    timer.snapshot("IR Generation");
+    dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
-    auto executable = compiler->compile(ir);
+    auto executable = compiler->compile(ir, options, dumpHelper);
     timer.snapshot("Compilation");
     NES_INFO(timer);
     return executable;
@@ -93,7 +94,7 @@ uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
     executablePipeline = std::async(std::launch::deferred, [this] {
                              return this->compilePipeline();
                          }).share();
-    executablePipeline.get();
+    pipelineFunction = executablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
     return 0;
 }
 

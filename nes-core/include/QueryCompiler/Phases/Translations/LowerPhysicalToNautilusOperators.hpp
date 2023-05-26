@@ -18,18 +18,18 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <memory>
 #include <vector>
 
-namespace NES {
-namespace Windowing {}// namespace Windowing
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 class ExpressionProvider;
 
 /**
@@ -62,61 +62,65 @@ class LowerPhysicalToNautilusOperators {
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
+    /**
+     * @brief Deconstructor for this class
+     */
     ~LowerPhysicalToNautilusOperators();
 
   private:
-    /**
-     * @brief Inserts streamJoinOperatorHandler into operatorHandlers, if it does not already exist
-     * @param operatorHandlers
-     * @param operatorId
-     * @param streamJoinOperatorHandler
-     * @return handlerIndex of the streamJoinOperatorHandler
-     */
-    uint64_t insertStreamJoinOperatorHandlerIfNeeded(
-        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-        OperatorId operatorId,
-        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler);
-
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
           size_t bufferSize,
           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
               size_t bufferSize);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerEmit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
               size_t bufferSize);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
              const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+
+    std::unique_ptr<Runtime::Execution::Operators::TimeFunction>
+    lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeBasedWindowType);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                  const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerKeyedThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
@@ -134,15 +138,45 @@ class LowerPhysicalToNautilusOperators {
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 #ifdef ENABLE_JNI
+    /**
+     * @brief Creates an executable operator for a Java UDF that performs a map operation.
+     * @param pipeline PhysicalOperatorPipeline object that contains the pipeline of physical operators.
+     * @param sharedPtr A shared pointer to a PhysicalOperator object.
+     * @param handlerIndex An unsigned 64-bit integer that represents the index of the handler.
+     * @return A shared pointer to an ExecutableOperator object that represents the executable Java UDF operator for a map operation.
+     */
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    lowerMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                     const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
                     uint64_t handlerIndex);
-#endif// ENABLE_JIN
+
+    /**
+     * @brief Creates an executable operator for a Java UDF that performs a flatmap operation.
+     * @param pipeline PhysicalOperatorPipeline object that contains the pipeline of physical operators.
+     * @param sharedPtr A shared pointer to a PhysicalOperator object.
+     * @param handlerIndex An unsigned 64-bit integer that represents the index of the handler.
+     * @return A shared pointer to an ExecutableOperator object that represents the executable Java UDF operator for a flatmap operation.
+     */
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                        const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
+                        uint64_t handlerIndex);
+#endif// ENABLE_JNI
+
+#ifdef TFDEF
+    /**
+     * @brief Creates an executable operator for an inference operation
+     * @param physicalOperator
+     * @param operatorHandlers
+     * @return A shared pointer to an ExecutableOperator object that represents the infer model
+     */
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                            std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+#endif
 
   private:
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_

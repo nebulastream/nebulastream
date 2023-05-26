@@ -66,6 +66,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'id' must be provided");
@@ -88,6 +91,9 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingMigrationType
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'migrationType' must be provided");
@@ -110,10 +116,13 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string message =
-        "MigrationType: 0"
+        "MigrationType: INVALID"
         " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
         "Buffering)";
     EXPECT_EQ(res["message"], message);
@@ -128,13 +137,16 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
     nlohmann::json request;
     //non-existent id
     request["id"] = 69;
-    request["migrationType"] = Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING);
+    request["migrationType"] = std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{request.dump()});
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "No Topology Node with ID " + std::to_string(69));
@@ -149,19 +161,21 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
 
     nlohmann::json request;
     request["id"] = nodeId;
-    request["migrationType"] = Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING);
+    request["migrationType"] = std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/maintenance/scheduleMaintenance"},
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{request.dump()});
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["Info"], "Successfully submitted Maintenance Request");
     EXPECT_EQ(res["Node Id"], nodeId);
-    EXPECT_EQ(res["Migration Type"],
-              Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
+    EXPECT_EQ(res["Migration Type"], std::string(magic_enum::enum_name(Experimental::MigrationType::MIGRATION_WITH_BUFFERING)));
     stopCoordinator();
 }
 }// namespace NES

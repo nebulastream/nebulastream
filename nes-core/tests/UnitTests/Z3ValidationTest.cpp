@@ -20,7 +20,7 @@
 
 using namespace z3;
 namespace NES {
-class Z3ValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
+class Z3ValidationTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3ValidationTest.log", NES::LogLevel::LOG_DEBUG);

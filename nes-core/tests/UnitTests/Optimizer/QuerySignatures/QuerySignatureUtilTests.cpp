@@ -41,14 +41,14 @@
 
 using namespace NES;
 
-class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::Test> {
+class QuerySignatureUtilTests : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     std::shared_ptr<Optimizer::TypeInferencePhaseContext> typeInferencePhaseContext;
 
     /* Will be called before all tests in this class are started. */
@@ -59,12 +59,12 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
         typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(
             Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
         schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);

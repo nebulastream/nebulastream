@@ -24,8 +24,14 @@ namespace NES::Windowing {
 TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic)
     : timeCharacteristic(std::move(timeCharacteristic)) {}
 
+bool TimeBasedWindowType::isTimeBasedWindowType() { return true; }
+
+bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext&) {
+    return inferStamp(schema);
+}
+
 bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
-    if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
+    if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->hasFieldName(fieldName);
         if (existingField) {
@@ -42,4 +48,5 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
 }
 
 TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const { return timeCharacteristic; }
+
 }// namespace NES::Windowing

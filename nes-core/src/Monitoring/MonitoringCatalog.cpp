@@ -19,6 +19,7 @@
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Monitoring {
 
@@ -46,7 +47,7 @@ MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) 
     if (metricMap.contains(metricType)) {
         return metricMap[metricType];
     }
-    NES_ERROR2("MonitoringCatalog: MetricType {} is not in catalog.", toString(metricType));
+    NES_ERROR2("MonitoringCatalog: MetricType {} is not in catalog.", std::string(magic_enum::enum_name(metricType)));
     return nullptr;
 }
 

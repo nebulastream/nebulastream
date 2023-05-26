@@ -15,6 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -82,7 +83,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, "interval");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -181,7 +182,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, 1, 0, "interval");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, 1, 0, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -282,7 +283,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, "interval");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

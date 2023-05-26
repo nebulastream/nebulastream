@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
 #define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -25,30 +26,37 @@ namespace NES::Runtime::Execution::Aggregation {
  */
 class AggregationFunction {
   public:
-    AggregationFunction(PhysicalTypePtr inputType, PhysicalTypePtr finalType);
+    AggregationFunction(PhysicalTypePtr inputType,
+                        PhysicalTypePtr resultType,
+                        Expressions::ExpressionPtr inputExpression,
+                        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /**
      * @brief lift adds the incoming value to the existing aggregation value
      * @param memref existing aggregation value
      * @param value the value to add
      */
-    virtual void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<>) = 0;
+    virtual void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) = 0;
+
     /**
      * @brief combine composes to aggregation value into one
      * @param memref1 an aggregation value (intermediate result)
      * @param memref2 another aggregation value (intermediate result)
      */
     virtual void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) = 0;
+
     /**
      * @brief lower returns the aggregation value
      * @param memref the derived aggregation value
      */
-    virtual Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) = 0;
+    virtual void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) = 0;
+
     /**
      * @brief resets the stored aggregation value to init (=0)
      * @param memref the current aggragtion value which need to be reset
      */
     virtual void reset(Nautilus::Value<Nautilus::MemRef> memref) = 0;
+
     /**
      * @brief gets the size of the partial aggregate in byte.
      * @return uint64_t
@@ -58,8 +66,10 @@ class AggregationFunction {
     virtual ~AggregationFunction();
 
   protected:
-    PhysicalTypePtr inputType;
-    PhysicalTypePtr finalType;
+    const PhysicalTypePtr inputType;
+    const PhysicalTypePtr resultType;
+    const Expressions::ExpressionPtr inputExpression;
+    const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 
     /**
      * @brief Load a value from a memref as a specific pyhsical type
@@ -67,7 +77,7 @@ class AggregationFunction {
      * @param physicalType the intended data type to which the value should be casted
      * @return value in the type of physicalType
      */
-    static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, PhysicalTypePtr physicalType);
+    static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, const PhysicalTypePtr& physicalType);
 
     static Nautilus::Value<> createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
 };

@@ -47,10 +47,10 @@ TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::RETURN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::RETURN);
 }
 
 TEST_F(SymbolicTracingTest, arithmeticExpressionTest) {
@@ -64,15 +64,15 @@ TEST_F(SymbolicTracingTest, arithmeticExpressionTest) {
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
 
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::CONST);
 
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::SUB);
-    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[5].op, Nautilus::Tracing::MUL);
-    ASSERT_EQ(block0.operations[6].op, Nautilus::Tracing::DIV);
-    ASSERT_EQ(block0.operations[7].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::SUB);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[5].op, Nautilus::Tracing::OpCode::MUL);
+    ASSERT_EQ(block0.operations[6].op, Nautilus::Tracing::OpCode::DIV);
+    ASSERT_EQ(block0.operations[7].op, Nautilus::Tracing::OpCode::ADD);
 }
 
 TEST_F(SymbolicTracingTest, logicalNegateTest) {
@@ -82,9 +82,9 @@ TEST_F(SymbolicTracingTest, logicalNegateTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::NEGATE);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::RETURN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::NEGATE);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::RETURN);
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionLessThanTest) {
@@ -94,9 +94,9 @@ TEST_F(SymbolicTracingTest, logicalExpressionLessThanTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::LESS_THAN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::LESS_THAN);
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionEqualsTest) {
@@ -107,9 +107,9 @@ TEST_F(SymbolicTracingTest, logicalExpressionEqualsTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::EQUALS);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::EQUALS);
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionLessEqualsTest) {
@@ -118,11 +118,11 @@ TEST_F(SymbolicTracingTest, logicalExpressionLessEqualsTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::EQUALS);
-    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OR);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OpCode::OR);
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionGreaterTest) {
@@ -131,9 +131,9 @@ TEST_F(SymbolicTracingTest, logicalExpressionGreaterTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::GREATER_THAN);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::GREATER_THAN);
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionGreaterEqualsTest) {
@@ -142,11 +142,11 @@ TEST_F(SymbolicTracingTest, logicalExpressionGreaterEqualsTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::GREATER_THAN);
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::EQUALS);
-    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OR);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::GREATER_THAN);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OpCode::OR);
 }
 
 TEST_F(SymbolicTracingTest, logicalAssignEqualsTest) {
@@ -158,9 +158,9 @@ TEST_F(SymbolicTracingTest, logicalAssignEqualsTest) {
     NES_INFO(*executionTrace.get());
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CONST);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::CONST);
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionTest) {
@@ -172,14 +172,14 @@ TEST_F(SymbolicTracingTest, logicalExpressionTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::EQUALS);
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block0.operations[5].op, Nautilus::Tracing::AND);
-    ASSERT_EQ(block0.operations[6].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[7].op, Nautilus::Tracing::OR);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::EQUALS);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block0.operations[5].op, Nautilus::Tracing::OpCode::AND);
+    ASSERT_EQ(block0.operations[6].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[7].op, Nautilus::Tracing::OpCode::OR);
 }
 
 TEST_F(SymbolicTracingTest, ifConditionTest) {
@@ -194,15 +194,15 @@ TEST_F(SymbolicTracingTest, ifConditionTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
 
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::CMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 0);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::SUB);
-    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::OpCode::SUB);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments[0], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
@@ -210,7 +210,7 @@ TEST_F(SymbolicTracingTest, ifConditionTest) {
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 0);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::JMP);
 
     auto blockref2 = std::get<Nautilus::Tracing::BlockRef>(block2.operations[0].input[0]);
     ASSERT_EQ(blockref2.block, 3);
@@ -221,8 +221,8 @@ TEST_F(SymbolicTracingTest, ifConditionTest) {
     ASSERT_EQ(block3.predecessors[0], 1);
     ASSERT_EQ(block3.predecessors[1], 2);
     ASSERT_EQ(block3.arguments.size(), 1);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::ADD);
 }
 
 TEST_F(SymbolicTracingTest, ifElseConditionTest) {
@@ -235,16 +235,16 @@ TEST_F(SymbolicTracingTest, ifElseConditionTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::CMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 0);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::SUB);
-    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::OpCode::SUB);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments[0], std::get<Nautilus::Tracing::ValueRef>(block1.operations[1].result));
@@ -252,8 +252,8 @@ TEST_F(SymbolicTracingTest, ifElseConditionTest) {
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 0);
     ASSERT_EQ(block2.arguments.size(), 2);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::MUL);
-    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::MUL);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref2 = std::get<Nautilus::Tracing::BlockRef>(block2.operations[1].input[0]);
     ASSERT_EQ(blockref2.block, 3);
     ASSERT_EQ(blockref2.arguments.size(), 1);
@@ -264,8 +264,8 @@ TEST_F(SymbolicTracingTest, ifElseConditionTest) {
     ASSERT_EQ(block3.predecessors[0], 1);
     ASSERT_EQ(block3.predecessors[1], 2);
     ASSERT_EQ(block3.arguments.size(), 1);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::ADD);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::ADD);
 }
 
 TEST_F(SymbolicTracingTest, nestedIfElseConditionTest) {
@@ -279,41 +279,41 @@ TEST_F(SymbolicTracingTest, nestedIfElseConditionTest) {
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 7);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::EQUALS);
-    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[3].op, Nautilus::Tracing::OpCode::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Nautilus::Tracing::OpCode::CMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 0);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[0].input[0]);
     ASSERT_EQ(blockref.block, 5);
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 0);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::EQUALS);
-    ASSERT_EQ(block2.operations[2].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::OpCode::EQUALS);
+    ASSERT_EQ(block2.operations[2].op, Nautilus::Tracing::OpCode::CMP);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 2);
     ASSERT_EQ(block3.arguments.size(), 0);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block4 = basicBlocks[4];
     ASSERT_EQ(block4.predecessors[0], 2);
     ASSERT_EQ(block4.arguments.size(), 1);
-    ASSERT_EQ(block4.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block4.operations[1].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block4.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block4.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block4.operations[1].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block4.operations[2].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block5 = basicBlocks[5];
     ASSERT_EQ(block5.predecessors[0], 1);
     ASSERT_EQ(block5.predecessors[1], 3);
-    ASSERT_EQ(block5.operations[0].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block5.operations[0].op, Nautilus::Tracing::OpCode::JMP);
 }
 
 TEST_F(SymbolicTracingTest, emptyLoopTest) {
@@ -325,15 +325,15 @@ TEST_F(SymbolicTracingTest, emptyLoopTest) {
     auto basicBlocks = execution->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
@@ -342,16 +342,16 @@ TEST_F(SymbolicTracingTest, emptyLoopTest) {
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::SUB);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::OpCode::SUB);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::OpCode::CMP);
 }
 
 TEST_F(SymbolicTracingTest, longEmptyLoopTest) {
@@ -363,15 +363,15 @@ TEST_F(SymbolicTracingTest, longEmptyLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     NES_INFO(*execution);
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
@@ -380,16 +380,16 @@ TEST_F(SymbolicTracingTest, longEmptyLoopTest) {
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::SUB);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::OpCode::SUB);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::OpCode::CMP);
 }
 
 TEST_F(SymbolicTracingTest, sumLoopTest) {
@@ -402,17 +402,17 @@ TEST_F(SymbolicTracingTest, sumLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     NES_INFO(*execution);
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[3].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block1.operations[4].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[3].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block1.operations[4].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[4].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
@@ -422,16 +422,16 @@ TEST_F(SymbolicTracingTest, sumLoopTest) {
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::EQUALS);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::OpCode::EQUALS);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::OpCode::CMP);
 }
 
 TEST_F(SymbolicTracingTest, sumWhileLoopTest) {
@@ -444,14 +444,14 @@ TEST_F(SymbolicTracingTest, sumWhileLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     NES_INFO(*execution);
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block1.operations[1].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block1.operations[2].op, Nautilus::Tracing::OpCode::JMP);
     auto blockref = std::get<Nautilus::Tracing::BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 1);
@@ -460,16 +460,16 @@ TEST_F(SymbolicTracingTest, sumWhileLoopTest) {
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
     ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::EQUALS);
+    ASSERT_EQ(block2.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block2.operations[1].op, Nautilus::Tracing::OpCode::EQUALS);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 1);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::OpCode::CMP);
 }
 
 TEST_F(SymbolicTracingTest, invertedLoopTest) {
@@ -482,13 +482,13 @@ TEST_F(SymbolicTracingTest, invertedLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
     NES_INFO(execution);
-    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block0.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::JMP);
+    ASSERT_EQ(block1.operations[0].op, Nautilus::Tracing::OpCode::JMP);
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
@@ -498,10 +498,10 @@ TEST_F(SymbolicTracingTest, invertedLoopTest) {
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::CONST);
-    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::ADD);
-    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::LESS_THAN);
-    ASSERT_EQ(block3.operations[3].op, Nautilus::Tracing::CMP);
+    ASSERT_EQ(block3.operations[0].op, Nautilus::Tracing::OpCode::CONST);
+    ASSERT_EQ(block3.operations[1].op, Nautilus::Tracing::OpCode::ADD);
+    ASSERT_EQ(block3.operations[2].op, Nautilus::Tracing::OpCode::LESS_THAN);
+    ASSERT_EQ(block3.operations[3].op, Nautilus::Tracing::OpCode::CMP);
 }
 
 TEST_F(SymbolicTracingTest, nestedLoopTest) {

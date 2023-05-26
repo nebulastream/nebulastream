@@ -16,10 +16,10 @@
 #define NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_
 
 #include <API/AttributeField.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <UdfCatalogService.pb.h>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 namespace NES {
 
@@ -30,13 +30,13 @@ class ProtobufMessageFactory {
   public:
     /**
      * @brief Construct a RegisterJavaUdfRequest protobuf message.
-     * @see UdfCatalog::registerJavaUdf
+     * @see UDFCatalog::registerJavaUdf
      */
     static RegisterJavaUdfRequest createRegisterJavaUdfRequest(const std::string& udfName,
                                                                const std::string& udfClassName,
                                                                const std::string& methodName,
                                                                const Catalogs::UDF::JavaSerializedInstance& serializedInstance,
-                                                               const Catalogs::UDF::JavaUdfByteCodeList& byteCodeList,
+                                                               const Catalogs::UDF::JavaUDFByteCodeList& byteCodeList,
                                                                const SchemaPtr& outputSchema,
                                                                const std::string& inputClassName,
                                                                const std::string& outputClassName) {
@@ -63,7 +63,7 @@ class ProtobufMessageFactory {
     }
 
     static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest() {
-        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
+        auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
         return createRegisterJavaUdfRequest("my_udf",
                                             javaUdfDescriptor->getClassName(),
                                             javaUdfDescriptor->getMethodName(),

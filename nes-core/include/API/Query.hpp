@@ -48,6 +48,11 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+namespace Catalogs::UDF {
+class JavaUDFDescriptor;
+using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
+}// namespace Catalogs::UDF
+
 namespace WindowOperatorBuilder {
 
 class WindowedQuery;
@@ -438,6 +443,20 @@ class Query {
      * @return query.
      */
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+
+    /**
+     * @brief: Create map java udf operator.
+     * @param descriptor java udf descriptor
+     * @return query
+     */
+    Query& mapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr descriptor);
+
+    /**
+     * @brief: Create flat map java udf operator.
+     * @param descriptor java udf descriptor
+     * @return query
+     */
+    Query& flatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr descriptor);
 
     /**
      * @brief: Map records according to a map expression. An

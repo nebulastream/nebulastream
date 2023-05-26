@@ -21,7 +21,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -46,12 +46,12 @@
 using namespace NES;
 using namespace Configurations;
 
-class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class DistributeWindowRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -60,7 +60,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         // enable distributed window optimization
         auto optimizerConfiguration = Configurations::OptimizerConfiguration();
@@ -68,7 +68,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
 

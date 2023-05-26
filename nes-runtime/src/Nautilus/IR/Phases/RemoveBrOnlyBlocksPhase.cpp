@@ -20,6 +20,7 @@
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
 #include <memory>
 #include <stack>
@@ -44,13 +45,13 @@ void inline addPredecessorToBlock(IR::BasicBlockPtr currentBlock,
                                   std::unordered_set<std::string> newBlocks) {
     // Add the current block to the predecessors af the next block or true- and false blocks, in case of an if.
     auto terminatorOp = currentBlock->getTerminatorOp();
-    if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
+    if (terminatorOp->getOperationType() == Operations::Operation::OperationType::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
         branchOp->getNextBlockInvocation().getBlock()->addPredecessor(currentBlock);
         if (!newBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
             candidates.emplace(branchOp->getNextBlockInvocation().getBlock());
         }
-    } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
+    } else if (terminatorOp->getOperationType() == Operations::Operation::OperationType::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
         ifOp->getFalseBlockInvocation().getBlock()->addPredecessor(currentBlock);
         ifOp->getTrueBlockInvocation().getBlock()->addPredecessor(currentBlock);
@@ -77,7 +78,7 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::addPredecessors(IR
     } while (!newBlocks.empty());
 }
 
-void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::BasicBlockPtr nonBrOnlyBlock) {
+void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, const IR::BasicBlockPtr& nonBrOnlyBlock) {
     // We refer to the block that comes after the br-only-block-chain and is not a br-only-block as non-br-only-block.
     // newBlocks is used to remember all blocks that must become predecessors of the non-br-only-block.
     // removedBlock is used to remember all br-only-blocks that need to be removed as predecessors from the non-br-only-block.
@@ -85,9 +86,9 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
     std::unordered_map<std::string, IR::BasicBlockPtr> removedBlocks;
     // Iterate over all passed br-only-blocks and set the non-br-only-block as new target block of predecessors.
     // Also, update all br- and if-operations to point to the non-br-block.
-    for (auto brOnlyBlock : brOnlyBlocks) {
+    for (const auto& brOnlyBlock : brOnlyBlocks) {
         removedBlocks.emplace(std::make_pair(brOnlyBlock->getIdentifier(), brOnlyBlock));
-        for (auto predecessor : brOnlyBlock->getPredecessors()) {
+        for (const auto& predecessor : brOnlyBlock->getPredecessors()) {
             if (!removedBlocks.contains(predecessor.lock()->getIdentifier())) {
                 newPredecessorBlocks.emplace_back(predecessor);
             }
@@ -97,7 +98,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
             // If it is the false-branch-block, add it as the new false-branch-block, and check whether the true-branch-block
             // is the same. If it is, we found an empty if-else case and can replace the if-operation with a branch-operation.
             // If the predecessor is a branch-operation, simply set the non-branch-block as the new next-block.
-            if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
+            if (terminatorOp->getOperationType() == Operations::Operation::OperationType::IfOp) {
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
                 if (ifOp->getTrueBlockInvocation().getBlock()->getIdentifier() == brOnlyBlock->getIdentifier()) {
                     ifOp->getTrueBlockInvocation().setBlock(nonBrOnlyBlock);
@@ -109,31 +110,31 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
                         predecessor.lock()->removeOperation(predecessor.lock()->getTerminatorOp());
                         auto newBranchOperation = std::make_shared<Operations::BranchOperation>();
                         newBranchOperation->getNextBlockInvocation().setBlock(nonBrOnlyBlock);
-                        for (auto arg : ifOp->getFalseBlockInvocation().getArguments()) {
+                        for (const auto& arg : ifOp->getFalseBlockInvocation().getArguments()) {
                             newBranchOperation->getNextBlockInvocation().addArgument(arg);
                         }
                         predecessor.lock()->addOperation(std::move(newBranchOperation));
                     }
                 }
-            } else if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
+            } else if (terminatorOp->getOperationType() == Operations::Operation::OperationType::BranchOp) {
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
                 branchOp->getNextBlockInvocation().setBlock(nonBrOnlyBlock);
             } else {
                 NES_ERROR("RemoveBrOnlyBlocksPhase::updateTerminatorOperation: Case not implemented: "
-                          << terminatorOp->getOperationType());
+                          << magic_enum::enum_name(terminatorOp->getOperationType()));
                 NES_NOT_IMPLEMENTED();
             }
         }
     }
     // Add all predecessors of the non-branch-only-block that are NOT branch-only-blocks to the list of new predecessors.
-    for (auto predecessor : nonBrOnlyBlock->getPredecessors()) {
+    for (const auto& predecessor : nonBrOnlyBlock->getPredecessors()) {
         if (!removedBlocks.contains(predecessor.lock()->getIdentifier())) {
             newPredecessorBlocks.emplace_back(predecessor);
         }
     }
     // Drop the current predecessor list of the non-br-only-block and fill it with all new-predecessor blocks.
     nonBrOnlyBlock->getPredecessors().clear();
-    for (auto newPredecessor : newPredecessorBlocks) {
+    for (const auto& newPredecessor : newPredecessorBlocks) {
         nonBrOnlyBlock->addPredecessor(newPredecessor.lock());
     }
 }
@@ -145,15 +146,23 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBr
     // We are searching for branch-only-blocks. If the currentBlock has a different terminator operation, simply
     // add the next-block(s) to the newBlocks and proceed.
     auto terminatorOp = currentBlock->getTerminatorOp();
-    if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
+    if (terminatorOp->getOperationType() == Operations::Operation::OperationType::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
         // If we have a block with a branch operation, check whether it is the only operation in that block.
         if (currentBlock->getOperations().size() == 1) {
+            if (currentBlock->getArguments().size() != branchOp->getNextBlockInvocation().getArguments().size()) {
+                // TODO handle modification of arguments correctly. Currently, the algorithm can't handle renamed arguments.
+                if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
+                    newBlocks.emplace(branchOp->getNextBlockInvocation().getBlock());
+                }
+                return;
+            }
+
             // We found a branch-only-block. Now check whether subsequent blocks are also branch-only-blocks.
             // In case we find a branch-only-block-chain, we remove the entire chain (brOnlyBlocks) in one go.
             std::vector<IR::BasicBlockPtr> brOnlyBlocks;
             while (currentBlock->getOperations().size() == 1
-                   && currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::BranchOp) {
+                   && currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::BranchOp) {
                 brOnlyBlocks.emplace_back(currentBlock);
                 visitedBlocks.emplace(currentBlock->getIdentifier());// put every visited br only block in visitedBlocks
                 branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
@@ -172,7 +181,7 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBr
                 newBlocks.emplace(branchOp->getNextBlockInvocation().getBlock());
             }
         }
-    } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
+    } else if (terminatorOp->getOperationType() == Operations::Operation::OperationType::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
         if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
             newBlocks.emplace(ifOp->getFalseBlockInvocation().getBlock());

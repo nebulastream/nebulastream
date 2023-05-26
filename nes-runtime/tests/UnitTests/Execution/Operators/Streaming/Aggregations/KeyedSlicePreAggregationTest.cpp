@@ -29,6 +29,7 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <NesBaseTest.hpp>
@@ -88,17 +89,16 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
 
     auto slicePreAggregation =
         KeyedSlicePreAggregation(0 /*handler index*/,
-                                 readTs,
+                                 std::make_unique<EventTimeFunction>(readTs),
                                  {readKey},
                                  {integerType},
-                                 {readV1},
-                                 {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)},
+                                 {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},
                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
     auto sliceStaging = std::make_shared<KeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
-    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
     auto buffer = bm->getBufferBlocking();

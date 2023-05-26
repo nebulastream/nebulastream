@@ -25,6 +25,7 @@
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -50,7 +51,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        OperatorId operatorId,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode::Value gatheringMode,
+                       GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
                  bufferManager,
@@ -139,8 +140,8 @@ std::string MQTTSource::toString() const {
     ss << "CLIENTID=" << clientId << ", ";
     ss << "USER=" << user << ", ";
     ss << "TOPIC=" << topic << ", ";
-    ss << "DATATYPE=" << sourceConfig->getInputFormat()->getValue() << ", ";
-    ss << "QOS=" << qualityOfService << ", ";
+    ss << "DATATYPE=" << magic_enum::enum_name(sourceConfig->getInputFormat()->getValue()) << ", ";
+    ss << "QOS=" << magic_enum::enum_name(qualityOfService) << ", ";
     ss << "CLEANSESSION=" << cleanSession << ". ";
     ss << "BUFFERFLUSHINTERVALMS=" << bufferFlushIntervalMs << ". ";
     return ss.str();
@@ -188,7 +189,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                 }
             } else if (client->is_connected()) {// We lost connection (connection=false), check if we are connected again.
                 NES_DEBUG2("MQTTSource::fillBuffer: Reconnected, subscribing again!");
-                client->subscribe(topic, qualityOfService)->wait_for(readTimeoutInMs);
+                client->subscribe(topic, magic_enum::enum_integer(qualityOfService))->wait_for(readTimeoutInMs);
                 connected = true;
             }
         } catch (...) {
@@ -247,7 +248,7 @@ bool MQTTSource::connect() {
             // there is a session, then the server remembers us and our
             // subscriptions.
             if (!rsp.is_session_present()) {
-                client->subscribe(topic, qualityOfService)->wait();
+                client->subscribe(topic, magic_enum::enum_integer(qualityOfService))->wait();
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& error) {
@@ -304,7 +305,7 @@ const string& MQTTSource::getTopic() const { return topic; }
 
 uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
 
-SourceType MQTTSource::getType() const { return MQTT_SOURCE; }
+SourceType MQTTSource::getType() const { return SourceType::MQTT_SOURCE; }
 
 MQTTSourceDescriptor::ServiceQualities MQTTSource::getQualityOfService() const { return qualityOfService; }
 

@@ -15,6 +15,8 @@
 #ifndef NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
 #define NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
 
+#include <stdint.h>
+
 namespace grpc {
 class ServerCompletionQueue;
 }
@@ -50,7 +52,7 @@ class CallData {
     [[maybe_unused]] grpc::ServerCompletionQueue* completionQueue;
 
     // Let's implement a tiny state machine with the following states.
-    enum CallStatus { CREATE, PROCESS, FINISH };
+    enum class CallStatus : uint8_t { CREATE, PROCESS, FINISH };
     CallStatus status;// The current serving state.
 };
 

@@ -15,7 +15,8 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -31,11 +32,11 @@
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -48,6 +49,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <gtest/gtest.h>
@@ -58,7 +61,8 @@ using namespace std;
 
 namespace NES {
 using Runtime::TupleBuffer;
-
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 32 * 1024;
 
@@ -74,7 +78,7 @@ static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 namespace Network {
 class NetworkStackIntegrationTest : public Testing::NESBaseTest {
   public:
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -86,7 +90,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
         dataPort1 = Testing::NESBaseTest::getAvailablePort();
         dataPort2 = Testing::NESBaseTest::getAvailablePort();
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void TearDown() {
@@ -358,7 +362,11 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0,
+                                                          0,
+                                                          Runtime::ReconfigurationType::Initialize,
+                                                          networkSink,
+                                                          std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
@@ -369,7 +377,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                     networkSink->writeData(buffer, workerContext);
                     usleep(rand() % 10000 + 1000);
                 }
-                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
+                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::SoftEndOfStream, networkSink);
                 networkSink->reconfigure(rt2, workerContext);
                 sinkShutdownBarrier->wait();
             });
@@ -530,7 +538,11 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0,
+                                                          0,
+                                                          Runtime::ReconfigurationType::Initialize,
+                                                          networkSink,
+                                                          std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
@@ -543,7 +555,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                     usleep(rand() % 10000 + 1000);
                 }
                 waitBeforeBufferBarrier->wait();
-                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
+                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::ReconfigurationType::SoftEndOfStream, networkSink);
                 networkSink->reconfigure(rt2, workerContext);
                 sinkShutdownBarrier->wait();
             });
@@ -557,8 +569,11 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                 NES_DEBUG("Count before buffer: " << prevCount);
             }
         }
-        auto bufferReconfigMsg =
-            Runtime::ReconfigurationMessage(0, 0, Runtime::StartBuffering, networkSink, std::make_any<uint32_t>(1));
+        auto bufferReconfigMsg = Runtime::ReconfigurationMessage(0,
+                                                                 0,
+                                                                 Runtime::ReconfigurationType::StartBuffering,
+                                                                 networkSink,
+                                                                 std::make_any<uint32_t>(1));
 
         sendEngine->bufferAllData();
         sleep(1);

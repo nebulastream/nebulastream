@@ -39,7 +39,7 @@ class RuntimeException : virtual public std::exception {
      */
     explicit RuntimeException(std::string msg,
                               std::string&& stacktrace = collectAndPrintStacktrace(),
-                              std::source_location location = std::source_location::current());
+                              const std::source_location location = std::source_location::current());
 
     /** Constructor
     *  @param msg The error message

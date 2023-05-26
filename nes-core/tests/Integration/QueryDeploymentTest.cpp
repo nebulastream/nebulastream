@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -25,6 +26,7 @@
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -448,9 +450,9 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
     auto schema = Schema::create()
-                      ->addField(createField("id", UINT64))
-                      ->addField(createField("value", UINT64))
-                      ->addField(createField("timestamp", UINT64));
+                      ->addField(createField("id", BasicType::UINT64))
+                      ->addField(createField("value", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
 
     auto logicalSource = LogicalSource::create("window1", schema);
     coordinatorConfig->logicalSources.add(logicalSource);
@@ -636,9 +638,9 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
     auto schema = Schema::create()
-                      ->addField(createField("id", UINT64))
-                      ->addField(createField("value", UINT64))
-                      ->addField(createField("timestamp", UINT64));
+                      ->addField(createField("id", BasicType::UINT64))
+                      ->addField(createField("value", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
 
     auto logicalSource = LogicalSource::create("window1", schema);
     coordinatorConfig->logicalSources.add(logicalSource);
@@ -846,48 +848,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
-#ifdef TFDEF
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputWithInferModel) {
-    struct Test {
-        uint32_t id;
-        uint32_t value;
-    };
-
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
-
-    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
-
-    string query = R"(Query::from("test").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
-                        {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
-                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
-                        .filter(Attribute("iris0") > 0))";
-    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("test", defaultLogicalSchema)
-                           .attachWorkerWithMemorySourceToCoordinator("test") //2
-                           .attachWorkerWithMemorySourceToCoordinator("test");//3
-
-    for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
-    }
-    testHarness.validate().setupTopology();
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
-    struct Output {
-        uint32_t id;
-        uint32_t value;
-        float_t iris0;
-        float_t iris1;
-        float_t iris2;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
-    };
-
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "BottomUp", "NONE", "IN_MEMORY");
-    EXPECT_EQ(actualOutput.size(), 20);
-}
-#endif
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     struct Test {
@@ -938,7 +898,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -995,7 +955,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1051,7 +1011,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1294,7 +1254,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1385,7 +1345,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1646,7 +1606,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1725,5 +1685,632 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
 
     int response2 = remove(outputFilePath2.c_str());
     EXPECT_EQ(response2, 0);
+}
+
+/**
+ * Test deploying join query with source on two different worker node using top down strategy.
+ */
+//TODO: this test will be enabled once we have the renaming function using as
+//TODO: prevent self join #3686
+TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
+
+    struct Window {
+        uint64_t value;
+        uint64_t id;
+        uint64_t timestamp;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("value", DataTypeFactory::createUInt64())
+                            ->addField("id", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(2);
+    csvSourceType->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window", windowSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        uint64_t value1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t value2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && value1 == rhs.value1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && value2 == rhs.value2 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 1, 4, 1002},
+                                          {1000, 2000, 12, 1, 12, 1001, 1, 12, 1001},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2000},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
+                                          {2000, 3000, 16, 2, 16, 2002, 2, 16, 2002}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * Test deploying join with different sources and different Speed
+ */
+TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
+    struct Window {
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+    };
+
+    struct Window2 {
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("win1", DataTypeFactory::createInt64())
+                            ->addField("id1", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+                             ->addField("win2", DataTypeFactory::createInt64())
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setGatheringInterval(0);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setGatheringInterval(1);
+    csvSourceType2->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && win1 == rhs.win1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && win1 == rhs.win1 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * Test deploying join with different three sources
+ */
+TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
+    struct Window {
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp;
+    };
+
+    struct Window2 {
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("win1", DataTypeFactory::createInt64())
+                            ->addField("id1", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+                             ->addField("win2", DataTypeFactory::createInt64())
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && win1 == rhs.win1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && win2 == rhs.win2 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * Test deploying join with four different sources
+ */
+TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
+    struct Window {
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp;
+    };
+
+    struct Window2 {
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("win1", DataTypeFactory::createInt64())
+                            ->addField("id1", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+                             ->addField("win2", DataTypeFactory::createInt64())
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
+    string query =
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        int64_t win1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        int64_t win2;
+        uint64_t id2;
+        uint64_t timestamp2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && win1 == rhs.win1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && win2 == rhs.win2 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 4, 1, 4, 1002, 3, 4, 1102},    {1000, 2000, 4, 1, 4, 1002, 3, 4, 1112},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}, {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011}, {1000, 2000, 12, 1, 12, 1001, 5, 12, 1011},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},    {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},    {2000, 3000, 1, 2, 1, 2000, 2, 1, 2010},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}, {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}, {2000, 3000, 11, 2, 11, 2001, 2, 11, 2301}};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
+ * Topology:
+    PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
+    |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
+    |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
+    |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
+    |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
+ */
+TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDistributed) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    //register logical source qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
+
+    std::string window2 =
+        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
+
+    std::string window3 =
+        R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->coordinatorPort = *rpcCoordinatorPort;
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
+    workerConfig2->physicalSources.add(physicalSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    wrk2->replaceParent(1, 2);
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
+    WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
+    workerConfig3->coordinatorPort = *rpcCoordinatorPort;
+    auto csvSourceType3 = CSVSourceType::create();
+    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType3->setNumberOfBuffersToProduce(2);
+    auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
+    workerConfig3->physicalSources.add(physicalSource3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    wrk3->replaceParent(1, 2);
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 4");
+    WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
+    workerConfig4->coordinatorPort = *rpcCoordinatorPort;
+    auto csvSourceType4 = CSVSourceType::create();
+    csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType4->setNumberOfBuffersToProduce(2);
+    auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);
+    workerConfig4->physicalSources.add(physicalSource4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    wrk4->replaceParent(1, 2);
+    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
+
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    NES_INFO("MultipleJoinsTest: Submit query");
+
+    string query =
+        R"(Query::from("window1")
+        .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+        .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+    string expectedContent =
+        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
+        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
+        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
+        "INTEGER,window3$timestamp:INTEGER\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_DEBUG("MultipleJoinsTest: Remove query");
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_DEBUG("MultipleJoinsTest: Test finished");
+}
+
+/**
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
+ * Topology:
+    PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
+    |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
+    |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
+    |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
+    |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
+ */
+TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDistributed) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    //register logical source qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
+
+    std::string window2 =
+        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
+
+    std::string window3 =
+        R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
+    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 2");
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->coordinatorPort = port;
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
+    workerConfig2->physicalSources.add(physicalSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    wrk2->replaceParent(1, 2);
+    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 3");
+    WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
+    workerConfig3->coordinatorPort = port;
+    auto csvSourceType3 = CSVSourceType::create();
+    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType3->setNumberOfBuffersToProduce(2);
+    auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
+    workerConfig3->physicalSources.add(physicalSource3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    wrk3->replaceParent(1, 2);
+    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+
+    NES_DEBUG("MultipleJoinsTest: Start worker 4");
+    WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
+    workerConfig4->coordinatorPort = port;
+    auto csvSourceType4 = CSVSourceType::create();
+    csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType4->setNumberOfBuffersToProduce(2);
+    auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);
+    workerConfig4->physicalSources.add(physicalSource4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    wrk4->replaceParent(1, 2);
+    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
+
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowDistributed.out";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    NES_INFO("MultipleJoinsTest: Submit query");
+
+    string query =
+        R"(Query::from("window1")
+        .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+    string expectedContent =
+        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
+        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
+        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
+        "INTEGER,window3$timestamp:INTEGER\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "1000,2000,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "1000,2000,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "500,1500,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "500,1500,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "500,1500,4,500,1500,4,1,4,1002,3,4,1102,4,4,1001\n"
+        "500,1500,4,500,1500,4,1,4,1002,3,4,1112,4,4,1001\n"
+        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
+        "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n"
+        "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
+        "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_DEBUG("MultipleJoinsTest: Remove query");
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 3");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+
+    NES_DEBUG("MultipleJoinsTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 }// namespace NES

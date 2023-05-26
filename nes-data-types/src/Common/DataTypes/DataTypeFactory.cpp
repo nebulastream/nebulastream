@@ -139,19 +139,19 @@ ValueTypePtr DataTypeFactory::createFixedCharValue(char const* values) noexcept 
 
 DataTypePtr DataTypeFactory::createType(BasicType type) {
     switch (type) {
-        case BOOLEAN: return DataTypeFactory::createBoolean();
-        case CHAR: return DataTypeFactory::createChar();
-        case INT8: return DataTypeFactory::createInt8();
-        case INT16: return DataTypeFactory::createInt16();
-        case INT32: return DataTypeFactory::createInt32();
-        case INT64: return DataTypeFactory::createInt64();
-        case UINT8: return DataTypeFactory::createUInt8();
-        case UINT16: return DataTypeFactory::createUInt16();
-        case UINT32: return DataTypeFactory::createUInt32();
-        case UINT64: return DataTypeFactory::createUInt64();
-        case FLOAT32: return DataTypeFactory::createFloat();
-        case FLOAT64: return DataTypeFactory::createDouble();
-        case TEXT: return DataTypeFactory::createText();
+        case BasicType::BOOLEAN: return DataTypeFactory::createBoolean();
+        case BasicType::CHAR: return DataTypeFactory::createChar();
+        case BasicType::INT8: return DataTypeFactory::createInt8();
+        case BasicType::INT16: return DataTypeFactory::createInt16();
+        case BasicType::INT32: return DataTypeFactory::createInt32();
+        case BasicType::INT64: return DataTypeFactory::createInt64();
+        case BasicType::UINT8: return DataTypeFactory::createUInt8();
+        case BasicType::UINT16: return DataTypeFactory::createUInt16();
+        case BasicType::UINT32: return DataTypeFactory::createUInt32();
+        case BasicType::UINT64: return DataTypeFactory::createUInt64();
+        case BasicType::FLOAT32: return DataTypeFactory::createFloat();
+        case BasicType::FLOAT64: return DataTypeFactory::createDouble();
+        case BasicType::TEXT: return DataTypeFactory::createText();
         default: return nullptr;
     }
     return DataTypePtr();

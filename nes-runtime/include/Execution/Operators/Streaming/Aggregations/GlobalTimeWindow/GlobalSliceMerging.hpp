@@ -32,7 +32,6 @@ class GlobalSliceMerging : public Operator {
      */
     GlobalSliceMerging(uint64_t operatorHandlerIndex,
                        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                       const std::vector<std::string>& aggregationResultExpressions,
                        const std::string& startTsFieldName,
                        const std::string& endTsFieldName,
                        uint64_t resultOriginId);
@@ -59,7 +58,6 @@ class GlobalSliceMerging : public Operator {
 
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::vector<std::string> aggregationResultExpressions;
     const std::string startTsFieldName;
     const std::string endTsFieldName;
     const uint64_t resultOriginId;

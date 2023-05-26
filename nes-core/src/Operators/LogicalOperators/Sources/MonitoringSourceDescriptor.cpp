@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -35,7 +36,7 @@ bool MonitoringSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 }
 
 std::string MonitoringSourceDescriptor::toString() const {
-    return "MonitoringSourceDescriptor(" + std::to_string(metricCollectorType) + ")";
+    return "MonitoringSourceDescriptor(" + std::string(magic_enum::enum_name(metricCollectorType)) + ")";
 }
 
 SourceDescriptorPtr MonitoringSourceDescriptor::copy() {

@@ -35,7 +35,7 @@ namespace NES {
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::NodeEnginePtr engine;
 
@@ -45,7 +45,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -62,7 +62,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
         NES_INFO("TearDown ConvertLogicalToPhysicalSourceTest test instance.");
         ASSERT_TRUE(engine->stop());
         engine.reset();
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 };
 
@@ -75,7 +75,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysica
     csvSourceType->setGatheringInterval(1000);
     SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, csvSourceType);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);
+    EXPECT_EQ(csvFileSource->getType(), SourceType::CSV_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingTCPLogicalToPhysicalSource) {
@@ -83,7 +83,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingTCPLogicalToPhysicalSou
     auto tcpSourceType = TCPSourceType::create();
     SourceDescriptorPtr sourceDescriptor = TCPSourceDescriptor::create(schema, tcpSourceType);
     DataSourcePtr tcpSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(tcpSource->getType(), TCP_SOURCE);
+    EXPECT_EQ(tcpSource->getType(), SourceType::TCP_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhysicalSource) {
@@ -91,28 +91,28 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhys
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = BinarySourceDescriptor::create(schema, filePath);
     DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(binaryFileSource->getType(), BINARY_SOURCE);
+    EXPECT_EQ(binaryFileSource->getType(), SourceType::BINARY_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = ZmqSourceDescriptor::create(schema, "127.0.0.1", 10000);
     DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(zqmSource->getType(), ZMQ_SOURCE);
+    EXPECT_EQ(zqmSource->getType(), SourceType::ZMQ_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = SenseSourceDescriptor::create(schema, "some_udf");
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(senseSource->getType(), SENSE_SOURCE);
+    EXPECT_EQ(senseSource->getType(), SourceType::SENSE_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1000);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(senseSource->getType(), DEFAULT_SOURCE);
+    EXPECT_EQ(senseSource->getType(), SourceType::DEFAULT_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysicalSource) {
@@ -122,6 +122,6 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysica
     SourceDescriptorPtr sourceDescriptor =
         Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
     DataSourcePtr networkSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(networkSource->getType(), NETWORK_SOURCE);
+    EXPECT_EQ(networkSource->getType(), SourceType::NETWORK_SOURCE);
 }
 }// namespace NES

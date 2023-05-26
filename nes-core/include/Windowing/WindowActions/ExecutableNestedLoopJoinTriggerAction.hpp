@@ -14,6 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
+
+#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -25,6 +27,7 @@
 #include <State/StateVariable.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -36,6 +39,8 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <cstdint>
+#include <cstring>
 
 namespace NES::Join {
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
@@ -115,7 +120,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                               lastWatermark,
                                                               workerContext);
                     } else {
-                        NES_ERROR2("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType {}", joinDefinition->getJoinType());
+                        NES_ERROR2("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType {}",
+                                   magic_enum::enum_name(joinDefinition->getJoinType()));
                     }
                 }
             }
@@ -341,14 +347,25 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                    sizeof(rightValue),
                    sizeof(InputTypeLeft),
                    sizeof(InputTypeRight));
-
-        auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
-        std::tuple<uint64_t, uint64_t, KeyType, InputTypeLeft, InputTypeRight> newTuple(startTs,
-                                                                                        endTs,
-                                                                                        key,
-                                                                                        leftValue,
-                                                                                        rightValue);
-        bindedRowLayout->pushRecord<true>(newTuple, index);
+        NES_ASSERT(windowTupleLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+                   "Layout Type must be ROW");
+        // A struct can be packed which assures that the correct bytes are written to the TupleBuffer.
+        // (Using a std::tuple here let to inconsistencies.)
+        struct __attribute__((packed)) NewRecord {
+            uint64_t startTs;
+            uint64_t endTs;
+            KeyType key;
+            InputTypeLeft leftValue;
+            InputTypeRight rightValue;
+        };
+        auto newRecordData = NewRecord{startTs, endTs, key, leftValue, rightValue};
+        // We use memcpy to write to the TupleBuffer, because (Row-/Column-)LayoutTupleBuffer were removed in #3467.
+        // We cannot use a DynamicTupleBuffer leftValue, because its 'write()' function does not support structs and
+        // leftValue and rightValue can be structs.
+        std::memcpy(tupleBuffer.getBuffer<NewRecord>() + index, &newRecordData, sizeof(NewRecord));
+        if (index + 1 > tupleBuffer.getNumberOfTuples()) {
+            tupleBuffer.setNumberOfTuples(index + 1);
+        }
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }

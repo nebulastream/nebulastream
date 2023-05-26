@@ -50,8 +50,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Source
 
 namespace UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
@@ -67,7 +67,7 @@ class QueryService {
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                           QueryParsingServicePtr queryParsingService,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                          Catalogs::UDF::UdfCatalogPtr udfCatalog);
+                          Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -81,8 +81,8 @@ class QueryService {
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
                                             const std::string& placementStrategyName,
-                                            const FaultToleranceType::Value faultTolerance = FaultToleranceType::NONE,
-                                            const LineageType::Value lineage = LineageType::NONE);
+                                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                            const LineageType lineage = LineageType::NONE);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -96,8 +96,8 @@ class QueryService {
     QueryId addQueryRequest(const std::string& queryString,
                             const QueryPlanPtr& queryPlan,
                             const std::string& placementStrategyName,
-                            const FaultToleranceType::Value faultTolerance = FaultToleranceType::NONE,
-                            const LineageType::Value lineage = LineageType::NONE);
+                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                            const LineageType lineage = LineageType::NONE);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.

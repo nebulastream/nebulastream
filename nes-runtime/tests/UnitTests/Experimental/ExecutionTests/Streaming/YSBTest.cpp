@@ -132,17 +132,17 @@ class YSBTest : public Testing::NESBaseTest,
 
 SchemaPtr getSchema() {
     return Schema::create()
-        ->addField("user_id", INT64)
-        ->addField("page_id", INT64)
-        ->addField("campaign_id", INT64)
-        ->addField("ad_type", INT64)
-        ->addField("event_type", INT64)
-        ->addField("current_ms", INT64)
-        ->addField("ip", INT64)
-        ->addField("d1", INT64)
-        ->addField("d2", INT64)
-        ->addField("d3", INT32)
-        ->addField("d4", INT16);
+        ->addField("user_id", BasicType::INT64)
+        ->addField("page_id", BasicType::INT64)
+        ->addField("campaign_id", BasicType::INT64)
+        ->addField("ad_type", BasicType::INT64)
+        ->addField("event_type", BasicType::INT64)
+        ->addField("current_ms", BasicType::INT64)
+        ->addField("ip", BasicType::INT64)
+        ->addField("d1", BasicType::INT64)
+        ->addField("d2", BasicType::INT64)
+        ->addField("d3", BasicType::INT32)
+        ->addField("d4", BasicType::INT16);
 }
 
 std::vector<Runtime::TupleBuffer>
@@ -195,7 +195,7 @@ TEST_P(YSBTest, ysbSelectionCampain) {
     auto selection = std::make_shared<Selection>(equalsExpression);
     scan.setChild(selection);
 
-    auto resultSchema = Schema::create()->addField("user_id", INT64);
+    auto resultSchema = Schema::create()->addField("user_id", BasicType::INT64);
     auto resMem = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
 
     auto emit = std::make_shared<Emit>(resMem);
@@ -310,7 +310,7 @@ INSTANTIATE_TEST_CASE_P(testYSB,
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
                         [](const testing::TestParamInfo<YSBTest::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
-                            if (layout == Schema::ROW_LAYOUT) {
+                            if (layout == Schema::MemoryLayoutType::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
                             } else {
                                 return std::get<0>(info.param) + "_COLUMNAR";
@@ -324,7 +324,7 @@ INSTANTIATE_TEST_CASE_P(testYSB,
                                            ::testing::Values(Schema::MemoryLayoutType::ROW_LAYOUT)),
                         [](const testing::TestParamInfo<YSBTest::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
-                            if (layout == Schema::ROW_LAYOUT) {
+                            if (layout == Schema::MemoryLayoutType::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
                             } else {
                                 return std::get<0>(info.param) + "_COLUMNAR";

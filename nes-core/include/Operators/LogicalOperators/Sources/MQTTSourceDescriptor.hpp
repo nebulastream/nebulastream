@@ -18,7 +18,6 @@
 #ifdef ENABLE_MQTT_BUILD
 
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {
@@ -29,7 +28,11 @@ namespace NES {
 class MQTTSourceDescriptor : public SourceDescriptor {
 
   public:
-    enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
+    enum class ServiceQualities : uint8_t {
+        atMostOnce,
+        atLeastOnce,
+        exactlyOnce
+    };//cleanSession requires atLeastOnce or exactlyOnce
     /**
    * @brief create a source descriptor pointer for MQTT source
    * @param schema the schema of the data

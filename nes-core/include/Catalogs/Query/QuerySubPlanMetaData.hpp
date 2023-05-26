@@ -30,13 +30,13 @@ using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 class QuerySubPlanMetaData {
 
   public:
-    static QuerySubPlanMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
+    static QuerySubPlanMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus, uint64_t workerId);
 
     /**
      * Update the status of the qub query
      * @param queryStatus : new status
      */
-    void updateStatus(QueryStatus::Value queryStatus);
+    void updateStatus(QueryStatus queryStatus);
 
     /**
      * Update the meta information
@@ -48,17 +48,17 @@ class QuerySubPlanMetaData {
      * Get status of query sub plan
      * @return status
      */
-    QueryStatus::Value getQuerySubPlanStatus();
+    QueryStatus getQuerySubPlanStatus();
 
     QuerySubPlanId getQuerySubPlanId() const;
 
-    QueryStatus::Value getSubQueryStatus() const;
+    QueryStatus getSubQueryStatus() const;
 
     uint64_t getWorkerId() const;
 
     const std::string& getMetaInformation() const;
 
-    QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
+    QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryStatus subQueryStatus, uint64_t workerId);
 
   private:
     /**
@@ -69,7 +69,7 @@ class QuerySubPlanMetaData {
     /**
      * status of the sub query
      */
-    QueryStatus::Value subQueryStatus;
+    QueryStatus subQueryStatus;
 
     /**
      * worker id where the sub query is deployed

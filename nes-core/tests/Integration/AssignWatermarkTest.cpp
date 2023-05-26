@@ -48,8 +48,9 @@ class AssignWatermarkTest : public Testing::NESBaseTest {
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     //Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
-                                            ->addField(createField("timestamp", UINT64));)";
+    std::string window =
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))
+                                            ->addField(createField("timestamp", BasicType::UINT64));)";
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -128,9 +129,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     //Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("value", UINT64))
-                                            ->addField(createField("id", UINT64))
-                                            ->addField(createField("timestamp", UINT64));)";
+    std::string window = R"(Schema::create()->addField(createField("value", BasicType::UINT64))
+                                            ->addField(createField("id", BasicType::UINT64))
+                                            ->addField(createField("timestamp", BasicType::UINT64));)";
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -233,8 +234,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     //Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
-                                            ->addField(createField("timestamp", UINT64));)";
+    std::string window =
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))
+                                            ->addField(createField("timestamp", BasicType::UINT64));)";
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -319,8 +321,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     //Setup Coordinator
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
-                           ->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))
+                           ->addField(createField("timestamp", BasicType::UINT64));)";
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

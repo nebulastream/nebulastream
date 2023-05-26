@@ -11,9 +11,8 @@
 # limitations under the License.
 
 
-add_subdirectory(DataStructure)
-add_subdirectory(JoinPhases)
+add_subdirectory(StreamHashJoin)
+add_subdirectory(NestedLoopJoin)
 
-add_source_files(nes-runtime
-        StreamJoinOperatorHandler.cpp
+add_source(nes-runtime
         StreamJoinUtil.cpp)

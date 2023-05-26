@@ -30,6 +30,7 @@ function(llvmir_attach_bc_target)
   set(DEPENDS_TRGT ${LLVMIR_ATTACH_DEPENDS})
 
   # fallback to backwards compatible mode for argument parsing
+  message(STATUS "Using optimization flag: ${ARGV2} for proxy function LLVM IR generation.")
   if(NOT TRGT AND NOT DEPENDS_TRGT)
     set(TRGT ${ARGV0})
     set(DEPENDS_TRGT ${ARGV1})
@@ -132,7 +133,8 @@ function(llvmir_attach_bc_target)
     debug("@llvmir_attach_bc_target ${DEPENDS_TRGT} compile flags: \
     ${CURRENT_COMPILE_FLAGS}")
 
-    set(CMD_ARGS "-emit-llvm" ${IN_STANDARD_FLAGS} ${IN_LANG_FLAGS}
+    #Use parameter to set optimization
+    set(CMD_ARGS ${ARGV2} "-emit-llvm" ${IN_STANDARD_FLAGS} ${IN_LANG_FLAGS}
       ${IN_COMPILE_OPTIONS} ${CURRENT_COMPILE_FLAGS} ${CURRENT_DEFS}
       ${IN_INCLUDES})
     set(CMAKE_VERBOSE_MAKEFILE on)
@@ -154,7 +156,7 @@ function(llvmir_attach_bc_target)
   add_custom_target(${TRGT} DEPENDS ${FULL_OUT_LLVMIR_FILES})
 
   set_property(TARGET ${TRGT} PROPERTY LLVMIR_TYPE ${LLVMIR_BINARY_TYPE})
-  set_property(TARGET ${TRGT} PROPERTY LLVMIR_EXTERNAL_TYPE ${EXTERNAL_TYPE})
+  set_property(TARGET ${TRGT} PROPERTY LLVMIR_EXTERNAL_TYPE ${LLVMIR_EXTERNAL_TYPE})
   set_property(TARGET ${TRGT} PROPERTY LLVMIR_DIR ${WORK_DIR})
   set_property(TARGET ${TRGT} PROPERTY LLVMIR_FILES ${OUT_LLVMIR_FILES})
   set_property(TARGET ${TRGT} PROPERTY LINKER_LANGUAGE ${LINKER_LANGUAGE})

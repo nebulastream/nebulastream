@@ -28,7 +28,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
-                       FaultToleranceType::Value faultToleranceType,
+                       FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
@@ -112,15 +112,15 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
     Reconfigurable::postReconfigurationCallback(message);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (message.getType()) {
-        case Runtime::FailEndOfStream: {
+        case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
-        case Runtime::SoftEndOfStream: {
+        case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
-        case Runtime::HardEndOfStream: {
+        case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             break;
         }

@@ -112,6 +112,15 @@ class ChainedHashMap {
     int8_t* getPage(uint64_t pageIndex);
 
     /**
+     * @brief Inserts a page of entries to the hash table.
+     * This assumes that entries have the same shape and size as the the entries of this hash map
+     * This avoids any allocations, and inserts the page directly to the map, thus the ownership of the page also moves.
+     * @param page
+     * @param numberOfEntries
+     */
+    void insertPage(int8_t* page, uint64_t numberOfEntries);
+
+    /**
      * @brief Destructs the hash map and releases all associated resources.
      * All pointers to entries of the hash map become invalid and accesses are undefined.
      */
@@ -149,7 +158,7 @@ class ChainedHashMap {
     Entry* entryIndexToAddress(uint64_t entryIndex);
 
   private:
-    // ChainedHashMapRef is a fiend to access private members and functions
+    // ChainedHashMapRef is a friend to access private members and functions
     friend ChainedHashMapRef;
     const std::unique_ptr<std::pmr::memory_resource> allocator;
     const uint64_t pageSize;

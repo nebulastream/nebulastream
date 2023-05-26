@@ -20,8 +20,10 @@
 
 #ifdef TFDEF
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
+
 #endif// TFDEF
 
 #ifdef TFDEF
@@ -45,7 +47,7 @@ NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() { return std::make_sh
 
 float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
-void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
+void NES::TensorflowAdapter::infer(BasicPhysicalType::NativeType dataType, int n, ...) {
 
     va_list vl;
     va_start(vl, n);

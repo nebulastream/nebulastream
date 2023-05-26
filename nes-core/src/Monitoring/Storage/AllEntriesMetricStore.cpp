@@ -15,13 +15,14 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <chrono>
 
 namespace NES::Monitoring {
 
 AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG2("AllEntriesMetricStore: Init NewestMetricStore"); }
 
-MetricStoreType AllEntriesMetricStore::getType() const { return AllEntries; }
+MetricStoreType AllEntriesMetricStore::getType() const { return MetricStoreType::AllEntries; }
 
 void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
     std::unique_lock lock(storeMutex);
@@ -32,18 +33,22 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         nodeMetrics = storedMetrics[nodeId];
         // check if the metric type exists
         if (!nodeMetrics->contains(metric->getMetricType())) {
-            NES_TRACE2("AllEntriesMetricStore: Creating metrics {} of {}", nodeId, toString(metric->getMetricType()));
+            NES_TRACE2("AllEntriesMetricStore: Creating metrics {} of {}",
+                       nodeId,
+                       std::string(magic_enum::enum_name(metric->getMetricType())));
             nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
-        NES_TRACE2("AllEntriesMetricStore: Creating node {} of {}", nodeId, toString(metric->getMetricType()));
+        NES_TRACE2("AllEntriesMetricStore: Creating node {} of {}",
+                   nodeId,
+                   std::string(magic_enum::enum_name(metric->getMetricType())));
         nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
     NES_TRACE2("AllEntriesMetricStore: Adding metrics for {} with type {}: {}",
                nodeId,
-               toString(metric->getMetricType()),
+               std::string(magic_enum::enum_name(metric->getMetricType())),
                NES::Monitoring::asJson(metric));
     TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());

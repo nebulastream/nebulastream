@@ -204,35 +204,24 @@ class LogicalOperatorFactory {
     createCEPIterationOperator(uint64_t minIterations, uint64_t maxIterations, OperatorId id = Util::getNextOperatorId());
 
     /**
-     * Create a new MapJavaUdfLogicalOperatorNode.
-     *
+     * @brief Create a new MapJavaUDFLogicalOperatorNode.
      * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
     static LogicalUnaryOperatorNodePtr
-    createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+    createMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
                                     OperatorId id = Util::getNextOperatorId());
 
     /**
-     * @brief Create a new WindowJavaUdfLogicalOperatorNode.
-     * @param javaUdfDescriptor
-     * @param windowType
-     * @param distributionType
-     * @param onKey
-     * @param allowedLateness
-     * @param originId
-     * @param id
-     * @return A logical operator node which encapsulates the Java UDF for a window UDF.
+     * @brief Create a new FlatMapJavaUDFLogicalOperatorNode.
+     * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
+     * @param id The operator ID.
+     * @return A logical operator node which encapsulates the Java UDF.
      */
     static LogicalUnaryOperatorNodePtr
-    createWindowJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                       Windowing::WindowTypePtr windowType,
-                                       Windowing::DistributionCharacteristicPtr distributionType,
-                                       std::vector<FieldAccessExpressionNodePtr> onKey,
-                                       uint64_t allowedLateness,
-                                       OriginId originId,
-                                       OperatorId id = Util::getNextOperatorId());
+    createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
+                                        OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES

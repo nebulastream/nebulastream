@@ -14,36 +14,15 @@
 
 #ifndef NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
 #define NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
-#include <cinttypes>
-#include <stdint.h>
-#include <string>
-#include <unordered_map>
 
 namespace NES {
 
-class LineageType {
-  public:
-    enum Value : uint8_t {
-        NONE = 0,      /// no lineage
-        IN_MEMORY = 1, /// lineage is stored in memory on nodes
-        PERSISTENT = 2,/// lineage is stored in persistent memory
-        REMOTE = 3,    /// lineage is stored in remote storage
-        INVALID = 4
-    };
-
-    /**
-     * @brief Get lineage type in string representation
-     * @param lineageType : enum value of the lineage type
-     * @return string representation of lineage type
-     */
-    static std::string toString(const Value lineageType);
-
-    /**
-     * @brief Get lineage type from string
-     * @param lineageType : string representation of lineage Type
-     * @return enum representing lineage Type
-     */
-    static Value getFromString(const std::string lineageType);
+enum class LineageType : uint8_t {
+    NONE = 0,      /// no lineage
+    IN_MEMORY = 1, /// lineage is stored in memory on nodes
+    PERSISTENT = 2,/// lineage is stored in persistent memory
+    REMOTE = 3,    /// lineage is stored in remote storage
+    INVALID = 4
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_

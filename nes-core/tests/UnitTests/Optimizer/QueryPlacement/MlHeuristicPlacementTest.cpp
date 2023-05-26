@@ -16,7 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -44,14 +44,14 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -61,12 +61,12 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void topologyGenerator() {
@@ -103,22 +103,22 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
             }
         }
 
-        std::string irisSchema = R"(Schema::create()->addField(createField("id", UINT64))
-                           ->addField(createField("SepalLengthCm", FLOAT32))
-                           ->addField(createField("SepalWidthCm", FLOAT32))
-                           ->addField(createField("PetalLengthCm", FLOAT32))
-                           ->addField(createField("PetalWidthCm", FLOAT32))
-                           ->addField(createField("SpeciesCode", UINT64));)";
+        std::string irisSchema = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
+                           ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                           ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                           ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                           ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                           ->addField(createField("SpeciesCode", BasicType::UINT64));)";
 
         const std::string streamName = "iris";
         //        SchemaPtr irisSchema = Schema::create()
-        //                                   ->addField(createField("id", UINT64))
-        //                                   ->addField(createField("SepalLengthCm", FLOAT32))
-        //                                   ->addField(createField("SepalWidthCm", FLOAT32))
-        //                                   ->addField(createField("PetalLengthCm", FLOAT32))
-        //                                   ->addField(createField("PetalWidthCm", FLOAT32))
-        //                                   ->addField(createField("SpeciesCode", UINT64))
-        //                                   ->addField(createField("CreationTime", UINT64));
+        //                                   ->addField(createField("id", BasicType::UINT64))
+        //                                   ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+        //                                   ->addField(createField("SpeciesCode", BasicType::UINT64))
+        //                                   ->addField(createField("CreationTime", BasicType::UINT64));
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(streamName, irisSchema);
@@ -149,7 +149,9 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
             .inferModel(
                 "../../../test_data/iris.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                {Attribute("iris0", BasicType::FLOAT32),
+                 Attribute("iris1", BasicType::FLOAT32),
+                 Attribute("iris2", BasicType::FLOAT32)})
             .filter(Attribute("iris0") < 3.0)
             .project(Attribute("iris1"), Attribute("iris2"))
             .sink(PrintSinkDescriptor::create());

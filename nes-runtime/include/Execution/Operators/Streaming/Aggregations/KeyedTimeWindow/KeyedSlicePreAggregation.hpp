@@ -18,6 +18,7 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <memory>
 
 namespace NES {
 class PhysicalType;
@@ -25,6 +26,8 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 }// namespace NES
 
 namespace NES::Runtime::Execution::Operators {
+class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
  * @brief KeyedSlicePreAggregation operator that performs the pre-aggregation step for a keyed window aggregation.
@@ -36,10 +39,9 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
     * @brief Creates a KeyedSlicePreAggregation operator
     */
     KeyedSlicePreAggregation(uint64_t operatorHandlerIndex,
-                             Expressions::ExpressionPtr timestampExpression,
+                             TimeFunctionPtr timeFunction,
                              const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                              const std::vector<PhysicalTypePtr>& keyDataTypes,
-                             const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
                              const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                              const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
@@ -49,10 +51,9 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
 
   private:
     const uint64_t operatorHandlerIndex;
-    const Expressions::ExpressionPtr timestampExpression;
+    const TimeFunctionPtr timeFunction;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::vector<Expressions::ExpressionPtr> aggregationExpressions;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     uint64_t keySize;

@@ -19,13 +19,11 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <NesBaseTest.hpp>
-#include <REST/ServerTypes.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/MetricValidator.hpp>
-#include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
 #include <cstdint>
 #include <gtest/gtest.h>
@@ -120,9 +118,16 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     // oatpp GET start call
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
 
     //check if content of r contains valid information
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    std::set<std::string> expectedMonitoringStreams{toString(Monitoring::MetricType::WrappedNetworkMetrics),
+                                                    toString(Monitoring::MetricType::WrappedCpuMetrics),
+                                                    toString(Monitoring::MetricType::MemoryMetric),
+                                                    toString(Monitoring::MetricType::DiskMetric)};
+
     nlohmann::json jsonsStart;
     ASSERT_NO_THROW(jsonsStart = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetStart request: " << jsonsStart.dump());
@@ -150,6 +155,9 @@ TEST_F(MonitoringControllerTest, testStopMonitoring) {
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/stop"});
     EXPECT_EQ(r.status_code, 200);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -171,6 +179,9 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -192,6 +203,9 @@ TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEn
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -215,6 +229,9 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
 
     nlohmann::json jsonsOfResponse;
     ASSERT_NO_THROW(jsonsOfResponse = nlohmann::json::parse(r.text));
@@ -251,6 +268,9 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonsOfResponse;
     ASSERT_NO_THROW(jsonsOfResponse = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetMetricsForOneNode request: " << jsonsOfResponse);
@@ -286,6 +306,9 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     //compare content of response to expected values
     nlohmann::json jsons;
     ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
@@ -294,7 +317,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     auto json = jsons[std::to_string(1)];
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << std::to_string(1));
     NES_INFO("Received Data for node 1: " << json.dump());
-    auto jsonRegistration = json["registration"][0]["value"];
+    auto jsonRegistration = json[toString(Monitoring::MetricType::RegistrationMetric)][0]["value"];
     ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
                                                             jsonRegistration));
     ASSERT_EQ(jsonRegistration["NODE_ID"], 1);
@@ -323,12 +346,18 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
+    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
 
     //compare content of response to expected values
     nlohmann::json jsons;
     ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    std::set<std::string> expectedMonitoringStreams{toString(Monitoring::MetricType::WrappedNetworkMetrics),
+                                                    toString(Monitoring::MetricType::WrappedCpuMetrics),
+                                                    toString(Monitoring::MetricType::MemoryMetric),
+                                                    toString(Monitoring::MetricType::DiskMetric)};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
     ASSERT_TRUE(check);
     ASSERT_TRUE(waitForMonitoringQuery(coordinator, coordinatorConfig->restPort.getValue(), 5));

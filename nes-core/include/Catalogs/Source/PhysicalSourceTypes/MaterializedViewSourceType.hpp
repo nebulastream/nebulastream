@@ -17,12 +17,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-
-namespace NES {
-
-namespace Configurations {
-
-namespace Experimental::MaterializedView {
+namespace NES::Configurations::Experimental::MaterializedView {
 
 class MaterializedViewSourceType;
 using MaterializedViewSourceTypePtr = std::shared_ptr<MaterializedViewSourceType>;
@@ -82,7 +77,5 @@ class MaterializedViewSourceType : public PhysicalSourceType {
 
     IntConfigOption id;
 };
-}// namespace Experimental::MaterializedView
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations::Experimental::MaterializedView
 #endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MATERIALIZEDVIEWSOURCETYPE_HPP_

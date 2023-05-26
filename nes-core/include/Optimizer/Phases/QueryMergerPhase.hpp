@@ -26,7 +26,7 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES::Optimizer {
 
-enum class QueryMergerRule {
+enum class QueryMergerRule : uint8_t {
     SyntaxBasedCompleteQueryMergerRule,
     SyntaxBasedPartialQueryMergerRule,
     Z3SignatureBasedCompleteQueryMergerRule,
@@ -38,7 +38,7 @@ enum class QueryMergerRule {
     HashSignatureBasedPartialQueryMergerRule,
     DefaultQueryMergerRule,
     HybridCompleteQueryMergerRule,
-    Z3SignatureBasedQueryContainmentRule
+    Z3SignatureBasedBottomUpQueryContainmentRule
 };
 
 class QueryMergerPhase;

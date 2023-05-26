@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -25,6 +25,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/RequestQueue.hpp>
@@ -32,6 +33,7 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES {
@@ -41,7 +43,7 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            Catalogs::Source::SourceCatalogPtr sourceCatalog,
                            QueryParsingServicePtr queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                           Catalogs::UDF::UdfCatalogPtr udfCatalog)
+                           Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG2("QueryService()");
@@ -53,8 +55,8 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const std::string& placementStrategyName,
-                                                      const FaultToleranceType::Value faultTolerance,
-                                                      const LineageType::Value lineage) {
+                                                      const FaultToleranceType faultTolerance,
+                                                      const LineageType lineage) {
 
     NES_INFO2("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -70,9 +72,9 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy::Value placementStrategy;
+        PlacementStrategy placementStrategy;
         try {
-            placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
             NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
@@ -90,7 +92,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, exc.what());
         throw exc;
     }
     throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
@@ -99,8 +101,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
                                       const std::string& placementStrategyName,
-                                      const FaultToleranceType::Value faultTolerance,
-                                      const LineageType::Value lineage) {
+                                      const FaultToleranceType faultTolerance,
+                                      const LineageType lineage) {
 
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     auto promise = std::make_shared<std::promise<QueryId>>();
@@ -117,9 +119,9 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         // perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        PlacementStrategy::Value placementStrategy;
+        PlacementStrategy placementStrategy;
         try {
-            placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            placementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategyName).value();
         } catch (...) {
             NES_ERROR2("QueryService: Unknown placement strategy name: {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
@@ -137,7 +139,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, exc.what());
         throw exc;
     }
     throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");

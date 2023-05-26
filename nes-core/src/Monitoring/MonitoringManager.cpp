@@ -73,7 +73,9 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     this->queryService = queryService;
     this->catalogService = catalogService;
-    NES_DEBUG2("MonitoringManager: Init with monitoring= {} , storage= {} ", enableMonitoring, toString(metricStore->getType()));
+    NES_DEBUG2("MonitoringManager: Init with monitoring= {} , storage= {} ",
+               enableMonitoring,
+               std::string(magic_enum::enum_name(metricStore->getType())));
 }
 
 MonitoringManager::~MonitoringManager() {
@@ -156,7 +158,9 @@ StoredNodeMetricsPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_
 }
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
-    NES_TRACE2("MonitoringManager: Adding metrics of type {} for node {}", toString(metrics->getMetricType()), nodeId);
+    NES_TRACE2("MonitoringManager: Adding metrics of type {} for node {}",
+               std::string(magic_enum::enum_name(metrics->getMetricType())),
+               nodeId);
     metricStore->addMetrics(nodeId, metrics);
 }
 
@@ -188,7 +192,7 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configuratio
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
-            std::string logicalSourceName = NES::Monitoring::toString(metricType);
+            std::string logicalSourceName = std::string(magic_enum::enum_name(metricType));
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO2("MonitoringManager: Creating logical source {}", logicalSourceName);
             config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
@@ -215,8 +219,9 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
 
     // params for iteration
     if (success) {
-        MetricType metricType = parse(monitoringStream);
-        std::string metricCollectorStr = NES::Monitoring::toString(MetricUtils::createCollectorTypeFromMetricType(metricType));
+        MetricType metricType = magic_enum::enum_cast<MetricType>(monitoringStream).value();
+        std::string metricCollectorStr =
+            std::string(magic_enum::enum_name(MetricUtils::createCollectorTypeFromMetricType(metricType)));
         std::string query =
             R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType::%COLLECTOR%));)";
         query = std::regex_replace(query, std::regex("%STREAM%"), monitoringStream);
@@ -307,7 +312,7 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE2("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
+        if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::STOPPED) {
             NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
@@ -331,10 +336,10 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
             return false;
         }
         NES_TRACE2("MonitoringManager: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
-        QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
+        QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::Running: {
+            case QueryStatus::RUNNING: {
                 NES_DEBUG2("MonitoringManager: Query is now running {}", queryId);
                 return true;
             }

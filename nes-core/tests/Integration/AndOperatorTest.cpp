@@ -80,8 +80,9 @@ class AndOperatorTest : public Testing::NESBaseTest {
  */
 TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     // Setup Coordinator
-    std::string window = R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))
-                                            ->addField(createField("timestamp", UINT64));)";
+    std::string window =
+        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
+                                            ->addField(createField("timestamp", BasicType::UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
@@ -163,8 +164,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
 TEST_F(AndOperatorTest, testPatternOneAnd) {
     // Setup Coordinator
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                                         ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
-                                         ->addField(createField("quantity", UINT64));)";
+                                         ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
+                                         ->addField(createField("quantity", BasicType::UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
@@ -252,8 +253,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     // Setup Coordinator
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                                         ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
-                                         ->addField(createField("quantity", UINT64));)";
+                                         ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
+                                         ->addField(createField("quantity", BasicType::UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
@@ -336,8 +337,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
  */
 TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                                         ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
-                                         ->addField(createField("quantity", UINT64));)";
+                                         ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
+                                         ->addField(createField("quantity", BasicType::UINT64));)";
     //Setup Coordinator
     coConf->clear();
     NES_DEBUG("start coordinator");
@@ -437,8 +438,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
 TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     //Setup Coordinator
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                                         ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
-                                         ->addField(createField("quantity", UINT64));)";
+                                         ->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))
+                                         ->addField(createField("quantity", BasicType::UINT64));)";
     coConf->clear();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);

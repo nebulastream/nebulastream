@@ -15,30 +15,12 @@
 #ifndef NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_
 #define NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_
 
-#include <cinttypes>
 #include <cstdint>
-#include <string>
 
 namespace NES {
-class GatheringMode {
 
-  public:
-    enum Value : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2 };
+enum class GatheringMode : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2 };
 
-    /**
-     * @brief Get Gathering Mode from string
-     * @param gatheringMode : string representation of gathering mode
-     * @return enum representing gathering mode
-     */
-    static Value getFromString(const std::string gatheringMode);
-
-    /**
-     * @brief Get Gathering mode in string representation
-     * @param gatheringMode : enum value of the gathering mode
-     * @return string representation of gathering mode
-     */
-    static std::string toString(const Value gatheringMode);
-};
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_

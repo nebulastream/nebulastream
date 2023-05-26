@@ -33,6 +33,7 @@
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
+#include <vector>
 
 namespace NES::Nautilus::Tracing {
 
@@ -88,60 +89,60 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
                                                                      TraceOperation& operation) {
 
     switch (operation.op) {
-        case ADD: {
+        case OpCode::ADD: {
             processAdd(scope, frame, currentIrBlock, operation);
             return;
         };
-        case SUB: {
+        case OpCode::SUB: {
             processSub(scope, frame, currentIrBlock, operation);
             return;
         };
-        case DIV: {
+        case OpCode::DIV: {
             processDiv(scope, frame, currentIrBlock, operation);
             return;
         };
-        case MUL: {
+        case OpCode::MUL: {
             processMul(scope, frame, currentIrBlock, operation);
             return;
         };
-        case EQUALS: {
+        case OpCode::EQUALS: {
             processEquals(scope, frame, currentIrBlock, operation);
             return;
         };
-        case LESS_THAN: {
+        case OpCode::LESS_THAN: {
             processLessThan(scope, frame, currentIrBlock, operation);
             return;
         };
-        case GREATER_THAN: {
+        case OpCode::GREATER_THAN: {
             processGreaterThan(scope, frame, currentIrBlock, operation);
             return;
         };
-        case NEGATE: {
+        case OpCode::NEGATE: {
             processNegate(scope, frame, currentIrBlock, operation);
             return;
         };
-        case AND: {
+        case OpCode::AND: {
             processAnd(scope, frame, currentIrBlock, operation);
             return;
         };
-        case OR: {
+        case OpCode::OR: {
             processOr(scope, frame, currentIrBlock, operation);
             return;
         };
-        case CMP: {
+        case OpCode::CMP: {
             processCMP(scope, frame, currentBlock, currentIrBlock, operation);
             return;
         };
-        case JMP: {
+        case OpCode::JMP: {
             processJMP(scope, frame, currentIrBlock, operation);
             return;
         };
-        case CONST: {
+        case OpCode::CONST: {
             processConst(scope, frame, currentIrBlock, operation);
             return;
         };
-        case ASSIGN: break;
-        case RETURN: {
+        case OpCode::ASSIGN: break;
+        case OpCode::RETURN: {
             if (std::get<ValueRef>(operation.result).type->isVoid()) {
                 auto operation = std::make_shared<NES::Nautilus::IR::Operations::ReturnOperation>();
                 currentIrBlock->addOperation(operation);
@@ -153,19 +154,19 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
 
             return;
         };
-        case LOAD: {
+        case OpCode::LOAD: {
             processLoad(scope, frame, currentIrBlock, operation);
             return;
         };
-        case STORE: {
+        case OpCode::STORE: {
             processStore(scope, frame, currentIrBlock, operation);
             return;
         };
-        case CAST: {
+        case OpCode::CAST: {
             processCast(scope, frame, currentIrBlock, operation);
             return;
         };
-        case CALL: processCall(scope, frame, currentIrBlock, operation); return;
+        case OpCode::CALL: processCall(scope, frame, currentIrBlock, operation); return;
     }
     //  NES_NOT_IMPLEMENTED();
 }
@@ -189,10 +190,10 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
     // targetBlock   = get<BlockRef>(operation.input[0])
 
     // check if we jump to a loop head:
-    if (targetBlock.operations.back().op == CMP) {
+    if (targetBlock.operations.back().op == OpCode::CMP) {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
 #ifdef USE_BABELFISH
-        if (isBlockInLoop(targetBlock.blockId, UINT32_MAX)) {
+        if (isBlockInLoop(targetBlock.blockId, BasicType::UINT32_MAX)) {
             NES_DEBUG("1. found loop");
             auto loopOperator = std::make_shared<NES::Nautilus::IR::Operations::LoopOperation>(
                 NES::Nautilus::IR::Operations::LoopOperation::LoopType::ForLoop);
@@ -333,15 +334,14 @@ void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
 
     NES::Nautilus::IR::Operations::CompareOperation::Comparator comparator;
-    if (leftInput->getStamp()->isInteger() && rightInput->getStamp()->isInteger()) {
-        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISLT;
-    } else if (leftInput->getStamp()->isFloat() && rightInput->getStamp()->isFloat()) {
-        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::FOLT;
-    }
+    comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::LT;
 
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation =
-        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier, leftInput, rightInput, comparator);
+    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
+        resultIdentifier,
+        leftInput,
+        rightInput,
+        NES::Nautilus::IR::Operations::CompareOperation::Comparator::LT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -353,15 +353,14 @@ void TraceToIRConversionPhase::IRConversionContext::processGreaterThan(int32_t,
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
 
     NES::Nautilus::IR::Operations::CompareOperation::Comparator comparator;
-    if (leftInput->getStamp()->isInteger() && rightInput->getStamp()->isInteger()) {
-        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::ISGT;
-    } else if (leftInput->getStamp()->isFloat() && rightInput->getStamp()->isFloat()) {
-        comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::FOGT;
-    }
+    comparator = NES::Nautilus::IR::Operations::CompareOperation::Comparator::GT;
 
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto compareOperation =
-        std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(resultIdentifier, leftInput, rightInput, comparator);
+    auto compareOperation = std::make_shared<NES::Nautilus::IR::Operations::CompareOperation>(
+        resultIdentifier,
+        leftInput,
+        rightInput,
+        NES::Nautilus::IR::Operations::CompareOperation::Comparator::GT);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -376,7 +375,7 @@ void TraceToIRConversionPhase::IRConversionContext::processEquals(int32_t,
         resultIdentifier,
         leftInput,
         rightInput,
-        NES::Nautilus::IR::Operations::CompareOperation::Comparator::IEQ);
+        NES::Nautilus::IR::Operations::CompareOperation::Comparator::EQ);
     frame.setValue(resultIdentifier, compareOperation);
     currentBlock->addOperation(compareOperation);
 }
@@ -468,12 +467,12 @@ bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(uint32_t paren
     }
     auto currentBlock = trace->getBlock(currentBlockId);
     auto& terminationOp = currentBlock.operations.back();
-    if (terminationOp.op == CMP) {
+    if (terminationOp.op == OpCode::CMP) {
         auto trueCaseBlockRef = get<BlockRef>(terminationOp.input[0]);
         auto falseCaseBlockRef = get<BlockRef>(terminationOp.input[1]);
-        return currentBlock.type == Block::ControlFlowMerge;
+        return currentBlock.type == Block::Type::ControlFlowMerge;
         //isBlockInLoop(parentBlockId, trueCaseBlockRef.block) || isBlockInLoop(parentBlockId, falseCaseBlockRef.block);
-    } else if (terminationOp.op == JMP) {
+    } else if (terminationOp.op == OpCode::JMP) {
         auto target = get<BlockRef>(terminationOp.input[0]);
         return isBlockInLoop(parentBlockId, target.block);
     }

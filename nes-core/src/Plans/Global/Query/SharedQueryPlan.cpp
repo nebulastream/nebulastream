@@ -162,9 +162,9 @@ void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::stri
     }
 }
 
-SharedQueryPlanStatus::Value SharedQueryPlan::getStatus() const { return sharedQueryPlanStatus; }
+SharedQueryPlanStatus SharedQueryPlan::getStatus() const { return sharedQueryPlanStatus; }
 
-void SharedQueryPlan::setStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+void SharedQueryPlan::setStatus(SharedQueryPlanStatus sharedQueryPlanStatus) {
     this->sharedQueryPlanStatus = sharedQueryPlanStatus;
 }
 

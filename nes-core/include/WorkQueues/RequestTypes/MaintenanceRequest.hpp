@@ -31,7 +31,7 @@ typedef std::shared_ptr<MaintenanceRequest> MaintenanceRequestPtr;
 class MaintenanceRequest : public Request {
 
   public:
-    static MaintenanceRequestPtr create(TopologyNodeId nodeId, MigrationType::Value migrationType);
+    static MaintenanceRequestPtr create(TopologyNodeId nodeId, MigrationType migrationType);
 
     std::string toString() override;
 
@@ -39,7 +39,7 @@ class MaintenanceRequest : public Request {
      * @brief gets the Migration Type for this Query Migration Request
      * @return MigrationType
      */
-    MigrationType::Value getMigrationType();
+    MigrationType getMigrationType();
 
     /**
     * @brief gets the topology node which is to be marked for maintenance
@@ -48,10 +48,10 @@ class MaintenanceRequest : public Request {
     TopologyNodeId getTopologyNode();
 
   private:
-    explicit MaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value migrationType);
+    explicit MaintenanceRequest(TopologyNodeId nodeId, MigrationType migrationType);
 
     TopologyNodeId nodeId;
-    MigrationType::Value migrationType;
+    MigrationType migrationType;
 };
 }// namespace NES::Experimental
 #endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MAINTENANCEREQUEST_HPP_

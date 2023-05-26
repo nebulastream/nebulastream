@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -20,6 +21,6 @@ PhysicalSourceType::PhysicalSourceType(SourceType sourceType) : sourceType(sourc
 
 SourceType PhysicalSourceType::getSourceType() { return sourceType; }
 
-std::string PhysicalSourceType::getSourceTypeAsString() { return sourceTypeToString[sourceType]; }
+std::string PhysicalSourceType::getSourceTypeAsString() { return std::string(magic_enum::enum_name(getSourceType())); }
 
 }// namespace NES

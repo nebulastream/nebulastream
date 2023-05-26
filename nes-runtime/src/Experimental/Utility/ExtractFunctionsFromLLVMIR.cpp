@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <filesystem>
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
@@ -27,6 +28,7 @@
 #include <llvm/IR/Mangler.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IRReader/IRReader.h>
+#include <llvm/Transforms/IPO/ExtractGV.h>
 
 #include <cstddef>
 #include <iostream>
@@ -45,6 +47,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+
 using namespace llvm;
 
 std::string demangleToBaseName(const std::string& functionName) {
@@ -63,7 +66,6 @@ std::string demangleToBaseName(const std::string& functionName) {
 int main(int argc, char** argv) {
     InitLLVM X(argc, argv);
     bool Recursive = true;
-    NES_DEBUG("Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE);
     LLVMContext Context;
 
     // Use lazy loading, since we only care about selected global values.
@@ -87,18 +89,16 @@ int main(int argc, char** argv) {
     }
 
     // Get functions from LLVM IR module. Use mapping to mangled function names, if needed.
-    std::vector<std::string> ExtractFuncs{"NES__QueryCompiler__PipelineContext__getGlobalOperatorStateProxy",
-                                          "NES__Runtime__TupleBuffer__getNumberOfTuples",
+    std::vector<std::string> ExtractFuncs{"NES__Runtime__TupleBuffer__getNumberOfTuples",
                                           "NES__Runtime__TupleBuffer__setNumberOfTuples",
                                           "NES__Runtime__TupleBuffer__getBuffer",
-                                          // "NES__QueryCompiler__PipelineContext__emitBufferProxy",
                                           "NES__Runtime__TupleBuffer__getBufferSize",
                                           "NES__Runtime__TupleBuffer__getWatermark",
                                           "NES__Runtime__TupleBuffer__setWatermark",
-                                          "NES__Runtime__TupleBuffer__getCreationTimestamp",
+                                          "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
                                           "NES__Runtime__TupleBuffer__setSequenceNumber",
                                           "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                          "NES__Runtime__TupleBuffer__setCreationTimestamp"};
+                                          "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
 
     for (size_t i = 0; i != ExtractFuncs.size(); ++i) {
         GlobalValue* GV = LLVMModule->getFunction(ExtractFuncs[i]);
@@ -142,11 +142,12 @@ int main(int argc, char** argv) {
             }
         }
     }
-
-    legacy::PassManager Extract;
+    // We create a vector of GlobValues that represent the functions that we do NOT want to extract.
     std::vector<GlobalValue*> FunctionsToKeep(ProxyFunctionValues.begin(), ProxyFunctionValues.end());
-    Extract.add(createGVExtractionPass(FunctionsToKeep, /* false: keep functions */ false, false));
-    Extract.run(*LLVMModule);
+    // We then run the GlobalValue (GV) extraction pass and remove all functions that we want to extract.
+    auto const extractGVPass = new llvm::ExtractGVPass(FunctionsToKeep, /* false: keep functions */ false, false);
+    llvm::ModuleAnalysisManager dummyAnalysisManager;
+    extractGVPass->run(*LLVMModule, dummyAnalysisManager);
 
     // Now that we only have the GVs that we need left, mark the module as fully materialized.
     ExitOnErr(LLVMModule->materializeAll());
@@ -158,11 +159,10 @@ int main(int argc, char** argv) {
     Passes.add(createGlobalDCEPass());          // Delete unreachable globals
     Passes.add(createStripDeadDebugInfoPass()); // Remove dead debug info
     Passes.add(createStripDeadPrototypesPass());// Remove dead func decls
-    // Passes.add(createFunctionInliningPass());    // Inline function definitions
 
-    NES_DEBUG("Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR);
     std::error_code EC;
-    ToolOutputFile Out(std::string(PROXY_FUNCTIONS_RESULT_DIR), EC, sys::fs::OF_None);
+    // We statically write proxy functions to /tmp/proxiesReduced.ll (we might change this behavior in #3710)
+    ToolOutputFile Out(std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll", EC, sys::fs::OF_None);
     if (EC) {
         errs() << EC.message() << '\n';
         return 1;
@@ -170,9 +170,6 @@ int main(int argc, char** argv) {
 
     Passes.add(createPrintModulePass(Out.os(), "", false));
     Passes.run(*LLVMModule.get());
-
-    // Below call can lead to errors.
-    // system("/home/rudi/CLionProjects/GenerateProxyFunctionsIR/cmake-build-debug/mlir-translate --import-llvm ./llvm-ir/nes-runtime_opt/proxiesReduced.ll -o ./llvm-ir/nes-runtime_opt/proxiesFinal.mlir");
 
     // Declare success.
     Out.keep();

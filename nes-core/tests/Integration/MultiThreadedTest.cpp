@@ -55,7 +55,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -135,7 +135,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -212,7 +212,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", source);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -293,7 +293,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", source);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -370,7 +370,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", source);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -444,10 +444,10 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window1", source);
     std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win2", BasicType::INT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -531,13 +531,13 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window1", source);
     std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win2", BasicType::INT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
     std::string window3 =
-        R"(Schema::create()->addField(createField("win3", INT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win3", BasicType::INT64))->addField(createField("id3", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -637,16 +637,16 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window1", source);
     std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win2", BasicType::INT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
     std::string window3 =
-        R"(Schema::create()->addField(createField("win3", INT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win3", BasicType::INT64))->addField(createField("id3", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     std::string window4 =
-        R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win4", BasicType::UINT64))->addField(createField("id4", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
@@ -792,10 +792,10 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win1", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window1", source);
     std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("win2", BasicType::INT64))->addField(createField("id2", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
     NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 

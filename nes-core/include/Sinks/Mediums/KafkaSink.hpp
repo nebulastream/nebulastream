@@ -53,7 +53,7 @@ class KafkaSink : public SinkMedium {
               QueryId queryId,
               QuerySubPlanId querySubPlanId,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
-              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
               uint64_t numberOfOrigins = 1);
 
     ~KafkaSink() override;

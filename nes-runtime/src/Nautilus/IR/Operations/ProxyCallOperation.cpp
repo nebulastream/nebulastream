@@ -19,7 +19,7 @@ ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        OperationIdentifier identifier,
                                        std::vector<OperationWPtr> inputArguments,
                                        Types::StampPtr resultType)
-    : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
       inputArguments(std::move(inputArguments)) {}
 
 ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
@@ -28,7 +28,7 @@ ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        OperationIdentifier identifier,
                                        std::vector<OperationWPtr> inputArguments,
                                        Types::StampPtr resultType)
-    : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
       mangedFunctionSymbol(functionSymbol), functionPtr(functionPtr), inputArguments(std::move(inputArguments)) {}
 
 Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
@@ -41,8 +41,12 @@ std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
 }
 
 std::string ProxyCallOperation::toString() {
-    std::string baseString = identifier + " = " + getFunctionSymbol() + "(";
-    if (inputArguments.size() > 0) {
+    std::string baseString = "";
+    if (!identifier.empty()) {
+        baseString = identifier + " = ";
+    }
+    baseString = baseString + getFunctionSymbol() + "(";
+    if (!inputArguments.empty()) {
         baseString += inputArguments[0].lock()->getIdentifier();
         for (int i = 1; i < (int) inputArguments.size(); ++i) {
             baseString += ", " + inputArguments.at(i).lock()->getIdentifier();

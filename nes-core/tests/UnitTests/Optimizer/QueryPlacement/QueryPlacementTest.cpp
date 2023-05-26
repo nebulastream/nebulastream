@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -60,14 +60,14 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryPlacementTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
 
     static void SetUpTestCase() {
@@ -77,12 +77,12 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup QueryPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     void setupTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
@@ -154,12 +154,12 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         TopologyNodePtr sourceNode4 = TopologyNode::create(5, "localhost", 123, 124, resources[2], properties);
         topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode4);
 
-        std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
-                           ->addField(createField("SepalLengthCm", FLOAT32))
-                           ->addField(createField("SepalWidthCm", FLOAT32))
-                           ->addField(createField("PetalLengthCm", FLOAT32))
-                           ->addField(createField("PetalWidthCm", FLOAT32))
-                           ->addField(createField("SpeciesCode", UINT64));)";
+        std::string schema = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
+                           ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                           ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                           ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                           ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                           ->addField(createField("SpeciesCode", BasicType::UINT64));)";
         const std::string sourceName = "iris";
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);

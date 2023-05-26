@@ -96,6 +96,7 @@ class ExecutionTrace {
      */
     std::shared_ptr<OperationRef> getReturn();
 
+    std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
   private:

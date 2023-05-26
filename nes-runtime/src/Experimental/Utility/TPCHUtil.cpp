@@ -53,7 +53,7 @@ TPCHUtil::getLineitems(std::string rootPath,
     // shipmode
     // comment
     std::string prefix;
-    if (layoutType == Schema::ROW_LAYOUT) {
+    if (layoutType == Schema::MemoryLayoutType::ROW_LAYOUT) {
         prefix = "row_";
     } else {
         prefix = "col_";
@@ -97,7 +97,7 @@ TPCHUtil::getOrders(std::string rootPath,
     NES_DEBUG("Loading of Orders done");
 
     std::string prefix;
-    if (layoutType == Schema::ROW_LAYOUT) {
+    if (layoutType == Schema::MemoryLayoutType::ROW_LAYOUT) {
         prefix = "row_";
     } else {
         prefix = "col_";
@@ -141,7 +141,7 @@ TPCHUtil::getCustomers(std::string rootPath,
     NES_DEBUG("Loading of customer done");
 
     std::string prefix;
-    if (layoutType == Schema::ROW_LAYOUT) {
+    if (layoutType == Schema::MemoryLayoutType::ROW_LAYOUT) {
         prefix = "row_";
     } else {
         prefix = "col_";
@@ -170,7 +170,7 @@ TPCHUtil::getFileFromCache(std::string path, std::shared_ptr<Runtime::BufferMana
     uint64_t generated_tuples_this_pass = size / schema->getSchemaSizeInBytes();
     buf.setNumberOfTuples(generated_tuples_this_pass);
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, size);
     } else {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, size);
@@ -204,7 +204,7 @@ TPCHUtil::getLineitemsFromFile(std::string path, std::shared_ptr<Runtime::Buffer
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
     } else {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
@@ -295,7 +295,7 @@ TPCHUtil::getOrdersFromFile(std::string path, std::shared_ptr<Runtime::BufferMan
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
     } else {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
@@ -377,7 +377,7 @@ TPCHUtil::getCustomersFromFile(std::string path, std::shared_ptr<Runtime::Buffer
     auto targetBufferSize = schema->getSchemaSizeInBytes() * linecount;
     auto buffer = bm->getUnpooledBuffer(targetBufferSize).value();
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
     } else {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());

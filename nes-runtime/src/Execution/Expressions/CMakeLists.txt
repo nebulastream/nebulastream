@@ -21,3 +21,4 @@ add_source_files(nes-runtime
 add_subdirectory(ArithmeticExpressions)
 add_subdirectory(LogicalExpressions)
 add_subdirectory(Functions)
+add_subdirectory(TextFunctions)

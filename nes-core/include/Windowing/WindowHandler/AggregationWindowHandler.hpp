@@ -111,11 +111,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::stringstream ss;
         ss << "AggregationWindowHandler(" << handlerType << "," << id << "): ";
         std::string triggerType;
-        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
+        if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Combining) {
             triggerType = "Combining";
-        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Slicing) {
+        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Slicing) {
             triggerType = "Slicing";
-        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Merging) {
+        } else if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
             triggerType = "Merging";
         } else {
             triggerType = "Complete";
@@ -133,13 +133,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         // TODO switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
-            case Runtime::FailEndOfStream: {
+            case Runtime::ReconfigurationType::FailEndOfStream: {
                 NES_NOT_IMPLEMENTED();
             }
-            case Runtime::SoftEndOfStream: {
+            case Runtime::ReconfigurationType::SoftEndOfStream: {
                 break;
             }
-            case Runtime::HardEndOfStream: {
+            case Runtime::ReconfigurationType::HardEndOfStream: {
                 stop();
                 break;
             }
@@ -166,14 +166,17 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         } else {
             watermark = getMinWatermark();
             uint64_t windowSize = 0;
-            if (windowDefinition->getWindowType()->isTumblingWindow()) {
-                TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
-                windowSize = window->getSize().getTime();
-            } else if (windowDefinition->getWindowType()->isSlidingWindow()) {
-                SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
-                windowSize = window->getSize().getTime();
-            } else {
-                NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
+            if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+                auto timeBasedWindowType = WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+                if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::TUMBLINGWINDOW) {
+                    auto* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
+                    windowSize = window->getSize().getTime();
+                } else if (timeBasedWindowType->getTimeBasedSubWindowType() == TimeBasedWindowType::SLIDINGWINDOW) {
+                    auto* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
+                    windowSize = window->getSize().getTime();
+                } else {
+                    NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
+                }
             }
 
             auto allowedLateness = windowManager->getAllowedLateness();

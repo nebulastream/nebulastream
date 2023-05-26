@@ -18,21 +18,18 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
-
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include <iostream>
 
 using namespace std;
@@ -144,7 +141,7 @@ PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t
         },
         numberOfBuffers,
         0,
-        GatheringMode ::INTERVAL_MODE);
+        GatheringMode::INTERVAL_MODE);
 }
 
 class DataGeneratorMultiKey {
@@ -166,7 +163,7 @@ class DataGeneratorMultiKey {
             },
             numberOfBuffers,
             0,
-            GatheringMode ::INTERVAL_MODE);
+            GatheringMode::INTERVAL_MODE);
     }
 
   private:
@@ -193,7 +190,7 @@ class DataGenerator {
             },
             numberOfBuffers,
             0,
-            GatheringMode ::INTERVAL_MODE);
+            GatheringMode::INTERVAL_MODE);
     }
 
   private:
@@ -288,7 +285,7 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowMultiBuff
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
+TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())

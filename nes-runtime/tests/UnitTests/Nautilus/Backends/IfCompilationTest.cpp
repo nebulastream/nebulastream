@@ -161,6 +161,56 @@ TEST_P(IfCompilationTest, ifElseIfCondition) {
     ASSERT_EQ(function(), 23);
 }
 
+Value<> orCondition(Value<> value) {
+    Value iw = Value(1);
+    if (value == 8 || value == 1) {
+        iw = iw + 14;
+    }
+    return iw;
+}
+
+TEST_P(IfCompilationTest, orConditionTest) {
+    Value<Int32> value = Value<Int32>((int32_t) 1);
+    value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
+
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
+        return orCondition(value);
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t, int32_t>("execute");
+    ASSERT_EQ(function(42), 1);
+    ASSERT_EQ(function(8), 15);
+    ASSERT_EQ(function(1), 15);
+}
+
+Value<> andCondition(Value<> x, Value<> y) {
+    Value iw = Value(1);
+    if (x == 8 && y == 1) {
+        iw = iw + 14;
+    }
+    return iw;
+}
+
+TEST_P(IfCompilationTest, andConditionTest) {
+    Value<Int32> x = Value<Int32>((int32_t) 1);
+    x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
+
+    Value<Int32> y = Value<Int32>((int32_t) 1);
+    y.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([x, y]() {
+        Tracing::TraceContext::get()->addTraceArgument(x.ref);
+        Tracing::TraceContext::get()->addTraceArgument(y.ref);
+        return andCondition(x, y);
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int32_t, int32_t, int32_t>("execute");
+    ASSERT_EQ(function(42, 42), 1);
+    ASSERT_EQ(function(8, 42), 1);
+    ASSERT_EQ(function(42, 1), 1);
+    ASSERT_EQ(function(8, 1), 15);
+}
+
 Value<> deeplyNestedIfElseCondition() {
     Value value = Value(1);
     Value iw = Value(5);
@@ -213,7 +263,7 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition) {
     ASSERT_EQ(function(), 17);
 }
 
-Value<Boolean> function1(const Value<Int64>& value) {
+Value<Boolean> andFunction(const Value<Int64>& value) {
     Value<Boolean> equals = true;
     equals = equals && (value == (int64_t) 42);
     equals = equals && (value == (int64_t) 42);
@@ -226,7 +276,7 @@ TEST_P(IfCompilationTest, nestedBooleanFunction) {
     value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
         Value<Int64> res = Value<Int64>((int64_t) 42);
-        if (function1(value)) {
+        if (andFunction(value)) {
             res = res + 1;
         }
         return res;
@@ -239,10 +289,10 @@ TEST_P(IfCompilationTest, nestedBooleanFunction) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         IfCompilationTest,
-                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
+                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
                         [](const testing::TestParamInfo<IfCompilationTest::ParamType>& info) {
                             return info.param;
                         });

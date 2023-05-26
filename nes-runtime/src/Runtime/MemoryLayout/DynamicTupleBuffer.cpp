@@ -12,12 +12,13 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -61,7 +62,15 @@ std::string DynamicField::toString() {
     std::string currentFieldContentAsString = this->physicalType->convertRawToString(this->address);
     ss << currentFieldContentAsString;
     return ss.str();
-};
+}
+
+bool DynamicField::equal(const DynamicField& rhs) const { return std::memcmp(address, rhs.address, physicalType->size()) == 0; }
+
+bool DynamicField::operator==(const DynamicField& rhs) const { return equal(rhs); };
+
+bool DynamicField::operator!=(const DynamicField& rhs) const { return !equal(rhs); }
+
+const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalType; };
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 
@@ -150,5 +159,17 @@ bool DynamicTupleBuffer::TupleIterator::operator!=(TupleIterator other) const { 
 DynamicTuple DynamicTupleBuffer::TupleIterator::operator*() const { return buffer[currentIndex]; }
 
 MemoryLayoutPtr DynamicTupleBuffer::getMemoryLayout() const { return memoryLayout; }
+
+DynamicTupleBuffer DynamicTupleBuffer::createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
+        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
 
 }// namespace NES::Runtime::MemoryLayouts

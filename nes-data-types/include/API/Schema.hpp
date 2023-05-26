@@ -36,10 +36,10 @@ class Schema {
     /**
      * @brief Enum to identify the memory layout in which we want to represent the schema physically.
      */
-    enum MemoryLayoutType : std::int8_t { ROW_LAYOUT = 0, COLUMNAR_LAYOUT = 1 };
+    enum class MemoryLayoutType : uint8_t { ROW_LAYOUT = 0, COLUMNAR_LAYOUT = 1 };
 
-    Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
-    Schema(SchemaPtr const& query, MemoryLayoutType layoutType = ROW_LAYOUT);
+    Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    Schema(SchemaPtr const& query, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
      * @brief Schema qualifier separator
@@ -50,7 +50,7 @@ class Schema {
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
-    static SchemaPtr create(MemoryLayoutType layoutType = ROW_LAYOUT);
+    static SchemaPtr create(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
      * @brief Creates a copy of this schema.

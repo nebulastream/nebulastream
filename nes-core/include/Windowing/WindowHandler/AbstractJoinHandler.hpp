@@ -38,7 +38,7 @@
 
 namespace NES::Join {
 
-enum JoinSides { leftSide = 0, rightSide = 1 };
+enum class JoinSides : uint8_t { leftSide = 0, rightSide = 1 };
 
 /**
  * @brief The abstract window handler is the base class for all window handlers
@@ -112,9 +112,9 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
      * @return MinAggregationDescriptor watermark
      */
     uint64_t getMinWatermark(JoinSides side) {
-        if (side == leftSide) {
+        if (side == JoinSides::leftSide) {
             return watermarkProcessorLeft->getCurrentWatermark();
-        } else if (side == rightSide) {
+        } else if (side == JoinSides::rightSide) {
             return watermarkProcessorRight->getCurrentWatermark();
         } else {
             NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");

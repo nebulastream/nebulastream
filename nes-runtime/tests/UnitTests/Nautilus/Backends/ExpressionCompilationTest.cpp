@@ -174,7 +174,7 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
         return castInt8ToInt64AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int8_t, int8_t>("execute");
+    auto function = engine->getInvocableMember<int64_t, int8_t>("execute");
     ASSERT_EQ(function(7), 14);
     ASSERT_EQ(function(-7), 0);
     ASSERT_EQ(function(-14), -7);
@@ -192,17 +192,17 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2) {
         return castInt8ToInt64AddExpression2(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int8_t, int8_t>("execute");
+    auto function = engine->getInvocableMember<int64_t, int8_t>("execute");
     ASSERT_EQ(function(8), 50);
     ASSERT_EQ(function(-2), 40);
 }
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testExpressions,
                         ExpressionExecutionTest,
-                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
+                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
                         [](const testing::TestParamInfo<ExpressionExecutionTest::ParamType>& info) {
                             return info.param;
                         });

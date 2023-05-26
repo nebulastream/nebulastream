@@ -62,12 +62,12 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     remove(outputFilePath.c_str());
 
     // elegant project test schema
-    std::string testSchema = R"(Schema::create()->addField("camera_id", UINT64)
-                                                ->addField("timestamp", UINT64)
-                                                ->addField("rows", UINT64)
-                                                ->addField("cols", UINT64)
-                                                ->addField("type", UINT64)
-                                                ->addField("data", TEXT);)";// TEXT is the variable length field
+    std::string testSchema = R"(Schema::create()->addField("camera_id", BasicType::UINT64)
+                                                ->addField("timestamp", BasicType::UINT64)
+                                                ->addField("rows", BasicType::UINT64)
+                                                ->addField("cols", BasicType::UINT64)
+                                                ->addField("type", BasicType::UINT64)
+                                                ->addField("data", BasicType::TEXT);)";// TEXT is the variable length field
 
     // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();

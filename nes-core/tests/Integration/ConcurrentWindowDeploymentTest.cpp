@@ -28,12 +28,12 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-
 #include <iostream>
 
 using namespace std;
@@ -55,80 +55,6 @@ class ConcurrentWindowDeploymentTest : public Testing::NESBaseTest {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-
-    NES_INFO("WindowDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0ull);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->numWorkerThreads = workerThreads;
-    workerConfig->coordinatorPort = *rpcCoordinatorPort;
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create("exdra", "test_stream", csvSourceType);
-    workerConfig->physicalSources.add(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-
-    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
-    remove(outputFilePath.c_str());
-
-    NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"exdra\").window(TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
-                   "Seconds(10))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"features_properties_capacity\")))"
-                   ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //todo will be removed once the new window source is in place
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-
-    string expectedContent = "exdra$start:INTEGER,exdra$end:INTEGER,exdra$id:INTEGER,exdra$features_properties_capacity:INTEGER\n"
-                             "1262343610000,1262343620000,1,736\n"
-                             "1262343620000,1262343630000,2,1348\n"
-                             "1262343630000,1262343640000,3,4575\n"
-                             "1262343640000,1262343650000,4,1358\n"
-                             "1262343650000,1262343660000,5,1288\n"
-                             "1262343660000,1262343670000,6,3458\n"
-                             "1262343670000,1262343680000,7,1128\n"
-                             "1262343680000,1262343690000,8,1079\n"
-                             "1262343690000,1262343700000,9,2071\n"
-                             "1262343700000,1262343710000,10,2632\n";
-
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_INFO("WindowDeploymentTest: Remove query");
-    ;
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    NES_INFO("WindowDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("WindowDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("WindowDeploymentTest: Test finished");
-}
-
-/**
- * @brief test central tumbling window and event time
- */
 TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -139,7 +65,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input =
-        R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
+        R"(Schema::create()->addField("ysb$user_id", BasicType::UINT64)->addField("ysb$page_id", BasicType::UINT64)->addField("ysb$campaign_id", BasicType::UINT64)->addField("ysb$ad_type", BasicType::UINT64)->addField("ysb$event_type", BasicType::UINT64)->addField("ysb$current_ms", BasicType::UINT64)->addField("ysb$ip", BasicType::UINT64)->addField("ysb$d1", BasicType::UINT64)->addField("ysb$d2", BasicType::UINT64)->addField("ysb$d3", BasicType::UINT32)->addField("ysb$d4", BasicType::UINT16);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
     NES_DEBUG("ConcurrentWindowDeploymentTest: Coordinator started successfully");
 
@@ -149,17 +75,17 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     auto ysbSchema = Schema::create()
-                         ->addField("ysb$user_id", UINT64)
-                         ->addField("ysb$page_id", UINT64)
-                         ->addField("ysb$campaign_id", UINT64)
-                         ->addField("ysb$ad_type", UINT64)
-                         ->addField("ysb$event_type", UINT64)
-                         ->addField("ysb$current_ms", UINT64)
-                         ->addField("ysb$ip", UINT64)
-                         ->addField("ysb$d1", UINT64)
-                         ->addField("ysb$d2", UINT64)
-                         ->addField("ysb$d3", UINT32)
-                         ->addField("ysb$d4", UINT16);
+                         ->addField("ysb$user_id", BasicType::UINT64)
+                         ->addField("ysb$page_id", BasicType::UINT64)
+                         ->addField("ysb$campaign_id", BasicType::UINT64)
+                         ->addField("ysb$ad_type", BasicType::UINT64)
+                         ->addField("ysb$event_type", BasicType::UINT64)
+                         ->addField("ysb$current_ms", BasicType::UINT64)
+                         ->addField("ysb$ip", BasicType::UINT64)
+                         ->addField("ysb$d1", BasicType::UINT64)
+                         ->addField("ysb$d2", BasicType::UINT64)
+                         ->addField("ysb$d3", BasicType::UINT32)
+                         ->addField("ysb$d4", BasicType::UINT16);
 
     auto func = [](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
@@ -275,7 +201,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -351,7 +277,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -427,7 +353,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -714,7 +640,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -824,7 +750,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowE
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -904,7 +830,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -986,7 +912,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWin
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1088,7 +1014,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1186,7 +1112,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1253,7 +1179,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1322,7 +1248,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1392,7 +1318,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     std::string testSchema =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -1786,14 +1712,14 @@ TEST_F(ConcurrentWindowDeploymentTest,
 TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     struct Car {
         uint64_t key;
-        uint64_t value1;
+        double value1;
         uint64_t value2;
         uint64_t timestamp;
     };
 
     auto carSchema = Schema::create()
                          ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value1", DataTypeFactory::createUInt64())
+                         ->addField("value1", DataTypeFactory::createDouble())
                          ->addField("value2", DataTypeFactory::createUInt64())
                          ->addField("timestamp", DataTypeFactory::createUInt64());
 
@@ -2147,7 +2073,8 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    std::string input = R"(Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);)";
+    std::string input =
+        R"(Schema::create()->addField("key", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
     ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("schema", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -2202,7 +2129,10 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    auto schema = Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);
+    auto schema = Schema::create()
+                      ->addField("key", BasicType::UINT64)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("ts", BasicType::UINT64);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"schema\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "

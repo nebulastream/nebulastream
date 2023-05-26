@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -76,18 +77,14 @@ class LocalKeyedSliceStoreState : public Operators::OperatorState {
 
 KeyedSlicePreAggregation::KeyedSlicePreAggregation(
     uint64_t operatorHandlerIndex,
-    Expressions::ExpressionPtr timestampExpression,
+    TimeFunctionPtr timeFunction,
     const std::vector<Expressions::ExpressionPtr>& keyExpressions,
     const std::vector<PhysicalTypePtr>& keyDataTypes,
-    const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), timestampExpression(std::move(timestampExpression)),
-      keyExpressions(keyExpressions), keyDataTypes(keyDataTypes), aggregationExpressions(aggregationExpressions),
-      aggregationFunctions(aggregationFunctions), hashFunction(std::move(hashFunction)), keySize(0), valueSize(0) {
-    NES_ASSERT(aggregationFunctions.size() == aggregationExpressions.size(),
-               "The number of aggregation expression and aggregation functions need to be equals");
-
+    : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction)), keyExpressions(keyExpressions),
+      keyDataTypes(keyDataTypes), aggregationFunctions(aggregationFunctions), hashFunction(std::move(hashFunction)), keySize(0),
+      valueSize(0) {
     for (auto& keyType : keyDataTypes) {
         keySize = keySize + keyType->size();
     }
@@ -106,7 +103,7 @@ void KeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
                            Value<UInt64>(valueSize));
 }
 
-void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
+void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     // 1. get the operator handler
@@ -117,13 +114,14 @@ void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const 
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalKeyedSliceStoreState>(keyDataTypes, keySize, valueSize, sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
+    // 4. initialize timestamp function
+    timeFunction->open(ctx, rb);
 }
 
 void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
     // For each input record, we derive its timestamp, we derive the correct slice from the slice store, and we manipulate the thread local aggregate.
     // 1. derive the current ts for the record.
-    // Depending on the timestamp expression this is derived by a record field (event-time).
-    auto timestampValue = timestampExpression->execute(record).as<UInt64>();
+    auto timestampValue = timeFunction->getTs(ctx, record);
 
     // 2. derive key values
     std::vector<Value<>> keyValues;
@@ -150,10 +148,9 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 6. manipulate the current aggregate values
     auto valuePtr = entry.getValuePtr();
-    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
-        auto value = aggregationExpressions[i]->execute(record);
-        aggregationFunctions[i]->lift(valuePtr, value);
-        valuePtr = valuePtr + aggregationFunctions[i]->getSize();
+    for (const auto& aggregationFunction : aggregationFunctions) {
+        aggregationFunction->lift(valuePtr, record);
+        valuePtr = valuePtr + aggregationFunction->getSize();
     }
 }
 void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {

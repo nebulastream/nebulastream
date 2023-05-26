@@ -92,7 +92,7 @@
     #configuration:
       ###### Define only the following configurations for CSV stream
       # Set file path
-      #filePath: /tests/test_data/exdra.csv
+      #filePath:
       # Skip first line of the file
       #skipHeader: false
       # Set delimiter, e.g. ',' or '.'

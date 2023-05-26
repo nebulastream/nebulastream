@@ -25,6 +25,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -33,7 +34,8 @@ namespace NES::Runtime::Execution {
 
 class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
-    ExecutablePipelineProvider* provider;
+    Nautilus::CompilationOptions options;
+    ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
@@ -50,6 +52,8 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
+        options.setDumpToConsole(true);
+        options.setDumpToFile(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -104,7 +108,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
@@ -134,7 +138,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) {
                             return info.param;
                         });

@@ -34,12 +34,12 @@ using Runtime::TupleBuffer;
 const size_t buffers_managed = 1024;
 const size_t buffer_size = 32 * 1024;
 
-class BufferManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class BufferManagerTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("BufferManagerTest.log", NES::LogLevel::LOG_DEBUG); }
 
-    void SetUp() { Testing::TestWithErrorHandling<testing::Test>::SetUp(); }
+    void SetUp() { Testing::TestWithErrorHandling::SetUp(); }
 };
 
 TEST_F(BufferManagerTest, initializedBufferManager) {

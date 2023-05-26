@@ -17,7 +17,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -31,6 +31,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,7 +48,7 @@ using NES::Runtime::TupleBuffer;
 
 namespace NES {
 
-class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
+class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -57,7 +58,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
         testSchema = Schema::create()
@@ -65,80 +66,11 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
 
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     SchemaPtr testSchema;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
-};
-
-class TestSink : public SinkMedium {
-  public:
-    TestSink(uint64_t expectedBuffer,
-             const SchemaPtr& schema,
-             const Runtime::BufferManagerPtr& bufferManager,
-             uint32_t numOfProducers = 1)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, numOfProducers, 0, 0),
-          expectedBuffer(expectedBuffer){};
-
-    static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager, 1u);
-    }
-
-    void setup() override {}
-
-    void shutdown() override {}
-
-    bool writeData(TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
-        std::unique_lock lock(m);
-        NES_DEBUG("QueryExecutionTest: TestSink: got buffer " << input_buffer);
-
-        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(getSchemaPtr(), input_buffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, input_buffer);
-        NES_DEBUG("QueryExecutionTest: buffer content " << dynamicTupleBuffer);
-
-        resultBuffers.emplace_back(std::move(input_buffer));
-        if (resultBuffers.size() == expectedBuffer) {
-            completed.set_value(true);
-        } else if (resultBuffers.size() > expectedBuffer) {
-            EXPECT_TRUE(false);
-        }
-        return true;
-    }
-
-    /**
-     * @brief Factory to create a new TestSink.
-     * @param expectedBuffer number of buffers expected this sink should receive.
-     * @return TupleBuffer
-     */
-    TupleBuffer get(uint64_t index) {
-        std::unique_lock lock(m);
-        return resultBuffers[index];
-    }
-
-    std::string toString() const override { return "Test_Sink"; }
-
-    ~TestSink() override {
-        NES_DEBUG("~TestSink()");
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    };
-
-    uint32_t getNumberOfResultBuffers() {
-        std::unique_lock lock(m);
-        return resultBuffers.size();
-    }
-
-    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
-
-    void cleanupBuffers() { resultBuffers.clear(); }
-
-    mutable std::recursive_mutex m;
-    uint64_t expectedBuffer;
-
-    std::promise<bool> completed;
-    std::vector<TupleBuffer> resultBuffers;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 };
 
 void fillBufferRowLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, uint64_t numberOfTuples) {
@@ -175,19 +107,20 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->setLayoutType(Schema::ROW_LAYOUT);
+    inputSchema->setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
 
     auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
                      .map(Attribute("f3") = Attribute("f1") * 42)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
+        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COLUMNAR_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
 }
@@ -198,7 +131,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
+    inputSchema->setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
@@ -210,13 +143,14 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
+        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::ROW_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
         }
     }
 }
@@ -242,13 +176,14 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = typeInference->execute(plan);
 
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
+        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
     plan = typeInference->execute(plan);
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COLUMNAR_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
 }

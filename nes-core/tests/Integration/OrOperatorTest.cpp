@@ -64,7 +64,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
 
     //register logical source qnv
     std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
 
     auto sourceCatalogService = crd->getSourceCatalogService();
     sourceCatalogService->registerLogicalSource("QnV1", qnv);
@@ -154,7 +154,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     NES_INFO("OrOperatorTest: Coordinator started successfully");
@@ -247,7 +247,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV3", qnv);
@@ -361,7 +361,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     NES_INFO("SimplePatternTest: Coordinator started successfully");

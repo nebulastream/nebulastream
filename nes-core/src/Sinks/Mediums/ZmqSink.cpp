@@ -25,7 +25,7 @@
 
 namespace NES {
 
-SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
+SinkMediumTypes ZmqSink::getSinkMediumType() { return SinkMediumTypes::ZMQ_SINK; }
 
 ZmqSink::ZmqSink(SinkFormatPtr format,
                  Runtime::NodeEnginePtr nodeEngine,
@@ -35,7 +35,7 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  bool internal,
                  QueryId queryId,
                  QuerySubPlanId querySubPlanId,
-                 FaultToleranceType::Value faultToleranceType,
+                 FaultToleranceType faultToleranceType,
                  uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),

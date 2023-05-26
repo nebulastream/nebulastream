@@ -55,7 +55,7 @@ std::string STWithinExpressionNode::toString() const {
 
 void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& shapeExpression) {
     if (!point->instanceOf<GeographyFieldsAccessExpressionNode>()
-        || (shapeExpression->getShapeType() != Polygon && shapeExpression->getShapeType() != Rectangle)) {
+        || (shapeExpression->getShapeType() != ShapeType::Polygon && shapeExpression->getShapeType() != ShapeType::Rectangle)) {
         throw InvalidArgumentException("Invalid arguments in STDWithinExpressionNode::setChildren(): ",
                                        "Point is : " + point->toString()
                                            + ", and shape expression is : " + shapeExpression->toString());
@@ -88,7 +88,7 @@ void STWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseConte
     auto shape = getShape();
     point->inferStamp(typeInferencePhaseContext, schema);
     auto shapeType = shape->getShapeType();
-    auto validShape = (shapeType == Rectangle) || (shapeType == Polygon);
+    auto validShape = (shapeType == ShapeType::Rectangle) || (shapeType == ShapeType::Polygon);
 
     // both sub expressions have to be numerical
     if (!point->getStamp()->isFloat() || !validShape) {

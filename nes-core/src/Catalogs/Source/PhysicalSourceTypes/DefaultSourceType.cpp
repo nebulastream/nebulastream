@@ -30,18 +30,18 @@ DefaultSourceTypePtr DefaultSourceType::create(Yaml::Node yamlConfig) {
 }
 
 DefaultSourceType::DefaultSourceType()
-    : PhysicalSourceType(DEFAULT_SOURCE), numberOfBuffersToProduce(Configurations::ConfigurationOption<uint32_t>::create(
-                                              Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
-                                              1,
-                                              "Number of buffers to produce.")),
+    : PhysicalSourceType(SourceType::DEFAULT_SOURCE),
+      numberOfBuffersToProduce(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                                                1,
+                                                                "Number of buffers to produce.")),
       sourceGatheringInterval(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
                                                                 1,
                                                                 "Gathering interval of the source.")),
-      gatheringMode(
-          Configurations::ConfigurationOption<GatheringMode::Value>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
-                                                                            GatheringMode::INTERVAL_MODE,
-                                                                            "Gathering mode of the source.")) {
+      gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
+                                                                               GatheringMode::INTERVAL_MODE,
+                                                                               "Gathering mode of the source.")) {
     NES_INFO2("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -54,7 +54,7 @@ std::string DefaultSourceType::toString() {
     ss << "Default Source Type =>{\n";
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG << ":" << numberOfBuffersToProduce->getValue();
     ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG << ":" << sourceGatheringInterval->getValue();
-    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG << ":" << GatheringMode::toString(gatheringMode->getValue());
+    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG << ":" << std::string(magic_enum::enum_name(gatheringMode->getValue()));
     ss << "\n}";
     return ss.str();
 }
@@ -80,9 +80,9 @@ void DefaultSourceType::setSourceGatheringInterval(uint32_t sourceGatheringInter
 }
 
 void DefaultSourceType::setGatheringMode(std::string inputGatheringMode) {
-    gatheringMode->setValue(GatheringMode::getFromString(std::move(inputGatheringMode)));
+    gatheringMode->setValue(magic_enum::enum_cast<GatheringMode>(inputGatheringMode).value());
 }
 
-void DefaultSourceType::setGatheringMode(GatheringMode::Value inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
+void DefaultSourceType::setGatheringMode(GatheringMode inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
 
 }// namespace NES

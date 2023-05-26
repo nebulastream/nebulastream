@@ -31,8 +31,9 @@ OPCSourceTypePtr OPCSourceType::create() { return std::make_shared<OPCSourceType
 
 OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap) : OPCSourceType() {
     NES_INFO2("OPCSourceType: Init default OPC source config object with values from command line args.");
-    if (sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
-        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG)->second));
+    auto enumNameString = std::string(magic_enum::enum_name(SourceType::OPC_SOURCE));
+    if (sourceConfigMap.find(enumNameString) != sourceConfigMap.end()) {
+        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(enumNameString)->second));
     }
     if (sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
         nodeIdentifier->setValue(sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG)->second);
@@ -74,7 +75,7 @@ OPCSourceType::OPCSourceType(Yaml::Node yamlConfig) : OPCSourceType() {
 }
 
 OPCSourceType::OPCSourceType()
-    : PhysicalSourceType(OPC_SOURCE),
+    : PhysicalSourceType(SourceType::OPC_SOURCE),
       namespaceIndex(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NAME_SPACE_INDEX_CONFIG,
                                                                            1,
                                                                            "namespaceIndex for node, needed for: OPCSource")),

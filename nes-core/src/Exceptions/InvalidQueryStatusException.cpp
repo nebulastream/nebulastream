@@ -13,19 +13,20 @@
 */
 
 #include "Exceptions/InvalidQueryStatusException.hpp"
+#include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 
 namespace NES {
 
-InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus::Value>& expectedStatuses,
-                                                         QueryStatus::Value actualStatus) {
+InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatuses,
+                                                         QueryStatus actualStatus) {
 
     std::stringstream expectedStatus;
-    for (QueryStatus::Value status : expectedStatuses) {
-        expectedStatus << QueryStatus::toString(status) << " ";
+    for (QueryStatus status : expectedStatuses) {
+        expectedStatus << std::string(magic_enum::enum_name(status)) << " ";
     }
     message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
-        + QueryStatus::toString(actualStatus);
+        + std::string(magic_enum::enum_name(actualStatus));
 }
 
 const char* InvalidQueryStatusException::what() const noexcept { return message.c_str(); }

@@ -15,7 +15,6 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -23,7 +22,6 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
@@ -56,11 +54,13 @@ ExpressionNodePtr operator%(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr MOD(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) { return std::move(leftExp) % std::move(rightExp); }
 
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
-    return PowExpressionNode::create(std::move(leftExp), std::move(rightExp));
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "power", {leftExp, rightExp});
 }
 
 // calls of unary operators with ExpressionNode
-ExpressionNodePtr ABS(const ExpressionNodePtr& exp) { return AbsExpressionNode::create(exp); }
+ExpressionNodePtr ABS(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "abs", {exp});
+}
 
 ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode::create(exp); }
 
@@ -76,6 +76,18 @@ ExpressionNodePtr LOG2(const ExpressionNodePtr& exp) {
 
 ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "log10", {exp});
+}
+
+ExpressionNodePtr SIN(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "sin", {exp});
+}
+
+ExpressionNodePtr COS(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "cos", {exp});
+}
+
+ExpressionNodePtr RADIANS(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "radians", {exp});
 }
 
 ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) { return RoundExpressionNode::create(exp); }
@@ -204,6 +216,12 @@ ExpressionNodePtr LN(ExpressionItem exp) { return LN(exp.getExpressionNode()); }
 ExpressionNodePtr LOG2(ExpressionItem exp) { return LOG2(exp.getExpressionNode()); }
 
 ExpressionNodePtr LOG10(ExpressionItem exp) { return LOG10(exp.getExpressionNode()); }
+
+ExpressionNodePtr SIN(ExpressionItem exp) { return SIN(exp.getExpressionNode()); }
+
+ExpressionNodePtr COS(ExpressionItem exp) { return COS(exp.getExpressionNode()); }
+
+ExpressionNodePtr RADIANS(ExpressionItem exp) { return RADIANS(exp.getExpressionNode()); }
 
 ExpressionNodePtr ROUND(ExpressionItem exp) { return ROUND(exp.getExpressionNode()); }
 

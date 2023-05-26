@@ -18,7 +18,7 @@
 #include <string>
 
 namespace NES::Monitoring {
-enum MetricCollectorType {
+enum class MetricCollectorType : uint8_t {
     CPU_COLLECTOR,
     DISK_COLLECTOR,
     MEMORY_COLLECTOR,
@@ -27,8 +27,6 @@ enum MetricCollectorType {
     RUNTIME_METRICS_COLLECTOR,
     INVALID
 };
-
-std::string toString(MetricCollectorType type);
 
 }// namespace NES::Monitoring
 

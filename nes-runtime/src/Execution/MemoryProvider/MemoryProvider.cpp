@@ -12,11 +12,17 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
@@ -33,40 +39,40 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::BOOLEAN: {
+            case BasicPhysicalType::NativeType::BOOLEAN: {
                 return fieldReference.load<Nautilus::Boolean>();
             };
-            case BasicPhysicalType::INT_8: {
+            case BasicPhysicalType::NativeType::INT_8: {
                 return fieldReference.load<Nautilus::Int8>();
             };
-            case BasicPhysicalType::INT_16: {
+            case BasicPhysicalType::NativeType::INT_16: {
                 return fieldReference.load<Nautilus::Int16>();
             };
-            case BasicPhysicalType::INT_32: {
+            case BasicPhysicalType::NativeType::INT_32: {
                 return fieldReference.load<Nautilus::Int32>();
             };
-            case BasicPhysicalType::INT_64: {
+            case BasicPhysicalType::NativeType::INT_64: {
                 return fieldReference.load<Nautilus::Int64>();
             };
-            case BasicPhysicalType::UINT_8: {
+            case BasicPhysicalType::NativeType::UINT_8: {
                 return fieldReference.load<Nautilus::UInt8>();
             };
-            case BasicPhysicalType::UINT_16: {
+            case BasicPhysicalType::NativeType::UINT_16: {
                 return fieldReference.load<Nautilus::UInt16>();
             };
-            case BasicPhysicalType::UINT_32: {
+            case BasicPhysicalType::NativeType::UINT_32: {
                 return fieldReference.load<Nautilus::UInt32>();
             };
-            case BasicPhysicalType::UINT_64: {
+            case BasicPhysicalType::NativeType::UINT_64: {
                 return fieldReference.load<Nautilus::UInt64>();
             };
-            case BasicPhysicalType::FLOAT: {
+            case BasicPhysicalType::NativeType::FLOAT: {
                 return fieldReference.load<Nautilus::Float>();
             };
-            case BasicPhysicalType::DOUBLE: {
+            case BasicPhysicalType::NativeType::DOUBLE: {
                 return fieldReference.load<Nautilus::Double>();
             };
-            case BasicPhysicalType::TEXT: {
+            case BasicPhysicalType::NativeType::TEXT: {
                 auto childIndex = fieldReference.load<Nautilus::UInt32>();
                 auto variableSizeBuffer =
                     Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
@@ -94,7 +100,7 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::TEXT: {
+            case BasicPhysicalType::NativeType::TEXT: {
                 auto textValue = value.as<Nautilus::Text>();
                 auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
                                                          storeAssociatedTextValue,
@@ -113,7 +119,7 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
 }
 
 bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                   Nautilus::Record::RecordFieldIdentifier fieldIndex) const {
+                                   const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const {
     if (projections.empty()) {
         return true;
     }
@@ -121,5 +127,17 @@ bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFie
 }
 
 MemoryProvider::~MemoryProvider() {}
+
+MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
+        return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+        auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+        return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
 
 }// namespace NES::Runtime::Execution::MemoryProvider

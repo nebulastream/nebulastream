@@ -98,10 +98,10 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     NES_DEBUG2("Define Struct : {}", structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
-        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             structDeclarationTuple.addField(
                 VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->getName()));
-        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+        } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
             auto valuePointer = GeneratableTypesFactory::createPointer(tf->createDataType(schema->get(i)->getDataType()));
             auto valuePointerDeclaration = VariableDeclaration::create(valuePointer, schema->get(i)->getName());
             structDeclarationTuple.addField(valuePointerDeclaration);
@@ -139,7 +139,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
     switch (context->arity) {
-        case PipelineContext::Unary: {
+        case PipelineContext::PipelineContextArity::Unary: {
             // it is assumed that the input item is the first element!
             // so place to front
             // todo remove this assumption
@@ -148,14 +148,14 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             NES_DEBUG2("arity unary generate scan for input={} output={}", inputSchema->toString(), outputSchema->toString());
             break;
         }
-        case PipelineContext::BinaryLeft: {
+        case PipelineContext::PipelineContextArity::BinaryLeft: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
             NES_DEBUG2("arity binaryleft generate scan for input={} output={}",
                        inputSchema->toString(),
                        outputSchema->toString());
             break;
         }
-        case PipelineContext::BinaryRight: {
+        case PipelineContext::PipelineContextArity::BinaryRight: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
             NES_DEBUG2("arity binaryright generate scan for input={} output={}",
                        inputSchema->toString(),
@@ -193,12 +193,12 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     /*  declaration of num of records */
 
-    if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         NES_DEBUG2("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                         "inputTuples");
-    } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         NES_DEBUG2("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
@@ -218,14 +218,14 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
     // If it is a row layout, then map struct to buffer, otherwise set the start of all fields
-    if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         // Generates: InputTuple* inputTuples = (InputTuple*) inputTupleBuffer.getBuffer();
         code->variableInitStmts.push_back(
             VarDeclStatement(code->varDeclarationInputTuples)
                 .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
                 .copy());
 
-    } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto compStatement = code->currentCodeInsertionPoint;
         generateCodeInitStructFieldsColLayout(inputSchema,
                                               tf,
@@ -248,12 +248,12 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                               (++VarRef(code->varDeclarationRecordIndex)).copy());
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
-    if (context->arity != PipelineContext::Unary) {
+    if (context->arity != PipelineContext::PipelineContextArity::Unary) {
         NES_DEBUG2("adding in scan for schema={} context={}", inputSchema->toString(), context->inputSchema->toString());
     }
 
     auto recordHandler = context->getRecordHandler();
-    if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         for (const AttributeFieldPtr& field : inputSchema->fields) {
             auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
             auto fieldRefStatement =
@@ -261,7 +261,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                     VarRef(variable));
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
         }
-    } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         for (const AttributeFieldPtr& field : inputSchema->fields) {
             auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
             auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples)
@@ -305,9 +305,10 @@ void CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& sche
         // Create offSet in tupleBuffer
         auto lhs =
             TypeCast(getBuffer(varDeclarationBuffer), tf->createPointer(tf->createDataType(DataTypeFactory::createUInt8())));
-        auto expr =
-            BinaryOperatorStatement(lhs, PLUS_OP, Constant(tf->createValueType(DataTypeFactory::createBasicValue(offsetCounter))))
-                .addRight(MULTIPLY_OP, VarRef(capacityVarDeclaration), BRACKETS);
+        auto expr = BinaryOperatorStatement(lhs,
+                                            BinaryOperatorType::PLUS_OP,
+                                            Constant(tf->createValueType(DataTypeFactory::createBasicValue(offsetCounter))))
+                        .addRight(BinaryOperatorType::MULTIPLY_OP, VarRef(capacityVarDeclaration), BracketMode::BRACKETS);
         auto offSetAssignment = TypeCast(expr, tf->createPointer(tf->createDataType(field->getDataType())));
         statements.push_back(fieldRefStmt.assign(offSetAssignment).copy());
 
@@ -437,23 +438,28 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     }
     NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: {}", commonStamp->toString());
     if (commonStamp->isInteger()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-            DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            BasicType::UINT8,
+            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::INT_64))))));
     } else if (commonStamp->isFloat()) {
         std::shared_ptr<Float> floatStamp = commonStamp->as<Float>(commonStamp);
         if (floatStamp->getBits() == 32) {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-                DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::FLOAT)))));
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+                BasicType::UINT8,
+                "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::FLOAT))))));
         } else {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-                DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::DOUBLE)))));
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+                BasicType::UINT8,
+                "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::DOUBLE))))));
         }
     } else if (commonStamp->isBoolean()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-            DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::BOOLEAN)))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            BasicType::UINT8,
+            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::BOOLEAN))))));
     } else {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
-            DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::UNDEFINED)))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            BasicType::UINT8,
+            "BasicPhysicalType::NativeType::" + std::string(magic_enum::enum_name(BasicPhysicalType::NativeType::UNDEFINED))))));
     }
     generateTensorFlowInferCall->addParameter(
         Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
@@ -548,17 +554,17 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
     // add type declaration for the result tuple
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
-    if (bufferAssignmentStrategy == RECORD_COPY) {
+    if (bufferAssignmentStrategy == OutputBufferAssignmentStrategy::RECORD_COPY) {
         structDeclarationResultTuple = code->structDeclarationInputTuples[0];
     }
 
-    if (sinkSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (sinkSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         VariableDeclaration varDeclResultTuple =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(structDeclarationResultTuple)),
                                         "resultTuples");
 
         // initialize result buffer
-        if (bufferStrategy == ONLY_INPLACE_OPERATIONS) {
+        if (bufferStrategy == OutputBufferAllocationStrategy::ONLY_INPLACE_OPERATIONS) {
             // We do not even initialize a buffer, we just use "inputBuffer" as the resultBuffer-handle for the later emit.
             // The only contents in the Scan's for loop will be map operations.
             code->varDeclarationResultBuffer = code->varDeclarationInputBuffer;
@@ -573,8 +579,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
             code->varDeclarationResultBuffer = varDeclarationResultBuffer;
 
-            if (bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-                || bufferStrategy == REUSE_INPUT_BUFFER) {// Reuse the input buffer as the result buffer.
+            if (bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+                || bufferStrategy
+                    == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER) {// Reuse the input buffer as the result buffer.
                 // Generates: NES::Runtime::TupleBuffer resultTupleBuffer = inputTupleBuffer;
                 code->variableInitStmts.push_back(
                     VarDeclStatement(code->varDeclarationResultBuffer).assign(VarRef(code->varDeclarationInputBuffer)).copy());
@@ -614,7 +621,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                         .copy());
             }
 
-            if (bufferAssignmentStrategy == FIELD_COPY) {
+            if (bufferAssignmentStrategy == OutputBufferAssignmentStrategy::FIELD_COPY) {
                 // Now, copy all fields listed in the result schema into the result buffer.
                 for (const auto& field : context->resultSchema->fields) {
                     auto resultRecordFieldVariableDeclaration =
@@ -644,7 +651,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
                     code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
                 }
-            } else if (bufferAssignmentStrategy == RECORD_COPY) {
+            } else if (bufferAssignmentStrategy == OutputBufferAssignmentStrategy::RECORD_COPY) {
                 auto recordCopyStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)].assign(
                     VarRef(code->varDeclarationInputTuples)[VarRef(code->varDeclarationRecordIndex)]);
                 code->currentCodeInsertionPoint->addStatement(recordCopyStatement.copy());
@@ -665,11 +672,12 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
             // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
             // We can optimize this away if the result schema is smaller than the input schema.
-            if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK || bufferStrategy == OMIT_OVERFLOW_CHECK)) {
+            if (!(bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+                  || bufferStrategy == OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK)) {
                 generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
             }
         }
-    } else if (sinkSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (sinkSchema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
         auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
         code->varDeclarationResultBuffer = varDeclarationResultBuffer;
@@ -726,8 +734,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
         // Generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the Runtime.
         // We can optimize this away if the result schema is smaller than the input schema.
-        if (!(bufferStrategy == REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
-              || bufferStrategy == OMIT_OVERFLOW_CHECK)) {// TODO does this work yet for col layout?
+        if (!(bufferStrategy == OutputBufferAllocationStrategy::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK
+              || bufferStrategy
+                  == OutputBufferAllocationStrategy::OMIT_OVERFLOW_CHECK)) {// TODO does this work yet for col layout?
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
@@ -736,7 +745,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
     // Generate final logic to emit the last buffer to the Runtime
     // 1. set the number of tuples to the buffer
-    if (bufferStrategy != ONLY_INPLACE_OPERATIONS) {
+    if (bufferStrategy != OutputBufferAllocationStrategy::ONLY_INPLACE_OPERATIONS) {
         code->cleanupStmts.push_back(
             setNumberOfTuples(code->varDeclarationResultBuffer, code->varDeclarationNumberOfResultTuples).copy());
     }
@@ -761,7 +770,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrategyPtr watermarkStrategy,
                                                       PipelineContextPtr context) {
     auto recordHandler = context->getRecordHandler();
-    if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::EventTimeWatermark) {
+    if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::Type::EventTimeWatermark) {
         auto eventTimeWatermarkStrategy = watermarkStrategy->as<Windowing::EventTimeWatermarkStrategy>();
 
         auto tf = getTypeFactory();
@@ -827,7 +836,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         setWatermarkFunctionCall.addParameter(VarRef(maxWatermarkVariableDeclaration));
         auto setWatermarkStatement = VarRef(context->code->varDeclarationInputBuffer).accessRef(setWatermarkFunctionCall);
         context->code->cleanupStmts.push_back(setWatermarkStatement.createCopy());
-    } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::IngestionTimeWatermark) {
+    } else if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::Type::IngestionTimeWatermark) {
         // get the watermark from attribute field
         // auto watermark_ts = NES::Windowing::getTsFromClock()
         auto tf = getTypeFactory();
@@ -938,14 +947,14 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     thenStatement->addStatement(
         VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationWorkerContext)).copy());
     // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         thenStatement->addStatement(VarRef(varDeclResultTuple)
                                         .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
                                         .copy());
     }
 
     // Setting the start of all fields for col layout
-    if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {// TODO duplicate to maxTuple?
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {// TODO duplicate to maxTuple?
         std::vector<StatementPtr> statements;
         generateCodeInitStructFieldsColLayout(schema,
                                               tf,
@@ -1244,7 +1253,8 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
                              recordHandler);
         }
         auto initializeValue = VarRef(state).accessPtr(
-            VarRef(isInitialized).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BOOLEAN, "true")))));
+            VarRef(isInitialized)
+                .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
         stateNotInitializedCase->addStatement(initializeValue.copy());
     }
     {
@@ -1518,10 +1528,10 @@ uint64_t getAggregationValueSize(Windowing::LogicalWindowDefinitionPtr window) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     uint64_t aggSize = 0;
     for (auto agg : window->getWindowAggregation()) {
-        if (agg->getType() == Windowing::WindowAggregationDescriptor::Avg) {
+        if (agg->getType() == Windowing::WindowAggregationDescriptor::Type::Avg) {
             // a avg is currently a custome type
             aggSize = aggSize + 16;
-        } else if (agg->getType() == Windowing::WindowAggregationDescriptor::Median) {
+        } else if (agg->getType() == Windowing::WindowAggregationDescriptor::Type::Median) {
             // a avg is currently a custome type
             aggSize = aggSize + 12;
         } else {
@@ -1730,7 +1740,8 @@ std::shared_ptr<ForLoopStatement> CCodeGenerator::globalSliceMergeLoop(
             memcopyCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryContentSize))));
             stateNotInitializedCase->addStatement(memcopyCall);
             auto initializeValue = VarRef(state).accessPtr(
-                VarRef(isInitialized).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BOOLEAN, "true")))));
+                VarRef(isInitialized)
+                    .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
             stateNotInitializedCase->addStatement(initializeValue.copy());
         }
 
@@ -1874,10 +1885,10 @@ bool CCodeGenerator::generateCodeForGlobalSlidingWindowSink(
             uint64_t entryContentSize = getAggregationValueSize(window);
             memcopyCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryContentSize))));
             stateNotInitializedCase->addStatement(memcopyCall);
-            auto initializeValue =
-                VarRef(globalSliceState)
-                    .accessPtr(VarRef(isInitialized)
-                                   .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BOOLEAN, "true")))));
+            auto initializeValue = VarRef(globalSliceState)
+                                       .accessPtr(VarRef(isInitialized)
+                                                      .assign(Constant(tf->createValueType(
+                                                          DataTypeFactory::createBasicValue(BasicType::BOOLEAN, "true")))));
             stateNotInitializedCase->addStatement(initializeValue.copy());
         }
         {
@@ -2308,8 +2319,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     NES_ASSERT(!window->getWindowAggregation()[0]->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT((!window->getWindowAggregation()[0]->getPartialAggregateStamp()->isUndefined()
-                || window->getWindowAggregation()[0]->getType() == Windowing::WindowAggregationDescriptor::Avg
-                || window->getWindowAggregation()[0]->getType() == Windowing::WindowAggregationDescriptor::Median),
+                || window->getWindowAggregation()[0]->getType() == Windowing::WindowAggregationDescriptor::Type::Avg
+                || window->getWindowAggregation()[0]->getType() == Windowing::WindowAggregationDescriptor::Type::Median),
                "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()[0]->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
@@ -2363,7 +2374,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     // avg : initialize with an empty AVGPartialType
     // median: initialize with a vector of the data type
     switch (window->getWindowAggregation()[0]->getType()) {
-        case Windowing::WindowAggregationDescriptor::Min: {
+        case Windowing::WindowAggregationDescriptor::Type::Min: {
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()[0]->getPartialAggregateStamp())) {
                 getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
                     tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->upperBound)))));
@@ -2373,7 +2384,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             }
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Max: {
+        case Windowing::WindowAggregationDescriptor::Type::Max: {
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()[0]->getPartialAggregateStamp())) {
                 getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
                     tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->lowerBound)))));
@@ -2383,17 +2394,17 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             }
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Sum: {
+        case Windowing::WindowAggregationDescriptor::Type::Sum: {
             getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
                 tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Count: {
+        case Windowing::WindowAggregationDescriptor::Type::Count: {
             getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
                 tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))));
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Avg: {
+        case Windowing::WindowAggregationDescriptor::Type::Avg: {
             // generates the following initial value (T is the aggregationInputType):
             // Windowing::AVGPartialType<T> initialValue;
             auto aggregationInputType = tf->createDataType(window->getWindowAggregation()[0]->getInputStamp());
@@ -2404,7 +2415,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             getValueFromKeyHandle.addParameter(VarRefStatement(avgInitialValueDeclaration));
             break;
         }
-        case Windowing::WindowAggregationDescriptor::Median: {
+        case Windowing::WindowAggregationDescriptor::Type::Median: {
             // generates the following initial value (T is the aggregationInputType):
             // std::vector<T> initialValue;
             auto aggregationInputType = tf->createDataType(window->getWindowAggregation()[0]->getInputStamp());
@@ -2429,7 +2440,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     // TODO add support for event time
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(window->getWindowType());
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
@@ -2519,13 +2530,13 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     // windowHandler->trigger();
     switch (window->getTriggerPolicy()->getPolicyType()) {
-        case Windowing::triggerOnRecord: {
+        case Windowing::TriggerType::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
             auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->currentCodeInsertionPoint->addStatement(call);
             break;
         }
-        case Windowing::triggerOnBuffer: {
+        case Windowing::TriggerType::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
             auto call = std::make_shared<BinaryOperatorStatement>(VarRef(windowHandlerVariableDeclration).accessPtr(trigger));
             context->code->cleanupStmts.push_back(call);
@@ -2598,7 +2609,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(
 }
 
 uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) {
-    if (context->arity == PipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::PipelineContextArity::BinaryLeft) {
         return 0;
     }
 
@@ -2611,7 +2622,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     NES_ASSERT(join->getLeftSourceType() != nullptr && !join->getLeftSourceType()->fields.empty(), "left join type is undefined");
     NES_ASSERT(join->getRightSourceType() != nullptr && !join->getRightSourceType()->fields.empty(),
                "right join type is undefined");
-    NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
+    NES_ASSERT(context->arity != PipelineContext::PipelineContextArity::Unary,
+               "unary operator detected but join codegen invoked");
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
     auto handlers = context->getOperatorHandlers();
@@ -2651,7 +2663,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     auto keyType = tf->createDataType(join->getLeftJoinKey()->getStamp());
     auto policy = join->getTriggerPolicy();
     auto executableTrigger = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "trigger");
-    if (policy->getPolicyType() == Windowing::triggerOnTime) {
+    if (policy->getPolicyType() == Windowing::TriggerType::triggerOnTime) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnTimeTriggerPolicy::create");
         auto constantTriggerTime =
@@ -2660,13 +2672,13 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
         NES_WARNING2("This mode is not supported anymore");
-    } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+    } else if (policy->getPolicyType() == Windowing::TriggerType::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", policy->getPolicyType());
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", magic_enum::enum_name(policy->getPolicyType()));
     }
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2680,7 +2692,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", magic_enum::enum_name(action->getActionType()));
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -2769,7 +2781,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
     auto keyType = tf->createDataType(join->getLeftJoinKey()->getStamp());
     auto policy = join->getTriggerPolicy();
     auto executableTrigger = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "trigger");
-    if (policy->getPolicyType() == Windowing::triggerOnTime) {
+    if (policy->getPolicyType() == Windowing::TriggerType::triggerOnTime) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnTimeTriggerPolicy::create");
         auto constantTriggerTime =
@@ -2778,13 +2790,13 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
         NES_WARNING2("This mode is not supported anymore");
-    } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+    } else if (policy->getPolicyType() == Windowing::TriggerType::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented.", policy->getPolicyType());
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented.", magic_enum::enum_name(policy->getPolicyType()));
     }
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2798,7 +2810,8 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented",
+                         std::string(magic_enum::enum_name(action->getActionType())));
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -2865,7 +2878,7 @@ CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental::Logical
     context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
 
-    // initial registration of operator handler to make it available in the pipelines setup() and execute() functions
+    // initial registration of operator handler to make it available in the pipelines' setup() and execute() functions
     int64_t joinOperatorHandlerIndex = context->registerOperatorHandler(batchJoinOperatorHandler);
 
     // create a new setup scope for this operator
@@ -2935,12 +2948,12 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                                          uint64_t operatorHandlerIndex) {
     NES_DEBUG2("join input={} aritiy={} out={}",
                context->inputSchema->toString(),
-               context->arity,
+               magic_enum::enum_name(context->arity),
                joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
-    if (context->arity == PipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::PipelineContextArity::BinaryLeft) {
         auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightSourceType());
         context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
@@ -2957,7 +2970,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                "left join type is undefined");
     NES_ASSERT(joinDef->getRightSourceType() != nullptr && !joinDef->getRightSourceType()->fields.empty(),
                "right join type is undefined");
-    NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
+    NES_ASSERT(context->arity != PipelineContext::PipelineContextArity::Unary,
+               "unary operator detected but join codegen invoked");
 
     auto code = context->code;
 
@@ -2981,12 +2995,12 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
-    if (context->arity == PipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::PipelineContextArity::BinaryLeft) {
         NES_DEBUG2("CCodeGenerator::generateCodeForJoin generate code for side left");
         auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
-    } else if (context->arity == PipelineContext::BinaryRight) {
+    } else if (context->arity == PipelineContext::PipelineContextArity::BinaryRight) {
         NES_DEBUG2("CCodeGenerator::generateCodeForJoin generate code for side right");
         auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
@@ -3002,7 +3016,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_");
     auto recordHandler = context->getRecordHandler();
 
-    if (context->arity == PipelineContext::BinaryLeft) {
+    if (context->arity == PipelineContext::PipelineContextArity::BinaryLeft) {
         auto joinKeyFieldName = joinDef->getLeftJoinKey()->getFieldName();
         keyVariableDeclaration =
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
@@ -3048,7 +3062,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     // get current timestamp
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(joinDef->getWindowType());
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
-    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
@@ -3058,7 +3072,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
-        if (context->arity == PipelineContext::BinaryRight) {
+        if (context->arity == PipelineContext::PipelineContextArity::BinaryRight) {
             NES_DEBUG2("windowTimeStampFieldName bin right= {}", windowTimeStampFieldName);
 
             //Extract the schema of the right side
@@ -3128,7 +3142,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     // joinHandler->trigger();
     switch (joinDef->getTriggerPolicy()->getPolicyType()) {
-        case Windowing::triggerOnBuffer: {
+        case Windowing::TriggerType::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
             call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
             context->code->cleanupStmts.push_back(call);
@@ -3142,7 +3156,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     NES_DEBUG2("CCodeGenerator: Generate code for : {}", context->pipelineName);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
+    generateCodeForWatermarkUpdaterJoin(context,
+                                        windowJoinVariableDeclration,
+                                        context->arity == PipelineContext::PipelineContextArity::BinaryLeft);
     return true;
 }
 
@@ -3273,7 +3289,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     // get current timestamp
     auto currentTimeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "current_ts");
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(joinDef->getWindowType());
-    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+    if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         //      auto current_ts = NES::Windowing::getTsFromClock();
         auto getCurrentTs = FunctionCallStatement("NES::Windowing::getTsFromClock");
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
@@ -3353,7 +3369,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 
     // joinHandler->trigger();
     switch (joinDef->getTriggerPolicy()->getPolicyType()) {
-        case Windowing::triggerOnBuffer: {
+        case Windowing::TriggerType::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
             call = std::make_shared<BinaryOperatorStatement>(VarRef(windowJoinVariableDeclration).accessPtr(trigger));
             context->code->cleanupStmts.push_back(call);
@@ -3641,7 +3657,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start");
 
     if (Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getType()
-        == Windowing::TimeCharacteristic::IngestionTime) {
+        == Windowing::TimeCharacteristic::Type::IngestionTime) {
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(recordStartAttributeRef);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
@@ -3727,13 +3743,13 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
 
     // windowHandler->trigger();
     switch (window->getTriggerPolicy()->getPolicyType()) {
-        case Windowing::triggerOnRecord: {
+        case Windowing::TriggerType::triggerOnRecord: {
             auto trigger = FunctionCallStatement("trigger");
             auto call = VarRef(windowHandlerVariableDeclration).accessPtr(trigger).copy();
             context->code->currentCodeInsertionPoint->addStatement(call);
             break;
         }
-        case Windowing::triggerOnBuffer: {
+        case Windowing::TriggerType::triggerOnBuffer: {
             auto trigger = FunctionCallStatement("trigger");
             auto call = VarRef(windowHandlerVariableDeclration).accessPtr(trigger).copy();
             context->code->cleanupStmts.push_back(call);
@@ -3760,14 +3776,14 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
     FunctionCallStatementPtr createAggregateCall;
     auto tf = getTypeFactory();
 
-    // If the the aggregate is Avg, we initialize the partialAggregate with an empty AVGPartialType<InputType>
-    if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Avg) {
+    // If the aggregate is Avg, we initialize the partialAggregate with an empty AVGPartialType<InputType>
+    if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Type::Avg) {
         auto partialAggregateInitStatement =
             VarDeclStatement(partialAggregateInitialValue)
                 .assign(call("Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">"));
         setupScope->addStatement(partialAggregateInitStatement.copy());
         createAggregateCall = call("Windowing::ExecutableAVGAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Median) {
+    } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Type::Median) {
         auto partialAggregateInitStatement = VarDeclStatement(partialAggregateInitialValue)
                                                  .assign(call("std::vector<" + aggregationInputType->getCode()->code_ + ">"));
         setupScope->addStatement(partialAggregateInitStatement.copy());
@@ -3780,13 +3796,13 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
                 .assign(Constant(
                     tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
 
-        if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Sum) {
+        if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Type::Sum) {
             createAggregateCall =
                 call("Windowing::ExecutableSumAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-        } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Count) {
+        } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Type::Count) {
             createAggregateCall =
                 call("Windowing::ExecutableCountAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-        } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Min) {
+        } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Type::Min) {
             // If the the aggregate is Min, we initialize the partialAggregate with the upper bound of the type of the aggregated field
             std::string upperBoundstr;
             if (auto intType = DataType::as<Integer>(aggregation->getPartialAggregateStamp())) {
@@ -3801,7 +3817,7 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
 
             createAggregateCall =
                 call("Windowing::ExecutableMinAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-        } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Max) {
+        } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Type::Max) {
             // If the the aggregate is Max, we initialize the partialAggregate with the lower bound of the type of the aggregated field
             std::string lowerBoundStr;
             if (auto intType = DataType::as<Integer>(aggregation->getPartialAggregateStamp())) {
@@ -3817,7 +3833,8 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
             createAggregateCall =
                 call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else {
-            NES_FATAL_ERROR2("Aggregation Handler: aggregation={} not implemented", aggregation->getType());
+            NES_FATAL_ERROR2("Aggregation Handler: aggregation={} not implemented",
+                             std::string(magic_enum::enum_name(aggregation->getType())));
         }
         // add the partial aggregation initialization to the code
         setupScope->addStatement(partialAggregateInitStatement.copy());
@@ -4228,9 +4245,9 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
 
     // If aggregation is AVG, initiate an AVGPartialType
     std::string partialAggregateTypeCode;
-    if (aggregation[0]->getType() == Windowing::WindowAggregationDescriptor::Avg) {
+    if (aggregation[0]->getType() == Windowing::WindowAggregationDescriptor::Type::Avg) {
         partialAggregateTypeCode = "Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">";
-    } else if (aggregation[0]->getType() == Windowing::WindowAggregationDescriptor::Median) {
+    } else if (aggregation[0]->getType() == Windowing::WindowAggregationDescriptor::Type::Median) {
         partialAggregateTypeCode = "std::vector<" + aggregationInputType->getCode()->code_ + ">";
     } else {
         // otherwise, get the code directly from the partialAggregateStamp
@@ -4252,7 +4269,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
 
     auto policy = window->getTriggerPolicy();
     auto executableTrigger = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "trigger");
-    if (policy->getPolicyType() == Windowing::triggerOnTime) {
+    if (policy->getPolicyType() == Windowing::TriggerType::triggerOnTime) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnTimeTriggerPolicy::create");
         auto constantTriggerTime =
@@ -4261,18 +4278,19 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
         NES_WARNING2("This mode is not supported anymore");
-    } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+    } else if (policy->getPolicyType() == Windowing::TriggerType::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", policy->getPolicyType());
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented",
+                         std::string(magic_enum::enum_name(policy->getPolicyType())));
     }
 
     auto action = window->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
-    if (action->getActionType() == Windowing::WindowAggregationTriggerAction) {
+    if (action->getActionType() == Windowing::ActionType::WindowAggregationTriggerAction) {
         auto createTriggerActionCall = call("Windowing::ExecutableCompleteAggregationTriggerAction<" + keyType->getCode()->code_
                                             + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
                                             + finalAggregateType->getCode()->code_ + ">::create");
@@ -4283,7 +4301,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerActionCall->addParameter(VarRef(partialAggregateInitialValue));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
-    } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
+    } else if (action->getActionType() == Windowing::ActionType::SliceAggregationTriggerAction) {
         auto createTriggerActionCall = call("Windowing::ExecutableSliceAggregationTriggerAction<" + keyType->getCode()->code_
                                             + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
                                             + finalAggregateType->getCode()->code_ + ">::create");
@@ -4294,7 +4312,8 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented",
+                         std::string(magic_enum::enum_name(action->getActionType())));
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -4398,19 +4417,19 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     // define param to use in the ctor of pipeline to determine its arity.
     ExpressionStatementPtr arityStatement;
     switch (context->arity) {
-        case PipelineContext::Unary: {
-            arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "Unary")));
+        case PipelineContext::PipelineContextArity::Unary: {
+            arityStatement = std::make_shared<ConstantExpressionStatement>(tf->createValueType(
+                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::Unary")));
             break;
         }
-        case PipelineContext::BinaryLeft: {
-            arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "BinaryLeft")));
+        case PipelineContext::PipelineContextArity::BinaryLeft: {
+            arityStatement = std::make_shared<ConstantExpressionStatement>(tf->createValueType(
+                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryLeft")));
             break;
         }
-        case PipelineContext::BinaryRight: {
-            arityStatement = std::make_shared<ConstantExpressionStatement>(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "BinaryRight")));
+        case PipelineContext::PipelineContextArity::BinaryRight: {
+            arityStatement = std::make_shared<ConstantExpressionStatement>(tf->createValueType(
+                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "PipelineStageArity::BinaryRight")));
             break;
         }
     }
@@ -4420,8 +4439,8 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 
     auto executablePipeline = ClassDefinition::create("ExecutablePipelineStage" + context->pipelineName);
     executablePipeline->addBaseClass("Runtime::Execution::ExecutablePipelineStage");
-    executablePipeline->addMethod(ClassDefinition::Public, functionBuilder);
-    executablePipeline->addMethod(ClassDefinition::Public, setupFunction);
+    executablePipeline->addMethod(ClassDefinition::Visibility::Public, functionBuilder);
+    executablePipeline->addMethod(ClassDefinition::Visibility::Public, setupFunction);
     executablePipeline->addConstructor(ctorFunction);
 
     auto executablePipelineDeclaration = executablePipeline->getDeclaration();
@@ -4447,8 +4466,8 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                         QueryCompilerOptions::CompilationStrategy compilationStrategy) {
     std::string src = generateCode(code);
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", src);
-    auto enableDebugCompilation = compilationStrategy == QueryCompilerOptions::DEBUG;
-    auto enableOptimizations = compilationStrategy == QueryCompilerOptions::OPTIMIZE;
+    auto enableDebugCompilation = compilationStrategy == QueryCompilerOptions::CompilationStrategy::DEBUG;
+    auto enableOptimizations = compilationStrategy == QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
                                                         "query",
                                                         false,
@@ -4461,9 +4480,9 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
         auto compiledCode = result.get().getDynamicObject();
         PipelineStageArity const arity = [&ari = code->arity]() {
             switch (ari) {
-                case PipelineContext::Unary: return Unary;
-                case PipelineContext::BinaryLeft: return BinaryLeft;
-                case PipelineContext::BinaryRight: return BinaryRight;
+                case PipelineContext::PipelineContextArity::Unary: return PipelineStageArity::Unary;
+                case PipelineContext::PipelineContextArity::BinaryLeft: return PipelineStageArity::BinaryLeft;
+                case PipelineContext::PipelineContextArity::BinaryRight: return PipelineStageArity::BinaryRight;
                 default: NES_FATAL_ERROR2("Unknown PipelineContext. Terminate.");
             }
         }();
@@ -4553,10 +4572,10 @@ CCodeGenerator::getAggregationWindowHandler(const VariableDeclaration& pipelineC
     // determine the partialAggregate parameter based on the aggregation type
     // Avg aggregation uses AVGPartialType, other aggregates use their getPartialAggregateStamp
     std::string partialAggregateCode;
-    if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Avg) {
+    if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Type::Avg) {
         // generated code : Windowing::AVGPartialType<T>
         partialAggregateCode = "Windowing::AVGPartialType<" + TO_CODE(windowAggregationDescriptor->getInputStamp()) + ">";
-    } else if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Median) {
+    } else if (windowAggregationDescriptor->getType() == Windowing::WindowAggregationDescriptor::Type::Median) {
         // generated code : std::vector<T>
         partialAggregateCode = "std::vector<" + TO_CODE(windowAggregationDescriptor->getInputStamp()) + ">";
     } else {
@@ -4630,19 +4649,19 @@ VariableDeclaration CCodeGenerator::getOperatorHandler(const PipelineContextPtr&
             typeString = "Windowing::WindowOperatorHandler";
             identifier = "windowOperatorHandler";
             break;
-        case Runtime::Execution::CEP:
+        case Runtime::Execution::OperatorHandlerType::CEP:
             typeString = "NES::CEP::CEPOperatorHandler";
             identifier = "CEPOperatorHandler";
             break;
-        case Runtime::Execution::JOIN:
+        case Runtime::Execution::OperatorHandlerType::JOIN:
             typeString = "Join::JoinOperatorHandler";
             identifier = "joinOperatorHandler";
             break;
-        case Runtime::Execution::BATCH_JOIN:
+        case Runtime::Execution::OperatorHandlerType::BATCH_JOIN:
             typeString = "Join::Experimental::BatchJoinOperatorHandler";
             identifier = "batchJoinOperatorHandler";
             break;
-        case Runtime::Execution::KEY_EVENT_TIME_WINDOW:// afaik nothing uses or tests this behaviour
+        case Runtime::Execution::OperatorHandlerType::KEY_EVENT_TIME_WINDOW:// afaik nothing uses or tests this behaviour
             typeString = "Windowing::Experimental::BatchJoinOperatorHandler";
             identifier = "keyEventTimeWindowOperatorHandler";
             break;

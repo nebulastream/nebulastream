@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <chrono>
 
 namespace NES {
@@ -34,13 +35,14 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(uint64_t metricCollectorType, std::chrono::milliseconds waitTimeInMs);
+    static MonitoringSourceTypePtr create(Monitoring::MetricCollectorType metricCollectorType,
+                                          std::chrono::milliseconds waitTimeInMs);
 
     /**
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(uint64_t metricCollectorType);
+    static MonitoringSourceTypePtr create(Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief creates a string representation of the source
@@ -70,19 +72,19 @@ class MonitoringSourceType : public PhysicalSourceType {
     /**
      * @brief gets a int object representing the enum of metric collector type
      */
-    [[nodiscard]] uint64_t getMetricCollectorType() const;
+    [[nodiscard]] Monitoring::MetricCollectorType getMetricCollectorType() const;
 
     /**
      * @brief set the value for collector type with the appropriate data format
      */
-    void setMetricCollectorType(uint64_t metricCollectorType);
+    void setMetricCollectorType(Monitoring::MetricCollectorType metricCollectorType);
 
   private:
     /**
      * @brief constructor to create a new source type with defaults.
      */
-    MonitoringSourceType(uint64_t metricCollectorType, std::chrono::milliseconds waitTime);
-    uint64_t metricCollectorType;
+    MonitoringSourceType(Monitoring::MetricCollectorType metricCollectorType, std::chrono::milliseconds waitTime);
+    Monitoring::MetricCollectorType metricCollectorType;
     std::chrono::milliseconds waitTime;
 };
 

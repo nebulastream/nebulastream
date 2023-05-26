@@ -38,7 +38,7 @@ class RunQueryRequest : public Request {
      * @param queryPlacementStrategy: the placement strategy name
      * @return shared pointer to the instance of Run query request
      */
-    static RunQueryRequestPtr create(QueryPlanPtr queryPlan, PlacementStrategy::Value queryPlacementStrategy);
+    static RunQueryRequestPtr create(QueryPlanPtr queryPlan, PlacementStrategy queryPlacementStrategy);
 
     /// Virtual destructor for inheritance
     /**
@@ -51,16 +51,16 @@ class RunQueryRequest : public Request {
      * @brief Get query placement strategy
      * @return query placement strategy
      */
-    PlacementStrategy::Value getQueryPlacementStrategy();
+    PlacementStrategy getQueryPlacementStrategy();
 
     std::string toString() override;
 
     uint64_t getQueryId();
 
   private:
-    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy::Value queryPlacementStrategy);
+    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy queryPlacementStrategy);
     QueryPlanPtr queryPlan;
-    PlacementStrategy::Value queryPlacementStrategy;
+    PlacementStrategy queryPlacementStrategy;
 };
 }// namespace NES
 

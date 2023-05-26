@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-class UtilFunctionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class UtilFunctionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);

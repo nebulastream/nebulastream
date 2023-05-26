@@ -120,7 +120,7 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
 }
 
 KafkaSourceType::KafkaSourceType()
-    : PhysicalSourceType(KAFKA_SOURCE),
+    : PhysicalSourceType(SourceType::KAFKA_SOURCE),
       brokers(Configurations::ConfigurationOption<std::string>::create(Configurations::BROKERS_CONFIG, "", "brokers")),
 
       autoCommit(Configurations::ConfigurationOption<uint32_t>::create(
@@ -169,7 +169,7 @@ std::string KafkaSourceType::toString() {
     ss << Configurations::CONNECTION_TIMEOUT_CONFIG + ":" + connectionTimeout->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_BUFFER_TO_PRODUCE + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::BATCH_SIZE + ":" + batchSize->toStringNameCurrentValue();
-    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValue();
+    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValueEnum();
     ss << "\n}";
     return ss.str();
 }

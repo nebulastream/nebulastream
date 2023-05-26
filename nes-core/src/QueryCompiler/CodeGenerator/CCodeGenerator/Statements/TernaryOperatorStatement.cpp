@@ -31,7 +31,7 @@ TernaryOperatorStatement::TernaryOperatorStatement(ExpressionStatementPtr& condE
                                                    const ExpressionStatementPtr& condFalseExpr)
     : conditionalExpression(condExpr), trueCaseExpression(condTrueExpr), falseCaseExpression(condFalseExpr) {}
 
-StatementType TernaryOperatorStatement::getStamentType() const { return TERNARY_OP_STMT; }
+StatementType TernaryOperatorStatement::getStamentType() const { return StatementType::TERNARY_OP_STMT; }
 
 CodeExpressionPtr TernaryOperatorStatement::getCode() const {
     std::stringstream code;

@@ -37,7 +37,6 @@ class KeyedSliceMerging : public Operator {
      */
     KeyedSliceMerging(uint64_t operatorHandlerIndex,
                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                      const std::vector<std::string>& aggregationResultExpressions,
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
                       const std::vector<std::string>& resultKeyFields,
                       std::string startTsFieldName,
@@ -76,7 +75,6 @@ class KeyedSliceMerging : public Operator {
                     Interface::ChainedHashMapRef& globalSliceHashMap) const;
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-    const std::vector<std::string> aggregationResultExpressions;
     const std::vector<std::string> resultKeyFields;
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const std::string startTsFieldName;

@@ -147,7 +147,7 @@ TEST_P(Query1Test, tpchQ1) {
     auto selection = std::make_shared<Selection>(lessThanExpression1);
     scan.setChild(selection);
 
-    /**
+    /*
      *
      * group by
         l_returnflag,
@@ -270,7 +270,7 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query1Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
-                            if (layout == Schema::ROW_LAYOUT) {
+                            if (layout == Schema::MemoryLayoutType::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
                             } else {
                                 return std::get<0>(info.param) + "_COLUMNAR";
@@ -285,7 +285,7 @@ INSTANTIATE_TEST_CASE_P(testTPCHQ1,
                                                              Schema::MemoryLayoutType::COLUMNAR_LAYOUT)),
                         [](const testing::TestParamInfo<Query1Test::ParamType>& info) {
                             auto layout = std::get<1>(info.param);
-                            if (layout == Schema::ROW_LAYOUT) {
+                            if (layout == Schema::MemoryLayoutType::ROW_LAYOUT) {
                                 return std::get<0>(info.param) + "_ROW";
                             } else {
                                 return std::get<0>(info.param) + "_COLUMNAR";

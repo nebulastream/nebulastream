@@ -43,9 +43,9 @@ class StaticDataSourceType : public PhysicalSourceType {
                                           uint64_t taskQueueId,
                                           bool lateStart);
 
-    GatheringMode::Value getGatheringMode() const;
+    GatheringMode getGatheringMode() const;
 
-    NES::SourceMode::Value getSourceMode() const;
+    NES::SourceMode getSourceMode() const;
 
     uint64_t getTaskQueueId() const;
 
@@ -71,13 +71,13 @@ class StaticDataSourceType : public PhysicalSourceType {
      */
     explicit StaticDataSourceType(const std::string& pathTableFile,
                                   uint64_t numBuffersToProcess,
-                                  SourceMode::Value sourceMode,
+                                  SourceMode sourceMode,
                                   uint64_t taskQueueId,
                                   bool lateStart);
 
     std::string pathTableFile;
     uint64_t numBuffersToProcess;// todo not used right now [#2493]
-    SourceMode::Value sourceMode;
+    SourceMode sourceMode;
     uint64_t taskQueueId;// todo not used right now [#2493]
     const bool lateStart;
 };

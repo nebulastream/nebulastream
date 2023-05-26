@@ -10,13 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Aggregation)
+add_subdirectory(Join)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    add_subdirectory(JavaUDF)
+endif ()
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
         )
-if(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_source_files(nes-runtime
-            MapJavaUdf.cpp
-            JVMContext.cpp
-            )
-endif()

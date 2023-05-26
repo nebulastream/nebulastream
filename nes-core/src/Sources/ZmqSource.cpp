@@ -33,7 +33,7 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                      OperatorId operatorId,
                      OriginId originId,
                      uint64_t numSourceLocalBuffers,
-                     GatheringMode::Value gatheringMode,
+                     GatheringMode gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
@@ -165,7 +165,7 @@ bool ZmqSource::disconnect() {
     return !connected;
 }
 
-SourceType ZmqSource::getType() const { return ZMQ_SOURCE; }
+SourceType ZmqSource::getType() const { return SourceType::ZMQ_SOURCE; }
 
 const std::string& ZmqSource::getHost() const { return host; }
 

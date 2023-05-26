@@ -181,6 +181,21 @@ class Text final : public Nautilus::Any {
     const Value<Text> trim() const;
 
     /**
+     * @brief Returns true or false depending on whether its pattern matches the given string
+     * @param compareText as Value<Text>
+     * @return Value<Boolean>
+     */
+    const Value<Boolean> similarTo(Value<Text>& compareText) const;
+
+    /**
+     * @brief Returns true or false whether the string matches the supplied pattern
+     * @param compareText as Value<Text>
+     * @param caseSensitive as Value<Boolean> true for case sensitive and false for insensitive pattern matching
+     * @return Value<Boolean> returns true if the string matches the supplied pattern
+     */
+    const Value<Boolean> like(Value<Text>& compareText, Value<Boolean> caseSensitive) const;
+
+    /**
      * @brief Returns the stamp of this type
      * @return IR::Types::StampPtr
      */

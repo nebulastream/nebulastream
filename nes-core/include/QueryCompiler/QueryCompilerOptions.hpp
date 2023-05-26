@@ -16,51 +16,78 @@
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <cstdint>
-namespace NES {
-namespace QueryCompilation {
+#include <string>
+namespace NES::QueryCompilation {
 
 /**
  * @brief Set of common options for the query compiler
  */
 class QueryCompilerOptions {
   public:
-    enum QueryCompiler {
+    enum class QueryCompiler : uint8_t {
         // Uses the default query compiler
         DEFAULT_QUERY_COMPILER,
         // Uses the nautilus query compiler
         NAUTILUS_QUERY_COMPILER
     };
-    enum FilterProcessingStrategy {
+
+    enum class DumpMode : uint8_t {
+        // Disables all dumping
+        NONE,
+        // Dumps intermediate representations to console, std:out
+        CONSOLE,
+        // Dumps intermediate representations to file
+        FILE,
+        // Dumps intermediate representations to console and file
+        FILE_AND_CONSOLE
+    };
+
+    enum class NautilusBackend : uint8_t {
+        // Uses the interpretation based nautilus backend.
+        INTERPRETER,
+        // Uses the mlir based nautilus backend.
+        MLIR_COMPILER,
+        // Uses the byte code interpretation based nautilus backend.
+        BC_INTERPRETER,
+        // Uses the flounder based nautilus backend.
+        FLOUNDER_COMPILER,
+        // Uses the cpp based nautilus backend.
+        CPP_COMPILER
+    };
+
+    enum class FilterProcessingStrategy : uint8_t {
         // Uses a branches to process filter expressions
         BRANCHED,
         // Uses predication for filter expressions if possible
         PREDICATION
     };
 
-    enum CompilationStrategy {
+    enum class CompilationStrategy : uint8_t {
         // Use fast compilation strategy, i.e., dose not apply any optimizations and omits debug output.
         FAST,
         // Creates debug output i.e., source code files and applies formatting. No code optimizations.
         DEBUG,
         // Applies all compiler optimizations.
-        OPTIMIZE
+        OPTIMIZE,
+        // Applies all compiler optimizations and inlines proxy functions.
+        PROXY_INLINING
     };
 
-    enum PipeliningStrategy {
+    enum class PipeliningStrategy : uint8_t {
         // Applies operator fusion.
         OPERATOR_FUSION,
         // Places each operator in an individual pipeline.
         OPERATOR_AT_A_TIME
     };
 
-    enum WindowingStrategy {
+    enum class WindowingStrategy : uint8_t {
         // Applies default windowing strategy.
         DEFAULT,
         // Applies an experimental thread local implementation for window aggregations
         THREAD_LOCAL
     };
 
-    enum OutputBufferOptimizationLevel {
+    enum class OutputBufferOptimizationLevel : uint8_t {
         // Use highest optimization available.
         ALL,
         // create separate result buffer and copy everything over after all operations are applied.
@@ -126,6 +153,11 @@ class QueryCompilerOptions {
 
     void setWindowingStrategy(WindowingStrategy windowingStrategy);
 
+    [[nodiscard]] NautilusBackend getNautilusBackend() const;
+    void setNautilusBackend(const NautilusBackend nautilusBackend);
+    [[nodiscard]] const DumpMode& getDumpMode() const;
+    void setDumpMode(DumpMode dumpMode);
+
   protected:
     uint64_t numSourceLocalBuffers;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
@@ -134,8 +166,9 @@ class QueryCompilerOptions {
     FilterProcessingStrategy filterProcessingStrategy;
     WindowingStrategy windowingStrategy;
     QueryCompiler queryCompiler;
+    NautilusBackend nautilusBackend;
+    DumpMode dumpMode;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

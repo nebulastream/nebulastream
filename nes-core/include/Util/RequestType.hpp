@@ -14,39 +14,21 @@
 
 #ifndef NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
 #define NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
-
-#include <string>
+#include <cstdint>
 
 namespace NES {
 
-class RequestType {
-  public:
-    /**
-     * @brief Represents various request types.
-     *
-     * Add: Add query.
-     * Stop: Stop query.
-     * Restart: Restart query.
-     * Fail: Fail query.
-     * Migrate: Migrate query.
-     * Update: Update running query.
-     */
-    enum Value : uint8_t { Add = 0, Stop, Restart, Fail, Migrate, Update };
-
-    /**
-     * @brief Get query status from string
-     * @param queryStatus : string representation of query status
-     * @return enum representing query status
-     */
-    static Value getFromString(const std::string queryStatus);
-
-    /**
-     * @brief Get query status in string representation
-     * @param queryStatus : enum value of the query status
-     * @return string representation of query status
-     */
-    static std::string toString(const Value queryStatus);
-};
+/**
+ * @brief Represents various request types.
+ *
+ * Add: Add query.
+ * Stop: Stop query.
+ * Restart: Restart query.
+ * Fail: Fail query.
+ * Migrate: Migrate query.
+ * Update: Update running query.
+ */
+enum class RequestType : uint8_t { Add = 0, Stop, Restart, Fail, Migrate, Update };
 
 }// namespace NES
 

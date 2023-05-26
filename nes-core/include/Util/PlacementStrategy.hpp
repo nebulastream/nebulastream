@@ -20,38 +20,19 @@
 #include <unordered_map>
 
 namespace NES {
-class PlacementStrategy {
-
-  public:
-    enum Value : uint8_t {
-        TopDown = 0,
-        BottomUp = 1,
-        IFCOP = 2,
-        ILP = 3,
-        Manual = 4,
-        MlHeuristic = 5
-        // FIXME: enable them with issue #755
-        // LowLatency,
-        //  HighThroughput,
-        //  MinimumResourceConsumption,
-        //  MinimumEnergyConsumption,
-        // HighAvailability
-    };
-
-    /**
-     * @brief Get Placement Strategy from string
-     * @param placementStrategy : string representation of placement strategy
-     * @return enum representing Placement Strategy
-     */
-    static Value getFromString(const std::string placementStrategy);
-
-    /**
-     * @brief Get Placement Strategy in string representation
-     * @param placementStrategy : enum value of the Placement Strategy
-     * @return string representation of Placement Strategy
-     */
-    static std::string toString(const Value placementStrategy);
+enum class PlacementStrategy : uint8_t {
+    TopDown = 0,
+    BottomUp = 1,
+    IFCOP = 2,
+    ILP = 3,
+    Manual = 4,
+    MlHeuristic = 5
+    // FIXME: enable them with issue #755
+    // LowLatency,
+    //  HighThroughput,
+    //  MinimumResourceConsumption,
+    //  MinimumEnergyConsumption,
+    // HighAvailability
 };
-
 }// namespace NES
 #endif// NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

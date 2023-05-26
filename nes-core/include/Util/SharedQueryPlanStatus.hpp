@@ -21,11 +21,7 @@
 #include <unordered_map>
 
 namespace NES {
-
-class SharedQueryPlanStatus {
-
-  public:
-    /**
+/**
      * @brief Represents various states a Shared query Plan goes through.
      *
      * Created: Shared query plan was just created
@@ -34,22 +30,7 @@ class SharedQueryPlanStatus {
      * Stopped: Shared Query Plan was stopped by user.
      * Failed: Shared Query Plan failed because of some reason.
      */
-    enum Value : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed };
-
-    /**
-     * @brief Get query status from string
-     * @param queryStatus : string representation of query status
-     * @return enum representing query status
-     */
-    static Value getFromString(const std::string queryStatus);
-
-    /**
-     * @brief Get query status in string representation
-     * @param queryStatus : enum value of the query status
-     * @return string representation of query status
-     */
-    static std::string toString(const Value queryStatus);
-};
+enum class SharedQueryPlanStatus : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed };
 
 }// namespace NES
 

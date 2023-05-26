@@ -26,6 +26,7 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,7 +44,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog)
+                                                       const Catalogs::UDF::UDFCatalogPtr& udfCatalog)
     : topology(topology), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
       z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
@@ -71,7 +72,7 @@ GlobalQueryPlanUpdatePhase::create(TopologyPtr topology,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   Catalogs::UDF::UdfCatalogPtr udfCatalog) {
+                                   Catalogs::UDF::UDFCatalogPtr udfCatalog) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
                                                                                    std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),
@@ -105,7 +106,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
                     NES_INFO2("QueryProcessingService: Request received for optimizing and deploying of the query {}", queryId);
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Optimizing, "");
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::OPTIMIZING, "");
 
                     NES_DEBUG2("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
                     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -173,7 +174,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
         NES_DEBUG2("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
-
+        //needed for containment merger phase to make sure that all operators have correct input and output schema
+        for (const auto& item : globalQueryPlan->getSharedQueryPlansToDeploy()) {
+            typeInferencePhase->execute(item->getQueryPlan());
+        }
         NES_DEBUG2("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
     } catch (std::exception& ex) {

@@ -25,6 +25,6 @@ std::string OnWatermarkChangeTriggerPolicyDescription::toString() { return getTy
 TriggerType OnWatermarkChangeTriggerPolicyDescription::getPolicyType() { return this->policy; }
 
 OnWatermarkChangeTriggerPolicyDescription::OnWatermarkChangeTriggerPolicyDescription()
-    : BaseWindowTriggerPolicyDescriptor(triggerOnWatermarkChange) {}
+    : BaseWindowTriggerPolicyDescriptor(TriggerType::triggerOnWatermarkChange) {}
 
 }// namespace NES::Windowing

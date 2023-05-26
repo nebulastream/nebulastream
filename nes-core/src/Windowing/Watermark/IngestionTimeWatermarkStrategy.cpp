@@ -21,5 +21,5 @@ IngestionTimeWatermarkStrategy::IngestionTimeWatermarkStrategy() = default;
 IngestionTimeWatermarkStrategyPtr IngestionTimeWatermarkStrategy::create() {
     return std::make_shared<IngestionTimeWatermarkStrategy>();
 }
-WatermarkStrategy::Type IngestionTimeWatermarkStrategy::getType() { return WatermarkStrategy::IngestionTimeWatermark; }
+WatermarkStrategy::Type IngestionTimeWatermarkStrategy::getType() { return WatermarkStrategy::Type::IngestionTimeWatermark; }
 }//namespace NES::Windowing

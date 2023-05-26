@@ -41,7 +41,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -54,7 +54,7 @@ class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling<tes
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 };

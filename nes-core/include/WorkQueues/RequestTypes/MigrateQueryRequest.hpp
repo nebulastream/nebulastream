@@ -31,7 +31,7 @@ typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
 class MigrateQueryRequest : public Request {
 
   public:
-    static MigrateQueryRequestPtr create(QueryId queryId, MigrationType::Value migrationType);
+    static MigrateQueryRequestPtr create(QueryId queryId, MigrationType migrationType);
 
     std::string toString() override;
 
@@ -39,7 +39,7 @@ class MigrateQueryRequest : public Request {
          * @brief gets the Migration Type for this Query Migration Request
          * @return MigrationType
          */
-    MigrationType::Value getMigrationType();
+    MigrationType getMigrationType();
 
     /**
          * @brief gets the topology node on which the query can be found
@@ -48,10 +48,10 @@ class MigrateQueryRequest : public Request {
     TopologyNodeId getQueryId();
 
   private:
-    explicit MigrateQueryRequest(QueryId queryId, MigrationType::Value migrationType);
+    explicit MigrateQueryRequest(QueryId queryId, MigrationType migrationType);
 
     QueryId queryId;
-    MigrationType::Value migrationType;
+    MigrationType migrationType;
 };
 }// namespace NES::Experimental
 #endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_MIGRATEQUERYREQUEST_HPP_

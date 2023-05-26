@@ -21,10 +21,11 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Optimizer {
 
-BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
+BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                const TopologyPtr& topology,
                                                                const TypeInferencePhasePtr& typeInferencePhase) {
@@ -48,7 +49,9 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
         //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
         //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default: throw Exceptions::RuntimeException("Unknown placement strategy type " + std::to_string(placementStrategy));
+        default:
+            throw Exceptions::RuntimeException("Unknown placement strategy type "
+                                               + std::string(magic_enum::enum_name(placementStrategy)));
     }
 }
 }// namespace NES::Optimizer

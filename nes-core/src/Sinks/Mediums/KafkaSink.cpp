@@ -32,7 +32,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                      QueryId queryId,
                      QuerySubPlanId querySubPlanId,
                      const uint64_t kafkaProducerTimeout,
-                     FaultToleranceType::Value faultToleranceType,
+                     FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(format,
                  std::move(nodeEngine),
@@ -107,7 +107,7 @@ void KafkaSink::connect() {
 std::string KafkaSink::getBrokers() const { return brokers; }
 std::string KafkaSink::getTopic() const { return topic; }
 uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
-SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
+SinkMediumTypes KafkaSink::getSinkMediumType() { return SinkMediumTypes::KAFKA_SINK; }
 
 }// namespace NES
 #endif

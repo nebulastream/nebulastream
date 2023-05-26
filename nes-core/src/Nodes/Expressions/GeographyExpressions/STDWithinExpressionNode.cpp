@@ -55,7 +55,7 @@ std::string STDWithinExpressionNode::toString() const {
 }
 
 void STDWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ShapeExpressionNodePtr const& circle) {
-    if (!point->instanceOf<GeographyFieldsAccessExpressionNode>() || circle->getShapeType() != Circle) {
+    if (!point->instanceOf<GeographyFieldsAccessExpressionNode>() || circle->getShapeType() != ShapeType::Circle) {
         throw InvalidArgumentException("Invalid arguments in STDWithinExpressionNode::setChildren(): ",
                                        "Point is : " + point->toString() + ", and shape expression is : " + circle->toString());
     }
@@ -89,7 +89,7 @@ void STDWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCont
     point->inferStamp(typeInferencePhaseContext, schema);
     auto shapeType = circle->getShapeType();
 
-    if (!point->getStamp()->isFloat() || shapeType != Circle) {
+    if (!point->getStamp()->isFloat() || shapeType != ShapeType::Circle) {
         throw std::logic_error(
             "ST_DWithinExpressionNode: Error during type inference. AccessTypes need to be Float and shape type needs"
             "to be Circle but Point was:"

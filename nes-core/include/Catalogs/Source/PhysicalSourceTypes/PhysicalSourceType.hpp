@@ -15,14 +15,14 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 
-#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <map>
 #include <memory>
 #include <string>
 
 namespace NES {
 
-enum SourceType {
+enum class SourceType : uint8_t {
     OPC_SOURCE,
     ZMQ_SOURCE,
     CSV_SOURCE,
@@ -44,36 +44,6 @@ enum SourceType {
     TCP_SOURCE,
     LORAWAN_SOURCE
 };
-
-/**
- * enum string mapping for source type
- */
-static std::map<std::string, SourceType> stringToSourceType{
-    {Configurations::SENSE_SOURCE_CONFIG, SENSE_SOURCE},
-    {Configurations::CSV_SOURCE_CONFIG, CSV_SOURCE},
-    {Configurations::TCP_SOURCE_CONFIG, TCP_SOURCE},
-    {Configurations::BINARY_SOURCE_CONFIG, BINARY_SOURCE},
-    {Configurations::MQTT_SOURCE_CONFIG, MQTT_SOURCE},
-    {Configurations::KAFKA_SOURCE_CONFIG, KAFKA_SOURCE},
-    {Configurations::OPC_SOURCE_CONFIG, OPC_SOURCE},
-    {Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG, MATERIALIZEDVIEW_SOURCE},
-    {Configurations::LORAWAN_PROXY_SOURCE_CONFIG, LORAWAN_SOURCE},
-    {Configurations::DEFAULT_SOURCE_CONFIG, DEFAULT_SOURCE}};
-
-/**
- * enum source type to string
- */
-static std::map<SourceType, std::string> sourceTypeToString{
-    {SENSE_SOURCE, Configurations::SENSE_SOURCE_CONFIG},
-    {CSV_SOURCE, Configurations::CSV_SOURCE_CONFIG},
-    {TCP_SOURCE, Configurations::TCP_SOURCE_CONFIG},
-    {BINARY_SOURCE, Configurations::BINARY_SOURCE_CONFIG},
-    {MQTT_SOURCE, Configurations::MQTT_SOURCE_CONFIG},
-    {KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
-    {OPC_SOURCE, Configurations::OPC_SOURCE_CONFIG},
-    {MATERIALIZEDVIEW_SOURCE, Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG},
-    {DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG},
-    {LORAWAN_SOURCE, Configurations::LORAWAN_PROXY_SOURCE_CONFIG}};
 
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;

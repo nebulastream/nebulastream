@@ -19,12 +19,23 @@
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
+class MemoryProvider;
+using MemoryProviderPtr = std::unique_ptr<MemoryProvider>;
+
 /**
  * @brief Abstract parent class for providing memory.
  */
 class MemoryProvider {
   public:
     virtual ~MemoryProvider();
+
+    /**
+     * @brief Helper function for creating a memory provider from the buffer size and the schema
+     * @param bufferSize
+     * @param schema
+     * @return MemoryProvider
+     */
+    static MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
 
     /**
      * @brief Return the memory layout pointer used by the MemoryProvider.
@@ -83,7 +94,7 @@ class MemoryProvider {
      * @return true if no projections (entire record accessed) or if field is in projections, else return false.
      */
     [[nodiscard]] bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                     Nautilus::Record::RecordFieldIdentifier fieldIndex) const;
+                                     const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider

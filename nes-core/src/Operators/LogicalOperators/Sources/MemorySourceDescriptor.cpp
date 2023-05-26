@@ -14,6 +14,7 @@
 
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -23,7 +24,7 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
                                                size_t memoryAreaSize,
                                                uint64_t numBuffersToProcess,
                                                uint64_t gatheringValue,
-                                               GatheringMode::Value gatheringMode,
+                                               GatheringMode gatheringMode,
                                                uint64_t sourceAffinity,
                                                uint64_t taskQueueId,
                                                std::string logicalSourceName,
@@ -39,7 +40,7 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
                                                                        size_t memoryAreaSize,
                                                                        uint64_t numBuffersToProcess,
                                                                        uint64_t gatheringValue,
-                                                                       GatheringMode::Value gatheringMode,
+                                                                       GatheringMode gatheringMode,
                                                                        uint64_t sourceAffinity,
                                                                        uint64_t taskQueueId,
                                                                        std::string logicalSourceName,
@@ -73,7 +74,7 @@ size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize
 
 uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
-GatheringMode::Value MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
+GatheringMode MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
 
 uint64_t MemorySourceDescriptor::getGatheringValue() const { return gatheringValue; }
 uint64_t MemorySourceDescriptor::getSourceAffinity() const { return sourceAffinity; }

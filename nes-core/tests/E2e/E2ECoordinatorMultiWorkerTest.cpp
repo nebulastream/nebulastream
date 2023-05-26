@@ -15,6 +15,7 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cstdio>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -48,8 +49,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", BasicType::UINT64))"
+              "->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
+              "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -57,7 +59,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream1"),
                                            TestUtils::logicalSourceName("QnV"),
@@ -71,7 +73,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::parentId(2),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream2"),
                                            TestUtils::logicalSourceName("QnV"),
@@ -86,7 +88,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::parentId(3),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream2"),
                                            TestUtils::logicalSourceName("QnV"),
@@ -117,7 +119,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
               "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+              "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
+              "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -125,7 +128,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream1"),
                                            TestUtils::logicalSourceName("QnV"),
@@ -137,7 +140,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                            TestUtils::physicalSourceName("test_stream2"),
                                            TestUtils::logicalSourceName("QnV"),
@@ -196,7 +199,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
               "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+              "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
+              "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -205,7 +209,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
         TestUtils::startWorker({TestUtils::rpcPort(0),
                                 TestUtils::dataPort(0),
                                 TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                TestUtils::sourceType("CSVSource"),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
                                 TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv"),
                                 TestUtils::physicalSourceName("test_stream1"),
                                 TestUtils::logicalSourceName("QnV"),
@@ -218,7 +222,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
         TestUtils::startWorker({TestUtils::rpcPort(0),
                                 TestUtils::dataPort(0),
                                 TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                TestUtils::sourceType("CSVSource"),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
                                 TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv"),
                                 TestUtils::physicalSourceName("test_stream2"),
                                 TestUtils::logicalSourceName("QnV"),
@@ -292,8 +296,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
 
     NES_INFO("schema submit=" << schema.str());
@@ -302,7 +307,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                            TestUtils::physicalSourceName("test_stream_1"),
                                            TestUtils::logicalSourceName("window"),
@@ -314,7 +319,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType("CSVSource"),
+                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
                                            TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                            TestUtils::physicalSourceName("test_stream_2"),
                                            TestUtils::logicalSourceName("window"),
@@ -388,7 +393,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     auto schema = "{\n"
                   "  \"logicalSourceName\": \"test_source\",\n"
                   "  \"schema\": \"Schema::create()->addField(createField(\\\"timestamp\\\", "
-                  "UINT64))->addField(createField(\\\"key\\\", UINT64))->addField(createField(\\\"value\\\", UINT64));\"\n"
+                  "UINT64))->addField(createField(\\\"key\\\", BasicType::UINT64))->addField(createField(\\\"value\\\", "
+                  "BasicType::UINT64));\"\n"
                   "}";
     NES_DEBUG("Schema: " << schema);
     ASSERT_TRUE(TestUtils::addLogicalSource(schema, std::to_string(*restPort)));
@@ -407,14 +413,14 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
 
     NES_DEBUG("Start the workers.");
     std::initializer_list<std::string> workerConfiguration1 = {TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                                               TestUtils::sourceType("CSVSource"),
+                                                               TestUtils::sourceType(SourceType::CSV_SOURCE),
                                                                TestUtils::csvSourceFilePath(inputCsvPath),
                                                                TestUtils::physicalSourceName("test_source_1"),
                                                                TestUtils::logicalSourceName("test_source"),
                                                                TestUtils::numberOfTuplesToProducePerBuffer(10),
                                                                TestUtils::enableThreadLocalWindowing()};
     std::initializer_list<std::string> workerConfiguration2 = {TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                                               TestUtils::sourceType("CSVSource"),
+                                                               TestUtils::sourceType(SourceType::CSV_SOURCE),
                                                                TestUtils::csvSourceFilePath(inputCsvPath),
                                                                TestUtils::physicalSourceName("test_source_2"),
                                                                TestUtils::logicalSourceName("test_source"),

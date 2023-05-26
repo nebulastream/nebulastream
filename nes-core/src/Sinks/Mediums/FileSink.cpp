@@ -24,7 +24,7 @@
 
 namespace NES {
 
-SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
+SinkMediumTypes FileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
 
 FileSink::FileSink(SinkFormatPtr format,
                    Runtime::NodeEnginePtr nodeEngine,
@@ -33,7 +33,7 @@ FileSink::FileSink(SinkFormatPtr format,
                    bool append,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
-                   FaultToleranceType::Value faultToleranceType,
+                   FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
@@ -92,7 +92,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
             std::ofstream outputFile;
-            if (sinkFormat->getSinkFormat() == NES_FORMAT) {
+            if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
                 uint64_t idx = filePath.rfind('.');
                 std::string shrinkedPath = filePath.substr(0, idx + 1);
                 std::string schemaFile = shrinkedPath + "schema";
@@ -119,7 +119,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
     for (auto& buffer : dataBuffers) {
         NES_TRACE2("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
-        if (sinkFormat->getSinkFormat() == NES_FORMAT) {
+        if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
             outputFile.write((char*) buffer.getBuffer(),
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         } else {

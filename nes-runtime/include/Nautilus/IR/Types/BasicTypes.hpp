@@ -14,9 +14,11 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_BASICTYPES_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_BASICTYPES_HPP_
 
+#include <stdint.h>
+
 namespace NES::Nautilus::IR::Operations {
 
-enum PrimitiveStamp {
+enum class PrimitiveStamp : uint8_t {
     //BasicTypes
     // Type < 5 is INT
     INT1 = 0,

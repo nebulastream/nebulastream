@@ -17,7 +17,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
@@ -268,12 +268,12 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
     // create a query with "as" in the aggregation
     auto query = Query::from("default_logical")
                      .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
-                     .byKey(Attribute("id", INT64))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .byKey(Attribute("id", BasicType::INT64))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                      .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
                      .sink(PrintSinkDescriptor::create());
 
-    Catalogs::UDF::UdfCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
+    Catalogs::UDF::UDFCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -298,7 +298,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
     // without by key
     auto query = Query::from("default_logical")
                      .window(ThresholdWindow::of(Attribute("f1") < 45))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                      .sink(PrintSinkDescriptor::create());
 
     auto plan = query.getQueryPlan();
@@ -317,8 +317,8 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
     // with by key
     auto query2 = Query::from("default_logical")
                       .window(ThresholdWindow::of(Attribute("f1") < 45))
-                      .byKey(Attribute("id", INT64))
-                      .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                      .byKey(Attribute("id", BasicType::INT64))
+                      .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                       .sink(PrintSinkDescriptor::create());
 
     auto plan2 = query2.getQueryPlan();
@@ -348,7 +348,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
     // without by key
     auto query = Query::from("default_logical")
                      .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                      .sink(PrintSinkDescriptor::create());
 
     auto plan = query.getQueryPlan();
@@ -367,8 +367,8 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
     // with by key
     auto query2 = Query::from("default_logical")
                       .window(ThresholdWindow::of(Attribute("f1") < 45))
-                      .byKey(Attribute("id", INT64))
-                      .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                      .byKey(Attribute("id", BasicType::INT64))
+                      .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                       .sink(PrintSinkDescriptor::create());
 
     auto plan2 = query2.getQueryPlan();
@@ -398,7 +398,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
     // without by key
     auto query = Query::from("default_logical")
                      .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                      .sink(PrintSinkDescriptor::create());
 
     auto plan = query.getQueryPlan();
@@ -417,8 +417,8 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
     // with by key
     auto query2 = Query::from("default_logical")
                       .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
-                      .byKey(Attribute("id", INT64))
-                      .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                      .byKey(Attribute("id", BasicType::INT64))
+                      .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
                       .sink(PrintSinkDescriptor::create());
 
     auto plan2 = query2.getQueryPlan();

@@ -22,7 +22,7 @@
 namespace NES {
 using Runtime::StateManager;
 using Runtime::StateVariable;
-class StateTest : public Testing::TestWithErrorHandling<testing::Test> {
+class StateTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StateTest.log", NES::LogLevel::LOG_DEBUG);

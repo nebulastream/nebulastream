@@ -23,13 +23,13 @@ namespace NES::Windowing {
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
-class TimeCharacteristic {
+class TimeCharacteristic final {
   public:
     constexpr static const auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
     /**
      * @brief The type as enum.
      */
-    enum Type { IngestionTime, EventTime };
+    enum class Type : uint8_t { IngestionTime, EventTime };
     explicit TimeCharacteristic(Type type);
     TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 
@@ -55,6 +55,12 @@ class TimeCharacteristic {
      * @return  If it is a event time window this returns the field, from which we extract the time stamp.
      */
     AttributeFieldPtr getField();
+
+    /**
+     * @brief Set the field from which we extract the time stamp.
+     * @param field for extracting the time stamp
+     */
+    void setField(AttributeFieldPtr field);
 
     std::string toString();
     std::string getTypeAsString();

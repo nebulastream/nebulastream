@@ -25,8 +25,8 @@ namespace NES::Nautilus::Backends::MLIR {
 // and applies configured lowering & optimization passes to it.
 class MLIRPassManager {
   public:
-    enum LoweringPass { SCF, LLVM };
-    enum OptimizationPass { Inline };
+    enum class LoweringPass : uint8_t { SCF, LLVM };
+    enum class OptimizationPass : uint8_t { Inline };
 
     MLIRPassManager(); // Disable default constructor
     ~MLIRPassManager();// Disable default destructor

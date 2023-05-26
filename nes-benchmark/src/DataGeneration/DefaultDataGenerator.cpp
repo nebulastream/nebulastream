@@ -17,7 +17,6 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
@@ -46,13 +45,13 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
 
         /* This branch is solely for performance reasons.
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
-        if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
+        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
-            auto rowLayoutBuffer = rowLayout->bind(bufferRef);
+            auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer->getCapacity(); ++curRecord) {
                 uint64_t value = uniformIntDistribution(generator);
-                rowLayoutBuffer->pushRecord<false>(
+                dynamicBuffer->pushRecordToBuffer(
                     std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
             }
 
@@ -80,10 +79,10 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
 
 NES::SchemaPtr DefaultDataGenerator::getSchema() {
     return Schema::create()
-        ->addField(createField("id", NES::UINT64))
-        ->addField(createField("value", NES::UINT64))
-        ->addField(createField("payload", NES::UINT64))
-        ->addField(createField("timestamp", NES::UINT64));
+        ->addField(createField("id", BasicType::UINT64))
+        ->addField(createField("value", BasicType::UINT64))
+        ->addField(createField("payload", BasicType::UINT64))
+        ->addField(createField("timestamp", BasicType::UINT64));
 }
 
 std::string DefaultDataGenerator::getName() { return "Uniform"; }

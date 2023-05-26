@@ -69,7 +69,7 @@ class TCPSourceTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("TCPSOURCETEST::SetUp() MQTTSourceTest cases set up.");
-        test_schema = Schema::create()->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", BasicType::UINT32);
         tcpSourceType = TCPSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
@@ -152,7 +152,7 @@ TEST_F(TCPSourceTest, TCPSourcePrint) {
  */
 TEST_F(TCPSourceTest, DISABLED_TCPSourceValue) {
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto mqttSource = createTCPSource(test_schema,
                                       bufferManager,
                                       queryManager,
@@ -189,14 +189,14 @@ TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
     //register logical source qnv
     std::string source =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", UINT64))
-                            ->addField(createField("stationId", UINT64))
-                            ->addField(createField("patientId", UINT64))
-                            ->addField(createField("time", UINT64))
-                            ->addField(createField("healthStatus", UINT8))
-                            ->addField(createField("healthStatusDuration", UINT32))
-                            ->addField(createField("recovered", BOOLEAN))
-                            ->addField(createField("dead", BOOLEAN));)";
+                            ->addField(createField("hospitalId", BasicType::UINT64))
+                            ->addField(createField("stationId", BasicType::UINT64))
+                            ->addField(createField("patientId", BasicType::UINT64))
+                            ->addField(createField("time", BasicType::UINT64))
+                            ->addField(createField("healthStatus", BasicType::UINT8))
+                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
+                            ->addField(createField("recovered", BasicType::BOOLEAN))
+                            ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 

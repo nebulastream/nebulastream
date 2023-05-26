@@ -21,12 +21,6 @@
 namespace NES::Experimental {
 
 /**
- * @brief this class represent Migration Types
- */
-class MigrationType {
-
-  public:
-    /**
     * RESTART means the entire query is first undeployed and then redeployed, ie restarted
     * Query is undeployed by the QueryUndeploymentPhase. The Query is then redeployed just like a new query would be.
     *
@@ -41,19 +35,7 @@ class MigrationType {
     *         Suitable: reachable by all upstream nodes and can reach all downstream nodes of a query sub plan
     * Step 2: upstream node(s) are reconfigured to send data to the suitable alternative node(s)
     */
-    enum Value : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
-
-    /**
-     *
-     * @param migrationType
-     * @return true if migrationType is valid, else false
-     */
-    static bool isValidMigrationType(Value migrationType);
-
-    static Value getFromString(const std::string migrationType);
-
-    static std::string toString(MigrationType::Value migrationType);
-};
+enum class MigrationType : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
 
 }//namespace NES::Experimental
 #endif// NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_

@@ -139,8 +139,8 @@ AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false) { destroy(); }
 bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     NES_DEBUG2("startThreadPool: setup thread pool for nodeEngineId= {}  with numThreads= {}", nodeEngineId, numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
-    auto expected = Created;
-    if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
+    auto expected = QueryManagerStatus::Created;
+    if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Running)) {
 #ifdef ENABLE_PAPI_PROFILER
         cpuProfilers.resize(numThreads);
 #endif
@@ -164,8 +164,8 @@ uint64_t MultiQueueQueryManager::getNumberOfBuffersPerEpoch() const { return num
 bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     NES_DEBUG2("startThreadPool: setup thread pool for nodeId= {}  with numThreads= {}", nodeEngineId, numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
-    auto expected = Created;
-    if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
+    auto expected = QueryManagerStatus::Created;
+    if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Running)) {
 #ifdef ENABLE_PAPI_PROFILER
         cpuProfilers.resize(numThreads);
 #endif
@@ -194,28 +194,28 @@ bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) 
 
 void DynamicQueryManager::destroy() {
     AbstractQueryManager::destroy();
-    if (queryManagerStatus.load() == Destroyed) {
+    if (queryManagerStatus.load() == QueryManagerStatus::Destroyed) {
         taskQueue = decltype(taskQueue)();
     }
 }
 
 void MultiQueueQueryManager::destroy() {
     AbstractQueryManager::destroy();
-    if (queryManagerStatus.load() == Destroyed) {
+    if (queryManagerStatus.load() == QueryManagerStatus::Destroyed) {
         taskQueues.clear();
     }
 }
 
 void AbstractQueryManager::destroy() {
     // 0. if already destroyed
-    if (queryManagerStatus.load() == Destroyed) {
+    if (queryManagerStatus.load() == QueryManagerStatus::Destroyed) {
         return;
     }
     // 1. attempt transition from Running -> Stopped
-    auto expected = Running;
+    auto expected = QueryManagerStatus::Running;
 
     bool successful = true;
-    if (queryManagerStatus.compare_exchange_strong(expected, Stopped)) {
+    if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Stopped)) {
         std::unique_lock lock(queryMutex);
         auto copyOfRunningQeps = runningQEPs;
         lock.unlock();
@@ -225,8 +225,8 @@ void AbstractQueryManager::destroy() {
     }
     NES_ASSERT2_FMT(successful, "Cannot stop running queryIdAndCatalogEntryMapping upon query manager destruction");
     // 2. attempt transition from Stopped -> Destroyed
-    expected = Stopped;
-    if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {
+    expected = QueryManagerStatus::Stopped;
+    if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Destroyed)) {
         {
             std::scoped_lock locks(queryMutex, statisticsMutex);
 
@@ -278,7 +278,7 @@ QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(QuerySubPlanId qepId
 void AbstractQueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
-        case Destroy: {
+        case ReconfigurationType::Destroy: {
             break;
         }
         default: {
@@ -290,7 +290,7 @@ void AbstractQueryManager::reconfigure(ReconfigurationMessage& task, WorkerConte
 void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
-        case Destroy: {
+        case ReconfigurationType::Destroy: {
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
             if (status == Execution::ExecutableQueryPlanStatus::Invalid) {

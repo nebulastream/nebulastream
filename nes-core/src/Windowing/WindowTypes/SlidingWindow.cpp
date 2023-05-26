@@ -48,7 +48,7 @@ uint64_t SlidingWindow::calculateNextWindowEnd(uint64_t currentTs) const {
     return currentTs + slide.getTime() - (currentTs % slide.getTime());
 }
 
-bool SlidingWindow::isSlidingWindow() { return true; }
+TimeBasedWindowType::TimeBasedSubWindowType SlidingWindow::getTimeBasedSubWindowType() { return SLIDINGWINDOW; }
 
 TimeMeasure SlidingWindow::getSize() { return size; }
 
@@ -64,9 +64,10 @@ std::string SlidingWindow::toString() {
 }
 
 bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
-    if (otherWindowType->isSlidingWindow()) {
-        auto timeBasedWindowType = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType);
-        return this->isSlidingWindow() && otherWindowType->isSlidingWindow()
+    if (otherWindowType->isTimeBasedWindowType()) {
+        auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(otherWindowType);
+        return this->getTimeBasedSubWindowType() == SLIDINGWINDOW
+            && timeBasedWindowType->getTimeBasedSubWindowType() == SLIDINGWINDOW
             && this->timeCharacteristic->getField()->getName()
             == timeBasedWindowType->getTimeCharacteristic()->getField()->getName()
             && this->size.getTime() == timeBasedWindowType->getSize().getTime()

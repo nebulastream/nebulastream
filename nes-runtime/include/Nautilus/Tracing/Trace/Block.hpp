@@ -27,7 +27,7 @@ class Block {
     /**
      * @brief Indicates if this is a control flow merge block -> such blocks could be loop headers.
      */
-    enum Type { Default, ControlFlowMerge };
+    enum class Type : uint8_t { Default, ControlFlowMerge };
 
     /**
      * @brief creates a new block with a specific block id.

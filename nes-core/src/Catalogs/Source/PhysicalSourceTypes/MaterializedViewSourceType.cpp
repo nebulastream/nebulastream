@@ -14,11 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES {
-
-namespace Configurations {
-
-namespace Experimental::MaterializedView {
+namespace NES::Configurations::Experimental::MaterializedView {
 
 MaterializedViewSourceTypePtr MaterializedViewSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<MaterializedViewSourceType>(MaterializedViewSourceType(std::move(sourceConfigMap)));
@@ -39,7 +35,7 @@ MaterializedViewSourceType::MaterializedViewSourceType(std::map<std::string, std
 }
 
 MaterializedViewSourceType::MaterializedViewSourceType()
-    : PhysicalSourceType(MATERIALIZEDVIEW_SOURCE),
+    : PhysicalSourceType(SourceType::MATERIALIZEDVIEW_SOURCE),
       id(Configurations::ConfigurationOption<uint32_t>::create(MATERIALIZED_VIEW_ID_CONFIG,
                                                                1,
                                                                "id to identify the materialized view to read from")) {
@@ -65,6 +61,4 @@ bool MaterializedViewSourceType::equal(const PhysicalSourceTypePtr& other) {
     auto otherSourceType = other->as<MaterializedViewSourceType>();
     return id == otherSourceType->id;
 }
-}// namespace Experimental::MaterializedView
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations::Experimental::MaterializedView

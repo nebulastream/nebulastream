@@ -25,7 +25,7 @@ AttributeFieldPtr AttributeField::create(const std::string& name, const DataType
     return std::make_shared<AttributeField>(name, dataType);
 }
 
-std::string AttributeField::getName() const { return name; }
+const std::string& AttributeField::getName() const { return name; }
 
 void AttributeField::setName(std::string newName) { this->name = std::move(newName); }
 

@@ -21,17 +21,24 @@
 
 namespace NES::Windowing {
 class ContentBasedWindowType : public WindowType {
+
   public:
+    enum ContentBasedSubWindowType { THRESHOLDWINDOW };
+
     explicit ContentBasedWindowType();
 
     virtual ~ContentBasedWindowType() = default;
 
     /**
-     * @brief Infer stamp of content-based window type
-     * @param schema : the schema of the window
-     * @return true if success else false
-     */
-    bool inferStamp(const SchemaPtr& schema) override;
+     * @brief getter for the SubWindowType, i.e., Thresholdwindow
+     * @return the SubWindowType
+    */
+    virtual ContentBasedSubWindowType getContentBasedSubWindowType() = 0;
+
+    /**
+    * @return true if this is a content-based window
+    */
+    bool isContentBasedWindowType() override;
 
     /**
        * Cast the current window type as a threshold window type

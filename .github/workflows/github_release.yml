@@ -57,7 +57,7 @@ jobs:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-    timeout-minutes: 90
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -142,3 +142,41 @@ jobs:
           rm -rf nes-amd64.deb nes-arm64.deb
           echo "Pushed the execution image"
           docker logout
+
+  Java-Client-CI-Dispatch:
+    needs: [build-docker]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - name: "Repository dispatch for Java-Client"
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.CI_TOKEN }}
+          repository: nebulastream/nebulastream-java-client
+          event-type: nes-executable-image-update
+          client-payload: '{"version": "${{ env.VERSION }}"}'
+
+  Run-Regression-Tests:
+    needs: [build-docker]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+    steps:
+      - name: KTM Use Case Regression Test
+        run: |
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/KTM/
+          sh ./docker/regressionImage/KTM/run.sh
+      - name: Video Use Case Regression Test
+        run: |
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Video/
+          sh ./docker/regressionImage/Video/run.sh
+      - name: Smart Meter Use Case Regression Test
+        run: |
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/SmartMeter/
+          sh ./docker/regressionImage/SmartMeter/run.sh
+      - name: Medic Regression Test
+        run: |
+          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Med/
+          sh ./docker/regressionImage/Med/run.sh

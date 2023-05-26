@@ -47,62 +47,61 @@ class TextTypeTest : public Testing::NESBaseTest {
 TEST_F(TextTypeTest, createTextTest) {
     auto textValue = Value<Text>("test");
     auto length = textValue->length();
-    ASSERT_EQ(length, (uint32_t) 4);
+    EXPECT_EQ(length, (uint32_t) 4);
 
     auto textValue2 = Value<Text>("test");
-    ASSERT_EQ(textValue, textValue2);
+    EXPECT_EQ(textValue, textValue2);
 
     auto textValue3 = Value<Text>("teso");
     ASSERT_NE(textValue, textValue3);
 
     Value<> character = textValue[0];
-    ASSERT_EQ(character, 't');
+    EXPECT_EQ(character, 't');
 
     textValue[3] = (int8_t) 'o';
     character = textValue[3];
-    ASSERT_EQ(character, 'o');
-    ASSERT_EQ(textValue, textValue3);
+    EXPECT_EQ(character, 'o');
+    EXPECT_EQ(textValue, textValue3);
 
     for (Value<UInt32> i = (uint32_t) 0; i < textValue->length(); i = i + (uint32_t) 1) {
         textValue[i] = (int8_t) 'z';
     }
     auto textValue4 = Value<Text>("zzzz");
-    ASSERT_EQ(textValue, textValue4);
+    EXPECT_EQ(textValue, textValue4);
 
     auto bitLength = textValue->bitLength();
-    ASSERT_EQ(bitLength, (uint32_t) 32);
+    EXPECT_EQ(bitLength, (uint32_t) 32);
 }
 
 TEST_F(TextTypeTest, LowerUpperTest) {
     auto LowerUpperTest1 = Value<Text>("test");
     auto LowerUpperTest2 = LowerUpperTest1->upper();
     auto LowerUpperTest3 = Value<Text>("TEST");
-    ASSERT_EQ(LowerUpperTest2, LowerUpperTest3);
+    EXPECT_EQ(LowerUpperTest2, LowerUpperTest3);
 
     auto LowerUpperTest4 = LowerUpperTest3->lower();
-    ASSERT_EQ(LowerUpperTest4, LowerUpperTest1);
+    EXPECT_EQ(LowerUpperTest4, LowerUpperTest1);
 }
 
 TEST_F(TextTypeTest, LeftRightTest) {
-
     auto LeftRightTest1 = Value<Text>("Test");
     auto LeftRightTest2 = Value<Text>("Te");
     auto LeftRightTest3 = LeftRightTest2->left((uint32_t) 2);
-    ASSERT_EQ(LeftRightTest3, LeftRightTest2);
+    EXPECT_EQ(LeftRightTest3, LeftRightTest2);
 
     auto LeftRightTest4 = Value<Text>("st");
     auto LeftRightTest5 = LeftRightTest1->right((uint32_t) 2);
-    ASSERT_EQ(LeftRightTest5, LeftRightTest4);
+    EXPECT_EQ(LeftRightTest5, LeftRightTest4);
 }
 
 TEST_F(TextTypeTest, PadTest) {
     auto PadTest1 = Value<Text>("Test");
     auto PadTest2 = Value<Text>("Testoo");
     auto PadTest3 = PadTest1->rpad((uint32_t) 6, (int8_t) 'o');
-    ASSERT_EQ(PadTest2, PadTest3);
+    EXPECT_EQ(PadTest2, PadTest3);
     auto PadTest4 = Value<Text>("ooTest");
     auto PadTest5 = PadTest1->lpad((uint32_t) 6, (int8_t) 'o');
-    ASSERT_EQ(PadTest4, PadTest5);
+    EXPECT_EQ(PadTest4, PadTest5);
 }
 
 TEST_F(TextTypeTest, TrimTest) {
@@ -110,42 +109,42 @@ TEST_F(TextTypeTest, TrimTest) {
     auto TrimTest0 = Value<Text>("Test");
     auto TrimTest1 = Value<Text>("  Test");
     auto TrimTest2 = TrimTest1->ltrim(TrimTest0);
-    ASSERT_EQ(TrimTest0, TrimTest2);
+    EXPECT_EQ(TrimTest0, TrimTest2);
 
     auto TrimTest3 = Value<Text>("Test  ");
     auto TrimTest4 = TrimTest3->rtrim(TrimTest0);
-    ASSERT_EQ(TrimTest4, TrimTest0);
+    EXPECT_EQ(TrimTest4, TrimTest0);
 
     auto Trimtest5 = Value<Text>("  Test  ");
     auto TrimTest6 = Trimtest5->trim();
-    ASSERT_EQ(TrimTest6, TrimTest0);
+    EXPECT_EQ(TrimTest6, TrimTest0);
 
     auto TrimTest7 = TrimSpaceTest->ltrim(TrimTest0);
     TrimTest7 = TrimTest7->rtrim(TrimTest0);
-    ASSERT_EQ(TrimTest7, TrimTest0);
+    EXPECT_EQ(TrimTest7, TrimTest0);
 }
 
 TEST_F(TextTypeTest, prefixTest) {
     auto preTest1 = Value<Text>("abc");
     auto preTest2 = Value<Text>("ab");
     bool x = preTest1->prefix(preTest2);
-    ASSERT_EQ(x, true);
-    ASSERT_ANY_THROW(preTest2->prefix(preTest1));
+    EXPECT_EQ(x, true);
+    EXPECT_ANY_THROW(preTest2->prefix(preTest1));
 }
 
 TEST_F(TextTypeTest, repeatTest) {
     auto repeatTest1 = Value<Text>("A");
     auto repeatTest2 = repeatTest1->repeat((uint32_t) 5);
     auto repeatTest3 = Value<Text>("AAAAA");
-    ASSERT_EQ(repeatTest2, repeatTest3);
-    ASSERT_ANY_THROW(repeatTest1->repeat((uint32_t) 0));
+    EXPECT_EQ(repeatTest2, repeatTest3);
+    EXPECT_ANY_THROW(repeatTest1->repeat((uint32_t) 0));
 }
 
 TEST_F(TextTypeTest, reverseTest) {
     auto reverseTest1 = Value<Text>("hello");
     auto reverseTest2 = reverseTest1->reverse();
     auto reverseTest3 = Value<Text>("olleh");
-    ASSERT_EQ(reverseTest2, reverseTest3);
+    EXPECT_EQ(reverseTest2, reverseTest3);
 }
 
 TEST_F(TextTypeTest, positionTest) {
@@ -156,10 +155,10 @@ TEST_F(TextTypeTest, positionTest) {
     auto test1 = positionTest2->position(positionTest1);
     auto test2 = positionTest2->position(positionTest4);
     auto test3 = positionTest2->position(positionTest3);
-    ASSERT_EQ(test1, (uint32_t) 2);
-    ASSERT_EQ(test2, (uint32_t) 3);
-    ASSERT_EQ(test3, (uint32_t) 0);
-    ASSERT_ANY_THROW(positionTest1->position(positionTest2));
+    EXPECT_EQ(test1, (uint32_t) 2);
+    EXPECT_EQ(test2, (uint32_t) 3);
+    EXPECT_EQ(test3, (uint32_t) 0);
+    EXPECT_ANY_THROW(positionTest1->position(positionTest2));
 }
 
 TEST_F(TextTypeTest, replaceTest) {
@@ -168,20 +167,21 @@ TEST_F(TextTypeTest, replaceTest) {
     auto replaceTest3 = Value<Text>("new");
     auto replaceTest4 = Value<Text>("xnewxnew");
     auto test1 = replaceTest1->replace(replaceTest2, replaceTest3);
-    ASSERT_EQ(test1, replaceTest4);
-    // ASSERT_ANY_THROW(replaceTest2->replace(replaceTest3, replaceTest4););
+    EXPECT_EQ(test1, replaceTest4);
+    auto test2 = replaceTest2->replace(replaceTest3, replaceTest4);
+    EXPECT_EQ(test2, replaceTest2);
 }
 
 TEST_F(TextTypeTest, subStringTest) {
     auto subtext1 = Value<Text>("Hello");
     auto subtext2 = subtext1->substring((uint32_t) 2, (uint32_t) 2);
     auto subtext3 = Value<Text>("el");
-    ASSERT_EQ(subtext2, subtext3);
+    EXPECT_EQ(subtext2, subtext3);
 }
 
 TEST_F(TextTypeTest, subStringTestFail) {
     auto subtext1 = Value<Text>("Hello");
-    ASSERT_ANY_THROW(subtext1->substring((uint32_t) 200, (uint32_t) 200));
+    EXPECT_ANY_THROW(subtext1->substring((uint32_t) 200, (uint32_t) 200));
 }
 
 TEST_F(TextTypeTest, stringconcatTest) {
@@ -189,6 +189,43 @@ TEST_F(TextTypeTest, stringconcatTest) {
     auto concatTest2 = Value<Text>("Stream");
     auto concatTest3 = Value<Text>("NebulaStream");
     auto concatTest5 = concatTest1->concat(concatTest2);
-    ASSERT_EQ(concatTest5, concatTest3);
+    EXPECT_EQ(concatTest5, concatTest3);
 }
+
+TEST_F(TextTypeTest, similarToTest) {
+    auto similarToTest1 = Value<Text>("NebulaStream");
+    auto similarToTest2 = Value<Text>("NebulaStream");
+    auto similarToResult = similarToTest1->similarTo(similarToTest2);
+    EXPECT_EQ(similarToResult, (Boolean) true);
+    EXPECT_TRUE(similarToResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, similarToTestFail) {
+    auto similarToTest1 = Value<Text>("NebulaStream");
+    auto similarToTest2 = Value<Text>("Nebula");
+    auto similarToResult = similarToTest1->similarTo(similarToTest2);
+    EXPECT_EQ(similarToResult, (Boolean) false);
+    EXPECT_TRUE(similarToResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, DISABLED_likeTest) {
+    auto likeTest1 = Value<Text>("abcde");
+    auto likeTest2 = Value<Text>("%bcd%");
+    auto caseSensitiveFlag = Value<Boolean>(false);
+    auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
+    EXPECT_EQ(likeResult, (Boolean) true);
+    EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
+    //TODO: Test passes but in the Shut Down process Fatal Error occurs : NES Fatal Error on false message: Deletion of unpooled buffer invoked on used memory segment
+}
+
+TEST_F(TextTypeTest, DISABLED_likeTestFalse) {
+    auto likeTest1 = Value<Text>("abcde");
+    auto likeTest2 = Value<Text>("_bc_");
+    auto caseSensitiveFlag = Value<Boolean>(false);
+    auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
+    EXPECT_EQ(likeResult, (Boolean) false);
+    EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
+    //TODO: Test passes but in the Shut Down process Fatal Error occurs : NES Fatal Error on false message: Deletion of unpooled buffer invoked on used memory segment
+}
+
 }// namespace NES::Nautilus

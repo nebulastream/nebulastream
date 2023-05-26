@@ -22,7 +22,7 @@
 
 using namespace NES;
 
-class GlobalQueryNodeTest : public Testing::TestWithErrorHandling<testing::Test> {
+class GlobalQueryNodeTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before a test is executed. */

@@ -250,7 +250,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     EXPECT_NE(port, 0UL);
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
-    auto tcpSchema = Schema::create()->addField("id", UINT32)->addField("value", FLOAT32)->addField("onTime", BOOLEAN);
+    auto tcpSchema = Schema::create()
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
+                         ->addField("onTime", BasicType::BOOLEAN);
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
@@ -349,8 +352,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
@@ -450,8 +453,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
@@ -551,8 +554,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
@@ -652,8 +655,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
@@ -753,8 +756,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
@@ -854,8 +857,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
@@ -955,8 +958,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
-                         ->addField("id", UINT32)
-                         ->addField("value", FLOAT32)
+                         ->addField("id", BasicType::UINT32)
+                         ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
     crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);

@@ -15,7 +15,7 @@ include(ExternalProject)
 
 add_library(nes-runtime-benchmark INTERFACE)
 target_include_directories(nes-runtime-benchmark INTERFACE "../tests/include/")
-target_link_libraries(nes-runtime-benchmark INTERFACE nes-runtime)
+target_link_libraries(nes-runtime-benchmark INTERFACE nes-runtime nes-runtime-test-util)
 
 find_package(benchmark CONFIG REQUIRED)
 if (NOT ${benchmark_FOUND})
@@ -33,5 +33,6 @@ function(add_nes_benchmarks TARGET_NAME FILE_PATH)
 endfunction()
 
 add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
-
+add_executable(tpch-benchmark "TPCH/TPCHBenchmark.cpp")
+target_link_libraries(tpch-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
 

@@ -17,14 +17,18 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <utility>
 
 using namespace NES;
 using Runtime::TupleBuffer;
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
+class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -33,33 +37,33 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down ProjectionQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down ProjectionQueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
-};
-
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    int numberOfTuples = 10;
-    for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
-        buf[recordIndex][0].write<int64_t>(recordIndex);
-        buf[recordIndex][1].write<int64_t>(1);
-        buf[recordIndex][2].write<int64_t>(42);
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+        int numberOfTuples = 10;
+        for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
+            buf[recordIndex][0].write<int64_t>(recordIndex);
+            buf[recordIndex][1].write<int64_t>(1);
+            buf[recordIndex][2].write<int64_t>(42);
+        }
+        buf.setNumberOfTuples(numberOfTuples);
     }
-    buf.setNumberOfTuples(numberOfTuples);
-}
+
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+};
 
 TEST_P(ProjectionQueryExecutionTest, projectField) {
     auto schema = Schema::create()

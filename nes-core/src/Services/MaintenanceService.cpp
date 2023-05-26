@@ -22,6 +22,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryStatus.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
@@ -35,7 +36,7 @@ MaintenanceService::MaintenanceService(TopologyPtr topology, RequestQueuePtr que
 
 MaintenanceService::~MaintenanceService() { NES_DEBUG2("Destroying MaintenanceService"); }
 
-std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type) {
+std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType type) {
     std::pair<bool, std::string> result;
     //check if topology node exists
     if (!topology->findNodeWithId(nodeId)) {
@@ -46,12 +47,12 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     }
 
     //check if valid Migration Type
-    if (!MigrationType::isValidMigrationType(type)) {
+    if (type == MigrationType::INVALID) {
         NES_DEBUG2("MaintenanceService: MigrationType: {} is not a valid type. Type must be 1 (Restart), 2 (Migration with "
                    "Buffering) or 3 (Migration without Buffering)",
-                   type);
+                   std::string(magic_enum::enum_name(type)));
         result.first = false;
-        result.second = "MigrationType: " + std::to_string(type)
+        result.second = "MigrationType: " + std::string(magic_enum::enum_name(type))
             + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
               "Buffering)";
         return result;
@@ -59,7 +60,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
 
     //create MaintenanceRequest
     //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
-    if (type == MigrationType::Value::RESTART) {
+    if (type == MigrationType::RESTART) {
         result.first = false;
         result.second = "RESTART currently not supported. Will be added in future";
         //functionality will be added in #2873

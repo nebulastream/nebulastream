@@ -11,11 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cstring>
 #include <iostream>
+#include <memory>
+#include <regex>
 #include <string>
 
 namespace NES::Nautilus {
@@ -149,7 +152,9 @@ Value<UInt32> Text::position(Value<Text>& other) const {
 TextValue* textReplace(const TextValue* text, const TextValue* source, const TextValue* target) {
     uint32_t p = textPosition(text, source);
     if (p == 0) {
-        NES_THROW_RUNTIME_ERROR("no match sourcetext in text");
+        auto resultText = TextValue::create(text->length());
+        std::memcpy(resultText->str(), text->c_str(), text->length());
+        return resultText;
     }
     uint32_t startIndex = p - 1;
     uint32_t len = text->length() - source->length() + target->length();
@@ -327,6 +332,7 @@ TextValue* rightTrim(const TextValue* text, const TextValue* target) {
 const Value<Text> Text::rtrim(Value<Text>& other) const {
     return FunctionCall<>("rightTrim", rightTrim, rawReference, other.value->rawReference);
 }
+
 TextValue* lrTrim(const TextValue* text) {
     if (text->length() <= 1) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
@@ -351,6 +357,45 @@ TextValue* lrTrim(const TextValue* text) {
     }
 
     return resultText;
+}
+
+bool textSimilarTo(const TextValue* text, TextValue* pattern) {
+    std::string target = std::string(text->c_str(), text->length());
+    NES_DEBUG("Received the following source string " << target);
+    std::string strPattern = std::string(pattern->str(), pattern->length());
+    NES_DEBUG("Received the following source string " << strPattern);
+    std::regex regexPattern(strPattern);
+    return std::regex_match(target, regexPattern);
+}
+
+const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
+    return FunctionCall<>("textSimilarTo", textSimilarTo, rawReference, pattern.value->rawReference);
+}
+
+bool textLike(const TextValue* text, TextValue* pattern, Boolean caseSensitive) {
+    NES_DEBUG("Checking in textLike if " << text->c_str() << " and" << pattern << " are a match.");
+    auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
+    auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
+    auto addStartChar = textConcat(TextValue::create("^"), addWildcard);
+    auto likeRegex = textConcat(addStartChar, TextValue::create("$"));
+
+    std::string target = std::string(text->c_str(), text->length());
+    NES_DEBUG("Received the following source string " << target);
+    std::string strPattern = std::string(likeRegex->c_str(), likeRegex->length());
+    NES_DEBUG("Received the following source string " << strPattern);
+    // LIKE and GLOB adoption requires syntax conversion functions
+    // would make regex case in sensitive for ILIKE
+    if (caseSensitive.getValue()) {
+        std::regex regexPattern(strPattern, std::regex::icase);
+        return std::regex_match(target, regexPattern);
+    } else {
+        std::regex regexPattern(strPattern);
+        return std::regex_match(target, regexPattern);
+    }
+}
+
+const Value<Boolean> Text::like(Value<Text>& pattern, Value<Boolean> caseSensitive) const {
+    return FunctionCall<>("textLike", textLike, rawReference, pattern.value->rawReference, caseSensitive);
 }
 
 const Value<Text> Text::trim() const { return FunctionCall<>("lrTrim", lrTrim, rawReference); }

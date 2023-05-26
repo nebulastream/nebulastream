@@ -13,7 +13,7 @@
 */
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Nodes/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -25,7 +25,7 @@ ExpressionNodePtr CALL(const ExpressionItem& udfName, std::vector<ExpressionNode
         NES_ERROR2("UDF name has to be a ConstantValueExpression but it was a {}", udfNameExpression->toString());
     }
     auto udfNameConstantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
-    return UdfCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArguments));
+    return UDFCallExpressionNode::create(udfNameConstantValueExpression, std::move(functionArguments));
 }
 
 }// namespace NES

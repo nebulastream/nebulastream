@@ -126,8 +126,8 @@ std::vector<T> SequenceOption<T>::getValues() const {
 }
 
 template<class T>
-    requires std::is_base_of_v<BaseOption, T> bool
-SequenceOption<T>::empty() const {
+    requires std::is_base_of_v<BaseOption, T>
+bool SequenceOption<T>::empty() const {
     return options.empty();
 }
 

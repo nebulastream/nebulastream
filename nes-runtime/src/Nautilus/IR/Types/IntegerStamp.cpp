@@ -28,10 +28,10 @@ IntegerStamp::BitWidth IntegerStamp::getBitWidth() const { return bitWidth; }
 
 uint32_t IntegerStamp::getNumberOfBits() const {
     switch (getBitWidth()) {
-        case I8: return 8;
-        case I16: return 16;
-        case I32: return 32;
-        case I64: return 64;
+        case BitWidth::I8: return 8;
+        case BitWidth::I16: return 16;
+        case BitWidth::I32: return 32;
+        case BitWidth::I64: return 64;
     }
 }
 

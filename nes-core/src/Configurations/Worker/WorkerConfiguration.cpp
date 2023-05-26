@@ -19,6 +19,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configurations/details/EnumOptionDetails.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
@@ -26,7 +27,18 @@
 #include <thread>
 #include <utility>
 
-namespace NES {
+namespace NES::Configurations {
 
-namespace Configurations {}// namespace Configurations
-}// namespace NES
+template class EnumOption<NES::Spatial::Experimental::SpatialType>;
+template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::QueryCompiler>;
+template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::CompilationStrategy>;
+template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::PipeliningStrategy>;
+template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel>;
+template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::WindowingStrategy>;
+template class EnumOption<NES::Runtime::QueryExecutionMode>;
+template class EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType>;
+template class EnumOption<NES::Optimizer::QueryMergerRule>;
+template class EnumOption<NES::LogLevel>;
+template class EnumOption<NES::Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy>;
+
+}// namespace NES::Configurations

@@ -14,6 +14,7 @@
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MaterializedViewSource.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Views/MaterializedView.hpp>
 
 namespace NES::Experimental::MaterializedView {
@@ -24,7 +25,7 @@ MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
                                                OperatorId operatorId,
                                                OriginId originId,
                                                size_t numSourceLocalBuffers,
-                                               GatheringMode::Value gatheringMode,
+                                               GatheringMode gatheringMode,
                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                                MaterializedViewPtr view)
     : DataSource(std::move(schema),
@@ -39,9 +40,11 @@ MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> MaterializedViewSource::receiveData() { return view->receiveData(); };
 
-std::string MaterializedViewSource::toString() const { return Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG; };
+std::string MaterializedViewSource::toString() const {
+    return std::string(magic_enum::enum_name(SourceType::MATERIALIZEDVIEW_SOURCE));
+};
 
-SourceType MaterializedViewSource::getType() const { return MATERIALIZEDVIEW_SOURCE; };
+SourceType MaterializedViewSource::getType() const { return SourceType::MATERIALIZEDVIEW_SOURCE; };
 
 uint64_t MaterializedViewSource::getViewId() const { return view->getId(); }
 

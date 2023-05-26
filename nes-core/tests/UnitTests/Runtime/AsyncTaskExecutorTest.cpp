@@ -20,8 +20,8 @@
 
 namespace NES {
 
-class AsyncTaskExecutorTest : public Testing::TestWithErrorHandling<testing::TestWithParam<int>> {
-    using Base = Testing::TestWithErrorHandling<testing::TestWithParam<int>>;
+class AsyncTaskExecutorTest : public Testing::TestWithErrorHandling, public testing::WithParamInterface<int> {
+    using Base = Testing::TestWithErrorHandling;
 
   protected:
     Runtime::AsyncTaskExecutorPtr executor{nullptr};

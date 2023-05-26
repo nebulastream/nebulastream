@@ -16,7 +16,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -39,6 +39,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <fstream>
@@ -57,7 +58,7 @@ TopologyManagerServicePtr topologyManagerService;
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
-Catalogs::UDF::UdfCatalogPtr udfCatalog;
+Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
 class ErrorHandler : public Exceptions::ErrorListener {
   public:
@@ -83,44 +84,44 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
-                                 ->addField("a", NES::UINT64)
-                                 ->addField("b", NES::UINT64)
-                                 ->addField("c", NES::UINT64)
-                                 ->addField("d", NES::UINT64)
-                                 ->addField("e", NES::UINT64)
-                                 ->addField("f", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("a", BasicType::UINT64)
+                                 ->addField("b", BasicType::UINT64)
+                                 ->addField("c", BasicType::UINT64)
+                                 ->addField("d", BasicType::UINT64)
+                                 ->addField("e", BasicType::UINT64)
+                                 ->addField("f", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     NES::SchemaPtr schema2 = NES::Schema::create()
-                                 ->addField("g", NES::UINT64)
-                                 ->addField("h", NES::UINT64)
-                                 ->addField("i", NES::UINT64)
-                                 ->addField("j", NES::UINT64)
-                                 ->addField("k", NES::UINT64)
-                                 ->addField("l", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("g", BasicType::UINT64)
+                                 ->addField("h", BasicType::UINT64)
+                                 ->addField("i", BasicType::UINT64)
+                                 ->addField("j", BasicType::UINT64)
+                                 ->addField("k", BasicType::UINT64)
+                                 ->addField("l", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     NES::SchemaPtr schema3 = NES::Schema::create()
-                                 ->addField("m", NES::UINT64)
-                                 ->addField("n", NES::UINT64)
-                                 ->addField("o", NES::UINT64)
-                                 ->addField("p", NES::UINT64)
-                                 ->addField("q", NES::UINT64)
-                                 ->addField("r", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("m", BasicType::UINT64)
+                                 ->addField("n", BasicType::UINT64)
+                                 ->addField("o", BasicType::UINT64)
+                                 ->addField("p", BasicType::UINT64)
+                                 ->addField("q", BasicType::UINT64)
+                                 ->addField("r", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     NES::SchemaPtr schema4 = NES::Schema::create()
-                                 ->addField("s", NES::UINT64)
-                                 ->addField("t", NES::UINT64)
-                                 ->addField("u", NES::UINT64)
-                                 ->addField("v", NES::UINT64)
-                                 ->addField("w", NES::UINT64)
-                                 ->addField("x", NES::UINT64)
-                                 ->addField("time1", NES::UINT64)
-                                 ->addField("time2", NES::UINT64);
+                                 ->addField("s", BasicType::UINT64)
+                                 ->addField("t", BasicType::UINT64)
+                                 ->addField("u", BasicType::UINT64)
+                                 ->addField("v", BasicType::UINT64)
+                                 ->addField("w", BasicType::UINT64)
+                                 ->addField("x", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
 
     //Add the logical and physical stream to the stream catalog
     uint64_t counter = 1;
@@ -390,7 +391,7 @@ int main(int argc, const char* argv[]) {
             cfg.set("model", false);
             cfg.set("type_check", false);
             auto z3Context = std::make_shared<z3::context>(cfg);
-            udfCatalog = Catalogs::UDF::UdfCatalog::create();
+            udfCatalog = Catalogs::UDF::UDFCatalog::create();
             Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
             auto globalQueryPlan = GlobalQueryPlan::create();
@@ -412,7 +413,7 @@ int main(int argc, const char* argv[]) {
 
                 auto queryPlan = queryObjects[i];
                 queryCatalogService->createNewEntry("", queryPlan, placementStrategy);
-                PlacementStrategy::Value queryPlacementStrategy = PlacementStrategy::getFromString(placementStrategy);
+                PlacementStrategy queryPlacementStrategy = magic_enum::enum_cast<PlacementStrategy>(placementStrategy).value();
                 auto runQueryRequest = RunQueryRequest::create(queryPlan, queryPlacementStrategy);
 
                 globalQueryUpdatePhase->execute({runQueryRequest});

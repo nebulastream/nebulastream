@@ -18,6 +18,8 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 namespace NES::Runtime::Execution::Operators {
+class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
 * @brief GlobalSlicePreAggregation operator that performs the pre-aggregation step for a global window aggregation.
@@ -28,8 +30,7 @@ class GlobalSlicePreAggregation : public ExecutableOperator {
     * @brief Creates a GlobalSlicePreAggregation operator
     */
     GlobalSlicePreAggregation(uint64_t operatorHandlerIndex,
-                              Expressions::ExpressionPtr timestampExpression,
-                              const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
+                              TimeFunctionPtr timeFunction,
                               const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -38,8 +39,7 @@ class GlobalSlicePreAggregation : public ExecutableOperator {
 
   private:
     const uint64_t operatorHandlerIndex;
-    const Expressions::ExpressionPtr timestampExpression;
-    const std::vector<Expressions::ExpressionPtr> aggregationExpressions;
+    const TimeFunctionPtr timeFunction;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 

@@ -108,16 +108,21 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
 
         //Convert window definitions from both signature into equality conditions
         //If window key from one signature doesn't exist in other signature then they are not equal.
-        for (const auto& windowExpression : windowsExpressions) {
-            if (otherWindowExpressions.find(windowExpression.first) == otherWindowExpressions.end()) {
-                NES_WARNING2("Window expression with key {} doesn't exists in window expressions of other signature",
-                             windowExpression.first);
-                return false;
+        if (windowsExpressions.size() > 1 && otherWindowExpressions.size() > 1) {
+            NES_NOT_IMPLEMENTED();
+        } else if (windowsExpressions.size() != 0) {
+            for (const auto& windowExpression : windowsExpressions[0]) {
+                if (otherWindowExpressions[0].find(windowExpression.first) == otherWindowExpressions[0].end()) {
+                    NES_WARNING2("Window expression with key {}",
+                                 windowExpression.first,
+                                 " doesn't exists in window expressions of other signature");
+                    return false;
+                }
+                //For each column expression of the column in other signature we try to create a DNF using
+                // each column expression of the same column in this signature.
+                z3::ExprPtr otherWindowExpression = otherWindowExpressions[0][windowExpression.first];
+                allConditions.push_back(to_expr(*context, Z3_mk_eq(*context, *otherWindowExpression, *windowExpression.second)));
             }
-            //For each column expression of the column in other signature we try to create a DNF using
-            // each column expression of the same column in this signature.
-            z3::ExprPtr otherWindowExpression = otherWindowExpressions[windowExpression.first];
-            allConditions.push_back(to_expr(*context, Z3_mk_eq(*context, *otherWindowExpression, *windowExpression.second)));
         }
 
         //Add conditions from both signature into the collection of all conditions

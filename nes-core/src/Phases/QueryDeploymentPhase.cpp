@@ -77,7 +77,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Deployed, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::DEPLOYED, "");
     }
 
     bool successDeploy = deployQuery(sharedQueryId, executionNodes);
@@ -91,7 +91,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::RUNNING, "");
     }
 
     NES_DEBUG2("QueryService: start query");
@@ -138,7 +138,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         }
         completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG2("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} success={}", queryId, result);
     return result;
 }
@@ -168,7 +168,7 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
         completionQueues[queueForExecutionNode] = 1;
     }
 
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Start);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
     NES_DEBUG2("QueryDeploymentPhase: Finished starting execution plan for query with Id {} success={}", queryId, result);
     return result;
 }

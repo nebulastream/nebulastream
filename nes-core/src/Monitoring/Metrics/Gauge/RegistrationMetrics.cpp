@@ -48,7 +48,7 @@ RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& 
 }
 
 NES::SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
-    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::ROW_LAYOUT)
+    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField(prefix + "node_id", BasicType::UINT64)
 
                                 ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)

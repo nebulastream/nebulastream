@@ -15,7 +15,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -118,7 +118,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   this->coordinatorConfiguration->optimizer,
                                                   udfCatalog);
 
-    udfCatalog = Catalogs::UDF::UdfCatalog::create();
+    udfCatalog = Catalogs::UDF::UDFCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, queryRequestQueue);
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
@@ -192,6 +192,15 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //Start rest that accepts queryIdAndCatalogEntryMapping form the outsides
     NES_DEBUG2("NesCoordinator starting rest server");
+
+    //setting the allowed origins for http request to the rest server
+    std::optional<std::string> allowedOrigin = std::nullopt;
+    auto originString = coordinatorConfiguration->restServerCorsAllowedOrigin.getValue();
+    if (!originString.empty()) {
+        NES_INFO2("CORS: allow origin: {}", originString);
+        allowedOrigin = originString;
+    }
+
     restServer = std::make_shared<RestServer>(restIp,
                                               restPort,
                                               this->inherited0::weak_from_this(),
@@ -205,7 +214,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager(),
-                                              locationService);
+                                              locationService,
+                                              allowedOrigin);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking
@@ -342,7 +352,7 @@ QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 
-Catalogs::UDF::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
+Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
@@ -359,5 +369,7 @@ SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return
 TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
+
+GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
 
 }// namespace NES

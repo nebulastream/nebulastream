@@ -94,8 +94,8 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace Query
 
 namespace UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
@@ -175,7 +175,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Return the UDF catalog.
      * @return Pointer to the UDF catalog.
      */
-    Catalogs::UDF::UdfCatalogPtr getUdfCatalog();
+    Catalogs::UDF::UDFCatalogPtr getUDFCatalog();
 
     /**
      * @brief Get instance of monitoring service
@@ -224,6 +224,13 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     LocationServicePtr getLocationService() const;
 
+    //Todo #3740: this function is added for testing the fail query request. can be removed once the new request executor is implemented
+    /**
+     * getter for the global execution plan
+     * @return
+     */
+    GlobalExecutionPlanPtr getGlobalExecutionPlan() const;
+
     NesWorkerPtr getNesWorker();
 
   private:
@@ -260,7 +267,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerRPCClientPtr workerRpcClient;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     bool enableMonitoring;
     LocationServicePtr locationService;
 

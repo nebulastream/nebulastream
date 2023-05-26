@@ -46,7 +46,7 @@ class AttributeField {
 
     [[nodiscard]] DataTypePtr getDataType() const;
 
-    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] const std::string& getName() const;
 
     void setName(std::string newName);
 

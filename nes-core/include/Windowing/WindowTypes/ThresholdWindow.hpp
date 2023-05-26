@@ -40,19 +40,21 @@ class ThresholdWindow : public ContentBasedWindowType {
     */
     static WindowTypePtr of(ExpressionNodePtr predicate, uint64_t minimumCount);
 
-    /**
-    * @brief Returns true, because this a threshold window
-    * @return true
-    */
-    bool isThresholdWindow() override;
-
     std::string toString() override;
 
     bool equal(WindowTypePtr otherWindowType) override;
 
+    /**
+     * @brief return the content-based Subwindow Type, i.e., THRESHOLDWINDOW
+     * @return enum content-based Subwindow Type
+     */
+    ContentBasedSubWindowType getContentBasedSubWindowType() override;
+
     [[nodiscard]] const ExpressionNodePtr& getPredicate() const;
 
     uint64_t getMinimumCount();
+
+    bool inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
 
   private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);

@@ -21,11 +21,7 @@
 #include <unordered_map>
 
 namespace NES {
-
-class QueryStatus {
-
-  public:
-    /**
+/**
      * @brief Represents various states the user query goes through.
      *
      * Registered: Query is registered to be scheduled to the worker nodes (added to the queue).
@@ -40,35 +36,20 @@ class QueryStatus {
      * Restarting: restarting the query
      * Migrating: migrating query
      */
-    enum Value : uint8_t {
-        Registered = 0,
-        Optimizing,
-        Deployed,
-        Running,
-        MarkedForHardStop,
-        MarkedForSoftStop,
-        SoftStopTriggered,
-        SoftStopCompleted,
-        Stopped,
-        MarkedForFailure,
-        Failed,
-        Restarting,
-        Migrating
-    };
-
-    /**
-     * @brief Get query status from string
-     * @param queryStatus : string representation of query status
-     * @return enum representing query status
-     */
-    static Value getFromString(const std::string queryStatus);
-
-    /**
-     * @brief Get query status in string representation
-     * @param queryStatus : enum value of the query status
-     * @return string representation of query status
-     */
-    static std::string toString(const Value queryStatus);
+enum class QueryStatus : uint8_t {
+    REGISTERED = 0,
+    OPTIMIZING,
+    DEPLOYED,
+    RUNNING,
+    MARKED_FOR_HARD_STOP,
+    MARKED_FOR_SOFT_STOP,
+    SOFT_STOP_TRIGGERED,
+    SOFT_STOP_COMPLETED,
+    STOPPED,
+    MARKED_FOR_FAILURE,
+    FAILED,
+    RESTARTING,
+    MIGRATING
 };
 
 }// namespace NES

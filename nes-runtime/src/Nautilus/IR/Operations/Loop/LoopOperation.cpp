@@ -18,7 +18,7 @@
 #include <utility>
 namespace NES::Nautilus::IR::Operations {
 LoopOperation::LoopOperation(LoopType loopType)
-    : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
+    : Operation(Operation::OperationType::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
 // Todo leads to segfault

@@ -63,8 +63,8 @@ class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 namespace Catalogs::UDF {
-class JavaUdfDescriptor;
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
+class JavaUDFDescriptor;
+using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 }// namespace Catalogs::UDF
 
 namespace InferModel {

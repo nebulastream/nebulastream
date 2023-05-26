@@ -17,7 +17,7 @@
 #include <sstream>
 namespace NES::QueryCompilation {
 
-StatementType CommentStatement::getStamentType() const { return COMMENT_STMT; }
+StatementType CommentStatement::getStamentType() const { return StatementType::COMMENT_STMT; }
 
 CodeExpressionPtr CommentStatement::getCode() const {
     std::stringstream stmt;

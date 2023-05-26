@@ -33,7 +33,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                uint32_t numOfProducers,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
-                               FaultToleranceType::Value faultToleranceType,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  std::move(nodeEngine),
@@ -49,7 +49,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
 
 MonitoringSink::~MonitoringSink() = default;
 
-SinkMediumTypes MonitoringSink::getSinkMediumType() { return MONITORING_SINK; }
+SinkMediumTypes MonitoringSink::getSinkMediumType() { return SinkMediumTypes::MONITORING_SINK; }
 
 bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
@@ -81,7 +81,7 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 std::string MonitoringSink::toString() const {
     std::stringstream ss;
     ss << "MONITORING_SINK(";
-    ss << "COLLECTOR(" << NES::Monitoring::toString(collectorType) << ")";
+    ss << "COLLECTOR(" << std::string(magic_enum::enum_name(collectorType)) << ")";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
     ss << ")";
     return ss.str();

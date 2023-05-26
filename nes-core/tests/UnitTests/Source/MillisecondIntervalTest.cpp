@@ -89,7 +89,6 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
 
         csvSourceType = CSVSourceType::create();
-        csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
         csvSourceType->setGatheringInterval(550);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
@@ -169,8 +168,8 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
                            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
                            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+                           ->addField("current_ms", BasicType::UINT64)
+                           ->addField("ip", BasicType::INT32);
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;
@@ -220,8 +219,8 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
                            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
                            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
                            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+                           ->addField("current_ms", BasicType::UINT64)
+                           ->addField("ip", BasicType::INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
     uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
@@ -264,7 +263,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0u);
     //register logical source
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 

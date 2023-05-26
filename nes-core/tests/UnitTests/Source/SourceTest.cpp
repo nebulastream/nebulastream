@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -34,7 +33,6 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -173,7 +171,7 @@ class MockDataSource : public DataSource {
                    Runtime::QueryManagerPtr queryManager,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
-                   GatheringMode::Value gatheringMode,
+                   GatheringMode gatheringMode,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema,
                      bufferManager,
@@ -191,7 +189,7 @@ class MockDataSource : public DataSource {
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode::Value gatheringMode,
+                       GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
         return std::make_shared<MockDataSource>(schema,
                                                 bufferManager,
@@ -218,7 +216,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                                      Runtime::QueryManagerPtr queryManager,
                                      OperatorId operatorId,
                                      size_t numSourceLocalBuffers,
-                                     GatheringMode::Value gatheringMode,
+                                     GatheringMode gatheringMode,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema,
                      bufferManager,
@@ -251,7 +249,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                     Runtime::QueryManagerPtr queryManager,
                     OperatorId operatorId,
                     size_t numSourceLocalBuffers,
-                    GatheringMode::Value gatheringMode,
+                    GatheringMode gatheringMode,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema,
                      bufferManager,
@@ -378,7 +376,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                          uint64_t numbersOfBufferToProduce,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
-                         GatheringMode::Value gatheringMode,
+                         GatheringMode gatheringMode,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : GeneratorSource(schema,
                           bufferManager,
@@ -424,7 +422,7 @@ class LambdaSourceProxy : public LambdaSource {
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         OperatorId operatorId,
         size_t numSourceLocalBuffers,
-        GatheringMode::Value gatheringMode,
+        GatheringMode gatheringMode,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : LambdaSource(schema,
                        bufferManager,
@@ -520,24 +518,24 @@ class SourceTest : public Testing::NESBaseTest {
                            ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
                            ->addField("ad_type", DataTypeFactory::createFixedChar(9))
                            ->addField("event_type", DataTypeFactory::createFixedChar(9))
-                           ->addField("current_ms", UINT64)
-                           ->addField("ip", INT32);
+                           ->addField("current_ms", BasicType::UINT64)
+                           ->addField("ip", BasicType::INT32);
         this->lambdaSchema = Schema::create()
-                                 ->addField("user_id", UINT64)
-                                 ->addField("page_id", UINT64)
-                                 ->addField("campaign_id", UINT64)
-                                 ->addField("ad_type", UINT64)
-                                 ->addField("event_type", UINT64)
-                                 ->addField("current_ms", UINT64)
-                                 ->addField("ip", UINT64)
-                                 ->addField("d1", UINT64)
-                                 ->addField("d2", UINT64)
-                                 ->addField("d3", UINT32)
-                                 ->addField("d4", UINT16);
+                                 ->addField("user_id", BasicType::UINT64)
+                                 ->addField("page_id", BasicType::UINT64)
+                                 ->addField("campaign_id", BasicType::UINT64)
+                                 ->addField("ad_type", BasicType::UINT64)
+                                 ->addField("event_type", BasicType::UINT64)
+                                 ->addField("current_ms", BasicType::UINT64)
+                                 ->addField("ip", BasicType::UINT64)
+                                 ->addField("d1", BasicType::UINT64)
+                                 ->addField("d2", BasicType::UINT64)
+                                 ->addField("d3", BasicType::UINT32)
+                                 ->addField("d4", BasicType::UINT16);
         this->decimalsSchema = Schema::create()
-                                   ->addField("positive_with_decimal", FLOAT32)
-                                   ->addField("negative_with_decimal", FLOAT32)
-                                   ->addField("longer_precision_decimal", FLOAT32);
+                                   ->addField("positive_with_decimal", BasicType::FLOAT32)
+                                   ->addField("negative_with_decimal", BasicType::FLOAT32)
+                                   ->addField("longer_precision_decimal", BasicType::FLOAT32);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -575,7 +573,7 @@ class SourceTest : public Testing::NESBaseTest {
                                              Runtime::QueryManagerPtr queryManager,
                                              OperatorId operatorId,
                                              size_t numSourceLocalBuffers,
-                                             GatheringMode::Value gatheringMode,
+                                             GatheringMode gatheringMode,
                                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
         return std::make_shared<DataSourceProxy>(schema,
                                                  bufferManager,
@@ -749,21 +747,6 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
     EXPECT_EQ(mDataSource.wasGracefullyStopped, Runtime::QueryTerminationType::HardStop);// private side-effect, use FRIEND_TEST
 }
 
-TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
-    // create a DefaultSource instead of raw DataSource
-    const DataSourcePtr source =
-        createDefaultDataSourceWithSchemaForOneBuffer(this->schema,
-                                                      this->nodeEngine->getBufferManager(),
-                                                      this->nodeEngine->getQueryManager(),
-                                                      this->operatorId,
-                                                      0,
-                                                      this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::INTERVAL_MODE);
-    ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::INGESTION_RATE_MODE);
-    EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));
-}
-
 TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
     auto mDataSource = MockDataSource::create(this->schema,
                                               this->nodeEngine->getBufferManager(),
@@ -819,7 +802,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::INTERVAL_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
@@ -866,7 +849,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::INGESTION_RATE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 11;
@@ -912,7 +895,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 1;
@@ -958,7 +941,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
@@ -1006,7 +989,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                            this->numSourceLocalBuffersDefault,
                                                            GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
-    mDataSource->numBuffersToProcess = 1;
+    mDataSource->numberOfBuffersToProduce = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->setGatheringInterval(std::chrono::milliseconds{1000});
@@ -1404,46 +1387,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                  || !strcmp(content->event_type, "purchase")));
 }
 
-TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
-    // Full pass: 52 tuples in first buffer, 48 in second
-    // expectedNumberOfBuffers in c-tor, no looping
-    uint64_t expectedNumberOfTuples = 100;
-    uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(this->path_to_file);
-    sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setGatheringInterval(this->gatheringInterval);
-    CSVSourceProxy csvDataSource(this->schema,
-                                 this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(),
-                                 sourceConfig,
-                                 this->operatorId,
-                                 this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_FALSE(csvDataSource.loopOnFile);
-    auto buf = this->GetEmptyBuffer();
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
-        Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
-        csvDataSource.fillBuffer(buffer);
-        EXPECT_NE(buf->getNumberOfTuples(), 0u);
-        EXPECT_TRUE(buf.has_value());
-        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
-            auto tuple = buf->getBuffer<ysbRecord>();
-            EXPECT_STREQ(tuple->ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
-                         || !strcmp(tuple->event_type, "purchase")));
-        }
-    }
-    EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
-    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
-}
-
 TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     // Full pass: 52 tuples in first buffer, 48 in second
     // expectedNumberOfBuffers in c-tor, no looping
@@ -1462,7 +1405,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1479,23 +1421,20 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
         }
     }
     EXPECT_TRUE(csvDataSource.fileEnded);
-    EXPECT_FALSE(csvDataSource.loopOnFile);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
 
-TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
-    // Full pass: 52 tuples in a buffer, 2*52 = 104 in total
-    // file is 52 + 48 but it loops, so 1st: 52, 2nd: also 52
-    // expectedNumberOfBuffers set 0 in c-tor, looping
-    uint64_t expectedNumberOfTuples = 104;
+TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
+    // Full pass: 52 tuples in first buffer, 48 in second
+    // expectedNumberOfBuffers in c-tor, no looping
+    uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(this->path_to_file);
-    sourceConfig->setNumberOfBuffersToProduce(0);
+    sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setGatheringInterval(this->gatheringInterval);
-
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1504,16 +1443,22 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
-    ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
-    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {
+    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(buffer);
+        EXPECT_NE(buf->getNumberOfTuples(), 0u);
+        EXPECT_TRUE(buf.has_value());
+        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
+            auto tuple = buf->getBuffer<ysbRecord>();
+            EXPECT_STREQ(tuple->ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
+                         || !strcmp(tuple->event_type, "purchase")));
+        }
     }
-    EXPECT_FALSE(csvDataSource.fileEnded);
-    EXPECT_TRUE(csvDataSource.loopOnFile);
+    EXPECT_TRUE(csvDataSource.fileEnded);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
 }
@@ -1521,14 +1466,14 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
 TEST_F(SourceTest, testCSVSourceIntTypes) {
     // use custom schema and file, read once
     SchemaPtr int_schema = Schema::create()
-                               ->addField("uint64", UINT64)
-                               ->addField("int64", INT64)
-                               ->addField("uint32", UINT32)
-                               ->addField("int32", INT32)
-                               ->addField("uint16", UINT16)
-                               ->addField("int16", INT16)
-                               ->addField("uint8", UINT8)
-                               ->addField("int8", INT8);
+                               ->addField("uint64", BasicType::UINT64)
+                               ->addField("int64", BasicType::INT64)
+                               ->addField("uint32", BasicType::UINT32)
+                               ->addField("int32", BasicType::INT32)
+                               ->addField("uint16", BasicType::UINT16)
+                               ->addField("int16", BasicType::INT16)
+                               ->addField("uint8", BasicType::UINT8)
+                               ->addField("int8", BasicType::INT8);
 
     std::string path_to_int_file = std::string(TEST_DATA_DIRECTORY) + "every-int.csv";
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
@@ -1589,7 +1534,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
-    SchemaPtr float_schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
+    SchemaPtr float_schema = Schema::create()->addField("float64", BasicType::FLOAT64)->addField("float32", BasicType::FLOAT32);
     std::string path_to_float_file = std::string(TEST_DATA_DIRECTORY) + "every-float.csv";
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(path_to_float_file);
@@ -1622,10 +1567,10 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     // use custom schema and file, read once
     SchemaPtr bool_schema = Schema::create()
-                                ->addField("false", BOOLEAN)
-                                ->addField("true", BOOLEAN)
-                                ->addField("falsey", BOOLEAN)
-                                ->addField("truthy", BOOLEAN);
+                                ->addField("false", BasicType::BOOLEAN)
+                                ->addField("true", BasicType::BOOLEAN)
+                                ->addField("falsey", BasicType::BOOLEAN)
+                                ->addField("truthy", BasicType::BOOLEAN);
 
     std::string path_to_bool_file = std::string(TEST_DATA_DIRECTORY) + "every-boolean.csv";
 
@@ -1722,7 +1667,8 @@ TEST_F(SourceTest, TCPSourcePrint) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: 1\ndecideMessageSize: 0\ntupleSeparator: \n\nsocketBufferSize: "
+        "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
+        "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
@@ -1757,7 +1703,8 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
         "current_ms:INTEGER ip:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: 5000\nsocketDomain: "
-        "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: 1\ndecideMessageSize: 0\ntupleSeparator: \n\nsocketBufferSize: "
+        "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
+        "\n\nsocketBufferSize: "
         "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
@@ -1911,7 +1858,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
-        R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
+        R"(Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
@@ -2045,8 +1992,10 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::MetricType::CpuMetric,
+                                                     Monitoring::MetricType::DiskMetric,
+                                                     Monitoring::MetricType::MemoryMetric,
+                                                     Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -2063,8 +2012,10 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::MetricType::CpuMetric,
+                                                     Monitoring::MetricType::DiskMetric,
+                                                     Monitoring::MetricType::MemoryMetric,
+                                                     Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 
@@ -2092,8 +2043,10 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::set<Monitoring::MetricType>(
-        {Monitoring::CpuMetric, Monitoring::DiskMetric, Monitoring::MemoryMetric, Monitoring::NetworkMetric});
+    auto metrics = std::set<Monitoring::MetricType>({Monitoring::MetricType::CpuMetric,
+                                                     Monitoring::MetricType::DiskMetric,
+                                                     Monitoring::MetricType::MemoryMetric,
+                                                     Monitoring::MetricType::NetworkMetric});
     auto plan = Monitoring::MonitoringPlan::create(metrics);
     auto testCollector = std::make_shared<Monitoring::DiskCollector>();
 

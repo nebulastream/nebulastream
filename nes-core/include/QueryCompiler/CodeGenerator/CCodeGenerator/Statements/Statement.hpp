@@ -23,7 +23,7 @@
 
 namespace NES {
 namespace QueryCompilation {
-enum StatementType {
+enum class StatementType : uint8_t {
     RETURN_STMT,
     CONTINUE_STMT,
     IF_STMT,
@@ -43,7 +43,7 @@ enum StatementType {
     COMMENT_STMT
 };
 
-enum BracketMode { NO_BRACKETS, BRACKETS };
+enum class BracketMode : uint8_t { NO_BRACKETS, BRACKETS };
 
 class Statement;
 using StatementPtr = std::shared_ptr<Statement>;

@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Streaming)
+
 add_source_files(nes-core
         PhysicalBatchJoinOperator.cpp
         PhysicalBatchJoinBuildOperator.cpp
@@ -18,8 +20,4 @@ add_source_files(nes-core
         PhysicalJoinOperator.cpp
         PhysicalJoinBuildOperator.cpp
         PhysicalJoinSinkOperator.cpp
-        PhysicalStreamJoinOperator.cpp
-        PhysicalStreamJoinBuildOperator.cpp
-        PhysicalStreamJoinSinkOperator.cpp
 )
-

@@ -21,7 +21,7 @@ BasicBlockInvocation::BasicBlockInvocation()
 
 void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = block; }
 
-BasicBlockPtr BasicBlockInvocation::getBlock() { return basicBlock; }
+BasicBlockPtr BasicBlockInvocation::getBlock() const { return basicBlock; }
 
 void BasicBlockInvocation::addArgument(OperationPtr argument) {
     this->operations.emplace_back(argument);
@@ -39,7 +39,7 @@ int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
     return -1;
 }
 
-std::vector<OperationPtr> BasicBlockInvocation::getArguments() {
+std::vector<OperationPtr> BasicBlockInvocation::getArguments() const {
     std::vector<OperationPtr> arguments;
     for (auto& arg : this->operations) {
         arguments.emplace_back(arg.lock());

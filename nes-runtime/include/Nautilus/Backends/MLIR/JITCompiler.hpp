@@ -16,6 +16,8 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
 
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
 #include <llvm/IR/Module.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
@@ -34,10 +36,12 @@ class JITCompiler {
     ~JITCompiler();// Disable default destructor
 
     static std::unique_ptr<mlir::ExecutionEngine>
-    jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
-                     llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+    jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
+                     const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
                      const std::vector<std::string>& jitProxyFunctionSymbols,
-                     const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses);
+                     const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
+                     const CompilationOptions& options,
+                     const DumpHelper& dumpHelper);
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

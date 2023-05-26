@@ -16,7 +16,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -80,9 +80,9 @@ Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLa
                           Value<MemRef> bufferAddress,
                           Value<UInt64> recordIndex) {
     // read all fields
-    if (memoryLayout->getSchema()->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         return readRowLayout(memoryLayout, projections, bufferAddress, recordIndex);
-    } else if (memoryLayout->getSchema()->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         return readColumnarLayout(memoryLayout, projections, bufferAddress, recordIndex);
     }
     NES_THROW_RUNTIME_ERROR("Layout not supported");

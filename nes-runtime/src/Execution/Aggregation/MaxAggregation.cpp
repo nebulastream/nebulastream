@@ -15,11 +15,15 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <limits>
 
 namespace NES::Runtime::Execution::Aggregation {
-MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
-    : AggregationFunction(inputType, finalType) {}
+MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType,
+                                               const PhysicalTypePtr& resultType,
+                                               const Expressions::ExpressionPtr& inputExpression,
+                                               const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
+    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
 template<class T>
 T max(T first, T second) {
@@ -56,28 +60,29 @@ Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Va
     throw Exceptions::NotImplementedException("Type not implemented");
 }
 
-void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
+void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) {
     // load
-    auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
+    auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
     // compare
     // TODO implement the function in nautilus if #3500 is fixed
-    auto result = callMax(oldValue, value);
+    auto inputValue = inputExpression->execute(inputRecord);
+    auto result = callMax(oldValue, inputValue);
     // store
-    memref.store(result);
+    state.store(result);
 }
 
-void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
-    auto left = AggregationFunction::loadFromMemref(memref1, inputType);
-    auto right = AggregationFunction::loadFromMemref(memref2, inputType);
+void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
+    auto left = AggregationFunction::loadFromMemref(state1, inputType);
+    auto right = AggregationFunction::loadFromMemref(state2, inputType);
     // TODO implement the function in nautilus if #3500 is fixed
     auto result = callMax(left, right);
     // store
-    memref1.store(result);
+    state1.store(result);
 }
 
-Nautilus::Value<> MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = AggregationFunction::loadFromMemref(memref, finalType);
-    return finalVal;
+void MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) {
+    auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
+    resultRecord.write(resultFieldIdentifier, finalVal);
 }
 void MaxAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto maxVal = createConstValue(std::numeric_limits<int64_t>::min(), inputType);

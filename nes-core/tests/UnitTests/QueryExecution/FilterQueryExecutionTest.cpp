@@ -18,6 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <utility>
@@ -25,7 +27,10 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
+class FilterQueryExecutionTest : public Testing::TestWithErrorHandling,
                                  public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -34,31 +39,31 @@ class FilterQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down FilterQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
-};
-
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        buf[recordIndex][0].write<int64_t>(recordIndex);
-        buf[recordIndex][1].write<int64_t>(1);
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+            buf[recordIndex][0].write<int64_t>(recordIndex);
+            buf[recordIndex][1].write<int64_t>(1);
+        }
+        buf.setNumberOfTuples(10);
     }
-    buf.setNumberOfTuples(10);
-}
+
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+};
 
 TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);

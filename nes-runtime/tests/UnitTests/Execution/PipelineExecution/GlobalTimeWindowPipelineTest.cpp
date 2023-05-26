@@ -30,6 +30,7 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -39,6 +40,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -49,7 +51,7 @@ class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public Abstrac
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GlobalTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -87,20 +89,17 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto aggregationResultFieldName = "test$sum";
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-    auto slicePreAggregation = std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
-                                                                                      readTsField,
-                                                                                      aggregationFields,
-                                                                                      aggregationFunctions);
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName)};
+    auto slicePreAggregation =
+        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+                                                               std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                               aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    std::vector<std::string> resultFields = {aggregationResultFieldName};
     auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
                                                                         aggregationFunctions,
-                                                                        resultFields,
                                                                         "start",
                                                                         "end",
                                                                         /*origin id*/ 0);
@@ -134,7 +133,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
@@ -142,7 +141,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
-    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
@@ -182,26 +181,21 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2, readF2, readF2, readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType),
-        std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType),
-        std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType),
-        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType)};
-    auto slicePreAggregation = std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
-                                                                                      readTsField,
-                                                                                      aggregationFields,
-                                                                                      aggregationFunctions);
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName1),
+        std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName2),
+        std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName3),
+        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName4)};
+    auto slicePreAggregation =
+        std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+                                                               std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                               aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-    std::vector<std::string> resultFields = {aggregationResultFieldName1,
-                                             aggregationResultFieldName2,
-                                             aggregationResultFieldName3,
-                                             aggregationResultFieldName4};
     auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
                                                                         aggregationFunctions,
-                                                                        resultFields,
+
                                                                         "start",
                                                                         "end",
                                                                         /*origin id*/ 0);
@@ -238,7 +232,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
@@ -246,7 +240,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
 
-    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
@@ -270,7 +264,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         GlobalTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<GlobalTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

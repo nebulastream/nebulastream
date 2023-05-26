@@ -77,7 +77,7 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
         auto newReconf = ReconfigurationMessage(queryId,
                                                 querySubPlanId,
-                                                Initialize,
+                                                ReconfigurationType::Initialize,
                                                 inherited0::shared_from_this(),
                                                 std::make_any<uint32_t>(activeProducers.load()));
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
@@ -189,7 +189,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
     NES_DEBUG2("Going to reconfigure pipeline {} belonging to query id: {} stage id: {}", pipelineId, querySubPlanId, pipelineId);
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
-        case Initialize: {
+        case ReconfigurationType::Initialize: {
             NES_ASSERT2_FMT(isRunning(),
                             "Going to reconfigure a non-running pipeline "
                                 << pipelineId << " belonging to query id: " << querySubPlanId << " stage id: " << pipelineId);
@@ -197,9 +197,9 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
             context.setObjectRefCnt(this, refCnt);
             break;
         }
-        case FailEndOfStream:
-        case HardEndOfStream:
-        case SoftEndOfStream: {
+        case ReconfigurationType::FailEndOfStream:
+        case ReconfigurationType::HardEndOfStream:
+        case ReconfigurationType::SoftEndOfStream: {
             if (context.decreaseObjectRefCnt(this) == 1) {
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->reconfigure(task, context);
@@ -219,7 +219,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                pipelineId);
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
-        case FailEndOfStream: {
+        case ReconfigurationType::FailEndOfStream: {
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {//all producers sent EOS
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
@@ -250,16 +250,17 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 }
             }
         }
-        case HardEndOfStream:
-        case SoftEndOfStream: {
+        case ReconfigurationType::HardEndOfStream:
+        case ReconfigurationType::SoftEndOfStream: {
             //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {//all producers sent EOS
                 NES_DEBUG2("Reconfiguration of pipeline belonging to subplanId:{} stage id:{} reached prev=1",
                            querySubPlanId,
                            pipelineId);
-                auto terminationType = task.getType() == Runtime::SoftEndOfStream ? Runtime::QueryTerminationType::Graceful
-                                                                                  : Runtime::QueryTerminationType::HardStop;
+                auto terminationType = task.getType() == Runtime::ReconfigurationType::SoftEndOfStream
+                    ? Runtime::QueryTerminationType::Graceful
+                    : Runtime::QueryTerminationType::HardStop;
 
                 // do not change the order here
                 // first, stop and drain handlers, if necessary

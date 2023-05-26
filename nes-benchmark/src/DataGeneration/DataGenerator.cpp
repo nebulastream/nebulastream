@@ -22,15 +22,16 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 
 Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
 
     auto schema = this->getSchema();
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
-    } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
     }
 

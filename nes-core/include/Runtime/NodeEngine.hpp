@@ -70,7 +70,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     friend class NodeEngineBuilder;
 
   public:
-    enum NodeEngineQueryStatus { started, stopped, registered };
+    enum class NodeEngineQueryStatus : uint8_t { started, stopped, registered };
 
     virtual ~NodeEngine() override;
 

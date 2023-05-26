@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {

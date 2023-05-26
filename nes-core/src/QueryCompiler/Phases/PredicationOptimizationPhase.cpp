@@ -37,7 +37,7 @@ PredicationOptimizationPhase::PredicationOptimizationPhase(
     : filterProcessingStrategy(filterProcessingStrategy) {}
 
 PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
-    if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
+    if (filterProcessingStrategy == QueryCompilerOptions::FilterProcessingStrategy::BRANCHED) {
         NES_DEBUG2("PredicationOptimizationPhase: No optimization requested or applied.");
         return pipelinedQueryPlan;
     }
@@ -51,7 +51,7 @@ PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pi
 }
 
 OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
-    if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
+    if (filterProcessingStrategy == QueryCompilerOptions::FilterProcessingStrategy::BRANCHED) {
         NES_DEBUG2("PredicationOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
     }

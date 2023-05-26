@@ -16,7 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -52,14 +52,14 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ILPPlacementTest : public Testing::TestWithErrorHandling {
 
   protected:
     z3::ContextPtr z3Context;
 
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
     TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -69,12 +69,12 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup ILPPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
         z3::config cfg;
         cfg.set("timeout", 50000);

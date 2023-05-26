@@ -14,6 +14,7 @@
 
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -252,7 +253,9 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
 
         auto sharedQueryId = request->queryid();
         auto subQueryId = request->subqueryid();
-        if (!queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId)) {
+        try {
+            queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId);
+        } catch (std::exception& e) {
             NES_ERROR2("Unable to mark queries for failure :: subQueryId={}", subQueryId);
             return Status::CANCELLED;
         }
@@ -345,7 +348,7 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
               sharedQueryId)
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SoftStopTriggered);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SOFT_STOP_TRIGGERED);
 
     //update response
     response->set_success(success);
@@ -360,7 +363,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     auto querySubPlanId = request->querysubplanid();
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopCompleted);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SOFT_STOP_COMPLETED);
 
     //update response
     response->set_success(success);

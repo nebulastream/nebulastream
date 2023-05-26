@@ -37,6 +37,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -44,14 +45,12 @@
 namespace NES::Runtime::Execution {
 class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
-    std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
-    std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -96,16 +95,18 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
+
     aggVector.emplace_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -134,7 +135,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
@@ -176,16 +177,17 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, unsignedIntegerType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType,
+                                                                            unsignedIntegerType,
+                                                                            readF2,
+                                                                            aggregationResultFieldName);
     aggVector.emplace_back(countAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -214,7 +216,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(countAggregationValue));
@@ -255,16 +257,17 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(minAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -293,7 +296,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(minAggregationValue));
@@ -334,16 +337,17 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(maxAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -372,7 +376,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(maxAggregationValue));
@@ -413,16 +417,17 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -451,7 +456,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
@@ -490,16 +495,17 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(avgAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -528,7 +534,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     dynamicBuffer[3]["f2"].write((float) 40.0);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     aggValues.emplace_back(std::move(avgAggregationValue));
@@ -569,16 +575,17 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    aggFieldAccessExpressionsVector.emplace_back(readF2);
-    resultFieldVector.emplace_back(aggregationResultFieldName);
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType,
+                                                                        integerPhysicalType,
+                                                                        readF2,
+                                                                        aggregationResultFieldName);
     aggVector.emplace_back(sumAgg);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                                0,
-                                                                                aggFieldAccessExpressionsVector,
-                                                                                resultFieldVector,
-                                                                                aggVector,
-                                                                                0);
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                     std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName},
+                                                     0,
+                                                     aggVector,
+                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -607,7 +614,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     dynamicBuffer[3]["f2"].write((int64_t) 40);
     dynamicBuffer.setNumberOfTuples(4);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     aggValues.emplace_back(std::move(sumAggregationValue));
@@ -629,7 +636,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
                         [](const testing::TestParamInfo<ThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

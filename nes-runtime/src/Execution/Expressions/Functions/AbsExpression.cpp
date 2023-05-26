@@ -34,6 +34,7 @@ double calculateAbs(double n) { return std::abs(n); }
 Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
+    // TODO: missing support for int: issue #3682
     if (subValue->isType<Float>()) {
         return FunctionCall<>("calculateAbs", calculateAbs, subValue.as<Float>());
 

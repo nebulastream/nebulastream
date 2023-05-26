@@ -18,6 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <iostream>
@@ -26,8 +28,11 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class GlobalTumblingWindowQueryExecutionTest
-    : public Testing::TestWithErrorHandling<testing::Test>,
+    : public Testing::TestWithErrorHandling,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -36,16 +41,16 @@ class GlobalTumblingWindowQueryExecutionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -53,7 +58,7 @@ class GlobalTumblingWindowQueryExecutionTest
         NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test class.");
     }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
@@ -77,7 +82,7 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
-                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .apply(Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$sum")))
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
@@ -113,7 +118,7 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProject
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
-                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .apply(Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());

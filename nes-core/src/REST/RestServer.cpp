@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/LocationController.hpp>
@@ -35,6 +35,7 @@
 #include <oatpp/parser/json/mapping/ObjectMapper.hpp>
 #include <oatpp/web/server/HttpConnectionHandler.hpp>
 #include <oatpp/web/server/HttpRouter.hpp>
+#include <oatpp/web/server/interceptor/AllowCorsGlobal.hpp>
 #include <utility>
 
 namespace NES {
@@ -50,15 +51,17 @@ RestServer::RestServer(std::string host,
                        MonitoringServicePtr monitoringService,
                        NES::Experimental::MaintenanceServicePtr maintenanceService,
                        GlobalQueryPlanPtr globalQueryPlan,
-                       Catalogs::UDF::UdfCatalogPtr udfCatalog,
+                       Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
-                       LocationServicePtr locationService)
+                       LocationServicePtr locationService,
+                       std::optional<std::string> corsAllowedOrigin)
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
       globalExecutionPlan(std::move(globalExecutionPlan)), queryService(std::move(queryService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
       topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
       locationService(std::move(locationService)), maintenanceService(std::move(maintenanceService)),
-      monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)) {}
+      monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)),
+      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
     NES_INFO2("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -121,7 +124,7 @@ void RestServer::run() {
                                                                      "/query",
                                                                      errorHandler);
     auto udfCatalogController =
-        REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
+        REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController =
         REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalogService, errorHandler, "/sourceCatalog");
     auto maintenanceController =
@@ -150,6 +153,13 @@ void RestServer::run() {
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
     //register error handler
     connectionHandler->setErrorHandler(std::make_shared<ErrorHandler>(objectMapper));
+
+    /* Add CORS-enabling interceptors */
+    if (corsAllowedOrigin.has_value()) {
+        connectionHandler->addRequestInterceptor(std::make_shared<oatpp::web::server::interceptor::AllowOptionsGlobal>());
+        connectionHandler->addResponseInterceptor(
+            std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(corsAllowedOrigin.value()));
+    }
 
     /* Create TCP connection provider */
     auto connectionProvider =

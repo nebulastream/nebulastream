@@ -24,7 +24,7 @@ PointExpressionNode::PointExpressionNode(PointExpressionNode* other) : ShapeExpr
 }
 
 PointExpressionNode::PointExpressionNode(double latitude, double longitude)
-    : ShapeExpressionNode(Point), latitude(latitude), longitude(longitude) {}
+    : ShapeExpressionNode(ShapeType::Point), latitude(latitude), longitude(longitude) {}
 
 ShapeExpressionNodePtr PointExpressionNode::create(double latitude, double longitude) {
     auto pointNode = std::make_shared<PointExpressionNode>(latitude, longitude);

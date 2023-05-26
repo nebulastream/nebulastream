@@ -31,7 +31,7 @@
 
 using namespace NES;
 
-class QueryPlanBuilderTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryPlanBuilderTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before a test is executed. */
@@ -72,7 +72,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator) {
     EXPECT_TRUE(queryPlan->getOperatorByType<MapLogicalOperatorNode>().size() == 1);
     //test addUnion
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
-    queryPlan = QueryPlanBuilder::addUnionOperator(queryPlan, rightQueryPlan);
+    queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<UnionLogicalOperatorNode>().size() == 1);
     // test addSink
     auto sinkDescriptorPtr = NES::PrintSinkDescriptor::create();

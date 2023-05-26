@@ -17,7 +17,7 @@
 
 namespace NES {
 
-enum UnaryOperatorType {
+enum class UnaryOperatorType : uint8_t {
     ABSOLUTE_VALUE_OF_OP,
     ADDRESS_OF_OP,
     BITWISE_COMPLEMENT_OP,
@@ -38,9 +38,7 @@ enum UnaryOperatorType {
     INVALID_UNARY_OPERATOR_TYPE
 };
 
-const std::string toString(const UnaryOperatorType& type);
-
-enum BinaryOperatorType {
+enum class BinaryOperatorType : uint8_t {
     EQUAL_OP,
     UNEQUAL_OP,
     LESS_THAN_OP,
@@ -65,8 +63,6 @@ enum BinaryOperatorType {
     MEMBER_SELECT_POINTER_OP,
     MEMBER_SELECT_REFERENCE_OP
 };
-
-const std::string toString(const BinaryOperatorType& type);
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_OPERATORTYPES_HPP_

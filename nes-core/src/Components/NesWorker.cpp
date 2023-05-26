@@ -37,6 +37,7 @@
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <csignal>
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
@@ -132,7 +133,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                workerConfig->localWorkerIp.getValue(),
                localWorkerRpcPort,
                workerConfig->dataPort.getValue(),
-               workerConfig->queryCompiler.windowingStrategy);
+               magic_enum::enum_name(workerConfig->queryCompiler.windowingStrategy.getValue()));
 
     NES_DEBUG2("NesWorker::start: start Runtime");
     auto expected = false;

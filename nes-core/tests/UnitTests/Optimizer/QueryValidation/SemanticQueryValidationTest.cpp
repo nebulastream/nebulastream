@@ -16,7 +16,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -34,11 +34,11 @@
 
 namespace NES {
 
-class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SemanticQueryValidationTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     std::shared_ptr<QueryParsingService> queryParsingService;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -47,11 +47,11 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
@@ -257,7 +257,9 @@ TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
     auto query = Query::from("irisData")
                      .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                  {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                                 {Attribute("iris0", BasicType::FLOAT32),
+                                  Attribute("iris1", BasicType::FLOAT32),
+                                  Attribute("iris2", BasicType::FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
     semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan());
@@ -293,7 +295,9 @@ TEST_F(SemanticQueryValidationTest, invalidMixedInputMLInferenceOperatorTest) {
     auto query = Query::from("irisData")
                      .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                  {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                                 {Attribute("iris0", BasicType::FLOAT32),
+                                  Attribute("iris1", BasicType::FLOAT32),
+                                  Attribute("iris2", BasicType::FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
@@ -330,7 +334,9 @@ TEST_F(SemanticQueryValidationTest, invalidInputMLInferenceOperatorTest) {
     auto query = Query::from("irisData")
                      .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                  {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                                 {Attribute("iris0", BasicType::FLOAT32),
+                                  Attribute("iris1", BasicType::FLOAT32),
+                                  Attribute("iris2", BasicType::FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);

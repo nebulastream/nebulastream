@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalSourceConfig.hpp>
 #include <NesBaseTest.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -41,7 +42,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
+class OPCSinkTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 
@@ -53,7 +54,7 @@ class OPCSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
-        test_schema = Schema::create()->addField("var", UINT32);
+        test_schema = Schema::create()->addField("var", BasicType::UINT32);
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
@@ -179,7 +180,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     });
     t1.detach();
     p.get_future().wait();
-    auto test_schema = Schema::create()->addField("var", UINT32);
+    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId());
     Runtime::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;

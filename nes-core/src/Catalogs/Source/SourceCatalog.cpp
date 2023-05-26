@@ -35,44 +35,6 @@ void SourceCatalog::addDefaultSources() {
         NES_ERROR2("SourceCatalog::addDefaultSources: error while add default_logical");
         throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     }
-
-    //TODO I think we should get rid of this soon
-    SchemaPtr schemaExdra = Schema::create()
-                                ->addField("id", DataTypeFactory::createUInt64())
-                                ->addField("metadata_generated", DataTypeFactory::createUInt64())
-                                ->addField("metadata_title", DataTypeFactory::createFixedChar(50))
-                                ->addField("metadata_id", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_properties_capacity", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_efficiency", DataTypeFactory::createFloat())
-                                ->addField("features_properties_mag", DataTypeFactory::createFloat())
-                                ->addField("features_properties_time", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_updated", DataTypeFactory::createUInt64())
-                                ->addField("features_properties_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_geometry_type", DataTypeFactory::createFixedChar(50))
-                                ->addField("features_geometry_coordinates_longitude", DataTypeFactory::createFloat())
-                                ->addField("features_geometry_coordinates_latitude", DataTypeFactory::createFloat())
-                                ->addField("features_eventId ", DataTypeFactory::createFixedChar(50));
-
-    bool success2 = addLogicalSource("exdra", schemaExdra);
-    if (!success2) {
-        NES_ERROR2("SourceCatalog::addDefaultSources: error while adding exdra logical source");
-        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
-    }
-
-    //    SchemaPtr iris = Schema::create()
-    //                            ->addField(createField("id", UINT64))
-    //                            ->addField(createField("SepalLengthCm", FLOAT32))
-    //                            ->addField(createField("SepalWidthCm", FLOAT32))
-    //                            ->addField(createField("PetalLengthCm", FLOAT32))
-    //                            ->addField(createField("PetalWidthCm", FLOAT32))
-    //                            ->addField(createField("SpeciesCode", UINT64))
-    //                            ->addField(createField("CreationTime", UINT64));
-    //    bool success3 = addLogicalSource("iris", iris);
-    //    if (!success3) {
-    //        NES_ERROR2("SourceCatalog::addDefaultSources: error while adding iris logical source");
-    //        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
-    //    }
 }
 
 SourceCatalog::SourceCatalog(QueryParsingServicePtr queryParsingService) : queryParsingService(queryParsingService) {
@@ -175,11 +137,6 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     return true;
 }
 
-bool SourceCatalog::removeAllPhysicalSources(const std::string&) {
-    std::unique_lock lock(catalogMutex);
-    NES_NOT_IMPLEMENTED();
-}
-
 bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
                                          const std::string& physicalSourceName,
                                          std::uint64_t hashId) {
@@ -222,30 +179,6 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
                logicalSourceName);
 
     NES_DEBUG2("SourceCatalog: physical source {} does not exist on node with id {}", physicalSourceName, hashId);
-    return false;
-}
-
-bool SourceCatalog::removePhysicalSourceByHashId(uint64_t hashId) {
-    std::unique_lock lock(catalogMutex);
-    for (const auto& logSource : logicalToPhysicalSourceMapping) {
-        NES_DEBUG2("SourceCatalog: check log source {}", logSource.first);
-        for (auto entry = logicalToPhysicalSourceMapping[logSource.first].cbegin();
-             entry != logicalToPhysicalSourceMapping[logSource.first].cend();
-             entry++) {
-            if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG2("SourceCatalog: found entry with nodeid={} physicalSource={} logicalSource={}",
-                           entry->get()->getNode()->getId(),
-                           entry->get()->getPhysicalSource()->getPhysicalSourceName(),
-                           logSource.first);
-                //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
-                NES_DEBUG2("SourceCatalog: deleted physical source with hashID {} and name {}",
-                           hashId,
-                           entry->get()->getPhysicalSource()->getPhysicalSourceName());
-                logicalToPhysicalSourceMapping[logSource.first].erase(entry);
-                return true;
-            }
-        }
-    }
     return false;
 }
 

@@ -24,7 +24,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
-                               FaultToleranceType::Value faultToleranceType,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(nullptr,
                  std::move(nodeEngine),
@@ -37,7 +37,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
 
 NullOutputSink::~NullOutputSink() = default;
 
-SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
+SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     updateWatermarkCallback(inputBuffer);

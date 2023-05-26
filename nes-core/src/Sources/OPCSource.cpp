@@ -47,7 +47,7 @@ OPCSource::OPCSource(const SchemaPtr& schema,
                      OperatorId operatorId,
                      OriginId originId,
                      size_t numSourceLocalBuffers,
-                     GatheringMode::Value gatheringMode,
+                     GatheringMode gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
                  std::move(bufferManager),
@@ -165,7 +165,7 @@ bool OPCSource::disconnect() {
     return !connected;
 }
 
-SourceType OPCSource::getType() const { return OPC_SOURCE; }
+SourceType OPCSource::getType() const { return SourceType::OPC_SOURCE; }
 
 std::string OPCSource::getUrl() const { return url; }
 

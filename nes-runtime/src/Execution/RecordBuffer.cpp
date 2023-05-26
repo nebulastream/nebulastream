@@ -17,7 +17,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution {
 
-RecordBuffer::RecordBuffer(Value<MemRef> tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
+RecordBuffer::RecordBuffer(const Value<MemRef>& tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
 Value<UInt64> RecordBuffer::getNumRecords() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getNumberOfTuples",
@@ -33,14 +33,14 @@ Value<UInt64> RecordBuffer::getNumRecords() {
                           tupleBufferRef);
 }
 
-void RecordBuffer::setNumRecords(Value<UInt64> numRecordsValue) {
+void RecordBuffer::setNumRecords(const Value<UInt64>& numRecordsValue) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setNumberOfTuples",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples,
                    tupleBufferRef,
                    numRecordsValue);
 }
 
-Value<MemRef> RecordBuffer::getBuffer() {
+Value<MemRef> RecordBuffer::getBuffer() const {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getBuffer",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer,
                           tupleBufferRef);
@@ -61,12 +61,12 @@ void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
 }
 
 Value<UInt64> RecordBuffer::getWatermarkTs() {
-    return FunctionCall<>("NES__Runtime__TupleBuffer__getWatermark",
+    return FunctionCall<>("NES__Runtime__TupleBuffer__Watermark",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,
                           tupleBufferRef);
 }
 
-void RecordBuffer::setWatermarkTs(Value<UInt64> watermarkTs) {
+void RecordBuffer::setWatermarkTs(const Value<UInt64>& watermarkTs) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setWatermark,
                    tupleBufferRef,
@@ -77,6 +77,19 @@ Value<UInt64> RecordBuffer::getSequenceNr() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getSequenceNumber",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getSequenceNumber,
                           tupleBufferRef);
+}
+
+Value<UInt64> RecordBuffer::getCreatingTs() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getCreationTimestampInMS,
+                          tupleBufferRef);
+}
+
+void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS,
+                   tupleBufferRef,
+                   creationTs);
 }
 
 }// namespace NES::Runtime::Execution

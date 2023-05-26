@@ -60,7 +60,7 @@ class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 }// namespace Spatial::Mobility::Experimental
 
-enum RpcClientModes { Register, Unregister, Start, Stop };
+enum class RpcClientModes : uint8_t { Register, Unregister, Start, Stop };
 
 class WorkerRPCClient {
   public:

@@ -101,7 +101,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
             Monitoring::MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
         ASSERT_EQ(retMetricType, expectedType);
         MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
-        std::string metricCollectorStr = NES::Monitoring::toString(collectorType);
+        std::string metricCollectorStr = std::string(magic_enum::enum_name(collectorType));
 
         NesCoordinatorPtr crd = createCoordinator();
         NES_INFO("MonitoringQueriesTest: Start coordinator");

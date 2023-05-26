@@ -12,9 +12,13 @@
 # limitations under the License.
 
 
-add_nes_runtime_test(nautilus-expression-compilation-test "ExpressionCompilationTest.cpp")
-add_nes_runtime_test(nautilus-if-compilation-test "IfCompilationTest.cpp")
-add_nes_runtime_test(nautilus-loop-compilation-test "LoopCompilationTest.cpp")
-add_nes_runtime_test(nautilus-memory-compilation-test "MemoryAccessCompilationTest.cpp")
-add_nes_runtime_test(nautilus-type-compilation-test "TypeCompilationTest.cpp")
-add_nes_runtime_test(nautilus-function-compilation-test "FunctionCompilationTest.cpp")
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
+    add_nes_runtime_test(nautilus-proxy-inlining-test "ProxyInliningCompilationTest.cpp")
+endif ()
+add_nes_runtime_test(nautilus-backend-tests
+        "ExpressionCompilationTest.cpp"
+        "IfCompilationTest.cpp"
+        "LoopCompilationTest.cpp"
+        "MemoryAccessCompilationTest.cpp"
+        "TypeCompilationTest.cpp"
+        "FunctionCompilationTest.cpp")

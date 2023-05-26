@@ -1,0 +1,4 @@
+{
+  "userQuery": "Query::from(\"wind_turbines\").window(TumblingWindow::of(EventTime(Attribute(\"features_properties_updated\")), Minutes(10))).byKey(Attribute(\"metadata_id\")).apply(Sum(Attribute(\"features_properties_mag\"))).sink(FileSinkDescriptor::create(\"/tutorial/rest-query-result.csv\", \"CSV_FORMAT\", \"APPEND\"));",
+  "strategyName": "BottomUp"
+}

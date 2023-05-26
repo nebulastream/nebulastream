@@ -19,8 +19,8 @@ CompareOperation::CompareOperation(OperationIdentifier identifier,
                                    OperationPtr leftInput,
                                    OperationPtr rightInput,
                                    Comparator comparator)
-    : Operation(Operation::CompareOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)), comparator(comparator) {
+    : Operation(Operation::OperationType::CompareOp, identifier, Types::StampFactory::createBooleanStamp()),
+      leftInput(std::move(leftInput)), rightInput(std::move(rightInput)), comparator(comparator) {
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }
@@ -29,11 +29,11 @@ OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
-bool CompareOperation::isLessThan() { return (comparator == ISLT || comparator == IULT); }
-bool CompareOperation::isLessEqual() { return (comparator == ISLE || comparator == IULE); }
-bool CompareOperation::isGreaterThan() { return (comparator == ISGT || comparator == IUGT); }
-bool CompareOperation::isGreaterEqual() { return (comparator == ISGE || comparator == IUGE); }
-bool CompareOperation::isEquals() { return (comparator == IEQ); }
+bool CompareOperation::isLessThan() { return (comparator == LT); }
+bool CompareOperation::isLessEqual() { return (comparator == LE); }
+bool CompareOperation::isGreaterThan() { return (comparator == GT); }
+bool CompareOperation::isGreaterEqual() { return (comparator == GE); }
+bool CompareOperation::isEquals() { return (comparator == EQ); }
 bool CompareOperation::isLessThanOrGreaterThan() { return isLessThan() || isGreaterThan(); }
 bool CompareOperation::isLess() { return isLessThan() || isLessEqual(); }
 bool CompareOperation::isGreater() { return isGreaterThan() || isGreaterEqual(); }
@@ -41,22 +41,12 @@ bool CompareOperation::isGreater() { return isGreaterThan() || isGreaterEqual();
 std::string CompareOperation::toString() {
     std::string comperator;
     switch (comparator) {
-        case IEQ: comperator = "=="; break;
-        case INE: comperator = "!="; break;
-        case ISLT: comperator = "<"; break;
-        case ISLE: comperator = "<="; break;
-        case ISGT: comperator = ">"; break;
-        case ISGE: comperator = ">="; break;
-        case IULT: comperator = "<"; break;
-        case IULE: comperator = "<="; break;
-        case IUGT: comperator = ">"; break;
-        case IUGE: comperator = ">="; break;
-        case FOLT: comperator = "<"; break;
-        case FOLE: comperator = "<="; break;
-        case FOGT: comperator = ">"; break;
-        case FOGE: comperator = ">="; break;
-        case FOEQ: comperator = "=="; break;
-        case FONE: comperator = "!="; break;
+        case EQ: comperator = "=="; break;
+        case NE: comperator = "!="; break;
+        case LT: comperator = "<"; break;
+        case LE: comperator = "<="; break;
+        case GT: comperator = ">"; break;
+        case GE: comperator = ">="; break;
     }
 
     return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();

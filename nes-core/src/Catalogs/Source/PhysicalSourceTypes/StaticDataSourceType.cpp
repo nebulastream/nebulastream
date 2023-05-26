@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Experimental {
@@ -34,9 +35,9 @@ static StaticDataSourceTypePtr create(const std::string& sourceType,
                                       const std::string& pathTableFile,
                                       uint64_t numBuffersToProcess);
 
-GatheringMode::Value getGatheringMode() const;
+GatheringMode getGatheringMode() const;
 
-SourceMode::Value getSourceMode() const;
+SourceMode getSourceMode() const;
 
 uint64_t getTaskQueueId() const;
 
@@ -48,11 +49,11 @@ bool equal(const PhysicalSourceTypePtr& other) override;
 
 StaticDataSourceType::StaticDataSourceType(const std::string& pathTableFile,
                                            uint64_t numBuffersToProcess,
-                                           SourceMode::Value sourceMode,
+                                           SourceMode sourceMode,
                                            uint64_t taskQueueId,
                                            bool lateStart)
-    : PhysicalSourceType(STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)), numBuffersToProcess(numBuffersToProcess),
-      sourceMode(sourceMode), taskQueueId(taskQueueId), lateStart(lateStart) {}
+    : PhysicalSourceType(SourceType::STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)),
+      numBuffersToProcess(numBuffersToProcess), sourceMode(sourceMode), taskQueueId(taskQueueId), lateStart(lateStart) {}
 
 StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTableFile,
                                                      uint64_t numBuffersToProcess,
@@ -60,11 +61,11 @@ StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTabl
                                                      uint64_t taskQueueId,
                                                      bool lateStart) {
     // todo check validity of path
-    SourceMode::Value sourceModeEnum = SourceMode::getFromString(sourceMode);
+    SourceMode sourceModeEnum = magic_enum::enum_cast<SourceMode>(sourceMode).value();
     return std::make_shared<StaticDataSourceType>(pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId, lateStart);
 }
 
-SourceMode::Value StaticDataSourceType::getSourceMode() const { return sourceMode; }
+SourceMode StaticDataSourceType::getSourceMode() const { return sourceMode; }
 
 void StaticDataSourceType::reset() {
     //nothing
@@ -79,7 +80,7 @@ std::string StaticDataSourceType::toString() {
     ss << "StaticDataSourceType => {\n";
     ss << "pathTableFile :" << pathTableFile;
     ss << "numBuffersToProcess :" << numBuffersToProcess;
-    ss << "SourceMode :" << SourceMode::toString(sourceMode);
+    ss << "SourceMode :" << std::string(magic_enum::enum_name(sourceMode));
     ss << "taskQueueId :" << taskQueueId;
     ss << "lateStart :" << lateStart;
     ss << "\n}";

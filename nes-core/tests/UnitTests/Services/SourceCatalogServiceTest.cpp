@@ -74,7 +74,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string logicalSourceName = "testStream";
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     bool successRegisterLogicalSource = sourceCatalogService->registerLogicalSource(logicalSourceName, testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);
 
@@ -115,7 +115,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_NE(nodeId, 0u);
 
     //setup test
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
     bool successRegisterLogicalSource =
         sourceCatalogService->registerLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);

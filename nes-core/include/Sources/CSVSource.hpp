@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
@@ -49,7 +48,7 @@ class CSVSource : public DataSource {
                        OperatorId operatorId,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode::Value gatheringMode,
+                       GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
@@ -82,21 +81,6 @@ class CSVSource : public DataSource {
     std::string getFilePath() const;
 
     /**
-     * @brief Get the csv file delimiter
-     */
-    std::string getDelimiter() const;
-
-    /**
-     * @brief Get number of tuples per buffer
-     */
-    uint64_t getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief getter for skip header
-     */
-    bool getSkipHeader() const;
-
-    /**
      * @brief getter for source config
      * @return csvSourceType1
      */
@@ -105,7 +89,6 @@ class CSVSource : public DataSource {
   protected:
     std::ifstream input;
     bool fileEnded;
-    bool loopOnFile;
 
   private:
     CSVSourceTypePtr csvSourceType;

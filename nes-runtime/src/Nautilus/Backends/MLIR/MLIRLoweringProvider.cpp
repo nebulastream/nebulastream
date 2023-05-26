@@ -17,9 +17,10 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
+#include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
 #include <mlir/Dialect/ControlFlow/IR/ControlFlowOps.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
@@ -55,8 +56,8 @@ mlir::Type MLIRLoweringProvider::getMLIRType(IR::Types::StampPtr type) {
     } else if (type->isFloat()) {
         auto value = cast<IR::Types::FloatStamp>(type);
         switch (value->getBitWidth()) {
-            case IR::Types::FloatStamp::F32: return mlir::Float32Type::get(context);
-            case IR::Types::FloatStamp::F64: return mlir::Float64Type::get(context);
+            case IR::Types::FloatStamp::BitWidth::F32: return mlir::Float32Type::get(context);
+            case IR::Types::FloatStamp::BitWidth::F64: return mlir::Float64Type::get(context);
         }
     } else if (type->isAddress()) {
         return mlir::LLVM::LLVMPointerType::get(builder->getI8Type());
@@ -90,31 +91,40 @@ mlir::Location MLIRLoweringProvider::getNameLoc(const std::string& name) {
     return mlir::NameLoc::get(builder->getStringAttr(name), baseLocation);
 }
 
-mlir::arith::CmpIPredicate convertToIntMLIRComparison(IR::Operations::CompareOperation::Comparator comparisonType) {
-    switch (comparisonType) {
-        case (IR::Operations::CompareOperation::Comparator::IEQ): return mlir::arith::CmpIPredicate::eq;
-        case (IR::Operations::CompareOperation::Comparator::INE): return mlir::arith::CmpIPredicate::ne;
-        case (IR::Operations::CompareOperation::Comparator::ISLT): return mlir::arith::CmpIPredicate::slt;
-        case (IR::Operations::CompareOperation::Comparator::ISLE): return mlir::arith::CmpIPredicate::sle;
-        case (IR::Operations::CompareOperation::Comparator::ISGT): return mlir::arith::CmpIPredicate::sgt;
-        case (IR::Operations::CompareOperation::Comparator::ISGE): return mlir::arith::CmpIPredicate::sge;
-        //Unsigned Comparisons. Necessary, otherwise: slt(unsigned(8), 3) -> true.
-        case (IR::Operations::CompareOperation::Comparator::IULT): return mlir::arith::CmpIPredicate::ult;
-        case (IR::Operations::CompareOperation::Comparator::IULE): return mlir::arith::CmpIPredicate::ule;
-        case (IR::Operations::CompareOperation::Comparator::IUGT): return mlir::arith::CmpIPredicate::ugt;
-        case (IR::Operations::CompareOperation::Comparator::IUGE): return mlir::arith::CmpIPredicate::uge;
-        default: return mlir::arith::CmpIPredicate::slt;
+mlir::arith::CmpIPredicate convertToIntMLIRComparison(IR::Operations::CompareOperation::Comparator comparisonType,
+                                                      IR::Types::StampPtr& stamp) {
+    auto integerStamp = std::dynamic_pointer_cast<IR::Types::IntegerStamp>(stamp);
+    if (integerStamp->isSigned()) {
+        switch (comparisonType) {
+            case (IR::Operations::CompareOperation::Comparator::EQ): return mlir::arith::CmpIPredicate::eq;
+            case (IR::Operations::CompareOperation::Comparator::NE): return mlir::arith::CmpIPredicate::ne;
+            case (IR::Operations::CompareOperation::Comparator::LT): return mlir::arith::CmpIPredicate::slt;
+            case (IR::Operations::CompareOperation::Comparator::LE): return mlir::arith::CmpIPredicate::sle;
+            case (IR::Operations::CompareOperation::Comparator::GT): return mlir::arith::CmpIPredicate::sgt;
+            case (IR::Operations::CompareOperation::Comparator::GE): return mlir::arith::CmpIPredicate::sge;
+            default: return mlir::arith::CmpIPredicate::slt;
+        }
+    } else {
+        switch (comparisonType) {
+            case (IR::Operations::CompareOperation::Comparator::EQ): return mlir::arith::CmpIPredicate::eq;
+            case (IR::Operations::CompareOperation::Comparator::NE): return mlir::arith::CmpIPredicate::ne;
+            case (IR::Operations::CompareOperation::Comparator::LT): return mlir::arith::CmpIPredicate::ult;
+            case (IR::Operations::CompareOperation::Comparator::LE): return mlir::arith::CmpIPredicate::ule;
+            case (IR::Operations::CompareOperation::Comparator::GT): return mlir::arith::CmpIPredicate::ugt;
+            case (IR::Operations::CompareOperation::Comparator::GE): return mlir::arith::CmpIPredicate::uge;
+            default: return mlir::arith::CmpIPredicate::ult;
+        }
     }
 }
 mlir::arith::CmpFPredicate convertToFloatMLIRComparison(IR::Operations::CompareOperation::Comparator comparisonType) {
     switch (comparisonType) {
         // the U in U(LT/LE/..) stands for unordered, not unsigned! Float comparisons are always signed.
-        case (IR::Operations::CompareOperation::Comparator::FOLT): return mlir::arith::CmpFPredicate::OLT;
-        case (IR::Operations::CompareOperation::Comparator::FOLE): return mlir::arith::CmpFPredicate::OLE;
-        case (IR::Operations::CompareOperation::Comparator::FOEQ): return mlir::arith::CmpFPredicate::OEQ;
-        case (IR::Operations::CompareOperation::Comparator::FOGT): return mlir::arith::CmpFPredicate::OGT;
-        case (IR::Operations::CompareOperation::Comparator::FOGE): return mlir::arith::CmpFPredicate::OGE;
-        case (IR::Operations::CompareOperation::Comparator::FONE): return mlir::arith::CmpFPredicate::ONE;
+        case (IR::Operations::CompareOperation::Comparator::LT): return mlir::arith::CmpFPredicate::OLT;
+        case (IR::Operations::CompareOperation::Comparator::LE): return mlir::arith::CmpFPredicate::OLE;
+        case (IR::Operations::CompareOperation::Comparator::EQ): return mlir::arith::CmpFPredicate::OEQ;
+        case (IR::Operations::CompareOperation::Comparator::GT): return mlir::arith::CmpFPredicate::OGT;
+        case (IR::Operations::CompareOperation::Comparator::GE): return mlir::arith::CmpFPredicate::OGE;
+        case (IR::Operations::CompareOperation::Comparator::NE): return mlir::arith::CmpFPredicate::ONE;
         default: return mlir::arith::CmpFPredicate::OLT;
     }
 }
@@ -159,9 +169,6 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std::shared_ptr<IR::IRGraph> ir) {
     ValueFrame firstFrame;
     generateMLIR(ir->getRootOperation(), firstFrame);
-    mlir::OpPrintingFlags flags;
-    llvm::raw_ostream& output = llvm::outs();
-    theModule->print(output, flags);
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
@@ -350,23 +357,20 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOper
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame) {
     if (!frame.contains(constIntOp->getIdentifier())) {
-        frame.setValue(constIntOp->getIdentifier(),
-                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getConstantIntValue()));
+        frame.setValue(constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
     } else {
-        frame.setValue(constIntOp->getIdentifier(),
-                       getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getConstantIntValue()));
+        frame.setValue(constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getStamp(), constIntOp->getValue()));
     }
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp, ValueFrame& frame) {
     if (auto floatStamp = cast_if<IR::Types::FloatStamp>(constFloatOp->getStamp().get())) {
         auto floatType =
-            (floatStamp->getBitWidth() == IR::Types::FloatStamp::F32) ? builder->getF32Type() : builder->getF64Type();
-        frame.setValue(
-            constFloatOp->getIdentifier(),
-            builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
-                                                    floatType,
-                                                    builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue())));
+            (floatStamp->getBitWidth() == IR::Types::FloatStamp::BitWidth::F32) ? builder->getF32Type() : builder->getF64Type();
+        frame.setValue(constFloatOp->getIdentifier(),
+                       builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"),
+                                                               floatType,
+                                                               builder->getFloatAttr(floatType, constFloatOp->getValue())));
     }
 }
 
@@ -408,10 +412,11 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::SubOpera
     auto leftInput = frame.getValue(subIntOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(subIntOp->getRightInput()->getIdentifier());
     if (subIntOp->getStamp()->isFloat()) {
-        auto mlirSubOp = builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
-                                                             leftInput,
-                                                             rightInput,
-                                                             mlir::LLVM::FMFAttr::get(context, mlir::LLVM::FastmathFlags::fast));
+        auto mlirSubOp =
+            builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
+                                                leftInput,
+                                                rightInput,
+                                                mlir::LLVM::FastmathFlagsAttr::get(context, mlir::LLVM::FastmathFlags::fast));
         frame.setValue(subIntOp->getIdentifier(), mlirSubOp);
     } else {
         auto mlirSubOp = builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"), leftInput, rightInput);
@@ -496,15 +501,21 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
                                                        getMLIRType(proxyCallOp->getStamp()),
                                                        functionRef,
                                                        functionArgs);
-        frame.setValue(proxyCallOp->getIdentifier(), res.getResult(0));
+        frame.setValue(proxyCallOp->getIdentifier(), res.getResult());
     } else {
-        builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, functionRef, functionArgs);
+        builder->create<mlir::LLVM::CallOp>(builder->getUnknownLoc(), mlir::TypeRange(), functionRef, functionArgs);
     }
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame) {
-    if (compareOp->getComparator() == IR::Operations::CompareOperation::IEQ && compareOp->getLeftInput()->getStamp()->isAddress()
-        && compareOp->getRightInput()->getStamp()->isInteger()) {
+    auto leftStamp = compareOp->getLeftInput()->getStamp();
+    auto rightStamp = compareOp->getRightInput()->getStamp();
+
+    if ((leftStamp->isInteger() && leftStamp->isFloat()) || (leftStamp->isFloat() && rightStamp->isInteger())) {
+        // Avoid comparing integer to float
+        NES_THROW_RUNTIME_ERROR("Type missmatch: cannot compare " << leftStamp->toString() << " to " << rightStamp->toString());
+    } else if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ
+               && compareOp->getLeftInput()->getStamp()->isAddress() && compareOp->getRightInput()->getStamp()->isInteger()) {
         // add null check
         auto null =
             builder->create<mlir::LLVM::NullOp>(getNameLoc("null"), mlir::LLVM::LLVMPointerType::get(builder->getI8Type()));
@@ -513,21 +524,22 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                          null);
         frame.setValue(compareOp->getIdentifier(), cmpOp);
-        return;
-    }
-    // < 10: (signed/unsigned) Integer comparison, >= 10: Float comparison.
-    if (compareOp->getComparator() < 10) {
+    } else if (leftStamp->isInteger() && rightStamp->isInteger()) {
+        // handle integer
         auto cmpOp = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
-                                                          convertToIntMLIRComparison(compareOp->getComparator()),
+                                                          convertToIntMLIRComparison(compareOp->getComparator(), leftStamp),
                                                           frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                           frame.getValue(compareOp->getRightInput()->getIdentifier()));
         frame.setValue(compareOp->getIdentifier(), cmpOp);
-    } else {
+    } else if (leftStamp->isFloat() && rightStamp->isFloat()) {
+        // handle float comparison
         auto cmpOp = builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
                                                           convertToFloatMLIRComparison(compareOp->getComparator()),
                                                           frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                           frame.getValue(compareOp->getRightInput()->getIdentifier()));
         frame.setValue(compareOp->getIdentifier(), cmpOp);
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unknown type to compare: " << leftStamp->toString() << " and " << rightStamp->toString());
     }
 }
 
@@ -556,9 +568,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::IfOperat
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame) {
-    printf("BranchOperation.getNextBlock.getIdentifier: %s\n",
-           branchOp->getNextBlockInvocation().getBlock()->getIdentifier().c_str());
-    printf("BranchOperation first BlockArg name:\n");
     std::vector<mlir::Value> mlirTargetBlockArguments;
     for (auto targetBlockArgument : branchOp->getNextBlockInvocation().getArguments()) {
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));

@@ -29,13 +29,15 @@ uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSour
 
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
-    options.setCompilationStrategy(OPTIMIZE);
-    options.setPipeliningStrategy(OPERATOR_FUSION);
-    options.setFilterProcessingStrategy(BRANCHED);
+    options.setCompilationStrategy(CompilationStrategy::OPTIMIZE);
+    options.setPipeliningStrategy(PipeliningStrategy::OPERATOR_FUSION);
+    options.setFilterProcessingStrategy(FilterProcessingStrategy::BRANCHED);
     options.setNumSourceLocalBuffers(64);
-    options.setOutputBufferOptimizationLevel(ALL);
-    options.setWindowingStrategy(DEFAULT);
-    options.setQueryCompiler(DEFAULT_QUERY_COMPILER);
+    options.setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel::ALL);
+    options.setWindowingStrategy(WindowingStrategy::DEFAULT);
+    options.setQueryCompiler(QueryCompiler::DEFAULT_QUERY_COMPILER);
+    options.setDumpMode(DumpMode::FILE_AND_CONSOLE);
+    options.setNautilusBackend(NautilusBackend::MLIR_COMPILER);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 QueryCompilerOptions::PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
@@ -67,5 +69,11 @@ QueryCompilerOptions::WindowingStrategy QueryCompilerOptions::getWindowingStrate
 void QueryCompilerOptions::setWindowingStrategy(QueryCompilerOptions::WindowingStrategy windowingStrategy) {
     QueryCompilerOptions::windowingStrategy = windowingStrategy;
 }
+QueryCompilerOptions::NautilusBackend QueryCompilerOptions::getNautilusBackend() const { return nautilusBackend; }
+void QueryCompilerOptions::setNautilusBackend(const NautilusBackend nautilusBackend) {
+    QueryCompilerOptions::nautilusBackend = nautilusBackend;
+}
+const QueryCompilerOptions::DumpMode& QueryCompilerOptions::getDumpMode() const { return dumpMode; }
+void QueryCompilerOptions::setDumpMode(QueryCompilerOptions::DumpMode dumpMode) { QueryCompilerOptions::dumpMode = dumpMode; }
 
 }// namespace NES::QueryCompilation

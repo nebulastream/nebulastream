@@ -14,6 +14,7 @@
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(../cmake/LLVMIRUtil.cmake)
+include_directories(tests/include)
 
 # Set Sources and Headers
 add_subdirectory(src)
@@ -21,7 +22,6 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-runtime SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-target_compile_definitions(nes-runtime PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
 # if musl we cant use can't use backtrace for tracing
 if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
@@ -34,8 +34,49 @@ target_include_directories(nes-runtime PUBLIC
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
+    message(STATUS "Enable cpp compiler backend")
+    target_link_libraries(nes-runtime PRIVATE nes-compiler)
+endif ()
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable bytecode interpreter")
+
+
+    # We use the dyncall lib to call arbitrary runtime function.
+    # Set the path to the dyncall directory
+    set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
+
+    # Create the include directory for dyncall
+    file(MAKE_DIRECTORY ${dyncall_dir}/include)
+
+    # Download and build the external project
+    ExternalProject_Add(dyncallProject
+            GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
+            GIT_TAG "origin/main"
+            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> # Specify installation directory
+            BUILD_IN_SOURCE true # Build the project in the source directory
+            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
+            INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
+            UPDATE_DISCONNECTED 1
+            )
+
+    # Create a static imported library for the external project
+    add_library(dyncall STATIC IMPORTED)
+    add_dependencies(dyncall dyncallProject)
+
+    # Get the installation directory of the external project
+    ExternalProject_Get_Property(dyncallProject install_dir)
+
+    # Add the include directory of the external project to the interface of extLib
+    target_include_directories(dyncall INTERFACE ${install_dir}/include)
+
+    # Set the imported location of the external library to the installation directory
+    set_target_properties(dyncall PROPERTIES IMPORTED_LOCATION ${install_dir}/lib/libdyncall_s.a)
+
+    # Link the external library to nes-runtime
+    target_link_libraries(nes-runtime PRIVATE dyncall)
+
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
@@ -61,7 +102,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 MLIRExecutionEngine)
 
         # Include necessary mlir library in the deb package and install it in the lib folder
-        install(IMPORTED_RUNTIME_ARTIFACTS mlir_runner_utils mlir_c_runner_utils mlir_async_runtime DESTINATION lib)
+        install(IMPORTED_RUNTIME_ARTIFACTS mlir_float16_utils mlir_runner_utils mlir_c_runner_utils mlir_async_runtime DESTINATION lib)
 
     else ()
         message(FATAL_ERROR "Cannot find mlir")
@@ -71,36 +112,36 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
-        add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
-        target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-        target_link_libraries(nes-runtime PUBLIC nes)
-        add_dependencies(nes-runtime nes)
+        add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp)
         message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
-        target_include_directories(nes-runtime PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/)
-        set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
-        llvmir_attach_bc_target(nes-runtime_bc nes-runtime -O3)
-        add_dependencies(nes-runtime_bc nes-runtime)
+        target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
+
+        set_target_properties(nes-runtime-proxy PROPERTIES LINKER_LANGUAGE CXX)
+        llvmir_attach_bc_target(nes-runtime_bc nes-runtime-proxy -O3)
+        add_dependencies(nes-runtime_bc nes-runtime-proxy)
 
         llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
         llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
 
         get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
         get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
+        
         message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}")
         message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
         message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
-
 
         # Reducing linked & optimized LLVM IR to Proxy Functions only.
         add_executable(generate-proxy-function-ir "${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Utility/ExtractFunctionsFromLLVMIR.cpp")
         set_target_properties(generate-proxy-function-ir PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OP_BINARY_DIR}")
         list(POP_FRONT OP_BINARY_LLVMIR_FILES OP_BINARY_LLVMIR_FILE)
-        set(PROXY_FUNCTIONS_RESULT_DIR ${OP_BINARY_DIR}/proxiesReduced.ll)
+        target_compile_definitions(nes-runtime-proxy PRIVATE PROXY_FUNCTIONS_RESULT_DIR_CMAKE=\"${OP_BINARY_DIR}\")
+
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_DIR=\"${OP_BINARY_DIR}\")
         target_compile_definitions(generate-proxy-function-ir PRIVATE IR_FILE_FILE=\"${OP_BINARY_LLVMIR_FILE}\")
-        target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR=\"${PROXY_FUNCTIONS_RESULT_DIR}\")
+        target_compile_definitions(generate-proxy-function-ir PRIVATE PROXY_FUNCTIONS_RESULT_DIR_CMAKE=\"${OP_BINARY_DIR}\")
 
         target_link_libraries(generate-proxy-function-ir ${mlir_libs})
+        target_link_libraries(generate-proxy-function-ir ${llvm_libs})
         target_include_directories(generate-proxy-function-ir SYSTEM PRIVATE ${LLVM_INCLUDE_DIRS})
 
         add_custom_command(TARGET generate-proxy-function-ir POST_BUILD
@@ -108,7 +149,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 COMMAND "echo" ARGS "Executing function reducer on linked and optimized LLVM IR."
                 VERBATIM)
         add_dependencies(generate-proxy-function-ir nes-runtime_opt)
-        add_dependencies(nes-runtime generate-proxy-function-ir)
+        add_dependencies(nes-runtime-proxy generate-proxy-function-ir)
     endif ()
 endif ()
 
@@ -126,26 +167,23 @@ elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
+    # add flounder backend
     target_compile_definitions(nes-runtime PUBLIC USE_FLOUNDER)
-    ExternalProject_Add(
-            fmt-external
-            GIT_REPOSITORY "https://github.com/fmtlib/fmt"
-            GIT_TAG "8.1.1"
-            PREFIX "lib/fmt"
-            INSTALL_COMMAND cmake -E echo ""
-            CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE -DFMT_TEST=FALSE -DFMT_MASTER_PROJECT=OFF"
+    include(FetchContent)
+    FetchContent_Declare(
+            flounder
+            GIT_REPOSITORY git@github.com:nebulastream/flounder-compiler.git
+            GIT_TAG flounder
+            PREFIX ${BOTAN_LIB_FCSTUFF_DIR}
+            SOURCE_DIR "lib/flounder"
+            BINARY_DIR "lib/flounder"
     )
-
-    target_include_directories(nes-runtime PUBLIC
-            $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/src/>
-            $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/src/>)
-
-    target_include_directories(nes-runtime PUBLIC
-            $<BUILD_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>
-            $<INSTALL_INTERFACE:/home/pgrulich/projects/MxTasking/lib/asmjit/src/>)
-    target_link_libraries(nes-runtime PUBLIC /home/pgrulich/projects/MxTasking/lib/libflounder.so)
-    target_link_libraries(nes-runtime PUBLIC /home/pgrulich/projects/MxTasking/lib/libasmjit.so)
-    target_link_libraries(nes-runtime PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
+    set (flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
+    set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(flounder)
+    target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
+    target_link_libraries(nes-runtime PRIVATE flounder)
+    target_include_directories(nes-runtime PRIVATE ${flounder_SOURCE_DIR}/src)
 endif ()
 
 if (NES_RUNTIME_BENCHMARKS)
@@ -162,14 +200,26 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    # Define map java udf utils class file
+    if (NES_JAVA_UDF_UTILS_PATH)
+        # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
+        add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+        message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+
+        # Install Java deserialization helper.
+        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
+    else()
+        # Use Java helpers from test directory when working in CLion.
+        add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
+    endif()
+endif()
 
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayout.hpp Runtime/MemoryLayout/RowLayout.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayoutField.hpp Runtime/MemoryLayout/RowLayoutField.hpp)
-register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/ColumnLayout.hpp Runtime/MemoryLayout/ColumnLayout.hpp)
-register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/BufferManager.hpp Runtime/BufferManager.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/AbstractBufferProvider.hpp Runtime/AbstractBufferProvider.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Allocator/NesDefaultMemoryAllocator.hpp Runtime/Allocator/NesDefaultMemoryAllocator.hpp)

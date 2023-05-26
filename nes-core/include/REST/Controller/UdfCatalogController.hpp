@@ -14,13 +14,13 @@
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
 #include <API/Schema.hpp>
-#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
-#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
-#include <Catalogs/UDF/UdfDescriptor.hpp>
-#include <Exceptions/UdfException.hpp>
+#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <GRPC/Serialization/UdfSerializationUtil.hpp>
+#include <GRPC/Serialization/UDFSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <UdfCatalogService.pb.h>
@@ -34,8 +34,8 @@
 namespace NES {
 
 namespace Catalogs::UDF {
-class UdfCatalog;
-using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+class UDFCatalog;
+using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 
 namespace REST {
@@ -44,7 +44,7 @@ namespace Controller {
 
 using namespace Catalogs::UDF;
 
-class UdfCatalogController : public oatpp::web::server::api::ApiController {
+class UDFCatalogController : public oatpp::web::server::api::ApiController {
 
   public:
     /**
@@ -54,8 +54,8 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      * @param errorHandler - responsible for handling errors
      */
-    UdfCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                         UdfCatalogPtr udfCatalog,
+    UDFCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
+                         UDFCatalogPtr udfCatalog,
                          const oatpp::String& completeRouterPrefix,
                          ErrorHandlerPtr errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(std::move(udfCatalog)),
@@ -68,12 +68,12 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @param errorHandler - responsible for handling errors
      */
-    static std::shared_ptr<UdfCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                        const UdfCatalogPtr& udfCatalog,
+    static std::shared_ptr<UDFCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                        const UDFCatalogPtr& udfCatalog,
                                                         const std::string& routerPrefixAddition,
                                                         const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<UdfCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
+        return std::make_shared<UDFCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
     }
 
     /**
@@ -87,7 +87,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/getUdfDescriptor", getUdfDescriptor, QUERY(String, udf, "udfName")) {
         try {
             std::string udfName = udf.getValue("");
-            auto udfDescriptor = UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(udfName));
+            auto udfDescriptor = UDFDescriptor::as<JavaUDFDescriptor>(udfCatalog->getUDFDescriptor(udfName));
             GetJavaUdfDescriptorResponse response;
             if (udfDescriptor == nullptr) {
                 // Signal that the UDF does not exist in the catalog.
@@ -98,7 +98,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                 // Return the UDF descriptor to the client.
                 NES_DEBUG2("Returning UDF descriptor to REST client for Java UDF: {}", udfName);
                 response.set_found(true);
-                UdfSerializationUtil::serializeJavaUdfDescriptor(*udfDescriptor, *response.mutable_java_udf_descriptor());
+                UDFSerializationUtil::serializeJavaUDFDescriptor(*udfDescriptor, *response.mutable_java_udf_descriptor());
                 return createResponse(Status::CODE_200, response.SerializeAsString());
             }
         } catch (...) {
@@ -116,7 +116,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         try {
             nlohmann::json response;
             response["udfs"] = nlohmann::json::array();
-            for (const auto& udf : udfCatalog->listUdfs()) {
+            for (const auto& udf : udfCatalog->listUDFs()) {
                 response["udfs"].push_back(udf);
             }
             return createResponse(Status::CODE_200, response.dump());
@@ -129,12 +129,12 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * Endpoint to register a java udf
      * Request body must contain a protobuf message serialized as string
      * returns 200 if java udf was successfully registered
-     * returns 400 if request body is emtpy or if errors occur parsing protobuf message into a JavaUdfDescriptor object
+     * returns 400 if request body is emtpy or if errors occur parsing protobuf message into a JavaUDFDescriptor object
      * returns 500 for internal server errors
      */
     ENDPOINT("POST", "/registerJavaUdf", registerJavaUdf, BODY_STRING(String, request)) {
         try {
-            // Convert protobuf message contents to JavaUdfDescriptor.
+            // Convert protobuf message contents to JavaUDFDescriptor.
             std::string body = request.getValue("");
             if (body.empty()) {
                 errorHandler->handleError(Status::CODE_400, "Protobuf message is empty");
@@ -143,12 +143,12 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             auto javaUdfRequest = RegisterJavaUdfRequest{};
             javaUdfRequest.ParseFromString(body);
             auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
-            auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(descriptorMessage);
-            // Register JavaUdfDescriptor in UDF catalog and return success.
+            auto javaUdfDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(descriptorMessage);
+            // Register JavaUDFDescriptor in UDF catalog and return success.
             NES_DEBUG2("Registering Java UDF '{}'.'", javaUdfRequest.udf_name());
-            udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+            udfCatalog->registerUDF(javaUdfRequest.udf_name(), javaUdfDescriptor);
             return createResponse(Status::CODE_200, "Registered Java UDF");
-        } catch (const UdfException& e) {
+        } catch (const UDFException& e) {
             NES_WARNING2("Exception occurred during UDF registration: {}", e.what());
             // Just return the exception message to the client, not the stack trace.
             return errorHandler->handleError(Status::CODE_400, e.getMessage());
@@ -167,7 +167,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         try {
             std::string udfName = udf.getValue("");
             NES_DEBUG2("Removing Java UDF '{}'", udfName);
-            auto removed = udfCatalog->removeUdf(udfName);
+            auto removed = udfCatalog->removeUDF(udfName);
             nlohmann::json result;
             result["removed"] = removed;
             return createResponse(Status::CODE_200, result.dump());
@@ -177,7 +177,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
     }
 
   private:
-    UdfCatalogPtr udfCatalog;
+    UDFCatalogPtr udfCatalog;
     ErrorHandlerPtr errorHandler;
 };
 }// namespace Controller

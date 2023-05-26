@@ -14,6 +14,7 @@
 
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Experimental {

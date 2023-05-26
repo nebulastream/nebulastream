@@ -40,12 +40,12 @@ namespace NES::Optimizer {
 
 SemanticQueryValidation::SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                  bool advanceChecks,
-                                                 Catalogs::UDF::UdfCatalogPtr udfCatalog)
+                                                 Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks), udfCatalog(std::move(udfCatalog)) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                            bool advanceChecks,
-                                                           const Catalogs::UDF::UdfCatalogPtr& udfCatalog) {
+                                                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog) {
     return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks, udfCatalog);
 }
 

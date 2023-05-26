@@ -26,12 +26,16 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -81,12 +85,6 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     return ss.str();
 }
 
-/**
- * @brief create CSV lines from the tuples
- * @param tbuffer the tuple buffer
- * @param schema how to read the tuples from the buffer
- * @return a full string stream as string
- */
 std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -370,4 +368,75 @@ std::string Util::updateSourceName(std::string queryPlanSourceConsumed, std::str
     return updatedSourceName;
 }
 
+void Util::writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header) {
+    std::ofstream ofstream(csvFileName, std::ios::trunc | std::ios::out);
+    ofstream << header << std::endl;
+    ofstream.close();
+}
+
+void Util::writeRowToCsvFile(const std::string& csvFileName, const std::string& row) {
+    std::ofstream ofstream(csvFileName, std::ios::app | std::ios::out);
+    ofstream << row << std::endl;
+    ofstream.close();
+}
+
+std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,
+                                                                 const SchemaPtr& schema,
+                                                                 Runtime::BufferManagerPtr bufferManager,
+                                                                 const std::string& timeStampFieldName,
+                                                                 uint64_t lastTimeStamp) {
+    std::vector<Runtime::TupleBuffer> recordBuffers;
+    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
+
+    // Creating everything for the csv parser
+    std::ifstream file(csvFile);
+    std::istream_iterator<std::string> beginIt(file);
+    std::istream_iterator<std::string> endIt;
+    const std::string delimiter = ",";
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+
+    // Do-while loop for checking, if we have another line to parse from the inputFile
+    const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    auto it = beginIt;
+    auto tupleCount = 0UL;
+    auto buffer = bufferManager->getBufferBlocking();
+    do {
+        std::string line = *it;
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicTupleBuffer, schema, bufferManager);
+        ++tupleCount;
+
+        // If we have read enough tuples from the csv file, then stop iterating over it
+        auto curTimeStamp = dynamicTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
+        if (curTimeStamp >= lastTimeStamp) {
+            break;
+        }
+
+        if (tupleCount >= maxTuplesPerBuffer) {
+            buffer.setNumberOfTuples(tupleCount);
+            recordBuffers.emplace_back(buffer);
+            buffer = bufferManager->getBufferBlocking();
+            tupleCount = 0UL;
+        }
+        ++it;
+    } while (it != endIt);
+
+    if (tupleCount > 0) {
+        buffer.setNumberOfTuples(tupleCount);
+        recordBuffers.emplace_back(buffer);
+    }
+
+    return recordBuffers;
+}
+
+std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
+    std::vector<PhysicalTypePtr> retVector;
+
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        retVector.push_back(physicalField);
+    }
+    return retVector;
+}
 }// namespace NES

@@ -19,6 +19,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -56,12 +57,12 @@ using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLE 10
 
-class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class GPUQueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         testSchemaSimple = Schema::create()->addField("test$value", BasicType::INT32);
         testSchemaMultipleFields = Schema::create()
                                        ->addField("test$id", BasicType::INT64)
@@ -80,11 +81,15 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
+    void TearDown() override {
+        NES_DEBUG("QueryExecutionTest: Tear down GPUQueryExecutionTest test case.");
+        ASSERT_TRUE(nodeEngine->stop());
+        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {}
@@ -94,7 +99,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     SchemaPtr testSchemaColumnLayout;
     Runtime::NodeEnginePtr nodeEngine;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    Catalogs::UDF::UdfCatalogPtr udfCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 
 void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -386,6 +391,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaSimple,
         [&](OperatorId id,
+            OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -394,7 +400,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
+                                                                 origin,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -462,6 +468,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaMultipleFields,
         [&](OperatorId id,
+            OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -470,7 +477,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
+                                                                 origin,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -542,6 +549,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchemaColumnLayout,
         [&](OperatorId id,
+            OriginId origin,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -550,7 +558,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
+                                                                 origin,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });

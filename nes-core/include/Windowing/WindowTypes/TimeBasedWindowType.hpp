@@ -21,10 +21,20 @@
 namespace NES::Windowing {
 
 class TimeBasedWindowType : public WindowType {
+
   public:
+    enum TimeBasedSubWindowType { SLIDINGWINDOW, TUMBLINGWINDOW };
+
     explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
     virtual ~TimeBasedWindowType() = default;
+
+    /**
+     * @brief getter for the SubWindowType, i.e., SlidingWindow, TumblingWindow
+     * @return the SubWindowType
+    */
+    virtual TimeBasedSubWindowType getTimeBasedSubWindowType() = 0;
+
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs
@@ -59,11 +69,25 @@ class TimeBasedWindowType : public WindowType {
     virtual TimeMeasure getSlide() = 0;
 
     /**
+    * @return true if this is a sliding window
+    */
+    bool isTimeBasedWindowType() override;
+
+    /**
+     * @brief Infer stamp of time based window type
+     * @param schema : the schema of the window
+     * @param typeInferencePhaseContext: typeInference context
+     * @return true if success else false
+     */
+    bool inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+
+  private:
+    /**
      * @brief Infer stamp of time based window type
      * @param schema : the schema of the window
      * @return true if success else false
      */
-    bool inferStamp(const SchemaPtr& schema) override;
+    bool inferStamp(const SchemaPtr& schema);
 
   protected:
     TimeCharacteristicPtr timeCharacteristic;

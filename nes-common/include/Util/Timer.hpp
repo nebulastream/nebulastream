@@ -79,6 +79,13 @@ class Timer {
     };
 
     /**
+     * @brief Creates a fully qualified name (how it is stored)
+     * @param snapshotName
+     * @return Fully qualified name as string
+     */
+    std::string createFullyQualifiedSnapShotName(const std::string& snapshotName) { return componentName + '_' + snapshotName; }
+
+    /**
      * @brief saves current runtime as a snapshot. Useful for
      * measuring the time of sub-components.
      * @note The runtime is the time from the last taken snapshot
@@ -95,7 +102,7 @@ class Timer {
             auto duration = std::chrono::duration_cast<TimeUnit>(stop_p - start_p);
 
             runtime += duration;
-            snapshots.emplace_back(Snapshot(componentName + '_' + snapshotName, duration, std::vector<Snapshot>()));
+            snapshots.emplace_back(Snapshot(createFullyQualifiedSnapShotName(snapshotName), duration, std::vector<Snapshot>()));
 
             start_p = ClockType::now();
         }
@@ -118,8 +125,25 @@ class Timer {
 
     /**
      * @brief returns the currently saved snapshots
+     * @return reference to the saved snapshots
      */
     const std::vector<Snapshot>& getSnapshots() const { return snapshots; };
+
+    /**
+     * @brief Returns the runtime of the snapshot with the snapShotName
+     * @param snapShotName
+     * @return Runtime
+     */
+    int64_t getRuntimeFromSnapshot(const std::string& snapShotName) {
+        auto it = std::find_if(snapshots.begin(), snapshots.end(), [&](Snapshot const& snapshot) {
+            return (snapshot.name == snapShotName);
+        });
+        if (it != snapshots.end()) {
+            return it->getRuntime();
+        } else {
+            return -1;
+        }
+    }
 
     /**
      * @brief returns the current runtime

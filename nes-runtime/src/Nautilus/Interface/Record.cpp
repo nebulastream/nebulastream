@@ -41,6 +41,7 @@ uint64_t Record::numberOfFields() { return fields.size(); }
 void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
 
 bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
+
 std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
     std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
     for (auto& [fieldIdentifier, value] : fields) {
@@ -49,4 +50,20 @@ std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
 
     return fieldIdentifierVec;
 }
+
+std::string Record::toString() {
+    std::ostringstream stringStream;
+    for (auto& [fieldIdentifier, value] : fields) {
+        stringStream << fieldIdentifier << ": " << value << ", ";
+    }
+    auto tmpStr = stringStream.str();
+    tmpStr.pop_back();
+    tmpStr.pop_back();
+
+    return tmpStr;
+}
+
+bool Record::operator==(const Record& rhs) const { return fields == rhs.fields; }
+
+bool Record::operator!=(const Record& rhs) const { return !(rhs == *this); }
 }// namespace NES::Nautilus

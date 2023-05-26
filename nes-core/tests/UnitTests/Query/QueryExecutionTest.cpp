@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -50,6 +50,8 @@
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -63,7 +65,7 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -71,7 +73,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         // create test input buffer
         windowSchema = Schema::create()
                            ->addField("test$key", BasicType::INT64)
@@ -97,11 +99,11 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
-        // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
+        // Initialize the typeInferencePhase with a dummy SourceCatalog & UDFCatalog
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
@@ -110,7 +112,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -400,8 +402,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
         NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_NO_FALLBACK,
         NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::OMIT_OVERFLOW_CHECK_NO_FALLBACK};
 
-    auto filterProcessingStrategies = {NES::QueryCompilation::QueryCompilerOptions::BRANCHED,
-                                       NES::QueryCompilation::QueryCompilerOptions::PREDICATION};
+    auto filterProcessingStrategies = {NES::QueryCompilation::QueryCompilerOptions::FilterProcessingStrategy::BRANCHED,
+                                       NES::QueryCompilation::QueryCompilerOptions::FilterProcessingStrategy::PREDICATION};
     for (auto outputBufferOptimizationLevel :
          outputBufferOptimizationLevels) {// try different OutputBufferOptimizationLevel's: enum with six states
         for (auto filterProcessingStrategy : filterProcessingStrategies) {// try Predication on/off: bool
@@ -912,7 +914,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                             ->addField("id", BasicType::INT64)
                             ->addField("one", BasicType::INT64)
                             ->addField("value", BasicType::INT64)
-                            ->addField("result_pow_int", BasicType::INT64)
+                            ->addField("result_pow_int", BasicType::FLOAT64)
                             ->addField("result_pow_float", BasicType::FLOAT64)
                             ->addField("result_mod_int", BasicType::INT64)
                             ->addField("result_mod_float", BasicType::FLOAT64)
@@ -966,18 +968,18 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
         // This plan should produce one output buffer
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
 
-        std::string expectedContent =
-            "+----------------------------------------------------+\n"
-            "|id:INT64|one:INT64|value:INT64|result_pow_int:INT64|result_pow_float:FLOAT64|result_mod_int:INT64|result_mod_float:"
-            "FLOAT64|result_ceil:FLOAT64|result_exp:FLOAT64|result_batch_test:BOOLEAN|\n"
-            "+----------------------------------------------------+\n"
-            "|0|1|0|2|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
-            "|1|1|1|4|4.000000|0|-0.000000|1.000000|2.718282|1|\n"
-            "|2|1|0|8|8.000000|2|-2.000000|1.000000|2.718282|1|\n"
-            "|3|1|1|16|16.000000|0|-0.000000|2.000000|7.389056|1|\n"
-            "|4|1|0|32|32.000000|0|-0.000000|2.000000|7.389056|1|\n"
-            "|5|1|1|64|64.000000|2|-2.000000|3.000000|20.085537|1|\n"
-            "+----------------------------------------------------+";
+        std::string expectedContent = "+----------------------------------------------------+\n"
+                                      "|id:INT64|one:INT64|value:INT64|result_pow_int:FLOAT64|result_pow_float:FLOAT64|result_"
+                                      "mod_int:INT64|result_mod_float:"
+                                      "FLOAT64|result_ceil:FLOAT64|result_exp:FLOAT64|result_batch_test:BOOLEAN|\n"
+                                      "+----------------------------------------------------+\n"
+                                      "|0|1|0|2.000000|2.000000|0|-0.000000|0.000000|1.000000|1|\n"
+                                      "|1|1|1|4.000000|4.000000|0|-0.000000|1.000000|2.718282|1|\n"
+                                      "|2|1|0|8.000000|8.000000|2|-2.000000|1.000000|2.718282|1|\n"
+                                      "|3|1|1|16.000000|16.000000|0|-0.000000|2.000000|7.389056|1|\n"
+                                      "|4|1|0|32.000000|32.000000|0|-0.000000|2.000000|7.389056|1|\n"
+                                      "|5|1|1|64.000000|64.000000|2|-2.000000|3.000000|20.085537|1|\n"
+                                      "+----------------------------------------------------+";
 
         auto resultBuffer = testSink->get(0);
 
@@ -1028,15 +1030,15 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
                                                                                Milliseconds(millisecondOfallowedLateness),
                                                                                Milliseconds()));
 
-    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
+    query = query.window(windowType).byKey(Attribute("key", BasicType::INT64)).apply(Sum(Attribute("value", BasicType::INT64)));
     // add a watermark assigner operator with allowedLateness of 1 millisecond
 
     // 3. add sink. We expect that this sink will receive one buffer
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField(createField("test$key", INT64))
-                                  ->addField("test$value", INT64);
+                                  ->addField(createField("_$start", BasicType::UINT64))
+                                  ->addField(createField("_$end", BasicType::UINT64))
+                                  ->addField(createField("test$key", BasicType::INT64))
+                                  ->addField("test$value", BasicType::INT64);
 
     // each source buffer produce 1 result buffer, totalling 2 buffers
     auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine);
@@ -1089,15 +1091,15 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(10));
 
-    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
+    query = query.window(windowType).byKey(Attribute("key", BasicType::INT64)).apply(Sum(Attribute("value", BasicType::INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField(createField("test$key", INT64))
-                                  ->addField("test$value", INT64);
+                                  ->addField(createField("_$start", BasicType::UINT64))
+                                  ->addField(createField("_$end", BasicType::UINT64))
+                                  ->addField(createField("test$key", BasicType::INT64))
+                                  ->addField("test$value", BasicType::INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -1176,15 +1178,15 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
+    query = query.window(windowType).byKey(Attribute("key", BasicType::INT64)).apply(Sum(Attribute("value", BasicType::INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField(createField("key", BasicType::INT64))
+                                  ->addField("value", BasicType::INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -1211,7 +1213,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
-        auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
 
         auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
         auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
@@ -1264,10 +1265,10 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField(createField("key", BasicType::INT64))
+                                  ->addField("value", BasicType::INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -1332,10 +1333,10 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField(createField("key", BasicType::INT64))
+                                  ->addField("value", BasicType::INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -1414,10 +1415,10 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+                                  ->addField(createField("start", BasicType::UINT64))
+                                  ->addField(createField("end", BasicType::UINT64))
+                                  ->addField(createField("key", BasicType::INT64))
+                                  ->addField("value", BasicType::INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);

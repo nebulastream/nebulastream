@@ -17,4 +17,9 @@ add_source_files(nes-core
         LnFunction.cpp
         Log2Function.cpp
         Log10Function.cpp
+        AbsFunction.cpp
+        PowerFunction.cpp
+        SinFunction.cpp
+        CosFunction.cpp
+        RadiansFunction.cpp
         )

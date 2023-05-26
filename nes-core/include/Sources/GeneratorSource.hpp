@@ -43,7 +43,7 @@ class GeneratorSource : public DataSource {
                     OperatorId operatorId,
                     OriginId originId,
                     size_t numSourceLocalBuffers,
-                    GatheringMode::Value gatheringMode,
+                    GatheringMode gatheringMode,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : DataSource(std::move(schema),
                      std::move(bufferManager),
@@ -53,7 +53,7 @@ class GeneratorSource : public DataSource {
                      numSourceLocalBuffers,
                      gatheringMode,
                      std::move(successors)) {
-        this->numBuffersToProcess = numbersOfBufferToProduce;
+        this->numberOfBuffersToProduce = numbersOfBufferToProduce;
     }
     /**
    * @brief override function to create one buffer

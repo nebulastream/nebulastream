@@ -15,12 +15,15 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <chrono>
 #include <utility>
+
 namespace NES {
 
 LambdaSource::LambdaSource(
@@ -33,7 +36,7 @@ LambdaSource::LambdaSource(
     OperatorId operatorId,
     OriginId originId,
     size_t numSourceLocalBuffers,
-    GatheringMode::Value gatheringMode,
+    GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -53,7 +56,7 @@ LambdaSource::LambdaSource(
     } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
-        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));
     }
     numberOfTuplesToProduce = this->localBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
     this->sourceAffinity = sourceAffinity;
@@ -84,5 +87,5 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
 std::string LambdaSource::toString() const { return "LambdaSource"; }
 
-SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
+SourceType LambdaSource::getType() const { return SourceType::LAMBDA_SOURCE; }
 }// namespace NES

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
@@ -20,7 +22,7 @@ namespace NES::Windowing {
 
 ContentBasedWindowType::ContentBasedWindowType() = default;
 
-bool ContentBasedWindowType::inferStamp(const SchemaPtr&) { return true; }
+bool ContentBasedWindowType::isContentBasedWindowType() { return true; }
 
 ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType) {
     if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType)) {

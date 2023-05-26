@@ -23,6 +23,6 @@ BaseJoinActionDescriptorPtr LazyNestLoopJoinTriggerActionDescriptor::create() {
 JoinActionType LazyNestLoopJoinTriggerActionDescriptor::getActionType() { return this->action; }
 
 LazyNestLoopJoinTriggerActionDescriptor::LazyNestLoopJoinTriggerActionDescriptor()
-    : BaseJoinActionDescriptor(LazyNestedLoopJoin) {}
+    : BaseJoinActionDescriptor(JoinActionType::LazyNestedLoopJoin) {}
 
 }// namespace NES::Join

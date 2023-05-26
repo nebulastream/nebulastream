@@ -23,11 +23,9 @@ namespace NES::Windowing {
 
 WindowType::WindowType() = default;
 
-bool WindowType::isSlidingWindow() { return false; }
+bool WindowType::isTimeBasedWindowType() { return false; }
 
-bool WindowType::isTumblingWindow() { return false; }
-
-bool WindowType::isThresholdWindow() { return false; }
+bool WindowType::isContentBasedWindowType() { return false; }
 
 TimeBasedWindowTypePtr WindowType::asTimeBasedWindowType(std::shared_ptr<WindowType> windowType) {
     if (auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType)) {

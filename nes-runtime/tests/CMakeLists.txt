@@ -12,30 +12,34 @@
 # limitations under the License.
 
 include(ExternalProject)
+add_subdirectory(Util)
 
 # Copy Test Data
 file(COPY testData DESTINATION .)
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
 
+
+include(FetchContent)
+FetchContent_Declare(tpch-dbgen
+        GIT_REPOSITORY https://github.com/nebulastream/tpch-dbgen.git
+        GIT_TAG master
+        )
+
+FetchContent_MakeAvailable(tpch-dbgen)
+# The tpch-dbgen target causes warnings on recent compilers. Thus we disable the warning for this target.
+target_compile_options(tpch-dbgen PUBLIC "-Wno-deprecated-non-prototype")
+
 function(add_nes_runtime_test)
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-runtime-tests)
+    target_link_libraries(${TARGET_NAME} PRIVATE nes-runtime-test-util)
     if (CODE_COVERAGE)
-        target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes-runtime nes-common EXCLUDE tests/*)
+        target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes-runtime-test-util EXCLUDE tests/*)
         message(STATUS "Added cc test ${TARGET_NAME}")
     endif ()
-    add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
+    gtest_add_tests(TARGET ${TARGET_NAME})
     message(STATUS "Added ut test ${TARGET_NAME}")
 endfunction()
 
-
-add_library(nes-runtime-tests INTERFACE)
-target_include_directories(nes-runtime-tests INTERFACE "./include/")
-target_link_libraries(nes-runtime-tests INTERFACE nes-runtime nes-tests-util)
-
 add_subdirectory(UnitTests)
-
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
-

@@ -15,6 +15,7 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Catalogs::Query {
@@ -23,7 +24,7 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
                                      std::string queryPlacementStrategy,
                                      QueryPlanPtr inputQueryPlan,
-                                     QueryStatus::Value queryStatus)
+                                     QueryStatus queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
       inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
 
@@ -40,17 +41,17 @@ void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
     this->executedQueryPlan = executedQueryPlan;
 }
 
-QueryStatus::Value QueryCatalogEntry::getQueryStatus() const {
+QueryStatus QueryCatalogEntry::getQueryStatus() const {
     std::unique_lock lock(mutex);
     return queryStatus;
 }
 
 std::string QueryCatalogEntry::getQueryStatusAsString() const {
     std::unique_lock lock(mutex);
-    return QueryStatus::toString(queryStatus);
+    return std::string(magic_enum::enum_name(queryStatus));
 }
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) {
+void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) {
     std::unique_lock lock(mutex);
     this->queryStatus = queryStatus;
 }
@@ -64,8 +65,8 @@ std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
 
 const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
 
-PlacementStrategy::Value QueryCatalogEntry::getQueryPlacementStrategy() {
-    return PlacementStrategy::getFromString(queryPlacementStrategy);
+PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() {
+    return magic_enum::enum_cast<PlacementStrategy>(queryPlacementStrategy).value();
 }
 
 void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {
@@ -82,7 +83,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Running, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::RUNNING, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 

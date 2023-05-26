@@ -100,35 +100,35 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) 
 PhysicalSourceTypePtr
 PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
                                                 const std::map<std::string, std::string>& commandLineParams) {
-    switch (stringToSourceType[sourceType]) {
-        case CSV_SOURCE: return CSVSourceType::create(commandLineParams);
-        case MQTT_SOURCE: return MQTTSourceType::create(commandLineParams);
-        case KAFKA_SOURCE: return KafkaSourceType::create(commandLineParams);
-        case OPC_SOURCE: return OPCSourceType::create(commandLineParams);
-        case BINARY_SOURCE: return BinarySourceType::create(commandLineParams);
-        case SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
-        case LORAWAN_SOURCE: return LoRaWANProxySourceType::create(commandLineParams);
-        case DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
-        case MATERIALIZEDVIEW_SOURCE: return DefaultSourceType::create(commandLineParams);
+    switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
+        case SourceType::CSV_SOURCE: return CSVSourceType::create(commandLineParams);
+        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(commandLineParams);
+        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(commandLineParams);
+        case SourceType::OPC_SOURCE: return OPCSourceType::create(commandLineParams);
+        case SourceType::BINARY_SOURCE: return BinarySourceType::create(commandLineParams);
+        case SourceType::SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
+        case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
+        case SourceType::LORAWAN_SOURCE: return LoRaWANProxySourceType::create(commandLineParams);
+        case SourceType::MATERIALIZEDVIEW_SOURCE: return DefaultSourceType::create(commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
 PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) {
 
-    if (stringToSourceType.find(sourceType) == stringToSourceType.end()) {
+    if (!magic_enum::enum_cast<SourceType>(sourceType).has_value()) {
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 
-    switch (stringToSourceType[sourceType]) {
-        case CSV_SOURCE: return CSVSourceType::create(yamlConfig);
-        case MQTT_SOURCE: return MQTTSourceType::create(yamlConfig);
-        case KAFKA_SOURCE: return KafkaSourceType::create(yamlConfig);
-        case OPC_SOURCE: return OPCSourceType::create(yamlConfig);
-        case BINARY_SOURCE: return BinarySourceType::create(yamlConfig);
-        case SENSE_SOURCE: return SenseSourceType::create(yamlConfig);
-        case LORAWAN_SOURCE: return LoRaWANProxySourceType::create(yamlConfig);
-        case DEFAULT_SOURCE: return DefaultSourceType::create(yamlConfig);
+    switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
+        case SourceType::CSV_SOURCE: return CSVSourceType::create(yamlConfig);
+        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(yamlConfig);
+        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(yamlConfig);
+        case SourceType::OPC_SOURCE: return OPCSourceType::create(yamlConfig);
+        case SourceType::BINARY_SOURCE: return BinarySourceType::create(yamlConfig);
+        case SourceType::SENSE_SOURCE: return SenseSourceType::create(yamlConfig);
+        case SourceType::LORAWAN_SOURCE: return LoRaWANProxySourceType::create(yamlConfig);
+        case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }

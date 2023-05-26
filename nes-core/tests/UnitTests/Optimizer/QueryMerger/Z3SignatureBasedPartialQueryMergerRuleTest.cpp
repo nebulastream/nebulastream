@@ -21,7 +21,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -50,12 +50,12 @@
 using namespace NES;
 using namespace Configurations;
 
-class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
+    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -65,7 +65,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -110,7 +110,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
 

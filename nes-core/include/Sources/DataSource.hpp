@@ -17,8 +17,8 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Common/Identifiers.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -29,6 +29,10 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+
+namespace NES::Runtime::MemoryLayouts {
+class DynamicTupleBuffer;
+}
 
 namespace NES {
 class KalmanFilter;
@@ -58,7 +62,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OperatorId operatorId,
                         OriginId originId,
                         size_t numSourceLocalBuffers,
-                        GatheringMode::Value gatheringMode,
+                        GatheringMode gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
@@ -269,11 +273,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     SchemaPtr schema;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
-    uint64_t numBuffersToProcess = std::numeric_limits<decltype(numBuffersToProcess)>::max();
+    uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate{};
     std::chrono::milliseconds gatheringInterval{0};
-    GatheringMode::Value gatheringMode;
+    GatheringMode gatheringMode;
     SourceType type;
     Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
     std::atomic_bool wasStarted{false};
@@ -295,7 +299,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
-    Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
+    NES::Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
 
   protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;

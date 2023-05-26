@@ -29,6 +29,7 @@
 #include <numaif.h>
 #endif
 #endif
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES {
@@ -43,8 +44,8 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  OperatorId operatorId,
                                  OriginId originId,
                                  size_t numSourceLocalBuffers,
-                                 GatheringMode::Value gatheringMode,
-                                 SourceMode::Value sourceMode,
+                                 GatheringMode gatheringMode,
+                                 SourceMode sourceMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
                                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -59,13 +60,13 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                       std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");
-    this->numBuffersToProcess = numBuffersToProcess;
+    this->numberOfBuffersToProduce = numBuffersToProcess;
     if (gatheringMode == GatheringMode::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
-        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));
     }
     this->sourceAffinity = sourceAffinity;
     this->taskQueueId = taskQueueId;
@@ -118,7 +119,7 @@ void BenchmarkSource::runningRoutine() {
 
         NES_INFO2("Going to produce {}", numberOfTuplesToProduce);
 
-        for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
+        for (uint64_t i = 0; i < numberOfBuffersToProduce && running; ++i) {
             Runtime::TupleBuffer buffer;
             switch (sourceMode) {
                 case SourceMode::EMPTY_BUFFER: {
@@ -197,5 +198,5 @@ std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData() {
 
 std::string BenchmarkSource::toString() const { return "BenchmarkSource"; }
 
-NES::SourceType BenchmarkSource::getType() const { return MEMORY_SOURCE; }
+NES::SourceType BenchmarkSource::getType() const { return SourceType::MEMORY_SOURCE; }
 }// namespace NES

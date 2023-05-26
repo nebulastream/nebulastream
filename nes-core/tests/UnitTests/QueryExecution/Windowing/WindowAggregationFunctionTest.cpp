@@ -18,6 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <iostream>
@@ -29,8 +31,11 @@ using Runtime::TupleBuffer;
 const static uint64_t windowSize = 10;
 const static uint64_t recordsPerBuffer = 100;
 
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class WindowAggregationFunctionTest
-    : public Testing::TestWithErrorHandling<testing::Test>,
+    : public Testing::TestWithErrorHandling,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -39,10 +44,9 @@ class WindowAggregationFunctionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
         sourceSchema = Schema::create()->addField("test$ts", BasicType::UINT64)->addField("test$value", BasicType::INT64);
     }
 
@@ -50,14 +54,14 @@ class WindowAggregationFunctionTest
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down WindowAggregationFunctionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down WindowAggregationFunctionTest test class."); }
 
     SchemaPtr sourceSchema;
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, uint64_t ts) {
         for (int64_t recordIndex = 0; recordIndex < (int64_t) recordsPerBuffer; recordIndex++) {
@@ -93,7 +97,7 @@ TEST_P(WindowAggregationFunctionTest, testSumAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Sum(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -124,7 +128,7 @@ TEST_P(WindowAggregationFunctionTest, testAvgAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Avg(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Avg(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -155,7 +159,7 @@ TEST_P(WindowAggregationFunctionTest, testMinAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Min(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Min(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -186,7 +190,7 @@ TEST_P(WindowAggregationFunctionTest, testMaxAggregation) {
 
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-                     .apply(Max(Attribute("value", INT64))->as(Attribute("value")))
+                     .apply(Max(Attribute("value", BasicType::INT64))->as(Attribute("value")))
                      .project(Attribute("start"), Attribute("end"), Attribute("value"))
                      .sink(testSinkDescriptor);
 
@@ -225,10 +229,10 @@ TEST_P(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
     auto query =
         TestQuery::from(testSourceDescriptor)
             .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
-            .apply(Sum(Attribute("value", INT64))->as(Attribute("sum")),
-                   Min(Attribute("value", INT64))->as(Attribute("min")),
-                   Max(Attribute("value", INT64))->as(Attribute("max")),
-                   Avg(Attribute("value", INT64))->as(Attribute("avg")))
+            .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("sum")),
+                   Min(Attribute("value", BasicType::INT64))->as(Attribute("min")),
+                   Max(Attribute("value", BasicType::INT64))->as(Attribute("max")),
+                   Avg(Attribute("value", BasicType::INT64))->as(Attribute("avg")))
             .project(Attribute("start"), Attribute("end"), Attribute("sum"), Attribute("min"), Attribute("max"), Attribute("avg"))
             .sink(testSinkDescriptor);
 

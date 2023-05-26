@@ -16,6 +16,8 @@
 
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <vector>
+
 namespace NES::QueryCompilation {
 
 /**

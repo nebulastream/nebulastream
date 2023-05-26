@@ -60,7 +60,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
                                           TestUtils::enableDebug(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::numberOfSlots(8),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -141,7 +141,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -233,7 +233,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
               "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
-              "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
+              "BasicType::UINT64))->addField(createField(\\\"velocity\\\", "
+              "BasicType::FLOAT32))->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -242,7 +243,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("QnV"),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
@@ -335,8 +336,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -345,7 +347,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("window"),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
@@ -437,8 +439,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+              ":\"Schema::create()->addField(createField(\\\"value\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"id\\\",BasicType::UINT64))"
+              "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
@@ -447,7 +450,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("window"),
-                                          TestUtils::sourceType("CSVSource"),
+                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::sourceGatheringInterval(1000),

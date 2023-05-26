@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 #define NES_CORE_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 
+#include <Util/magicenum/magic_enum.hpp>
 #include <string>
 
 namespace NES::Monitoring {
@@ -22,7 +23,7 @@ namespace NES::Monitoring {
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
 */
-enum MetricType {
+enum class MetricType : uint8_t {
     CpuMetric,
     DiskMetric,
     MemoryMetric,
@@ -34,19 +35,7 @@ enum MetricType {
     UnknownMetric
 };
 
-/**
- * @brief Converts a metric type to a string
- * @param type
- * @return the type as string
- */
-std::string toString(MetricType type);
-
-/**
- * @brief Creates a metric type from a string
- * @param metric type as string
- * @return the metric type
- */
-MetricType parse(std::string metricTypeStr);
+std::string toString(MetricType metricType);
 
 }// namespace NES::Monitoring
 
