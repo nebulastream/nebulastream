@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORTOPERATORHANDLER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORTOPERATORHANDLER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_
 
 #include <Nautilus/Interface/Stack/Stack.hpp>
 #include <Nautilus/Interface/Stack/StackRef.hpp>
@@ -27,11 +27,22 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class SortOperatorHandler : public Runtime::Execution::OperatorHandler,
-                         public NES::detail::virtual_enable_shared_from_this<SortOperatorHandler, false> {
+/**
+ * @brief Sort operator handler that manages the state of the BatchSort and BatchSortScan operators.
+ */
+class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
+                         public NES::detail::virtual_enable_shared_from_this<BatchSortOperatorHandler, false> {
   public:
-    SortOperatorHandler(uint64_t entrySize) : entrySize(entrySize), currentEntryIndex(0) {};
+    /**
+     * @brief Creates the operator handler for the sort operator.
+     * @param entrySize size of the entry
+     */
+    explicit BatchSortOperatorHandler(uint64_t entrySize) : entrySize(entrySize) {};
 
+    /**
+     * @brief Sets up the state for the sort operator
+     * @param ctx PipelineExecutionContext
+     */
     void setup(Runtime::Execution::PipelineExecutionContext&) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
         stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
@@ -39,31 +50,35 @@ class SortOperatorHandler : public Runtime::Execution::OperatorHandler,
         tempStack = std::make_unique<Nautilus::Interface::Stack>(std::move(tempAllocator), entrySize);
     }
 
+    /**
+     * @brief Returns the state of the sort operator
+     * @return Stack state
+     */
+    Nautilus::Interface::Stack *getState() { return stack.get(); }
+
+    /**
+     * @brief Returns the temporary state of the sort operator
+     * @return Stack state
+     */
+    Nautilus::Interface::Stack *getTempState() { return tempStack.get(); }
+
+    /**
+     * @brief Returns the size of the entry
+     * @return entry size
+     */
+    uint64_t getStateEntrySize() const { return entrySize; }
+
+
     void start(Runtime::Execution::PipelineExecutionContextPtr,
                Runtime::StateManagerPtr,
                uint32_t) override {};
 
     void stop(Runtime::QueryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr) override {};
-
-    uint64_t getCount() { return stack->getNumberOfEntries(); }
-
-    Nautilus::Interface::Stack *getState() { return stack.get(); }
-    Nautilus::Interface::StackRef getStateRef() {
-        return Nautilus::Interface::StackRef(Nautilus::Value<Nautilus::MemRef>((int8_t*) &stack), entrySize);
-    }
-
-    Nautilus::Interface::Stack *getTempState() { return tempStack.get(); }
-
-    uint64_t getEntrySize() const { return entrySize; }
-
-    uint64_t getAndIncrementCurrentEntryIndex() { return currentEntryIndex++; }
-
   private:
     std::unique_ptr<Nautilus::Interface::Stack> stack;
     std::unique_ptr<Nautilus::Interface::Stack> tempStack;
     uint64_t entrySize;
-    uint64_t currentEntryIndex;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORTOPERATORHANDLER_HPP_
+#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_

@@ -13,11 +13,9 @@
 */
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Relational/Sort/Sort.hpp>
-#include <Execution/Operators/Relational/Sort/SortOperatorHandler.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSort.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/Stack/Stack.hpp>
@@ -25,36 +23,35 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-Sort::Sort(const uint64_t operatorHandlerIndex, const std::vector<PhysicalTypePtr>& dataTypes)
-    : operatorHandlerIndex(operatorHandlerIndex), dataTypes(dataTypes) { }
+BatchSort::BatchSort(const uint64_t operatorHandlerIndex, const std::vector<PhysicalTypePtr>& dataTypes)
+    : operatorHandlerIndex(operatorHandlerIndex), dataTypes(dataTypes) {}
+
+void* getStackProxy(void* op) {
+    auto handler = static_cast<BatchSortOperatorHandler*>(op);
+    return handler->getState();
+}
+
+uint64_t getStateEntrySize(void* op) {
+    auto handler = static_cast<BatchSortOperatorHandler*>(op);
+    return handler->getStateEntrySize();
+}
 
 void setupHandler(void* op, void* ctx) {
-    auto handler = static_cast<SortOperatorHandler*>(op);
+    auto handler = static_cast<BatchSortOperatorHandler*>(op);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext);
 }
 
-void* getStackProxy(void* op) {
-    auto handler = static_cast<SortOperatorHandler*>(op);
-    return handler->getState();
-}
-
-uint64_t getEntrySize(void* op) {
-    auto handler = static_cast<SortOperatorHandler*>(op);
-    return handler->getEntrySize();
-}
-
-void Sort::setup(ExecutionContext& ctx) const {
+void BatchSort::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("setupHandler", setupHandler, globalOperatorHandler, ctx.getPipelineContext());
 }
 
-void Sort::execute(ExecutionContext& ctx, Record& record) const {
-    // get local state
+void BatchSort::execute(ExecutionContext& ctx, Record& record) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler);
 
-    auto entrySize = Nautilus::FunctionCall("getEntrySize", getEntrySize, globalOperatorHandler);
+    auto entrySize = Nautilus::FunctionCall("getStateEntrySize", getStateEntrySize, globalOperatorHandler);
     auto stack = Interface::StackRef(state, entrySize->getValue());
 
     // create entry and store it in state

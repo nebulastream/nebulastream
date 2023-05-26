@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORTSCAN_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORTSCAN_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTSCAN_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTSCAN_HPP_
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -21,9 +21,18 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class SortScan : public Operator {
+/**
+ * @brief BatchSortScan operator that sorts a batch of records stored in the BatchSortOperatorHandler state.
+ */
+class BatchSortScan : public Operator {
   public:
-    SortScan(const uint64_t operatorHandlerIndex, const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+    /**
+     * @brief Construct a new BatchSortScan operator
+     * @param operatorHandlerIndex operator handler index
+     * @param fieldIdentifiers field identifiers of the records
+     * @param dataTypes data types of the records
+     */
+    BatchSortScan(const uint64_t operatorHandlerIndex, const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
              const std::vector<PhysicalTypePtr>& dataTypes) : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes) {}
 
     void setup(ExecutionContext& executionCtx) const override;
@@ -36,4 +45,4 @@ class SortScan : public Operator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORTSCAN_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTSCAN_HPP_

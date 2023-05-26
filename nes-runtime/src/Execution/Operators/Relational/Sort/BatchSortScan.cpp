@@ -11,15 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Execution/RecordBuffer.hpp>
+
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/Operators/Relational/Sort/SortOperatorHandler.hpp>
-#include <Execution/Operators/Relational/Sort/SortScan.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSortScan.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/Stack/StackRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -28,11 +29,6 @@ namespace NES::Runtime::Execution::Operators {
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
 const uint64_t COL_SIZE = 8;
-
-template <typename T>
-T MaxValue(T a, T b) {
-    return a > b ? a : b;
-}
 
 /**
  * @brief Radix sort implementation as most significant digit (msd) radix sort
@@ -77,7 +73,7 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
 
     // Loop through all possible byte values (radix) and update the maximum count and locations array
     for (uint64_t radix = 0; radix < VALUES_PER_RADIX; radix++) {
-        max_count = MaxValue<uint64_t>(max_count, counts[radix]);
+        max_count = std::max(max_count, counts[radix]);
         counts[radix] += locations[radix];
     }
 
@@ -119,64 +115,61 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
 }
 
 void RadixSortMSDProxy(void *op) {
-    auto handler = static_cast<SortOperatorHandler*>(op);
+    auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
     // issue #3773 add support for columns other than the first one
     auto colOffset = 0;
-    auto rowWidth = handler->getEntrySize();
+    auto rowWidth = handler->getStateEntrySize();
     // issue #3773 add support for columns other sizes
     auto compWidth = COL_SIZE;
     auto offset = 0; // init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
     auto swap = false; // init false
     RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
-}
-
-uint64_t getAndIterateEntryIndex(void *op){
-    auto handler = static_cast<SortOperatorHandler*>(op);
-    auto entryIndex = handler->getAndIncrementCurrentEntryIndex();
-    return entryIndex;
+    delete[] locations;
 }
 
 void *getStateProxy(void *op){
-    auto handler = static_cast<SortOperatorHandler*>(op);
+    auto handler = static_cast<BatchSortOperatorHandler*>(op);
     return handler->getState();
 }
 
-uint64_t getSortEntrySize(void *op){
-    auto handler = static_cast<SortOperatorHandler*>(op);
-    return handler->getEntrySize();
+uint64_t getSortStateEntrySize(void *op){
+    auto handler = static_cast<BatchSortOperatorHandler*>(op);
+    return handler->getStateEntrySize();
 }
 
-void SortScan::setup(ExecutionContext& ctx) const {
+void BatchSortScan::setup(ExecutionContext& ctx) const {
     // perform sort
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("RadixSortMSDProxy", RadixSortMSDProxy, globalOperatorHandler);
 }
 
-void SortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
+void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     Operators::Operator::open(ctx, rb);
 
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // 2. load the local state.
+    // 2. load the state
     auto stateProxy = Nautilus::FunctionCall("getStateProxy", getStateProxy, globalOperatorHandler);
-    auto entrySize = Nautilus::FunctionCall("getSortEntrySize", getSortEntrySize, globalOperatorHandler);
+    auto entrySize = Nautilus::FunctionCall("getSortStateEntrySize", getSortStateEntrySize, globalOperatorHandler);
     auto state = Nautilus::Interface::StackRef(stateProxy, entrySize->getValue());
-    auto currentEntryIndex = Nautilus::FunctionCall("getAndIterateEntryIndex", getAndIterateEntryIndex, globalOperatorHandler);
 
-    Record record;
-    auto entry  = state.getEntry(Value<UInt64>(currentEntryIndex));
-    for (size_t i = 0; i < fieldIdentifiers.size(); i++) {
-        auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
-        record.write(fieldIdentifiers[i], value);
-        entry = entry + dataTypes[i]->size();
+    // 3. emit the records
+    for (size_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
+        Record record;
+        auto entry  = state.getEntry(Value<UInt64>(entryIndex));
+        for (size_t i = 0; i < fieldIdentifiers.size(); i++) {
+            auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
+            record.write(fieldIdentifiers[i], value);
+            entry = entry + dataTypes[i]->size();
+        }
+        child->execute(ctx, record);
     }
-    child->execute(ctx, record);
 }
 
 }// namespace NES::Runtime::Execution::Operators
