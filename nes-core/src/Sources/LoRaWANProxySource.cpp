@@ -25,7 +25,7 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                                        OperatorId operatorId,
                                        OriginId originId,
                                        size_t numSourceLocalBuffers,
-                                       GatheringMode::Value gatheringMode,
+                                       GatheringMode gatheringMode,
                                        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors)
     : DataSource(schema,
                  bufferManager,
@@ -42,7 +42,7 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
     deviceEUIs = sourceConfig->getDeviceEUIs()->getValue();
     topicBase = "application/" + sourceConfig->getAppId()->getValue();
     topicAll = topicBase + "/#";
-    topicDevice =  topicBase + "/device";
+    topicDevice = topicBase + "/device";
     topicReceiveSuffix = "/event/up";
     topicSendSuffix = "/command/down";
     topicAllDevicesReceive = topicDevice + "/+" + topicReceiveSuffix;
@@ -87,14 +87,14 @@ bool LoRaWANProxySource::connect() {
         open();
         try {
             //TODO: actually get authentication to work
-//            auto sslopt = mqtt::ssl_options_builder()
-//                              .ca_path(capath)
-//                              .trust_store(certpath)
-//                              .private_key(keypath)
-//                              .verify(false)
-//                              .enable_server_cert_auth(false)
-//                              .finalize();
-//            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
+            //            auto sslopt = mqtt::ssl_options_builder()
+            //                              .ca_path(capath)
+            //                              .trust_store(certpath)
+            //                              .private_key(keypath)
+            //                              .verify(false)
+            //                              .enable_server_cert_auth(false)
+            //                              .finalize();
+            //            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
             auto connOpts = mqtt::connect_options_builder()
                                 //.ssl(sslopt)
                                 .automatic_reconnect(true)
@@ -202,18 +202,28 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
                         for (int i = 0; i < resultArray.size(); ++i) {
                             auto result = resultArray[i];
                             auto bufferCell = buffer[tupCount][i];
-                            if (result.has__int8()) bufferCell.write<int8_t>(result._int8());
-                            if (result.has__int16()) bufferCell.write<int16_t>(result._int16());
-                            if (result.has__int32()) bufferCell.write<int32_t>(result._int32());
-                            if (result.has__int64()) bufferCell.write<int64_t>(result._int64());
+                            if (result.has__int8())
+                                bufferCell.write<int8_t>(result._int8());
+                            if (result.has__int16())
+                                bufferCell.write<int16_t>(result._int16());
+                            if (result.has__int32())
+                                bufferCell.write<int32_t>(result._int32());
+                            if (result.has__int64())
+                                bufferCell.write<int64_t>(result._int64());
 
-                            if (result.has__uint8()) bufferCell.write<u_int8_t>(result._uint8());
-                            if (result.has__uint16()) bufferCell.write<u_int16_t>(result._uint16());
-                            if (result.has__uint32()) bufferCell.write<u_int32_t>(result._uint32());
-                            if (result.has__uint64()) bufferCell.write<u_int64_t>(result._uint64());
+                            if (result.has__uint8())
+                                bufferCell.write<u_int8_t>(result._uint8());
+                            if (result.has__uint16())
+                                bufferCell.write<u_int16_t>(result._uint16());
+                            if (result.has__uint32())
+                                bufferCell.write<u_int32_t>(result._uint32());
+                            if (result.has__uint64())
+                                bufferCell.write<u_int64_t>(result._uint64());
 
-                            if (result.has__float()) bufferCell.write<float_t>(result._float());
-                            if (result.has__double()) bufferCell.write<float_t>(result._double());
+                            if (result.has__float())
+                                bufferCell.write<float_t>(result._float());
+                            if (result.has__double())
+                                bufferCell.write<float_t>(result._double());
                         }
                         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
                     }
@@ -236,7 +246,7 @@ std::string LoRaWANProxySource::toString() const {
     ss << ").";
     return ss.str();
 }
-SourceType LoRaWANProxySource::getType() const { return LORAWAN_SOURCE; }
+SourceType LoRaWANProxySource::getType() const { return SourceType::LORAWAN_SOURCE; }
 bool LoRaWANProxySource::sendQueries() {
     auto queryMap = sourceConfig->getSerializedQueries();
     auto pbMsg = EndDeviceProtocol::Message();
@@ -265,10 +275,9 @@ bool LoRaWANProxySource::sendQueries() {
         //            }
         //        }
         nlohmann::json payload{{"devEui", devEUI}, {"confirmed", true}, {"fPort", 1}, {"data", pbEncoded}};
-        auto topic = topicDevice + "/" +devEUI + topicSendSuffix;
+        auto topic = topicDevice + "/" + devEUI + topicSendSuffix;
         NES_DEBUG("sending data: " + pbMsg.DebugString() + " to topic: " + topic + " with payload " + payload.dump());
         client->publish(topic, payload.dump());
-
     }
     return true;
 }

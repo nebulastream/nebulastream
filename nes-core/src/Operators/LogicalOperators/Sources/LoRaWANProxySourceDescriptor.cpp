@@ -10,9 +10,9 @@
 //     limitations under the License.
 // *
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <API/Schema.hpp>
 #include <utility>
 
 namespace NES {
@@ -28,8 +28,10 @@ SourceDescriptorPtr LoRaWANProxySourceDescriptor::create(SchemaPtr schema,
                                                          LoRaWANProxySourceTypePtr sourceConfig,
                                                          std::string logicalSourceName,
                                                          std::string physicalSourceName) {
-    return std::make_shared<LoRaWANProxySourceDescriptor>(
-        LoRaWANProxySourceDescriptor(std::move(schema), std::move(sourceConfig), std::move(logicalSourceName), std::move(physicalSourceName)));
+    return std::make_shared<LoRaWANProxySourceDescriptor>(LoRaWANProxySourceDescriptor(std::move(schema),
+                                                                                       std::move(sourceConfig),
+                                                                                       std::move(logicalSourceName),
+                                                                                       std::move(physicalSourceName)));
 }
 std::string LoRaWANProxySourceDescriptor::toString() const {
     return "LoRaWANProxySourceDescriptor(" + loRaWanProxySourceType->toString() + ")";
@@ -43,7 +45,8 @@ bool LoRaWANProxySourceDescriptor::equal(const NES::SourceDescriptorPtr& other) 
 }
 
 SourceDescriptorPtr LoRaWANProxySourceDescriptor::copy() {
-    return LoRaWANProxySourceDescriptor::create(schema->copy(),loRaWanProxySourceType, logicalSourceName, physicalSourceName); }
+    return LoRaWANProxySourceDescriptor::create(schema->copy(), loRaWanProxySourceType, logicalSourceName, physicalSourceName);
+}
 
 LoRaWANProxySourceTypePtr LoRaWANProxySourceDescriptor::getSourceConfig() const { return loRaWanProxySourceType; }
 SourceDescriptorPtr LoRaWANProxySourceDescriptor::create(SchemaPtr schema, LoRaWANProxySourceTypePtr loRaWanProxySourceType) {

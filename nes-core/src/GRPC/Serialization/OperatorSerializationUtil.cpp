@@ -36,13 +36,13 @@
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -1254,7 +1254,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         SchemaSerializationUtil::serializeSchema(senseSourceDescriptor->getSchema(),
                                                  senseSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(senseSerializedSourceDescriptor);
-    } else if (sourceDescriptor.instanceOf<LoRaWANProxySourceDescriptor>()){
+    } else if (sourceDescriptor.instanceOf<LoRaWANProxySourceDescriptor>()) {
         // serialize LoRaWANProxySourceDescriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableLoRaWANProxySourceDescriptor");
@@ -1278,12 +1278,11 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         sourceConf_ser.mutable_sensorfields()->Assign(sensorFields.begin(), sensorFields.end());
 
         auto queries = loraSourceConfig->getSerializedQueries();
-        for(auto const& [id, query]: *queries){
+        for (auto const& [id, query] : *queries) {
             auto serializedQuery = EndDeviceProtocol::Query();
             serializedQuery.CopyFrom(*query);
             sourceConf_ser.mutable_queries()->insert({id, serializedQuery});
         }
-
 
         //Insert into descriptor
         auto loraDesc_ser = SerializableOperator_SourceDetails_SerializableLoRaWANProxySourceDescriptor();
@@ -1293,8 +1292,8 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
 
         SchemaSerializationUtil::serializeSchema(schema, loraDesc_ser.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(loraDesc_ser);
-
-    } if (sourceDescriptor.instanceOf<const LogicalSourceDescriptor>()) {
+    }
+    if (sourceDescriptor.instanceOf<const LogicalSourceDescriptor>()) {
         // serialize logical source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
@@ -1477,11 +1476,13 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         return SenseSourceDescriptor::create(schema, senseSerializedSourceDescriptor.udfs());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLoRaWANProxySourceDescriptor>()) {
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LoRaWANProxySourceDescriptor");
-        auto serializedloRaWanProxySourceDescriptor = SerializableOperator_SourceDetails_SerializableLoRaWANProxySourceDescriptor();
+        auto serializedloRaWanProxySourceDescriptor =
+            SerializableOperator_SourceDetails_SerializableLoRaWANProxySourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&serializedloRaWanProxySourceDescriptor);
         auto schema = SchemaSerializationUtil::deserializeSchema(serializedloRaWanProxySourceDescriptor.sourceschema());
         auto serializedProxySourceType = SerializablePhysicalSourceType_SerializableLoRaWANProxySourceType();
-        serializedloRaWanProxySourceDescriptor.physicalsourcetype().specificphysicalsourcetype().UnpackTo(&serializedProxySourceType);
+        serializedloRaWanProxySourceDescriptor.physicalsourcetype().specificphysicalsourcetype().UnpackTo(
+            &serializedProxySourceType);
 
         auto lorawanSourceType = LoRaWANProxySourceType::create();
         lorawanSourceType->setNetworkStack(serializedProxySourceType.networkstack());
@@ -1496,16 +1497,15 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         lorawanSourceType->setDeviceEUIs(std::vector<std::string>(serializedProxySourceType.deviceeuis().begin(),
                                                                   serializedProxySourceType.deviceeuis().end()));
         lorawanSourceType->setSensorFields(std::vector<std::string>(serializedProxySourceType.sensorfields().begin(),
-                                                                  serializedProxySourceType.sensorfields().end()));
+                                                                    serializedProxySourceType.sensorfields().end()));
 
-        for (const auto& [id, query] : serializedProxySourceType.queries()){
+        for (const auto& [id, query] : serializedProxySourceType.queries()) {
             auto queryPtr = std::make_shared<EndDeviceProtocol::Query>();
             queryPtr->CopyFrom(query);
             lorawanSourceType->addSerializedQuery(id, queryPtr);
         }
         return LoRaWANProxySourceDescriptor::create(schema, lorawanSourceType);
-    }
-    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>()) {
+    } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>()) {
         // de-serialize logical source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalSourceDescriptor");
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();

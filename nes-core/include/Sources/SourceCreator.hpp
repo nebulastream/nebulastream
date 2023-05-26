@@ -24,10 +24,10 @@
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/TCPSource.hpp>
-#include <Sources/LoRaWANProxySource.hpp>
 #include <chrono>
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
@@ -444,7 +444,6 @@ DataSourcePtr createLoRaWANProxySource(const SchemaPtr& schema,
                                        OperatorId operatorId,
                                        OriginId originId,
                                        size_t numSourceLocalBuffers,
-                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
-                                       );
+                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors);
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_SOURCECREATOR_HPP_

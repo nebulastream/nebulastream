@@ -11,20 +11,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#include <EndDeviceProtocol.pb.h>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <NesBaseTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Sources/LoRaWANProxySource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
+#include <EndDeviceProtocol.pb.h>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -37,10 +33,14 @@ limitations under the License.
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestUtils.hpp>
@@ -84,7 +84,8 @@ class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt8) {
     // Test constant Value serialisation.
     constexpr int8_t number = (1 << 7) - 1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(number)));
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -99,7 +100,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt8) {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt16) {
     // Test constant Value serialisation.
     constexpr int16_t number = (1 << 15) - 1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT16, std::to_string(number)));
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT16, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -114,7 +116,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt16) {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt32) {
     // Test constant Value serialisation.
     constexpr int32_t number = (1u << 31) - 1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT32, std::to_string(number)));
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT32, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -129,7 +132,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt32) {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt64) {
     // Test constant Value serialisation.
     constexpr int64_t number = (1ul << 63) - 1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, std::to_string(number)));
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -143,8 +147,9 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueInt64) {
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint8) {
     // Test constant Value serialisation.
-    constexpr uint8_t number = (1 << 8)-1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT8, std::to_string(number)));
+    constexpr uint8_t number = (1 << 8) - 1;
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT8, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -158,8 +163,9 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint8) {
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint16) {
     // Test constant Value serialisation.
-    constexpr uint16_t number = (1 << 16)-1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT16, std::to_string(number)));
+    constexpr uint16_t number = (1 << 16) - 1;
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT16, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -173,8 +179,9 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint16) {
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint32) {
     // Test constant Value serialisation.
-    constexpr uint32_t number = (1l << 32)-1;
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT32, std::to_string(number)));
+    constexpr uint32_t number = (1l << 32) - 1;
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT32, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -189,7 +196,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint32) {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint64) {
     // Test constant Value serialisation.
     constexpr uint64_t number = (1UL << 63);
-    auto intNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, std::to_string(number)));
+    auto intNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(intNode, actual.mutable_function());
@@ -204,7 +212,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueUint64) {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueFloat) {
     // Test constant Value serialisation.
     constexpr float number = 1.0;
-    auto floatNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT32, std::to_string(number)));
+    auto floatNode =
+        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT32, std::to_string(number)));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(floatNode, actual.mutable_function());
@@ -223,7 +232,7 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValueDouble) {
     ss << std::fixed;
     ss << std::setprecision(17);
     ss << number;
-    auto floatNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT64,  ss.str()));
+    auto floatNode = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT64, ss.str()));
 
     MapOperation actual;
     EndDeviceProtocolSerializationUtil::serializeConstantValue(floatNode, actual.mutable_function());
@@ -383,8 +392,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, QueryPlan) {
 
     auto schema = Schema::create()->addField("x", BasicType::INT8);
     auto loraSourceType = LoRaWANProxySourceType::create();
-    loraSourceType->setSensorFields(std::vector<std::string> {"x"});
-    auto loraDesc = LoRaWANProxySourceDescriptor::create(schema,loraSourceType,"default_logical","default_physical");
+    loraSourceType->setSensorFields(std::vector<std::string>{"x"});
+    auto loraDesc = LoRaWANProxySourceDescriptor::create(schema, loraSourceType, "default_logical", "default_physical");
     auto logicalSource = LogicalSource::create("default_logical", schema);
 
     auto query = TestQuery::from(loraDesc).map(Attribute("x") = Attribute("x")).sink(NullOutputSinkDescriptor::create());
@@ -392,13 +401,11 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, QueryPlan) {
 
     EXPECT_EQ(expected.DebugString(), actual->DebugString());
 
-
-    EXPECT_EQ(query.getQueryPlan()->getOperatorByType<MapLogicalOperatorNode>().size(),1);
+    EXPECT_EQ(query.getQueryPlan()->getOperatorByType<MapLogicalOperatorNode>().size(), 1);
     EXPECT_EQ(query.getQueryPlan()->getSourceOperators().size(), 1);
     EXPECT_EQ(query.getQueryPlan()->getSinkOperators().size(), 1);
     EXPECT_TRUE(query.getQueryPlan()->getSourceOperators().at(0)->getSourceDescriptor()->equal(loraDesc));
     EXPECT_TRUE(query.getQueryPlan()->getSinkOperators().at(0)->getSinkDescriptor()->instanceOf<NullOutputSinkDescriptor>());
 }
-
 
 }// namespace NES

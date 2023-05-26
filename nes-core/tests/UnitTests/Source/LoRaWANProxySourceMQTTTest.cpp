@@ -130,7 +130,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->logLevel= LogLevel::LOG_TRACE;
+    coordinatorConfig->logLevel = LogLevel::LOG_TRACE;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
     client.publish(mqtt::make_message(TOPIC, R"({ "value": 1 })"));
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -138,8 +138,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string source =
-        R"(Schema::create()->addField(createField("value", UINT8));)";
+    std::string source = R"(Schema::create()->addField(createField("value", UINT8));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
 
     auto sourceType = LoRaWANProxySourceType::create();
@@ -160,16 +159,16 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    std::string outputFilePath =  "/tmp/test.out";
-    string query = R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "TEXT_FORMAT", "APPEND"));)";
+    std::string outputFilePath = "/tmp/test.out";
+    string query =
+        R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "TEXT_FORMAT", "APPEND"));)";
     string query2 = R"(Query::from("stream").filter(Attribute("value") < 3).sink(PrintSinkDescriptor::create());)";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(5);
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId,1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1));
     NES_INFO("\n\n --------- CONTENT --------- \n\n");
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));

@@ -66,12 +66,10 @@ using namespace EndDeviceProtocol;
 
 DefaultPhysicalTypeFactory EndDeviceProtocolSerializationUtil::physicalFactory = DefaultPhysicalTypeFactory();
 
-
-
-std::string getFieldNameFromSchemaName(const std::string& s){
+std::string getFieldNameFromSchemaName(const std::string& s) {
     auto pos = s.find('$');
-    return s.substr(pos+1, s.length() - pos-1);
-  };
+    return s.substr(pos + 1, s.length() - pos - 1);
+};
 
 void EndDeviceProtocolSerializationUtil::serializeConstantValue(ExpressionNodePtr node, EDDataVector* expression) {
     if (!node->instanceOf<ConstantValueExpressionNode>()) {
@@ -86,25 +84,25 @@ void EndDeviceProtocolSerializationUtil::serializeConstantValue(ExpressionNodePt
 
     EDData* data = expression->Add();
     switch (basicPhysType->nativeType) {
-        case BasicPhysicalType::UINT_8: data->set__uint8(stoul(basicValue->value)); break;
-        case BasicPhysicalType::UINT_16: data->set__uint16(stoul(basicValue->value)); break;
-        case BasicPhysicalType::UINT_32: data->set__uint32(stoul(basicValue->value)); break;
-        case BasicPhysicalType::UINT_64: data->set__uint64(stoul(basicValue->value)); break;
-        case BasicPhysicalType::INT_8: data->set__int8(stoul(basicValue->value)); break;
-        case BasicPhysicalType::INT_16: data->set__int16(stoul(basicValue->value)); break;
-        case BasicPhysicalType::INT_32: data->set__int32(stoi(basicValue->value)); break;
-        case BasicPhysicalType::INT_64: data->set__int64(stol(basicValue->value)); break;
-        case BasicPhysicalType::FLOAT: data->set__float(std::stof(basicValue->value)); break;
-        case BasicPhysicalType::DOUBLE: data->set__double(std::stod(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::UINT_8: data->set__uint8(stoul(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::UINT_16: data->set__uint16(stoul(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::UINT_32: data->set__uint32(stoul(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::UINT_64: data->set__uint64(stoul(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::INT_8: data->set__int8(stoul(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::INT_16: data->set__int16(stoul(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::INT_32: data->set__int32(stoi(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::INT_64: data->set__int64(stol(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::FLOAT: data->set__float(std::stof(basicValue->value)); break;
+        case BasicPhysicalType::NativeType::DOUBLE: data->set__double(std::stod(basicValue->value)); break;
         default: throw UnsupportedEDSerialisationException();
     }
-
 }
 void EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(ExpressionNodePtr anode,
-                                                                         EDRegistersRef registers, EDDataVector* expression) {
+                                                                         EDRegistersRef registers,
+                                                                         EDDataVector* expression) {
     auto bin = anode->as<ArithmeticalBinaryExpressionNode>();
     serializeExpression(bin->getLeft(), registers, expression);
-    serializeExpression(bin->getRight(), registers,  expression);
+    serializeExpression(bin->getRight(), registers, expression);
 
     ExpressionInstructions instr;
     if (bin->instanceOf<AddExpressionNode>()) {
@@ -123,7 +121,9 @@ void EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(Express
     expression->Add()->set_instruction(instr);
 }
 
-void EndDeviceProtocolSerializationUtil::serializeLogicalExpression(ExpressionNodePtr lnode, EDRegistersRef registers, EDDataVector* expression) {
+void EndDeviceProtocolSerializationUtil::serializeLogicalExpression(ExpressionNodePtr lnode,
+                                                                    EDRegistersRef registers,
+                                                                    EDDataVector* expression) {
 
     ExpressionInstructions instr;
     if (lnode->instanceOf<LogicalBinaryExpressionNode>()) {
@@ -154,9 +154,10 @@ void EndDeviceProtocolSerializationUtil::serializeLogicalExpression(ExpressionNo
             throw UnsupportedEDSerialisationException();
         }
     }
-
 }
-void EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(ExpressionNodePtr node, EDRegistersRef registers, EDDataVector* expression) {
+void EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(ExpressionNodePtr node,
+                                                                        EDRegistersRef registers,
+                                                                        EDDataVector* expression) {
 
     auto fanode = node->as<FieldAccessExpressionNode>();
     auto fullName = fanode->getFieldName();
@@ -170,9 +171,10 @@ void EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(Expressi
     expression->Add()->set_instruction(ExpressionInstructions::VAR);
 
     expression->Add()->set__uint8(id);
-
 }
-void EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, EDRegistersRef registers, EDDataVector* expression) {
+void EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node,
+                                                             EDRegistersRef registers,
+                                                             EDDataVector* expression) {
     if (node->instanceOf<ConstantValueExpressionNode>()) {
         serializeConstantValue(node->as<ConstantValueExpressionNode>(), expression);
     } else if (node->instanceOf<FieldAccessExpressionNode>()) {
@@ -185,7 +187,9 @@ void EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr n
         throw UnsupportedEDSerialisationException();
     }
 }
-void EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRegistersRef registers, EDMapOperation* edMapOperation) {
+void EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node,
+                                                              EDRegistersRef registers,
+                                                              EDMapOperation* edMapOperation) {
     auto mapNode = node->as<MapLogicalOperatorNode>();
     auto expressionNode = mapNode->getMapExpression();
     auto schemaFieldName = expressionNode->getField()->getFieldName();
@@ -204,20 +208,23 @@ void EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRe
     edMapOperation->set_attribute(attribute);
 }
 
-void EndDeviceProtocolSerializationUtil::serializeFilterOperator(NodePtr node, EDRegistersRef registers, EDFilterOperation* filterOperation) {
+void EndDeviceProtocolSerializationUtil::serializeFilterOperator(NodePtr node,
+                                                                 EDRegistersRef registers,
+                                                                 EDFilterOperation* filterOperation) {
     auto filterNode = node->as<FilterLogicalOperatorNode>();
     auto expressionNode = filterNode->getPredicate();
     serializeLogicalExpression(expressionNode, registers, filterOperation->mutable_predicate());
-
 }
-void EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, EDRegistersRef __attribute__((unused)) registers, EDWindowOperation*  __attribute__((unused)) windowOperation) {
+void EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node,
+                                                                 EDRegistersRef __attribute__((unused)) registers,
+                                                                 EDWindowOperation* __attribute__((unused)) windowOperation) {
     NES_NOT_IMPLEMENTED();
     //TODO: NES only supports time-based windows while ED atm only supports count-based. Need to add time-based support
     auto windowNode = node->as<WindowOperatorNode>();
     auto definition = windowNode->getWindowDefinition();
 
     auto windowType = definition->getWindowType();
-    if (!windowType->isTumblingWindow()) {
+    if (!windowType->isContentBasedWindowType()) {
         NES_WARNING("Window type not supported. Only tumbling windows are supported currently");
         throw UnsupportedEDSerialisationException();
     }
@@ -230,20 +237,21 @@ void EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, E
     auto aggDescriptor = aggregations.at(0);
     WindowAggregationType winAggType;
     switch (aggDescriptor->getType()) {
-        case Windowing::WindowAggregationDescriptor::Avg: winAggType = WindowAggregationType::AVG; break;
-        case Windowing::WindowAggregationDescriptor::Count: winAggType = WindowAggregationType::COUNT; break;
-        case Windowing::WindowAggregationDescriptor::Max: winAggType = WindowAggregationType::MAX; break;
-        case Windowing::WindowAggregationDescriptor::Min: winAggType = WindowAggregationType::MIN; break;
-        case Windowing::WindowAggregationDescriptor::Sum: winAggType = WindowAggregationType::SUM; break;
+        case Windowing::WindowAggregationDescriptor::Type::Avg: winAggType = WindowAggregationType::AVG; break;
+        case Windowing::WindowAggregationDescriptor::Type::Count: winAggType = WindowAggregationType::COUNT; break;
+        case Windowing::WindowAggregationDescriptor::Type::Max: winAggType = WindowAggregationType::MAX; break;
+        case Windowing::WindowAggregationDescriptor::Type::Min: winAggType = WindowAggregationType::MIN; break;
+        case Windowing::WindowAggregationDescriptor::Type::Sum: winAggType = WindowAggregationType::SUM; break;
         default:
             NES_WARNING("Window Aggregation type not supported");
             throw UnsupportedEDSerialisationException();
             break;
     }
-
 };
 
-void EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node, EDRegistersRef registers, EDOperation* serialized_Operation) {
+void EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node,
+                                                           EDRegistersRef registers,
+                                                           EDOperation* serialized_Operation) {
     EDOperation operation;
     if (node->instanceOf<MapLogicalOperatorNode>()) {
         auto map = serialized_Operation->mutable_map();
@@ -252,7 +260,6 @@ void EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node, EDRegis
     if (node->instanceOf<FilterLogicalOperatorNode>()) {
         auto filter = serialized_Operation->mutable_filter();
         serializeFilterOperator(node, registers, filter);
-
     }
     if (node->instanceOf<WindowLogicalOperatorNode>()) {
         auto window = serialized_Operation->mutable_window();
@@ -266,13 +273,13 @@ EndDeviceProtocolSerializationUtil::EDQueryPtr
 EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlanPtr QP, LoRaWANProxySourceTypePtr st) {
     //make sure we only have a single LoRaWANProxySource
     auto sourceOperators = QP->getSourceOperators();
-//    auto st = sourceOperators.at(0)->toString();
+    //    auto st = sourceOperators.at(0)->toString();
     if (sourceOperators.size() != 1) {
         NES_THROW_RUNTIME_ERROR("Trying to serialize query with incompatible sources");
     }
-//    // fetch the sourceDescriptor and the sensor_fields
+    //    // fetch the sourceDescriptor and the sensor_fields
     auto sourceDescriptor = sourceOperators.at(0)->getSourceDescriptor();
-//    auto sensorFields = std::make_shared<std::vector<std::string>>(sourceDescriptor->getSourceConfig()->getSensorFields()->getValue());
+    //    auto sensorFields = std::make_shared<std::vector<std::string>>(sourceDescriptor->getSourceConfig()->getSensorFields()->getValue());
     auto sensorFields = std::vector<std::string>(st->getSensorFields()->getValue());
 
     // get operators as list so we can travel to it in reverse
@@ -295,8 +302,7 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
         auto opNode = node->as<LogicalUnaryOperatorNode>();
         try {
             auto op = query->mutable_operations()->Add();
-             serializeOperator(opNode, sensorFields, op);
-
+            serializeOperator(opNode, sensorFields, op);
 
             sourceDescriptor->setSchema(opNode->getOutputSchema());
             opNode->removeAndJoinParentAndChildren();

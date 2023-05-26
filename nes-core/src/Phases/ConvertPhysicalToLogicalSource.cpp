@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
@@ -26,13 +27,13 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Sources/MQTTSource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
@@ -41,7 +42,6 @@
 #include <Sources/SenseSource.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/LoRaWANProxySource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 

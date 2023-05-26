@@ -10,7 +10,6 @@
 //     limitations under the License.
 // *
 
-
 #ifndef NES_LORAWANPROXYSOURCEDESCRIPTOR_HPP
 #define NES_LORAWANPROXYSOURCEDESCRIPTOR_HPP
 
@@ -18,10 +17,13 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 namespace NES {
 
-class LoRaWANProxySourceDescriptor: public SourceDescriptor {
+class LoRaWANProxySourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, LoRaWANProxySourceTypePtr loRaWanProxySourceType, std::string logicalSourceName, std::string physicalSourceName);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      LoRaWANProxySourceTypePtr loRaWanProxySourceType,
+                                      std::string logicalSourceName,
+                                      std::string physicalSourceName);
     static SourceDescriptorPtr create(SchemaPtr schema, LoRaWANProxySourceTypePtr loRaWanProxySourceType);
     /**
      * @brief get source config ptr with all configurations for LoRaWANProxySource
@@ -33,15 +35,14 @@ class LoRaWANProxySourceDescriptor: public SourceDescriptor {
     SourceDescriptorPtr copy() override;
 
   private:
-    explicit LoRaWANProxySourceDescriptor(
-        SchemaPtr schema,
-        LoRaWANProxySourceTypePtr sourceConfig,
-        std::string logicalSourceName,
-        std::string physicalSourceName);
+    explicit LoRaWANProxySourceDescriptor(SchemaPtr schema,
+                                          LoRaWANProxySourceTypePtr sourceConfig,
+                                          std::string logicalSourceName,
+                                          std::string physicalSourceName);
 
     LoRaWANProxySourceTypePtr loRaWanProxySourceType;
 };
 
-}
+}// namespace NES
 
 #endif//NES_LORAWANPROXYSOURCEDESCRIPTOR_HPP

@@ -30,7 +30,7 @@ LoRaWANProxySourceTypePtr LoRaWANProxySourceType::create() {
 }
 
 LoRaWANProxySourceType::LoRaWANProxySourceType()
-    : PhysicalSourceType(LORAWAN_SOURCE),
+    : PhysicalSourceType(SourceType::LORAWAN_SOURCE),
       networkStack(Configurations::ConfigurationOption<std::string>::create(Configurations::LORAWAN_NETWORK_STACK_CONFIG,
                                                                             "ChirpStack",
                                                                             "Name of network stack")),
@@ -68,7 +68,7 @@ LoRaWANProxySourceType::LoRaWANProxySourceType()
           "for example if config on sensor has \"sensors: ['ESP32Temperature']\" "
           "then the value from that sensor will be mapped to the \"temperature\" field in the logical schema")) {
     queries = std::make_shared<std::map<QueryId, std::shared_ptr<EndDeviceProtocol::Query>>>();
-    NES_INFO(Configurations::LORAWAN_PROXY_SOURCE_CONFIG + "Init source config object with default values");
+    NES_INFO(Configurations::LORAWAN_SOURCE_CONFIG + "Init source config object with default values");
 }
 
 LoRaWANProxySourceType::LoRaWANProxySourceType(std::map<std::string, std::string> sourceConfigMap) : LoRaWANProxySourceType() {
@@ -237,7 +237,7 @@ void LoRaWANProxySourceType::setPassword(std::string passwordValue) { password->
 void LoRaWANProxySourceType::setAppId(std::string appIdValue) { appId->setValue(std::move(appIdValue)); }
 void LoRaWANProxySourceType::setSensorFields(std::vector<std::string> sensors) { sensorFields->setValue(std::move(sensors)); }
 void LoRaWANProxySourceType::addSerializedQuery(QueryId id, std::shared_ptr<EndDeviceProtocol::Query> query) {
-    queries->insert({id,query});
+    queries->insert({id, query});
 }
 void LoRaWANProxySourceType::removeSerializedQuery(QueryId id) { queries->erase(id); }
 void LoRaWANProxySourceType::reset() {
@@ -279,8 +279,7 @@ bool LoRaWANProxySourceType::equal(const PhysicalSourceTypePtr& other) {
         && userName->getValue() == otherConfig->userName->getValue() && password->getValue() == otherConfig->password->getValue()
         && appId->getValue() == otherConfig->appId->getValue()
         && sensorFields->getValue() == otherConfig->sensorFields->getValue()
-        && capath->getValue() == otherConfig->capath->getValue()
-        && certpath->getValue() == otherConfig->certpath->getValue()
+        && capath->getValue() == otherConfig->capath->getValue() && certpath->getValue() == otherConfig->certpath->getValue()
         && keypath->getValue() == otherConfig->keypath->getValue();
 }
 EDQueryMapPtr LoRaWANProxySourceType::getSerializedQueries() { return queries; }
@@ -294,7 +293,5 @@ Configurations::StringConfigOption LoRaWANProxySourceType::getCertpath() { retur
 void LoRaWANProxySourceType::setCertpath(std::string _certpath) { certpath->setValue(std::move(_certpath)); }
 Configurations::StringConfigOption LoRaWANProxySourceType::getKeypath() { return keypath; }
 void LoRaWANProxySourceType::setKeypath(std::string _keypath) { keypath->setValue(std::move(_keypath)); }
-void LoRaWANProxySourceType::setSerializedQueries(EDQueryMapPtr _queries){
-    queries = _queries;
-};
+void LoRaWANProxySourceType::setSerializedQueries(EDQueryMapPtr _queries) { queries = _queries; };
 }// namespace NES

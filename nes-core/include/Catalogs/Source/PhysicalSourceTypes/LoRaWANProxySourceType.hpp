@@ -13,15 +13,16 @@
 #ifndef NES_LORAWANPROXYSOURCETYPE_HPP
 #define NES_LORAWANPROXYSOURCETYPE_HPP
 
-#include <Util/yaml/Yaml.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Common/Identifiers.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <EndDeviceProtocol.pb.h>
+#include <Util/yaml/Yaml.hpp>
 namespace NES {
 class LoRaWANProxySourceType;
 using LoRaWANProxySourceTypePtr = std::shared_ptr<LoRaWANProxySourceType>;
-using EDQueryMapPtr = std::shared_ptr<std::map<QueryId,std::shared_ptr<EndDeviceProtocol::Query>>>;
-class LoRaWANProxySourceType: public PhysicalSourceType {
+using EDQueryMapPtr = std::shared_ptr<std::map<QueryId, std::shared_ptr<EndDeviceProtocol::Query>>>;
+class LoRaWANProxySourceType : public PhysicalSourceType {
   public:
     /**
      * @brief create an LoRaWANProxySourceTypePtr object
@@ -52,17 +53,17 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     [[nodiscard]] Configurations::StringConfigOption getNetworkStack();
     void setNetworkStack(std::string networkStack);
     [[nodiscard]] Configurations::StringConfigOption getUrl();
-    void setUrl( std::string url);
+    void setUrl(std::string url);
     [[nodiscard]] Configurations::StringConfigOption getUserName();
-    void setUserName( std::string userName);
+    void setUserName(std::string userName);
     [[nodiscard]] Configurations::StringConfigOption getPassword();
-    void setPassword( std::string password);
+    void setPassword(std::string password);
     [[nodiscard]] Configurations::StringConfigOption getAppId();
-    void setAppId( std::string appId);
+    void setAppId(std::string appId);
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> getSensorFields();
-    void setSensorFields (std::vector<std::string>);
+    void setSensorFields(std::vector<std::string>);
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> getDeviceEUIs();
-    void setDeviceEUIs (std::vector<std::string>);
+    void setDeviceEUIs(std::vector<std::string>);
     [[nodiscard]] Configurations::StringConfigOption getCapath();
     void setCapath(std::string capath);
     [[nodiscard]] Configurations::StringConfigOption getCertpath();
@@ -75,8 +76,7 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     void setSerializedQueries(EDQueryMapPtr);
     EDQueryMapPtr getSerializedQueries();
 
-    private:
-
+  private:
     /**
      * @brief constructor to create a new LoRaWAN proxysource config object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
@@ -93,7 +93,7 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
      * @brief constructor to create a new LoRaWAN proxysource config object initialized with default values as set below
      */
     LoRaWANProxySourceType();
-    
+
     Configurations::StringConfigOption networkStack;
     Configurations::StringConfigOption url;
     Configurations::StringConfigOption userName;
@@ -107,8 +107,6 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> deviceEUIs;
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> sensorFields;
     EDQueryMapPtr queries;
-
-
 };
 
 }// namespace NES

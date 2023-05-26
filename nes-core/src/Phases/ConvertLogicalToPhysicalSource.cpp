@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
@@ -30,7 +31,6 @@
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
@@ -239,8 +239,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                          originId,
                                                          numSourceLocalBuffers,
                                                          successors);
-    }
-    else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO2("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
         return createBenchmarkSource(benchmarkSourceDescriptor->getSchema(),
@@ -277,15 +276,14 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<LoRaWANProxySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating LoRaWANPRoxySource");
         auto loraSourceDescriptor = sourceDescriptor->as<LoRaWANProxySourceDescriptor>();
-        return createLoRaWANProxySource(
-            loraSourceDescriptor->getSchema(),
-            bufferManager,
-            queryManager,
-            loraSourceDescriptor->getSourceConfig(),
-            operatorId,
-            originId,
-            numSourceLocalBuffers,
-            successors);
+        return createLoRaWANProxySource(loraSourceDescriptor->getSchema(),
+                                        bufferManager,
+                                        queryManager,
+                                        loraSourceDescriptor->getSourceConfig(),
+                                        operatorId,
+                                        originId,
+                                        numSourceLocalBuffers,
+                                        successors);
     } else if (sourceDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
         NES_INFO2("ConvertLogicalToPhysicalSource: Creating materialized view source");
         auto materializedViewSourceDescriptor =

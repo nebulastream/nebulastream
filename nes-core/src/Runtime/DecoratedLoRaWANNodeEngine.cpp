@@ -2,8 +2,8 @@
 // Created by kasper on 1/16/23.
 //
 
-#include <Runtime/DecoratedLoRaWANNodeEngine.hpp>
 #include <GRPC/Serialization/EndDeviceProtocolSerializationUtil.hpp>
+#include <Runtime/DecoratedLoRaWANNodeEngine.hpp>
 #include <utility>
 namespace NES::Runtime {
 DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
@@ -37,7 +37,8 @@ DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
                  numberOfBuffersInGlobalBufferManager,
                  numberOfBuffersInSourceLocalBufferPool,
                  numberOfBuffersPerWorker,
-                 sourceSharing), sourceType(std::move(proxysource)){
+                 sourceSharing),
+      sourceType(std::move(proxysource)) {
     NES_DEBUG("DECORATEDLORAWANCLASS CREATED")
 }
 bool DecoratedLoRaWANNodeEngine::registerQueryInNodeEngine(const NES::QueryPlanPtr& queryPlan) {

@@ -24,6 +24,7 @@
 //TODO: update to handle new form of functionexpressions. see https://github.com/nebulastream/nebulastream/issues/3501
 //#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
 //#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
@@ -34,7 +35,6 @@
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>

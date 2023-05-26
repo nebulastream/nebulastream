@@ -10,7 +10,6 @@
 //     limitations under the License.
 // *
 
-
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <NesBaseTest.hpp>
 #include <Sources/SourceCreator.hpp>

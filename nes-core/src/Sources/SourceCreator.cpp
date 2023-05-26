@@ -21,6 +21,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/MonitoringSource.hpp>
@@ -29,7 +30,6 @@
 #include <Sources/StaticDataSource.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/LoRaWANProxySource.hpp>
 #include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
@@ -455,16 +455,14 @@ DataSourcePtr createLoRaWANProxySource(const SchemaPtr& schema,
                                        OriginId originId,
                                        size_t numSourceLocalBuffers,
                                        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors) {
-    return std::make_shared<LoRaWANProxySource>(
-        schema,
-        bufferManager,
-        queryManager,
-        sourceConfig,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE, //TODO: figure out what this means
-        executableSuccessors);
-
+    return std::make_shared<LoRaWANProxySource>(schema,
+                                                bufferManager,
+                                                queryManager,
+                                                sourceConfig,
+                                                operatorId,
+                                                originId,
+                                                numSourceLocalBuffers,
+                                                GatheringMode::INTERVAL_MODE,//TODO: figure out what this means
+                                                executableSuccessors);
 }
 }// namespace NES

@@ -19,9 +19,8 @@ class LoRaWANProxySource : public DataSource {
                        OperatorId operatorId,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode::Value gatheringMode,
-                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
-                       );
+                       GatheringMode gatheringMode,
+                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -43,11 +42,11 @@ class LoRaWANProxySource : public DataSource {
      */
     bool disconnect();
 
-//    void open() override;
-//    void close() override;
-//    bool start() override;
-//    bool stop(Runtime::QueryTerminationType graceful) override;
-//    void runningRoutine() override;
+    //    void open() override;
+    //    void close() override;
+    //    bool start() override;
+    //    bool stop(Runtime::QueryTerminationType graceful) override;
+    //    void runningRoutine() override;
     /**
      * @brief blocking method to receive a buffer from the LoRaWAN source
      * @return TupleBufferPtr containing the received buffer
@@ -56,7 +55,6 @@ class LoRaWANProxySource : public DataSource {
     std::string toString() const override;
     SourceType getType() const override;
     const LoRaWANProxySourceTypePtr& getSourceConfig() const;
-
 
   private:
     LoRaWANProxySourceTypePtr sourceConfig;
@@ -79,24 +77,25 @@ class LoRaWANProxySource : public DataSource {
     bool sendQueries();
 
     //TODO: Should maybe be macro'ed in by DEBUG flag
-    class debug_action_listener: virtual mqtt::iaction_listener{
+    class debug_action_listener : virtual mqtt::iaction_listener {
         std::string name;
+
       public:
-        explicit debug_action_listener(std::string  name);
+        explicit debug_action_listener(std::string name);
 
       private:
         void on_failure(const mqtt::token& asyncActionToken) override;
         void on_success(const mqtt::token& asyncActionToken) override;
     };
 
-//    class callback: virtual mqtt::callback {
-//        void connected(const mqtt::string& string) override;
-//        void connection_lost(const mqtt::string& string) override;
-//        void message_arrived(mqtt::const_message_ptr ptr) override;
-//        void delivery_complete(mqtt::delivery_token_ptr ptr) override;
-//    };
+    //    class callback: virtual mqtt::callback {
+    //        void connected(const mqtt::string& string) override;
+    //        void connection_lost(const mqtt::string& string) override;
+    //        void message_arrived(mqtt::const_message_ptr ptr) override;
+    //        void delivery_complete(mqtt::delivery_token_ptr ptr) override;
+    //    };
 };
 
-}
+}// namespace NES
 
 #endif//NES_LORAWANPROXYSOURCE_HPP
