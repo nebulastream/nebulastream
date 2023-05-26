@@ -15,6 +15,7 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstdio>
 #include <gtest/gtest.h>
@@ -263,7 +264,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, ",");
+        std::vector<string> content = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
         if (content.at(0) == "R2000073") {
             NES_INFO("First content=" << content.at(2));
             NES_INFO("First: expContent= 102.629631");

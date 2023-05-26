@@ -20,7 +20,6 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -31,51 +30,13 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <random>
-#include <unistd.h>
 
 namespace NES {
-
-uint64_t Util::numberOfUniqueValues(std::vector<uint64_t>& values) {
-    std::sort(values.begin(), values.end());
-    return std::unique(values.begin(), values.end()) - values.begin();
-}
-
-std::string Util::escapeJson(const std::string& str) {
-    std::ostringstream o;
-    for (char c : str) {
-        if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f')) {
-            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) c;
-        } else {
-            o << c;
-        }
-    }
-    return o.str();
-}
-
-std::string Util::trim(std::string str) {
-    auto not_space = [](char c) {
-        return isspace(c) == 0;
-    };
-    // trim left
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), not_space));
-    // trim right
-    str.erase(find_if(str.rbegin(), str.rend(), not_space).base(), str.end());
-    return str;
-}
-
-std::string Util::trim(std::string str, char trimFor) {
-    // remove all trimFor characters from left and right
-    str.erase(std::remove(str.begin(), str.end(), trimFor), str.end());
-    return str;
-}
 
 std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
@@ -142,25 +103,6 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
     return ss.str();
 }
 
-void Util::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
-    // Get the first occurrence
-    uint64_t pos = data.find(toSearch);
-    // Repeat till end is reached
-    while (pos != std::string::npos) {
-        // Replace this occurrence of Sub String
-        data.replace(pos, toSearch.size(), replaceStr);
-        // Get the next occurrence from the current position
-        pos = data.find(toSearch, pos + replaceStr.size());
-    }
-}
-
-std::string Util::replaceFirst(std::string origin, const std::string& search, const std::string& replace) {
-    if (origin.find(search) != std::string::npos) {
-        return origin.replace(origin.find(search), search.size(), replace);
-    }
-    return origin;
-}
-
 std::string Util::toCSVString(const SchemaPtr& schema) {
     std::stringstream ss;
     for (auto& f : schema->fields) {
@@ -169,21 +111,6 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
     ss.seekp(-1, std::ios_base::end);
     ss << std::endl;
     return ss.str();
-}
-
-bool Util::endsWith(const std::string& fullString, const std::string& ending) {
-    if (fullString.length() >= ending.length()) {
-        // get the start of the ending index of the full string and compare with the ending string
-        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    }// if full string is smaller than the ending automatically return false
-    return false;
-}
-
-bool Util::startsWith(const std::string& fullString, const std::string& ending) { return (fullString.rfind(ending, 0) == 0); }
-
-std::string Util::toUpperCase(std::string string) {
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-    return string;
 }
 
 OperatorId Util::getNextOperatorId() {
@@ -200,14 +127,14 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    size_t numOperators = queryPlanIterator.snapshot().size();
-    ;
+    size_t numOperators = queryPlanIterator.snapshot().size();;
 
     // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {
-        NES_ERROR2("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
-                   "operators. The query plan is: {}",
-                   queryPlan->toString());
+        NES_ERROR2(
+                "UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
+                "operators. The query plan is: {}",
+                queryPlan->toString());
         return false;
     }
 
@@ -215,8 +142,8 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query
-    for (auto&& node : queryPlanIterator) {
-        for (auto const& [key, val] : *propertyIterator) {
+    for (auto &&node: queryPlanIterator) {
+        for (auto const &[key, val]: *propertyIterator) {
             // add the current property to the current operator
             node->as<LogicalOperatorNode>()->addProperty(key, val);
         }
@@ -224,32 +151,6 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     }
 
     return true;
-}
-
-std::string Util::updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed) {
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(subQueryPlanSourceConsumed);
-    sourceNames.emplace_back(queryPlanSourceConsumed);
-    std::sort(sourceNames.begin(), sourceNames.end());
-    // accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
-    auto updatedSourceName =
-        std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
-            return a + "_" + b;
-        });
-    return updatedSourceName;
-}
-
-void Util::writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header) {
-    std::ofstream ofstream(csvFileName, std::ios::trunc | std::ios::out);
-    ofstream << header << std::endl;
-    ofstream.close();
-}
-
-void Util::writeRowToCsvFile(const std::string& csvFileName, const std::string& row) {
-    std::ofstream ofstream(csvFileName, std::ios::app | std::ios::out);
-    ofstream << row << std::endl;
-    ofstream.close();
 }
 
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,

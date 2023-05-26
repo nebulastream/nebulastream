@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <atomic>
 #include <cstring>
 
@@ -42,7 +43,7 @@ uint8_t* FixedPage::append(const uint64_t hash) {
 bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const {
     uint64_t totalKey;
     memcpy(&totalKey, keyPtr, sizeOfKey);
-    uint64_t hash = Execution::Util::murmurHash(totalKey);
+    uint64_t hash = NES::Util::murmurHash(totalKey);
 
     return bloomFilter->checkContains(hash);
 }

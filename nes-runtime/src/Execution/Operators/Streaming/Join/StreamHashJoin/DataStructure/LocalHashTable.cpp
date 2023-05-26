@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -30,7 +31,7 @@ LocalHashTable::LocalHashTable(size_t sizeOfRecord,
 }
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
-    auto hashedKey = Util::murmurHash(key);
+    auto hashedKey = NES::Util::murmurHash(key);
     return buckets[getBucketPos(hashedKey)]->append(hashedKey);
 }
 

@@ -22,6 +22,7 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <cstring>
 #include <string>
 #include <utility>

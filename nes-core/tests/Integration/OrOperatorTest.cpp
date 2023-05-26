@@ -22,6 +22,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>//for timing execution
 #include <filesystem>
@@ -430,7 +431,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, "|");
+        std::vector<string> content = NES::Util::splitWithStringDelimiter<std::string>(line, "|");
         if (content.size() > 1 && content.at(1) == "R2000073") {
             NES_INFO("First content=" << content.at(2));
             NES_INFO("First: expContent= 102.629631");

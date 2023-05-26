@@ -25,6 +25,7 @@
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
@@ -35,8 +36,8 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
         return false;
     }
 
-    auto hasName = Util::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
-    auto hasLastField = Util::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
+    auto hasName = NES::Util::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
+    auto hasLastField = NES::Util::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
                                        metricSchema->get(metricSchema->getSize() - 1)->getName());
 
     return hasName && hasLastField;

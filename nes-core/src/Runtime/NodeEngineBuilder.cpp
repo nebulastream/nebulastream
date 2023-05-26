@@ -28,6 +28,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
@@ -138,7 +139,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
             auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration->numberOfBuffersPerEpoch.getValue());
             std::vector<uint64_t> workerToCoreMappingVec =
-                Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
+                NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
             switch (workerConfiguration->queryManagerMode.getValue()) {
                 case QueryExecutionMode::Dynamic: {
                     queryManager = std::make_shared<DynamicQueryManager>(nesWorker,

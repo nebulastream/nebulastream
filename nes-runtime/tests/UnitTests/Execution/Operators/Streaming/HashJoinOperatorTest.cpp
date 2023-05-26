@@ -28,6 +28,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution {
@@ -131,7 +132,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
 
         uint64_t joinKey = record.read(buildHelper.joinFieldName).as<UInt64>().getValue().getValue();
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
-        auto hash = Util::murmurHash(joinKey);
+        auto hash = NES::Util::murmurHash(joinKey);
         auto hashTable =
             hashJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));

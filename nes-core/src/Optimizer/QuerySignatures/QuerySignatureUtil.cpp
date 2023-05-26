@@ -36,6 +36,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -432,7 +433,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
         //Compute equality conditions for event time field
         auto eventTimeFieldName = eventTimeWatermarkStrategy->getOnField()->as<FieldAccessExpressionNode>()->getFieldName();
         auto eventTimeFieldNameAndSource =
-            Util::splitWithStringDelimiter<std::string>(eventTimeFieldName, "$")[0] + "." + "eventTimeField";
+            NES::Util::splitWithStringDelimiter<std::string>(eventTimeFieldName, "$")[0] + "." + "eventTimeField";
         auto eventTimeFieldVar =
             context->constant(context->str_symbol(eventTimeFieldNameAndSource.c_str()), context->string_sort());
         auto eventTimeFieldVal = context->string_val(eventTimeFieldName);

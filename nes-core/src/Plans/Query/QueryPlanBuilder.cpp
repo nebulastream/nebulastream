@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -213,7 +214,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::Operat
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
     NES_DEBUG2("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
-    auto newSourceName = Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
+    auto newSourceName = NES::Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
     leftQueryPlan->setSourceConsumed(newSourceName);
     return leftQueryPlan;
 }
