@@ -24,9 +24,8 @@ class BidGenerator : public DataGenerator {
   public:
     /**
      * @brief creates a BidGenerator
-     * @param numberOfRecords
      */
-    explicit BidGenerator(uint64_t numberOfRecords);
+    explicit BidGenerator();
 
     /**
      * @brief creates data with the schema "auctionId, bidderId, price, timestamp" from the bids vector of dependencyGeneratorInstance
@@ -53,10 +52,6 @@ class BidGenerator : public DataGenerator {
      * @return the string representation of the BidGenerator
      */
     std::string toString() override;
-
-  private:
-    uint64_t numberOfRecords;
-    NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 

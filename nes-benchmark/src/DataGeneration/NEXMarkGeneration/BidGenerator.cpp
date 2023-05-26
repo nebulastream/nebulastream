@@ -18,32 +18,33 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-BidGenerator::BidGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), numberOfRecords(numberOfRecords), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
+BidGenerator::BidGenerator()
+    : DataGenerator() {}
 
 std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+    auto& dependencyGeneratorInstance = DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
+    auto bids = dependencyGeneratorInstance.getBids();
+    auto numberOfBids = bids.size();
+    auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
+    auto bidsToProcess = numberOfRecords * 10 < numberOfBids ? numberOfRecords * 10 : numberOfBids;
+
     std::vector<Runtime::TupleBuffer> createdBuffers;
-    createdBuffers.reserve(numberOfBuffers);
+    uint64_t numberOfBuffersToCreate = 1 + bidsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
+    createdBuffers.reserve(numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
-
-    auto bids = dependencyGeneratorInstance.getBids();
     auto processedBids = 0UL;
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffersToCreate; ++curBuffer) {
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
         // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
-        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-            // TODO what if numberOfRecords is smaller than the number of records we can fit in the buffers? Timestamp would be reset
-            // TODO what if numberOfRecords is larger than the number of records we can fit in the buffers? We might get bids that reference auction id's or bidder id's that haven't been created yet
-            auto bidsIndex = processedBids++ % bids.size();
-
-            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(std::get<0>(bids[bidsIndex]));
-            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(std::get<1>(bids[bidsIndex]));
-            dynamicBuffer[curRecord]["price"].write<uint64_t>(std::get<2>(bids[bidsIndex]));
-            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(std::get<3>(bids[bidsIndex]));
+        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedBids < bidsToProcess; ++curRecord) {
+            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(std::get<0>(bids[processedBids++]));
+            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(std::get<1>(bids[processedBids++]));
+            dynamicBuffer[curRecord]["price"].write<uint64_t>(std::get<2>(bids[processedBids++]));
+            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(std::get<3>(bids[processedBids++]));
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -66,7 +67,7 @@ std::string BidGenerator::getName() { return "NEXMarkBid"; }
 std::string BidGenerator::toString() {
     std::ostringstream oss;
 
-    oss << getName() << " (" << numberOfRecords << ")";
+    oss << getName() << " ()";
 
     return oss.str();
 }
