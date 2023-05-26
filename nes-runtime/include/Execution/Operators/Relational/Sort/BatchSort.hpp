@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORT_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORT_HPP_
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -21,19 +21,30 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class Sort : public ExecutableOperator {
+/**
+ * @brief Batch sort operator.
+ * The batch sort operator, consumes input tuples and materializes them in a global state.
+ * If all input records are processed, we sort the global state and emit the sorted records.
+ */
+class BatchSort : public ExecutableOperator {
   public:
-    Sort(const uint64_t operatorHandlerIndex,
+    /**
+     * @brief Construct a new BatchSort operator
+     *
+     * @param operatorHandlerIndex operator handler index
+     * @param dataTypes data types of the input records
+     */
+    BatchSort(const uint64_t operatorHandlerIndex,
          const std::vector<PhysicalTypePtr>& dataTypes);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void setup(ExecutionContext& executionCtx) const override;
+
   private:
     const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
-
     const uint64_t operatorHandlerIndex;
     const std::vector<PhysicalTypePtr> dataTypes;
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORT_HPP_

@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        Sort.cpp
-        SortScan.cpp
+        BatchSort.cpp
+        BatchSortScan.cpp
         )

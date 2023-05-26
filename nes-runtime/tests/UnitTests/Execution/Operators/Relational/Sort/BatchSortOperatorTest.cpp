@@ -17,8 +17,8 @@
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/Sort/Sort.hpp>
-#include <Execution/Operators/Relational/Sort/SortOperatorHandler.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSort.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -30,15 +30,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class SortOperatorTest : public Testing::NESBaseTest {
+template <typename T>
+class BatchSortOperatorTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SortOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SortOperatorTest test class.");
+        NES::Logger::setupLogging("BatchSortOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO2("Setup BatchSortOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -48,27 +49,57 @@ class SortOperatorTest : public Testing::NESBaseTest {
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SortOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down BatchSortOperatorTest test class."); }
 };
+
+template <typename TypeParam>
+PhysicalTypePtr getPhysicalTypePtr() {
+    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr type;
+    if (typeid(int32_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+    } else if (typeid(uint32_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt32());
+    } else if (typeid(int64_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    } else if (typeid(uint64_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+    } else if (typeid(int16_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt16());
+    } else if (typeid(uint16_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt16());
+    } else if (typeid(int8_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
+    } else if (typeid(uint8_t) == typeid(TypeParam)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
+    } else {
+        throw std::runtime_error("Type not supported");
+    }
+    return type;
+}
+
+using TestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, uint16_t, int16_t, uint8_t, int8_t>;
+TYPED_TEST_SUITE(BatchSortOperatorTest, TestTypes);
 
 /**
  * @brief Tests if the sort operator collects records with multiple fields
  */
-TEST_F(SortOperatorTest, SortOperatorMultipleFieldsTest) {
+TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
     std::vector<Record> records;
-    records.push_back(Record({{"f1", Value<>(50)}, {"f2", Value<>(1)}}));
-    records.push_back(Record({{"f1", Value<>(40)}, {"f2", Value<>(2)}}));
-    records.push_back(Record({{"f1", Value<>(30)}, {"f2", Value<>(3)}}));
-    records.push_back(Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}}));
-    records.push_back(Record({{"f1", Value<>(10)}, {"f2", Value<>(5)}}));
+    for (size_t i = 0; i < 5; i++) {
+        TypeParam val1 = i * 10;
+        TypeParam val2 = i;
+        records.push_back(Record({{"f1", Value<>(val1)}, {"f2", Value<>(val2)}}));
+    }
 
-    auto entrySize = sizeof(int32_t) + sizeof(int32_t);
-    auto handler = std::make_shared<SortOperatorHandler>(entrySize);
+    auto entrySize = sizeof(TypeParam) + sizeof(TypeParam);
+    auto handler = std::make_shared<BatchSortOperatorHandler>(entrySize);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-    auto dataTypes = std::vector<PhysicalTypePtr>{integerType, integerType};
-    auto sortOperator = Sort(0, dataTypes);
+
+    auto type = getPhysicalTypePtr<TypeParam>();
+    auto dataTypes = std::vector<PhysicalTypePtr>{type, type};
+
+    auto sortOperator = BatchSort(0, dataTypes);
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -82,27 +113,17 @@ TEST_F(SortOperatorTest, SortOperatorMultipleFieldsTest) {
     auto state = handler->getState();
     ASSERT_EQ(state->getNumberOfEntries(), 5);
 
-    auto entry = reinterpret_cast<int32_t*>(state->getEntry(0));
-    ASSERT_EQ(*entry, 50);
-    ASSERT_EQ(*(entry + 1), 1);
-    entry = reinterpret_cast<int32_t*>(state->getEntry(1));
-    ASSERT_EQ(*entry, 40);
-    ASSERT_EQ(*(entry + 1), 2);
-    entry = reinterpret_cast<int32_t*>(state->getEntry(2));
-    ASSERT_EQ(*entry, 30);
-    ASSERT_EQ(*(entry + 1), 3);
-    entry = reinterpret_cast<int32_t*>(state->getEntry(3));
-    ASSERT_EQ(*entry, 20);
-    ASSERT_EQ(*(entry + 1), 4);
-    entry = reinterpret_cast<int32_t*>(state->getEntry(4));
-    ASSERT_EQ(*entry, 10);
-    ASSERT_EQ(*(entry + 1), 5);
+    for (size_t i = 0; i < 5; i++) {
+        auto entry = reinterpret_cast<TypeParam*>(state->getEntry(i));
+        ASSERT_EQ(*entry, i * 10);
+        ASSERT_EQ(*(entry + 1), i);
+    }
 }
 
 /**
  * @brief Tests if the sort operator collects records over multiple pages
  */
-TEST_F(SortOperatorTest, SortOperatorMuliplePagesTest) {
+TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
     auto numberRecords = 1025; // 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
     std::vector<Record> records;
     for(int i = 0; i < numberRecords; i++) {
@@ -110,12 +131,12 @@ TEST_F(SortOperatorTest, SortOperatorMuliplePagesTest) {
     }
 
     auto entrySize = sizeof(int32_t) + sizeof(int32_t);
-    auto handler = std::make_shared<SortOperatorHandler>(entrySize);
+    auto handler = std::make_shared<BatchSortOperatorHandler>(entrySize);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
     auto dataTypes = std::vector<PhysicalTypePtr>{integerType, integerType};
-    auto sortOperator = Sort(0, dataTypes);
+    auto sortOperator = BatchSort(0, dataTypes);
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -128,5 +149,4 @@ TEST_F(SortOperatorTest, SortOperatorMuliplePagesTest) {
     auto state = handler->getState();
     ASSERT_EQ(state->getNumberOfEntries(), numberRecords);
 }
-
 }// namespace NES::Runtime::Execution::Operators
