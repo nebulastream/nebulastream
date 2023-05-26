@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3SignatureContainmentUtil.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -449,7 +449,7 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
         signatureInferencePhase->execute(queryPlanNewQuery);
         SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
         SinkLogicalOperatorNodePtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
-        auto signatureContainmentUtil = Optimizer::SignatureContainmentUtil::create(context);
+        auto signatureContainmentUtil = Optimizer::Z3SignatureContainmentUtil::create(context);
         std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
         auto sqpSink = queryPlanSQPQuery->getSinkOperators()[0];
         auto newSink = queryPlanNewQuery->getSinkOperators()[0];

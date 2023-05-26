@@ -17,6 +17,7 @@ add_source_files(nes-core
         DataTypeToZ3ExprUtil.cpp
         Z3ExprAndFieldMap.cpp
         SignatureEqualityUtil.cpp
-        SignatureContainmentUtil.cpp
+        Z3SignatureContainmentUtil.cpp
         QuerySignature.cpp
+        HashSignatureContainmentUtil.cpp
 )

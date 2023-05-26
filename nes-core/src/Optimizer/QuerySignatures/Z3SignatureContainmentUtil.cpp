@@ -13,23 +13,23 @@
 */
 
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3SignatureContainmentUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Optimizer {
 
-SignatureContainmentUtilPtr SignatureContainmentUtil::create(const z3::ContextPtr& context) {
-    return std::make_shared<SignatureContainmentUtil>(context);
+Z3SignatureContainmentUtilPtr Z3SignatureContainmentUtil::create(const z3::ContextPtr& context) {
+    return std::make_shared<Z3SignatureContainmentUtil>(context);
 }
 
-SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& context) {
+Z3SignatureContainmentUtil::Z3SignatureContainmentUtil(const z3::ContextPtr& context) {
     this->context = context;
     this->solver = std::make_unique<z3::solver>(*this->context);
 }
 
-ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType Z3SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& leftSignature,
                                                            const QuerySignaturePtr& rightSignature) {
     NES_TRACE2("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
@@ -69,7 +69,7 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
     return containmentRelationship;
 }
 
-ContainmentType SignatureContainmentUtil::checkProjectionContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType Z3SignatureContainmentUtil::checkProjectionContainment(const QuerySignaturePtr& leftSignature,
                                                                      const QuerySignaturePtr& rightSignature) {
     z3::expr_vector leftQueryProjectionFOL(*context);
     z3::expr_vector rightQueryProjectionFOL(*context);
@@ -102,7 +102,7 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
     return ContainmentType::NO_CONTAINMENT;
 }
 
-ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType Z3SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
     // if no window signature is present, return equality
     if (leftSignature->getWindowsExpressions().empty() && rightSignature->getWindowsExpressions().empty()) {
@@ -216,7 +216,7 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
     return containmentRelationship;
 }
 
-ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType Z3SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
     NES_TRACE2("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
@@ -258,7 +258,7 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     return ContainmentType::NO_CONTAINMENT;
 }
 
-void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
+void Z3SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
     //check projection containment
     // if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
     // else we indicate that the attribute is involved in the projection as attributeStingName == true
@@ -288,7 +288,7 @@ void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& sign
     projectionFOL.push_back(to_expr(*context, mk_and(createSourceFOL)));
 }
 
-bool SignatureContainmentUtil::checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition,
+bool Z3SignatureContainmentUtil::checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition,
                                                                      z3::expr_vector& condition) {
     solver->push();
     solver->add(!mk_and(negatedCondition).simplify());
@@ -308,7 +308,7 @@ bool SignatureContainmentUtil::checkContainmentConditionsUnsatisfied(z3::expr_ve
     return conditionUnsatisfied;
 }
 
-bool SignatureContainmentUtil::checkAttributeOrder(const QuerySignaturePtr& leftSignature,
+bool Z3SignatureContainmentUtil::checkAttributeOrder(const QuerySignaturePtr& leftSignature,
                                                    const QuerySignaturePtr& rightSignature) const {
     for (size_t j = 0; j < rightSignature->getColumns().size(); ++j) {
         NES_TRACE2("Containment order check for {}", rightSignature->getColumns()[j]);
@@ -320,7 +320,7 @@ bool SignatureContainmentUtil::checkAttributeOrder(const QuerySignaturePtr& left
     return true;
 }
 
-void SignatureContainmentUtil::combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
+void Z3SignatureContainmentUtil::combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
                                                              const QuerySignaturePtr& rightSignature,
                                                              z3::expr_vector& leftFOL,
                                                              z3::expr_vector& rightFOL) {
@@ -337,7 +337,7 @@ void SignatureContainmentUtil::combineWindowAndProjectionFOL(const QuerySignatur
     }
 }
 
-bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& containerWindow,
+bool Z3SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& containerWindow,
                                                               const std::map<std::string, z3::ExprPtr>& containedWindow,
                                                               const QuerySignaturePtr& leftSignature,
                                                               const QuerySignaturePtr& rightSignature) {
@@ -391,7 +391,7 @@ bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std
     return windowContainmentPossible;
 }
 
-bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignaturePtr& container,
+bool Z3SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignaturePtr& container,
                                                               const QuerySignaturePtr& containee) {
     if (container->getSchemaFieldToExprMaps().size() > 1) {
         for (const auto& [containerSourceName, containerConditions] : container->getUnionExpressions()) {
@@ -414,7 +414,7 @@ bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignatu
     return true;
 }
 
-void SignatureContainmentUtil::resetSolver() {
+void Z3SignatureContainmentUtil::resetSolver() {
     solver->reset();
     counter = 0;
 }

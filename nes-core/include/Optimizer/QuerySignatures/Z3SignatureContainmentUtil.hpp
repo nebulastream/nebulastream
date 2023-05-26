@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
-#define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
+#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_Z3SIGNATURECONTAINMENTUTIL_HPP_
+#define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_Z3SIGNATURECONTAINMENTUTIL_HPP_
 
 #include <memory>
 #include <z3++.h>
@@ -34,8 +34,8 @@ namespace NES::Optimizer {
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
-class SignatureContainmentUtil;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
+class Z3SignatureContainmentUtil;
+using Z3SignatureContainmentUtilPtr = std::shared_ptr<Z3SignatureContainmentUtil>;
 /**
  * @brief enum describing the given containment relationship
  */
@@ -44,7 +44,7 @@ enum class ContainmentType : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT
 /**
  * @brief This is a utility to compare two signatures
  */
-class SignatureContainmentUtil {
+class Z3SignatureContainmentUtil {
 
   public:
     /**
@@ -52,13 +52,13 @@ class SignatureContainmentUtil {
      * @param context The Z3 context for the SMT solver
      * @return instance of SignatureContainmentUtil
      */
-    static SignatureContainmentUtilPtr create(const z3::ContextPtr& context);
+    static Z3SignatureContainmentUtilPtr create(const z3::ContextPtr& context);
 
     /**
      * @brief constructor for signatureContainmentUtil
      * @param context The Z3 context for the SMT solver
      */
-    explicit SignatureContainmentUtil(const z3::ContextPtr& context);
+    explicit Z3SignatureContainmentUtil(const z3::ContextPtr& context);
 
     /**
      * @brief Check containment relationships for the given signatures as follows

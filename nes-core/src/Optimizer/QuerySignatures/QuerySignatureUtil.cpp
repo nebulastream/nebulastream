@@ -347,7 +347,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
 
     //Fetch query signature of the child operator
     std::vector<NodePtr> children = filterOperator->getChildren();
-    NES_ASSERT(children.size() == 1, "Map operator should only have one non null children.");
+    NES_ASSERT(children.size() == 1, "Filter operator should only have one non null child.");
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
 

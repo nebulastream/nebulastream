@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDCONTAINMENTBASEDCOMPLETEQUERYMERGERRULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3SignatureContainmentUtil.hpp>
 
 namespace z3 {
 class context;
@@ -25,8 +25,8 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES::Optimizer {
 
-class SignatureContainmentUtil;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
+class Z3SignatureContainmentUtil;
+using Z3SignatureContainmentUtilPtr = std::shared_ptr<Z3SignatureContainmentUtil>;
 
 class Z3SignatureBasedBottomUpQueryContainmentRule;
 using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedBottomUpQueryContainmentRule>;
@@ -89,7 +89,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      */
     bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee) const;
 
-    SignatureContainmentUtilPtr signatureContainmentUtil;
+    Z3SignatureContainmentUtilPtr signatureContainmentUtil;
 };
 }// namespace NES::Optimizer
 

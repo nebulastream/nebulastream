@@ -21,7 +21,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3SignatureContainmentUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -39,7 +39,7 @@ namespace NES::Optimizer {
 
 Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context)
     : BaseQueryMergerRule() {
-    signatureContainmentUtil = SignatureContainmentUtil::create(std::move(context));
+    signatureContainmentUtil = Z3SignatureContainmentUtil::create(std::move(context));
 }
 
 Z3SignatureBasedBottomUpQueryContainmentRulePtr
@@ -289,40 +289,41 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         return {};
     }
 
-    NES_DEBUG2("Compare target {} and host {} operators.", targetOperator->toString(), hostOperator->toString());
-    auto containmentType =
-        signatureContainmentUtil->checkContainment(hostOperator->getZ3Signature(), targetOperator->getZ3Signature());
-    if (containmentType == ContainmentType::EQUALITY) {
-        NES_DEBUG2("Check containment relationship for parents of target operator.");
-        uint16_t matchCount = 0;
-        for (const auto& targetParent : targetOperator->getParents()) {
-            NES_DEBUG2("TargetParent: {}", targetParent->toString());
-            for (const auto& hostParent : hostOperator->getParents()) {
-                NES_DEBUG2("HostParent: {}", hostParent->toString());
-                auto matchedOperators =
-                    areOperatorsContained(hostParent->as<LogicalOperatorNode>(), targetParent->as<LogicalOperatorNode>());
-                if (!matchedOperators.empty()) {
-                    targetHostOperatorMap.merge(matchedOperators);
-                    matchCount++;
-                    break;
+    if (targetHostOperatorMap.find(targetOperator) == targetHostOperatorMap.end()) {
+        NES_DEBUG2("Compare target {} and host {} operators.", targetOperator->toString(), hostOperator->toString());
+        auto containmentType =
+            signatureContainmentUtil->checkContainment(hostOperator->getZ3Signature(), targetOperator->getZ3Signature());
+        if (containmentType == ContainmentType::EQUALITY) {
+            NES_DEBUG2("Check containment relationship for parents of target operator.");
+            uint16_t matchCount = 0;
+            for (const auto& targetParent : targetOperator->getParents()) {
+                NES_DEBUG2("TargetParent: {}", targetParent->toString());
+                for (const auto& hostParent : hostOperator->getParents()) {
+                    NES_DEBUG2("HostParent: {}", hostParent->toString());
+                    auto matchedOperators =
+                        areOperatorsContained(hostParent->as<LogicalOperatorNode>(), targetParent->as<LogicalOperatorNode>());
+                    if (!matchedOperators.empty()) {
+                        targetHostOperatorMap.merge(matchedOperators);
+                        matchCount++;
+                        break;
+                    }
                 }
             }
-        }
-
-        if (matchCount < targetOperator->getParents().size()) {
+            if (matchCount < targetOperator->getParents().size()) {
+                targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
+            }
+            return targetHostOperatorMap;
+        } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
+            NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}, ContainmentType: {}",
+                       targetOperator->toString(),
+                       hostOperator->toString(),
+                       magic_enum::enum_name(containmentType));
+            if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
+                return targetHostOperatorMap;
+            }
             targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
-        }
-        return targetHostOperatorMap;
-    } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
-        NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}, ContainmentType: {}",
-                   targetOperator->toString(),
-                   hostOperator->toString(),
-                   magic_enum::enum_name(containmentType));
-        if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
             return targetHostOperatorMap;
         }
-        targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
-        return targetHostOperatorMap;
     }
     NES_WARNING2("Target and host operators are not matched.");
     return {};
