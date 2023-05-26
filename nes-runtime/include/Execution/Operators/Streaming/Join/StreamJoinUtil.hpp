@@ -49,14 +49,6 @@ struct __attribute__((packed)) JoinPartitionIdTumpleStamp {
 
 namespace Util {
 
-// TODO #3362
-/**
-* @brief hashes the key with murmur hash
- * @param key
- * @return calculated hash
- */
-uint64_t murmurHash(uint64_t key);
-
 /**
  * @brief Creates the join schema from the left and right schema
  * @param leftSchema
@@ -65,78 +57,6 @@ uint64_t murmurHash(uint64_t key);
  * @return
  */
 SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName);
-
-// TODO Once #3693 is done, we can use the same function in UtilityFunction
-namespace detail {
-/**
-* @brief set of helper functions for splitting for different types
-* @return splitting function for a given type
-*/
-template<typename T>
-struct SplitFunctionHelper {};
-
-template<>
-struct SplitFunctionHelper<std::string> {
-    static constexpr auto FUNCTION = [](std::string x) {
-        return x;
-    };
-};
-
-template<>
-struct SplitFunctionHelper<uint64_t> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return uint64_t(std::atoll(str.c_str()));
-    };
-};
-
-template<>
-struct SplitFunctionHelper<uint32_t> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return uint32_t(std::atoi(str.c_str()));
-    };
-};
-
-template<>
-struct SplitFunctionHelper<int> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return std::atoi(str.c_str());
-    };
-};
-
-template<>
-struct SplitFunctionHelper<double> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return std::atof(str.c_str());
-    };
-};
-}// namespace detail
-
-// TODO Once #3693 is done, we can use the same function in UtilityFunction
-/**
-* @brief splits a string given a delimiter into multiple substrings stored in a T vector
-* the delimiter is allowed to be a string rather than a char only.
-* @param data - the string that is to be split
-* @param delimiter - the string that is to be split upon e.g. / or -
-* @param fromStringtoT - the function that converts a string to an arbitrary type T
-* @return
-*/
-template<typename T>
-std::vector<T> splitWithStringDelimiter(const std::string& inputString,
-                                        const std::string& delim,
-                                        std::function<T(std::string)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
-    std::string copy = inputString;
-    size_t pos = 0;
-    std::vector<T> elems;
-    while ((pos = copy.find(delim)) != std::string::npos) {
-        elems.push_back(fromStringToT(copy.substr(0, pos)));
-        copy.erase(0, pos + delim.length());
-    }
-    if (!copy.substr(0, pos).empty()) {
-        elems.push_back(fromStringToT(copy.substr(0, pos)));
-    }
-
-    return elems;
-}
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**

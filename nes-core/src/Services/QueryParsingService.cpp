@@ -25,6 +25,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -94,7 +95,7 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
 
         std::string newQuery = queryCodeSnippet;
         // add return statement in front of input query
-        newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
+        newQuery = NES::Util::replaceFirst(newQuery, "Query::from", "return Query::from");
 
         NES_DEBUG2("QueryParsingService: parsed query = {}", newQuery);
         code << newQuery << std::endl;

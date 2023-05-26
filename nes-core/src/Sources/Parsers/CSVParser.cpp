@@ -19,6 +19,7 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <string>
 
 using namespace std::string_literals;

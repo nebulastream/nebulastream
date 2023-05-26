@@ -21,21 +21,13 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
+
 #include <fstream>
 
 namespace NES::Runtime::Execution::Util {
 
-uint64_t murmurHash(uint64_t key) {
-    uint64_t hash = key;
 
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xff51afd7ed558ccd);
-    hash ^= hash >> 33;
-    hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-    hash ^= hash >> 33;
-
-    return hash;
-}
 
 SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName) {
     NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
@@ -92,7 +84,7 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
     do {
         std::string line = *it;
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
-        auto values = Util::splitWithStringDelimiter<std::string>(line, delimiter);
+        auto values = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
 
         // iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++) {

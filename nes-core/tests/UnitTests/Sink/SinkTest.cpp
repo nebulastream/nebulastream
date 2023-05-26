@@ -29,6 +29,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/CommonUtilityFunctions.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <ostream>
@@ -129,7 +130,7 @@ TEST_F(SinkTest, testCSVFileSink) {
 
     //search for each value
     string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
-    Util::findAndReplaceAll(contentWOHeader, "\n", ",");
+    NES::Util::findAndReplaceAll(contentWOHeader, "\n", ",");
     stringstream ss(contentWOHeader);
     string item;
     while (getline(ss, item, ',')) {
@@ -264,7 +265,7 @@ TEST_F(SinkTest, testCSVPrintSink) {
     //cout << "File Content=" << fileContent << endl;
     //search for each value
     string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
-    Util::findAndReplaceAll(contentWOHeader, "\n", ",");
+    NES::Util::findAndReplaceAll(contentWOHeader, "\n", ",");
     //cout << "File Content shrinked=" << contentWOHeader << endl;
 
     stringstream ss(contentWOHeader);
