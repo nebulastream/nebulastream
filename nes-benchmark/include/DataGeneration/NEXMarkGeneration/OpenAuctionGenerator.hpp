@@ -24,9 +24,8 @@ class OpenAuctionGenerator : public DataGenerator {
   public:
     /**
      * @brief creates a OpenAuctionGenerator
-     * @param numberOfRecords
      */
-    explicit OpenAuctionGenerator(uint64_t numberOfRecords);
+    explicit OpenAuctionGenerator();
 
     /**
      * @brief creates data with the schema "id, reserve, privacy, sellerId, category, quantity, type, startTime, endTime"
@@ -55,10 +54,6 @@ class OpenAuctionGenerator : public DataGenerator {
      * @return the string representation of the OpenAuctionGenerator
      */
     std::string toString() override;
-
-  private:
-    uint64_t numberOfRecords;
-    NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 

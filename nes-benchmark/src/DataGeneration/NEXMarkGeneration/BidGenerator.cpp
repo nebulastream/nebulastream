@@ -41,10 +41,12 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
 
         // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
         for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedBids < bidsToProcess; ++curRecord) {
-            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(std::get<0>(bids[processedBids++]));
-            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(std::get<1>(bids[processedBids++]));
-            dynamicBuffer[curRecord]["price"].write<uint64_t>(std::get<2>(bids[processedBids++]));
-            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(std::get<3>(bids[processedBids++]));
+            auto bidsIndex = processedBids++;
+
+            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(std::get<0>(bids[bidsIndex]));
+            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(std::get<1>(bids[bidsIndex]));
+            dynamicBuffer[curRecord]["price"].write<uint64_t>(std::get<2>(bids[bidsIndex]));
+            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(std::get<3>(bids[bidsIndex]));
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -67,7 +69,7 @@ std::string BidGenerator::getName() { return "NEXMarkBid"; }
 std::string BidGenerator::toString() {
     std::ostringstream oss;
 
-    oss << getName() << " ()";
+    oss << getName() << "()";
 
     return oss.str();
 }

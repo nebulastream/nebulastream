@@ -18,15 +18,10 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-OpenAuctionGenerator::OpenAuctionGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), numberOfRecords(numberOfRecords), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
+OpenAuctionGenerator::OpenAuctionGenerator()
+    : DataGenerator() {}
 
 std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
-    std::vector<Runtime::TupleBuffer> createdBuffers;
-    createdBuffers.reserve(numberOfBuffers);
-
-    auto memoryLayout = this->getMemoryLayout(bufferSize);
-
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
     std::uniform_int_distribution<uint64_t> uniformReserveDistribution(1000, 2000);
@@ -34,19 +29,28 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
     std::uniform_int_distribution<uint16_t> uniformCategoryDistribution(0, 302);
     std::uniform_int_distribution<uint8_t> uniformQuantityDistribution(1, 9);
 
+    auto& dependencyGeneratorInstance = DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
     auto auctions = dependencyGeneratorInstance.getAuctions();
+    auto numberOfAuctions = auctions.size();
+    auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
+    auto auctionsToProcess = numberOfRecords < numberOfAuctions ? numberOfRecords : numberOfAuctions;
+
+    std::vector<Runtime::TupleBuffer> createdBuffers;
+    uint64_t numberOfBuffersToCreate = 1 + auctionsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
+    createdBuffers.reserve(numberOfBuffersToCreate);
+
+    auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedAuctions = 0UL;
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffersToCreate; ++curBuffer) {
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
         // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
-        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-            // TODO what if numberOfRecords is smaller than the number of records we can fit in the buffers? Timestamp would be reset
-            // TODO what if numberOfRecords is larger than the number of records we can fit in the buffers? We might get bids that reference auction id's or bidder id's that haven't been created yet
-            auto auctionsIndex = processedAuctions++ % auctions.size();
+        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedAuctions < auctionsToProcess; ++curRecord) {
+            auto auctionsIndex = processedAuctions++;
 
+            // create random data
             auto reserve = 0UL;
             if (uniformBooleanDistribution(generator)) reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + uniformReserveDistribution(generator) / 1000.0));
             auto privacy = false;
@@ -59,13 +63,20 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
             if (quantity > 1 && uniformBooleanDistribution(generator)) oss << ", Dutch";
             auto type = oss.str();
 
+            // write type string to childBuffer in order to store it in TupleBuffer
+            auto childTupleBuffer = allocateBuffer();
+            auto sizeOfInputField = type.size();
+            (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfInputField;
+            std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), type.c_str(), sizeOfInputField);
+            auto childIdx = dynamicBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
+
             dynamicBuffer[curRecord]["id"].write<uint64_t>(processedAuctions);
             dynamicBuffer[curRecord]["reserve"].write<uint64_t>(reserve);
             dynamicBuffer[curRecord]["privacy"].write<bool>(privacy);
             dynamicBuffer[curRecord]["sellerId"].write<uint64_t>(std::get<0>(auctions[auctionsIndex]));
             dynamicBuffer[curRecord]["category"].write<uint16_t>(category);
             dynamicBuffer[curRecord]["quantity"].write<uint8_t>(quantity);
-            dynamicBuffer[curRecord]["type"].write<std::string>(type);
+            dynamicBuffer[curRecord]["type"].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx);
             dynamicBuffer[curRecord]["startTime"].write<uint64_t>(std::get<2>(auctions[auctionsIndex]));
             dynamicBuffer[curRecord]["endTime"].write<uint64_t>(std::get<3>(auctions[auctionsIndex]));
         }
@@ -95,7 +106,7 @@ std::string OpenAuctionGenerator::getName() { return "NEXMarkOpenAuction"; }
 std::string OpenAuctionGenerator::toString() {
     std::ostringstream oss;
 
-    oss << getName() << " (" << numberOfRecords << ")";
+    oss << getName() << "()";
 
     return oss.str();
 }
