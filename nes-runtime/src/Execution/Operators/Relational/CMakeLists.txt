@@ -19,5 +19,4 @@ endif ()
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
-        SortHandler.cpp
         )

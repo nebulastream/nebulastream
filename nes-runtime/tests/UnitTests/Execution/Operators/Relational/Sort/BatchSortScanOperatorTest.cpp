@@ -52,7 +52,7 @@ template <typename TypeParam>
 void fillState(uint64_t numberOfRecord, std::shared_ptr<BatchSortOperatorHandler> handler) {
     auto state = handler->getState();
     auto entrySize = sizeof(TypeParam);
-    auto stateRef = Nautilus::Interface::StackRef(Value<MemRef>((int8_t*) state), entrySize);
+    auto stateRef = Nautilus::Interface::PagedVectorRef(Value<MemRef>((int8_t*) state), entrySize);
     for (size_t j = 0; j < numberOfRecord; j++) {
         Value<> val((TypeParam) (numberOfRecord - j));
         auto entry = stateRef.allocateEntry();
@@ -120,8 +120,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
     ASSERT_EQ(collector->records[0].numberOfFields(), 1);
     // Records should be in ascending order
     for (int i = 0; i < numberOfRecords; i++){
-        std::cout << collector->records[i].read("f1") << std::endl;
-        //ASSERT_EQ(collector->records[i].read("f1"), i+1);
+        ASSERT_EQ(collector->records[i].read("f1"), i+1);
     }
 }
 

@@ -20,7 +20,7 @@
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -157,7 +157,7 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // 2. load the state
     auto stateProxy = Nautilus::FunctionCall("getStateProxy", getStateProxy, globalOperatorHandler);
     auto entrySize = Nautilus::FunctionCall("getSortStateEntrySize", getSortStateEntrySize, globalOperatorHandler);
-    auto state = Nautilus::Interface::StackRef(stateProxy, entrySize->getValue());
+    auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
 
     // 3. emit the records
     for (size_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {

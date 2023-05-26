@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_
 
-#include <Nautilus/Interface/Stack/Stack.hpp>
-#include <Nautilus/Interface/Stack/StackRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -45,22 +45,22 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
      */
     void setup(Runtime::Execution::PipelineExecutionContext&) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-        stack = std::make_unique<Nautilus::Interface::Stack>(std::move(allocator), entrySize);
+        stack = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
         auto tempAllocator = std::make_unique<NesDefaultMemoryAllocator>();
-        tempStack = std::make_unique<Nautilus::Interface::Stack>(std::move(tempAllocator), entrySize);
+        tempStack = std::make_unique<Nautilus::Interface::PagedVector>(std::move(tempAllocator), entrySize);
     }
 
     /**
      * @brief Returns the state of the sort operator
      * @return Stack state
      */
-    Nautilus::Interface::Stack *getState() { return stack.get(); }
+    Nautilus::Interface::PagedVector *getState() { return stack.get(); }
 
     /**
      * @brief Returns the temporary state of the sort operator
      * @return Stack state
      */
-    Nautilus::Interface::Stack *getTempState() { return tempStack.get(); }
+    Nautilus::Interface::PagedVector *getTempState() { return tempStack.get(); }
 
     /**
      * @brief Returns the size of the entry
@@ -76,8 +76,8 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
     void stop(Runtime::QueryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr) override {};
   private:
-    std::unique_ptr<Nautilus::Interface::Stack> stack;
-    std::unique_ptr<Nautilus::Interface::Stack> tempStack;
+    std::unique_ptr<Nautilus::Interface::PagedVector> stack;
+    std::unique_ptr<Nautilus::Interface::PagedVector> tempStack;
     uint64_t entrySize;
 };
 }// namespace NES::Runtime::Execution::Operators

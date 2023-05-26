@@ -13,11 +13,8 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -56,6 +53,20 @@ TEST_F(PagedVectorTest, appendValue) {
 
     ASSERT_EQ(pagedVector.getNumberOfEntries(), 1000);
     ASSERT_EQ(pagedVector.getNumberOfPages(), 8);
+}
+
+TEST_F(PagedVectorTest, changePageSize) {
+    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto entrySize = 32;
+    auto pagedVector = PagedVector(std::move(allocator), entrySize, 2048);
+    auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize, 2048);
+
+    for (auto i = 0; i < 1000; i++) {
+        pagedVectorRef.allocateEntry();
+    }
+
+    ASSERT_EQ(pagedVector.getNumberOfEntries(), 1000);
+    ASSERT_EQ(pagedVector.getNumberOfPages(), 16);
 }
 
 TEST_F(PagedVectorTest, storeAndRetrieveValues) {
