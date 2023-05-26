@@ -18,28 +18,37 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-PersonGenerator::PersonGenerator(uint64_t numberOfRecords)
-    : DataGenerator(), numberOfRecords(numberOfRecords), dependencyGeneratorInstance(DependencyGenerator::getInstance(numberOfRecords)) {}
+PersonGenerator::PersonGenerator()
+    : DataGenerator() {}
 
 std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+    std::random_device rndDevice;
+    std::mt19937 generator(rndDevice());
+    std::uniform_int_distribution<uint64_t> uniformBooleanDistribution(0, 1);
+    // TODO add other distributions
+
+    auto& dependencyGeneratorInstance = DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
+    auto persons = dependencyGeneratorInstance.getPersons();
+    auto numberOfPersons = persons.size();
+    auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
+    auto personsToProcess = numberOfRecords < numberOfPersons ? numberOfRecords : numberOfPersons;
+
     std::vector<Runtime::TupleBuffer> createdBuffers;
-    createdBuffers.reserve(numberOfBuffers);
+    uint64_t numberOfBuffersToCreate = 1 + personsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
+    createdBuffers.reserve(numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
-
-    auto persons = dependencyGeneratorInstance.getPersons();
     auto processedPersons = 0UL;
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffersToCreate; ++curBuffer) {
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
         // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
-        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-            // TODO what if numberOfRecords is smaller than the number of records we can fit in the buffers? Timestamp would be reset
-            // TODO what if numberOfRecords is larger than the number of records we can fit in the buffers? We might get bids that reference auction id's or bidder id's that haven't been created yet
-            auto auctionsIndex = processedPersons++ % persons.size();
+        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedPersons < personsToProcess; ++curRecord) {
+            auto auctionsIndex = processedPersons++;
 
+            // TODO create random data
             // TODO add fields
         }
 
@@ -76,7 +85,7 @@ std::string PersonGenerator::getName() { return "NEXMarkPerson"; }
 std::string PersonGenerator::toString() {
     std::ostringstream oss;
 
-    oss << getName() << " (" << numberOfRecords << ")";
+    oss << getName() << "()";
 
     return oss.str();
 }

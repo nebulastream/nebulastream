@@ -25,9 +25,8 @@ class PersonGenerator : public DataGenerator {
   public:
     /**
      * @brief creates a PersonGenerator
-     * @param numberOfRecords
      */
-    explicit PersonGenerator(uint64_t numberOfRecords);
+    explicit PersonGenerator();
 
     /**
      * @brief creates data
@@ -54,10 +53,6 @@ class PersonGenerator : public DataGenerator {
      * @return the string representation of the PersonGenerator
      */
     std::string toString() override;
-
-  private:
-    uint64_t numberOfRecords;
-    NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance;
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
