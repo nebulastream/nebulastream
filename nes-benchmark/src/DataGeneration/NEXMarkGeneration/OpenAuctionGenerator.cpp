@@ -70,7 +70,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
             std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), type.c_str(), sizeOfInputField);
             auto childIdx = dynamicBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
 
-            dynamicBuffer[curRecord]["id"].write<uint64_t>(processedAuctions);
+            dynamicBuffer[curRecord]["id"].write<uint64_t>(auctionsIndex);
             dynamicBuffer[curRecord]["reserve"].write<uint64_t>(reserve);
             dynamicBuffer[curRecord]["privacy"].write<bool>(privacy);
             dynamicBuffer[curRecord]["sellerId"].write<uint64_t>(std::get<0>(auctions[auctionsIndex]));
