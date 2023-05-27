@@ -1489,7 +1489,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
-    NES_DEBUG(int_schema->toString());
+    NES_DEBUG2("{}", int_schema->toString());
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(int_schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1974,7 +1974,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 60));
     auto stop = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_DEBUG("start=" << start << " stop=" << stop);
+    NES_DEBUG2("start={} stop={}", start, stop);
 
     NES_INFO("SourceTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);

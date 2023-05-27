@@ -108,7 +108,9 @@ class TestSink : public SinkMedium {
         std::unique_lock lock(m);
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(getSchemaPtr(), input_buffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, input_buffer);
-        NES_DEBUG("TestSink:\n" << dynamicTupleBuffer);
+        std::stringstream dynamicTupleBufferAsString;
+        dynamicTupleBufferAsString << dynamicTupleBuffer;
+        NES_DEBUG2("TestSink:\n{}", dynamicTupleBufferAsString.str());
 
         uint64_t sum = 0;
         for (uint64_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
@@ -484,7 +486,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
             double bytes = totalNumBuffer * bufferSize;
             double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
-            NES_DEBUG("Sent " << bytes << " bytes :: throughput " << throughput);
+            NES_DEBUG2("Sent {} bytes :: throughput {}", bytes, throughput);
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 
@@ -581,7 +583,7 @@ TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
             double bytes = totalNumBuffer * bufferSize;
             double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
-            NES_DEBUG("Sent " << bytes << " bytes :: throughput " << throughput << std::endl);
+            NES_DEBUG2("Sent {} bytes :: throughput {}\n", bytes, throughput);
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 

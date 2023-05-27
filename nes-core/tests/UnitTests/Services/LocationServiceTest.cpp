@@ -178,7 +178,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
         entry = e.get<std::map<std::string, nlohmann::json>>();
         EXPECT_EQ(entry.size(), 2);
         EXPECT_TRUE(entry.find("id") != entry.end());
-        NES_DEBUG("checking element with id " << entry.at("id"));
+        NES_DEBUG2("checking element with id {}", entry.at("id"));
         EXPECT_TRUE(entry.at("id") == node3Id || entry.at("id") == node4Id);
         if (entry.at("id") == node3Id) {
             cmpLoc[0] = 52.55227464714949;
@@ -249,7 +249,7 @@ TEST_F(LocationServiceTest, testConvertingToJson) {
 
     auto invalidLoc = NES::Spatial::DataTypes::Experimental::GeoLocation();
     auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
-    NES_DEBUG("Invalid location json: " << invalidLocJson.dump())
+    NES_DEBUG2("Invalid location json: {}", invalidLocJson.dump())
     EXPECT_EQ(invalidLocJson["id"], 2);
     ASSERT_TRUE(invalidLocJson["location"].empty());
 

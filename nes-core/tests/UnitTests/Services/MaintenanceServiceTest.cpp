@@ -38,13 +38,13 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup MaintenanceService test class.");
+        NES_DEBUG2("Setup MaintenanceService test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG("Setup MaintenanceService test case.");
+        NES_DEBUG2("Setup MaintenanceService test case.");
         topology = Topology::create();
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;

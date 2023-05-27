@@ -101,9 +101,9 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
  * @return boolean if the buffers contain the same tuples
  */
 bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
-    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples");
+    NES_DEBUG2("Checking if the buffers are equal, so if they contain the same tuples");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
-        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_DEBUG2("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
@@ -125,7 +125,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
         }
 
         if (!idxFoundInBuffer2) {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
+            NES_DEBUG2("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
             return false;
         }
     }
@@ -188,8 +188,8 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
-    NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
+    NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
+    NES_DEBUG2("expectedSinkBuffer: {}", NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
     ASSERT_TRUE(
@@ -280,7 +280,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
+    NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
 }
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,

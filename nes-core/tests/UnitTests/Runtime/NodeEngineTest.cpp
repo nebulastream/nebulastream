@@ -218,7 +218,9 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
             auto* arr = outputBuffer.getBuffer<uint32_t>();
             arr[0] = static_cast<uint32_t>(sum.load());
             outputBuffer.setNumberOfTuples(1);
-            NES_DEBUG("TEST: " << this << " written " << arr[0]);
+            std::stringstream thisAsString;
+            thisAsString << this;
+            NES_DEBUG2("TEST: {} written {}", thisAsString.str(), arr[0]);
             pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
             completedPromise.set_value(true);
         } else {

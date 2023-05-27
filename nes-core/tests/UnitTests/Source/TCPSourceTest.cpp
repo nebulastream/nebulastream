@@ -63,12 +63,12 @@ class TCPSourceTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TCPSourceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("TCPSOURCETEST::SetUpTestCase()");
+        NES_DEBUG2("TCPSOURCETEST::SetUpTestCase()");
     }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_DEBUG("TCPSOURCETEST::SetUp() MQTTSourceTest cases set up.");
+        NES_DEBUG2("TCPSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         tcpSourceType = TCPSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
@@ -83,11 +83,11 @@ class TCPSourceTest : public Testing::NESBaseTest {
     void TearDown() override {
         Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
-        NES_DEBUG("TCPSOURCETEST::TearDown() Tear down TCPSOURCETEST");
+        NES_DEBUG2("TCPSOURCETEST::TearDown() Tear down TCPSOURCETEST");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("TCPSOURCETEST::TearDownTestCases() Tear down TCPSOURCETEST test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("TCPSOURCETEST::TearDownTestCases() Tear down TCPSOURCETEST test class."); }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     Runtime::BufferManagerPtr bufferManager;
@@ -142,7 +142,7 @@ TEST_F(TCPSourceTest, TCPSourcePrint) {
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
-    NES_DEBUG(mqttSource->toString());
+    NES_DEBUG2("{}", mqttSource->toString());
 
     SUCCEED();
 }
@@ -168,8 +168,7 @@ TEST_F(TCPSourceTest, DISABLED_TCPSourceValue) {
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
     uint64_t expected = 43;
-    NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: " << expected
-                                                                                            << ". Received value is: " << value);
+    NES_DEBUG2("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: {}. Received value is: {}", expected, value);
     EXPECT_EQ(value, expected);
 }
 

@@ -37,7 +37,7 @@ class ThresholdWindowQueryExecutionTest
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup ThresholdWindowQueryExecutionTest test class.");
+        NES_DEBUG2("QueryExecutionTest: Setup ThresholdWindowQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -48,13 +48,13 @@ class ThresholdWindowQueryExecutionTest
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down ThresholdWindowQueryExecutionTest test case.");
+        NES_DEBUG2("QueryExecutionTest: Tear down ThresholdWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down ThresholdWindowQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("QueryExecutionTest: Tear down ThresholdWindowQueryExecutionTest test class."); }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
@@ -64,14 +64,14 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
         buf[recordIndex][1].write<T>(recordIndex * 10);
-        NES_DEBUG("Input tuples: f1=" << recordIndex << " f2=" << recordIndex * 10);
+        NES_DEBUG2("Input tuples: f1={} f2={}", recordIndex, recordIndex * 10);
     }
     // The following buffer closes the window in the query in all test cases in this file
     // It's second field is 0 and our Threshold window query always check if the value is greater than 5
     buf[9][0].write<int64_t>(0);
     buf[9][1].write<T>(0);
     buf.setNumberOfTuples(10);
-    NES_DEBUG("Input tuples: f1=" << 0 << " f2=" << 0);
+    NES_DEBUG2("Input tuples: f1={} f2={}", 0, 0);
 }
 
 /**

@@ -779,7 +779,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     }
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
-    NES_DEBUG2("buffer={}", dynamicTupleBuffer);
+    std::stringstream dynamicTupleBufferAsString;
+    dynamicTupleBufferAsString << dynamicTupleBuffer;
+    NES_DEBUG2("buffer={}", dynamicTupleBufferAsString.str());
 
     /* execute Stage */
     stage1->setup(*executionContext);
@@ -790,7 +792,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto* stateVar = windowHandler->getTypedWindowState();
     std::vector<uint64_t> results;
     for (auto& [key, val] : stateVar->rangeAll()) {
-        NES_DEBUG2("Key: {} Value: {}", key, val);
+        std::stringstream valueAsString;
+        valueAsString << val;
+        NES_DEBUG2("Key: {} Value: {}", key, valueAsString.str());
         for (auto& slice : val->getSliceMetadata()) {
             NES_DEBUG2("start={} end={}", slice.getStartTs(), slice.getEndTs());
             results.push_back(slice.getStartTs());
@@ -1484,7 +1488,9 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(input_schema, inputBuffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
-    NES_DEBUG2("buffer content={}", dynamicTupleBuffer.toString(input_schema));
+    std::stringstream dynamicTupleBufferAsString;
+    dynamicTupleBufferAsString << dynamicTupleBuffer;
+    NES_DEBUG2("buffer content={}", dynamicTupleBufferAsString.str());
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage1->setup(*executionContext);
@@ -1504,7 +1510,9 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
                               ->getRightJoinState();
     std::vector<int64_t> results;
     for (auto& [key, val] : stateVarLeft->rangeAll()) {
-        NES_DEBUG2("Key: {} Value: {}", key, val);
+        std::stringstream valueAsString;
+        valueAsString << val;
+        NES_DEBUG2("Key: {} Value: {}", key, valueAsString.str());
         auto lock = std::unique_lock(val->mutex());
         for (auto& list : val->getAppendList()) {
             for (auto& value : list) {
@@ -1513,7 +1521,9 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
         }
     }
     for (auto& [key, val] : stateVarRight->rangeAll()) {
-        NES_DEBUG2("Key: {} Value: {}", key, val);
+        std::stringstream valueAsString;
+        valueAsString << val;
+        NES_DEBUG2("Key: {} Value: {}", key, valueAsString.str());
         auto lock = std::unique_lock(val->mutex());
         for (auto& list : val->getAppendList()) {
             for (auto& value : list) {
@@ -1862,6 +1872,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, resultBuffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-    NES_DEBUG2("{}", dynamicTupleBuffer.toString(inputSchema));
+    std::stringstream dynamicTupleBufferAsString;
+    dynamicTupleBufferAsString << dynamicTupleBuffer;
+    NES_DEBUG2("{}", dynamicTupleBufferAsString.str());
 }
 }// namespace NES

@@ -178,9 +178,9 @@ TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterOutofOrderTest)
     vec.emplace_back(std::make_unique<Slice>(10));
     vec.emplace_back(std::make_unique<Slice>(12));
     auto& s = vec[0];
-    NES_DEBUG(s->start);
+    NES_DEBUG2("{}", s->start);
     auto s2 = std::move(vec[0]);
-    NES_DEBUG(s2->start);
+    NES_DEBUG2("{}", s2->start);
 }
 
 }// namespace NES

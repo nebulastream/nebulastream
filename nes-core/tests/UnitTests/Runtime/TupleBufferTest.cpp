@@ -68,8 +68,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     auto* my_array = buf.getBuffer<MyTuple>();
     for (unsigned int i = 0; i < 5; ++i) {
         my_array[i] = MyTuple{i, float(0.5F * i), double(i * 0.2), i * 2, "1234"};
-        NES_DEBUG(my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|"
-                                  << std::string(my_array[i].s, 5));
+        NES_DEBUG2("{} | {} | {} | {} | {}", my_array[i].i64, my_array[i].f, my_array[i].d, my_array[i].i32, std::string(my_array[i].s, 5));
     }
     buf.setNumberOfTuples(5);
 
@@ -95,10 +94,10 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buf);
 
     std::string result = dynamicTupleBuffer.toString(s);
-    NES_DEBUG("RES=" << result);
-    NES_DEBUG("Reference size=" << reference.size() << " content=\n" << reference);
-    NES_DEBUG("Result size=" << result.size() << " content=\n" << result);
-    NES_DEBUG("----");
+    NES_DEBUG2("RES={}", result);
+    NES_DEBUG2("Reference size={} content=\n{}", reference.size(), reference);
+    NES_DEBUG2("Result size={} content=\n{}", result.size(), result);
+    NES_DEBUG2("----");
     EXPECT_EQ(reference.size(), result.size());
     //    EXPECT_EQ(reference, result);//TODO fix bug
 }

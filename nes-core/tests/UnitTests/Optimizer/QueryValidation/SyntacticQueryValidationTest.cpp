@@ -41,7 +41,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
-    static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
+    static void PrintQString(const std::string& s) { NES_DEBUG2("\n QUERY STRING:\n {}", s); }
 
     void TestForException(const std::string& queryString) {
         PrintQString(queryString);

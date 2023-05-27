@@ -60,14 +60,14 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MQTTTSinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup MQTTTSinkTest test class.");
+        NES_DEBUG2("Setup MQTTTSinkTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
-        NES_DEBUG("Setup MQTTTSinkTest test case.");
+        NES_DEBUG2("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
@@ -83,7 +83,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
     void TearDown() override {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
-        NES_DEBUG("Setup MQTT test case.");
+        NES_DEBUG2("Setup MQTT test case.");
         Testing::NESBaseTest::TearDown();
     }
 
@@ -147,7 +147,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         if (printBuffer) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, inputBuffer.getBufferSize());
             auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
-            NES_DEBUG("bufferContent before write=" << dynamicTupleBuffer);
+            NES_DEBUG2("bufferContent before write={}", dynamicTupleBuffer);
         }
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {
@@ -158,7 +158,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down MQTT test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("Tear down MQTT test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
