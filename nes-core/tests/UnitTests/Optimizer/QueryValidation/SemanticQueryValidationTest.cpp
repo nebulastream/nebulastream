@@ -54,7 +54,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling {
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
-    static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
+    static void PrintQString(const std::string& s) { NES_DEBUG2("\nQUERY STRING:\n{}", s); }
 
     void CallValidation(const std::string& queryString) {
         PrintQString(queryString);

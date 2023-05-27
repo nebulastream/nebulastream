@@ -104,7 +104,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryContainmentIdentificationTest: Tear down QueryContainmentIdentificationTest test case.");
+        NES_DEBUG2("QueryContainmentIdentificationTest: Tear down QueryContainmentIdentificationTest test case.");
     }
 
     static auto createEqualityCases() {

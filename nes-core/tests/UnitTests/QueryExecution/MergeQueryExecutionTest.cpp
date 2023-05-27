@@ -33,7 +33,7 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling,
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MergeQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup MergeQueryExecutionTest test class.");
+        NES_DEBUG2("QueryExecutionTest: Setup MergeQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -44,13 +44,13 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test case.");
+        NES_DEBUG2("QueryExecutionTest: Tear down MergeQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("QueryExecutionTest: Tear down MergeQueryExecutionTest test class."); }
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         int numberOfTuples = 10;

@@ -136,8 +136,8 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
                && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
             expectedItr++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedItr));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}",
+                                               std::distance(actualWayPoints.cbegin(), actualIt), std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
@@ -194,8 +194,8 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
                && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
             expectedItr++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedItr));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}",
+                                               std::distance(actualWayPoints.cbegin(), actualIt), std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
@@ -240,8 +240,8 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
                && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
             expectedItr++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
-                                               << std::distance(expectedWayPoints.cbegin(), expectedItr));
+        NES_DEBUG2("comparing actual waypoint {} to expected waypoint {}"
+                                               , std::distance(actualWayPoints.cbegin(), actualIt), std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedItr, expectedWayPoints.cend());
 

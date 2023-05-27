@@ -108,7 +108,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down Z3SignatureBasedBottomUpQueryContainmentRuleTest test case."); }
+    void TearDown() override { NES_DEBUG2("Tear down Z3SignatureBasedBottomUpQueryContainmentRuleTest test case."); }
 
     static auto createEqualityCases() {
         return std::

@@ -60,7 +60,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ExpressionNodeTest test class.");
+        NES_DEBUG2("Setup ExpressionNodeTest test class.");
     }
 };
 

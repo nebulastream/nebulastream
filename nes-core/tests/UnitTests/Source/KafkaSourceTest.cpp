@@ -139,7 +139,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
 
     EXPECT_EQ(kafkaSource->toString(), expected);
 
-    NES_DEBUG("kafka string=" << kafkaSource->toString());
+    NES_DEBUG2("kafka string={}", kafkaSource->toString());
 
     SUCCEED();
 }
@@ -164,18 +164,18 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
 
     // Print the assigned partitions on assignment
     consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-        NES_DEBUG("Got assigned: " << partitions);
+        NES_DEBUG2("Got assigned: {}", partitions);
     });
 
     // Print the revoked partitions on revocation
     consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-        NES_DEBUG("Got revoked: " << partitions);
+        NES_DEBUG2("Got revoked: {}", partitions);
     });
 
     // Subscribe to the topic
     consumer.subscribe({topic});
 
-    NES_DEBUG("Consuming messages from topic " << topic);
+    NES_DEBUG2("Consuming messages from topic {}", topic);
     //    ##################################
 
     // Create a message builder for this topic
@@ -193,7 +193,7 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
     // Create the producer
     cppkafka::Producer producer(configProd);
 
-    NES_DEBUG("Producing messages into topic " << topic);
+    NES_DEBUG2("Producing messages into topic {}", topic);
 
     // Produce a message!
     string message = "32";
@@ -205,7 +205,7 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
     bool pollSuccessFull = false;
     size_t cnt = 0;
     while (!pollSuccessFull) {
-        NES_DEBUG("run =" << cnt++);
+        NES_DEBUG2("run ={}", cnt++);
         if (cnt > 10) {
             break;
         }
@@ -215,15 +215,15 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
             if (msg.get_error()) {
                 // Ignore EOF notifications from rdkafka
                 if (!msg.is_eof()) {
-                    NES_DEBUG("[+] Received error notification: " << msg.get_error());
+                    NES_DEBUG2("[+] Received error notification: {}", msg.get_error());
                 }
             } else {
                 // Print the key (if any)
                 if (msg.get_key()) {
-                    NES_DEBUG(msg.get_key() << " -> ");
+                    NES_DEBUG2(" {} -> ", msg.get_key());
                 }
                 // Print the payload
-                NES_DEBUG(msg.get_payload());
+                NES_DEBUG2("{}", msg.get_payload());
 
                 // Now commit the message
                 consumer.commit(msg);
@@ -276,8 +276,8 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     auto* tuple = (char*) tuple_buffer->getBuffer();
     std::string str(tuple);
     std::string expected = "32";
-    NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: " << expected
-                                                                                               << ". Received value is: " << str);
+    NES_DEBUG2("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: {}. Received value is: {}",
+              expected, str);
     EXPECT_EQ(str, expected);
 }
 
