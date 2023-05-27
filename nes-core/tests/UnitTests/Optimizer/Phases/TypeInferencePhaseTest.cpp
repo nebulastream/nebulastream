@@ -1209,7 +1209,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$ts"));
 
     SchemaPtr sourceOutputSchema3 = sourceOperator[2]->getOutputSchema();
-    NES_DEBUG2("expected src3= {}",< sourceOperator[2]->getOutputSchema()->toString());
+    NES_DEBUG2("expected src3= {}", sourceOperator[2]->getOutputSchema()->toString());
     EXPECT_TRUE(sourceOutputSchema3->fields.size() == 3);
     EXPECT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$f5"));
     EXPECT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$f6"));

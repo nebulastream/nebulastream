@@ -188,7 +188,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     NES_DEBUG2(" plan before log expand={}", queryPlan->toString());
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
-    NES_DEBUG2(" plan after log expand="{}", queryPlan->toString());
+    NES_DEBUG2(" plan after log expand={}", queryPlan->toString());
 
     NES_DEBUG2(" plan before window distr={}", queryPlan->toString());
     updatedPlan = distributeWindowRule->apply(queryPlan);

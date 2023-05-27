@@ -302,8 +302,9 @@ class WindowSource : public NES::DefaultSource {
         buffer.setNumberOfTuples(10);
         timestamp = timestamp + 10;
         runCnt++;
-
-        NES_DEBUG2("QueryExecutionTest: source buffer={}", buffer);
+        std::stringstream bufferAsString;
+        bufferAsString << buffer;
+        NES_DEBUG2("QueryExecutionTest: source buffer={}", bufferAsString.str());
         return buffer.getBuffer();
     };
 
@@ -985,7 +986,9 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(outputSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_DEBUG2("QueryExecutionTest: buffer={}", buffer);
+        std::stringstream bufferAsString;
+        bufferAsString << buffer;
+        NES_DEBUG2("QueryExecutionTest: buffer={}", bufferAsString.str());
         EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
@@ -1118,7 +1121,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_DEBUG2("QueryExecutionTest: buffer={}", dynamicTupleBuffer);
+        std::stringstream bufferAsString;
+        bufferAsString << dynamicTupleBuffer;
+        NES_DEBUG2("QueryExecutionTest: buffer={}", bufferAsString.str());
 
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
@@ -1207,7 +1212,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_DEBUG2("QueryExecutionTest: buffer={}", dynamicTupleBuffer);
+        std::stringstream bufferAsString;
+        bufferAsString << dynamicTupleBuffer;
+        NES_DEBUG2("QueryExecutionTest: buffer={}", bufferAsString.str());
 
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
@@ -1718,7 +1725,9 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
 
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(outputSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_DEBUG2("QueryExecutionTest: buffer={}", buffer);
+        std::stringstream bufferAsString;
+        bufferAsString << buffer;
+        NES_DEBUG2("QueryExecutionTest: buffer={}", bufferAsString.str());
         EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
