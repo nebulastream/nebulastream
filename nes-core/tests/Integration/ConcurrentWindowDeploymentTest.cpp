@@ -2051,7 +2051,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
         }
     };
     auto outputsize = sizeof(Output);
-    NES_DEBUG2(outputsize);
+    NES_DEBUG2("{}", outputsize);
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 

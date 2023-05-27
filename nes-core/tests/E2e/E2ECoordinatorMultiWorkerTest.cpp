@@ -397,7 +397,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
                   "UINT64))->addField(createField(\\\"key\\\", BasicType::UINT64))->addField(createField(\\\"value\\\", "
                   "BasicType::UINT64));\"\n"
                   "}";
-    NES_DEBUG22("Schema: {}", schema);
+    NES_DEBUG2("Schema: {}", schema);
     ASSERT_TRUE(TestUtils::addLogicalSource(schema, std::to_string(*restPort)));
 
     NES_DEBUG2("Create an input CSV file for the worker.");
@@ -448,8 +448,9 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testWindowingWithTwoWorkerWithTwo
     nlohmann::json json_result = TestUtils::startQueryViaRest(query.str(), std::to_string(*restPort));
     QueryId queryId = json_result["queryId"].get<int>();
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-
-    NES_DEBUG2("Read in output file: {}", outputPath)
+    std::stringstream outputPathAsString;
+    outputPathAsString << outputPath;
+    NES_DEBUG2("Read in output file: {}", outputPathAsString.str());
     std::ifstream outputFile(outputPath);
     ASSERT_TRUE(outputFile.good());
     // Expected output:

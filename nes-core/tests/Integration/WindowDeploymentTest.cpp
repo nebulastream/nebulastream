@@ -2114,8 +2114,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testMultipleAggregationFunctionsOnMultiple
     auto expected = std::vector<Output>{{1000, 2000, 1, 16, 4}, {1000, 2000, 2, 6, 2}, {1000, 2000, 3, 14, 2}};
     auto actual = testHarness.getOutput<Output>(expected.size(), "BottomUp", "NONE", "IN_MEMORY");
     for (auto i : {0, 1, 2}) {
-        NES_DEBUG2("{} = {{},{},{},{},{}}", i, actual[i].start, actual[i].end, actual[i].key, actual[i].sum, actual[i].count);
-        
+        NES_DEBUG2("{} = ({},{},{},{},{})", i, actual[i].start, actual[i].end, actual[i].key, actual[i].sum, actual[i].count);
     }
     EXPECT_EQ(expected.size(), actual.size());
     EXPECT_THAT(actual, ::testing::UnorderedElementsAreArray(expected));

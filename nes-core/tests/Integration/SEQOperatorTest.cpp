@@ -237,7 +237,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG2("contents=" << content);
+    NES_DEBUG2("contents={}", content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
@@ -331,9 +331,9 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG2("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG2("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     string expectedContent =
         "|1543626120000|1543626720000|1|R2000070|1543626480000|73.722221|5|1|R2000073|1543626540000|71.444443|10|1|\n"
@@ -426,9 +426,9 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG2("contents=" << content);
+    NES_DEBUG2("contents={}", content);
     size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG2("TUPLE NUMBER=" << n);
+    NES_DEBUG2("TUPLE NUMBER={}", n);
 
     string expectedContent =
         "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n";
@@ -552,7 +552,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG2("contents=" << content);
+    NES_DEBUG2("contents={}", content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
