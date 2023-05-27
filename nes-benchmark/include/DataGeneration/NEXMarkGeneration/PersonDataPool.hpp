@@ -19,7 +19,8 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 class PersonDataPool {
   public:
-    const uint64_t NUM_FIRSTNAMES = 5000;
+    PersonDataPool() = default;
+
     const std::vector<std::string> firstnames = {
         "Perla","Girolamo","Ronnie","Xianlong",
         "Xiping","Adas","Patricia","Renee","Masami","Snehasis","Gil",
@@ -725,7 +726,6 @@ class PersonDataPool {
         "Nayyer","Nir","Florentino","Volkert","Niv"
     };
 
-    const uint64_t NUM_LASTNAMES = 5000;
     const std::vector<std::string> lastnames = {
         "Wossner","Gunderson","Comte","Linnainmaa","Harbusch","Speek",
         "Trachtenberg","Kohling","Speel","Nollmann","Jervis","Capobianchi",
@@ -1506,7 +1506,6 @@ class PersonDataPool {
         "Stougie","Kitano","Smale","Rajlich"
     };
 
-    const uint64_t NUM_CITIES = 265;
     const std::vector<std::string> cities = {
         "Abidjan","Abu","Acapulco","Aguascalientes","Akron","Albany",
         "Albuquerque","Alexandria","Allentown","Amarillo","Amsterdam",
@@ -1551,7 +1550,6 @@ class PersonDataPool {
         "Windhoek","Worcester","Zihuatenejo","Zurich"
     };
 
-    const uint64_t NUM_COUNTRIES = 232;
     const std::vector<std::string> countries = {
         "United States","Afghanistan","Albania","Algeria","American Samoa",
         "Andorra","Angola","Anguilla","Antarctica","Antigua","Argentina",
@@ -1601,7 +1599,6 @@ class PersonDataPool {
         "Western Sahara","Yemen","Zaire","Zambia","Zimbabwe"
     };
 
-    const uint64_t NUM_EMAILS = 179;
     const std::vector<std::string> emails = {
         "ab.ca","ac.at","ac.be","ac.jp","ac.kr","ac.uk","acm.org",
         "airmail.net","arizona.edu","ask.com","att.com","auc.dk","auth.gr",
@@ -1640,7 +1637,6 @@ class PersonDataPool {
         "zambeel.com"
     };
 
-    const uint64_t NUM_PROVINCES = 51;
     const std::vector<std::string> provinces = {
         "Alabama","Alaska","Arizona","Arkansas","California","Colorado",
         "Connecticut","Delaware","District Of Columbia","Florida","Georgia",
@@ -1653,7 +1649,6 @@ class PersonDataPool {
         "Virginia","Washington","West Virginia","Wisconsin","Wyoming"
     };
 
-    const uint64_t NUM_EDUCATION = 4;
     const std::vector<std::string> education = {
         "High School", "College", "Graduate School", "Other"
     };

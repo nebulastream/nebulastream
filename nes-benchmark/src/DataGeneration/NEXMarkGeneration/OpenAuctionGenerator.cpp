@@ -24,10 +24,10 @@ OpenAuctionGenerator::OpenAuctionGenerator()
 std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
-    std::uniform_int_distribution<uint64_t> uniformReserveDistribution(1000, 2000);
-    std::uniform_int_distribution<uint64_t> uniformBooleanDistribution(0, 1);
+    std::uniform_int_distribution<uint16_t> uniformReserveDistribution(1000, 2000);
+    std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
     std::uniform_int_distribution<uint16_t> uniformCategoryDistribution(0, 302);
-    std::uniform_int_distribution<uint8_t> uniformQuantityDistribution(1, 9);
+    std::uniform_int_distribution<uint8_t> uniformQuantityDistribution(1, 10);
 
     auto& dependencyGeneratorInstance = DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
     auto auctions = dependencyGeneratorInstance.getAuctions();
