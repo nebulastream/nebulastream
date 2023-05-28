@@ -145,7 +145,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
             records[u].currentMs = ts;
             records[u].ip = 0x01020304;
         }
-        NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
+        NES_WARNING2("Lambda last entry is={}", records[numberOfTuplesToProduce - 1].toString());
     };
 
     auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, GatheringMode::INTERVAL_MODE);
@@ -2111,7 +2111,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
             records[u].ts = ts;
             recordCounter++;
         }
-        NES_WARNING("Lambda last entry is=" << records[100 - 1].toString());
+        NES_WARNING2("Lambda last entry is={}", records[100 - 1].toString());
         buffer.setNumberOfTuples(100U);
         return;
     };

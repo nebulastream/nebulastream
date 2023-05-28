@@ -288,7 +288,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
                   << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
-    NES_WARNING("checkStoppedOrTimeout: expected status not reached within set timeout");
+    NES_WARNING2("checkStoppedOrTimeout: expected status not reached within set timeout");
     return false;
 }
 
