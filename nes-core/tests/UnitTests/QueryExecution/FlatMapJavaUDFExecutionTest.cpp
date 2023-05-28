@@ -120,8 +120,8 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    std::vector<std::string> classNames = {"IntegerMapFunction", "MapFunction"};
-    auto methodName = "map";
+    std::vector<std::string> classNames = {"IntegerFlatMapFunction", "stream/nebula/FlatMapFunction"};
+    auto methodName = "flatMap";
     std::vector<char> serializedInstance = {};
     auto byteCodeList = std::unordered_map<std::string, std::vector<char>>();
     for (const auto& className : classNames) {
@@ -132,7 +132,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto className = classNames[0];
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
     auto inputClassName = "java/lang/Integer";
-    auto outputClassName = "java/lang/Integer";
+    auto outputClassName = "java/util/Collection";
     NES_INFO("testDataPath:" + testDataPath);
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
                                  .setClassName(className)
@@ -156,10 +156,8 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), NUMBER_OF_RECORDS);
-    int32_t udfState = UDF_INCREMENT;
     for (uint32_t recordIndex = 0u; recordIndex < NUMBER_OF_RECORDS; ++recordIndex) {
-        udfState += recordIndex;
-        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), udfState);
+        EXPECT_EQ(resultBuffer[recordIndex][0].read<int32_t>(), recordIndex + UDF_INCREMENT);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);

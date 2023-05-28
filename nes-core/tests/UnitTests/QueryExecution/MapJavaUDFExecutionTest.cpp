@@ -124,7 +124,7 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    std::vector<std::string> classNames = {"IntegerMapFunction", "MapFunction"};
+    std::vector<std::string> classNames = {"IntegerMapFunction", "stream/nebula/MapFunction"};
     auto methodName = "map";
     std::vector<char> serializedInstance = {};
     auto byteCodeList = std::unordered_map<std::string, std::vector<char>>();
