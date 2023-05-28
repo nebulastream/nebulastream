@@ -140,7 +140,7 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
 
                     if (message.get_error()) {
                         if (!message.is_eof()) {
-                            NES_ERROR("KafkaSource received error notification: " << message.get_error());
+                            NES_ERROR2("KafkaSource received error notification: {}", message.get_error().to_string());
                             throw message.get_error();
                         }
                         NES_WARNING2("KafkaSource reached end of topic");

@@ -153,7 +153,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         if (connectSuccessful) {
             return mqttSink->writeData(inputBuffer, workerContext);
         }
-        NES_ERROR("MQTTSinkTest:createMQTTSinkConnectToBrokerWriteData: Could not connect to MQTT broker");
+        NES_ERROR2("MQTTSinkTest:createMQTTSinkConnectToBrokerWriteData: Could not connect to MQTT broker");
         return false;
     }
 

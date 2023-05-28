@@ -398,7 +398,7 @@ TEST_F(NetworkStackTest, testSendData) {
             if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
                 completed = future.get();
             } else {
-                NES_ERROR("NetworkStackTest: Receiving thread timed out!");
+                NES_ERROR2("NetworkStackTest: Receiving thread timed out!");
             }
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });

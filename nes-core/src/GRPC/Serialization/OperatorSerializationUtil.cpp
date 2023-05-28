@@ -511,7 +511,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
         } else {
-            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
+            NES_ERROR2("OperatorSerializationUtil: Cant serialize window Time Characteristic");
         }
         timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
 
@@ -529,7 +529,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
             slidingWindowDetails.set_slide(slidingWindow->getSlide().getTime());
             windowDetails.mutable_windowtype()->PackFrom(slidingWindowDetails);
         } else {
-            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
+            NES_ERROR2("OperatorSerializationUtil: Cant serialize window Time Type");
         }
     } else if (windowType->isContentBasedWindowType()) {
         auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowType);
@@ -541,7 +541,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
             thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
             windowDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
         } else {
-            NES_ERROR("OperatorSerializationUtil: Cant serialize this content based window Type");
+            NES_ERROR2("OperatorSerializationUtil: Cant serialize this content based window Type");
         }
     }
 
@@ -812,7 +812,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
     } else {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
+        NES_ERROR2("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
     if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
         auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
@@ -828,7 +828,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
         slidingWindowDetails.set_slide(slidingWindow->getSlide().getTime());
         joinDetails.mutable_windowtype()->PackFrom(slidingWindowDetails);
     } else {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
+        NES_ERROR2("OperatorSerializationUtil: Cant serialize window Time Type");
     }
 
     auto* windowTrigger = joinDetails.mutable_triggerpolicy();
@@ -1269,7 +1269,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         }
         sourceDetails.mutable_sourcedescriptor()->PackFrom(logicalSourceSerializedSourceDescriptor);
     } else {
-        NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor.toString());
+        NES_ERROR2("OperatorSerializationUtil: Unknown Source Descriptor Type {}", sourceDescriptor.toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }
@@ -1452,7 +1452,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
 
         return logicalSourceDescriptor;
     } else {
-        NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());
+        NES_ERROR2("OperatorSerializationUtil: Unknown Source Descriptor Type {}", serializedSourceDescriptor.type_url());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }
@@ -1593,7 +1593,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         } else if (format == "TEXT_FORMAT") {
             serializedSinkDescriptor.set_sinkformat("TEXT_FORMAT");
         } else {
-            NES_ERROR("serializeSinkDescriptor: format not supported");
+            NES_ERROR2("serializeSinkDescriptor: format not supported");
         }
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(fileSinkDescriptor->getFaultToleranceType()));
@@ -1610,7 +1610,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else {
 
-        NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor.toString());
+        NES_ERROR2("OperatorSerializationUtil: Unknown Sink Descriptor Type - {}", sinkDescriptor.toString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
 }
@@ -1722,7 +1722,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
             FaultToleranceType(deserializedFaultTolerance),
             deserializedNumberOfOrigins);
     } else {
-        NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails.DebugString());
+        NES_ERROR2("OperatorSerializationUtil: Unknown sink Descriptor Type {}", sinkDetails.DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
 }
@@ -1767,7 +1767,7 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
             SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor();
         watermarkStrategyDetails.mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     } else {
-        NES_ERROR("OperatorSerializationUtil: Unknown Watermark Strategy Descriptor Type");
+        NES_ERROR2("OperatorSerializationUtil: Unknown Watermark Strategy Descriptor Type");
         throw std::invalid_argument("Unknown Watermark Strategy Descriptor Type");
     }
 }
@@ -1799,7 +1799,7 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
             .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>()) {
         return Windowing::IngestionTimeWatermarkStrategyDescriptor::create();
     } else {
-        NES_ERROR("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");
+        NES_ERROR2("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");
         throw std::invalid_argument("Unknown Serialized Watermark Strategy Descriptor Type");
     }
 }

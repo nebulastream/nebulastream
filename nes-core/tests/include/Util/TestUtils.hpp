@@ -332,7 +332,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
 
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        NES_ERROR("Unable to find global query Id for user query id " << queryId);
+        NES_ERROR2("Unable to find global query Id for user query id {}", queryId);
         return false;
     }
 
@@ -384,7 +384,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                           std::chrono::seconds timeoutSeconds = defaultTimeout) {
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        NES_ERROR("Unable to find global query Id for user query id " << queryId);
+        NES_ERROR2("Unable to find global query Id for user query id {}", queryId);
         return false;
     }
 

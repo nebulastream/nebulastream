@@ -1640,7 +1640,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5UL);
 
     } catch (std::exception& e) {
-        NES_ERROR(e.what());
+        NES_ERROR2("{}", e.what());
         ASSERT_TRUE(false);
     }
 }
