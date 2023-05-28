@@ -115,13 +115,13 @@ TEST_F(SinkTest, testCSVFileSink) {
     auto rowLayoutBeforeWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBufferBeforeWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutBeforeWrite, buffer);
     std::string bufferContentBeforeWrite = dynamicTupleBufferBeforeWrite.toString(test_schema);
-    NES_TRACE("Buffer Content= " << bufferContentBeforeWrite);
+    NES_TRACE2("Buffer Content= {}", bufferContentBeforeWrite);
 
     // get buffer content as string
     auto rowLayoutAfterWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBufferAfterWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutAfterWrite, buffer);
     std::string bufferContentAfterWrite = dynamicTupleBufferAfterWrite.toString(test_schema);
-    NES_TRACE("Buffer Content= " << bufferContentAfterWrite);
+    NES_TRACE2("Buffer Content= {}", bufferContentAfterWrite);
 
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
@@ -159,7 +159,7 @@ TEST_F(SinkTest, testTextFileSink) {
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
     std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE("Buffer Content= " << bufferContent);
+    NES_TRACE2("Buffer Content= {}", bufferContent);
 
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
@@ -189,7 +189,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
     std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE("Buffer Content= " << bufferContent);
+    NES_TRACE2("Buffer Content= {}", bufferContent);
 
     //deserialize schema
     uint64_t idx = path_to_bin_file.rfind('.');
