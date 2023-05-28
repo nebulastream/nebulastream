@@ -1855,7 +1855,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
 
             // extract total query runtime from statistics
             auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
-            NES_WARNING("sizeProbeTable: " << sizeProbeTable << "  sizeBuildTable: " << sizeBuildTable);
+            NES_WARNING2("sizeProbeTable: {} sizeBuildTable: {}", sizeProbeTable, sizeBuildTable);
             printTotalQueryRuntime(stats);
 
             NES_INFO("StaticDataSourceIntegrationTest: Remove query");
