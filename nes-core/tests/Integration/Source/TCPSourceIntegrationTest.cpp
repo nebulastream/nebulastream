@@ -49,14 +49,14 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_TRACE("TCPSourceIntegrationTest: Start TCPServer.");
+        NES_TRACE2("TCPSourceIntegrationTest: Start TCPServer.");
         tcpServerPort = getAvailablePort();
         startServer();
     }
 
     void TearDown() override {
         stopServer();
-        NES_TRACE("TCPSourceIntegrationTest: Stop TCPServer.");
+        NES_TRACE2("TCPSourceIntegrationTest: Stop TCPServer.");
         Testing::NESBaseTest::TearDown();
     }
 
@@ -71,7 +71,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         uint8_t counter = 0;
         while (sockfd == 0 && counter < 10) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
-            NES_TRACE("Retrieved sockfd: " << sockfd << " on try: " << std::to_string(counter));
+            NES_TRACE2("Retrieved sockfd: {} on try: {}", sockfd, std::to_string(counter));
             counter++;
         }
         if (sockfd == 0) {
@@ -105,7 +105,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             NES_ERROR2("TCPSourceIntegrationTest: Failed to listen on socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
-        NES_TRACE("TCPSourceIntegrationTest: TCPServer successfully started.");
+        NES_TRACE2("TCPSourceIntegrationTest: TCPServer successfully started.");
     }
 
     /**
@@ -114,7 +114,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     void stopServer() {
         // Close the connections
         auto closed = close(sockfd);
-        NES_TRACE("Closing Server connection pls wait ..." << closed);
+        NES_TRACE2("Closing Server connection pls wait ...{}", closed);
         if (closed == -1) {
             NES_ERROR2("TCPSourceIntegrationTest::stopServer: Could not close socket. {}", strerror(errno));
             exit(EXIT_FAILURE);
@@ -135,7 +135,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             return -1;
         }
         for (int i = 0; i < repeatSending; ++i) {
-            NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message << " iter=" << i);
+            NES_TRACE2("TCPSourceIntegrationTest: Sending message: {} iter={}", message, i);
             send(connection, message.c_str(), message.size(), 0);
         }
         // Close the connections
@@ -155,32 +155,32 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             return -1;
         }
         std::string message = "100,4.986,sonne";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "192,4.96,sonne";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "130,4.9,stern";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "589,4.98621,sonne";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "39,4.198,malen";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "102,9.986,hello";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
@@ -201,32 +201,32 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             return -1;
         }
         std::string message = "{\"id\":\"4\", \"value\":\"5.893\", \"name\":\"hello\"}";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "{\"id\":\"8\", \"value\":\"5.8939\", \"name\":\"hello\"}";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "{\"id\":\"432\", \"value\":\"5.83\", \"name\":\"hello\"}";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "{\"id\":\"99\", \"value\":\"0.893\", \"name\":\"hello\"}";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "{\"id\":\"911\", \"value\":\"5.8893\", \"name\":\"hello\"}";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 
         message = "{\"id\":\"4293\", \"value\":\"5.89311\", \"name\":\"hello\"}";
-        NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
+        NES_TRACE2("TCPSourceIntegrationTest: Sending message: {}", message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
         send(connection, message.c_str(), message.size(), 0);
 

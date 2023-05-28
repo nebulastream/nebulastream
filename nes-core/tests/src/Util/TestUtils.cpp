@@ -183,18 +183,17 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkCompleteOrTimeout: check result NodeEnginePtr");
+        NES_TRACE2("checkCompleteOrTimeout: check result NodeEnginePtr");
         //FIXME: handle vector of statistics properly in #977
         if (ptr->getQueryStatistics(queryId)[0]->getProcessedBuffers() == expectedResult
             && ptr->getQueryStatistics(queryId)[0]->getProcessedTasks() == expectedResult) {
-            NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr results are correct");
+            NES_TRACE2("checkCompleteOrTimeout: NodeEnginePtr results are correct");
             return true;
         }
-        NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr sleep because val="
-                  << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple() << " < " << expectedResult);
+        NES_TRACE2("checkCompleteOrTimeout: NodeEnginePtr sleep because val={} < {}", ptr->getQueryStatistics(queryId)[0]->getProcessedTuple(), expectedResult);
         std::this_thread::sleep_for(sleepDuration);
     }
-    NES_TRACE("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
+    NES_TRACE2("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
     return false;
 }
 
@@ -241,7 +240,7 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
 
         std::this_thread::sleep_for(sleepDuration);
     }
-    NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
+    NES_TRACE2("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
     return false;
 }
 
@@ -256,15 +255,15 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
+        NES_TRACE2("checkStoppedOrTimeout: check query status for {}", queryId);
         if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::STOPPED) {
-            NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
+            NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
         NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}", queryId, queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
-    NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+    NES_TRACE2("checkStoppedOrTimeout: expected status not reached within set timeout");
     return false;
 }
 
@@ -279,13 +278,13 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkFailedOrTimeout: check query status");
+        NES_TRACE2("checkFailedOrTimeout: check query status");
         if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::FAILED) {
             NES_DEBUG2("checkFailedOrTimeout: status reached stopped");
             return true;
         }
-        NES_TRACE("checkFailedOrTimeout: status not reached as status is="
-                  << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_TRACE2("checkFailedOrTimeout: status not reached as status is={}",
+                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_WARNING2("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -306,7 +305,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         timeoutInSec = std::chrono::seconds(customTimeout);
     }
 
-    NES_TRACE("using timeout=" << timeoutInSec.count());
+    NES_TRACE2("using timeout={}", timeoutInSec.count());
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t found = 0;
     uint64_t count = 0;
@@ -314,23 +313,19 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         std::this_thread::sleep_for(sleepDuration);
         found = 0;
         count = 0;
-        NES_TRACE("checkOutputOrTimeout: check content for file " << outputFilePath);
+        NES_TRACE2("checkOutputOrTimeout: check content for file {}", outputFilePath);
         std::ifstream ifs(outputFilePath);
         if (ifs.good() && ifs.is_open()) {
             std::vector<std::string> expectedlines = NES::Util::splitWithStringDelimiter<std::string>(expectedContent, "\n");
             std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
             count = std::count(content.begin(), content.end(), '\n');
             if (expectedlines.size() != count) {
-                NES_TRACE("checkoutputortimeout: number of expected lines " << expectedlines.size() << " not reached yet with "
-                                                                            << count << " lines content=" << content
-                                                                            << " file=" << outputFilePath);
+                NES_TRACE2("checkoutputortimeout: number of expected lines {} not reached yet with {} lines content={} file={}", expectedlines.size(), count, content, outputFilePath);
                 continue;
             }
 
             if (content.size() != expectedContent.size()) {
-                NES_TRACE("checkoutputortimeout: number of chars " << expectedContent.size()
-                                                                   << " not reached yet with chars content=" << content.size()
-                                                                   << " lines content=" << content);
+                NES_TRACE2("checkoutputortimeout: number of chars {} not reached yet with chars content={} lines content={}", expectedContent.size(), content.size(), content);
                 continue;
             }
 
@@ -340,10 +335,10 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
                 }
             }
             if (found == count) {
-                NES_TRACE("all lines found final content=" << content);
+                NES_TRACE2("all lines found final content={}", content);
                 return true;
             }
-            NES_TRACE("only " << found << " lines found final content=" << content);
+            NES_TRACE2("only {} lines found final content={}", found, content);
         }
     }
     NES_ERROR2("checkOutputOrTimeout: expected ({}) result not reached ({}) within set timeout content", count, found);
@@ -363,23 +358,22 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         timeoutInSec = std::chrono::seconds(customTimeout);
     }
 
-    NES_TRACE("using timeout=" << timeoutInSec.count());
+    NES_TRACE2("using timeout={}", timeoutInSec.count());
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t count = 0;
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         count = 0;
-        NES_TRACE("checkIfOutputFileIsNotEmtpy: check content for file " << outputFilePath);
+        NES_TRACE2("checkIfOutputFileIsNotEmtpy: check content for file {}", outputFilePath);
         std::ifstream ifs(outputFilePath);
         if (ifs.good() && ifs.is_open()) {
             std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
             count = std::count(content.begin(), content.end(), '\n');
             if (count < minNumberOfLines) {
-                NES_TRACE("checkIfOutputFileIsNotEmtpy: number of min lines " << minNumberOfLines << " not reached yet with "
-                                                                              << count << " lines content=" << content);
+                NES_TRACE2("checkIfOutputFileIsNotEmtpy: number of min lines {} not reached yet with {} lines content={}", minNumberOfLines, count, content);
                 continue;
             }
-            NES_TRACE("at least" << minNumberOfLines << " are found in content=" << content);
+            NES_TRACE2("at least {} are found in content={}", minNumberOfLines, content);
             return true;
         }
     }
@@ -398,13 +392,13 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
-        NES_TRACE("checkFileCreationOrTimeout: for file " << outputFilePath);
+        NES_TRACE2("checkFileCreationOrTimeout: for file {}", outputFilePath);
         std::ifstream ifs(outputFilePath);
         if (ifs.good() && ifs.is_open()) {
             return true;
         }
     }
-    NES_TRACE("checkFileCreationOrTimeout: expected result not reached within set timeout");
+    NES_TRACE2("checkFileCreationOrTimeout: expected result not reached within set timeout");
     return false;
 }
 
@@ -433,7 +427,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
             return true;
         }
     }
-    NES_TRACE("checkFileCreationOrTimeout: expected result not reached within set timeout");
+    NES_TRACE2("checkFileCreationOrTimeout: expected result not reached within set timeout");
     return false;
 }
 
@@ -697,7 +691,7 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
         getline(stringStream, longitudeString, ',');
         getline(stringStream, timeString, ',');
         Timestamp time = std::stoul(timeString);
-        NES_TRACE("Read from csv: " << latitudeString << ", " << longitudeString << ", " << time);
+        NES_TRACE2("Read from csv: {}, {}, {}", latitudeString, longitudeString, time);
 
         //add startTime to the offset obtained from csv to get absolute timestamp
         time += startTime;
