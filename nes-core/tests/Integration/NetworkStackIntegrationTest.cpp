@@ -224,7 +224,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                   std::forward<ExtraParameters>(extraParams)...);
 
     } catch (std::exception& err) {
-        NES_ERROR("Cannot start node engine " << err.what());
+        NES_ERROR2("Cannot start node engine {}", err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
         return nullptr;
     }
@@ -881,7 +881,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
                 ASSERT_TRUE(future.get());
             } else {
-                NES_ERROR("NetworkStackIntegrationTest: Receiving thread timed out!");
+                NES_ERROR2("NetworkStackIntegrationTest: Receiving thread timed out!");
             }
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });

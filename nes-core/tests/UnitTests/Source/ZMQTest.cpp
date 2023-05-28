@@ -138,13 +138,13 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
         static_cast<uint64_t*>(message_tupleCnt.data())[1] = static_cast<uint64_t>(0ull);
         if (auto const sentEnvelope = socket.send(message_tupleCnt, zmq::send_flags::sndmore).value_or(0);
             sentEnvelope != envelopeSizeBytes) {
-            NES_ERROR("ZMQ Test Error: Sending message metadata failed!" << sentEnvelope << message_tupleCnt.size());
+            NES_ERROR2("ZMQ Test Error: Sending message metadata failed! {} {}", sentEnvelope, message_tupleCnt.size());
         }
 
         zmq::message_t message_data(test_data_size);
         memcpy(message_data.data(), test_data.data(), test_data_size);
         if (auto const sentPayload = socket.send(message_data, zmq::send_flags::none); sentPayload != test_data_size) {
-            NES_ERROR("ZMQ Test Error: Sending message payload failed!");
+            NES_ERROR2("ZMQ Test Error: Sending message payload failed!");
         }
     }
     receiving_thread.join();

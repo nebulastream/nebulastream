@@ -177,7 +177,7 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
      */
 [[nodiscard]] bool checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
     if (ptr->getQueryStatistics(queryId).empty()) {
-        NES_ERROR("checkCompleteOrTimeout query does not exists");
+        NES_ERROR2("checkCompleteOrTimeout query does not exists");
         return false;
     }
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
@@ -214,7 +214,7 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
         if (!queryCatalogEntry) {
-            NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+            NES_ERROR2("TestUtils: unable to find the entry for query {} in the query catalog.", queryId);
             return false;
         }
         NES_TRACE2("TestUtils: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
@@ -346,7 +346,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
             NES_TRACE("only " << found << " lines found final content=" << content);
         }
     }
-    NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found << ") within set timeout content");
+    NES_ERROR2("checkOutputOrTimeout: expected ({}) result not reached ({}) within set timeout content", count, found);
     return false;
 }
 
@@ -383,8 +383,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
             return true;
         }
     }
-    NES_ERROR("checkIfOutputFileIsNotEmtpy: expected (" << count << ") result not reached (" << minNumberOfLines
-                                                        << ") within set timeout content");
+    NES_ERROR2("checkIfOutputFileIsNotEmtpy: expected ({}) result not reached ({}) within set timeout content", count, minNumberOfLines);
     return false;
 }
 
@@ -621,13 +620,12 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
         } catch (const std::exception& e) {
-            NES_ERROR("TestUtils: WaitForWorkers error occured " << e.what());
+            NES_ERROR2("TestUtils: WaitForWorkers error occured {}", e.what());
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
         }
     }
 
-    NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly " << nodeNo << " but expected "
-                                                                                             << expectedWorkers);
+    NES_ERROR2("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly {} but expected {}", nodeNo, expectedWorkers);
     return false;
 }
 

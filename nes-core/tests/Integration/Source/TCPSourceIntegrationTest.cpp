@@ -75,11 +75,11 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
             counter++;
         }
         if (sockfd == 0) {
-            NES_ERROR("Failed to grap a valid file descriptor. errno: " << errno);
+            NES_ERROR2("Failed to grap a valid file descriptor. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
         if (sockfd == -1) {
-            NES_ERROR("Failed to create socket. errno: " << errno);
+            NES_ERROR2("Failed to create socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
 
@@ -90,17 +90,19 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
                                                   // network byte order
         int opt = 1;
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to create socket. errno: " << errno);
+            NES_ERROR2("TCPSourceIntegrationTest: Failed to create socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
         if (bind(sockfd, (struct sockaddr*) &sockaddr, sizeof(sockaddr)) < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to bind to port " << tcpServerPort << ". errno: " << errno);
+            std::stringstream tcpServerPortAsString;
+            tcpServerPortAsString << tcpServerPort;
+            NES_ERROR2("TCPSourceIntegrationTest: Failed to bind to port {}. errno: {}", tcpServerPortAsString.str(), errno);
             exit(EXIT_FAILURE);
         }
 
         // Start listening. Hold at most 10 connections in the queue
         if (listen(sockfd, 10) < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to listen on socket. errno: " << errno);
+            NES_ERROR2("TCPSourceIntegrationTest: Failed to listen on socket. errno: {}", errno);
             exit(EXIT_FAILURE);
         }
         NES_TRACE("TCPSourceIntegrationTest: TCPServer successfully started.");
@@ -114,7 +116,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         auto closed = close(sockfd);
         NES_TRACE("Closing Server connection pls wait ..." << closed);
         if (closed == -1) {
-            NES_ERROR("TCPSourceIntegrationTest::stopServer: Could not close socket. " << strerror(errno));
+            NES_ERROR2("TCPSourceIntegrationTest::stopServer: Could not close socket. {}", strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
@@ -129,7 +131,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         auto addrlen = sizeof(sockaddr);
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << strerror(errno));
+            NES_ERROR2("TCPSourceIntegrationTest: Failed to grab connection. errno: {}", strerror(errno));
             return -1;
         }
         for (int i = 0; i < repeatSending; ++i) {
@@ -149,7 +151,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         auto addrlen = sizeof(sockaddr);
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << strerror(errno));
+            NES_ERROR2("TCPSourceIntegrationTest: Failed to grab connection. errno: {}", strerror(errno));
             return -1;
         }
         std::string message = "100,4.986,sonne";
@@ -195,7 +197,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         auto addrlen = sizeof(sockaddr);
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << strerror(errno));
+            NES_ERROR2("TCPSourceIntegrationTest: Failed to grab connection. errno: {}", strerror(errno));
             return -1;
         }
         std::string message = "{\"id\":\"4\", \"value\":\"5.893\", \"name\":\"hello\"}";

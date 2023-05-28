@@ -111,7 +111,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
-        NES_ERROR("query was not stopped within 30 sec");
+        NES_ERROR2("query was not stopped within 30 sec");
     }
 
     NES_DEBUG2("E2EBase: Stop worker 1");
@@ -197,11 +197,11 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
-        NES_ERROR("query 1 was not stopped within 30 sec");
+        NES_ERROR2("query 1 was not stopped within 30 sec");
     }
     bool ret2 = NES::TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog);
     if (!ret2) {
-        NES_ERROR("query 2 was not stopped within 30 sec");
+        NES_ERROR2("query 2 was not stopped within 30 sec");
     }
 
     NES_DEBUG2("E2EBase: Stop worker 1");
@@ -273,7 +273,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
-        NES_ERROR("query was not stopped within 30 sec");
+        NES_ERROR2("query was not stopped within 30 sec");
     }
 
     NES_DEBUG2("E2EBase: Stop Coordinator");

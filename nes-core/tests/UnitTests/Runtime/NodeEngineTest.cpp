@@ -179,7 +179,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         NES::Exceptions::installGlobalErrorListener(mockEngine);
         return mockEngine;
     } catch (std::exception& err) {
-        NES_ERROR("Cannot start node engine " << err.what());
+        NES_ERROR2("Cannot start node engine {}", err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
     return nullptr;
@@ -838,7 +838,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();
-            NES_ERROR(str);
+            NES_ERROR2("{}", str);
             ASSERT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
             ASSERT_TRUE(stop(true));
@@ -913,7 +913,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();
-            NES_ERROR(str);
+            NES_ERROR2("{}", str);
             ASSERT_TRUE(strcmp(str, "Unknown exception caught") == 0);
             completedPromise.set_value(true);
         }

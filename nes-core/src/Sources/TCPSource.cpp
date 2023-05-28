@@ -204,7 +204,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         popped = popGivenNumberOfValues(inputTupleSize, true);
                         break;
                     } catch (const std::exception& e) {
-                        NES_ERROR("Failed to obtain tupleSize searching for separator token. Error: " << e.what());
+                        NES_ERROR2("Failed to obtain tupleSize searching for separator token. Error: {}", e.what());
                         throw e;
                     }
                 // The user inputted a fixed buffer size.
@@ -220,7 +220,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         //copy and delete tuple from circularBuffer
                         popped = popGivenNumberOfValues(inputTupleSize, false);
                     } catch (const std::exception& e) {
-                        NES_ERROR("Failed to obtain tupleSize with user inputted size. Error: " << e.what());
+                        NES_ERROR2("Failed to obtain tupleSize with user inputted size. Error: {}", e.what());
                         throw e;
                     }
                     break;
