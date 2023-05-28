@@ -160,10 +160,10 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
 
     // 3. emit the records
-    for (size_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
+    for (uint64_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
         Record record;
         auto entry  = state.getEntry(Value<UInt64>(entryIndex));
-        for (size_t i = 0; i < fieldIdentifiers.size(); i++) {
+        for (uint64_t i = 0; i < fieldIdentifiers.size(); i++) {
             auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
             record.write(fieldIdentifiers[i], value);
             entry = entry + dataTypes[i]->size();
