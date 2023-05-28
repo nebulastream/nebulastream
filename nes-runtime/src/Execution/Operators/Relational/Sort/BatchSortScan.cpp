@@ -50,10 +50,108 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-// TODO: issue #3773: get rid of hard-coded parameters
+// issue #3773: get rid of hard-coded parameters
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
 const uint64_t COL_SIZE = 8;
+const uint64_t INSERTION_SORT_THRESHOLD = 24;
+
+/**
+ * @brief Insertion sort implementation
+ * It is efficient for small data sets and mostly sorted data.
+ *
+ * Code take from DuckDB (MIT license):
+ * https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp
+ *
+ * @param orig_ptr pointer to original data
+ * @param temp_ptr pointer to temporary data as working memory
+ * @param count number of rows to sort
+ * @param col_offset offset of column to sort
+ * @param row_width width of row
+ * @param total_comp_width total width of columns to compare
+ * @param offset offset of columns to compare
+ * @param swap swap original and temporary data
+ */
+inline void InsertionSort(void *orig_ptr, void *temp_ptr, const uint64_t &count,
+                          const uint64_t &col_offset, const uint64_t &row_width, const uint64_t &total_comp_width,
+                          const uint64_t &offset, bool swap) {
+    uint8_t *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+    uint8_t *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+    if (count > 1) {
+        const uint64_t total_offset = col_offset + offset;
+        auto temp_val = std::unique_ptr<uint8_t[]>(new uint8_t[row_width]);
+        uint8_t *val = temp_val.get();
+        const auto comp_width = total_comp_width - offset;
+        for (uint64_t i = 1; i < count; i++) {
+            std::memcpy(val, source_ptr + i * row_width, row_width);
+            uint64_t j = i;
+            while (j > 0 &&
+                   std::memcmp(source_ptr + (j - 1) * row_width + total_offset, val + total_offset, comp_width) > 0) {
+                std::memcpy(source_ptr + j * row_width, source_ptr + (j - 1) * row_width, row_width);
+                j--;
+            }
+            std::memcpy(source_ptr + j * row_width, val, row_width);
+        }
+    }
+    if (swap) {
+        memcpy(target_ptr, source_ptr, count * row_width);
+    }
+}
+
+/**
+ * @brief Radix sort implementation as least significant digit (lsd) radix sort
+ *
+ * Code take from DuckDB (MIT license):
+ * https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp#L239
+ *
+ * @param orig_ptr pointer to original data
+ * @param temp_ptr pointer to temporary data as working memory
+ * @param count number of rows to sort
+ * @param col_offset offset of column to sort
+ * @param row_width width of row
+ * @param sorting_size number of bytes to sort
+ */
+void RadixSortLSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const uint64_t &col_offset,
+                  const uint64_t &row_width, const uint64_t &sorting_size) {
+    bool swap = false;
+    uint64_t counts[VALUES_PER_RADIX];
+    for (uint64_t r = 1; r <= sorting_size; r++) {
+        // Init counts to 0
+        memset(counts, 0, sizeof(counts));
+        // Const some values for convenience
+        uint8_t *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+        uint8_t *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+        const uint64_t offset = col_offset + sorting_size - r;
+        // Collect counts
+        uint8_t *offset_ptr = source_ptr + offset;
+        for (uint64_t i = 0; i < count; i++) {
+            counts[*offset_ptr]++;
+            offset_ptr += row_width;
+        }
+        // Compute offsets from counts
+        uint64_t max_count = counts[0];
+        for (uint64_t val = 1; val < VALUES_PER_RADIX; val++) {
+            max_count = std::max(max_count, counts[val]);
+            counts[val] = counts[val] + counts[val - 1];
+        }
+        if (max_count == count) {
+            continue;
+        }
+        // Re-order the data in temporary array
+        uint8_t *row_ptr = source_ptr + (count - 1) * row_width;
+        for (uint64_t i = 0; i < count; i++) {
+            uint64_t &radix_offset = --counts[*(row_ptr + offset)];
+            std::memcpy(target_ptr + radix_offset * row_width, row_ptr, row_width);
+            row_ptr -= row_width;
+        }
+        swap = !swap;
+    }
+    // Move data back to original buffer (if it was swapped)
+    if (swap) {
+        memcpy(orig_ptr, temp_ptr, count * row_width);
+    }
+}
+
 
 /**
  * @brief Radix sort implementation as most significant digit (msd) radix sort
@@ -145,20 +243,19 @@ void RadixSortMSD(void* orig_ptr,
     uint64_t radix_count = locations[0];
     for (uint64_t radix = 0; radix < VALUES_PER_RADIX; radix++) {
         const uint64_t loc = (locations[radix] - radix_count) * row_width;
-        RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc,
-                     static_cast<uint8_t*>(temp_ptr) + loc,
-                     radix_count,
-                     col_offset,
-                     row_width,
-                     comp_width,
-                     offset + 1,
-                     locations + MSD_RADIX_LOCATIONS,
-                     swap);
+        if (radix_count > INSERTION_SORT_THRESHOLD) {
+            RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc, static_cast<uint8_t*>(temp_ptr) + loc, radix_count, col_offset, row_width, comp_width, offset + 1,
+                         locations + MSD_RADIX_LOCATIONS, swap);
+        } else if (radix_count != 0) {
+            // When the count is low (less than the threshold), insertion sort is more efficient
+            InsertionSort(static_cast<uint8_t*>(orig_ptr) + loc, static_cast<uint8_t*>(temp_ptr) + loc, radix_count, col_offset, row_width, comp_width, offset + 1,
+                          swap);
+        }
         radix_count = locations[radix + 1] - locations[radix];
     }
 }
 
-void RadixSortMSDProxy(void* op) {
+void SortProxy(void *op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // TODO issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
@@ -189,7 +286,7 @@ uint64_t getSortStateEntrySizeProxy(void* op) {
 void BatchSortScan::setup(ExecutionContext& ctx) const {
     // perform sort
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("RadixSortMSDProxy", RadixSortMSDProxy, globalOperatorHandler);
+    Nautilus::FunctionCall("SortProxy", SortProxy, globalOperatorHandler);
 }
 
 void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
