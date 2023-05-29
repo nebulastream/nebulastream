@@ -31,11 +31,10 @@ class BatchSortScan : public Operator {
      * @param operatorHandlerIndex operator handler index
      * @param fieldIdentifiers field identifiers of the records
      * @param dataTypes data types of the records
+     * @param sortIndices field indices of the records to sort
      */
-    BatchSortScan(const uint64_t operatorHandlerIndex,
-                  const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
-                  const std::vector<PhysicalTypePtr>& dataTypes)
-        : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes) {}
+    BatchSortScan(const uint64_t operatorHandlerIndex, const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+             const std::vector<PhysicalTypePtr>& dataTypes, const std::vector<uint64_t>& sortIndices) : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes), sortIndices(sortIndices) {}
 
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -44,6 +43,7 @@ class BatchSortScan : public Operator {
     const uint64_t operatorHandlerIndex;
     const std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
     const std::vector<PhysicalTypePtr> dataTypes;
+    const std::vector<uint64_t> sortIndices;
 };
 
 }// namespace NES::Runtime::Execution::Operators

@@ -51,10 +51,12 @@
 namespace NES::Runtime::Execution::Operators {
 
 // issue #3773: get rid of hard-coded parameters
+// 256 is the number of possible byte values ranging from 0 to 255
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
 const uint64_t COL_SIZE = 8;
 const uint64_t INSERTION_SORT_THRESHOLD = 24;
+const uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
 
 /**
  * @brief Insertion sort implementation
@@ -75,8 +77,8 @@ const uint64_t INSERTION_SORT_THRESHOLD = 24;
 inline void InsertionSort(void *orig_ptr, void *temp_ptr, const uint64_t &count,
                           const uint64_t &col_offset, const uint64_t &row_width, const uint64_t &total_comp_width,
                           const uint64_t &offset, bool swap) {
-    uint8_t *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
-    uint8_t *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+    auto *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+    auto *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
     if (count > 1) {
         const uint64_t total_offset = col_offset + offset;
         auto temp_val = std::unique_ptr<uint8_t[]>(new uint8_t[row_width]);
@@ -119,16 +121,15 @@ void RadixSortLSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
         // Init counts to 0
         memset(counts, 0, sizeof(counts));
         // Const some values for convenience
-        uint8_t *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
-        uint8_t *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+        auto *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+        auto *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
         const uint64_t offset = col_offset + sorting_size - r;
-        // Collect counts
+        // Compute the prefix sum of the radix counts
         uint8_t *offset_ptr = source_ptr + offset;
         for (uint64_t i = 0; i < count; i++) {
             counts[*offset_ptr]++;
             offset_ptr += row_width;
         }
-        // Compute offsets from counts
         uint64_t max_count = counts[0];
         for (uint64_t val = 1; val < VALUES_PER_RADIX; val++) {
             max_count = std::max(max_count, counts[val]);
@@ -137,7 +138,7 @@ void RadixSortLSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
         if (max_count == count) {
             continue;
         }
-        // Re-order the data in temporary array
+        // Re-order the data in temporary array starting from the end
         uint8_t *row_ptr = source_ptr + (count - 1) * row_width;
         for (uint64_t i = 0; i < count; i++) {
             uint64_t &radix_offset = --counts[*(row_ptr + offset)];
@@ -175,8 +176,8 @@ void RadixSortMSD(void* orig_ptr,
                   uint64_t locations[],
                   bool swap) {
     // Set source and target pointers based on the swap flag
-    uint8_t* source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
-    uint8_t* target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+    auto* source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+    auto* target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
 
     // Initialize locations array to zero
     memset(locations, 0, MSD_RADIX_LOCATIONS * sizeof(uint64_t));
@@ -255,21 +256,25 @@ void RadixSortMSD(void* orig_ptr,
     }
 }
 
-void SortProxy(void *op) {
+void SortProxy(void *op, uint64_t compWidth, uint64_t colOffset) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // TODO issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
-    // TODO issue #3773 add support for columns other than the first one
-    auto colOffset = 0;
     auto rowWidth = handler->getStateEntrySize();
-    // TODO issue #3773 add support for columns other sizes
-    auto compWidth = COL_SIZE;
-    auto offset = 0;// init to 0
+    auto offset = 0; // init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
-    auto swap = false;// init false
-    RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+    auto swap = false; // init false
+
+    if (count <= INSERTION_SORT_THRESHOLD) {
+        InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, 0, false);
+    } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
+        RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
+    } else {
+        RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+    }
+
     delete[] locations;
 }
 
@@ -284,9 +289,19 @@ uint64_t getSortStateEntrySizeProxy(void* op) {
 }
 
 void BatchSortScan::setup(ExecutionContext& ctx) const {
-    // perform sort
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("SortProxy", SortProxy, globalOperatorHandler);
+    // TODO multi-column sort
+    auto currentSortColIndex = 0;
+    auto currentSortCol = sortIndices[currentSortColIndex];
+    // Width of the current column to sort
+    uint64_t compWidth = dataTypes[currentSortCol]->size();
+    // Offset of the current column to sort
+    uint64_t colOffset = 0;
+    for(uint64_t cols = 0; cols < currentSortCol; cols++){
+        colOffset += dataTypes[cols]->size();
+    }
+    // perform sort
+    Nautilus::FunctionCall("SortProxy", SortProxy, globalOperatorHandler, Value<UInt64>(compWidth), Value<UInt64>(colOffset));
 }
 
 void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
