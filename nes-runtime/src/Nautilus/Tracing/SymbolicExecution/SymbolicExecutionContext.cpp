@@ -50,7 +50,6 @@ bool SymbolicExecutionContext::record(TagRecorder& tr) {
             // The tag is in SecondVisit state -> terminate execution.
             NES_DEBUG("Trace: early terminate via exception.");
             TraceContext::get()->pause();
-            // todo disable tracing
             throw TraceTerminationException();
         };
     }

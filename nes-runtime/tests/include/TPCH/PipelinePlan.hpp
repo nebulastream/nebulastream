@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_PIPELINEPLAN_HPP_
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <tuple>

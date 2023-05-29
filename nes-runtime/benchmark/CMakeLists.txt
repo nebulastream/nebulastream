@@ -36,3 +36,11 @@ add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
 add_executable(tpch-benchmark "TPCH/TPCHBenchmark.cpp")
 target_link_libraries(tpch-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
 
+set(SHELL_SCRIPT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/path/to/shell/file")
+
+# Set the destination directory where you want to copy the shell file
+set(SHELL_SCRIPT_DEST_DIR "${CMAKE_BINARY_DIR}/path/to/build/directory")
+
+# Use configure_file to copy the shell file
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/scripts" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+

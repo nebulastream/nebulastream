@@ -63,7 +63,7 @@ DSSType call_dbgen_mk(size_t idx, MKRetType (*mk_fn)(DSS_HUGE, DSSType* val, Arg
 }// namespace
 namespace NES {
 
-enum class TPCH_Scale_Factor : uint8_t { F1, F0_1, F0_01 };
+enum class TPCH_Scale_Factor : uint8_t { F100, F10, F1, F0_1, F0_01, F0_001 };
 
 class TPCHTableGenerator {
   public:
@@ -171,6 +171,9 @@ class TPCHTableGenerator {
             case TPCH_Scale_Factor::F1: return 1.0f;
             case TPCH_Scale_Factor::F0_1: return 0.1f;
             case TPCH_Scale_Factor::F0_01: return 0.01f;
+            case TPCH_Scale_Factor::F100: return 100.0f;
+            case TPCH_Scale_Factor::F10: return 10.0f;
+            case TPCH_Scale_Factor::F0_001: return 0.001f;
         }
     }
 

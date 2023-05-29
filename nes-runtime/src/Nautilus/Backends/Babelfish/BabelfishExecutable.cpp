@@ -19,6 +19,7 @@
 #include <Util/JNI/JNI.hpp>
 #include <Util/JNI/JNIUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <complex>
 #include <jni.h>
 #include <utility>
 namespace NES::Nautilus::Backends::Babelfish {
@@ -64,6 +65,7 @@ std::unique_ptr<Executable::GenericInvocable> BabelfishExecutable::getGenericInv
 
     auto objectClass = jni::findClass("java/lang/Object");
     auto argArray = env->NewObjectArray(code.argTypes.size(), objectClass, nullptr);
+    argArray = (jobjectArray) env->NewGlobalRef((jobject) argArray);
 
     return std::make_unique<BabelfishInvocable>(code, entrypointClass, pipelineObject, pipelineInvocationMethod, argArray);
 }
