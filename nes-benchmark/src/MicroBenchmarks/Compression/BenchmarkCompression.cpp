@@ -380,11 +380,11 @@ int main() {
     MemoryLayout_ ml = MemoryLayout_::COLUMN;
     CompressionMode cm = CompressionMode::VERTICAL;
 
-    RepeatingValues distribution = RepeatingValues(10, 2, 0.5);
+    RepeatingValues distribution = RepeatingValues(2, 5, 0.5);
     // data: numbers 0-9
     ByteDataGenerator dataGenerator =
-        ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 5, 48, 57, &distribution);
-    benchmarkBytes(ml, cm, 200, dataGenerator);
+        ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);
+    benchmarkBytes(ml, cm, 300, dataGenerator);
     /*
     benchmarkYsb(ml, cm, 100);
     benchmarkUniform(ml, cm, 100, 0, 10);

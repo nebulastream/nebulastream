@@ -40,10 +40,10 @@ class ByteDataDistribution {
 class RepeatingValues : public ByteDataDistribution {
   public:
     /**
-     * Generate data with repeating values.
+     * Generate data with repeating values. Each column will has its own distribution.
      * @param numRepeats how often a value shall be repeated consecutively
-     * @param sigma maximum deviation of `numRepeats`: [numRepeats-sigma, numRepeats+sigma]
-     * @param changeProbability probability that the numRepeats will change within [numRepeats-sigma, numRepeats+sigma]
+     * @param sigma maximum deviation of `numRepeats`: [numRepeats - sigma, numRepeats + sigma]
+     * @param changeProbability probability that numRepeats will change within [numRepeats - sigma, numRepeats + sigma]
      */
     explicit RepeatingValues(int numRepeats, uint8_t sigma = 0, double changeProbability = 0);
     DistributionName getName() override;
