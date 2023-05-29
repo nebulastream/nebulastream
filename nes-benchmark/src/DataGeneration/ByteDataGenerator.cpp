@@ -67,27 +67,34 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> randomValue(minValue, maxValue);
-            std::uniform_int_distribution<> randomRepeat(distribution->repeats - distribution->maxError,
-                                                         distribution->repeats + distribution->maxError);
+            auto minDeviation = distribution->repeats - distribution->maxError;
+            if (minDeviation < 0)
+                minDeviation = 0;
+            auto maxDeviation = distribution->repeats + distribution->maxError;
+            std::uniform_int_distribution<> randomRepeat(minDeviation, maxDeviation);
             auto value = (uint8_t) randomValue(gen);
-            for (uint64_t curBuffer = 0; curBuffer < numBuffers; ++curBuffer) {
+            for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
                 Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
-                int repeats = distribution->repeats;
-                size_t row = 0;
-                while (row < dynamicBuffer.getCapacity()) {
+                std::vector repeats(dynamicBuffer.getOffsets().size(), distribution->repeats);
+                for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
                     int curRun = 0;
-                    while (curRun < repeats && row < dynamicBuffer.getCapacity()) {
-                        // todo write columns differently
-                        for (size_t col = 0; col < getSchema()->getSize(); col++)
+                    size_t row = 0;
+                    while (row < dynamicBuffer.getCapacity()) {
+                        while (curRun < repeats[col] && row < dynamicBuffer.getCapacity()) {
                             dynamicBuffer[row][col].write<uint8_t>(value);
-                        curRun++;
-                        row++;
+                            curRun++;
+                            row++;
+                        }
+                        auto newValue = randomValue(gen);
+                        while (newValue == value)
+                            newValue = randomValue(gen);
+                        value = newValue;
+                        bool changeRepeats = (rand() % 100) < (100 * distribution->changeProbability);
+                        if (changeRepeats)
+                            repeats[col] = randomRepeat(gen);
+                        curRun = 0;
                     }
-                    value = randomValue(gen);
-                    bool changeRepeats = (rand() % 100) < (100 * distribution->changeProbability);
-                    if (changeRepeats)
-                        repeats = randomRepeat(gen);
                 }
                 createdBuffers.emplace_back(bufferRef);
             }
@@ -112,15 +119,16 @@ SchemaPtr ByteDataGenerator::getSchema() { return schema; }
 // ====================================================================================================
 // Distributions
 // ====================================================================================================
-DistributionName ByteDataDistribution::getName() { return distributionName; }// TODO
+DistributionName ByteDataDistribution::getName() { return distributionName; }
 // ===================================
 // Repeating Values
 // ===================================
 RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changeProbability) : ByteDataDistribution() {
     distributionName = DistributionName::REPEATING_VALUES;
     if (numRepeats < 1)
-        NES_THROW_RUNTIME_ERROR("Number of numRepeats must be greater than 1.");// TODO max value
-    // TODO sigma
+        NES_THROW_RUNTIME_ERROR("Number of repeats must be greater than 1.");// TODO max value
+    if (sigma < 1)
+        NES_THROW_RUNTIME_ERROR("Sigma must be greater than 1.");
     if (changeProbability < 0 || changeProbability > 1)
         NES_THROW_RUNTIME_ERROR("Change probability must be between 0 and 1.");
     this->repeats = numRepeats;
