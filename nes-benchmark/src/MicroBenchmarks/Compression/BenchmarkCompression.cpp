@@ -1,4 +1,5 @@
 #include "API/Schema.hpp"
+#include "DataGeneration/ByteDataGenerator.hpp"
 #include "DataGeneration/DefaultDataGenerator.hpp"
 #include "DataGeneration/ZipfianDataGenerator.hpp"
 #include <DataGeneration/YSBDataGenerator.hpp>
@@ -138,6 +139,59 @@ void BenchmarkCompression::decompressAndVerify() {
         //NES_ASSERT(contentIsEqual, "Decompressed content does not equal original content.");
         if (!contentIsEqual)
             NES_WARNING("Decompressed content does not equal original content.")
+    }
+}
+
+void benchmarkBytes(const MemoryLayout_ ml, const CompressionMode cm, const size_t bufferSize, ByteDataGenerator& dataGenerator) {
+    switch (ml) {
+        case MemoryLayout_::ROW: {
+            switch (cm) {
+                case CompressionMode::HORIZONTAL: {
+                    auto rowLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
+                    auto b = BenchmarkCompression(bufferSize, dataGenerator, rowLayout, cm);
+                    std::cout << "MemoryLayout: RowLayout\n"
+                              << "CompressionMode: Horizontal\n"
+                              << "Distribution: " << getDistributionName(dataGenerator.getDistributionName()) << "\n"
+                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+                              << "Buffer Size: " << bufferSize << "\n"
+                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+                    b.run();
+                    break;
+                }
+                case CompressionMode::VERTICAL: {
+                    // TODO
+                    break;
+                }
+            }
+        }
+        case MemoryLayout_::COLUMN:
+            switch (cm) {
+                case CompressionMode::HORIZONTAL: {
+                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
+                    auto b = BenchmarkCompression(bufferSize, dataGenerator, columnLayout, cm);
+                    std::cout << "MemoryLayout: ColumnLayout\n"
+                              << "CompressionMode: Horizontal\n"
+                              << "Distribution: " << getDistributionName(dataGenerator.getDistributionName()) << "\n"
+                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+                              << "Buffer Size: " << bufferSize << "\n"
+                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+                    b.run();
+                    break;
+                }
+                case CompressionMode::VERTICAL: {
+                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
+                    auto b = BenchmarkCompression(bufferSize, dataGenerator, columnLayout, cm);
+                    std::cout << "MemoryLayout: ColumnLayout\n"
+                              << "CompressionMode: Vertical\n"
+                              << "Distribution: " << getDistributionName(dataGenerator.getDistributionName()) << "\n"
+                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
+                              << "Buffer Size: " << bufferSize << "\n"
+                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
+                    b.run();
+                    break;
+                }
+            }
+            break;
     }
 }
 
@@ -326,8 +380,15 @@ int main() {
     MemoryLayout_ ml = MemoryLayout_::COLUMN;
     CompressionMode cm = CompressionMode::VERTICAL;
 
+    RepeatingValues distribution = RepeatingValues(10, 2, 0.5);
+    // data: numbers 0-9
+    ByteDataGenerator dataGenerator =
+        ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 5, 48, 57, &distribution);
+    benchmarkBytes(ml, cm, 200, dataGenerator);
+    /*
     benchmarkYsb(ml, cm, 100);
     benchmarkUniform(ml, cm, 100, 0, 10);
     benchmarkZipf(ml, cm, 100, 0.1);
+     */
     return 0;
 }

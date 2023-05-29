@@ -1,0 +1,132 @@
+/*
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include <API/Schema.hpp>
+#include <DataGeneration/ByteDataGenerator.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <fstream>
+#include <random>
+#include <utility>
+
+/*
+ * TODO
+ *  - min max value (number of different values)
+ *  - schema (number of columns)
+ *  - number of consecutive values
+ *      - could be a "distribution": alpha for probability
+ *      - part of uniform distribution?
+ *  - distribution
+ *      - Uniform
+ *      - Zipf
+ *      - Binomial
+ *  - columns can have different distributions?
+ */
+
+namespace NES::Benchmark::DataGeneration {
+// ====================================================================================================
+// Data Generator
+// ====================================================================================================
+
+ByteDataGenerator::ByteDataGenerator(Schema::MemoryLayoutType layoutType,
+                                     size_t numColumns,
+                                     uint8_t minValue,
+                                     uint8_t maxValue,
+                                     ByteDataDistribution* dataDistribution)
+    : minValue(minValue), maxValue(maxValue), dataDistribution(dataDistribution) {
+    this->schema = Schema::create();
+    schema->setLayoutType(layoutType);
+    for (size_t i = 0; i < numColumns; i++) {
+        std::string str = "f_" + std::to_string(i);
+        schema->addField(str, BasicType::UINT8);
+    }
+}
+
+std::string ByteDataGenerator::getName() { return "Bytes"; }
+
+std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffers, size_t bufferSize) {
+    std::vector<Runtime::TupleBuffer> createdBuffers;
+    createdBuffers.reserve(numBuffers);
+
+    switch (dataDistribution->getName()) {
+        case DistributionName::REPEATING_VALUES: {
+            auto distribution = dynamic_cast<RepeatingValues*>(dataDistribution);
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> randomValue(minValue, maxValue);
+            std::uniform_int_distribution<> randomRepeat(distribution->repeats - distribution->maxError,
+                                                         distribution->repeats + distribution->maxError);
+            auto value = (uint8_t) randomValue(gen);
+            for (uint64_t curBuffer = 0; curBuffer < numBuffers; ++curBuffer) {
+                Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
+                auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
+                int repeats = distribution->repeats;
+                size_t row = 0;
+                while (row < dynamicBuffer.getCapacity()) {
+                    int curRun = 0;
+                    while (curRun < repeats && row < dynamicBuffer.getCapacity()) {
+                        // todo write columns differently
+                        for (size_t col = 0; col < getSchema()->getSize(); col++)
+                            dynamicBuffer[row][col].write<uint8_t>(value);
+                        curRun++;
+                        row++;
+                    }
+                    value = randomValue(gen);
+                    bool changeRepeats = (rand() % 100) < (100 * distribution->changeProbability);
+                    if (changeRepeats)
+                        repeats = randomRepeat(gen);
+                }
+                createdBuffers.emplace_back(bufferRef);
+            }
+            break;
+        }
+        case DistributionName::UNIFORM: NES_NOT_IMPLEMENTED();
+        case DistributionName::BINOMIAL: NES_NOT_IMPLEMENTED();
+        case DistributionName::ZIPF: NES_NOT_IMPLEMENTED();
+    }
+
+    return createdBuffers;
+}
+
+std::string ByteDataGenerator::toString() {
+    std::ostringstream oss;
+    oss << getName();
+    return oss.str();
+}
+DistributionName ByteDataGenerator::getDistributionName() { return dataDistribution->getName(); }
+SchemaPtr ByteDataGenerator::getSchema() { return schema; }
+
+// ====================================================================================================
+// Distributions
+// ====================================================================================================
+DistributionName ByteDataDistribution::getName() { return distributionName; }// TODO
+// ===================================
+// Repeating Values
+// ===================================
+RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changeProbability) : ByteDataDistribution() {
+    distributionName = DistributionName::REPEATING_VALUES;
+    if (numRepeats < 1)
+        NES_THROW_RUNTIME_ERROR("Number of numRepeats must be greater than 1.");// TODO max value
+    // TODO sigma
+    if (changeProbability < 0 || changeProbability > 1)
+        NES_THROW_RUNTIME_ERROR("Change probability must be between 0 and 1.");
+    this->repeats = numRepeats;
+    this->maxError = sigma;
+    this->changeProbability = changeProbability;
+}
+
+DistributionName RepeatingValues::getName() { return DistributionName::REPEATING_VALUES; }
+}// namespace NES::Benchmark::DataGeneration
