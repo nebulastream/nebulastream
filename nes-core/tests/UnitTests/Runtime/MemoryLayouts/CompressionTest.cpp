@@ -31,7 +31,7 @@ limitations under the License.
 // ======================================================================
 
 namespace NES::Runtime::MemoryLayouts {
-class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class CompressionTest : public Testing::TestWithErrorHandling {
   public:
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
@@ -39,7 +39,7 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
 
