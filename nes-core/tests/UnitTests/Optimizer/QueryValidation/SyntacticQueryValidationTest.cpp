@@ -19,7 +19,7 @@
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

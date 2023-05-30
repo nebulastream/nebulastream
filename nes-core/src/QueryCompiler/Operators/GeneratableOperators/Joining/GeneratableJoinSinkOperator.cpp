@@ -14,7 +14,7 @@
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <utility>
 

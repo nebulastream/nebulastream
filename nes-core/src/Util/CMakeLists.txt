@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        UtilityFunctions.cpp
+        CoreUtilityFunctions.cpp
         TimeMeasurement.cpp
         BufferSequenceNumber.cpp
         KalmanFilter.cpp

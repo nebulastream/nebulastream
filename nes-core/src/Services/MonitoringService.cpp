@@ -21,7 +21,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 

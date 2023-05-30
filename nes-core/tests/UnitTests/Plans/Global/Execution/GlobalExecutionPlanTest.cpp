@@ -24,7 +24,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;

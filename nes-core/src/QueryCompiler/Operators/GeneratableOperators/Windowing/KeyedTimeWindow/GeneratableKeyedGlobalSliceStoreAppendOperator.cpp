@@ -14,7 +14,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/KeyedTimeWindow/GeneratableKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>

@@ -20,7 +20,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <chrono>
 #include <cstring>
 #include <sstream>

@@ -27,7 +27,7 @@
 #endif
 #include <Sources/StaticDataSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <cmath>
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)

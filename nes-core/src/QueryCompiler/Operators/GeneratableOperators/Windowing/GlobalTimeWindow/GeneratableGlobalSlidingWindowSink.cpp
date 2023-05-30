@@ -15,7 +15,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GlobalTimeWindow/GeneratableGlobalSlidingWindowSink.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>

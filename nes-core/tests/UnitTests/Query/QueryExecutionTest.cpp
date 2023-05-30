@@ -53,7 +53,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>

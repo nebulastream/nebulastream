@@ -27,7 +27,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <algorithm>
 
 #include <utility>

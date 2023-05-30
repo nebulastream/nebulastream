@@ -27,7 +27,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>

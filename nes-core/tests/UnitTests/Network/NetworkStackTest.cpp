@@ -35,7 +35,7 @@
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <NesBaseTest.hpp>

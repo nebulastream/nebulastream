@@ -14,7 +14,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalGlobalThreadLocalPreAggregationOperator::PhysicalGlobalThreadLocalPreAggregationOperator(
     OperatorId id,

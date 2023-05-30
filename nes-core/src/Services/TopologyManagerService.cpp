@@ -25,7 +25,7 @@
 #include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/SpatialUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {

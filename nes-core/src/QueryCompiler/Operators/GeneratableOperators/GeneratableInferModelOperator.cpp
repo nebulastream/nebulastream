@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableInferModelOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 
 namespace NES {
 namespace QueryCompilation {

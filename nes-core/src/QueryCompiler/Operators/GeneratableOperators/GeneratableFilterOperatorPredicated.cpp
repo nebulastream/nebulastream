@@ -15,7 +15,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperatorPredicated.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 namespace NES::Windowing {
 
