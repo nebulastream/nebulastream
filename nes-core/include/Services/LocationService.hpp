@@ -55,17 +55,28 @@ class LocationService {
     nlohmann::json requestNodeLocationDataAsJson(uint64_t nodeId);
 
     /**
-     * @brief get a list of all mobile nodes in the system and their current positions
+     * @brief get a list of all mobile nodes in the system and their current positions as well as their parent nodes
      * @return a json list in the format:
-     * [
-            {
-                "id": <node id>,
-                "location": [
-                    <latitude>,
-                    <longitude>
-                ]
-            }
-        ]
+     * {
+     *      "edges":
+     *          [
+     *              {
+     *                  "source": <node id>,
+     *                  "target": <node id>
+     *              }
+     *          ],
+     *      "nodes":
+     *          [
+     *              {
+     *                  "id": <node id>,
+     *                  "location":
+     *                      [
+     *                          <latitude>,
+     *                          <longitude>
+     *                      ]
+     *              }
+     *          ]
+     *  }
      */
     nlohmann::json requestLocationDataFromAllMobileNodesAsJson();
 
