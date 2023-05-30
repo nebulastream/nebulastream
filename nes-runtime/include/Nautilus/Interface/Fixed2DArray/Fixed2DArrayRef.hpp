@@ -72,7 +72,5 @@ class Fixed2DArrayRowRef {
     const uint64_t entrySize;
 };
 
-
-
-} // namespace NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface
 #endif//NES_FIXED2DARRAYREF_HPP
