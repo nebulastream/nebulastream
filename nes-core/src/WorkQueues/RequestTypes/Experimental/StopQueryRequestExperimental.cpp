@@ -68,9 +68,11 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
         queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
         queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
         NES_TRACE2("Phases created. Stop request initialized.");
-    } catch (RequestExecutionException& e) {
+    } catch (std::exception& e) {
         NES_TRACE2("Failed to acquire resources.");
-        handleError(e, storageHandler);
+        //todo #3611: instead of matching on std::exception, implement a storae access handle excpetion which can be passed on
+        RequestExecutionException executionException;
+        handleError(executionException, storageHandler);
     }
 }
 
