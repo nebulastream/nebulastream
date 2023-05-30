@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.93](https://github.com/nebulastream/nebulastream/tree/v0.5.93) (2023-05-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.92...v0.5.93)
+
+**Implemented enhancements:**
+
+- \[TASK\] 2-D Datastructure for Synopses [\#3670](https://github.com/nebulastream/nebulastream/issues/3670)
+
 ## [v0.5.92](https://github.com/nebulastream/nebulastream/tree/v0.5.92) (2023-05-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.91...v0.5.92)
