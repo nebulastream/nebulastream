@@ -30,7 +30,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentMergerRule.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -1027,7 +1027,7 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedBottomUpQueryContainmentRule::create(context);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedBottomUpQueryContainmentMergerRule::create(context);
         signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
         //assert

@@ -28,13 +28,13 @@ namespace NES::Optimizer {
 class Z3SignatureContainmentUtil;
 using Z3SignatureContainmentUtilPtr = std::shared_ptr<Z3SignatureContainmentUtil>;
 
-class Z3SignatureBasedBottomUpQueryContainmentRule;
-using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedBottomUpQueryContainmentRule>;
+class Z3SignatureBasedBottomUpQueryContainmentMergerRule;
+using Z3SignatureBasedBottomUpQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedBottomUpQueryContainmentMergerRule>;
 
 /**
  * @brief Z3SignatureBasedCompleteQueryMergerRule currently identifies containment relationships between the global query plan and newly registered queries
  */
-class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule {
+class Z3SignatureBasedBottomUpQueryContainmentMergerRule final : public BaseQueryMergerRule {
 
   public:
     /**
@@ -42,7 +42,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context);
+    static Z3SignatureBasedBottomUpQueryContainmentMergerRulePtr create(const z3::ContextPtr& context);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query
@@ -54,14 +54,14 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
     /**
      * @brief destructor
      */
-    ~Z3SignatureBasedBottomUpQueryContainmentRule() noexcept final = default;
+    ~Z3SignatureBasedBottomUpQueryContainmentMergerRule() noexcept final = default;
 
   private:
     /**
      * @brief explicit constructor
      * @param context The Z3 context for the SMT solver
      */
-    explicit Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context);
+    explicit Z3SignatureBasedBottomUpQueryContainmentMergerRule(const z3::ContextPtr& context);
 
     /**
      * @brief identify if the query plans are equal or not

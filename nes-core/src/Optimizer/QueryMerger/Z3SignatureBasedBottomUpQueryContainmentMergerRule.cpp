@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentMergerRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/Z3SignatureContainmentUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -37,18 +37,18 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context)
+Z3SignatureBasedBottomUpQueryContainmentMergerRule::Z3SignatureBasedBottomUpQueryContainmentMergerRule(const z3::ContextPtr& context)
     : BaseQueryMergerRule() {
     signatureContainmentUtil = Z3SignatureContainmentUtil::create(std::move(context));
 }
 
-Z3SignatureBasedBottomUpQueryContainmentRulePtr
-Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& context) {
-    return std::make_shared<Z3SignatureBasedBottomUpQueryContainmentRule>(
-        Z3SignatureBasedBottomUpQueryContainmentRule(std::move(context)));
+Z3SignatureBasedBottomUpQueryContainmentMergerRulePtr
+Z3SignatureBasedBottomUpQueryContainmentMergerRule::create(const z3::ContextPtr& context) {
+    return std::make_shared<Z3SignatureBasedBottomUpQueryContainmentMergerRule>(
+        Z3SignatureBasedBottomUpQueryContainmentMergerRule(std::move(context)));
 }
 
-bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool Z3SignatureBasedBottomUpQueryContainmentMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("Z3SignatureBasedQueryContainmentRule: Applying Signature Based Equal Query Merger Rule to the "
              "Global Query Plan");
@@ -223,7 +223,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossible(const LogicalOperatorNodePtr& container,
+bool Z3SignatureBasedBottomUpQueryContainmentMergerRule::checkWindowContainmentPossible(const LogicalOperatorNodePtr& container,
                                                                                   const LogicalOperatorNodePtr& containee) const {
     //check that containee is a WindowOperatorNode if yes, go on, if no, return false
     if (containee->instanceOf<WindowOperatorNode>()) {
@@ -249,7 +249,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
 }
 
 std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
-Z3SignatureBasedBottomUpQueryContainmentRule::areQueryPlansContained(const QueryPlanPtr& hostQueryPlan,
+Z3SignatureBasedBottomUpQueryContainmentMergerRule::areQueryPlansContained(const QueryPlanPtr& hostQueryPlan,
                                                                      const QueryPlanPtr& targetQueryPlan) {
 
     std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> targetHostOperatorMap;
@@ -280,7 +280,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areQueryPlansContained(const Query
 }
 
 std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
-Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const LogicalOperatorNodePtr& hostOperator,
+Z3SignatureBasedBottomUpQueryContainmentMergerRule::areOperatorsContained(const LogicalOperatorNodePtr& hostOperator,
                                                                     const LogicalOperatorNodePtr& targetOperator) {
 
     std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> targetHostOperatorMap;

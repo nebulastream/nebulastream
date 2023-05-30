@@ -2,7 +2,7 @@
 
 Below we describe the REST APIs available for user to interact with system.
 The NebulaStream REST API is versioned, with specific versions being queryable by prefixing the url with the version prefix. 
-Prefixes are always of the form v[version_number]. For example, to access version 1 of /obtainSizeAndSlide/bar one would query /v1/obtainSizeAndSlide/bar.
+Prefixes are always of the form v[version_number]. For example, to access version 1 of /foo/bar one would query /v1/foo/bar.
 
 Querying unsupported/non-existing versions will return a 404 exception.
 
