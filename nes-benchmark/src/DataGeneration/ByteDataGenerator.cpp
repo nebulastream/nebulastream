@@ -65,15 +65,14 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
     switch (dataDistribution->getName()) {
         case DistributionName::REPEATING_VALUES: {
             auto distribution = dynamic_cast<RepeatingValues*>(dataDistribution);
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_int_distribution<> randomValue(minValue, maxValue);
+            std::mt19937 gen(distribution->seed);
+            std::uniform_int_distribution<uint8_t> randomValue(minValue, maxValue);
             auto minDeviation = distribution->numRepeats - distribution->sigma;
             if (minDeviation < 0)
                 minDeviation = 0;
             auto maxDeviation = distribution->numRepeats + distribution->sigma;
             std::uniform_int_distribution<> randomRepeat(minDeviation, maxDeviation);
-            auto value = (uint8_t) randomValue(gen);
+            auto value = randomValue(gen);
             for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
                 Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
@@ -104,7 +103,24 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             }
             break;
         }
-        case DistributionName::UNIFORM: NES_NOT_IMPLEMENTED();
+        case DistributionName::UNIFORM: {
+            auto distribution = dynamic_cast<Uniform*>(dataDistribution);
+            std::mt19937 gen(distribution->seed);
+            std::uniform_int_distribution<uint8_t> randomValue(minValue, maxValue);
+            for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
+                Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
+                auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
+                for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                    for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
+                        dynamicBuffer[row][col].write<uint8_t>(randomValue(gen));
+                    numberOfTuples++;
+                }
+                bufferRef.setNumberOfTuples(numberOfTuples);
+                createdBuffers.emplace_back(bufferRef);
+                numberOfTuples = 0;
+            }
+            break;
+        }
         case DistributionName::BINOMIAL: NES_NOT_IMPLEMENTED();
         case DistributionName::ZIPF: NES_NOT_IMPLEMENTED();
     }
@@ -127,7 +143,7 @@ DistributionName ByteDataDistribution::getName() { return distributionName; }
 // ===================================
 // Repeating Values
 // ===================================
-RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changeProbability) : ByteDataDistribution() {
+RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changeProbability) {
     distributionName = DistributionName::REPEATING_VALUES;
     if (numRepeats < 1)
         NES_THROW_RUNTIME_ERROR("Number of numRepeats must be greater than 1.");// TODO max value
@@ -140,5 +156,5 @@ RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changePro
     this->changeProbability = changeProbability;
 }
 
-DistributionName RepeatingValues::getName() { return DistributionName::REPEATING_VALUES; }
+Uniform::Uniform() { distributionName = DistributionName::UNIFORM; }
 }// namespace NES::Benchmark::DataGeneration

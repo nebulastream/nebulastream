@@ -30,6 +30,8 @@ class ErrorHandler : public NES::Exceptions::ErrorListener {
     }
 };
 
+std::initializer_list<CompressionAlgorithm> algorithms;
+
 class BenchmarkCompression {
   public:
     BenchmarkCompression(size_t bufferSize,
@@ -37,7 +39,7 @@ class BenchmarkCompression {
                          const std::shared_ptr<MemoryLayout>& memoryLayout,
                          CompressionMode cm);
     const size_t numberOfBuffersToProduce = 10;
-    void run();
+    void run(std::initializer_list<CompressionAlgorithm> cas);
 
   private:
     size_t bufferSize;
@@ -74,34 +76,18 @@ BenchmarkCompression::BenchmarkCompression(const size_t bufferSize,
     }
 }
 
-void BenchmarkCompression::run() {
+void BenchmarkCompression::run(std::initializer_list<CompressionAlgorithm> cas) {
     std::cout << "------------------------------\n"
               << "Algo\tRatio\tSpeed\n";
-    // compress and verify
-    compress(CompressionAlgorithm::LZ4);
-    decompressAndVerify();
-
-    compress(CompressionAlgorithm::SNAPPY);
-    decompressAndVerify();
-
-    compress(CompressionAlgorithm::RLE);
-    decompressAndVerify();
-
-    // Binary RLE succeeds only in the rarest cases
-    // compress(CompressionAlgorithm::BINARY_RLE);
-    // decompressAndVerify();
-
-    compress(CompressionAlgorithm::FSST);
-    decompressAndVerify();
-
-    try {
-        compress(CompressionAlgorithm::SPRINTZ);
-        decompressAndVerify();
-    } catch (NES::Exceptions::RuntimeException const& err) {
-        // compressed size might be larger than original for depending on data value distribution
-        EXPECT_THAT(err.what(), ::testing::HasSubstr("Sprintz compression failed: compressed size"));
+    for (auto ca : cas) {
+        try {
+            compress(ca);
+            decompressAndVerify();
+        } catch (NES::Exceptions::RuntimeException const& err) {
+            // compressed size might be larger than original
+            EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
+        }
     }
-
     std::cout << "------------------------------\n";
 }
 
@@ -158,7 +144,8 @@ void benchmarkBytes(const MemoryLayout_ ml, const CompressionMode cm, const size
                               << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
                               << "Buffer Size: " << bufferSize << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    std::initializer_list<CompressionAlgorithm> cas = {CompressionAlgorithm::LZ4};
+                    b.run(cas);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -178,7 +165,7 @@ void benchmarkBytes(const MemoryLayout_ ml, const CompressionMode cm, const size
                               << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
                               << "Buffer Size: " << bufferSize << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -190,7 +177,7 @@ void benchmarkBytes(const MemoryLayout_ ml, const CompressionMode cm, const size
                               << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
                               << "Buffer Size: " << bufferSize << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
             }
@@ -214,7 +201,7 @@ void benchmarkYsb(const MemoryLayout_ ml, const CompressionMode cm, const size_t
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -234,7 +221,7 @@ void benchmarkYsb(const MemoryLayout_ ml, const CompressionMode cm, const size_t
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -246,7 +233,7 @@ void benchmarkYsb(const MemoryLayout_ ml, const CompressionMode cm, const size_t
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
             }
@@ -274,7 +261,7 @@ void benchmarkUniform(const MemoryLayout_ ml,
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -295,7 +282,7 @@ void benchmarkUniform(const MemoryLayout_ ml,
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -307,7 +294,7 @@ void benchmarkUniform(const MemoryLayout_ ml,
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
             }
@@ -337,7 +324,7 @@ void benchmarkZipf(const MemoryLayout_ ml,
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -358,7 +345,7 @@ void benchmarkZipf(const MemoryLayout_ ml,
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
                 case CompressionMode::VERTICAL: {
@@ -370,7 +357,7 @@ void benchmarkZipf(const MemoryLayout_ ml,
                               << "Buffer Size: " << bufferSizeInBytes << "\n"
                               << "Num Tuples: " << numberOfTuples << "\n"
                               << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run();
+                    b.run(algorithms);
                     break;
                 }
             }
@@ -380,10 +367,21 @@ void benchmarkZipf(const MemoryLayout_ ml,
 }
 
 int main() {
+
+    algorithms = {CompressionAlgorithm::NONE,
+                  CompressionAlgorithm::LZ4,
+                  CompressionAlgorithm::SNAPPY,
+                  CompressionAlgorithm::RLE,
+                  CompressionAlgorithm::BINARY_RLE,
+                  CompressionAlgorithm::FSST,
+                  CompressionAlgorithm::SPRINTZ};
+
     MemoryLayout_ ml = MemoryLayout_::COLUMN;
     CompressionMode cm = CompressionMode::VERTICAL;
 
-    RepeatingValues distribution = RepeatingValues(5, 5, 0.5);
+    //RepeatingValues distribution = RepeatingValues(5, 5, 0.5);
+    Uniform distribution = Uniform();
+    distribution.seed = 42;
     // data: numbers 0-9
     ByteDataGenerator dataGenerator = ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);
     benchmarkBytes(ml, cm, 4096, dataGenerator);
