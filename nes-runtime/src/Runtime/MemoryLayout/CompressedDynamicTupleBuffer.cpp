@@ -501,7 +501,7 @@ void CompressedDynamicTupleBuffer::compressRle(size_t start, size_t end) {
     size_t compressedSize = rle::compress(baseSrcPointer, srcSize, baseDstPointer);
     if (compressedSize > srcSize) {
         // TODO do not compress and return original buffer
-        NES_THROW_RUNTIME_ERROR("Binary rle compression failed: compressed size ("
+        NES_THROW_RUNTIME_ERROR("RLE compression failed: compressed size ("
                                 << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
     clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
@@ -514,7 +514,7 @@ void CompressedDynamicTupleBuffer::decompressRle(size_t start, size_t dstSize) {
     uint8_t* decompressed = (uint8_t*) calloc(1, dstSize);
     size_t decompressedSize = rle::decompress(getBuffer().getBuffer() + start, compressedSizes[currColumn], decompressed);
     if (decompressedSize != dstSize)
-        NES_THROW_RUNTIME_ERROR("rle decompression failed: decompressed size (" << decompressedSize << ") != original size ("
+        NES_THROW_RUNTIME_ERROR("RLE decompression failed: decompressed size (" << decompressedSize << ") != original size ("
                                                                                 << dstSize << ").");
     const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
     if (rowLayout != nullptr) {
@@ -547,7 +547,7 @@ void CompressedDynamicTupleBuffer::compressBinaryRle(size_t start, size_t end) {
     const size_t compressedSize = std::distance(baseDstPointer, compressedEnd);
     if (compressedSize > (size_t) srcSize) {
         // TODO do not compress and return original buffer
-        NES_THROW_RUNTIME_ERROR("Binary rle compression failed: compressed size ("
+        NES_THROW_RUNTIME_ERROR("Binary RLE compression failed: compressed size ("
                                 << compressedSize << ") is larger than original size (" << srcSize << ").");
     }
     clearBuffer(getBuffer().getBuffer(), offsets[currColumn], offsets[currColumn] + srcSize);
@@ -568,7 +568,7 @@ void CompressedDynamicTupleBuffer::decompressBinaryRle(size_t start, size_t dstS
         dstSize = totalOriginalSize;
     }
     if ((size_t) decompressedSize != dstSize)
-        NES_THROW_RUNTIME_ERROR("Binary rle decompression failed: decompressed size ("
+        NES_THROW_RUNTIME_ERROR("Binary RLE decompression failed: decompressed size ("
                                 << decompressedSize << ") != original size (" << dstSize << ").");
     const auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
     if (rowLayout != nullptr) {

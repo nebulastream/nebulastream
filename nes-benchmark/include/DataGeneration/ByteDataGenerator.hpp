@@ -16,9 +16,9 @@ limitations under the License.
 #define NES_BYTEDATAGENERATOR_HPP
 #include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
 #include <DataGeneration/DataGenerator.hpp>
+#include <random>
 
 namespace NES::Benchmark::DataGeneration {
-
 enum class DistributionName { REPEATING_VALUES, UNIFORM, BINOMIAL, ZIPF };
 [[maybe_unused]] static std::string getDistributionName(enum DistributionName dn) {
     switch (dn) {
@@ -29,9 +29,12 @@ enum class DistributionName { REPEATING_VALUES, UNIFORM, BINOMIAL, ZIPF };
     }
 }
 
+std::random_device rd;
+
 class ByteDataDistribution {
   public:
     virtual DistributionName getName();
+    size_t seed = rd();
 
   protected:
     DistributionName distributionName;
@@ -46,11 +49,19 @@ class RepeatingValues : public ByteDataDistribution {
      * @param changeProbability probability that numRepeats will change within [numRepeats - sigma, numRepeats + sigma]
      */
     explicit RepeatingValues(int numRepeats, uint8_t sigma = 0, double changeProbability = 0);
-    DistributionName getName() override;
+    //DistributionName getName() override;
 
     int numRepeats;
     uint8_t sigma;
     double changeProbability;
+};
+
+class Uniform : public ByteDataDistribution {
+  public:
+    /**
+     * Generate uniformly distributed data
+     */
+    explicit Uniform();
 };
 
 class ByteDataGenerator : public DataGenerator {
