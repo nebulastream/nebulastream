@@ -60,6 +60,7 @@ std::string ByteDataGenerator::getName() { return "Bytes"; }
 std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
     createdBuffers.reserve(numBuffers);
+    size_t numberOfTuples = 0;
 
     switch (dataDistribution->getName()) {
         case DistributionName::REPEATING_VALUES: {
@@ -67,22 +68,23 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> randomValue(minValue, maxValue);
-            auto minDeviation = distribution->repeats - distribution->maxError;
+            auto minDeviation = distribution->numRepeats - distribution->sigma;
             if (minDeviation < 0)
                 minDeviation = 0;
-            auto maxDeviation = distribution->repeats + distribution->maxError;
+            auto maxDeviation = distribution->numRepeats + distribution->sigma;
             std::uniform_int_distribution<> randomRepeat(minDeviation, maxDeviation);
             auto value = (uint8_t) randomValue(gen);
             for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
                 Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
-                std::vector repeats(dynamicBuffer.getOffsets().size(), distribution->repeats);
+                std::vector repeats(dynamicBuffer.getOffsets().size(), distribution->numRepeats);
                 for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
                     int curRun = 0;
                     size_t row = 0;
                     while (row < dynamicBuffer.getCapacity()) {
                         while (curRun < repeats[col] && row < dynamicBuffer.getCapacity()) {
                             dynamicBuffer[row][col].write<uint8_t>(value);
+                            numberOfTuples++;
                             curRun++;
                             row++;
                         }
@@ -96,7 +98,9 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                         curRun = 0;
                     }
                 }
+                bufferRef.setNumberOfTuples(numberOfTuples);
                 createdBuffers.emplace_back(bufferRef);
+                numberOfTuples = 0;
             }
             break;
         }
@@ -126,13 +130,13 @@ DistributionName ByteDataDistribution::getName() { return distributionName; }
 RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changeProbability) : ByteDataDistribution() {
     distributionName = DistributionName::REPEATING_VALUES;
     if (numRepeats < 1)
-        NES_THROW_RUNTIME_ERROR("Number of repeats must be greater than 1.");// TODO max value
-    if (sigma < 1)
-        NES_THROW_RUNTIME_ERROR("Sigma must be greater than 1.");
+        NES_THROW_RUNTIME_ERROR("Number of numRepeats must be greater than 1.");// TODO max value
+    if (sigma < 0)
+        NES_THROW_RUNTIME_ERROR("Sigma must be greater than 0.");
     if (changeProbability < 0 || changeProbability > 1)
         NES_THROW_RUNTIME_ERROR("Change probability must be between 0 and 1.");
-    this->repeats = numRepeats;
-    this->maxError = sigma;
+    this->numRepeats = numRepeats;
+    this->sigma = sigma;
     this->changeProbability = changeProbability;
 }
 
