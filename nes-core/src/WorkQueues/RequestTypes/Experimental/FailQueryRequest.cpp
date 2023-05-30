@@ -62,6 +62,22 @@ void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {
 
     //todo #3727: perform error handling
+    /*
+    try {
+        auto undeploymentException = dynamic_cast<QueryUndeploymentException&>(ex);
+
+    //undeploy queries
+    globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
+    topology = storageHandler.getTopologyHandle();
+    auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+    queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
+    auto sharedQueryId = undeploymentException.getSharedQueryid();
+
+    for (auto& queryId : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::FAILED, "Failed");
+    }
+} catch (std::bad_cast& e) {}
+    */
 }
 
 void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) { storageHandler.releaseResources(queryId); }
