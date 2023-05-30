@@ -40,9 +40,7 @@ void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::Storag
 
 void FailQueryRequest::rollBack(RequestExecutionException&, StorageHandler&) {}
 
-void FailQueryRequest::postRollbackHandle(RequestExecutionException& ex, NES::StorageHandler& storageHandler) {
-    (void) ex;
-    (void) storageHandler;
+void FailQueryRequest::postRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {
 
     //todo #3727: perform the below error handling when the specific request type has been implemented
     /*

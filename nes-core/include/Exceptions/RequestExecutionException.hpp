@@ -21,8 +21,7 @@ namespace NES {
 
 /**
  * @brief This is the base class for exceptions thrown during the execution of coordinator side requests which
- * indicate an error that possibly needs to be handled by executing specifc request logic. It provides an instance of function,
- * to allow the request to perform error handling which is specific to the error that occurred.
+ * indicate an error that possibly require a rollback or other kinds of specific error handling
  */
 class RequestExecutionException : public std::exception {
 
