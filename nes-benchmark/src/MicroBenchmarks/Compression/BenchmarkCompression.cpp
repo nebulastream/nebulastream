@@ -84,18 +84,21 @@ void BenchmarkCompression::run() {
     compress(CompressionAlgorithm::SNAPPY);
     decompressAndVerify();
 
-    compress(CompressionAlgorithm::FSST);
+    compress(CompressionAlgorithm::RLE);
     decompressAndVerify();
 
-    //compress(CompressionAlgorithm::BINARY_RLE);
-    // TODO fix bug ↓
-    //decompressAndVerify();
+    // Binary RLE succeeds only in the rarest cases
+    // compress(CompressionAlgorithm::BINARY_RLE);
+    // decompressAndVerify();
+
+    compress(CompressionAlgorithm::FSST);
+    decompressAndVerify();
 
     try {
         compress(CompressionAlgorithm::SPRINTZ);
         decompressAndVerify();
     } catch (NES::Exceptions::RuntimeException const& err) {
-        // compressed size  might be larger than original for depending on data value distribution
+        // compressed size might be larger than original for depending on data value distribution
         EXPECT_THAT(err.what(), ::testing::HasSubstr("Sprintz compression failed: compressed size"));
     }
 
@@ -380,11 +383,10 @@ int main() {
     MemoryLayout_ ml = MemoryLayout_::COLUMN;
     CompressionMode cm = CompressionMode::VERTICAL;
 
-    RepeatingValues distribution = RepeatingValues(2, 5, 0.5);
+    RepeatingValues distribution = RepeatingValues(5, 5, 0.5);
     // data: numbers 0-9
-    ByteDataGenerator dataGenerator =
-        ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);
-    benchmarkBytes(ml, cm, 300, dataGenerator);
+    ByteDataGenerator dataGenerator = ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);
+    benchmarkBytes(ml, cm, 4096, dataGenerator);
     /*
     benchmarkYsb(ml, cm, 100);
     benchmarkUniform(ml, cm, 100, 0, 10);

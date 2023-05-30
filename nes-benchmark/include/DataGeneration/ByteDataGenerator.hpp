@@ -48,8 +48,8 @@ class RepeatingValues : public ByteDataDistribution {
     explicit RepeatingValues(int numRepeats, uint8_t sigma = 0, double changeProbability = 0);
     DistributionName getName() override;
 
-    int repeats;
-    uint8_t maxError;
+    int numRepeats;
+    uint8_t sigma;
     double changeProbability;
 };
 

@@ -33,7 +33,7 @@ CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr
     offsets = getOffsets(memoryLayout);
     compressedSizes = std::vector<size_t>(offsets.size(), 0);
     compressionAlgorithms = std::vector<CompressionAlgorithm>(offsets.size(), CompressionAlgorithm::NONE);
-    totalOriginalSize = getMemoryLayout()->getTupleSize() * getNumberOfTuples();
+    totalOriginalSize = getMemoryLayout()->getTupleSize() * getCapacity();
     columnTypes = getMemoryLayout()->getPhysicalTypes();
     // set default compression mode
     auto rowLayout = dynamic_cast<RowLayout*>(getMemoryLayout().get());
@@ -54,7 +54,7 @@ CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr
     offsets = getOffsets(memoryLayout);
     compressedSizes = std::vector<size_t>(offsets.size(), 0);
     compressionAlgorithms = std::vector<CompressionAlgorithm>(offsets.size(), CompressionAlgorithm::NONE);
-    totalOriginalSize = getMemoryLayout()->getTupleSize() * getNumberOfTuples();
+    totalOriginalSize = getMemoryLayout()->getTupleSize() * getCapacity();
     columnTypes = getMemoryLayout()->getPhysicalTypes();
     this->compressionMode = compressionMode;
 }
@@ -63,7 +63,7 @@ CompressedDynamicTupleBuffer::~CompressedDynamicTupleBuffer() { free(baseDstPoin
 
 void CompressedDynamicTupleBuffer::setNumberOfTuples(uint64_t value) {
     DynamicTupleBuffer::setNumberOfTuples(value);
-    totalOriginalSize = getMemoryLayout()->getTupleSize() * getNumberOfTuples();
+    totalOriginalSize = getMemoryLayout()->getTupleSize() * getCapacity();
 }
 
 std::vector<CompressionAlgorithm> CompressedDynamicTupleBuffer::getCompressionAlgorithms() { return compressionAlgorithms; }
@@ -103,7 +103,7 @@ void CompressedDynamicTupleBuffer::concatColumns() {
     std::vector<size_t> newOffsets{};
     size_t newOffset = 0;
     for (size_t i = 0; i < offsets.size(); i++) {
-        const size_t dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+        const size_t dstSize = columnTypes[i].get()->size() * getCapacity();
         memcpy(baseDstPointer + newOffset, baseSrcPointer + offsets[i], dstSize);
         newOffsets.push_back(newOffset);
         newOffset += dstSize;
@@ -237,7 +237,7 @@ void CompressedDynamicTupleBuffer::compressVertical(const std::vector<Compressio
         compressHorizontal(cas[0]);
     } else {
         for (auto ca : cas) {
-            const size_t end = offsets[currColumn] + getNumberOfTuples() * columnTypes[currColumn].get()->size();
+            const size_t end = offsets[currColumn] + getCapacity() * columnTypes[currColumn].get()->size();
             switch (ca) {
                 case CompressionAlgorithm::NONE: break;
                 case CompressionAlgorithm::LZ4: compressLz4(offsets[currColumn], end); break;
@@ -289,7 +289,7 @@ void CompressedDynamicTupleBuffer::decompressHorizontal() {
 
 void CompressedDynamicTupleBuffer::decompressVertical() {
     for (auto ca : compressionAlgorithms) {
-        const size_t dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+        const size_t dstSize = getCapacity() * columnTypes[currColumn].get()->size();
         switch (ca) {
             case CompressionAlgorithm::NONE: {
                 memcpy(baseDstPointer + offsets[currColumn], getBuffer().getBuffer() + offsets[currColumn], dstSize);
@@ -314,6 +314,7 @@ void CompressedDynamicTupleBuffer::decompressVertical() {
                         decompressFsstN(fsstColumns);
                     compressedWithFsst = false;
                 }
+                compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
                 break;
             }
             case CompressionAlgorithm::RLE: decompressRle(offsets[currColumn], dstSize); break;
@@ -356,7 +357,7 @@ void CompressedDynamicTupleBuffer::decompressLz4(const size_t start, size_t dstS
     if (decompressedSize <= 0)
         NES_THROW_RUNTIME_ERROR("LZ4 decompression failed.");
     if (compressionMode == CompressionMode::VERTICAL) {
-        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+        dstSize = columnTypes[currColumn].get()->size() * getCapacity();
     } else {
         dstSize = totalOriginalSize;
     }
@@ -414,7 +415,7 @@ void CompressedDynamicTupleBuffer::decompressSnappy(const size_t start, size_t d
     if (!success)
         NES_THROW_RUNTIME_ERROR("Snappy decompression failed.");
     if (compressionMode == CompressionMode::VERTICAL) {
-        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+        dstSize = columnTypes[currColumn].get()->size() * getCapacity();
     } else {
         dstSize = totalOriginalSize;
     }
@@ -438,7 +439,7 @@ void CompressedDynamicTupleBuffer::decompressSnappy(const size_t start, size_t d
 }
 
 // ===================================
-// BINARY_RLE
+// RLE
 // ===================================
 namespace rle {
 static size_t compress(const uint8_t* src, size_t srcLen, uint8_t* out) {
@@ -524,7 +525,7 @@ void CompressedDynamicTupleBuffer::decompressRle(size_t start, size_t dstSize) {
             memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
         } else {
             for (size_t i = 0; i < offsets.size(); i++) {
-                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                dstSize = columnTypes[i].get()->size() * getCapacity();
                 memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
             }
         }
@@ -541,7 +542,8 @@ void CompressedDynamicTupleBuffer::compressBinaryRle(size_t start, size_t end) {
     uint8_t* baseSrcPointer = getBuffer().getBuffer() + start;
     const int srcSize = int(end - start);
     const size_t dstSize = std::ceil(1.16 * (double) srcSize);// as specified in docs
-    uint8_t* compressedEnd = pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer); // TODO always write to same position
+    uint8_t* compressedEnd =
+        pg::brle::encode(baseSrcPointer, baseSrcPointer + srcSize, baseDstPointer);// TODO always write to same position
     const size_t compressedSize = std::distance(baseDstPointer, compressedEnd);
     if (compressedSize > (size_t) srcSize) {
         // TODO do not compress and return original buffer
@@ -561,7 +563,7 @@ void CompressedDynamicTupleBuffer::decompressBinaryRle(size_t start, size_t dstS
     uint8_t* decompressedEnd = pg::brle::decode(compressed, compressed + compressedSizes[currColumn], decompressed);
     const size_t decompressedSize = std::distance(decompressed, decompressedEnd);
     if (compressionMode == CompressionMode::VERTICAL) {
-        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+        dstSize = columnTypes[currColumn].get()->size() * getCapacity();
     } else {
         dstSize = totalOriginalSize;
     }
@@ -577,7 +579,7 @@ void CompressedDynamicTupleBuffer::decompressBinaryRle(size_t start, size_t dstS
             memcpy(baseDstPointer + origOffsets[currColumn], decompressed, dstSize);
         } else {
             for (size_t i = 0; i < offsets.size(); i++) {
-                dstSize = columnTypes[i].get()->size() * getNumberOfTuples();
+                dstSize = columnTypes[i].get()->size() * getCapacity();
                 memcpy(baseDstPointer + origOffsets[i], decompressed + offsets[i], dstSize);
             }
         }
@@ -655,7 +657,6 @@ void CompressedDynamicTupleBuffer::decompressFsst1(const size_t start, size_t ds
     }
 
     compressedSizes[currColumn] = 0;
-    compressionAlgorithms[currColumn] = CompressionAlgorithm::NONE;
     compressedSizes = std::vector<size_t>(offsets.size(), 0);
     fsstOutSize = 0;
     free(decompressed);
@@ -669,7 +670,7 @@ void CompressedDynamicTupleBuffer::compressFsstN(const std::vector<size_t>& fsst
     std::vector<unsigned char*> input;
     input.reserve(numColumns);
     for (auto i : fsstColumns) {
-        size_t srcSize = columnTypes[i].get()->size() * getNumberOfTuples();
+        size_t srcSize = columnTypes[i].get()->size() * getCapacity();
         srcLengths.push_back(srcSize);
         input.push_back(getBuffer().getBuffer() + offsets[i]);
     }
@@ -742,7 +743,7 @@ void CompressedDynamicTupleBuffer::decompressFsstN(const std::vector<size_t>& fs
             fsst_decompress(&decoder, compressedSizes[fsstCol], baseSrcPointer + offsets[fsstCol], outSize, output);
         if (decompressedSize < 1)
             NES_THROW_RUNTIME_ERROR("FSST decompression failed.");
-        size_t origSize = columnTypes[fsstCol].get()->size() * getNumberOfTuples();
+        size_t origSize = columnTypes[fsstCol].get()->size() * getCapacity();
         if (decompressedSize != origSize)
             NES_THROW_RUNTIME_ERROR("FSST decompression failed: decompressed size (" << decompressedSize << ") != original size ("
                                                                                      << origSize << ").");
@@ -751,11 +752,9 @@ void CompressedDynamicTupleBuffer::decompressFsstN(const std::vector<size_t>& fs
     for (auto fsstCol : fsstColumns)
         std::memcpy(baseSrcPointer + origOffsets[fsstCol],
                     baseDstPointer + origOffsets[fsstCol],
-                    columnTypes[fsstCol].get()->size() * getNumberOfTuples());
-    for (auto fsstColIdx : fsstColumns) {
-        compressionAlgorithms[fsstColIdx] = CompressionAlgorithm::NONE;
+                    columnTypes[fsstCol].get()->size() * getCapacity());
+    for (auto fsstColIdx : fsstColumns)
         compressedSizes[fsstColIdx] = 0;
-    }
     fsstEncoder = {};
     fsstOutSize = 0;
     free(output);
@@ -789,7 +788,7 @@ void CompressedDynamicTupleBuffer::decompressSprintz(const size_t start, size_t 
     uint8_t* decompressed = (uint8_t*) calloc(1, dstSize);
     const int64_t decompressedSize = sprintz_decompress_delta_8b(compressed, decompressed);
     if (compressionMode == CompressionMode::VERTICAL) {
-        dstSize = columnTypes[currColumn].get()->size() * getNumberOfTuples();
+        dstSize = columnTypes[currColumn].get()->size() * getCapacity();
     } else {
         dstSize = totalOriginalSize;
     }
