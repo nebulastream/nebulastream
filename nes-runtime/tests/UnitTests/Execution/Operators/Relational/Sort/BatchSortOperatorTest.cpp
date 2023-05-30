@@ -74,7 +74,9 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
     auto type = Util::getPhysicalTypePtr<TypeParam>();
     auto dataTypes = std::vector<PhysicalTypePtr>{type, type};
 
-    auto sortOperator = BatchSort(0, dataTypes);
+    std::vector<Record::RecordFieldIdentifier> fieldNames = {"f1", "f2"};
+    std::vector<Record::RecordFieldIdentifier> fieldNamesToSortOn = {"f1"};
+    auto sortOperator = BatchSort(0, dataTypes, fieldNames, fieldNamesToSortOn);
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -111,7 +113,9 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
     auto dataTypes = std::vector<PhysicalTypePtr>{integerType, integerType};
-    auto sortOperator = BatchSort(0, dataTypes);
+    std::vector<Record::RecordFieldIdentifier> fieldNames = {"f1", "f2"};
+    std::vector<Record::RecordFieldIdentifier> fieldNamesToSortOn = {"f1"};
+    auto sortOperator = BatchSort(0, dataTypes, fieldNames, fieldNamesToSortOn);
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));

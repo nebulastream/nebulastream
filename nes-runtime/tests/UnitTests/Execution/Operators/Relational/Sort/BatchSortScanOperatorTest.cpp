@@ -17,6 +17,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortScan.hpp>
+#include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -49,15 +50,22 @@ class BatchSortScanOperatorTest : public Testing::NESBaseTest {
 
 // Fills the state of the sort operator with values in descending order
 template<typename TypeParam>
-void fillState(uint64_t numberOfRecord, std::shared_ptr<BatchSortOperatorHandler> handler) {
+void fillState(uint64_t numberOfRecord, const std::shared_ptr<BatchSortOperatorHandler>& handler) {
     auto state = handler->getState();
-    auto entrySize = sizeof(TypeParam);
+    auto entrySize = sizeof(TypeParam) + sizeof(TypeParam);
     auto stateRef = Nautilus::Interface::PagedVectorRef(Value<MemRef>((int8_t*) state), entrySize);
-    std::mt19937 randomGenerator(42);
+    std::mt19937 random(42);
+    auto min = std::numeric_limits<TypeParam>::min();
+    auto max = std::numeric_limits<TypeParam>::max();
+    std::uniform_int_distribution<TypeParam> dist(min, max);
     for (size_t j = 0; j < numberOfRecord; j++) {
-        Value<> val((TypeParam) (randomGenerator()));
+        auto tmp = dist(random);
+        Value<> val((TypeParam) encodeData(tmp));
+        Value<> tmpVal(tmp);
         auto entry = stateRef.allocateEntry();
         entry.store(val);
+        entry = entry + sizeof(TypeParam);
+        entry.store(tmpVal);
     }
 }
 
@@ -99,7 +107,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
 
     // Records should be in ascending order
     auto prev = collector->records[0].read("f1").as<nType>();
-    for (int i = 1; i < numberOfRecords; i++){
+    for (int i = 1; i < numberOfRecords; i++) {
         auto cur = collector->records[i].read("f1").as<nType>();
         std::cout << prev << " " << cur << std::endl;
         ASSERT_LE(prev, cur);

@@ -54,7 +54,6 @@ namespace NES::Runtime::Execution::Operators {
 // 256 is the number of possible byte values ranging from 0 to 255
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
-const uint64_t COL_SIZE = 8;
 const uint64_t INSERTION_SORT_THRESHOLD = 24;
 const uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
 
@@ -74,11 +73,16 @@ const uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
  * @param offset offset of columns to compare
  * @param swap swap original and temporary data
  */
-inline void InsertionSort(void *orig_ptr, void *temp_ptr, const uint64_t &count,
-                          const uint64_t &col_offset, const uint64_t &row_width, const uint64_t &total_comp_width,
-                          const uint64_t &offset, bool swap) {
-    auto *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
-    auto *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+inline void InsertionSort(void* orig_ptr,
+                          void* temp_ptr,
+                          const uint64_t& count,
+                          const uint64_t& col_offset,
+                          const uint64_t& row_width,
+                          const uint64_t& total_comp_width,
+                          const uint64_t& offset,
+                          bool swap) {
+    auto* source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+    auto* target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
     if (count > 1) {
         const uint64_t total_offset = col_offset + offset;
         auto temp_val = std::unique_ptr<uint8_t[]>(new uint8_t[row_width]);
@@ -113,8 +117,12 @@ inline void InsertionSort(void *orig_ptr, void *temp_ptr, const uint64_t &count,
  * @param row_width width of row
  * @param sorting_size number of bytes to sort
  */
-void RadixSortLSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const uint64_t &col_offset,
-                  const uint64_t &row_width, const uint64_t &sorting_size) {
+void RadixSortLSD(void* orig_ptr,
+                  void* temp_ptr,
+                  const uint64_t& count,
+                  const uint64_t& col_offset,
+                  const uint64_t& row_width,
+                  const uint64_t& sorting_size) {
     bool swap = false;
     uint64_t counts[VALUES_PER_RADIX];
     for (uint64_t r = 1; r <= sorting_size; r++) {
@@ -152,7 +160,6 @@ void RadixSortLSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
         memcpy(orig_ptr, temp_ptr, count * row_width);
     }
 }
-
 
 /**
  * @brief Radix sort implementation as most significant digit (msd) radix sort
@@ -245,30 +252,43 @@ void RadixSortMSD(void* orig_ptr,
     for (uint64_t radix = 0; radix < VALUES_PER_RADIX; radix++) {
         const uint64_t loc = (locations[radix] - radix_count) * row_width;
         if (radix_count > INSERTION_SORT_THRESHOLD) {
-            RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc, static_cast<uint8_t*>(temp_ptr) + loc, radix_count, col_offset, row_width, comp_width, offset + 1,
-                         locations + MSD_RADIX_LOCATIONS, swap);
+            RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc,
+                         static_cast<uint8_t*>(temp_ptr) + loc,
+                         radix_count,
+                         col_offset,
+                         row_width,
+                         comp_width,
+                         offset + 1,
+                         locations + MSD_RADIX_LOCATIONS,
+                         swap);
         } else if (radix_count != 0) {
             // When the count is low (less than the threshold), insertion sort is more efficient
-            InsertionSort(static_cast<uint8_t*>(orig_ptr) + loc, static_cast<uint8_t*>(temp_ptr) + loc, radix_count, col_offset, row_width, comp_width, offset + 1,
+            InsertionSort(static_cast<uint8_t*>(orig_ptr) + loc,
+                          static_cast<uint8_t*>(temp_ptr) + loc,
+                          radix_count,
+                          col_offset,
+                          row_width,
+                          comp_width,
+                          offset + 1,
                           swap);
         }
         radix_count = locations[radix + 1] - locations[radix];
     }
 }
 
-void SortProxy(void *op, uint64_t compWidth, uint64_t colOffset) {
+void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // TODO issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
-    auto rowWidth = handler->getStateEntrySize();
-    auto offset = 0; // init to 0
+    auto rowWidth = handler->getStateEntrySize() *2; // TODO change back
+    auto offset = 0;// init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
-    auto swap = false; // init false
+    auto swap = false;// init false
 
     if (count <= INSERTION_SORT_THRESHOLD) {
-        InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, 0, false);
+        InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
     } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
         RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
     } else {
@@ -297,8 +317,8 @@ void BatchSortScan::setup(ExecutionContext& ctx) const {
     uint64_t compWidth = dataTypes[currentSortCol]->size();
     // Offset of the current column to sort
     uint64_t colOffset = 0;
-    for(uint64_t cols = 0; cols < currentSortCol; cols++){
-        colOffset += dataTypes[cols]->size();
+    for (uint64_t cols = 0; cols < currentSortCol; cols++) {
+        colOffset += dataTypes[cols]->size()*2; // TODO change back
     }
     // perform sort
     Nautilus::FunctionCall("SortProxy", SortProxy, globalOperatorHandler, Value<UInt64>(compWidth), Value<UInt64>(colOffset));
@@ -319,6 +339,9 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     for (uint64_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
         Record record;
         auto entry = state.getEntry(Value<UInt64>(entryIndex));
+        // TODO: Test!
+        entry = entry + dataTypes[0]->size();
+        //
         for (uint64_t i = 0; i < fieldIdentifiers.size(); i++) {
             auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
             record.write(fieldIdentifiers[i], value);
