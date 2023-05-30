@@ -86,7 +86,7 @@ class HashSignatureContainmentUtil {
      * @return containment relationship between the two projection operations
      */
     ContainmentType checkProjectionContainment(const LogicalOperatorNodePtr& leftOperator,
-                                               const LogicalOperatorNodePtr& rightOperator);
+                                               const LogicalOperatorNodePtr& rightOperator) const;
     /**
      * @brief Checks the containment relationship between two window operations
      * @param leftOperator left window operation

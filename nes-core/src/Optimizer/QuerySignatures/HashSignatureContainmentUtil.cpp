@@ -163,6 +163,16 @@ bool HashSignatureContainmentUtil::getWindowContainmentRelationship(const Window
                         }
                     }
                 }
+            } else if (containerOperator->getWindowDefinition()->getWindowAggregation().size()
+                       >= containeeOperator->getWindowDefinition()->getWindowAggregation().size()) {
+                if (checkProjectionContainment(containerOperator, containeeOperator) == ContainmentType::RIGHT_SIG_CONTAINED) {
+                    for (const auto& item : containerOperator->getWindowDefinition()->getWindowAggregation()) {
+                        if (item->getType() != Windowing::WindowAggregationDescriptor::Type::Avg
+                            && item->getType() != Windowing::WindowAggregationDescriptor::Type::Median) {
+                            return true;
+                        }
+                    }
+                }
             }
         }
     }
@@ -187,7 +197,7 @@ void HashSignatureContainmentUtil::obtainSizeAndSlide(Windowing::TimeBasedWindow
 }
 
 ContainmentType HashSignatureContainmentUtil::checkProjectionContainment(const LogicalOperatorNodePtr& leftOperator,
-                                                                         const LogicalOperatorNodePtr& rightOperator) {
+                                                                         const LogicalOperatorNodePtr& rightOperator) const {
     bool contained = true;
     if (leftOperator->getOutputSchema()->getSize() >= rightOperator->getOutputSchema()->getSize()) {
         for (size_t i = 0; i < rightOperator->getOutputSchema()->getSize(); ++i) {
