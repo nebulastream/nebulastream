@@ -41,13 +41,13 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MonitoringIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MonitoringIntegrationTest test class.");
+        NES_INFO2("Setup MonitoringIntegrationTest test class.");
     }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        NES_INFO("MonitoringIntegrationTest: Setting up test with rpc port " << rpcCoordinatorPort << ", rest port " << restPort);
+        NES_INFO2("MonitoringIntegrationTest: Setting up test with rpc port {}, rest port {}", rpcCoordinatorPort, restPort);
     }
 };
 
@@ -74,7 +74,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
+    NES_INFO2("ResourcesReaderTest: Jsons received: \n{}", jsons.dump());
     //TODO: This should be addressed by issue 2803
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 }
@@ -107,11 +107,11 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
+    NES_INFO2("ResourcesReaderTest: Jsons received: \n{}", jsons.dump());
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        NES_INFO2("ResourcesReaderTest: Requesting monitoring data from node with ID {}", i);
         auto json = jsons[std::to_string(i)];
         NES_DEBUG2("MonitoringIntegrationTest: JSON for node {}:\n{}", i, json);
         auto jsonString = json.dump();
@@ -148,12 +148,12 @@ TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
+    NES_INFO2("ResourcesReaderTest: Jsons received: \n{}", jsons.dump());
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        NES_INFO2("ResourcesReaderTest: Requesting monitoring data from node with ID {}", i);
         auto json = jsons[std::to_string(i)];
         NES_DEBUG2("MonitoringIntegrationTest: JSON for node {}:\n{}", i, json);
         auto jsonRegistration = json["registration"][0]["value"];
@@ -213,7 +213,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
-    NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
+    NES_INFO2("MonitoringIntegrationTest: Started monitoring streams {}", jsonStart);
     ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size());
 
     ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
@@ -221,7 +221,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
 
     // test network metrics
     for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        NES_INFO2("ResourcesReaderTest: Requesting monitoring data from node with ID {}", i);
         auto json = jsonMetrics[std::to_string(i)];
         NES_DEBUG2("MonitoringIntegrationTest: JSON for node {}:\n{}", i, json);
         auto jsonString = json.dump();

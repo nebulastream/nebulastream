@@ -27,7 +27,7 @@ class LocationProviderCSVTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoSourceCSV.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LocationProviderCSV test class.");
+        NES_INFO2("Setup LocationProviderCSV test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -44,7 +44,7 @@ class LocationProviderCSVTest : public Testing::NESBaseTest {
     }
 
     static void TearDownTestCase() {
-        NES_INFO("Tear down LocationProviderCSV test class.");
+        NES_INFO2("Tear down LocationProviderCSV test class.");
         auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
         remove(csvPath.c_str());
     }

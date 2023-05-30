@@ -39,7 +39,7 @@ class MultiThreadedTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MultiWorkerTest test class.");
+        NES_INFO2("Setup MultiWorkerTest test class.");
     }
 };
 
@@ -48,7 +48,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -79,14 +79,14 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical source qnv*/
 
     std::string outputFilePath = getTestResourceFolder() / "MultiThreadedTest_testFilterQuery.out";
 
-    NES_INFO("MultiThreadedTest: Submit query");
+    NES_INFO2("MultiThreadedTest: Submit query");
     string query = R"(Query::from("stream")
         .filter(Attribute("value") < 2)
         .sink(FileSinkDescriptor::create(")"
@@ -111,14 +111,14 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("MultiThreadedTest: Stop worker 1");
+    NES_INFO2("MultiThreadedTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("MultiThreadedTest: Stop Coordinator");
+    NES_INFO2("MultiThreadedTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("MultiThreadedTest: Test finished");
+    NES_INFO2("MultiThreadedTest: Test finished");
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 }
@@ -128,7 +128,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -155,14 +155,14 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical source qnv*/
 
     std::string outputFilePath = getTestResourceFolder() / "MultiThreadedTest_testProjectQuery.out";
 
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream")
         .filter(Attribute("value") < 2)
         .project(Attribute("id"))
@@ -188,14 +188,14 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    NES_INFO2("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    NES_INFO2("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    NES_INFO2("QueryDeploymentTest: Test finished");
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 }
@@ -205,7 +205,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -232,7 +232,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -240,7 +240,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("WindowDeploymentTest: Submit query");
+    NES_INFO2("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\")."
                    "window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))\n"
                    "        .byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
@@ -263,18 +263,18 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("WindowDeploymentTest: Remove query");
+    NES_INFO2("WindowDeploymentTest: Remove query");
     ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("WindowDeploymentTest: Stop worker 1");
+    NES_INFO2("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("WindowDeploymentTest: Stop Coordinator");
+    NES_INFO2("WindowDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("WindowDeploymentTest: Test finished");
+    NES_INFO2("WindowDeploymentTest: Test finished");
 }
 
 /**
@@ -286,7 +286,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = 12;
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -312,7 +312,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -320,7 +320,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("MultipleWindowsTest: Submit query");
+    NES_INFO2("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1)))
@@ -343,18 +343,18 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO("MultipleWindowsTest: Remove query");
+    NES_INFO2("MultipleWindowsTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("MultipleWindowsTest: Stop worker 1");
+    NES_INFO2("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("MultipleWindowsTest: Test finished");
+    NES_INFO2("MultipleWindowsTest: Test finished");
 }
 
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
@@ -363,7 +363,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = (12);
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -389,7 +389,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -397,7 +397,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("MultipleWindowsTest: Submit query");
+    NES_INFO2("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1)))
@@ -414,18 +414,18 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    NES_INFO("MultipleWindowsTest: Remove query");
+    NES_INFO2("MultipleWindowsTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("MultipleWindowsTest: Stop worker 1");
+    NES_INFO2("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("MultipleWindowsTest: Stop Coordinator");
+    NES_INFO2("MultipleWindowsTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("MultipleWindowsTest: Test finished");
+    NES_INFO2("MultipleWindowsTest: Test finished");
 }
 
 /**
@@ -437,7 +437,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = (16);
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -473,7 +473,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
@@ -481,7 +481,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("JoinDeploymentTest: Submit query");
+    NES_INFO2("JoinDeploymentTest: Submit query");
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
@@ -515,7 +515,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     NES_DEBUG2("JoinDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("JoinDeploymentTest: Test finished");
+    NES_INFO2("JoinDeploymentTest: Test finished");
 }
 
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
@@ -524,7 +524,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = (16);
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -573,7 +573,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -581,7 +581,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -630,7 +630,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -690,7 +690,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -698,7 +698,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -785,7 +785,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = (16);
     coordinatorConfig->worker.numWorkerThreads = numberOfCoordinatorThreads;
-    NES_INFO("MultiThreadedTest: Start coordinator");
+    NES_INFO2("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -821,7 +821,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+    NES_INFO2("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
@@ -829,7 +829,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("JoinDeploymentTest: Submit query");
+    NES_INFO2("JoinDeploymentTest: Submit query");
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
@@ -852,7 +852,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     NES_DEBUG2("JoinDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("JoinDeploymentTest: Test finished");
+    NES_INFO2("JoinDeploymentTest: Test finished");
 }
 
 }// namespace NES

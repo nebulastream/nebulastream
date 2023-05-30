@@ -38,10 +38,10 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyControllerTest test class.");
+        NES_INFO2("Setup TopologyControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down ConnectivityControllerTest test class."); }
 
     static void verifyResponseResult(const cpr::Response& response, const nlohmann::json expected) {
         NES_DEBUG2("{}", response.text);
@@ -74,14 +74,14 @@ class UDFCatalogControllerTest : public Testing::NESBaseTest {
     }
 
     void startCoordinator() {
-        NES_INFO("UdfCatalogController: Start coordinator");
+        NES_INFO2("UdfCatalogController: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO("UDFCatalogControllerTest: Coordinator started successfully");
+        NES_INFO2("UDFCatalogControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {

@@ -39,10 +39,10 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SourceCatalogControllerTest test class.");
+        NES_INFO2("Setup SourceCatalogControllerTest test class.");
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SourceCatalogControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down SourceCatalogControllerTest test class."); }
 
     /**
      * Starts a coordinator with the following configurations
@@ -50,7 +50,7 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
      * restPort = restPort specified in NESBaseTest
      */
     void startCoordinator() {
-        NES_INFO("SourceCatalogControllerTest: Start coordinator");
+        NES_INFO2("SourceCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
@@ -64,7 +64,7 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
      * @param coordinatorConfig
      */
     void startCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration) {
-        NES_INFO("SourceCatalogControllerTest: Start coordinator");
+        NES_INFO2("SourceCatalogControllerTest: Start coordinator");
         coordinatorConfig = coordinatorConfiguration;
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -122,8 +122,8 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SourceCatalogControllerTest: Worker1 started successfully");
-    NES_INFO(coordinator->getSourceCatalog()->getPhysicalSourceAndSchemaAsString());
+    NES_INFO2("SourceCatalogControllerTest: Worker1 started successfully");
+    NES_INFO2("{}", coordinator->getSourceCatalog()->getPhysicalSourceAndSchemaAsString());
     cpr::AsyncResponse future =
         cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/sourceCatalog/allPhysicalSource"},
                       cpr::Parameters{{"logicalSourceName", "default_logical"}});

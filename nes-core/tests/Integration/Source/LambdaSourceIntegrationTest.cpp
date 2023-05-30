@@ -33,7 +33,7 @@ class LambdaSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LambdaSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LambdaSourceIntegrationTest test class.");
+        NES_INFO2("Setup LambdaSourceIntegrationTest test class.");
     }
 };
 
@@ -262,7 +262,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
+    NES_INFO2("MillisecondIntervalTest: Worker1 started successfully");
 
     string query = R"(Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());)";
 

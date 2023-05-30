@@ -24,7 +24,7 @@ class Z3ValidationTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3ValidationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Z3ValidationTest test class.");
+        NES_INFO2("Setup Z3ValidationTest test class.");
     }
 };
 
@@ -33,7 +33,7 @@ class Z3ValidationTest : public Testing::TestWithErrorHandling {
    De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
 */
 TEST_F(Z3ValidationTest, deMorganDualityValidation) {
-    NES_INFO("De-Morgan Example");
+    NES_INFO2("De-Morgan Example");
 
     // create a context
     context c;
@@ -46,15 +46,17 @@ TEST_F(Z3ValidationTest, deMorganDualityValidation) {
 
     //Define the expression to evaluate
     expr expression = (!(x && y)) == (!x || !y);
-
-    NES_INFO("Expression: " << expression);
+    std::stringstream expressionAsString;
+    expressionAsString << expression;
+    NES_INFO2("Expression: {}", expressionAsString.str());
 
     // adding the negation of the expression as a constraint.
     // We try to prove that inverse of this expression is valid (which is obviously false).
     s.add(!expression);
-
-    NES_INFO("Content of the solver: " << s);
-    NES_INFO("Statement folding inside z3 solver: " << s.to_smt2());
+    std::stringstream solverString;
+    solverString << s;
+    NES_INFO2("Content of the solver: {}", solverString.str());
+    NES_INFO2("Statement folding inside z3 solver: {}", s.to_smt2());
     ASSERT_EQ(s.check(), unsat);
 }
 
@@ -129,7 +131,9 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     s.add(x > 1);
     s.add(y > 1);
     s.add(x + y < 1);
-    NES_INFO(s);
+    std::stringstream solverString;
+    solverString << s;
+    NES_INFO2("{}", solverString.str());
 
     //Assert
     ASSERT_EQ(s.check(), unsat);
@@ -145,7 +149,9 @@ TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
     auto xPlusYLessThanOne = to_expr(c, Z3_mk_lt(c, xPlusY, one));
 
     s.add(xLessThanOne);
-    NES_INFO(s);
+    std::stringstream solver;
+    solver << s;
+    NES_INFO2("{}", solver.str());
     s.add(yLessThanOne);
     s.add(xPlusYLessThanOne);
     //Assert
@@ -164,7 +170,9 @@ TEST_F(Z3ValidationTest, equalityChecks) {
     //We prove that equation (x==y and y==x) != (y==x and x==y) is unsatisfiable
     s.push();
     s.add((x == y && y == x) != (x == y && y == x));
-    NES_INFO(s);
+    std::stringstream solverString;
+    solverString << s;
+    NES_INFO2("{}", solverString.str());
     ASSERT_EQ(s.check(), unsat);
     s.pop();
     s.add((x == y && y == x) == (x == y && y == x));
@@ -210,9 +218,11 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     //
     ////    s.add(value40 != value50);
     //    s.add(!(((stream == streamVal) == (stream == streamVal)) && (value40 == value50)));
-    //    NES_INFO(s);
-    //    NES_INFO("Chk that " << s.check());
-    //    NES_INFO(s.get_model());
+    //    std::stringstream solverString;
+    //    solverString << s;
+    //    NES_INFO2("{}", solverString.str());
+    //    NES_INFO2("Chk that " << s.check());
+    //    NES_INFO2(s.get_model());
     //
     //    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= logicalSourceName "car"))
     //
@@ -221,8 +231,8 @@ TEST_F(Z3ValidationTest, unequalityChecks) {
     //
     //    s.reset();
     //    s.add(((value * 10) < 40) != ((value * 10) < 40 && (value * 10) < 30));
-    //    NES_INFO(s.check());
-    //    NES_INFO(s.get_model());
+    //    NES_INFO2(s.check());
+    //    NES_INFO2(s.get_model());
 }
 
 }// namespace NES

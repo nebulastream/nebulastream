@@ -90,7 +90,7 @@ class SerializationUtilTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SerializationUtilTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SerializationUtilTest test class.");
+        NES_INFO2("Setup SerializationUtilTest test class.");
     }
 };
 

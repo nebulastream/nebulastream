@@ -27,7 +27,7 @@ class StateTest : public Testing::TestWithErrorHandling {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StateTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("Setup StateTest test class.");
+        NES_INFO2("Setup StateTest test class.");
     }
     static void TearDownTestCase() { NES_DEBUG2("Tear down StateTest test class."); }
 };

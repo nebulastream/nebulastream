@@ -56,13 +56,13 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("OriginIdInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup OriginIdInferencePhaseTest test case.");
+        NES_INFO2("Setup OriginIdInferencePhaseTest test case.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_INFO("Setup OriginIdInferencePhaseTest test case.");
+        NES_INFO2("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         Catalogs::Source::SourceCatalogPtr sourceCatalog =
             std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
@@ -75,7 +75,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling {
     }
 
     void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-        NES_INFO("Setup FilterPushDownTest test case.");
+        NES_INFO2("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;

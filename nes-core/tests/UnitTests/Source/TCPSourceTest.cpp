@@ -181,7 +181,7 @@ TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NES_INFO2("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -197,9 +197,9 @@ TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
                             ->addField(createField("recovered", BasicType::BOOLEAN))
                             ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_INFO2("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
+    NES_INFO2("QueryDeploymentTest: Start worker 1");
     wrkConf->coordinatorPort = port;
     tcpSourceType->setUrl("ws://127.0.0.1:9002");
     tcpSourceType->setClientId("testClients");
@@ -213,13 +213,13 @@ TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
@@ -227,17 +227,17 @@ TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    NES_INFO2("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    NES_INFO2("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    NES_INFO2("QueryDeploymentTest: Test finished");
 }
 }// namespace NES

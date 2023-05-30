@@ -64,7 +64,7 @@ class TypeInferencePhaseTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TypeInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TypeInferencePhaseTest test class.");
+        NES_INFO2("Setup TypeInferencePhaseTest test class.");
     }
 };
 
@@ -172,7 +172,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
                             ->addField("default_logical$value", BasicType::UINT64)
                             ->addField("default_logical$f3", BasicType::UINT32);
 
-    NES_INFO(sink->getOutputSchema()->toString());
+    NES_INFO2("{}", sink->getOutputSchema()->toString());
 
     EXPECT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
@@ -200,7 +200,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
                             ->addField("default_logical$value", BasicType::UINT64)
                             ->addField("default_logical$f3", BasicType::UINT32);
 
-    NES_INFO(sink->getOutputSchema()->toString());
+    NES_INFO2("{}", sink->getOutputSchema()->toString());
     EXPECT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
 
@@ -1320,7 +1320,7 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
 
     auto sink = resultPlan->getSinkOperators()[0];
 
-    NES_INFO(sink->getOutputSchema()->toString());
+    NES_INFO2("{}", sink->getOutputSchema()->toString());
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
@@ -1361,7 +1361,7 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
 
     auto sink = resultPlan->getSinkOperators()[0];
 
-    NES_INFO(sink->getOutputSchema()->toString());
+    NES_INFO2("{}", sink->getOutputSchema()->toString());
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
@@ -1416,7 +1416,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
 
     auto sink = resultPlan->getSinkOperators()[0];
 
-    NES_INFO(sink->getOutputSchema()->toString());
+    NES_INFO2("{}", sink->getOutputSchema()->toString());
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
@@ -1469,7 +1469,7 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
 
     auto sink = resultPlan->getSinkOperators()[0];
 
-    NES_INFO(sink->getOutputSchema()->toString());
+    NES_INFO2("{}", sink->getOutputSchema()->toString());
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();

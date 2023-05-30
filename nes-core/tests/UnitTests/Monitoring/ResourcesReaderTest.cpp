@@ -37,7 +37,7 @@ class ResourcesReaderTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ResourcesReaderTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("ResourcesReaderTest: Setup ResourcesReaderTest test class.");
+        NES_INFO2("ResourcesReaderTest: Setup ResourcesReaderTest test class.");
     }
 
     /* Will be called before a  test is executed. */

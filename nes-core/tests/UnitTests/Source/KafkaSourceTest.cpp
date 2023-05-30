@@ -297,16 +297,16 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("KAFKASOURCETEST:: Start coordinator");
+    NES_INFO2("KAFKASOURCETEST:: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source
     std::string source = R"(Schema::create()->addField(createField("var", BasicType::UINT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
+    NES_INFO2("KAFKASOURCETEST:: Coordinator started successfully");
 
-    NES_INFO("KAFKASOURCETEST:: Start worker 1");
+    NES_INFO2("KAFKASOURCETEST:: Start worker 1");
     wrkConf->coordinatorPort = port;
     kafkaSourceType->setBrokers(KAFKA_BROKER);
     kafkaSourceType->setTopic(topic);
@@ -319,13 +319,13 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("KAFKASOURCETEST: Worker1 started successfully");
+    NES_INFO2("KAFKASOURCETEST: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
-    NES_INFO("KAFKASOURCETEST: Submit query");
+    NES_INFO2("KAFKASOURCETEST: Submit query");
     string query =
         R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
     QueryId queryId =
@@ -333,7 +333,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
-    NES_INFO("KAFKASOURCETEST: Remove query");
+    NES_INFO2("KAFKASOURCETEST: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -347,18 +347,18 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
                              "|6|\n"
                              "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content=" << content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
 
-    NES_INFO("KAFKASOURCETEST: Stop worker 1");
+    NES_INFO2("KAFKASOURCETEST: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("KAFKASOURCETEST: Stop Coordinator");
+    NES_INFO2("KAFKASOURCETEST: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("KAFKASOURCETEST: Test finished");
+    NES_INFO2("KAFKASOURCETEST: Test finished");
 }
 
 // Disabled, because it requires a manually set up Kafka broker
@@ -370,7 +370,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("KAFKASOURCETEST:: Start coordinator");
+    NES_INFO2("KAFKASOURCETEST:: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
@@ -386,9 +386,9 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
                             ->addField(createField("recovered", BasicType::BOOLEAN))
                             ->addField(createField("dead", BasicType::BOOLEAN));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
+    NES_INFO2("KAFKASOURCETEST:: Coordinator started successfully");
 
-    NES_INFO("KAFKASOURCETEST:: Start worker 1");
+    NES_INFO2("KAFKASOURCETEST:: Start worker 1");
     wrkConf->coordinatorPort = port;
     kafkaSourceType->setBrokers(KAFKA_BROKER);
     kafkaSourceType->setTopic(topic);
@@ -401,13 +401,13 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
@@ -415,18 +415,18 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    NES_INFO2("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    NES_INFO2("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    NES_INFO2("QueryDeploymentTest: Test finished");
 }
 #endif
 }// namespace NES

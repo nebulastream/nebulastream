@@ -52,7 +52,7 @@ class SensorBusTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SensorBusTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SourceBusTest test class.");
+        NES_INFO2("Setup SourceBusTest test class.");
     }
 
     /**

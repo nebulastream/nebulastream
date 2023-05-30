@@ -67,7 +67,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryContainmentIdentificationTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO("Setup QueryContainmentIdentificationTest test case.");
+        NES_INFO2("Setup QueryContainmentIdentificationTest test case.");
     }
 
     /* Will be called before a test is executed. */

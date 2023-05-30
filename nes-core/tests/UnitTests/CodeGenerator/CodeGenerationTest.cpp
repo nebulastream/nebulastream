@@ -599,7 +599,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
     auto outputBuffer = context->buffers[0];
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, outputBuffer);
-    NES_INFO(dynamicTupleBuffer);
+    std::stringstream dynamicTupleBufferAsString;
+    dynamicTupleBufferAsString <<  dynamicTupleBuffer;
+    NES_INFO2("{}", dynamicTupleBufferAsString.str());
 
     /* check result for correctness */
     auto sumGeneratedCode = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, outputBuffer)[0];

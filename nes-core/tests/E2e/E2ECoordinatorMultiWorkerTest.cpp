@@ -33,17 +33,17 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorWorkerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup E2e test class.");
+        NES_INFO2("Setup E2e test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
 /**
  * @brief Testing NES with a config using a hierarchical topology.
  */
 TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
-    NES_INFO(" start coordinator");
+    NES_INFO2(" start coordinator");
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -54,7 +54,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
               "->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
               "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
-    NES_INFO("schema submit=" << schema.str());
+    NES_INFO2("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -101,7 +101,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 3));
 
     auto topology = TestUtils::getTopology(*restPort);
-    NES_INFO("The final topology:\n" << topology);
+    NES_INFO2("The final topology:\n{}", topology);
     //check edges
     for (uint64_t i = 0; i < topology.at("edges").size(); i++) {
         EXPECT_EQ(topology["edges"][i]["target"].get<int>(), i + 1);
@@ -110,7 +110,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {
-    NES_INFO(" start coordinator");
+    NES_INFO2(" start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
@@ -123,7 +123,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
               "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
               "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
-    NES_INFO("schema submit=" << schema.str());
+    NES_INFO2("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -160,12 +160,12 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
 
-    NES_INFO("query string submit=" << ss.str());
+    NES_INFO2("query string submit={}", ss.str());
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     QueryId queryId = json_return.at("queryId").get<int>();
 
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
+    NES_INFO2("try to acc return");
+    NES_INFO2("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
 
     string expectedContent = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
@@ -181,8 +181,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
+    NES_INFO2("content={}", content);
+    NES_INFO2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());
@@ -190,7 +190,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerDifferentSource) {
-    NES_INFO(" start coordinator");
+    NES_INFO2(" start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
@@ -203,7 +203,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
               "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
               "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
-    NES_INFO("schema submit=" << schema.str());
+    NES_INFO2("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker1 =
@@ -242,14 +242,14 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
 
-    NES_INFO("query string submit=" << ss.str());
+    NES_INFO2("query string submit={}", ss.str());
     string body = ss.str();
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     QueryId queryId = json_return.at("queryId").get<int>();
 
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
+    NES_INFO2("try to acc return");
+    NES_INFO2("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(*restPort)));
@@ -263,17 +263,17 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     bool resultWrk2 = false;
 
     while (std::getline(ifs, line)) {
-        NES_INFO("print line from content" << line);
-        std::vector<string> content = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
+        NES_INFO2("print line from content{}", line);
+        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, ",");
         if (content.at(0) == "R2000073") {
-            NES_INFO("First content=" << content.at(2));
-            NES_INFO("First: expContent= 102.629631");
+            NES_INFO2("First content={}", content.at(2));
+            NES_INFO2("First: expContent= 102.629631");
             if (content.at(2) == "102.629631") {
                 resultWrk1 = true;
             }
         } else {
-            NES_INFO("Second: content=" << content.at(2));
-            NES_INFO("Second: expContent= 108.166664");
+            NES_INFO2("Second: content={}", content.at(2));
+            NES_INFO2("Second: expContent= 108.166664");
             if (content.at(2) == "108.166664") {
                 resultWrk2 = true;
             }
@@ -288,7 +288,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     //TODO result content does not end up in file?
-    NES_INFO(" start coordinator");
+    NES_INFO2(" start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 
@@ -302,7 +302,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
               "->addField(createField(\\\"timestamp\\\",BasicType::UINT64));\"}";
     schema << endl;
 
-    NES_INFO("schema submit=" << schema.str());
+    NES_INFO2("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -342,13 +342,13 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     ss << R"());","placement" : "BottomUp"})";
     ss << endl;
 
-    NES_INFO("query string submit=" << ss.str());
+    NES_INFO2("query string submit={}", ss.str());
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     QueryId queryId = json_return.at("queryId").get<int>();
 
-    NES_INFO("try to acc return");
-    NES_INFO("Query ID: " << queryId);
+    NES_INFO2("try to acc return");
+    NES_INFO2("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(*restPort)));
@@ -366,8 +366,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                              "0,10000,12,2\n"
                              "0,10000,16,4\n";
 
-    NES_INFO("content=" << content);
-    NES_INFO("expContent=" << expectedContent);
+    NES_INFO2("content={}", content);
+    NES_INFO2("expContent={}", expectedContent);
     ASSERT_EQ(content, expectedContent);
 
     int response = remove(outputFilePath.c_str());

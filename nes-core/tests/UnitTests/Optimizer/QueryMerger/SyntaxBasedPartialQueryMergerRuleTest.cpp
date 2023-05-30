@@ -39,7 +39,7 @@ class SyntaxBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandl
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
+        NES_INFO2("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */

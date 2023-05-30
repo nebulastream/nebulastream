@@ -40,12 +40,12 @@ class LocationServiceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Set up LocationServiceTest test class.")
+        NES_INFO2("Set up LocationServiceTest test class.")
         std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
         remove(singleLocationPath.c_str());
         writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
     }
-    static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
+    static void TearDownTestCase(){NES_INFO2("Tear down LocationServiceTest test class")}
 
     nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation loc) {
         nlohmann::json nodeInfo;
@@ -210,7 +210,7 @@ TEST_F(LocationServiceTest, DISABLED_testRequestEmptyReconnectSchedule) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
-    NES_INFO("start worker 3");
+    NES_INFO2("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
     wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);

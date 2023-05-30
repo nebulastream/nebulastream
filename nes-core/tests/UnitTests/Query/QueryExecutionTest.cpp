@@ -1287,16 +1287,18 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
 
     // wait till all buffers have been produced
     ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
-    NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
+    NES_INFO2("QueryExecutionTest: The test sink contains {} result buffers.", testSink->getNumberOfResultBuffers());
 
     // get result buffer
     if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
 
-        NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
+        NES_INFO2("QueryExecutionTest: The result buffer contains {} tuples.", resultBuffer.getNumberOfTuples());
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBuffer);
+        std::stringstream dynamicTupleBufferAsString;
+        dynamicTupleBufferAsString << dynamicTupleBuffer;
+        NES_INFO2("QueryExecutionTest: buffer={}", dynamicTupleBufferAsString.str());
         std::string expectedContent = "+----------------------------------------------------+\n"
                                       "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                       "+----------------------------------------------------+\n"
@@ -1355,15 +1357,17 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 
     // wait till all buffers have been produced
     ASSERT_EQ(testSink->completed.get_future().get(), 2UL);
-    NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
+    NES_INFO2("QueryExecutionTest: The test sink contains {} result buffers.", testSink->getNumberOfResultBuffers());
     // get result buffer
 
     {
         auto resultBuffer = testSink->get(0);
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual);
+        NES_INFO2("QueryExecutionTest: The result buffer contains {} tuples.", resultBuffer.getNumberOfTuples());
+        std::stringstream dynamicTupleBufferAsString;
+        dynamicTupleBufferAsString << dynamicTupleBufferActual;
+        NES_INFO2("QueryExecutionTest: buffer={}", dynamicTupleBufferAsString.str());
         std::string expectedContent = "+----------------------------------------------------+\n"
                                       "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                       "+----------------------------------------------------+\n"
@@ -1374,8 +1378,10 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
         auto resultBuffer2 = testSink->get(1);
         auto rowLayoutActual2 = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual2 = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual2, resultBuffer2);
-        NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer2.getNumberOfTuples() << " tuples.");
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual2);
+        NES_INFO2("QueryExecutionTest: The result buffer contains {} tuples.", resultBuffer2.getNumberOfTuples());
+        std::stringstream dynamicTupleBufferString;
+        dynamicTupleBufferString << dynamicTupleBufferActual2;
+        NES_INFO2("QueryExecutionTest: buffer={}", dynamicTupleBufferString.str());
         std::string expectedContent2 = "+----------------------------------------------------+\n"
                                        "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                        "+----------------------------------------------------+\n"
@@ -1437,17 +1443,19 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 
     // wait till all buffers have been produced
     ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
-    NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
+    NES_INFO2("QueryExecutionTest: The test sink contains {} result buffers.", testSink->getNumberOfResultBuffers());
     // get result buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     {
         auto resultBuffer = testSink->get(0);
 
-        NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
+        NES_INFO2("QueryExecutionTest: The result buffer contains {} tuples.", resultBuffer.getNumberOfTuples() );
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual);
+        std::stringstream dynamicTupleBufferAsString;
+        dynamicTupleBufferAsString << dynamicTupleBufferActual;
+        NES_INFO2("QueryExecutionTest: buffer={}", dynamicTupleBufferAsString.str());
         std::string expectedContent = "+----------------------------------------------------+\n"
                                       "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                       "+----------------------------------------------------+\n"

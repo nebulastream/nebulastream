@@ -336,7 +336,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         return false;
     }
 
-    NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
+    NES_INFO2("Found global query id {} for user query {}", sharedQueryId, queryId);
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -383,7 +383,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         return false;
     }
 
-    NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
+    NES_INFO2("Found global query id {} for user query {}", sharedQueryId, queryId);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutSeconds) {
         NES_TRACE2("checkCompleteOrTimeout: check result NesCoordinatorPtr");

@@ -29,10 +29,10 @@ class TestHarnessUtilTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TestHarnessUtilTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TestHarnessUtilTest test class.");
+        NES_INFO2("Setup TestHarnessUtilTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("TestHarnessUtilTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("TestHarnessUtilTest test class TearDownTestCase."); }
 };
 
 /*

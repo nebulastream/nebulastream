@@ -26,7 +26,7 @@ class PolygonTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PolygonTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup PolygonTest test class.");
+        NES_INFO2("Setup PolygonTest test class.");
     }
 };
 

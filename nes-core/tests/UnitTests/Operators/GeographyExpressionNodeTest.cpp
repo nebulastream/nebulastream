@@ -62,7 +62,7 @@ class GeographyExpressionNodeTest : public Testing::NESBaseTest {
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("GeographyExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup GeographyExpressionNodeTest test class.");
+        NES_INFO2("Setup GeographyExpressionNodeTest test class.");
     }
 };
 

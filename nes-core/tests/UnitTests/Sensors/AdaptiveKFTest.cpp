@@ -41,14 +41,14 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AdaptiveKFTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AdaptiveKFTest test class.");
+        NES_INFO2("Setup AdaptiveKFTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down AdaptiveKFTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down AdaptiveKFTest test class."); }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup AdaptiveKFTest class.");
+        NES_INFO2("Setup AdaptiveKFTest class.");
         dataPort = Testing::NESBaseTest::getAvailablePort();
         sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", BasicType::UINT32);
@@ -75,7 +75,7 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        NES_INFO("Tear down AdaptiveKFTest class.");
+        NES_INFO2("Tear down AdaptiveKFTest class.");
         NES_DEBUG2("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
         Testing::NESBaseTest::TearDown();

@@ -36,7 +36,7 @@ class UpdateTopologyRemoteTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UpdateTopologyRemoteTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup UpdateTopologyRemoteTest test class.");
+        NES_INFO2("Setup UpdateTopologyRemoteTest test class.");
     }
 
     static void TearDownTestCase() { NES_DEBUG2("Tear down UpdateTopologyRemoteTest test class."); }
@@ -59,9 +59,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0ull);
-    NES_INFO("coordinator started successfully");
+    NES_INFO2("coordinator started successfully");
 
-    NES_INFO("start worker");
+    NES_INFO2("start worker");
     auto node1RpcPort = getAvailablePort();
     auto node1DataPort = getAvailablePort();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
@@ -70,7 +70,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
-    NES_INFO("worker started successfully");
+    NES_INFO2("worker started successfully");
 
     auto node2RpcPort = getAvailablePort();
     auto node2DataPort = getAvailablePort();
@@ -80,7 +80,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("worker started successfully");
+    NES_INFO2("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
 
@@ -99,29 +99,29 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(node2->getGrpcPort() == *node2RpcPort);
     EXPECT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
 
-    NES_INFO("ADD NEW PARENT");
+    NES_INFO2("ADD NEW PARENT");
     bool successAddPar = wrk->addParent(node2->getId());
     EXPECT_TRUE(successAddPar);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     EXPECT_TRUE(node2->getChildren().size() == 1);
     EXPECT_TRUE(node2->getChildren()[0]->as<TopologyNode>()->getId() == node1->getId());
 
-    NES_INFO("REMOVE NEW PARENT");
+    NES_INFO2("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node2->getId());
     EXPECT_TRUE(successRemoveParent);
     EXPECT_TRUE(successAddPar);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     EXPECT_TRUE(node2->getChildren().empty());
 
-    NES_INFO("stopping worker");
+    NES_INFO2("stopping worker");
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
-    NES_INFO("stopping worker 2");
+    NES_INFO2("stopping worker 2");
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("stopping coordinator");
+    NES_INFO2("stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
@@ -140,9 +140,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("coordinator started successfully");
+    NES_INFO2("coordinator started successfully");
 
-    NES_INFO("start worker");
+    NES_INFO2("start worker");
     auto node1RpcPort = getAvailablePort();
     auto node1DataPort = getAvailablePort();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
@@ -151,7 +151,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
-    NES_INFO("worker started successfully");
+    NES_INFO2("worker started successfully");
 
     auto node2RpcPort = getAvailablePort();
     auto node2DataPort = getAvailablePort();
@@ -161,7 +161,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("worker started successfully");
+    NES_INFO2("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
 
@@ -177,19 +177,19 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
     EXPECT_TRUE(node2->getGrpcPort() == *node2RpcPort);
 
-    NES_INFO("REMOVE NEW PARENT");
+    NES_INFO2("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node1->getId());
     EXPECT_TRUE(!successRemoveParent);
 
-    NES_INFO("stopping worker");
+    NES_INFO2("stopping worker");
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
-    NES_INFO("stopping worker 2");
+    NES_INFO2("stopping worker 2");
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("stopping coordinator");
+    NES_INFO2("stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }

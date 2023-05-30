@@ -28,7 +28,7 @@ class GlobalQueryNodeTest : public Testing::TestWithErrorHandling {
     /* Will be called before a test is executed. */
     static void SetUpTestCase() {
         Logger::setupLogging("GlobalQueryNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup GlobalQueryNodeTest test case.");
+        NES_INFO2("Setup GlobalQueryNodeTest test case.");
     }
 };
 

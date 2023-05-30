@@ -51,7 +51,7 @@ class PipeliningPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PipeliningPhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup PipeliningPhaseTest test class.");
+        NES_INFO2("Setup PipeliningPhaseTest test class.");
     }
 
   protected:

@@ -558,8 +558,8 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     //Assertion to check correct amount of shared query plans to deploy are extracted.
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-    NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+    NES_INFO2("{}",sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -756,12 +756,14 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     //Assertion to check correct amount of shared query plans to deploy are extracted.
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
+    NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
     NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO2("{}",globalExecutionPlan->getAsString());
 
     //Assertions to check correct placement
     ASSERT_EQ(executionNodes.size(), 3U);
@@ -925,7 +927,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO2("{}",globalExecutionPlan->getAsString());
 
     //Assertions to check correct placement
     ASSERT_EQ(executionNodes.size(), 3U);

@@ -40,7 +40,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UserDefinedMonitoringTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
+        NES_INFO2("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
     }
 
     /* Will be called before a  test is executed. */

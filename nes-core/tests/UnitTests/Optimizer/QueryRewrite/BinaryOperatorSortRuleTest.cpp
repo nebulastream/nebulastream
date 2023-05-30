@@ -38,7 +38,7 @@ class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling {
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BinaryOperatorSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
+        NES_INFO2("Setup BinaryOperatorSortRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -49,7 +49,7 @@ class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling {
 };
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
+    NES_INFO2("Setup BinaryOperatorSortRuleTest test case.");
     auto schema1 = Schema::create()
                        ->addField("id", BasicType::UINT32)
                        ->addField("value", BasicType::UINT64)

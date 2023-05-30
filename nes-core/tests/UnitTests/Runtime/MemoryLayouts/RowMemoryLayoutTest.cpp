@@ -32,7 +32,7 @@ class RowMemoryLayoutTest : public Testing::TestWithErrorHandling {
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RowMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup RowMemoryLayoutTest test class.");
+        NES_INFO2("Setup RowMemoryLayoutTest test class.");
     }
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();

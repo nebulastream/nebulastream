@@ -196,7 +196,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
         auto* tuples = inputTupleBuffer.getBuffer<uint64_t>();
 
-        NES_INFO("Test: Start execution");
+        NES_INFO2("Test: Start execution");
 
         uint64_t psum = 0;
         for (uint64_t i = 0; i < inputTupleBuffer.getNumberOfTuples(); ++i) {
@@ -205,8 +205,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         count += inputTupleBuffer.getNumberOfTuples();
         sum += psum;
 
-        NES_INFO("Test: query result = Processed Block:" << inputTupleBuffer.getNumberOfTuples() << " count: " << count
-                                                         << " psum: " << psum << " sum: " << sum);
+        NES_INFO2("Test: query result = Processed Block:{} count: {} psum: {} sum: {}", inputTupleBuffer.getNumberOfTuples(), count, psum, sum);
 
         if (sum == 10) {
             NES_DEBUG2("TEST: result correct");
@@ -246,7 +245,7 @@ class NodeEngineTest : public Testing::NESBaseTest {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EngineTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("Setup EngineTest test class.");
+        NES_INFO2("Setup EngineTest test class.");
     }
 
     void SetUp() override {

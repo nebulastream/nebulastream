@@ -25,10 +25,10 @@ class LocationUnitTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Location test class.");
+        NES_INFO2("Setup Location test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down GeographilcalLocationUnitTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down GeographilcalLocationUnitTest test class."); }
 };
 
 TEST_F(LocationUnitTest, testExceptionHandling) {
