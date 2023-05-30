@@ -8,7 +8,7 @@ executionBenchmark=1
 
 # Array of compiler arguments
 queries=("q1" "q3" "q6")
-compilerArgs=("PipelineCompiler" "CPPPipelineCompiler")
+compilerArgs=("PipelineCompiler" "CPPPipelineCompiler" "BCInterpreter" "BabelfishPipelineCompiler" "PipelineInterpreter")
 
 # Iterate over each compiler argument in the array
 for query in "${queries[@]}"; do
