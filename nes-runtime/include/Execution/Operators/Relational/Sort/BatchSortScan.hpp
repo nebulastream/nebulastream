@@ -33,8 +33,12 @@ class BatchSortScan : public Operator {
      * @param dataTypes data types of the records
      * @param sortIndices field indices of the records to sort
      */
-    BatchSortScan(const uint64_t operatorHandlerIndex, const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
-             const std::vector<PhysicalTypePtr>& dataTypes, const std::vector<uint64_t>& sortIndices) : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes), sortIndices(sortIndices) {}
+    BatchSortScan(const uint64_t operatorHandlerIndex,
+                  const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+                  const std::vector<PhysicalTypePtr>& dataTypes,
+                  const std::vector<uint64_t>& sortIndices)
+        : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes),
+          sortIndices(sortIndices) {}
 
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
