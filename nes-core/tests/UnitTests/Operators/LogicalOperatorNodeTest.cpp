@@ -1064,7 +1064,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     // EXPECT_EQ(children.size(), expected.size());
 
     for (uint64_t i = 0; i < children.size(); i++) {
-        NES_DEBUG2("{}",i);
+        NES_DEBUG2("{}", i);
         // both reference to the same pointer
         EXPECT_TRUE(children[i]->isIdentical(expected[i]));
         // EXPECT_TRUE(children[i] == (expected[i]));

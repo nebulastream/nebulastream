@@ -1217,7 +1217,9 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     crdConf->worker.numberOfBuffersInGlobalBufferManager = 10000;
     crdConf->worker.numWorkerThreads = 8;
 
-   NES_DEBUG2("num work {} num buff {}", crdConf->worker.numWorkerThreads.getValue(), crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
+    NES_DEBUG2("num work {} num buff {}",
+               crdConf->worker.numWorkerThreads.getValue(),
+               crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1648,7 +1650,8 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     crdConf->worker.numWorkerThreads = 8;
 
     NES_DEBUG2("StaticDataSourceIntegrationTest::testBatchJoinCustomerWithIntTable: num work {} num buff {}",
-               crdConf->worker.numWorkerThreads.getValue(), crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
+               crdConf->worker.numWorkerThreads.getValue(),
+               crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1797,7 +1800,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             crdConf->worker.numWorkerThreads = 2;
 
             NES_INFO2("num work " << crdConf->worker.numWorkerThreads.getValue() << " num buff "
-                                 << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
+                                  << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
             crdConf->rpcPort = (*rpcCoordinatorPort);
             crdConf->restPort = *restPort;

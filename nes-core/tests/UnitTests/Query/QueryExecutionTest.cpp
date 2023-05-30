@@ -1449,7 +1449,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     {
         auto resultBuffer = testSink->get(0);
 
-        NES_INFO2("QueryExecutionTest: The result buffer contains {} tuples.", resultBuffer.getNumberOfTuples() );
+        NES_INFO2("QueryExecutionTest: The result buffer contains {} tuples.", resultBuffer.getNumberOfTuples());
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
         auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
         auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);

@@ -186,7 +186,7 @@ TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
     nlohmann::json res;
     EXPECT_EQ(response.status_code, 400l);
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}",res.dump());
+    NES_DEBUG2("{}", res.dump());
     EXPECT_EQ(res["message"], "Could not add parent for node in topology: childId and parentId must be different.");
     bool stopCrd = coordinator->stopCoordinator(true);
     NES_DEBUG2("shut down coordinator with rest port {}", coordinatorConfig->restPort.getValue());
@@ -215,7 +215,7 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     nlohmann::json res;
     EXPECT_EQ(response.status_code, 500l);
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}",res.dump());
+    NES_DEBUG2("{}", res.dump());
     bool stopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(stopWrk1);
     bool stopCrd = coordinator->stopCoordinator(true);

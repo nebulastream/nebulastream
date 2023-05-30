@@ -67,7 +67,9 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         rpcCoordinatorPortAsString << rpcCoordinatorPort;
         std::stringstream restPortAsString;
         rpcCoordinatorPortAsString << restPort;
-        NES_INFO2("MonitoringQueriesTest: Setting up test with rpc port {}, rest port {}", rpcCoordinatorPortAsString.str(), restPortAsString.str());
+        NES_INFO2("MonitoringQueriesTest: Setting up test with rpc port {}, rest port {}",
+                  rpcCoordinatorPortAsString.str(),
+                  restPortAsString.str());
     }
 
     NesCoordinatorPtr createCoordinator() {
