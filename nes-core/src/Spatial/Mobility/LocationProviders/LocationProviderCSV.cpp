@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <Util/CommonUtilityFunctions.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <fstream>
 #include <iostream>
 

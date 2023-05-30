@@ -26,7 +26,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/CommonUtilityFunctions.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 

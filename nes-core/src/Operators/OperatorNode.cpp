@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/CoreUtilityFunctions.hpp>
 #include <algorithm>
 #include <utility>
 
