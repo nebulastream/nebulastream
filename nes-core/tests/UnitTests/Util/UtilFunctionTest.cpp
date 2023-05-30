@@ -13,7 +13,7 @@
 */
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

@@ -20,7 +20,7 @@
 #include <Configurations/details/EnumOptionDetails.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <cstddef>

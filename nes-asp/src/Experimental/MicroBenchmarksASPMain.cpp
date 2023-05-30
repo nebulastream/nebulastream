@@ -17,7 +17,7 @@
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <iostream>
 
 const std::string logo = "/********************************************************\n"

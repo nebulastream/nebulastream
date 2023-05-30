@@ -17,7 +17,7 @@
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {

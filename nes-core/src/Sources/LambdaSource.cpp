@@ -19,7 +19,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <chrono>
 #include <utility>

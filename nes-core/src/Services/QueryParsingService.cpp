@@ -24,8 +24,8 @@
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Core.hpp>
+#include <Util/Common.hpp>
 #include <iostream>
 #include <sstream>
 

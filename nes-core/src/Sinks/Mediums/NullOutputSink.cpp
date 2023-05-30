@@ -15,7 +15,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <sstream>
 #include <string>
 

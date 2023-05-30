@@ -21,7 +21,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/details/EnumOptionDetails.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <filesystem>
 #include <string>
 #include <thread>

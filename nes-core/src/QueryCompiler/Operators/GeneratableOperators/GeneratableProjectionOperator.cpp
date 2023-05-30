@@ -14,7 +14,7 @@
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {

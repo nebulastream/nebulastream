@@ -18,8 +18,8 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Core.hpp>
+#include <Util/Common.hpp>
 #include <string>
 
 using namespace std::string_literals;

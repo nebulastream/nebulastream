@@ -25,8 +25,8 @@
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 

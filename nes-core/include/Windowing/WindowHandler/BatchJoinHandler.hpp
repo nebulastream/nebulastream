@@ -18,7 +18,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
