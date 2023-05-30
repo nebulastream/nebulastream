@@ -13,24 +13,24 @@
 */
 
 
-#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 
 namespace NES::ASP {
 
-void* SRSWoROperatorHandler::getPagedVectorRef() { return pagedVector.get(); }
+void* RandomSampleWithoutReplacementOperatorHandler::getPagedVectorRef() { return pagedVector.get(); }
 
-void SRSWoROperatorHandler::setup(uint64_t entrySize) {
+void RandomSampleWithoutReplacementOperatorHandler::setup(uint64_t entrySize) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
 }
-void SRSWoROperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                  Runtime::StateManagerPtr,
-                                  uint32_t) {
+void RandomSampleWithoutReplacementOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                                          Runtime::StateManagerPtr,
+                                                          uint32_t) {
     NES_DEBUG2("Started SRSWoROperatorHandler!");
 }
-void SRSWoROperatorHandler::stop(Runtime::QueryTerminationType,
-                                 Runtime::Execution::PipelineExecutionContextPtr) {
+void RandomSampleWithoutReplacementOperatorHandler::stop(Runtime::QueryTerminationType,
+                                                         Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG2("Stopped SRSWoROperatorHandler!");
 }
 

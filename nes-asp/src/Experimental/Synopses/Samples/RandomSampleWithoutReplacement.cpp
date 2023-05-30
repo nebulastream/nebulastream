@@ -19,7 +19,7 @@
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkASPUtil.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
-#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -65,12 +65,12 @@ uint64_t createSampleProxy(void* pagedVectorPtr, uint64_t sampleSize) {
 }
 
 void* getPagedVectorRefProxy(void* opHandlerPtr) {
-    auto* opHandler = (SRSWoROperatorHandler*) opHandlerPtr;
+    auto* opHandler = (RandomSampleWithoutReplacementOperatorHandler*) opHandlerPtr;
     return opHandler->getPagedVectorRef();
 }
 
 void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
-    auto* opHandler = (SRSWoROperatorHandler*) opHandlerPtr;
+    auto* opHandler = (RandomSampleWithoutReplacementOperatorHandler*) opHandlerPtr;
     opHandler->setup(entrySize);
 }
 
