@@ -19,7 +19,7 @@
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Util/FaultToleranceType.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <chrono>
 #include <string>
 namespace NES {

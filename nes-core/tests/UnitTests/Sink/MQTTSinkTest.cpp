@@ -29,7 +29,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>

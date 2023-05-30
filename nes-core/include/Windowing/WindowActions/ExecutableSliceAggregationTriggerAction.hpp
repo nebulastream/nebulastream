@@ -21,7 +21,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>

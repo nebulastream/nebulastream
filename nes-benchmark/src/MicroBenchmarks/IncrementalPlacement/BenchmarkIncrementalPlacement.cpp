@@ -38,7 +38,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>

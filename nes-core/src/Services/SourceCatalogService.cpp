@@ -20,7 +20,7 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <utility>
 
 namespace NES {

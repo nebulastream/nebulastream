@@ -13,7 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinOperator.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {

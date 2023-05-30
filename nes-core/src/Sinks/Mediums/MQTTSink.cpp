@@ -18,7 +18,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
 #include <memory>

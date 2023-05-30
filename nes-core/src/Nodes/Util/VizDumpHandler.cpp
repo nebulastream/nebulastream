@@ -20,9 +20,9 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>

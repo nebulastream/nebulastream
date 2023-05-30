@@ -18,8 +18,8 @@
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <fstream>
 #include <iostream>
 

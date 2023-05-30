@@ -19,8 +19,8 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Network {
 

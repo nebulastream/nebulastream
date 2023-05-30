@@ -18,11 +18,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>

@@ -23,7 +23,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>

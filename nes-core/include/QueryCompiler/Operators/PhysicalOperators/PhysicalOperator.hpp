@@ -16,7 +16,7 @@
 
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Util/CoreUtilityFunctions.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
