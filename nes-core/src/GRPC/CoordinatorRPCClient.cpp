@@ -643,6 +643,7 @@ bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experime
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
     return reply.success();
 }
+
 std::vector<NodeId> CoordinatorRPCClient::getParents(NodeId nodeId) {
     ClientContext context;
     GetParentsRequest request;
