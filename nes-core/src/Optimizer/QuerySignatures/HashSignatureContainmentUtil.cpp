@@ -188,16 +188,21 @@ void HashSignatureContainmentUtil::obtainSizeAndSlide(Windowing::TimeBasedWindow
 
 ContainmentType HashSignatureContainmentUtil::checkProjectionContainment(const LogicalOperatorNodePtr& leftOperator,
                                                                          const LogicalOperatorNodePtr& rightOperator) {
+    bool contained = true;
     if (leftOperator->getOutputSchema()->getSize() >= rightOperator->getOutputSchema()->getSize()) {
         for (size_t i = 0; i < rightOperator->getOutputSchema()->getSize(); ++i) {
-            leftOperator->getOutputSchema()->contains(rightOperator->getOutputSchema()->get(i)->getName());
+            contained = leftOperator->getOutputSchema()->contains(rightOperator->getOutputSchema()->get(i)->getName());
         }
-        return ContainmentType::RIGHT_SIG_CONTAINED;
+        if (contained) {
+            return ContainmentType::RIGHT_SIG_CONTAINED;
+        }
     } else if (leftOperator->getOutputSchema()->getSize() <= rightOperator->getOutputSchema()->getSize()) {
         for (size_t i = 0; i < leftOperator->getOutputSchema()->getSize(); ++i) {
-            rightOperator->getOutputSchema()->contains(leftOperator->getOutputSchema()->get(i)->getName());
+            contained = rightOperator->getOutputSchema()->contains(leftOperator->getOutputSchema()->get(i)->getName());
         }
-        return ContainmentType::LEFT_SIG_CONTAINED;
+        if (contained) {
+            return ContainmentType::LEFT_SIG_CONTAINED;
+        }
     }
     return ContainmentType::NO_CONTAINMENT;
 }
