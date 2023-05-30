@@ -187,7 +187,7 @@ TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
                                    msgDelay,
                                    qualityOfService,
                                    asynchronousClient);
-    NES_INFO(mqttSink->toString());
+    NES_INFO2("{}", mqttSink->toString());
     ASSERT_FALSE(mqttSink->toString().empty());
 }
 
@@ -243,7 +243,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
                                                MQTTSinkDescriptor::ServiceQualities::atLeastOnce,
                                                true,
                                                false);
-    NES_INFO("testMQTTbrokerDeathToClientStopAsynchronous result: " << bufferDataSuccessfullyWrittenToBroker);
+    NES_INFO2("testMQTTbrokerDeathToClientStopAsynchronous result: {}", bufferDataSuccessfullyWrittenToBroker);
 }
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? --------------------------- */

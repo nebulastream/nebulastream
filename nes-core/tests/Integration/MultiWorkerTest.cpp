@@ -33,10 +33,10 @@ class MultiWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MultiWorkerTest test class.");
+        NES_INFO2("Setup MultiWorkerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down MultiWorkerTest class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down MultiWorkerTest class."); }
 };
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {

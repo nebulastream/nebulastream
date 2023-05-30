@@ -36,7 +36,7 @@ class MultipleJoinsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultipleJoinsTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MultipleJoinsTest test class.");
+        NES_INFO2("Setup MultipleJoinsTest test class.");
     }
 
     std::string ipAddress = "127.0.0.1";
@@ -46,7 +46,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -77,7 +77,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -92,7 +92,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -107,7 +107,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -115,7 +115,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -169,7 +169,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -203,7 +203,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -217,7 +217,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -231,7 +231,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
@@ -245,7 +245,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -253,7 +253,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -316,7 +316,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -351,7 +351,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -366,7 +366,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -381,7 +381,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
@@ -396,7 +396,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -404,7 +404,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     auto query =
         R"(Query::from("window1")
@@ -472,7 +472,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -501,7 +501,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -515,7 +515,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -529,7 +529,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -537,7 +537,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -600,7 +600,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -634,7 +634,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -648,7 +648,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -662,7 +662,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
@@ -676,7 +676,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -684,7 +684,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -767,7 +767,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -801,7 +801,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -815,7 +815,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -829,7 +829,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
@@ -843,7 +843,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    NES_INFO("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
@@ -851,7 +851,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO("MultipleJoinsTest: Submit query");
+    NES_INFO2("MultipleJoinsTest: Submit query");
 
     auto query =
         R"(Query::from("window1")

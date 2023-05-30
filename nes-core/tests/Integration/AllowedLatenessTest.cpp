@@ -40,7 +40,7 @@ class AllowedLatenessTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AllowedLatenessTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AllowedLatenessTest test class.");
+        NES_INFO2("Setup AllowedLatenessTest test class.");
     }
 
     void SetUp() override {

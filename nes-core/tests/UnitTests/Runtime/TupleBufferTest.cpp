@@ -36,7 +36,7 @@ class TupleBufferTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TupleBufferTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("SetUpTestCase TupleBufferTest test case.");
+        NES_INFO2("SetUpTestCase TupleBufferTest test case.");
     }
 
     /* Will be called before a test is executed. */

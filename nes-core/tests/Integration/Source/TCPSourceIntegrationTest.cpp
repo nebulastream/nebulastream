@@ -44,7 +44,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TCPSourceIntegrationTest test class.");
+        NES_INFO2("Setup TCPSourceIntegrationTest test class.");
     }
 
     void SetUp() override {
@@ -246,11 +246,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -280,7 +280,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -304,7 +304,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -329,8 +329,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
         "|42|5.893000|1|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -347,11 +347,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -381,7 +381,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -405,7 +405,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -430,8 +430,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
         "|42|5.893000|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -448,11 +448,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -482,7 +482,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -506,7 +506,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -531,8 +531,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
         "|42|5.893000|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -549,11 +549,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -583,7 +583,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -607,7 +607,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -632,8 +632,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
         "|102|9.986000|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -650,11 +650,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -684,7 +684,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -708,7 +708,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -733,8 +733,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
         "|42|5.893000|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -751,11 +751,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -785,7 +785,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -809,7 +809,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -834,8 +834,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
         "|4293|5.893110|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -852,11 +852,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -886,7 +886,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -910,7 +910,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -935,8 +935,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
         "|42|5.893000|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
@@ -953,11 +953,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NES_INFO2("TCPSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Coordinator started successfully");
 
     auto tcpSchema = Schema::create()
                          ->addField("id", BasicType::UINT32)
@@ -987,7 +987,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("TCPSourceIntegrationTest: Worker1 started successfully");
 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
@@ -1011,7 +1011,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
     serverThread.join();
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -1036,8 +1036,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
         "|42|5.893000|hello|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("TCPSourceIntegrationTest: content=" << content);
-    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    NES_INFO2("TCPSourceIntegrationTest: content={}", content);
+    NES_INFO2("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);

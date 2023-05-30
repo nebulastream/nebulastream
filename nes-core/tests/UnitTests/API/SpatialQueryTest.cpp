@@ -30,7 +30,7 @@ class SpatialQueryTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SpatialQueryTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SpatialQueryTest test class.");
+        NES_INFO2("Setup SpatialQueryTest test class.");
     }
 };
 

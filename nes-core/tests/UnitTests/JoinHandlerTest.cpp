@@ -46,7 +46,7 @@ class JoinHandlerTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinHandlerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup JoinHandlerTest test class.");
+        NES_INFO2("Setup JoinHandlerTest test class.");
     }
 
     const uint64_t buffers_managed = 10;

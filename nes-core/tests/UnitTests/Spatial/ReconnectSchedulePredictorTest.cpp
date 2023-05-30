@@ -33,7 +33,7 @@ class ReconnectSchedulePredictorTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ReconnectSchedulePredictor.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ReconnectSchedulePredictor test class.");
+        NES_INFO2("Setup ReconnectSchedulePredictor test class.");
     }
 };
 

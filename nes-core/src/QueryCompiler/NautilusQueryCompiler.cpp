@@ -52,7 +52,7 @@ QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& op
 
 QueryCompilation::QueryCompilationResultPtr
 NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request) {
-    NES_INFO("Compile Query with Nautilus");
+    NES_INFO2("Compile Query with Nautilus");
     try {
         Timer timer("DefaultQueryCompiler");
         auto queryId = request->getQueryPlan()->getQueryId();

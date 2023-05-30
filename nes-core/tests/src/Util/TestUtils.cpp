@@ -144,7 +144,7 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
    * @return coordinator process, which terminates if it leaves the scope
    */
 [[nodiscard]] Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
-    NES_INFO("Start coordinator");
+    NES_INFO2("Start coordinator");
     return {std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesCoordinator", list};
 }
 
@@ -154,7 +154,7 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
      * @return worker process, which terminates if it leaves the scope
      */
 [[nodiscard]] Util::Subprocess startWorker(std::initializer_list<std::string> flags) {
-    NES_INFO("Start worker");
+    NES_INFO2("Start worker");
     return {std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesWorker", flags};
 }
 
@@ -164,7 +164,7 @@ std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILU
      * @return worker process, which terminates if it leaves the scope
      */
 [[nodiscard]] std::shared_ptr<Util::Subprocess> startWorkerPtr(std::initializer_list<std::string> flags) {
-    NES_INFO("Start worker");
+    NES_INFO2("Start worker");
     return std::make_shared<Util::Subprocess>(std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesWorker", flags);
 }
 
@@ -418,7 +418,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
-        NES_INFO("check if NES REST interface is up");
+        NES_INFO2("check if NES REST interface is up");
         auto future =
             cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"}, cpr::Timeout{3000});
         future.wait();
@@ -592,7 +592,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
 
 bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
     auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
-    NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
+    NES_INFO2("TestUtil: Executing GET request on URI {}", baseUri);
     nlohmann::json json_return;
     size_t nodeNo = 0;
 
@@ -608,7 +608,7 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
             nodeNo = jsonResponse["nodes"].size();
 
             if (nodeNo == expectedWorkers + 1U) {
-                NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
+                NES_INFO2("TestUtils: Expected worker number reached correctly {}", expectedWorkers);
                 NES_DEBUG2("TestUtils: Received topology JSON:\n{}", jsonResponse.dump());
                 return true;
             }
@@ -630,7 +630,7 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
      */
 [[nodiscard]] nlohmann::json getTopology(uint64_t restPort) {
     auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
-    NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
+    NES_INFO2("TestUtil: Executing GET request on URI {}", baseUri);
 
     auto future = cpr::GetAsync(cpr::Url{baseUri}, cpr::Timeout{3000});
     future.wait();

@@ -41,7 +41,7 @@ class AndOperatorTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AndOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AndOperatorTest test class.");
+        NES_INFO2("Setup AndOperatorTest test class.");
     }
 
     void SetUp() override {
@@ -89,10 +89,10 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     crd->getSourceCatalogService()->registerLogicalSource("Win2", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO2("AndOperatorTest: Coordinator started successfully");
 
     // Setup Worker 1
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO2("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     srcConf1->setFilePath("../tests/test_data/window.csv");
@@ -103,10 +103,10 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO2("AndOperatorTest: Worker1 started successfully");
 
     // Setup Worker 2
-    NES_INFO("AndOperatorTest: Start worker 2");
+    NES_INFO2("AndOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     srcConf1->setFilePath("../tests/test_data/window2.csv");
@@ -117,12 +117,12 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO2("AndOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testAndPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO2("AndOperatorTest: Submit andWith pattern");
 
     std::string query =
         R"(Query::from("Win1").andWith(Query::from("Win2"))
@@ -172,10 +172,10 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO2("AndOperatorTest: Coordinator started successfully");
 
     // Setup Worker 1
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO2("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -186,10 +186,10 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO2("AndOperatorTest: Worker1 started successfully");
 
     // Setup Worker 2
-    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NES_INFO2("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -200,12 +200,12 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO2("AndOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO2("AndOperatorTest: Submit andWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity") > 70).andWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
@@ -261,10 +261,10 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO2("AndOperatorTest: Coordinator started successfully");
 
     // Setup Worker 1
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO2("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     // Add source 1
@@ -283,12 +283,12 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO2("AndOperatorTest: Worker1 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternAndSliding.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO2("AndOperatorTest: Submit andWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity")>70).andWith(Query::from("QnV2").filter(Attribute("velocity")>70)).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(5),Minutes(1))).sink(FileSinkDescriptor::create(")"
@@ -304,7 +304,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO2("AndOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -347,10 +347,10 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO2("AndOperatorTest: Coordinator started successfully");
 
     //Setup Worker 1
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO2("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -361,10 +361,10 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO2("AndOperatorTest: Worker1 started successfully");
 
     //Setup Worker 2
-    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NES_INFO2("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -375,12 +375,12 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO2("AndOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternAndEarlyTermination.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO2("AndOperatorTest: Submit andWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity")>50).andWith(Query::from("QnV2").filter(Attribute("quantity")>5)).isEarlyTermination(true).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
@@ -397,7 +397,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO2("AndOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -448,10 +448,10 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO2("AndOperatorTest: Coordinator started successfully");
 
     // Setup Worker 1
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO2("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -462,10 +462,10 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO2("AndOperatorTest: Worker1 started successfully");
 
     // Setup Worker 2
-    NES_INFO("AndOperatorTest:  Start worker 2");
+    NES_INFO2("AndOperatorTest:  Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -476,10 +476,10 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO2("AndOperatorTest: Worker2 started successfully");
 
     // Setup Worker 3
-    NES_INFO("AndOperatorTest: Start worker 3");
+    NES_INFO2("AndOperatorTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     srcConf3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -490,12 +490,12 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("AndOperatorTest: Worker3 started successfully");
+    NES_INFO2("AndOperatorTest: Worker3 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testMultiANDPattern.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO2("AndOperatorTest: Submit andWith pattern");
     //  Pattern - 1 ANDS - 34 result tuple
     std::string query1 =
         R"(Query::from("QnV")
@@ -540,7 +540,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO2("AndOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 

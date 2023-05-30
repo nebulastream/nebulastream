@@ -55,7 +55,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DistributeWindowRuleTest test case.");
+        NES_INFO2("Setup DistributeWindowRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -73,7 +73,7 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling {
 };
 
 void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    NES_INFO2("Setup LogicalSourceExpansionRuleTest test case.");
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -93,7 +93,7 @@ void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatal
 }
 
 void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    NES_INFO2("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -129,7 +129,7 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
 }
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup DistributeWindowRuleTest test case.");
+    NES_INFO2("Setup DistributeWindowRuleTest test case.");
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;

@@ -27,11 +27,11 @@ class PapiProfilerTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PapiProfilerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("SetUpTestCase PapiProfilerTest test case.");
+        NES_INFO2("SetUpTestCase PapiProfilerTest test case.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase PapiProfilerTest test case."); }
+    static void TearDownTestCase() { NES_INFO2("TearDownTestCase PapiProfilerTest test case."); }
 };
 
 TEST_F(PapiProfilerTest, testSampling) {

@@ -50,7 +50,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::create(const z3::ContextPtr& conte
 
 bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO("Z3SignatureBasedQueryContainmentRule: Applying Signature Based Equal Query Merger Rule to the "
+    NES_INFO2("Z3SignatureBasedQueryContainmentRule: Applying Signature Based Equal Query Merger Rule to the "
              "Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {

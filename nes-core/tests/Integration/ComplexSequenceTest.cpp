@@ -32,7 +32,7 @@ class ComplexSequenceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ComplexSequenceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ComplexSequenceTest test class.");
+        NES_INFO2("Setup ComplexSequenceTest test class.");
     }
 };
 

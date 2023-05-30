@@ -82,7 +82,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
+        NES_INFO2("SetUpTestCase NetworkStackIntegrationTest");
     }
 
     void SetUp() {
@@ -99,7 +99,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::TearDown();
     }
 
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackIntegrationTest."); }
+    static void TearDownTestCase() { NES_INFO2("TearDownTestCase NetworkStackIntegrationTest."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort1;
@@ -893,7 +893,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
-            NES_INFO("NetworkStackIntegrationTest: Error in registering DataChannel!");
+            NES_INFO2("NetworkStackIntegrationTest: Error in registering DataChannel!");
             completedProm.set_value(false);
         } else {
             senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);

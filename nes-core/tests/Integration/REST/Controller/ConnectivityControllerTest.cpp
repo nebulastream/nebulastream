@@ -24,14 +24,14 @@ class ConnectivityControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyControllerTest test class.");
+        NES_INFO2("Setup TopologyControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down ConnectivityControllerTest test class."); }
 };
 
 TEST_F(ConnectivityControllerTest, testCORSRequest) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -40,7 +40,7 @@ TEST_F(ConnectivityControllerTest, testCORSRequest) {
 
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
+    NES_INFO2("ConnectivityControllerTest: Coordinator started successfully");
 
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
     if (!success) {
@@ -63,14 +63,14 @@ TEST_F(ConnectivityControllerTest, testCORSRequest) {
 }
 
 TEST_F(ConnectivityControllerTest, testGetRequest) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
+    NES_INFO2("ConnectivityControllerTest: Coordinator started successfully");
 
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
     if (!success) {

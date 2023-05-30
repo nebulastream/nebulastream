@@ -35,7 +35,7 @@ class GlobalExecutionPlanTest : public Testing::TestWithErrorHandling {
     /* Will be called before a test is executed. */
     static void SetUpTestCase() {
         Logger::setupLogging("GlobalExecutionPlanTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup GlobalExecutionPlanTest test case.");
+        NES_INFO2("Setup GlobalExecutionPlanTest test case.");
     }
 };
 
@@ -46,7 +46,7 @@ TEST_F(GlobalExecutionPlanTest, testCreateEmptyGlobalExecutionPlan) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     std::string actualPlan = globalExecutionPlan->getAsString();
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     std::string expectedPlan;
 
@@ -72,7 +72,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     std::string actualPlan = globalExecutionPlan->getAsString();
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId()) + ")\n";
@@ -110,9 +110,9 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     const std::string actualPlan = globalExecutionPlan->getAsString();
 
-    NES_INFO("GlobalExecutionPlanTest: Actual plan: \n" + actualPlan);
+    NES_INFO2("GlobalExecutionPlanTest: Actual plan: \n{}", actualPlan);
 
-    NES_INFO("GlobalExecutionPlanTest: queryPlan.toString(): \n" + plan->toString());
+    NES_INFO2("GlobalExecutionPlanTest: queryPlan.toString(): \n{}", plan->toString());
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
@@ -173,7 +173,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
@@ -238,7 +238,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
@@ -363,7 +363,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + "\n"
           "|    "
         + plan22->getRootOperators()[0]->getChildren()[0]->toString() + "\n";
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     ASSERT_EQ(expectedPlan, actualPlan);
 }
@@ -418,7 +418,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
 
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode2->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode2->getTopologyNode()->getId())
@@ -535,7 +535,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode4);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
-    NES_INFO("Actual query plan \n" << actualPlan);
+    NES_INFO2("Actual query plan \n{}", actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode4->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode4->getTopologyNode()->getId())

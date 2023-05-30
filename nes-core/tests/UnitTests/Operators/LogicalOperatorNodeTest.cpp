@@ -43,7 +43,7 @@ class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalOperatorNodeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LogicalOperatorNodeTest test class.");
+        NES_INFO2("Setup LogicalOperatorNodeTest test class.");
     }
 
     void SetUp() override {

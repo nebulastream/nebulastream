@@ -44,7 +44,7 @@ class QueryPlanIteratorTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryPlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryPlanIteratorTest test class.");
+        NES_INFO2("Setup QueryPlanIteratorTest test class.");
     }
 
     void SetUp() override {

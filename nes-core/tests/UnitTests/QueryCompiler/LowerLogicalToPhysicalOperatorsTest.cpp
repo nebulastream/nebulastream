@@ -77,7 +77,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TranslateToPhysicalOperatorPhaseTest test class.");
+        NES_INFO2("Setup TranslateToPhysicalOperatorPhaseTest test class.");
     }
 
     void SetUp() override {

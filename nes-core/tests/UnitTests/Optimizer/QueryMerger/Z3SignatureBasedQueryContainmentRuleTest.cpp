@@ -72,7 +72,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
+        NES_INFO2("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -1037,7 +1037,7 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
         auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
         EXPECT_TRUE(updatedSharedQueryPlan1);
 
-        NES_INFO(updatedSharedQueryPlan1->toString());
+        NES_INFO2("{}", updatedSharedQueryPlan1->toString());
 
         //assert that the sink operators have same up-stream operator
         auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();

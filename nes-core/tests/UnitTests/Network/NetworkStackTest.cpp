@@ -73,7 +73,7 @@ class NetworkStackTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("SetUpTestCase NetworkStackTest");
+        NES_INFO2("SetUpTestCase NetworkStackTest");
     }
 
     /* Will be called before a  test is executed. */
@@ -232,7 +232,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
             auto cnt = netManager->registerSubpartitionConsumer(nesPartition,
                                                                 netManager->getServerLocation(),
                                                                 std::make_shared<DataEmitterImpl>());
-            NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt" << cnt);
+            NES_INFO2("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
             auto v = completed.get_future().get();
             netManager->unregisterSubpartitionConsumer(nesPartition);
             ASSERT_EQ(v, true);
@@ -408,7 +408,7 @@ TEST_F(NetworkStackTest, testSendData) {
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
-            NES_INFO("NetworkStackTest: Error in registering DataChannel!");
+            NES_INFO2("NetworkStackTest: Error in registering DataChannel!");
             completedProm.set_value(false);
         } else {
             // create testbuffer
@@ -645,7 +645,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 if (errorCallsServer == retryTimes) {
                     serverError.set_value(true);
                 }
-                NES_INFO("NetworkStackTest: Server error called!");
+                NES_INFO2("NetworkStackTest: Server error called!");
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::ErrorType::PartitionNotRegisteredError);
             }
 
@@ -654,7 +654,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 if (errorCallsChannel == retryTimes) {
                     channelError.set_value(true);
                 }
-                NES_INFO("NetworkStackTest: Channel error called!");
+                NES_INFO2("NetworkStackTest: Channel error called!");
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::ErrorType::PartitionNotRegisteredError);
             }
 
@@ -773,7 +773,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                     netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(2), 10);
 
                 if (senderChannel == nullptr) {
-                    NES_INFO("NetworkStackTest: Error in registering DataChannel!");
+                    NES_INFO2("NetworkStackTest: Error in registering DataChannel!");
                     completedPromises[i].set_value(false);
                 } else {
                     std::mt19937 rnd;

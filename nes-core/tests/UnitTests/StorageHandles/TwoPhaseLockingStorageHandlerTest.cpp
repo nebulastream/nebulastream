@@ -29,7 +29,7 @@ class TwoPhaseLockingStorageHandlerTest : public Testing::TestWithErrorHandling 
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TwoPhaseLockingStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TwoPhaseLockingAccessHandle test class.")
+        NES_INFO2("Setup TwoPhaseLockingAccessHandle test class.")
     }
 };
 

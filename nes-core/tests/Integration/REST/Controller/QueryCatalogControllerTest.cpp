@@ -30,20 +30,20 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryCatalogControllerTest test class.");
+        NES_INFO2("Setup QueryCatalogControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down QueryCatalogControllerTest test class."); }
 
     void startCoordinator() {
-        NES_INFO("QueryCatalogControllerTest: Start coordinator");
+        NES_INFO2("QueryCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
+        NES_INFO2("QueryCatalogControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {

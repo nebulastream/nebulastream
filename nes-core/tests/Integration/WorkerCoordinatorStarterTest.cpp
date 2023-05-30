@@ -31,7 +31,7 @@ class WorkerCoordinatorStarterTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WorkerCoordinatorStarterTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
+        NES_INFO2("Setup WorkerCoordinatorStarterTest test class.");
     }
 };
 

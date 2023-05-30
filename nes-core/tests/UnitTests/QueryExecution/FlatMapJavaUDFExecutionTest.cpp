@@ -133,7 +133,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
     auto inputClassName = "java/lang/Integer";
     auto outputClassName = "java/lang/Integer";
-    NES_INFO("testDataPath:" + testDataPath);
+    NES_INFO2("testDataPath:" + testDataPath);
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
                                  .setClassName(className)
                                  .setMethodName(methodName)

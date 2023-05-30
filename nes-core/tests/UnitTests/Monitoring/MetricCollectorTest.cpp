@@ -48,7 +48,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MetricCollectorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("ResourcesReaderTest: Setup MetricCollectorTest test class.");
+        NES_INFO2("ResourcesReaderTest: Setup MetricCollectorTest test class.");
     }
 
     /* Will be called before a  test is executed. */

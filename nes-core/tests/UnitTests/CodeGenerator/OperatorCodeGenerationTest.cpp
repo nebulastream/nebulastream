@@ -417,7 +417,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
-    NES_INFO("Generate Code");
+    NES_INFO2("Generate Code");
     /* generate code for scanning input buffer */
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context);
     /* generate code for writing result tuples to output buffer */
@@ -438,7 +438,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     stage->start(*queryContext);
     if (auto buffer = source->receiveData().value(); !!buffer) {
         /* execute Stage */
-        NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
+        NES_INFO2("Processing {} tuples: ", buffer.getNumberOfTuples());
         stage->execute(buffer, *queryContext, wctx);
         if (auto resultBuffer = queryContext->buffers[0]; !!resultBuffer) {
             /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
@@ -493,7 +493,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare input tuple buffer */
     source->open();
     auto inputBuffer = source->receiveData().value();
-    NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
+    NES_INFO2("Processing {} tuples: ", inputBuffer.getNumberOfTuples());
 
     /* execute Stage */
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
@@ -504,7 +504,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     stage->execute(inputBuffer, *queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    NES_INFO("Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
+    NES_INFO2("Number of generated output tuples: {}", resultBuffer.getNumberOfTuples());
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5U);
 
     auto* resultData = (SelectionDataGenSource::InputTuple*) resultBuffer.getBuffer();
@@ -1484,7 +1484,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     /* prepare input tuple buffer */
     source->open();
     auto inputBuffer = source->receiveData().value();
-    NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
+    NES_INFO2("Processing {} tuples: ", inputBuffer.getNumberOfTuples());
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(input_schema, inputBuffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);

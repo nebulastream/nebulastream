@@ -44,7 +44,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NES_INFO2("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -68,14 +68,14 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG2("query={}", query);
@@ -91,7 +91,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NES_INFO2("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -118,14 +118,14 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
     string query1 =
         R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG2("query={}", query1);
@@ -134,7 +134,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
 
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
 
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
     string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = queryService->validateAndQueueAddQueryRequest(query2, "BottomUp");
@@ -155,17 +155,17 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
 
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO2("QueryDeploymentTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    NES_INFO2("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    NES_INFO2("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    NES_INFO2("QueryDeploymentTest: Test finished");
 
     int response1 = remove(outputFilePath1.c_str());
     EXPECT_EQ(response1, 0);
@@ -180,7 +180,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 2;
-    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NES_INFO2("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -200,7 +200,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();

@@ -31,20 +31,20 @@ class QueryControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryControllerTest test class.");
+        NES_INFO2("Setup QueryControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down QueryControllerTest test class."); }
 
     void startCoordinator() {
-        NES_INFO("QueryControllerTest: Start coordinator");
+        NES_INFO2("QueryControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO("QueryControllerTest: Coordinator started successfully");
+        NES_INFO2("QueryControllerTest: Coordinator started successfully");
     }
 
     void stopCoordinator() {
@@ -185,7 +185,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
 
 //Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -199,7 +199,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    NES_INFO2("QueryControllerTest: Coordinator started successfully");
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
     ASSERT_TRUE(success);
     nlohmann::json request;
@@ -226,7 +226,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
 
 //Check if getting an execution-plan returns as expected
 TEST_F(QueryControllerTest, testGetExecutionPlan) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -240,7 +240,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    NES_INFO2("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
@@ -303,7 +303,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
 //Check if getting an execution-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -317,7 +317,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    NES_INFO2("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
@@ -362,7 +362,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
 
 //Check if getting a query-plan returns as expected
 TEST_F(QueryControllerTest, testGetQueryPlan) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -376,7 +376,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    NES_INFO2("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
@@ -426,7 +426,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 
 //Check if getting a query-plan with invalid query ID returns a 404
 TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
-    NES_INFO("TestsForOatppEndpoints: Start coordinator");
+    NES_INFO2("TestsForOatppEndpoints: Start coordinator");
     coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -440,7 +440,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-    NES_INFO("QueryControllerTest: Coordinator started successfully");
+    NES_INFO2("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));

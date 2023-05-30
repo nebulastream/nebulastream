@@ -32,7 +32,7 @@ class GlobalQueryPlanTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         Logger::setupLogging("GlobalQueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup GlobalQueryPlanTest test case.");
+        NES_INFO2("Setup GlobalQueryPlanTest test case.");
     }
 };
 

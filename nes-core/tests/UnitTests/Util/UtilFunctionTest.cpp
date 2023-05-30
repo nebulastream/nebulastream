@@ -22,9 +22,9 @@ class UtilFunctionTest : public Testing::TestWithErrorHandling {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("UtilFunctionTest test class SetUpTestCase.");
+        NES_INFO2("UtilFunctionTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("UtilFunctionTest test class TearDownTestCase."); }
 };
 
 TEST(UtilFunctionTest, replaceNothing) {

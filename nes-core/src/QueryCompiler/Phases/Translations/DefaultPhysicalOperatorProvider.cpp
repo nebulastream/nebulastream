@@ -679,7 +679,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             // check different content-based window types
             if (contentBasedWindowType->getContentBasedSubWindowType()
                 == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
-                NES_INFO("Lower ThresholdWindow");
+                NES_INFO2("Lower ThresholdWindow");
                 auto thresholdWindowPhysicalOperator =
                     PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
                                                                                windowOutputSchema,

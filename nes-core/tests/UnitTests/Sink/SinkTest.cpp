@@ -63,7 +63,7 @@ class SinkTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SinkTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SinkTest class.");
+        NES_INFO2("Setup SinkTest class.");
     }
 
     /* Called before a single test. */
@@ -622,7 +622,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     Monitoring::MetricPtr retMetric = pairedDiskMetric->second;
     Monitoring::DiskMetrics parsedMetrics = retMetric->getValue<Monitoring::DiskMetrics>();
 
-    NES_INFO("MetricStoreTest: Stored metrics" << Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO2("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_TRUE(storedMetrics->size() == 1);
     ASSERT_EQ(parsedMetrics, typedMetric);
 
@@ -633,7 +633,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     Monitoring::MetricPtr retMetricCpu = pairedCpuMetric->second;
     Monitoring::CpuMetricsWrapper parsedMetricsCpu = retMetricCpu->getValue<Monitoring::CpuMetricsWrapper>();
 
-    NES_INFO("MetricStoreTest: Stored metrics" << Monitoring::MetricUtils::toJson(storedMetricsCpu));
+    NES_INFO2("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetricsCpu));
     ASSERT_TRUE(storedMetricsCpu->size() == 1);
     ASSERT_EQ(parsedMetricsCpu, typedMetricCpu);
 

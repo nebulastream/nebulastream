@@ -64,7 +64,7 @@ class WindowManagerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup WindowMangerTest test class.");
+        NES_INFO2("Setup WindowMangerTest test class.");
     }
 
     const uint64_t buffers_managed = 10;

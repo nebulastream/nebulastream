@@ -49,7 +49,7 @@ class SingleNodeThreadLocalGlobalTumblingWindowTests : public Testing::NESBaseTe
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SingleNodeThreadLocalGlobalTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalGlobalTumblingWindowTests test class.");
+        NES_INFO2("Setup SingleNodeThreadLocalGlobalTumblingWindowTests test class.");
     }
 
     void SetUp() override {

@@ -30,10 +30,10 @@ class TopologyControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyControllerTest test class.");
+        NES_INFO2("Setup TopologyControllerTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down ConnectivityControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down ConnectivityControllerTest test class."); }
 
     /**
      * Starts a coordinator with the following configurations
@@ -41,7 +41,7 @@ class TopologyControllerTest : public Testing::NESBaseTest {
      * restPort = restPort specified in NESBaseTest
      */
     void startCoordinator() {
-        NES_INFO("SourceCatalogControllerTest: Start coordinator");
+        NES_INFO2("SourceCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;

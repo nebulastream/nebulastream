@@ -49,7 +49,7 @@ class SingleNodeThreadLocalGlobalSlidingWindowTests : public Testing::NESBaseTes
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SingleNodeThreadLocalGlobalSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalGlobalSlidingWindowTests test class.");
+        NES_INFO2("Setup SingleNodeThreadLocalGlobalSlidingWindowTests test class.");
     }
 
     void SetUp() override {

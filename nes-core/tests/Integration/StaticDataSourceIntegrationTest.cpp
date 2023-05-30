@@ -69,7 +69,7 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StaticDataSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
+        NES_INFO2("Setup StaticDataSourceIntegrationTest test class.");
     }
 
     SchemaPtr schema_customer;
@@ -152,8 +152,8 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
 
         uint64_t diffToStart = lastTask - queryStart;
         uint64_t diffToFirstTask = lastTask - firstTask;
-        NES_INFO("Total query runtime since query start: " << diffToStart << " ms.");
-        NES_INFO("Total query runtime since first Task: " << diffToFirstTask << " ms.");
+        NES_INFO2("Total query runtime since query start: {}ms.", diffToStart);
+        NES_INFO2("Total query runtime since first Task: {}ms.", diffToFirstTask);
         return diffToFirstTask;
     }
 };
@@ -168,18 +168,18 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType =
@@ -190,7 +190,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "testCustomerTableOut.csv";
@@ -212,7 +212,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     int buffersToASSERT = 1;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     // extract total query runtime from statistics
@@ -275,12 +275,12 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     auto physicalSource = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType);
     crdConf->worker.physicalSources.add(physicalSource);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -302,7 +302,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     // extract total query runtime from statistics
@@ -350,18 +350,18 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType =
@@ -372,7 +372,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "testCustomerTableProjectionOut.csv";
@@ -396,7 +396,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     const auto timeoutSeconds = std::chrono::seconds(120);
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true, timeoutSeconds));
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -428,18 +428,18 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType =
@@ -450,7 +450,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "testNationTableOut.csv";
@@ -468,7 +468,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     int buffersToASSERT = 1;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -500,18 +500,18 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("static_integers_only_0", schema_integers_0);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType =
@@ -522,7 +522,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "testIntegerTable0Out.csv";
@@ -540,7 +540,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -572,11 +572,11 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -584,7 +584,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType0 =
@@ -600,7 +600,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = getTestResourceFolder() / "testTwoTableJoinOut.csv";
@@ -622,7 +622,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     int buffersToASSERT = 1;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -666,12 +666,12 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType1);
     crdConf->worker.physicalSources.add(physicalSource1);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -706,7 +706,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -1236,12 +1236,12 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_s0001_customer", sourceType1);
     crdConf->worker.physicalSources.add(physicalSource1);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1275,7 +1275,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     if (!benchmark) {
@@ -1319,12 +1319,12 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
     crdConf->worker.physicalSources.add(physicalSource1);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1354,7 +1354,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -1407,12 +1407,12 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     crdConf->worker.physicalSources.add(physicalSource1a);
     crdConf->worker.physicalSources.add(physicalSource1b);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1442,7 +1442,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -1489,12 +1489,12 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
     crdConf->worker.physicalSources.add(physicalSource1);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1530,7 +1530,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -1573,18 +1573,18 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
     wrkConfRemote->physicalSources.add(physicalSource1);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     wrkConfRemote->coordinatorPort = port;
     NesWorkerPtr wrkRemote = std::make_shared<NesWorker>(std::move(wrkConfRemote));
     bool retStartRemote = wrkRemote->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStartRemote);
-    NES_INFO("StaticDataSourceIntegrationTest: Remote worker started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remote worker started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1614,7 +1614,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -1668,12 +1668,12 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_customer_s0001", sourceType1);
     crdConf->worker.physicalSources.add(physicalSource1);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+    NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1705,7 +1705,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
     printTotalQueryRuntime(stats);
 
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     if (!benchmark) {
@@ -1796,7 +1796,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             crdConf->worker.numberOfBuffersInGlobalBufferManager = 1000000;
             crdConf->worker.numWorkerThreads = 2;
 
-            NES_INFO("num work " << crdConf->worker.numWorkerThreads.getValue() << " num buff "
+            NES_INFO2("num work " << crdConf->worker.numWorkerThreads.getValue() << " num buff "
                                  << crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
             crdConf->rpcPort = (*rpcCoordinatorPort);
@@ -1817,12 +1817,12 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             auto physicalSource1 = PhysicalSource::create("probe_side", "probe_side", sourceType1);
             crdConf->worker.physicalSources.add(physicalSource1);
 
-            NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+            NES_INFO2("StaticDataSourceIntegrationTest: Start coordinator");
 
             NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
             uint64_t port = crd->startCoordinator(/**blocking**/ false);
             EXPECT_NE(port, 0UL);
-            NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+            NES_INFO2("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
             QueryServicePtr queryService = crd->getQueryService();
             QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -1858,7 +1858,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             NES_WARNING2("sizeProbeTable: {} sizeBuildTable: {}", sizeProbeTable, sizeBuildTable);
             printTotalQueryRuntime(stats);
 
-            NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+            NES_INFO2("StaticDataSourceIntegrationTest: Remove query");
             ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
             if (!benchmark) {
@@ -1882,7 +1882,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
                 std::string content;
                 for (int i = 0; i < 11; ++i) {
                     std::getline(ifs, content, '\n');
-                    NES_INFO(content);
+                    NES_INFO2("{}", content);
                 }
             }
 

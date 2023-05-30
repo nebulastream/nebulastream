@@ -29,12 +29,12 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
+        NES_INFO2("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
+        NES_INFO2("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
@@ -42,13 +42,13 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
+        NES_INFO2("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
         EXPECT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
@@ -174,7 +174,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
-    NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
+    NES_INFO2("Submitting query: {}", query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
@@ -266,7 +266,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
                      .window(TumblingWindow::of(EventTime(Attribute("test1$start")), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
-    NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
+    NES_INFO2("Submitting query: {}", query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);

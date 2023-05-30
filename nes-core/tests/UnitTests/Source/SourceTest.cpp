@@ -553,11 +553,11 @@ class SourceTest : public Testing::NESBaseTest {
         this->sourceAffinity = std::numeric_limits<uint64_t>::max();
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down SourceTest test class."); }
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_TRACE);
-        NES_INFO("Setup SourceTest test class.");
+        NES_INFO2("Setup SourceTest test class.");
     }
 
     void TearDown() override {
@@ -1976,7 +1976,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     auto stop = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     NES_DEBUG2("start={} stop={}", start, stop);
 
-    NES_INFO("SourceTest: Remove query");
+    NES_INFO2("SourceTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 

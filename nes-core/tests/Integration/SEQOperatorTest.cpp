@@ -44,7 +44,7 @@ class SeqOperatorTest : public Testing::NESBaseTest {
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SeqOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SeqOperatorTest test class.");
+        NES_INFO2("Setup SeqOperatorTest test class.");
     }
 
     string removeRandomKey(string contentString) {
@@ -74,7 +74,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -101,7 +101,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -115,12 +115,12 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+    NES_INFO2("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("Win1").seqWith(Query::from("Win2"))
@@ -142,7 +142,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
-    NES_INFO("SeqOperatorTest: Remove query");
+    NES_INFO2("SeqOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -163,7 +163,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -190,7 +190,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SeqOperatorTest: Worker1 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker1 started successfully");
 
     NES_DEBUG2("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -204,12 +204,12 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("SeqOperatorTest: Worker2 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+    NES_INFO2("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity") > 70).seqWith(Query::from("QnV2").filter(Attribute("velocity") > 65))
@@ -258,7 +258,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("SeqOperatorTest: Start coordinator");
+    NES_INFO2("SeqOperatorTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -285,7 +285,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SeqOperatorTest: Worker1 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker1 started successfully");
 
     NES_DEBUG2("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -299,12 +299,12 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("SeqOperatorTest: Worker2 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternSeqSliding.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+    NES_INFO2("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity")>70)
@@ -323,7 +323,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO2("AndOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -355,7 +355,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -382,7 +382,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG2("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -396,12 +396,12 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternSeqEarlyTermination.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+    NES_INFO2("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity")>50).seqWith(Query::from("QnV2").filter(Attribute("quantity")>5)).isEarlyTermination(true).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
@@ -418,7 +418,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("SeqOperatorTest: Remove query");
+    NES_INFO2("SeqOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
@@ -453,7 +453,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("SeqOperatorTest: Start coordinator");
+    NES_INFO2("SeqOperatorTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -485,7 +485,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SeqOperatorTest: Worker1 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker1 started successfully");
 
     NES_DEBUG2("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
@@ -499,7 +499,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("SeqOperatorTest: Worker2 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker2 started successfully");
 
     NES_DEBUG2("SeqOperatorTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
@@ -513,12 +513,12 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("SeqOperatorTest: Worker2 started successfully");
+    NES_INFO2("SeqOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+    NES_INFO2("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity") > 70)
@@ -540,7 +540,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("SeqOperatorTest: Remove query");
+    NES_INFO2("SeqOperatorTest: Remove query");
     ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
