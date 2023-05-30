@@ -1267,7 +1267,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical4$ts"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    NES_DEBUG2("expected sinkOutputSchema= {}",sinkOutputSchema->toString());
+    NES_DEBUG2("expected sinkOutputSchema= {}", sinkOutputSchema->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$start"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$end"));

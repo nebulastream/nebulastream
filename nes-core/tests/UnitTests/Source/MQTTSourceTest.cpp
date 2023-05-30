@@ -168,7 +168,9 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
     value = *tuple;
     uint64_t expected = 43;
-    NES_DEBUG2("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: {}. Received value is: {}", expected, value);
+    NES_DEBUG2("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: {}. Received value is: {}",
+               expected,
+               value);
     EXPECT_EQ(value, expected);
 }
 

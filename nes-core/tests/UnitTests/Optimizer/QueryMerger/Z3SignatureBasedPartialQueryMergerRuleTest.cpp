@@ -257,7 +257,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
     EXPECT_TRUE(updatedSharedQueryPlan1);
 
-    NES_INFO2("{}",updatedSharedQueryPlan1->toString());
+    NES_INFO2("{}", updatedSharedQueryPlan1->toString());
 
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();

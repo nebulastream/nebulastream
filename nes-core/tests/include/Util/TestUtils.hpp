@@ -350,15 +350,23 @@ template<typename Predicate = std::equal_to<uint64_t>>
         }
         uint64_t processed = statistics[0]->getProcessedBuffers();
         if (processed >= expectedResult) {
-            NES_TRACE2("checkCompleteOrTimeout: results are correct procBuffer={} procTasks={} procWatermarks={}", statistics[0]->getProcessedBuffers(), statistics[0]->getProcessedTasks(), statistics[0]->getProcessedWatermarks());
+            NES_TRACE2("checkCompleteOrTimeout: results are correct procBuffer={} procTasks={} procWatermarks={}",
+                       statistics[0]->getProcessedBuffers(),
+                       statistics[0]->getProcessedTasks(),
+                       statistics[0]->getProcessedWatermarks());
             return true;
         }
-        NES_TRACE2("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer={} procTasks={} procWatermarks={}", statistics[0]->getProcessedBuffers(), statistics[0]->getProcessedTasks(), statistics[0]->getProcessedWatermarks());
+        NES_TRACE2("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer={} procTasks={} procWatermarks={}",
+                   statistics[0]->getProcessedBuffers(),
+                   statistics[0]->getProcessedTasks(),
+                   statistics[0]->getProcessedWatermarks());
         std::this_thread::sleep_for(sleepDuration);
     }
     auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
     uint64_t processed = statistics[0]->getProcessedBuffers();
-    NES_TRACE2("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected={} final result={}", expectedResult, processed);
+    NES_TRACE2("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected={} final result={}",
+               expectedResult,
+               processed);
     return false;
 }
 
@@ -403,20 +411,32 @@ template<typename Predicate = std::equal_to<uint64_t>>
         if (minOneProcessedTask
             && (statistics[0]->getTimestampLastProcessedTask() == 0 || statistics[0]->getTimestampFirstProcessedTask() == 0
                 || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count())) {
-            NES_TRACE2("checkCompleteOrTimeout: A task was processed within the last {}ms, the query may still be active. Restart the timeout period.", timeoutMillisec.count());
+            NES_TRACE2("checkCompleteOrTimeout: A task was processed within the last {}ms, the query may still be active. "
+                       "Restart the timeout period.",
+                       timeoutMillisec.count());
         }
         // return if enough buffer have been received
         else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
-            NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats={} procTasks={} procWatermarks={}", statistics[0]->getProcessedBuffers(), statistics[0]->getProcessedTasks(), statistics[0]->getProcessedWatermarks());
+            NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats={} procTasks={} procWatermarks={}",
+                       statistics[0]->getProcessedBuffers(),
+                       statistics[0]->getProcessedTasks(),
+                       statistics[0]->getProcessedWatermarks());
             return true;
         }
-        NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer={} procTasks={} expected={}", statistics[0]->getProcessedBuffers(), statistics[0]->getProcessedTasks(), expectedResult);
+        NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer={} procTasks={} expected={}",
+                   statistics[0]->getProcessedBuffers(),
+                   statistics[0]->getProcessedTasks(),
+                   expectedResult);
 
         std::this_thread::sleep_for(sleepDuration);
     }
     //FIXME: handle vector of statistics properly in #977
     NES_TRACE2("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result={}"
-              "processedBuffer={} processedTasks={} procWatermarks={}",expectedResult, nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers(), nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks(), nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+               "processedBuffer={} processedTasks={} procWatermarks={}",
+               expectedResult,
+               nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers(),
+               nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks(),
+               nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
     return false;
 }
 
@@ -505,16 +525,21 @@ template<typename T>
             if (expectedNumberOfContent != currentContentSize) {
                 if (currentContentSize > expectedNumberOfContent) {
                     NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
-                              "currentContentSize: {} - expectedNumberOfContent: {}", currentContentSize, expectedNumberOfContent);
+                               "currentContentSize: {} - expectedNumberOfContent: {}",
+                               currentContentSize,
+                               expectedNumberOfContent);
                     return false;
                 }
 
                 NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines {}"
-                          " not reached yet with {} lines content={}", expectedNumberOfContent, currentContent.size(), content);
+                           " not reached yet with {} lines content={}",
+                           expectedNumberOfContent,
+                           currentContent.size(),
+                           content);
 
             } else {
                 NES_DEBUG2("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
-                          "number of content");
+                           "number of content");
                 return true;
             }
         }

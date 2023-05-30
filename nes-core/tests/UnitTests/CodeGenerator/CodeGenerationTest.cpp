@@ -600,7 +600,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto outputBuffer = context->buffers[0];
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, outputBuffer);
     std::stringstream dynamicTupleBufferAsString;
-    dynamicTupleBufferAsString <<  dynamicTupleBuffer;
+    dynamicTupleBufferAsString << dynamicTupleBuffer;
     NES_INFO2("{}", dynamicTupleBufferAsString.str());
 
     /* check result for correctness */

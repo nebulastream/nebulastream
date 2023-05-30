@@ -277,7 +277,8 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     std::string str(tuple);
     std::string expected = "32";
     NES_DEBUG2("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: {}. Received value is: {}",
-              expected, str);
+               expected,
+               str);
     EXPECT_EQ(str, expected);
 }
 

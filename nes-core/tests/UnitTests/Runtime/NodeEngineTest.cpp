@@ -205,7 +205,11 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         count += inputTupleBuffer.getNumberOfTuples();
         sum += psum;
 
-        NES_INFO2("Test: query result = Processed Block:{} count: {} psum: {} sum: {}", inputTupleBuffer.getNumberOfTuples(), count, psum, sum);
+        NES_INFO2("Test: query result = Processed Block:{} count: {} psum: {} sum: {}",
+                  inputTupleBuffer.getNumberOfTuples(),
+                  count,
+                  psum,
+                  sum);
 
         if (sum == 10) {
             NES_DEBUG2("TEST: result correct");

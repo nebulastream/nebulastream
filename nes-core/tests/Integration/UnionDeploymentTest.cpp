@@ -734,11 +734,15 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                                          "|16|1|2|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): content={}", content);
+    NES_INFO2(
+        "UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): content={}",
+        content);
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-             "expectedContentSubQry={}", expectedContentSubQry);
+              "expectedContentSubQry={}",
+              expectedContentSubQry);
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-             "expectedContentMainQry={}", expectedContentMainQry);
+              "expectedContentMainQry={}",
+              expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
@@ -854,11 +858,11 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
 
     NES_INFO2("UnionDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentSources): content={}", content);
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-             "expectedContentSubQry={}",
-             expectedContentSubQry);
+              "expectedContentSubQry={}",
+              expectedContentSubQry);
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-             "expectedContentMainQry={}",
-             expectedContentMainQry);
+              "expectedContentMainQry={}",
+              expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
@@ -993,11 +997,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
 
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources): content={}", content);
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-             "expectedContentSubQry={}",
-             expectedContentSubQry);
+              "expectedContentSubQry={}",
+              expectedContentSubQry);
     NES_INFO2("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
-             "expectedContentMainQry={}",
-             expectedContentMainQry);
+              "expectedContentMainQry={}",
+              expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
