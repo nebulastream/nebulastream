@@ -49,7 +49,7 @@ class Fixed2DArrayRef {
 };
 
 /**
- * @brief This class represents a single of the Fixed2DArray
+ * @brief This class represents a single row of the Fixed2DArray
  */
 class Fixed2DArrayRowRef {
   public:
