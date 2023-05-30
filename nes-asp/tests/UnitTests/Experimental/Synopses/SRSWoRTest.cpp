@@ -18,7 +18,7 @@
 #include <Experimental/Operators/SynopsesOperator.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
-#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -116,7 +116,7 @@ namespace NES::ASP {
         // Creating the worker context and the pipeline necessary for testing the sampling
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         auto handlerIndex = 0;
-        auto opHandler = std::make_shared<SRSWoROperatorHandler>();
+        auto opHandler = std::make_shared<RandomSampleWithoutReplacementOperatorHandler>();
         std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
         auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
         Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
@@ -218,7 +218,7 @@ namespace NES::ASP {
         // Creating the worker context and the pipeline necessary for testing the sampling
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         auto handlerIndex = 0;
-        auto opHandler = std::make_shared<SRSWoROperatorHandler>();
+        auto opHandler = std::make_shared<RandomSampleWithoutReplacementOperatorHandler>();
         std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
         auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
         Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),

@@ -13,8 +13,8 @@
 */
 
 
-#ifndef NES_SRSWOROPERATORHANDLER_HPP
-#define NES_SRSWOROPERATORHANDLER_HPP
+#ifndef NES_RANDOMSAMPLEWITHOUTREPLACEMENTOPERATORHANDLER_HPP
+#define NES_RANDOMSAMPLEWITHOUTREPLACEMENTOPERATORHANDLER_HPP
 
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -23,7 +23,7 @@ namespace NES::ASP {
 /**
  * @brief OperatorHandler for a SRSWoR synopsis
  */
-class SRSWoROperatorHandler : public Runtime::Execution::OperatorHandler {
+class RandomSampleWithoutReplacementOperatorHandler : public Runtime::Execution::OperatorHandler {
 
   public:
     /**
@@ -62,4 +62,4 @@ class SRSWoROperatorHandler : public Runtime::Execution::OperatorHandler {
 } // namespace NES::ASP
 
 
-#endif//NES_SRSWOROPERATORHANDLER_HPP
+#endif//NES_RANDOMSAMPLEWITHOUTREPLACEMENTOPERATORHANDLER_HPP

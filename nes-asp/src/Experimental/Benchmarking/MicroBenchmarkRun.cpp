@@ -16,7 +16,7 @@
 #include <Experimental/Benchmarking/MicroBenchmarkRun.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Experimental/Operators/SynopsesOperator.hpp>
-#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -314,7 +314,7 @@ MicroBenchmarkRun::createExecutablePipeline(AbstractSynopsesPtr synopsis) {
 Runtime::Execution::OperatorHandlerPtr MicroBenchmarkRun::createOperatorHandler() {
     switch (synopsesArguments->type) {
 
-        case Parsing::Synopsis_Type::SRSWoR: return std::make_shared<SRSWoROperatorHandler>();
+        case Parsing::Synopsis_Type::SRSWoR: return std::make_shared<RandomSampleWithoutReplacementOperatorHandler>();
         case Parsing::Synopsis_Type::SRSWR:
         case Parsing::Synopsis_Type::Poisson:
         case Parsing::Synopsis_Type::Stratified:

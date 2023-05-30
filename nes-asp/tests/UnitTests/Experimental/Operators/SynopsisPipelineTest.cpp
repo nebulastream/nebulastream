@@ -27,7 +27,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
+#include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -86,7 +86,7 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
 Runtime::Execution::OperatorHandlerPtr createOperatorHandler(ASP::Parsing::Synopsis_Type type) {
     switch (type) {
 
-        case ASP::Parsing::Synopsis_Type::SRSWoR: return std::make_shared<ASP::SRSWoROperatorHandler>();
+        case ASP::Parsing::Synopsis_Type::SRSWoR: return std::make_shared<ASP::RandomSampleWithoutReplacementOperatorHandler>();
         case ASP::Parsing::Synopsis_Type::SRSWR:
         case ASP::Parsing::Synopsis_Type::Poisson:
         case ASP::Parsing::Synopsis_Type::Stratified:
