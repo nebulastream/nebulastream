@@ -671,7 +671,7 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
     for (auto& buffer : buffersToBeMerged) {
         cnt += buffer.getNumberOfTuples();
         if (cnt > maxPossibleTuples) {
-            NES_WARNING("Too many tuples to fit in a single buffer.");
+            NES_WARNING2("Too many tuples to fit in a single buffer.");
             return retBuffer;
         }
 
