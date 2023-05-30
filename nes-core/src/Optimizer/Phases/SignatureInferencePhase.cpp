@@ -34,7 +34,8 @@ void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
     if (queryMergerRule == QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule
         || queryMergerRule == QueryMergerRule::HashSignatureBasedPartialQueryMergerRule
         || queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedPartialQueryMergerRule) {
+        || queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedPartialQueryMergerRule
+        || queryMergerRule == QueryMergerRule::HashSignatureBasedPartialQueryContainmentMergerRule) {
         NES_INFO2("SignatureInferencePhase: computing String based signature for the query {}", queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
@@ -43,7 +44,7 @@ void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
     } else if (queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
                || queryMergerRule == QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule
                || queryMergerRule == QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule
-               || queryMergerRule == QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule) {
+               || queryMergerRule == QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentMergerRule) {
         NES_INFO2("SignatureInferencePhase: computing Z3 based signature for the query {}", queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {

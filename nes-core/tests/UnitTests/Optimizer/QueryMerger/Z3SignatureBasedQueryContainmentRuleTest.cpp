@@ -1018,7 +1018,7 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto z3InferencePhase =
             Optimizer::SignatureInferencePhase::create(context,
-                                                       Optimizer::QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule);
+                                                       Optimizer::QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentMergerRule);
         z3InferencePhase->execute(queryPlanSQPQuery);
         z3InferencePhase->execute(queryPlanNewQuery);
 

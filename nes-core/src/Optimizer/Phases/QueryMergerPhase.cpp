@@ -16,6 +16,7 @@
 #include <Optimizer/QueryMerger/DefaultQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/HashSignatureBasedPartialQueryContainmentMergerRule.hpp>
 #include <Optimizer/QueryMerger/HybridCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
@@ -51,7 +52,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule:
             queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(std::move(context));
             break;
-        case QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule:
+        case QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentMergerRule:
             queryMergerRule = Z3SignatureBasedBottomUpQueryContainmentRule::create(std::move(context));
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
@@ -63,6 +64,9 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             break;
         case QueryMergerRule::HybridCompleteQueryMergerRule:
             queryMergerRule = HybridCompleteQueryMergerRule::create(std::move(context));
+            break;
+        case QueryMergerRule::HashSignatureBasedPartialQueryContainmentMergerRule:
+            queryMergerRule = HashSignatureBasedPartialQueryContainmentMergerRule::create(std::move(context));
             break;
         case QueryMergerRule::DefaultQueryMergerRule: queryMergerRule = DefaultQueryMergerRule::create();
     }

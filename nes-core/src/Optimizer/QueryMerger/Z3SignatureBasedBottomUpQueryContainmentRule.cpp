@@ -100,7 +100,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                 hostQueryPlan->addRootOperator(targetSink);
             } else {
                 //create a map of matching target to address operator id map
-                auto matchedTargetToHostOperatorMap = areQueryPlansContained(targetQueryPlan, hostQueryPlan);
+                auto matchedTargetToHostOperatorMap = areQueryPlansContained(hostQueryPlan, targetQueryPlan);
                 NES_DEBUG2("matchedTargetToHostOperatorMap empty? {}", matchedTargetToHostOperatorMap.empty());
                 if (!matchedTargetToHostOperatorMap.empty()) {
                     hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
