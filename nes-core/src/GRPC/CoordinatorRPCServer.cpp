@@ -413,6 +413,7 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
     reply->set_success(false);
     return Status::CANCELLED;
 }
+
 Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) {
     auto nodeId = request->nodeid();
     auto node = topologyManagerService->findNodeWithId(nodeId);

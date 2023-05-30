@@ -178,6 +178,14 @@ std::optional<uint64_t> NES::Spatial::Mobility::Experimental::WorkerMobilityHand
     }
     return closestNode.data();
 }
+
+std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
+NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap) {
+    if (neighbourWorkerIdToLocationMap.contains(nodeId)) {
+        return NES::Spatial::Util::S2Utilities::s2pointToLocation(neighbourWorkerIdToLocationMap.at(nodeId));
+    }
+    return std::nullopt;
+}
 #endif
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
@@ -359,12 +367,4 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeIdsInRange(
     auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(location, radius);
     return DataTypes::Experimental::NodeIdToGeoLocationMap{nodeVector.begin(), nodeVector.end()};
 }
-std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
-NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap) {
-    if (neighbourWorkerIdToLocationMap.contains(nodeId)) {
-        return NES::Spatial::Util::S2Utilities::s2pointToLocation(neighbourWorkerIdToLocationMap.at(nodeId));
-    }
-    return std::nullopt;
-}
-
 }// namespace NES

@@ -133,6 +133,7 @@ class WorkerMobilityHandler {
     DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location,
                                                                       double radius);
 
+#ifdef S2DEF
     /**
      * @brief get a fixed location node's geolocation from the downloaded index
      * @param nodeId: the id of the fixed location node
@@ -140,7 +141,6 @@ class WorkerMobilityHandler {
      */
     static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap);
 
-#ifdef S2DEF
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
      * downloaded positions is non empty, delete the old spatial index and replace it with the new data.
