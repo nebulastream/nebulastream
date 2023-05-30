@@ -49,6 +49,6 @@ class Fixed2DArray {
     uint64_t numCols;
     uint8_t* data;
 };
-} // namespace NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface
 
 #endif//NES_FIXED2DARRAY_HPP

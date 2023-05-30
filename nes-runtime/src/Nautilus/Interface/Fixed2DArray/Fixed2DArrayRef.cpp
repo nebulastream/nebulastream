@@ -32,11 +32,12 @@ Fixed2DArrayRowRef Fixed2DArrayRef::operator[](const Value<UInt64>& rowIndex) co
     return {baseAddress, entrySize};
 }
 
-Fixed2DArrayRowRef::Fixed2DArrayRowRef(Value<MemRef>& baseAddress, uint64_t entrySize) : baseAddress(baseAddress), entrySize(entrySize) {}
+Fixed2DArrayRowRef::Fixed2DArrayRowRef(Value<MemRef>& baseAddress, uint64_t entrySize)
+    : baseAddress(baseAddress), entrySize(entrySize) {}
 
 Value<MemRef> Fixed2DArrayRowRef::operator[](const Value<UInt64>& colIndex) const {
     auto offSet = (colIndex * entrySize).as<UInt64>();
     return (baseAddress + offSet).as<MemRef>();
 }
 
-} // namespace NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface
