@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Batch sort operator.
  * The batch sort operator, consumes input tuples and materializes them in a global state.
- * If all input records are processed, we sort the global state and emit the sorted records.
+ * If all input records are processed, we sort the global state and emit the sorted tuples.
  */
 class BatchSort : public ExecutableOperator {
   public:
@@ -32,7 +32,7 @@ class BatchSort : public ExecutableOperator {
      * @brief Construct a new BatchSort operator
      *
      * @param operatorHandlerIndex operator handler index
-     * @param dataTypes data types of the input records
+     * @param dataTypes data types of the input tuples
      */
     BatchSort(const uint64_t operatorHandlerIndex,
          const std::vector<PhysicalTypePtr>& dataTypes);

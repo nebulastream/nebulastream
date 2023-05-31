@@ -13,7 +13,6 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
@@ -24,6 +23,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -60,32 +60,6 @@ void fillState(uint64_t numberOfRecord, std::shared_ptr<BatchSortOperatorHandler
     }
 }
 
-template <typename TypeParam>
-PhysicalTypePtr getPhysicalTypePtr() {
-    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    PhysicalTypePtr type;
-    if (typeid(int32_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-    } else if (typeid(uint32_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt32());
-    } else if (typeid(int64_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    } else if (typeid(uint64_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-    } else if (typeid(int16_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt16());
-    } else if (typeid(uint16_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt16());
-    } else if (typeid(int8_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
-    } else if (typeid(uint8_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
-    } else {
-        throw std::runtime_error("Type not supported");
-    }
-    return type;
-}
-
 using TestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, uint16_t, int16_t, uint8_t, int8_t>;
 TYPED_TEST_SUITE(BatchSortScanOperatorTest, TestTypes);
 
@@ -103,7 +77,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
     handler->setup(pipelineContext);
     fillState<TypeParam>(numberOfRecords, handler);
 
-    auto type = getPhysicalTypePtr<TypeParam>();
+    auto type = Util::getPhysicalTypePtr<TypeParam>();
     auto dataTypes = std::vector<PhysicalTypePtr>{type};
     std::vector<Record::RecordFieldIdentifier> fieldNames = {"f1"};
 

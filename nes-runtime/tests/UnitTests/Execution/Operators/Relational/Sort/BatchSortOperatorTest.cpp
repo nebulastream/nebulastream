@@ -24,6 +24,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -52,32 +53,6 @@ class BatchSortOperatorTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO2("Tear down BatchSortOperatorTest test class."); }
 };
 
-template <typename TypeParam>
-PhysicalTypePtr getPhysicalTypePtr() {
-    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    PhysicalTypePtr type;
-    if (typeid(int32_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-    } else if (typeid(uint32_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt32());
-    } else if (typeid(int64_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    } else if (typeid(uint64_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-    } else if (typeid(int16_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt16());
-    } else if (typeid(uint16_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt16());
-    } else if (typeid(int8_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
-    } else if (typeid(uint8_t) == typeid(TypeParam)) {
-        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
-    } else {
-        throw std::runtime_error("Type not supported");
-    }
-    return type;
-}
-
 using TestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, uint16_t, int16_t, uint8_t, int8_t>;
 TYPED_TEST_SUITE(BatchSortOperatorTest, TestTypes);
 
@@ -96,7 +71,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
     auto handler = std::make_shared<BatchSortOperatorHandler>(entrySize);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto type = getPhysicalTypePtr<TypeParam>();
+    auto type = Util::getPhysicalTypePtr<TypeParam>();
     auto dataTypes = std::vector<PhysicalTypePtr>{type, type};
 
     auto sortOperator = BatchSort(0, dataTypes);
@@ -130,7 +105,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
         records.push_back(Record({{"f1", Value<>(50)}, {"f2", Value<>(1)}}));
     }
 
-    auto entrySize = sizeof(int32_t) + sizeof(int32_t);
+    auto entrySize = sizeof(int32_t) * 2;
     auto handler = std::make_shared<BatchSortOperatorHandler>(entrySize);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
