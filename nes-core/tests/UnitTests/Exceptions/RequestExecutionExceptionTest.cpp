@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
+#include <Exceptions/RequestExecutionException.hpp>
+#include <NesBaseTest.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 

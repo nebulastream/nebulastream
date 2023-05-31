@@ -27,7 +27,7 @@ class QueryNotFoundException : public std::runtime_error, public RequestExecutio
   public:
     explicit QueryNotFoundException(const std::string& message);
 
-    const char * what() const noexcept override;
+    const char* what() const noexcept override;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_

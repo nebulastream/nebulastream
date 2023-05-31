@@ -39,6 +39,6 @@ class RequestExecutionException : public std::exception {
         return false;
     };
 };
-}
+}// namespace NES
 
 #endif//NES_REQUESTEXECUTIONEXCEPTION_HPP
