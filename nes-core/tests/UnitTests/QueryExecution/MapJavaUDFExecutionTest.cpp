@@ -97,7 +97,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Open the file
     std::ifstream file(path + className + ".class", std::ios::binary);
     if (!file.is_open()) {
-        NES_ERROR2("Could not open file: {}", path + className + ".class");
+        NES_ERROR2("Could not open file: {} {}.class", path, className);
         return {};
     }
 
@@ -109,7 +109,7 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
     // Read the file into the buffer
     file.seekg(0, std::ios::beg);
     if (!file.read(buffer.data(), fileSize)) {
-        NES_ERROR2("Could not read file: {}", path + className + ".class");
+        NES_ERROR2("Could not read file: {} {}.class", path, className);
         return {};
     }
     return buffer;
