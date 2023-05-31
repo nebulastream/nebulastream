@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.96](https://github.com/nebulastream/nebulastream/tree/v0.5.96) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.95...v0.5.96)
+
+### Bug Fixes 🐛
+
+- \[BUG\] PhysicalMapJavaUDFOperator not lowered to NautilusOperator in nes-executable-image [\#3772](https://github.com/nebulastream/nebulastream/issues/3772)
+
 ## [v0.5.95](https://github.com/nebulastream/nebulastream/tree/v0.5.95) (2023-05-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.94...v0.5.95)
