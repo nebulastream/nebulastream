@@ -245,12 +245,12 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
 }
 
 /**
-     * @brief Creates a TupleBuffer from a Nautilus::Record
-     * @param nautilusRecord
-     * @param schema
-     * @param bufferManager
-     * @return Filled TupleBuffer
-     */
+ * @brief Creates a TupleBuffer from a Nautilus::Record
+ * @param nautilusRecord
+ * @param schema
+ * @param bufferManager
+ * @return Filled TupleBuffer
+ */
 Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
     auto buffer = bufferManager->getBufferBlocking();
     int8_t* bufferPtr = (int8_t*) buffer.getBuffer();
@@ -262,11 +262,11 @@ Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, Schema
 }
 
 /**
-     * @brief create CSV lines from the tuples
-     * @param tbuffer the tuple buffer
-     * @param schema how to read the tuples from the buffer
-     * @return a full string stream as string
-     */
+ * @brief create CSV lines from the tuples
+ * @param tbuffer the tuple buffer
+ * @param schema how to read the tuples from the buffer
+ * @return a full string stream as string
+ */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -289,6 +289,36 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
         ss << std::endl;
     }
     return ss.str();
+}
+
+/**
+ * @brief Gets the physical type of a given type given as template parameter
+ * @return PhysicalTypePtr
+ */
+template <typename T>
+PhysicalTypePtr getPhysicalTypePtr() {
+    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr type;
+    if (typeid(int32_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+    } else if (typeid(uint32_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt32());
+    } else if (typeid(int64_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    } else if (typeid(uint64_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+    } else if (typeid(int16_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt16());
+    } else if (typeid(uint16_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt16());
+    } else if (typeid(int8_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
+    } else if (typeid(uint8_t) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
+    } else {
+        NES_THROW_RUNTIME_ERROR("Type not supported");
+    }
+    return type;
 }
 
 }// namespace NES::Runtime::Execution::Util
