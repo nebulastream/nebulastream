@@ -372,7 +372,7 @@ int main() {
                   CompressionAlgorithm::LZ4,
                   CompressionAlgorithm::SNAPPY,
                   CompressionAlgorithm::RLE,
-                  CompressionAlgorithm::BINARY_RLE,
+                  //CompressionAlgorithm::BINARY_RLE,
                   CompressionAlgorithm::FSST,
                   CompressionAlgorithm::SPRINTZ};
 
@@ -383,6 +383,7 @@ int main() {
     //Uniform distribution = Uniform();
     Binomial distribution = Binomial(0.5);
     distribution.seed = 42;
+    distribution.sort = true;
     // data: numbers 0-9
     ByteDataGenerator dataGenerator = ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);
     benchmarkBytes(ml, cm, 4096, dataGenerator);
