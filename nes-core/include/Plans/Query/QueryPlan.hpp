@@ -267,12 +267,6 @@ class QueryPlan {
      */
     PlacementStrategy getPlacementStrategy() const;
 
-    /**
-     * @brief Get the concatenated source and placement strategy divider is "_"
-     * @return sourceNames_placementStrategy
-     */
-    std::string getConcatenatedSourceAndPlacementStrategy() const;
-
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
