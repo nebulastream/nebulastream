@@ -65,7 +65,8 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
     for (const auto& targetQueryPlan : queryPlansToAdd) {
         bool matched = false;
         auto hostSharedQueryPlans =
-            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getConcatenatedSourceAndPlacementStrategy());
+            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
+                                                                                     targetQueryPlan->getPlacementStrategy());
         NES_DEBUG2("HostSharedQueryPlans empty? {}", hostSharedQueryPlans.empty());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
             //Fetch the host query plan to merge

@@ -41,7 +41,8 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
         auto hostSharedQueryPlans =
-            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getConcatenatedSourceAndPlacementStrategy());
+            globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
+                                                                                     targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
 
             //TODO: we need to check how this will pan out when we will have more than 1 sink

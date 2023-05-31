@@ -287,11 +287,4 @@ PlacementStrategy QueryPlan::getPlacementStrategy() const { return placementStra
 
 void QueryPlan::setPlacementStrategy(PlacementStrategy placementStrategy) { this->placementStrategy = placementStrategy; }
 
-std::string QueryPlan::getConcatenatedSourceAndPlacementStrategy() const {
-    //Combine placement strategy and source name
-    std::string sourceNameAndPlacementStrategy =
-        sourceConsumed + "_" + std::to_string(magic_enum::enum_integer(placementStrategy));
-    return sourceNameAndPlacementStrategy;
-}
-
 }// namespace NES

@@ -196,8 +196,10 @@ bool GlobalQueryPlan::clearQueryPlansToAdd() {
 }
 
 std::vector<SharedQueryPlanPtr>
-GlobalQueryPlan::getSharedQueryPlansConsumingSourcesAndPlacementStrategy(std::string sourceNamesAndPlacementStrategy) {
-    auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(sourceNamesAndPlacementStrategy);
+GlobalQueryPlan::getSharedQueryPlansConsumingSourcesAndPlacementStrategy(std::string sourceNames,
+                                                                         PlacementStrategy placementStrategy) {
+    std::string sourceNameAndPlacementStrategy = sourceNames + "_" + std::to_string(magic_enum::enum_integer(placementStrategy));
+    auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(sourceNameAndPlacementStrategy);
     if (item != sourceNamesAndPlacementStrategyToSharedQueryPlanMap.end()) {
         return item->second;
     }
