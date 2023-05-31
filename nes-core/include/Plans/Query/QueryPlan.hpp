@@ -278,6 +278,12 @@ class QueryPlan {
     void setEpochValue(uint64_t epochValue = 0);
 
     /**
+     * @brief Checks if the epoch value was set
+     * @return success if the epoch value was changed
+     */
+    bool hasEpochValue();
+
+    /**
      * @brief Get epoch value
      * @return epochValue: epochValue
      */

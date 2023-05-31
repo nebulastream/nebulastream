@@ -29,6 +29,7 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <utility>
@@ -106,6 +107,9 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
 
+        if (logicalQueryPlan->hasEpochValue()) {
+            request->getNodeEngine()->getQueryManager()->setNumberOfBuffersPerEpoch(logicalQueryPlan->getEpochValue());
+        }
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {

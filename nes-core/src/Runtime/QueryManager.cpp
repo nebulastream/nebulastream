@@ -112,6 +112,8 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
 
 uint64_t DynamicQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
 
+void DynamicQueryManager::setNumberOfBuffersPerEpoch(uint64_t epochValue) { numberOfBuffersPerEpoch = epochValue; }
+
 uint64_t DynamicQueryManager::getNumberOfTasksInWorkerQueues() const { return taskQueue.size(); }
 
 uint64_t MultiQueueQueryManager::getNumberOfTasksInWorkerQueues() const {
@@ -131,6 +133,8 @@ uint64_t AbstractQueryManager::getCurrentTaskSum() {
 }
 
 uint64_t AbstractQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
+
+void AbstractQueryManager::setNumberOfBuffersPerEpoch(uint64_t epochValue) { numberOfBuffersPerEpoch = epochValue; }
 
 AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false) { destroy(); }
 
@@ -158,6 +162,8 @@ bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
 }
 
 uint64_t MultiQueueQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
+
+void MultiQueueQueryManager::setNumberOfBuffersPerEpoch(uint64_t epochValue) { numberOfBuffersPerEpoch = epochValue; }
 
 bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);

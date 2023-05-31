@@ -283,6 +283,10 @@ void QueryPlan::setEpochValue(uint64_t epochValue) {
     this->epochValue = epochValue;
 }
 
+bool QueryPlan::hasEpochValue() {
+    return epochValue != 0;
+}
+
 uint64_t QueryPlan::getEpochValue() const { return epochValue; }
 
 FaultTolerancePlacement::Value QueryPlan::getFaultTolerancePlacement() const { return ftPlacement; }

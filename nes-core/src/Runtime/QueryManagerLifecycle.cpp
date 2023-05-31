@@ -63,7 +63,6 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId()
                                               << " subplanId=" << qep->getQuerySubPlanId());
 
-    numberOfBuffersPerEpoch = qep->getQueryId()
     //TODO: This assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
     queryToStatisticsMap.insert(qep->getQuerySubPlanId(),
                                 std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));

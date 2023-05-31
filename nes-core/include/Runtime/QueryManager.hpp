@@ -252,6 +252,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     uint64_t getNumberOfBuffersPerEpoch() const;
 
     /**
+      * @brief Sets the numberOfBuffersPerEpoch
+      * @param epochValue
+      */
+    void setNumberOfBuffersPerEpoch(uint64_t epochValue);
+
+    /**
      * @brief This method informs the QueryManager that a source has failed
      * @param source the failed source
      * @param errorMessage the reason of the feature
@@ -515,6 +521,12 @@ class DynamicQueryManager : public AbstractQueryManager {
       */
     uint64_t getNumberOfBuffersPerEpoch() const;
 
+    /**
+      * @brief Sets the numberOfBuffersPerEpoch
+      * @param epochValue
+      */
+    void setNumberOfBuffersPerEpoch(uint64_t epochValue);
+
   private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
@@ -605,6 +617,12 @@ class MultiQueueQueryManager : public AbstractQueryManager {
       * @return numberOfBuffersPerEpoch
       */
     uint64_t getNumberOfBuffersPerEpoch() const;
+
+    /**
+      * @brief Sets the numberOfBuffersPerEpoch
+      * @param epochValue
+      */
+    void setNumberOfBuffersPerEpoch(uint64_t epochValue);
 
   protected:
     /**
