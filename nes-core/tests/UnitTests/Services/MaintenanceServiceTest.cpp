@@ -22,9 +22,9 @@
 #include <Services/MaintenanceService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/Core.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <iostream>
 

@@ -19,9 +19,9 @@
 #include <Runtime/internal/rte_memory.h>
 #endif
 #include <Sources/BenchmarkSource.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Util/Core.hpp>
 #include <cmath>
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)

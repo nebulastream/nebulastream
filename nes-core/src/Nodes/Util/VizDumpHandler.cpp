@@ -21,8 +21,8 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>

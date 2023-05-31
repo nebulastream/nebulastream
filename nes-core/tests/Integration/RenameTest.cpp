@@ -25,9 +25,9 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/Core.hpp>
 #include <iostream>
 
 using namespace std;

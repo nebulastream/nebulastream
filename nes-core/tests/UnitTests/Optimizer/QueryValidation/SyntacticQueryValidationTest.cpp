@@ -18,8 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

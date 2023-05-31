@@ -27,9 +27,9 @@
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/Core.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>

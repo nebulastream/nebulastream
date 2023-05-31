@@ -77,7 +77,6 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
-
 /**
 * @brief Returns the physical types of all fields of the schema
 * @param schema

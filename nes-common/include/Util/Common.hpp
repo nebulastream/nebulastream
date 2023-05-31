@@ -21,47 +21,47 @@
 
 namespace NES::Util {
 namespace detail {
-    /**
+/**
     * @brief set of helper functions for splitting for different types
     * @return splitting function for a given type
     */
-    template<typename T>
-    struct SplitFunctionHelper {};
+template<typename T>
+struct SplitFunctionHelper {};
 
-    template<>
-    struct SplitFunctionHelper<std::string> {
-        static constexpr auto FUNCTION = [](std::string x) {
-            return x;
-        };
+template<>
+struct SplitFunctionHelper<std::string> {
+    static constexpr auto FUNCTION = [](std::string x) {
+        return x;
     };
+};
 
-    template<>
-    struct SplitFunctionHelper<uint64_t> {
-        static constexpr auto FUNCTION = [](std::string&& str) {
-            return uint64_t(std::atoll(str.c_str()));
-        };
+template<>
+struct SplitFunctionHelper<uint64_t> {
+    static constexpr auto FUNCTION = [](std::string&& str) {
+        return uint64_t(std::atoll(str.c_str()));
     };
+};
 
-    template<>
-    struct SplitFunctionHelper<uint32_t> {
-        static constexpr auto FUNCTION = [](std::string&& str) {
-            return uint32_t(std::atoi(str.c_str()));
-        };
+template<>
+struct SplitFunctionHelper<uint32_t> {
+    static constexpr auto FUNCTION = [](std::string&& str) {
+        return uint32_t(std::atoi(str.c_str()));
     };
+};
 
-    template<>
-    struct SplitFunctionHelper<int> {
-        static constexpr auto FUNCTION = [](std::string&& str) {
-            return std::atoi(str.c_str());
-        };
+template<>
+struct SplitFunctionHelper<int> {
+    static constexpr auto FUNCTION = [](std::string&& str) {
+        return std::atoi(str.c_str());
     };
+};
 
-    template<>
-    struct SplitFunctionHelper<double> {
-        static constexpr auto FUNCTION = [](std::string&& str) {
-            return std::atof(str.c_str());
-        };
+template<>
+struct SplitFunctionHelper<double> {
+    static constexpr auto FUNCTION = [](std::string&& str) {
+        return std::atof(str.c_str());
     };
+};
 
 }// namespace detail
 
@@ -173,7 +173,6 @@ std::string replaceFirst(std::string origin, const std::string& search, const st
  */
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
 
-
 /**
 * @brief Truncates the file and then writes the header string as is to the file
 * @param csvFileName
@@ -187,7 +186,6 @@ void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& hea
 * @param row
 */
 void writeRowToCsvFile(const std::string& csvFileName, const std::string& row);
-
 
 /**
 * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
@@ -232,7 +230,6 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
  */
 uint64_t murmurHash(uint64_t key);
 
-} // namespace NES::Util
+}// namespace NES::Util
 
-
-#endif //NES_COMMON_HPP
+#endif//NES_COMMON_HPP

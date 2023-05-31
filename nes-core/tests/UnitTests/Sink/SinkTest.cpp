@@ -27,10 +27,10 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <ostream>
 

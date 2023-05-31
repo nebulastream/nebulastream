@@ -15,8 +15,8 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>

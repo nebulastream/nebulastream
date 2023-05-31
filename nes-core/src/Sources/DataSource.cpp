@@ -23,10 +23,10 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Util/Core.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Util/Core.hpp>
 #include <chrono>
 #include <filesystem>
 #include <functional>

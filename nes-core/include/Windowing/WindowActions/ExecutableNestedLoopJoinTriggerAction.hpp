@@ -25,8 +25,8 @@
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>

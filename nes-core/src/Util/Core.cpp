@@ -127,14 +127,14 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    size_t numOperators = queryPlanIterator.snapshot().size();;
+    size_t numOperators = queryPlanIterator.snapshot().size();
+    ;
 
     // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {
-        NES_ERROR2(
-                "UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
-                "operators. The query plan is: {}",
-                queryPlan->toString());
+        NES_ERROR2("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
+                   "operators. The query plan is: {}",
+                   queryPlan->toString());
         return false;
     }
 
@@ -142,8 +142,8 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query
-    for (auto &&node: queryPlanIterator) {
-        for (auto const &[key, val]: *propertyIterator) {
+    for (auto&& node : queryPlanIterator) {
+        for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
             node->as<LogicalOperatorNode>()->addProperty(key, val);
         }

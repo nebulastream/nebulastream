@@ -45,6 +45,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Core.hpp>
 #include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
@@ -53,7 +54,6 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/Core.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>

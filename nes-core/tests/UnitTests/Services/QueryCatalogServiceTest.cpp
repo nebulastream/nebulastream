@@ -21,9 +21,9 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/Core.hpp>
 #include <iostream>
 
 using namespace NES;

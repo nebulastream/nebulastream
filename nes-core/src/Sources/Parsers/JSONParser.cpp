@@ -14,9 +14,9 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Core.hpp>
 #include <Util/Common.hpp>
+#include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <utility>

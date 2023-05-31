@@ -19,8 +19,8 @@
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <cstring>
 #include <sstream>

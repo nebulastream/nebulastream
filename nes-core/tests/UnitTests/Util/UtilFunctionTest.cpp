@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
