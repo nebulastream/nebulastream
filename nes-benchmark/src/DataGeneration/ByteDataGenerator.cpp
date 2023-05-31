@@ -121,7 +121,24 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             }
             break;
         }
-        case DistributionName::BINOMIAL: NES_NOT_IMPLEMENTED();
+        case DistributionName::BINOMIAL: {
+            auto distribution = dynamic_cast<Binomial*>(dataDistribution);
+            std::mt19937 gen(distribution->seed);
+            std::binomial_distribution<uint8_t> randomValue(maxValue - minValue, distribution->probability);
+            for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
+                Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
+                auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
+                for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                    for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
+                        dynamicBuffer[row][col].write<uint8_t>(randomValue(gen) + minValue);
+                    numberOfTuples++;
+                }
+                bufferRef.setNumberOfTuples(numberOfTuples);
+                createdBuffers.emplace_back(bufferRef);
+                numberOfTuples = 0;
+            }
+            break;
+        }
         case DistributionName::ZIPF: NES_NOT_IMPLEMENTED();
     }
 
@@ -140,9 +157,6 @@ SchemaPtr ByteDataGenerator::getSchema() { return schema; }
 // Distributions
 // ====================================================================================================
 DistributionName ByteDataDistribution::getName() { return distributionName; }
-// ===================================
-// Repeating Values
-// ===================================
 RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changeProbability) {
     distributionName = DistributionName::REPEATING_VALUES;
     if (numRepeats < 1)
@@ -157,4 +171,10 @@ RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changePro
 }
 
 Uniform::Uniform() { distributionName = DistributionName::UNIFORM; }
+
+Binomial::Binomial(double probability) {
+    distributionName = DistributionName::BINOMIAL;
+    this->probability = probability;
+}
+
 }// namespace NES::Benchmark::DataGeneration
