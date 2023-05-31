@@ -547,7 +547,14 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
     //stop worker to provoke failure of undeployment
     EXPECT_TRUE(wrk1->stop(true));
 
-    EXPECT_THROW(failQueryRequest.execute(storageHandler), QueryUndeploymentException);
+    try {
+        failQueryRequest.execute(storageHandler);
+        std::this_thread::sleep_for(std::chrono::seconds(defaultTimeout));
+        //fail the test if exception was not thrown within timeout
+        FAIL();
+    } catch (QueryUndeploymentException& e) {
+        NES_DEBUG2("Caught query undeployment exception: {}", e.what());
+    }
     bool stopCrd = crd->stopCoordinator(true);
     EXPECT_TRUE(stopCrd);
 }
