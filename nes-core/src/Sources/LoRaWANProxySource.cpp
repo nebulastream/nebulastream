@@ -14,6 +14,115 @@
 
 namespace NES {
 
+class NetworkServer {
+  public:
+    NetworkServer(const std::string& url, const std::string& user, const std::string& appId, const std::vector<std::string>& deviceEuIs)
+        : url(url), user(user), appId(appId), deviceEUIs(deviceEuIs) {}
+
+    // Functions to implement
+    virtual ~NetworkServer() = default;;
+    virtual bool connect() = 0;
+    virtual bool disconnect() = 0;
+    virtual EndDeviceProtocol::Output receiveData() = 0;
+    virtual bool sendQuery(EndDeviceProtocol::Query) = 0;
+  private:
+    std::string url;
+    std::string user;
+    std::string appId;
+    std::vector<std::string> deviceEUIs;
+};
+
+class ChirpStackServer: public NetworkServer {
+  private:
+    mqtt::async_client client;
+
+    std::string topicBase;
+    std::string topicAll;
+    std::string topicDevice;
+    std::string topicReceiveSuffix;
+    std::string topicSendSuffix;
+    std::string topicAllDevicesReceive;
+  public:
+    ChirpStackServer(const std::string& url, const std::string& user, const std::string& appId, const std::vector<std::string>& deviceEuIs)
+        : NetworkServer(url, user, appId, deviceEuIs),
+          client(url, "LoRaWANProxySource"),
+          topicBase("application/"+appId),
+          topicAll(topicBase + "/#"),
+          topicDevice(topicBase + "/device"),
+          topicReceiveSuffix("/event/up"),
+          topicSendSuffix("/command/down"),
+          topicAllDevicesReceive(topicDevice + "/+" + topicReceiveSuffix)
+    {}
+
+    bool connect() override {
+        if (!client.is_connected()) {
+            //open();
+            try {
+                //TODO: actually get authentication to work
+                //            auto sslopt = mqtt::ssl_options_builder()
+                //                              .ca_path(capath)
+                //                              .trust_store(certpath)
+                //                              .private_key(keypath)
+                //                              .verify(false)
+                //                              .enable_server_cert_auth(false)
+                //                              .finalize();
+                //            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
+                auto connOpts = mqtt::connect_options_builder()
+                                    //.ssl(sslopt)
+                                    .automatic_reconnect(true)
+                                    .clean_session(true)
+                                    .finalize();
+
+                // Start consumer before connecting to make sure to not miss messages
+                client.start_consuming();
+
+                // Connect to the server
+                NES_DEBUG("LoRaWANProxySource::connect Connecting to the MQTT server...");
+                auto tok = client.connect(connOpts);
+
+                // Getting the connect response will block waiting for the
+                // connection to complete.
+                auto rsp = tok->get_connect_response();
+
+                // If there is no session present, then we need to subscribe, but if
+                // there is a session, then the server remembers us and our
+                // subscriptions.
+                if (!rsp.is_session_present()) {
+                    client.subscribe(topicAllDevicesReceive, 0)->wait();
+                }
+            } catch (const mqtt::exception& error) {
+                NES_ERROR("LoRaWANProxySource::connect: " << error);
+                return false;
+            }
+        }
+        return true;
+    }
+    bool disconnect() override {
+        NES_DEBUG("LoRaWANProxySource::disconnect connected=" << client.is_connected());
+        if (client.is_connected()) {
+            //close();
+            NES_DEBUG("LoRaWANProxySource: Shutting down and disconnecting from the MQTT server.");
+
+            client.unsubscribe(topicAllDevicesReceive)->wait();
+
+            client.disconnect()->wait();
+            NES_DEBUG("LoRaWANProxySource::disconnect: disconnected.");
+        } else {
+            NES_DEBUG("LoRaWANProxySource::disconnect: Client was already disconnected");
+        }
+
+        if (!client.is_connected()) {
+            NES_DEBUG("LoRaWANProxySource::disconnect:  " << this << ": disconnected");
+        } else {
+            NES_DEBUG("LoRaWANProxySource::disconnect:  " << this << ": NOT disconnected");
+            return false;
+        }
+        return true;
+    }
+    EndDeviceProtocol::Output receiveData() override { return EndDeviceProtocol::Output(); }
+    bool sendQuery(EndDeviceProtocol::Query query) override { return false; }
+};
+
 enum class ChirpStackEvent { UP, STATUS, JOIN, ACK, TXACK, LOG, LOCATION, INTEGRATION };
 
 ChirpStackEvent strToEvent(const std::string& s) { return magic_enum::enum_cast<ChirpStackEvent>(s).value(); };
@@ -51,20 +160,20 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
     keypath = sourceConfig->getKeypath()->getValue();
 
     //region initialize parser
-    std::vector<std::string> schemaKeys;
-    std::vector<PhysicalTypePtr> physicalTypes;
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-
-    for (const auto& field : schema->fields) {
-        auto physField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physField);
-        auto fieldName = field->getName();
-        if (fieldName.find('$') == std::string::npos) {
-            schemaKeys.push_back(fieldName);
-        } else {// if fieldname contains a $ the name is logicalstream$fieldname
-            schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
-        }
-    }
+//    std::vector<std::string> schemaKeys;
+//    std::vector<PhysicalTypePtr> physicalTypes;
+//    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+//
+//    for (const auto& field : schema->fields) {
+//        auto physField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+//        physicalTypes.push_back(physField);
+//        auto fieldName = field->getName();
+//        if (fieldName.find('$') == std::string::npos) {
+//            schemaKeys.push_back(fieldName);
+//        } else {// if fieldname contains a $ the name is logicalstream$fieldname
+//            schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
+//        }
+//    }
     //jsonParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
     //endregion
     NES_DEBUG("LoRaWANProxySource::LoRaWANProxySource()")
