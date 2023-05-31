@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.95](https://github.com/nebulastream/nebulastream/tree/v0.5.95) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.94...v0.5.95)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create common base class for coordinator request exceptions and instanceOf method [\#3723](https://github.com/nebulastream/nebulastream/issues/3723)
+
 ## [v0.5.94](https://github.com/nebulastream/nebulastream/tree/v0.5.94) (2023-05-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.93...v0.5.94)
