@@ -12,6 +12,31 @@
     limitations under the License.
 */
 
+/**
+ * The function RadixSortMSD is taken from DuckDB (MIT license):
+ * MIT License
+ *
+ * Copyright 2018-2023 Stichting DuckDB Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
@@ -25,15 +50,13 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-// issue #3773: get rid of hard-coded parameters
+// TODO: issue #3773: get rid of hard-coded parameters
 const uint64_t VALUES_PER_RADIX = 256;
 const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
 const uint64_t COL_SIZE = 8;
 
 /**
  * @brief Radix sort implementation as most significant digit (msd) radix sort
- * Code take from DuckDB (MIT license):
- * https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp#L239
  * @param orig_ptr pointer to original data
  * @param temp_ptr pointer to temporary data as working memory
  * @param count count of records
@@ -116,14 +139,14 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
 
 void RadixSortMSDProxy(void *op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
-    // issue #3773 add support for data larger than page size
+    // TODO issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
-    // issue #3773 add support for columns other than the first one
+    // TODO issue #3773 add support for columns other than the first one
     auto colOffset = 0;
     auto rowWidth = handler->getStateEntrySize();
-    // issue #3773 add support for columns other sizes
+    // TODO issue #3773 add support for columns other sizes
     auto compWidth = COL_SIZE;
     auto offset = 0; // init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
@@ -137,7 +160,7 @@ void *getStateProxy(void *op){
     return handler->getState();
 }
 
-uint64_t getSortStateEntrySize(void *op){
+uint64_t getSortStateEntrySizeProxy(void *op){
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     return handler->getStateEntrySize();
 }
@@ -156,7 +179,7 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
 
     // 2. load the state
     auto stateProxy = Nautilus::FunctionCall("getStateProxy", getStateProxy, globalOperatorHandler);
-    auto entrySize = Nautilus::FunctionCall("getSortStateEntrySize", getSortStateEntrySize, globalOperatorHandler);
+    auto entrySize = Nautilus::FunctionCall("getSortStateEntrySizeProxy", getSortStateEntrySizeProxy, globalOperatorHandler);
     auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
 
     // 3. emit the records

@@ -54,20 +54,19 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
      * @brief Returns the state of the sort operator
      * @return Stack state
      */
-    Nautilus::Interface::PagedVector *getState() { return stack.get(); }
+    Nautilus::Interface::PagedVector *getState() const { return stack.get(); }
 
     /**
      * @brief Returns the temporary state of the sort operator
      * @return Stack state
      */
-    Nautilus::Interface::PagedVector *getTempState() { return tempStack.get(); }
+    Nautilus::Interface::PagedVector *getTempState() const { return tempStack.get(); }
 
     /**
      * @brief Returns the size of the entry
      * @return entry size
      */
     uint64_t getStateEntrySize() const { return entrySize; }
-
 
     void start(Runtime::Execution::PipelineExecutionContextPtr,
                Runtime::StateManagerPtr,
