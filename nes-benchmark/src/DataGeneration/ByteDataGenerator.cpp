@@ -65,6 +65,8 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
     switch (dataDistribution->getName()) {
         case DistributionName::REPEATING_VALUES: {
             auto distribution = dynamic_cast<RepeatingValues*>(dataDistribution);
+            if (distribution->sort)
+                NES_THROW_RUNTIME_ERROR("Sorting this distribution is not allowed.");
             std::mt19937 gen(distribution->seed);
             std::uniform_int_distribution<uint8_t> randomValue(minValue, maxValue);
             auto minDeviation = distribution->numRepeats - distribution->sigma;
@@ -110,10 +112,27 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
                 Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
-                for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
-                    for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
-                        dynamicBuffer[row][col].write<uint8_t>(randomValue(gen));
-                    numberOfTuples++;
+                if (distribution->sort) {
+                    for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        std::map<uint8_t, size_t> histogram;
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
+                            histogram[randomValue(gen)]++;
+                        }
+                        size_t row = 0;
+                        for (const auto& [value, count] : histogram) {
+                            for (size_t i = 0; i < count; i++) {
+                                dynamicBuffer[row][col].write<uint8_t>(value);
+                                row++;
+                                numberOfTuples++;
+                            }
+                        }
+                    }
+                } else {
+                    for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
+                            dynamicBuffer[row][col].write<uint8_t>(randomValue(gen));
+                        numberOfTuples++;
+                    }
                 }
                 bufferRef.setNumberOfTuples(numberOfTuples);
                 createdBuffers.emplace_back(bufferRef);
@@ -128,10 +147,27 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
                 Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
-                for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
-                    for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
-                        dynamicBuffer[row][col].write<uint8_t>(randomValue(gen) + minValue);
-                    numberOfTuples++;
+                if (distribution->sort) {
+                    for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        std::map<uint8_t, size_t> histogram;
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
+                            histogram[randomValue(gen) + minValue]++;
+                        }
+                        size_t row = 0;
+                        for (const auto& [value, count] : histogram) {
+                            for (size_t i = 0; i < count; i++) {
+                                dynamicBuffer[row][col].write<uint8_t>(value);
+                                row++;
+                                numberOfTuples++;
+                            }
+                        }
+                    }
+                } else {
+                    for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
+                            dynamicBuffer[row][col].write<uint8_t>(randomValue(gen) + minValue);
+                        numberOfTuples++;
+                    }
                 }
                 bufferRef.setNumberOfTuples(numberOfTuples);
                 createdBuffers.emplace_back(bufferRef);

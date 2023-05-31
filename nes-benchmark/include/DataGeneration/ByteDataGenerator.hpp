@@ -35,6 +35,7 @@ class ByteDataDistribution {
   public:
     virtual DistributionName getName();
     size_t seed = rd();
+    bool sort = false;
 
   protected:
     DistributionName distributionName;
