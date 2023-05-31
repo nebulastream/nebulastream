@@ -380,7 +380,8 @@ int main() {
     CompressionMode cm = CompressionMode::VERTICAL;
 
     //RepeatingValues distribution = RepeatingValues(5, 5, 0.5);
-    Uniform distribution = Uniform();
+    //Uniform distribution = Uniform();
+    Binomial distribution = Binomial(0.5);
     distribution.seed = 42;
     // data: numbers 0-9
     ByteDataGenerator dataGenerator = ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);

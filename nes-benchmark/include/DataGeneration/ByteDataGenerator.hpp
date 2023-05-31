@@ -64,6 +64,13 @@ class Uniform : public ByteDataDistribution {
     explicit Uniform();
 };
 
+class Binomial : public ByteDataDistribution {
+  public:
+    explicit Binomial(double probability);
+
+    double probability;
+};
+
 class ByteDataGenerator : public DataGenerator {
   public:
     explicit ByteDataGenerator(Schema::MemoryLayoutType layoutType,
