@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.94](https://github.com/nebulastream/nebulastream/tree/v0.5.94) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.93...v0.5.94)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move UtilityFunctions from nes-core and nes-common [\#3693](https://github.com/nebulastream/nebulastream/issues/3693)
+
 ## [v0.5.93](https://github.com/nebulastream/nebulastream/tree/v0.5.93) (2023-05-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.92...v0.5.93)
