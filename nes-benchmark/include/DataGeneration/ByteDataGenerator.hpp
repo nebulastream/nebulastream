@@ -50,7 +50,6 @@ class RepeatingValues : public ByteDataDistribution {
      * @param changeProbability probability that numRepeats will change within [numRepeats - sigma, numRepeats + sigma]
      */
     explicit RepeatingValues(int numRepeats, uint8_t sigma = 0, double changeProbability = 0);
-    //DistributionName getName() override;
 
     int numRepeats;
     uint8_t sigma;
@@ -70,6 +69,13 @@ class Binomial : public ByteDataDistribution {
     explicit Binomial(double probability);
 
     double probability;
+};
+
+class Zipf : public ByteDataDistribution {
+  public:
+    explicit Zipf(double alpha);
+
+    double alpha;
 };
 
 class ByteDataGenerator : public DataGenerator {
