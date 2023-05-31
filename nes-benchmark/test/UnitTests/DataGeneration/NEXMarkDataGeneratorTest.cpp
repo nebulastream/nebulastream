@@ -51,8 +51,8 @@ class NEXMarkDataGeneratorTest : public Testing::NESBaseTest {
  * getBids() and getNumberOfRecords() to expected values
  */
 TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
-    size_t numberOfBuffers = 10; // TODO set numberOfBuffers
-    size_t bufferSize = 10; // TODO set bufferSize
+    size_t numberOfBuffers = 1024; // TODO set numberOfBuffers
+    size_t bufferSize = 512; // TODO set bufferSize
     auto& dependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
 
     // testing getInstance
@@ -66,6 +66,9 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
     // testing getBids()
 
     // testing getNumberOfRecords
+    NES_INFO("BidSchemaSize: " << NEXMarkGeneration::BidGenerator().getSchema()->getSchemaSizeInBytes());
+    NES_INFO("OpenAuctionSchemaSize: " << NEXMarkGeneration::OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes());
+    NES_INFO("PersonSchemaSize: " << NEXMarkGeneration::PersonGenerator().getSchema()->getSchemaSizeInBytes());
 
     // TODO check if generated data has expected values
 }

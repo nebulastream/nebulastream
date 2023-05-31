@@ -77,28 +77,13 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         return std::make_unique<YSBDataGenerator>();
 
     } else if (type == "NEXMarkPerson") {
-        if (generatorNode["numberOfRecords"].IsNone()) {
-            NES_THROW_RUNTIME_ERROR("numberOfRecords is necessary for a NEXMarkPerson data generator!");
-        }
-
-        auto numberOfRecords = generatorNode["numberOfRecords"].As<uint64_t>();
-        return std::make_unique<NEXMarkGeneration::PersonGenerator>(numberOfRecords);
+        return std::make_unique<NEXMarkGeneration::PersonGenerator>();
 
     } else if (type == "NEXMarkOpenAuction") {
-        if (generatorNode["numberOfRecords"].IsNone()) {
-            NES_THROW_RUNTIME_ERROR("numberOfRecords is necessary for a NEXMarkOpenAuction data generator!");
-        }
-
-        auto numberOfRecords = generatorNode["numberOfRecords"].As<uint64_t>();
-        return std::make_unique<NEXMarkGeneration::OpenAuctionGenerator>(numberOfRecords);
+        return std::make_unique<NEXMarkGeneration::OpenAuctionGenerator>();
 
     } else if (type == "NEXMarkBid") {
-        if (generatorNode["numberOfRecords"].IsNone()) {
-            NES_THROW_RUNTIME_ERROR("numberOfRecords is necessary for a NEXMarkBid data generator!");
-        }
-
-        auto numberOfRecords = generatorNode["numberOfRecords"].As<uint64_t>();
-        return std::make_unique<NEXMarkGeneration::BidGenerator>(numberOfRecords);
+        return std::make_unique<NEXMarkGeneration::BidGenerator>();
 
     } else {
         NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " is not supported and could not be parsed!");
