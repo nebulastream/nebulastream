@@ -151,10 +151,12 @@ std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest 
  * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
  * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
 */
-void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::preRollbackHandle(RequestExecutionException& ex,
+                                                     [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
 }
-void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
+void StopQueryRequestExperimental::postRollbackHandle(RequestExecutionException& ex,
+                                                      [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE2("Error: {}", ex.what());
     //todo: #3635 call fail query request
 }
