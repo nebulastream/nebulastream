@@ -12,29 +12,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include "Util/ZipfianGenerator.hpp"
 #include <API/Schema.hpp>
 #include <DataGeneration/ByteDataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <random>
 #include <utility>
 
-/*
- * TODO
- *  - min max value (number of different values)
- *  - schema (number of columns)
- *  - number of consecutive values
- *      - could be a "distribution": alpha for probability
- *      - part of uniform distribution?
- *  - distribution
- *      - Uniform
- *      - Zipf
- *      - Binomial
- *  - columns can have different distributions?
- */
+void print_map(std::string_view comment, const std::map<std::uint8_t, size_t>& m) {
+    //src: https://en.cppreference.com/w/cpp/container/map
+    std::cout << comment;
+    for (const auto& [key, value] : m)
+        std::cout << '[' << key << "] = " << value << "; ";
+    std::cout << '\n';
+}
 
 namespace NES::Benchmark::DataGeneration {
 // ====================================================================================================
@@ -175,7 +168,41 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
             }
             break;
         }
-        case DistributionName::ZIPF: NES_NOT_IMPLEMENTED();
+        case DistributionName::ZIPF: {
+            auto distribution = dynamic_cast<Zipf*>(dataDistribution);
+            std::mt19937 gen(distribution->seed);
+            ZipfianGenerator randomValue(minValue, maxValue, distribution->alpha);
+            for (uint64_t curBuffer = 0; curBuffer < numBuffers; curBuffer++) {
+                Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
+                auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
+                if (distribution->sort) {
+                    for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        std::map<uint8_t, size_t> histogram;
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
+                            histogram[randomValue(gen)]++;
+                        }
+                        size_t row = 0;
+                        for (const auto& [value, count] : histogram) {
+                            for (size_t i = 0; i < count; i++) {
+                                dynamicBuffer[row][col].write<uint8_t>(value);
+                                row++;
+                                numberOfTuples++;
+                            }
+                        }
+                    }
+                } else {
+                    for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
+                            dynamicBuffer[row][col].write<uint8_t>(randomValue(gen));
+                        numberOfTuples++;
+                    }
+                }
+                bufferRef.setNumberOfTuples(numberOfTuples);
+                createdBuffers.emplace_back(bufferRef);
+                numberOfTuples = 0;
+            }
+            break;
+        }
     }
 
     return createdBuffers;
@@ -209,8 +236,17 @@ RepeatingValues::RepeatingValues(int numRepeats, uint8_t sigma, double changePro
 Uniform::Uniform() { distributionName = DistributionName::UNIFORM; }
 
 Binomial::Binomial(double probability) {
+    if (probability < 0 || probability > 1)
+        NES_THROW_RUNTIME_ERROR("Probability must be between 0 and 1.");
     distributionName = DistributionName::BINOMIAL;
     this->probability = probability;
+}
+
+Zipf::Zipf(double alpha) {
+    if (alpha < 0 || alpha > 1)
+        NES_THROW_RUNTIME_ERROR("Alpha must be between 0 and 1.");
+    distributionName = DistributionName::ZIPF;
+    this->alpha = alpha;
 }
 
 }// namespace NES::Benchmark::DataGeneration

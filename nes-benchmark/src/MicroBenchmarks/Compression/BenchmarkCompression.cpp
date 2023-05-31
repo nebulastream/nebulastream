@@ -381,7 +381,8 @@ int main() {
 
     //RepeatingValues distribution = RepeatingValues(5, 5, 0.5);
     //Uniform distribution = Uniform();
-    Binomial distribution = Binomial(0.5);
+    //Binomial distribution = Binomial(0.5);
+    Zipf distribution = Zipf(0.85);
     distribution.seed = 42;
     distribution.sort = true;
     // data: numbers 0-9
