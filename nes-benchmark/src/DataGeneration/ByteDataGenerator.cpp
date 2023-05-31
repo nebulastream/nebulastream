@@ -21,7 +21,8 @@ limitations under the License.
 #include <random>
 #include <utility>
 
-void print_map(std::string_view comment, const std::map<std::uint8_t, size_t>& m) {
+// for debugging purposes
+void printMap(std::string_view comment, const std::map<std::uint8_t, size_t>& m) {
     //src: https://en.cppreference.com/w/cpp/container/map
     std::cout << comment;
     for (const auto& [key, value] : m)
@@ -49,6 +50,23 @@ ByteDataGenerator::ByteDataGenerator(Schema::MemoryLayoutType layoutType,
 }
 
 std::string ByteDataGenerator::getName() { return "Bytes"; }
+
+static void randomizeHistogramOrder(std::map<uint8_t, size_t>& histogram, size_t seed) {
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<size_t> randomIndex(0, histogram.size() - 1);
+    std::vector<uint8_t> keys;
+    keys.reserve(histogram.size());
+    for (const auto& [key, _] : histogram) {
+        keys.push_back(key);
+    }
+    for (size_t i = 0; i < histogram.size(); i++) {
+        size_t swap1 = keys[randomIndex(gen)];
+        size_t swap2 = keys[randomIndex(gen)];
+        auto tmp = histogram[swap1];
+        histogram[swap1] = histogram[swap2];
+        histogram[swap2] = tmp;
+    }
+}
 
 std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
@@ -107,10 +125,13 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
                 if (distribution->sort) {
                     for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        // count all value occurrences
                         std::map<uint8_t, size_t> histogram;
                         for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
                             histogram[randomValue(gen)]++;
                         }
+                        randomizeHistogramOrder(histogram, distribution->seed);
+                        // write values to buffer
                         size_t row = 0;
                         for (const auto& [value, count] : histogram) {
                             for (size_t i = 0; i < count; i++) {
@@ -142,10 +163,13 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
                 if (distribution->sort) {
                     for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        // count all value occurrences
                         std::map<uint8_t, size_t> histogram;
                         for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
                             histogram[randomValue(gen) + minValue]++;
                         }
+                        randomizeHistogramOrder(histogram, distribution->seed);
+                        // write values to buffer
                         size_t row = 0;
                         for (const auto& [value, count] : histogram) {
                             for (size_t i = 0; i < count; i++) {
@@ -177,10 +201,13 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                 auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
                 if (distribution->sort) {
                     for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
+                        // count all value occurrences
                         std::map<uint8_t, size_t> histogram;
                         for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
                             histogram[randomValue(gen)]++;
                         }
+                        randomizeHistogramOrder(histogram, distribution->seed);
+                        // write values to buffer
                         size_t row = 0;
                         for (const auto& [value, count] : histogram) {
                             for (size_t i = 0; i < count; i++) {
