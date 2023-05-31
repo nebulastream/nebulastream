@@ -30,6 +30,10 @@ target_link_libraries(default-data-generator-test nes-benchmark)
 add_nes_unit_test(zipfian-data-generator-test "UnitTests/DataGeneration/ZipfianDataGeneratorTest.cpp")
 target_link_libraries(zipfian-data-generator-test nes-benchmark)
 
+# Adding unit test for NEXMarkDataGenerator
+add_nes_unit_test(nexmark-data-generator-test "UnitTests/DataGeneration/NEXMarkDataGeneratorTest.cpp")
+target_link_libraries(nexmark-data-generator-test nes-benchmark)
+
 # Adding unit test for InternalProvider
 add_nes_unit_test(internal-provider-test "UnitTests/DataProvider/InternalProviderTest.cpp")
 target_link_libraries(internal-provider-test nes-benchmark)
