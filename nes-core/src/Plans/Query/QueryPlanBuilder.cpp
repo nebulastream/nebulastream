@@ -23,8 +23,8 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

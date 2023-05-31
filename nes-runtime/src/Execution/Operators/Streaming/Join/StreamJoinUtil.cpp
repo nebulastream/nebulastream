@@ -20,14 +20,12 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <fstream>
 
 namespace NES::Runtime::Execution::Util {
-
-
 
 SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName) {
     NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),

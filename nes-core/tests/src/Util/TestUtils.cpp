@@ -19,10 +19,10 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Util/Core.hpp>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>

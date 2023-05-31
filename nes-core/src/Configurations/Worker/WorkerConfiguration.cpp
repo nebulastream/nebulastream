@@ -20,8 +20,8 @@
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/details/EnumOptionDetails.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <string>
 #include <thread>

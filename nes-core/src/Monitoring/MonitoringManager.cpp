@@ -37,8 +37,8 @@
 
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/QueryStatus.hpp>
 #include <Util/Core.hpp>
+#include <Util/QueryStatus.hpp>
 #include <regex>
 #include <utility>
 

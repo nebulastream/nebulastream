@@ -16,8 +16,8 @@
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
 

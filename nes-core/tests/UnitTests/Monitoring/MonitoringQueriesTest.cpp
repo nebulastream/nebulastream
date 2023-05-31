@@ -31,9 +31,9 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/Core.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>

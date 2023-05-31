@@ -20,9 +20,9 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Core.hpp>
 #include <Util/Common.hpp>
+#include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <string>
 #include <utility>

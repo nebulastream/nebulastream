@@ -34,9 +34,9 @@
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Util/Common.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

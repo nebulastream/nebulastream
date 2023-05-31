@@ -20,8 +20,8 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {

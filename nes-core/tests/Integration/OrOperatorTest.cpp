@@ -20,10 +20,10 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>

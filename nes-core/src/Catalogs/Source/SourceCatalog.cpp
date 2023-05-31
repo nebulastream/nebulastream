@@ -19,8 +19,8 @@
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <utility>
 

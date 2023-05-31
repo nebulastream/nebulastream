@@ -23,8 +23,8 @@
 #include <Sources/MQTTSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cassert>
 #include <cstdint>

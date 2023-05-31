@@ -24,9 +24,9 @@
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
@@ -38,7 +38,7 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
 
     auto hasName = NES::Util::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
     auto hasLastField = NES::Util::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
-                                       metricSchema->get(metricSchema->getSize() - 1)->getName());
+                                            metricSchema->get(metricSchema->getSize() - 1)->getName());
 
     return hasName && hasLastField;
 }

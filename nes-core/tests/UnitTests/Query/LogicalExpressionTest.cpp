@@ -15,9 +15,9 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/Core.hpp>
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>

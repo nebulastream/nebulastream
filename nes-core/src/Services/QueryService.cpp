@@ -25,9 +25,9 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Util/Core.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>

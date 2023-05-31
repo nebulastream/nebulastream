@@ -33,9 +33,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <Util/Core.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <NesBaseTest.hpp>

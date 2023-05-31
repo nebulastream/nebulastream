@@ -27,8 +27,8 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution {

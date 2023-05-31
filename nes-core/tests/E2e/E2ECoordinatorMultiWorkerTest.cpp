@@ -13,10 +13,10 @@
 */
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <cstdio>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
