@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.97](https://github.com/nebulastream/nebulastream/tree/v0.5.97) (2023-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.96...v0.5.97)
+
+#### User Defined Functions
+
+- \[TASK\] Add JVM to NebulaStream executable image [\#3754](https://github.com/nebulastream/nebulastream/issues/3754)
+
 ## [v0.5.96](https://github.com/nebulastream/nebulastream/tree/v0.5.96) (2023-05-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.95...v0.5.96)
