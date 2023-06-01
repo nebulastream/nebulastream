@@ -931,7 +931,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
     NES_INFO2("QueryDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("QueryDeploymentTest: Stop worker 1");
@@ -2026,7 +2026,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -2042,17 +2042,17 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType2 = CSVSourceType::create();
@@ -2065,9 +2065,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType3 = CSVSourceType::create();
@@ -2080,9 +2080,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker3 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 4");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = *rpcCoordinatorPort;
     auto csvSourceType4 = CSVSourceType::create();
@@ -2095,7 +2095,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
-    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
@@ -2103,7 +2103,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -2134,29 +2134,29 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG2("QueryDeploymentTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 4");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG2("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG2("QueryDeploymentTest: Test finished");
 }
 
 /**
@@ -2172,7 +2172,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO2("MultipleJoinsTest: Start coordinator");
+    NES_INFO2("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -2188,17 +2188,17 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
-    NES_DEBUG2("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG2("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO2("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker1 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -2211,9 +2211,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
-    NES_INFO2("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker2 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 3");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
     auto csvSourceType3 = CSVSourceType::create();
@@ -2226,9 +2226,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
-    NES_INFO2("MultipleJoinsTest: Worker3 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker3 started successfully");
 
-    NES_DEBUG2("MultipleJoinsTest: Start worker 4");
+    NES_DEBUG2("QueryDeploymentTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = port;
     auto csvSourceType4 = CSVSourceType::create();
@@ -2241,7 +2241,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
-    NES_INFO2("MultipleJoinsTest: Worker4 started successfully");
+    NES_INFO2("QueryDeploymentTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowDistributed.out";
     remove(outputFilePath.c_str());
@@ -2249,7 +2249,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    NES_INFO2("MultipleJoinsTest: Submit query");
+    NES_INFO2("QueryDeploymentTest: Submit query");
 
     string query =
         R"(Query::from("window1")
@@ -2289,28 +2289,28 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG2("MultipleJoinsTest: Remove query");
+    NES_DEBUG2("QueryDeploymentTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 2");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 3");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 3");
     bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop worker 4");
+    NES_DEBUG2("QueryDeploymentTest: Stop worker 4");
     bool retStopWrk4 = wrk4->stop(true);
     EXPECT_TRUE(retStopWrk4);
 
-    NES_DEBUG2("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG2("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG2("MultipleJoinsTest: Test finished");
+    NES_DEBUG2("QueryDeploymentTest: Test finished");
 }
 }// namespace NES

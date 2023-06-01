@@ -1060,7 +1060,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     expected.push_back(filterOp3);
     expected.push_back(filterOp4);
     const vector<FilterLogicalOperatorNodePtr> children = filterOp1->getNodesByType<FilterLogicalOperatorNode>();
-    ;
+
     // EXPECT_EQ(children.size(), expected.size());
 
     for (uint64_t i = 0; i < children.size(); i++) {

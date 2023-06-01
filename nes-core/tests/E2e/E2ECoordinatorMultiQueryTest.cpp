@@ -42,7 +42,7 @@ class E2ECoordinatorMultiQueryTest : public Testing::NESBaseTest {
  * @brief This test starts two workers and a coordinator and submit the same query but will output the results in different files
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string pathQuery1 = getTestResourceFolder() / "query1.out";
     std::string pathQuery2 = getTestResourceFolder() / "query2.out";
 
@@ -126,7 +126,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
  * @brief This test starts two workers and a coordinator and submit too many queryIdAndCatalogEntryMapping such that we test if the error-prone process
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string pathQuery1 = getTestResourceFolder() / "query1.out";
     std::string pathQuery2 = getTestResourceFolder() / "query2.out";
     std::string pathQuery3 = getTestResourceFolder() / "query3.out";
@@ -221,7 +221,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
  * @brief This test starts two workers and a coordinator and submits two different queryIdAndCatalogEntryMapping
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string Qpath1 = getTestResourceFolder() / "QueryQnV1.out";
     std::string Qpath2 = getTestResourceFolder() / "QueryQnV2.out";
     remove(Qpath1.c_str());
@@ -320,7 +320,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
 }
 
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
     remove(outputFilePath.c_str());
@@ -425,7 +425,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 }
 
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
     remove(outputFilePath.c_str());

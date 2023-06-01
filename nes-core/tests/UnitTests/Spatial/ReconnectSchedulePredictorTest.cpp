@@ -64,7 +64,7 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
         S2::ApproxEquals(resultOnLinePoint.first, S2::GetPointOnLine(coveringPointOnLine, lineEnd, coverage), allowedError));
     ASSERT_TRUE(abs(resultOnLinePoint.second - coverage) < allowedError);
     std::stringstream resultOnLinePointString;
-    resultOnLinePointString <<  S2LatLng(resultOnLinePoint.first);
+    resultOnLinePointString << S2LatLng(resultOnLinePoint.first);
     NES_DEBUG2("coverage end for point on line: {}", resultOnLinePointString.str());
 
     //create a point whose unit vector is orthogonal to start and end of the polyline

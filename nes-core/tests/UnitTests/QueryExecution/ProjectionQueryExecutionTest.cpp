@@ -33,7 +33,7 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectionQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("QueryExecutionTest: Setup ProjectionQueryExecutionTest test class.");
+        NES_DEBUG2("QueryCatalogServiceTest: Setup QueryCatalogServiceTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -44,13 +44,13 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("QueryExecutionTest: Tear down ProjectionQueryExecutionTest test case.");
+        NES_DEBUG2("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("QueryExecutionTest: Tear down ProjectionQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test class."); }
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         int numberOfTuples = 10;
