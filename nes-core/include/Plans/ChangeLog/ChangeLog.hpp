@@ -45,15 +45,16 @@ class ChangeLog {
      * @brief: Compact change log by combining overlapping change log entries into a single changelog entry.
      * @note: Overlapping change log entry means that the sub-query plans represented by thew change log entries are overlapping
      * with each other.
+     * @param timestamp: the timestamp till which the log is to be compacted
      */
-    void performChangeLogCompaction();
+    void performChangeLogCompaction(uint64_t timestamp);
 
     /**
      * @brief Get all non-overlapping change log entries created after the indicated timestamp
      * @param timestamp : the timestamp after which the change log entries need to be retrieved
      * @return a vector of change log entries
      */
-    std::vector<ChangeLogEntry> getChangeLogEntries(uint64_t timestamp);
+    std::vector<ChangeLogEntryPtr> getChangeLogEntries(uint64_t timestamp);
 
     /**
      * @brief: Update the timestamp till which the change log entries are processed

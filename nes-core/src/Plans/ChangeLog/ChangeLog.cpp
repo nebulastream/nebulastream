@@ -23,10 +23,26 @@ void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& change
     changeLogEntries[timestamp] = changeLogEntry;
 }
 
-//FIXME: as part of the issue #3797
-void ChangeLog::performChangeLogCompaction() { NES_NOT_IMPLEMENTED(); }
+//FIXME: implement as part of the issue #3797
+void ChangeLog::performChangeLogCompaction(uint64_t) { NES_NOT_IMPLEMENTED(); }
 
-std::vector<ChangeLogEntry> ChangeLog::getChangeLogEntries(uint64_t timestamp) { NES_NOT_IMPLEMENTED(); }
+std::vector<ChangeLogEntryPtr> ChangeLog::getChangeLogEntries(uint64_t timestamp) {
+
+    //TODO: enable as part of #3797
+    //performChangeLogCompaction(timestamp);
+
+    std::vector<ChangeLogEntryPtr> changeLogEntriesToReturn;
+    //Find the range of keys to be fetched
+    auto firstElement = changeLogEntries.lower_bound(0);
+    auto lastElement = changeLogEntries.lower_bound(timestamp);
+
+    auto iterator = firstElement;
+    while (iterator != lastElement) {
+        changeLogEntriesToReturn.emplace_back(iterator->second);
+        iterator++;
+    }
+    return changeLogEntriesToReturn;
+}
 
 void ChangeLog::updateProcessedChangeLogTimestamp(uint64_t timestamp) {
     this->lastProcessedChangeLogTimestamp = timestamp;
