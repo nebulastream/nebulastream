@@ -16,6 +16,8 @@
 #include <Util/Experimental/Hash.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <NesBaseTest.hpp>
+#include <vector>
+#include <array>
 
 namespace NES {
 class H3HashTest : public Testing::NESBaseTest {
@@ -23,9 +25,9 @@ public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("H3HashTest.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("H3HashTest test class SetUpTestCase.");
+        NES_INFO2("H3HashTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() { NES_INFO("H3HashTest test class TearDownTestCase."); }
+    static void TearDownTestCase() { NES_INFO2("H3HashTest test class TearDownTestCase."); }
 };
 
 TEST_F(H3HashTest, simpleH3testUInt64) {
