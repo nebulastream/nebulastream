@@ -43,7 +43,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class GlobalThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
@@ -53,14 +53,14 @@ class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abstract
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ThresholdWindowPipelineTest test class.");
+        NES::Logger::setupLogging("GlobalThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup GlobalThresholdWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup ThresholdWindowPipelineTest test case.");
+        NES_INFO("Setup GlobalThresholdWindowPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -70,13 +70,13 @@ class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abstract
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down GlobalThresholdWindowPipelineTest test class."); }
 };
 
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -157,7 +157,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -238,7 +238,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Min aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -318,7 +318,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Max aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -398,7 +398,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -476,7 +476,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
 }
 
 // This test ensures that the aggregated field does not have to be an integer, which is the data type of count aggregation.
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::FLOAT32);
@@ -556,7 +556,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
 /**
  * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
+TEST_P(GlobalThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::FLOAT32);
     scanSchema->addField("f2", BasicType::INT64);
@@ -635,9 +635,9 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate) {
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        ThresholdWindowPipelineTest,
+                        GlobalThresholdWindowPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<ThresholdWindowPipelineTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<GlobalThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });
 }// namespace NES::Runtime::Execution

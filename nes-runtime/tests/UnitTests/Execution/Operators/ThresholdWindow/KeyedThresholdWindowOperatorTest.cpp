@@ -249,7 +249,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
 }
 
 /**
-* @brief Tests the keyed threshold window operator with a sum aggregation on rows having different keys.
+* @brief Tests the keyed threshold window operator with a sum and a max aggregation on rows having different keys.
 */
 TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferentKey) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
