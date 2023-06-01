@@ -75,20 +75,17 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
     NodePtr child = childrenOfFilter[0];
 
     if (child -> instanceOf<ProjectionLogicalOperatorNode>()) {
-        //TODO: implement filter pushdown for projection
-
+        // TODO: implement filter pushdown for projection: https://github.com/nebulastream/nebulastream/issues/3799
     } else if (child -> instanceOf<MapLogicalOperatorNode>()) {
         std::string mapFieldName = getFieldNameUsedByMapOperator(child);
         bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
         if (!predicateFieldManipulated) {
             filterOperator->removeAndJoinParentAndChildren();
             child->insertBetweenThisAndChildNodes(filterOperator);
-
             pushDownFilter(filterOperator);
         }
     } else if(child->instanceOf<JoinLogicalOperatorNode>()) {
-        //TODO: implement filter pushdown for joins
-
+        // TODO: implement filter pushdown for joins: https://github.com/nebulastream/nebulastream/issues/3765
     } else if(child ->instanceOf<UnionLogicalOperatorNode>()) {
         std::vector<NodePtr> grandChildren = child->getChildren();
 
@@ -110,10 +107,12 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
         pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>());
 
     } else if(child ->instanceOf<WindowLogicalOperatorNode>()) {
-        // Window operators always need an aggregation function.
-        // The only cases without an aggregation is joining windows, but in such case we apply the join policy
-        // There is a corner case when the filter can be pushed down:
-        //  - there is a group_by clause on a certain attribute and the filter is applied to the same attribute
+        // TODO: implement filter pushdown for window aggregations: https://github.com/nebulastream/nebulastream/issues/3804
+        // Windows can be used either in joins or aggregations.
+        // For window joins, the push-down below join policy is applied.
+        // For window aggregations, we check for one case in which the filter can be pushed down.
+        // Such case happens when there is a group_by clause on a certain attribute
+        // and the filter is applied to the same attribute.
     }
 }
 
