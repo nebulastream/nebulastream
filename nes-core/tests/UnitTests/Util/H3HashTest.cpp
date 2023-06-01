@@ -66,7 +66,7 @@ TEST_F(H3HashTest, simpleH3testUInt32) {
             {0xc73e9f4,0x9356fd1c,0xd0be0c27}
     };
 
-    for (auto key = 0U; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
+    for (uint32_t key = 0U; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
             EXPECT_EQ(expectedHashes[key][row], h3Hash(key, row));
         }
