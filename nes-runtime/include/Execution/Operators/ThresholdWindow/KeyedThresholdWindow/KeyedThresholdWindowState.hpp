@@ -14,6 +14,9 @@
 
 #ifndef NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYEDTHRESHOLDWINDOWSTATE_HPP
 #define NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYEDTHRESHOLDWINDOWSTATE_HPP
+
+#include <mutex>
+
 namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This class encapsulate a state for a KeyedThresholdWindow.
