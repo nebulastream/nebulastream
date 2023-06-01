@@ -436,7 +436,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     q2.getQueryPlan()->setQueryId(2);
     queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
-    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+    NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
@@ -460,7 +460,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto resultPlan = phase->execute(batchOfQueryRequests);
     const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryPlansToDeploy();
 
-    ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 2u);
+    EXPECT_EQ(sharedQueryMetadataToDeploy.size(), 2u);
 
     auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(catalogEntry2->getInputQueryPlan()->getQueryId());
     auto sharedQueryPlanId1 = globalQueryPlan->getSharedQueryId(catalogEntry1->getInputQueryPlan()->getQueryId());
@@ -471,6 +471,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     //Assert
     NES_INFO2("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
     const auto& sharedQueryMetadataToDeploy2 = resultPlan->getSharedQueryPlansToDeploy();
-    ASSERT_EQ(sharedQueryMetadataToDeploy2.size(), 1u);
+    EXPECT_EQ(sharedQueryMetadataToDeploy2.size(), 1u);
 }
 }// namespace NES

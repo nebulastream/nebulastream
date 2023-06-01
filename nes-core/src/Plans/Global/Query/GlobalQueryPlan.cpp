@@ -142,7 +142,7 @@ void GlobalQueryPlan::removeSharedQueryPlan(QueryId sharedQueryPlanId) {
     }
     auto sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryPlanId];
     if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed) {
-        NES_TRACE2("GlobalQueryPlan: Removing! found an empty query meta data.");
+        NES_TRACE2("Found stopped or failed query plan. Removing query plan from shared query plan.");
         sharedQueryIdToPlanMap.erase(sharedQueryPlanId);
     }
 }
