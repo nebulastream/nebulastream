@@ -65,11 +65,13 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException& ex, N
         auto undeploymentException = dynamic_cast<QueryUndeploymentException&>(ex);
         auto sharedQueryId = undeploymentException.getSharedQueryId();
 
-        //undeploy queries
-        undeployQueries(storageHandler, sharedQueryId);
+        if (sharedQueryId.has_value()) {
+            //undeploy queries
+            undeployQueries(storageHandler, sharedQueryId.value());
 
-        //update global query plan
-        updateGlobalQueryPlan(sharedQueryId);
+            //update global query plan
+            updateGlobalQueryPlan(sharedQueryId.value());
+        }
     }
 }
 
@@ -109,8 +111,11 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     //update global query plan
     updateGlobalQueryPlan(sharedQueryId);
+
+    //todo: cleanup
 }
 
+//todo: rename
 void NES::Experimental::FailQueryRequest::updateGlobalQueryPlan(SharedQueryId sharedQueryId) {
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
