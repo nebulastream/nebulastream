@@ -52,7 +52,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG2("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG2("MultiThreadedTest: Coordinator started successfully");
     //register logical source
     std::string source =
         R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
@@ -108,7 +108,6 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG2("MultiThreadedTest: Remove query");
-    ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("MultiThreadedTest: Stop worker 1");
@@ -185,7 +184,6 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG2("MultipleJoinsTest: Remove query");
-    ;
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("QueryDeploymentTest: Stop worker 1");
@@ -240,7 +238,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO2("WindowDeploymentTest: Submit query");
+    NES_INFO2("MultiThreadedTest: Submit query");
     string query = "Query::from(\"window\")."
                    "window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))\n"
                    "        .byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
@@ -263,18 +261,17 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+    NES_INFO2("MultiThreadedTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    NES_INFO2("WindowDeploymentTest: Stop worker 1");
+    NES_INFO2("MultiThreadedTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO2("WindowDeploymentTest: Stop Coordinator");
+    NES_INFO2("MultiThreadedTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO2("WindowDeploymentTest: Test finished");
+    NES_INFO2("MultiThreadedTest: Test finished");
 }
 
 /**
@@ -344,7 +341,6 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("MultipleWindowsTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("MultipleWindowsTest: Stop worker 1");
@@ -415,7 +411,6 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     NES_INFO2("MultipleWindowsTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("MultipleWindowsTest: Stop worker 1");
@@ -505,7 +500,6 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG2("JoinDeploymentTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG2("JoinDeploymentTest: Stop worker 1");
@@ -611,7 +605,6 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG2("MultipleJoinsTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
@@ -764,7 +757,6 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG2("MultipleJoinsTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG2("MultipleJoinsTest: Stop worker 1");
@@ -842,7 +834,6 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     NES_DEBUG2("JoinDeploymentTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG2("JoinDeploymentTest: Stop worker 1");

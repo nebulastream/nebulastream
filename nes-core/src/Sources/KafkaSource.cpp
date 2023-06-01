@@ -90,8 +90,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 }
 
 KafkaSource::~KafkaSource() {
-    NES_INFO2("Kafka source {} partition/group={} produced={} batchSize={} successFullPollCnt={}"
-              " failedFullPollCnt={}",
+    NES_INFO2("Kafka source {} partition/group={} produced={} batchSize={} successFullPollCnt={} failedFullPollCnt={}",
               topic,
               groupId,
               bufferProducedCnt,

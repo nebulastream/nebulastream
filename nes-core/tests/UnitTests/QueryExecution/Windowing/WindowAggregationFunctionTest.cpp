@@ -40,7 +40,7 @@ class WindowAggregationFunctionTest
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowAggregationFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG2("QueryExecutionTest: Setup WindowAggregationFunctionTest test class.");
+        NES_DEBUG2("WindowAggregationFunctionTest: Setup WindowAggregationFunctionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -52,13 +52,13 @@ class WindowAggregationFunctionTest
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG2("QueryExecutionTest: Tear down WindowAggregationFunctionTest test case.");
+        NES_DEBUG2("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("QueryExecutionTest: Tear down WindowAggregationFunctionTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test class."); }
 
     SchemaPtr sourceSchema;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;

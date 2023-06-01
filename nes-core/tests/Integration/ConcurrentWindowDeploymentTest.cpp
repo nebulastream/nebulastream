@@ -327,7 +327,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -413,7 +413,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -606,7 +606,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -716,7 +716,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -800,7 +800,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindowE
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -920,7 +920,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWin
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->numWorkerThreads = workerThreads;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    ;
+
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setGatheringInterval(0);
@@ -1081,7 +1081,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -1152,7 +1152,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -1218,7 +1218,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -1288,7 +1288,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -1375,7 +1375,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -1519,7 +1519,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -1677,7 +1677,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("WindowDeploymentTest: Remove query");
-    ;
+
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("WindowDeploymentTest: Stop worker 1");
@@ -2147,8 +2147,6 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(1U, outputFilePath));
-
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     //here we can only check if the file exists and has some content

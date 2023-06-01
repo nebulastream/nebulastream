@@ -470,7 +470,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
             if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
-                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -555,7 +554,6 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
             if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
-                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -644,7 +642,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
             if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
-                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -730,7 +727,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
             if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
-                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }

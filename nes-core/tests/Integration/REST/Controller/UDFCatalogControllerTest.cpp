@@ -388,7 +388,7 @@ TEST_F(UDFCatalogControllerTest, testIfListUdfsReturnsEmptyUdfList) {
     // and the response message contains an empty list of UDFs
     nlohmann::json json;
     std::vector<std::string> udfs = udfCatalog->listUDFs();
-    ;
+
     json["udfs"] = udfs;
     verifyResponseResult(response, json);
     stopCoordinator();

@@ -123,7 +123,6 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    //    NES_INFO2("BenchmarkSourceIntegrationTest: content={}", content);
     ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());

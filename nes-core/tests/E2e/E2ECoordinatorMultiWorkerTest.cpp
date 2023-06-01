@@ -43,7 +43,7 @@ class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
  * @brief Testing NES with a config using a hierarchical topology.
  */
 TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -110,7 +110,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
@@ -190,7 +190,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 }
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerDifferentSource) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
@@ -288,7 +288,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     //TODO result content does not end up in file?
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 

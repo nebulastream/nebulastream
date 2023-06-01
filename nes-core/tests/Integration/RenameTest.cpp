@@ -83,7 +83,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO2("RenameTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ifstream my_file(getTestResourceFolder() / "test.out");
@@ -164,7 +163,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO2("RenameTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ifstream my_file(outputFile);
@@ -243,7 +241,6 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO2("RenameTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent = "default_logical$NewName:INTEGER,default_logical$value:INTEGER\n"
@@ -332,7 +329,6 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO2("RenameTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO2("RenameTest: Stop worker 1");
@@ -429,7 +425,6 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG2("RenameTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG2("RenameTest: Stop worker 1");

@@ -57,7 +57,7 @@ class LocationServiceTest : public Testing::NESBaseTest {
         }
 
         nodeInfo["location"] = locJson;
-        NES_DEBUG2("{}",nodeInfo.dump());
+        NES_DEBUG2("{}", nodeInfo.dump());
         return nodeInfo;
     }
 

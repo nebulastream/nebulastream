@@ -68,7 +68,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -130,7 +130,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVariableSizeWithFileOutput) {
     //TODO: This is part of issue #3146 and will be addressed there
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -191,7 +191,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -247,7 +247,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhysource) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputAndRegisterPhysourceTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -308,7 +308,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputKTMUseCase) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string testFile = "ktm-results.csv";
     remove(testFile.c_str());
 
@@ -392,7 +392,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -457,7 +457,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
@@ -725,7 +725,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdWindowFileOutputKTMUseCase) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
     NES_INFO2("testFile = {}", testFile);
     remove(testFile.c_str());
@@ -817,7 +817,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
 //TODO 3608 fixing bykey()
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey) {
-    NES_INFO2(" start coordinator");
+    NES_INFO2("start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
     NES_INFO2("testFile = {}", testFile);
     remove(testFile.c_str());

@@ -563,7 +563,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto createFunction = FunctionDefinition::create("create");
     auto returnStatement = ReturnStatement::create(SharedPointerGen::makeShared(executablePipelineDeclaration->getType()));
     createFunction->addStatement(returnStatement);
-    ;
+
     createFunction->returns(SharedPointerGen::createSharedPtrType(
         NES::QueryCompilation::GeneratableTypesFactory::createAnonymusDataType("Runtime::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
