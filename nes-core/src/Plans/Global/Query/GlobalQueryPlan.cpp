@@ -173,15 +173,16 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
     queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
-    //Add Shared Query Plan to the SourceNAme index
-    auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(queryPlan->getConcatenatedSourceAndPlacementStrategy());
+    std::string sourceNameAndPlacementStrategy = queryPlan->getSourceConsumed() + "_" + std::to_string(magic_enum::enum_integer(queryPlan->getPlacementStrategy()));
+    //Add Shared Query Plan to the SourceName index
+    auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(sourceNameAndPlacementStrategy);
     if (item != sourceNamesAndPlacementStrategyToSharedQueryPlanMap.end()) {
         auto sharedQueryPlans = item->second;
         sharedQueryPlans.emplace_back(sharedQueryPlan);
-        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[queryPlan->getConcatenatedSourceAndPlacementStrategy()] =
+        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] =
             sharedQueryPlans;
     } else {
-        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[queryPlan->getConcatenatedSourceAndPlacementStrategy()] = {
+        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = {
             sharedQueryPlan};
     }
 
