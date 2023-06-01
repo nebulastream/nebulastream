@@ -15,6 +15,11 @@
 #ifndef NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYEDTHRESHOLDWINDOWSTATE_HPP
 #define NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYEDTHRESHOLDWINDOWSTATE_HPP
 namespace NES::Runtime::Execution::Operators {
+/**
+ * @brief This class encapsulate a state for a KeyedThresholdWindow.
+ * This state belongs to a single key, and can contain multiple aggregationValues (i.e., one for each
+ * aggregation function)
+ */
 class KeyedThresholdWindowState {
   public:
     KeyedThresholdWindowState();

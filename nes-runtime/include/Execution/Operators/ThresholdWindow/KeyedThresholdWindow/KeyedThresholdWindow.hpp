@@ -29,9 +29,10 @@ class KeyedThresholdWindow : public ExecutableOperator {
     /**
  * @brief Creates a threshold window operator.
  * @param predicateExpression boolean predicate expression which check if a tuple satisfy the threshold
+ * @param minCount minimum number of tuple in a window to trigger aggregation in the threshold window
  * @param aggregatedFieldAccessExpression field access to the field that is aggregated
- * @param keyExpressions
- * @param keyDataTypes
+ * @param keyExpressions field access to the key
+ * @param keyFieldIdentifier field name of the key
  * @param aggregationResultFieldIdentifier a string indicating the name of field to store the aggregation result
  * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
  */
