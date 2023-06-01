@@ -24,7 +24,6 @@ class H3HashTest : public Testing::NESBaseTest {
 public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("H3HashTest.log", NES::LogLevel::LOG_DEBUG);
-
         NES_INFO2("H3HashTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO2("H3HashTest test class TearDownTestCase."); }
@@ -45,7 +44,7 @@ TEST_F(H3HashTest, simpleH3testUInt64) {
             {0xe482280c0c73e9f4,0x63f8ced3d0be0c27,0x6b1cefee563b33f8}
     };
 
-    for (auto key = 0UL; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
+    for (auto key = 0ULL; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
             EXPECT_EQ(expectedHashes[key][row], h3Hash(key, row));
         }
