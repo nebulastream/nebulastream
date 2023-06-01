@@ -495,6 +495,9 @@ add_nes_unit_test(location-provider-csv-unit-tests "UnitTests/Spatial/LocationPr
 ### Reconnect Schedule Predictor Test ###
 add_nes_unit_test(reconnect-schedule-predictor-tests "UnitTests/Spatial/ReconnectSchedulePredictorTest.cpp")
 
+### StatManager dynBuffer emit Test ###
+add_nes_unit_test(statManager-test "UnitTests/StatManager/StatManagerTest.cpp")
+
 ### Serial Storage Handler Test ###
 add_nes_unit_test(serial-access-handle-tests "UnitTests/StorageHandles/SerialStorageHandlerTest.cpp")
 
