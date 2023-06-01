@@ -94,6 +94,18 @@ class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
     void executeRequestLogic(StorageHandler& storageHandler) override;
 
   private:
+   /**
+    * @brief stop and undeploy the query
+    * @param storageHandler: a handle to access the coordinators data structures which might be needed for executing the
+    * @param sharedQueryId: the shraed query id of the query to be undeployed
+    */
+    void undeployQueries(StorageHandler& storageHandler, SharedQueryId sharedQueryId);
+
+    /**
+    * @brief stop and undeploy the query
+    * @param sharedQueryId: the shraed query id of the query to be undeployed
+    */
+    void updateGlobalQueryPlan(SharedQueryId sharedQueryId);
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     WorkerRPCClientPtr workerRpcClient;
