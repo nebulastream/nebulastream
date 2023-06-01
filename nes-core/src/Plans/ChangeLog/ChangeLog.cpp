@@ -12,4 +12,35 @@
     limitations under the License.
 */
 
-#include "ChangeLog.hpp"
+#include <Plans/ChangeLog/ChangeLog.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES::Optimizer::Experimental {
+
+ChangeLogPtr ChangeLog::create() { return std::make_unique<ChangeLog>(ChangeLog()); }
+
+void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& changeLogEntry) {
+    changeLogEntries[timestamp] = changeLogEntry;
+}
+
+//FIXME: as part of the issue #3797
+void ChangeLog::performChangeLogCompaction() { NES_NOT_IMPLEMENTED(); }
+
+std::vector<ChangeLogEntry> ChangeLog::getChangeLogEntries(uint64_t timestamp) { NES_NOT_IMPLEMENTED(); }
+
+void ChangeLog::updateProcessedChangeLogTimestamp(uint64_t timestamp) {
+    this->lastProcessedChangeLogTimestamp = timestamp;
+    cleanup(lastProcessedChangeLogTimestamp);
+}
+
+void ChangeLog::cleanup(uint64_t timestamp) {
+
+    //Find the range of keys to be removed
+    auto firstElement = changeLogEntries.lower_bound(0);
+    auto lastElement = changeLogEntries.lower_bound(timestamp);
+
+    //Remove the keys from the change log entry
+    changeLogEntries.erase(firstElement, lastElement);
+}
+
+}// namespace NES::Optimizer::Experimental
