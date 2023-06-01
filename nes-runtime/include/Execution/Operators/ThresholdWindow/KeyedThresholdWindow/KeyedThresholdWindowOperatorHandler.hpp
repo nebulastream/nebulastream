@@ -12,33 +12,31 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_GLOBAL_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_GLOBAL_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYED_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYED_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowState.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @brief This handler stores states of a global threshold window during its execution
+ * @brief This handler stores states of a threshold window during its execution
  */
-class GlobalThresholdWindowOperatorHandler : public OperatorHandler {
+
+class KeyedThresholdWindowOperatorHandler : public OperatorHandler {
   public:
-    explicit GlobalThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
-        : AggregationValues(std::move(AggregationValues)) {}
+    explicit KeyedThresholdWindowOperatorHandler() = default;
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
 
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
-    uint64_t recordCount = 0;// counts the records contributing to the aggregate,
-    bool isWindowOpen = false;
-    std::mutex mutex;
-    std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues;
-    uint8_t aggregationType;
+    std::unordered_map<uint32_t, KeyedThresholdWindowState> keyedAggregationStates {};
+
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_GLOBAL_THRESHOLDWINDOW_THRESHOLDWINDOWOPERATORHANDLER_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_KEYED_THRESHOLDWINDOWOPERATORHANDLER_HPP_
