@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
-#include "Util/PlacementStrategy.hpp"
 #include <Common/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>
 #include <iostream>
@@ -139,8 +139,9 @@ class GlobalQueryPlan {
     bool clearQueryPlansToAdd();
 
     /**
-     * Fetch the Shared query plan consuming the sources and having the same placement Strategy with the input source names and the placement strategy
-     * @param sourceNames: the concatenated names of the logical sources and an appended "_" followed by the placement strategy
+     * Fetch the Shared query plan consuming the sources and having the same placement strategy with the input source names and the placement strategy
+     * @param sourceNames: the concatenated names of the logical sources
+     * @param placementStrategy the placement strategy for the shared query plan
      * @return pointer to the Shared Query Plan or nullptr
      */
     std::vector<SharedQueryPlanPtr>
