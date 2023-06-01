@@ -27,7 +27,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libopencv4.2-java \
   libopencv4.2-jni \
   software-properties-common \
-  openjdk-8-jdk \
+  openjdk-17-jdk \
   ccache \
   && apt-get clean -qq && pip install lcov_cobertura
 
