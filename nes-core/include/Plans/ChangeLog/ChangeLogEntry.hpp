@@ -26,12 +26,12 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 namespace NES::Optimizer::Experimental {
 
 class ChangeLogEntry;
-using ChangeLogEntryPtr = std::unique_ptr<ChangeLogEntry>;
+using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
 
 /**
  * @brief: This class stores individual entry within a change log of a shared query plan. Each entry represents, changes occurred
  * to a shared query plan after applying the query or topology updates (node removal, link removal, query addition, query removal).
- * This change can be visualized as a sub-graph and is represented by the change log entry ba sets of upstream and downstream operators.
+ * This change can be visualized as a sub-query plan and is represented by the change log entry using sets of upstream and downstream operators.
  */
 class ChangeLogEntry {
 

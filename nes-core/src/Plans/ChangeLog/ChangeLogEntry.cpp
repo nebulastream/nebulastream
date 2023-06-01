@@ -19,7 +19,7 @@ namespace NES::Optimizer::Experimental {
 
 ChangeLogEntryPtr ChangeLogEntry::create(std::set<OperatorNodePtr> upstreamOperators,
                                          std::set<OperatorNodePtr> downstreamOperators) {
-    return std::make_unique<ChangeLogEntry>(ChangeLogEntry(std::move(upstreamOperators), std::move(downstreamOperators)));
+    return std::make_shared<ChangeLogEntry>(ChangeLogEntry(std::move(upstreamOperators), std::move(downstreamOperators)));
 }
 
 ChangeLogEntry::ChangeLogEntry(std::set<OperatorNodePtr> upstreamOperators, std::set<OperatorNodePtr> downstreamOperators)
