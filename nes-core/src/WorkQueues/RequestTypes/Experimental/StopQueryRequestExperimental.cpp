@@ -13,9 +13,11 @@
 */
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -93,16 +95,24 @@ void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) 
 void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHandler) {
     NES_TRACE("Start Stop Request logic.");
     try {
+        if (queryId == INVALID_SHARED_QUERY_ID) {
+            throw QueryNotFoundException("Cannot stop query with invalid query id " + std::to_string(queryId)
+                                         + ". Please enter a valid query id.");
+        }
         //mark single query for hard stop
         auto markedForHardStopSuccessful = queryCatalogService->checkAndMarkForHardStop(queryId);
         if (!markedForHardStopSuccessful) {
-            //todo: #3724 replace with correct exception type
-            std::exception e = std::runtime_error("Failed to mark query for hard stop");
-            throw e;
+            throw InvalidQueryStatusException(
+                {QueryStatus::OPTIMIZING, QueryStatus::REGISTERED, QueryStatus::DEPLOYED, QueryStatus::RUNNING, QueryStatus::RESTARTING},
+                queryCatalogService->getEntryForQuery(queryId)->getQueryStatus());
         }
         //remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+            throw QueryNotFoundException("Could not find a a valid shared query plan for query with id " + std::to_string(queryId)
+                                         + " in the global query plan");
+        }
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         //undeploy SQP
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
@@ -157,10 +167,6 @@ void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler
 
 std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
-/*todo: #3724 add error handling for:
- * 1. [16:06:55.369061] [E] [thread 107422] [QueryCatalogService.cpp:324] [addUpdatedQueryPlan] QueryCatalogService: Query Catalog does not contains the input queryId 0
- * 2. [16:49:07.569624] [E] [thread 109653] [RuntimeException.cpp:31] [RuntimeException] GlobalQueryPlan: Can not add query plan with invalid id. at /home/eleicha/Documents/DFKI/Code/nebulastream/nes-core/src/Plans/Global/Query/GlobalQueryPlan.cpp:33 addQueryPlan
-*/
 void StopQueryRequestExperimental::preRollbackHandle(const RequestExecutionException& ex,
                                                      [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
@@ -174,6 +180,42 @@ void StopQueryRequestExperimental::postRollbackHandle(const RequestExecutionExce
 
 void StopQueryRequestExperimental::rollBack(const RequestExecutionException& ex, [[maybe_unused]] StorageHandler& storageHandle) {
     NES_TRACE("Error: {}", ex.what());
+    //todo: when I would call fail query request, how would I release the allocated resources first?
+    NES_TRACE("Error: {}", ex.what());
+    if (ex.instanceOf<InvalidQueryStatusException>()) {
+        //todo: currently, we only log the error. Should we change this behavior? I'm not even sure, if throwing an exception here is really the best way of handling this situation as it only occurs when the
+        //query already failed, stopped, marked for stop etc.
+        NES_ERROR("InvalidQueryStatusException: {}", ex.what());
+    } else if (ex.instanceOf<QueryPlacementException>()) {
+        //todo: should I call fail request here instead? What is the querySubplanId and how do I get it?
+        NES_ERROR("QueryPlacementException: {}", ex.what());
+        auto sharedQueryId = ex.as<QueryPlacementException>()->getSharedQueryId();
+        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
+        auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        for (auto currentQueryId : sharedQueryMetaData->getQueryIds()) {
+            queryCatalogService->updateQueryStatus(currentQueryId, QueryStatus::FAILED, ex.what());
+        }
+    } else if (ex.instanceOf<QueryDeploymentException>()) {
+        //todo: should I call fail request here instead? What is the querySubplanId and how do I get it?
+        NES_ERROR("QueryDeploymentException: {}", ex.what());
+        auto sharedQueryId = ex.as<QueryDeploymentException>()->getSharedQueryId();
+        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
+        auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        for (auto currentQueryId : sharedQueryMetaData->getQueryIds()) {
+            queryCatalogService->updateQueryStatus(currentQueryId, QueryStatus::FAILED, ex.what());
+        }
+    } else if (ex.instanceOf<TypeInferenceException>()) {
+        NES_ERROR("TypeInferenceException: {}", ex.what());
+        auto currentQueryId = ex.as<TypeInferenceException>()->getQueryId();
+        queryCatalogService->updateQueryStatus(currentQueryId, QueryStatus::FAILED, ex.what());
+    } else if (ex.instanceOf<QueryUndeploymentException>()) {
+        NES_ERROR("QueryUndeploymentException: {}", ex.what());
+        //todo: call fail query request
+    } else if (ex.instanceOf<QueryNotFoundException>()) {
+        NES_ERROR("QueryNotFoundException: {}", ex.what());
+    } else {
+        NES_ERROR("Unknown exception: {}", ex.what());
+    }
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }
 }// namespace NES

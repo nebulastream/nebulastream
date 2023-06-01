@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <Common/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
@@ -24,7 +25,7 @@ namespace NES {
 /**
  * @brief This exception is thrown if some error occurred while deploying the query
  */
-class QueryDeploymentException : public std::runtime_error {
+class QueryDeploymentException : public RequestExecutionException {
 
   public:
     /**
