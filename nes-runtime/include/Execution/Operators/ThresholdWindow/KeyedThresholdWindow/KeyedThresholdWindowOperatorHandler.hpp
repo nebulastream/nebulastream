@@ -23,7 +23,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @brief This handler stores states of a threshold window during its execution
+ * @brief This handler stores states of a keyed threshold window during its execution
  */
 
 class KeyedThresholdWindowOperatorHandler : public OperatorHandler {

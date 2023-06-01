@@ -175,7 +175,6 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
 
     if (val) {
         NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
-
         for (uint32_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueState = FunctionCall("getKeyedAggregationValue",
                                                       getKeyedAggregationValue,
@@ -200,6 +199,7 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
                                             getKeyedThresholdWindowRecordCount,
                                             handler,
                                             keyValue.as<UInt32>());
+
             if (recordCount >= minCount) {
                 auto resultRecord = Record();
                 for (uint32_t i = 0; i < aggregationFunctions.size(); ++i) {
