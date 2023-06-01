@@ -93,7 +93,7 @@ void addAggregationValues(void* state, uint32_t aggKey, uint32_t aggFunctionCoun
     }
 }
 
-// TODO 3608: should support key data types other than uint32_t
+// TODO #3801: should support key data types other than uint32_t
 extern "C" void* getKeyedAggregationValue(void* state, uint32_t aggKey, uint32_t aggFuncIdx) {
     auto handler = (KeyedThresholdWindowOperatorHandler*) state;
     NES_TRACE("Called getAggregationValue: for aggIdx = " << aggFuncIdx << " and aggKey = " << aggKey);
@@ -136,7 +136,7 @@ void KeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const 
     auto aggFunctionsCount = Value<UInt32>((uint32_t) aggregationFunctions.size());
     for (uint32_t i = 0; i < aggregationFunctions.size(); ++i) {
         // check the aggregation function types
-        // TODO #3608 the aggregation values and key data type should not be hard-coded
+        // TODO #3801 the aggregation values and key data type should not be hard-coded
         if (std::dynamic_pointer_cast<Aggregation::SumAggregationFunction>(aggregationFunctions[i])) {
             FunctionCall("addAggregationValues",
                          addAggregationValues<Aggregation::SumAggregationValue<int64_t>>,
