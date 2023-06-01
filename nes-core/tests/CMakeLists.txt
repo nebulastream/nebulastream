@@ -480,6 +480,9 @@ add_nes_unit_test(config-test "UnitTests/Configurations/ConfigTest.cpp")
 ### Timer Tests ###
 #add_nes_unit_test(timer-test "UnitTests/Util/TimerTest.cpp")
 
+### H3 Tests ###
+add_nes_unit_test(h3-function-test "UnitTests/Util/H3HashTest.cpp")
+
 
 ### Adaptive Source Tests ###
 add_nes_unit_test(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
