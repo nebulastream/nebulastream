@@ -15,6 +15,7 @@
 #ifndef NES_CHANGELOGENTRY_HPP
 #define NES_CHANGELOGENTRY_HPP
 
+#include <Common/Identifiers.hpp>
 #include <memory>
 #include <set>
 
@@ -41,9 +42,18 @@ class ChangeLogEntry {
     const std::set<OperatorNodePtr> upstreamOperators;
     // Impacted downstream operators
     const std::set<OperatorNodePtr> downstreamOperators;
+    // A partially ordered set (poset) of operator ids that represent the sub-query plan captured in the changelog entry
+    const std::set<OperatorId> poSetOfSubQueryPlan;
 
   private:
     ChangeLogEntry(std::set<OperatorNodePtr> upstreamOperators, std::set<OperatorNodePtr> downstreamOperators);
+
+    /**
+     * @brief: This method computes the partially ordered set of operator ids representing the sub-query plan captured by change log entry.
+     * In particular, perform a BFS traversal from upstream to downstream operators of the sub-query plan.
+     * @return set of operator ids
+     */
+    std::set<OperatorId> computePoSet();
 };
 }// namespace NES::Optimizer::Experimental
 #endif//NES_CHANGELOGENTRY_HPP

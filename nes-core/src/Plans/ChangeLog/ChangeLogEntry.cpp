@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
+#include <stack>
 #include <utility>
+#include <vector>
 
 namespace NES::Optimizer::Experimental {
 
@@ -23,6 +26,67 @@ ChangeLogEntryPtr ChangeLogEntry::create(std::set<OperatorNodePtr> upstreamOpera
 }
 
 ChangeLogEntry::ChangeLogEntry(std::set<OperatorNodePtr> upstreamOperators, std::set<OperatorNodePtr> downstreamOperators)
-    : upstreamOperators(std::move(upstreamOperators)), downstreamOperators(std::move(downstreamOperators)) {}
+    : upstreamOperators(std::move(upstreamOperators)), downstreamOperators(std::move(downstreamOperators)),
+      poSetOfSubQueryPlan(computePoSet()) {}
+
+std::set<OperatorId> ChangeLogEntry::computePoSet() {
+
+    if (upstreamOperators.empty() || downstreamOperators.empty()) {
+        return {};
+    }
+
+    std::set<OperatorId> poSet;
+    std::stack<NodePtr> operatorsToVisit;
+    for (const auto& upstreamOperator : upstreamOperators) {
+
+        operatorsToVisit.push(upstreamOperator);
+        while (!operatorsToVisit.empty()) {
+
+            auto visitingOperator = operatorsToVisit.top();
+            operatorsToVisit.pop();
+            // Insert the operator id to the poSet
+            auto inserted = poSet.insert(visitingOperator->as<OperatorNode>()->getId());
+
+            //If insertion was not successful then skip the remainder of operation
+            // NOTE: this can happen because this operator was already visited.
+            if (!inserted.second) {
+                // Skip rest of the operation
+                continue;
+            }
+
+            // Check if the visiting operator is also one of the downstream operators
+            if (downstreamOperators.find(visitingOperator->as<OperatorNode>()) != downstreamOperators.end()) {
+                // Skip rest of the operation
+                continue;
+            }
+
+            auto downStreamOperatorsToVisit = visitingOperator->getChildren();
+
+            //If there are more than 1 downstream operators then
+            if (downStreamOperatorsToVisit.size() > 1) {
+                // visit only those downstream operators that are connected
+                // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
+                for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
+                    bool visit = false;
+                    for (const auto& downstreamOperator : downstreamOperators) {
+                        if (downStreamOperatorToVisit->as<OperatorNode>()->containAsGrandChild(downstreamOperator)) {
+                            visit = true;
+                            //skip rest of the checks
+                            break;
+                        }
+                    }
+                    if (visit) {
+                        //insert the downstream operator for further visit
+                        operatorsToVisit.push(downStreamOperatorToVisit);
+                    }
+                }
+            } else if (downStreamOperatorsToVisit.size() == 1) {
+                //insert the downstream operator for further visit
+                operatorsToVisit.push(downStreamOperatorsToVisit.at(0));
+            }
+        }
+    }
+    return poSet;
+}
 
 }// namespace NES::Optimizer::Experimental
