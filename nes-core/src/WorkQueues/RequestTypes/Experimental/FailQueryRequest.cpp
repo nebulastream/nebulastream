@@ -99,5 +99,6 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
     }
+    //todo: remove failed shared query plan from global query plan
 }
 }// namespace NES::Experimental

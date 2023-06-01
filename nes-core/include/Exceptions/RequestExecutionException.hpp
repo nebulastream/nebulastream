@@ -16,6 +16,7 @@
 
 #include <exception>
 #include <stdexcept>
+#include <memory>
 #include <string>
 
 namespace NES::Exceptions {
@@ -39,6 +40,19 @@ class RequestExecutionException : public std::runtime_error {
         }
         return false;
     };
+
+    /**
+    * @brief Dynamically casts the exception to the given type
+    * @tparam ExceptionType: a subclass ob RequestExecutionException
+    * @return returns a shared pointer of the given type
+    */
+    template<class ExceptionType>
+    std::shared_ptr<ExceptionType> as() {
+        if (instanceOf<ExceptionType>()) {
+            return std::dynamic_pointer_cast<ExceptionType>(this->shared_from_this());
+        }
+        throw std::logic_error("Exception:: we performed an invalid cast of exception");
+    }
 };
 }// namespace NES::Exceptions
 

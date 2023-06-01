@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <Common/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
