@@ -15,4 +15,18 @@
 #include <Experimental/Synopses/Histograms/EquiWidth1DHist.hpp>
 namespace NES::ASP {
 
+void EquiWidth1DHist::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                    Nautilus::Record record) {
+
+}
+
+std::vector<Runtime::TupleBuffer>
+EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                Runtime::BufferManagerPtr bufferManager) {
+
+}
+
+void EquiWidth1DHist::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) {
+
+}
 } // namespace NES::ASP
