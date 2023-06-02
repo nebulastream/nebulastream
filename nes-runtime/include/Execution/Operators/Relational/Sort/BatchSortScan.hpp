@@ -15,9 +15,9 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTSCAN_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTSCAN_HPP_
 
+#include <Execution/Expressions/Expression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Expressions/Expression.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -32,11 +32,13 @@ class BatchSortScan : public Operator {
      * @param fieldIdentifiers field identifiers of the records
      * @param dataTypes data types of the records
      */
-    BatchSortScan(const uint64_t operatorHandlerIndex, const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
-             const std::vector<PhysicalTypePtr>& dataTypes) : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes) {}
+    BatchSortScan(const uint64_t operatorHandlerIndex,
+                  const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+                  const std::vector<PhysicalTypePtr>& dataTypes)
+        : operatorHandlerIndex(operatorHandlerIndex), fieldIdentifiers(fieldIdentifiers), dataTypes(dataTypes) {}
 
     void setup(ExecutionContext& executionCtx) const override;
-    void open(ExecutionContext& executionCtx,  RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
     const uint64_t operatorHandlerIndex;

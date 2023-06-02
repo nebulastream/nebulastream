@@ -15,9 +15,9 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORT_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORT_HPP_
 
+#include <Execution/Expressions/Expression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Expressions/Expression.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -34,8 +34,7 @@ class BatchSort : public ExecutableOperator {
      * @param operatorHandlerIndex operator handler index
      * @param dataTypes data types of the input tuples
      */
-    BatchSort(const uint64_t operatorHandlerIndex,
-         const std::vector<PhysicalTypePtr>& dataTypes);
+    BatchSort(const uint64_t operatorHandlerIndex, const std::vector<PhysicalTypePtr>& dataTypes);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void setup(ExecutionContext& executionCtx) const override;

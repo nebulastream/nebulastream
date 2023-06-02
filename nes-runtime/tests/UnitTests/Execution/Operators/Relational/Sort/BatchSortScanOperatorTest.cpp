@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-template <typename T>
+template<typename T>
 class BatchSortScanOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
@@ -40,15 +40,13 @@ class BatchSortScanOperatorTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-    }
+    void SetUp() override { Testing::NESBaseTest::SetUp(); }
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO2("Tear down BatchSortScanOperatorTest test class."); }
 };
 
 // Fills the state of the sort operator with values in descending order
-template <typename TypeParam>
+template<typename TypeParam>
 void fillState(uint64_t numberOfRecord, std::shared_ptr<BatchSortOperatorHandler> handler) {
     auto state = handler->getState();
     auto entrySize = sizeof(TypeParam);
@@ -93,8 +91,8 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
     ASSERT_EQ(collector->records.size(), 100);
     ASSERT_EQ(collector->records[0].numberOfFields(), 1);
     // Records should be in ascending order
-    for (int i = 0; i < numberOfRecords; i++){
-        ASSERT_EQ(collector->records[i].read("f1"), i+1);
+    for (int i = 0; i < numberOfRecords; i++) {
+        ASSERT_EQ(collector->records[i].read("f1"), i + 1);
     }
 }
 

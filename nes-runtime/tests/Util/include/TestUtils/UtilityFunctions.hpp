@@ -295,7 +295,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
  * @brief Gets the physical type of a given type given as template parameter
  * @return PhysicalTypePtr
  */
-template <typename T>
+template<typename T>
 PhysicalTypePtr getPhysicalTypePtr() {
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr type;

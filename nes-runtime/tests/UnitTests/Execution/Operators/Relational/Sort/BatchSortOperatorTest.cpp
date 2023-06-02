@@ -31,7 +31,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-template <typename T>
+template<typename T>
 class BatchSortOperatorTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<BufferManager> bm;
@@ -99,9 +99,9 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
  * @brief Tests if the sort operator collects records over multiple pages
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
-    auto numberRecords = 1025; // 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
+    auto numberRecords = 1025;// 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
     std::vector<Record> records;
-    for(int i = 0; i < numberRecords; i++) {
+    for (int i = 0; i < numberRecords; i++) {
         records.push_back(Record({{"f1", Value<>(50)}, {"f2", Value<>(1)}}));
     }
 
