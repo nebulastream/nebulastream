@@ -212,4 +212,11 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
     }
     return retVector;
 }
+
+uint32_t Util::writeStringToTupleBuffer(Runtime::TupleBuffer parentTupleBuffer, Runtime::TupleBuffer childTupleBuffer, const std::string& field) {
+    auto sizeOfInputField = field.size();
+    (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfInputField;
+    std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), field.c_str(), sizeOfInputField);
+    return parentTupleBuffer.storeChildBuffer(childTupleBuffer);
+}
 }// namespace NES

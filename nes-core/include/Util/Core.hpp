@@ -63,6 +63,16 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 namespace Util {
 
 /**
+ * @brief copies the field string into the childTupleBuffer and stores it in the parentTupleBuffer
+ * @param parentTupleBuffer
+ * @param childTupleBuffer
+ * @param field
+ * @return index of the childTupleBuffer
+ */
+uint32_t writeStringToTupleBuffer (Runtime::TupleBuffer parentTupleBuffer, Runtime::TupleBuffer childTupleBuffer,
+                                  const std::string& field);
+
+/**
 * @brief Outputs a tuple buffer in text format
 * @param buffer the tuple buffer
 * @return string of tuple buffer
