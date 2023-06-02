@@ -513,6 +513,12 @@ add_nes_unit_test(stop-query-request-test "UnitTests/Requests/StopQueryRequestTe
 
 ### Request Execution Exception Test ###
 add_nes_unit_test(request-execution-exception-test "UnitTests/Exceptions/RequestExecutionExceptionTest.cpp")
+
+### ChangeLog Test ###
+add_nes_unit_test(change-log-test "UnitTests/Plans/ChangeLog/ChangeLogTest.cpp")
+
+
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")

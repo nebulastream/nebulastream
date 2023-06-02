@@ -36,6 +36,14 @@ using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
  */
 class ChangeLogEntry {
 
+  public:
+
+    /**
+     * @param: Create change log entry
+     * @param upstreamOperators: upstream operator set
+     * @param downstreamOperators: downstream operator set
+     * @return shared pointer to change log entry
+     */
     static ChangeLogEntryPtr create(std::set<OperatorNodePtr> upstreamOperators, std::set<OperatorNodePtr> downstreamOperators);
 
     // Impacted upstream operators
