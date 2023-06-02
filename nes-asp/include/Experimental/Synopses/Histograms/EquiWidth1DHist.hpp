@@ -21,9 +21,15 @@ namespace NES::ASP {
 class EquiWidth1DHist : public AbstractSynopsis {
 
 
+public:
+    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record) override;
 
+    std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                                     Runtime::BufferManagerPtr bufferManager) override;
 
-  private:
+    void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
+
+private:
     const int64_t minValue;
     const int64_t maxValue;
     const int64_t numberOfBins;
