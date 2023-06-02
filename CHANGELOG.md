@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.100](https://github.com/nebulastream/nebulastream/tree/v0.5.100) (2023-06-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.99...v0.5.100)
+
+**Implemented enhancements:**
+
+- \[TASK\] Always connect to closest fixed node on mobile worker start [\#3744](https://github.com/nebulastream/nebulastream/issues/3744)
+- \[TASK\] Remove stopped shared query plans [\#3728](https://github.com/nebulastream/nebulastream/issues/3728)
+- \[TASK\] Adding placement strategy to shared query plan [\#3726](https://github.com/nebulastream/nebulastream/issues/3726)
+
 ## [v0.5.99](https://github.com/nebulastream/nebulastream/tree/v0.5.99) (2023-06-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.98...v0.5.99)
