@@ -1,0 +1,105 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/Hash/H3Hash.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <NesBaseTest.hpp>
+#include <vector>
+#include <array>
+
+namespace NES::Nautilus::Interface {
+class H3HashTest : public Testing::NESBaseTest {
+public:
+    static constexpr auto H3_SEED = 42;
+    static constexpr auto NUMBER_OF_KEYS_TO_TEST = 5;
+    static constexpr auto NUMBER_OF_ROWS = 3;
+    std::array<std::vector<uint64_t>, NUMBER_OF_ROWS> allH3Seeds;
+    std::vector<std::unique_ptr<HashFunction>> allH3Hashes;
+
+
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("H3HashTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO2("H3HashTest test class SetUpTestCase.");
+    }
+
+    void SetUp() override {
+        NESBaseTest::SetUp();
+
+        std::random_device rd;
+        std::mt19937 gen(H3_SEED);
+        std::uniform_int_distribution<uint64_t> distribution;
+        auto numberOfBitsInKey = sizeof(uint64_t) * 8;
+
+        for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
+            for (auto keyBit = 0UL; keyBit < numberOfBitsInKey; ++keyBit) {
+                allH3Seeds[row].emplace_back(distribution(gen));
+            }
+        }
+        allH3Hashes.clear();
+    }
+
+    static void TearDownTestCase() { NES_INFO2("H3HashTest test class TearDownTestCase."); }
+};
+
+TEST_F(H3HashTest, simpleH3testUInt64) {
+    std::vector<std::array<uint64_t, NUMBER_OF_ROWS>> expectedHashes = {
+            {0x0,0x0,0x0},
+            {0x5fe1dc66cbea3db3,0x47eb52fb9b6698bb,0x1c79d662a26e2c5},
+            {0xf362035c2ef5950e,0x8aee217b46a7e1ec,0x82c055c788ba159a},
+            {0xac83df3ae51fa8bd,0xcd057380ddc17957,0x8307c8a1a29cf75f},
+            {0xbb63f46ac799d447,0x24139c284bd8949c,0x6adb72887c1dd13d},
+            {0xe482280c0c73e9f4,0x63f8ced3d0be0c27,0x6b1cefee563b33f8}
+    };
+
+    for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(allH3Seeds[row], sizeof(uint64_t) * 8));
+    }
+
+    for (uint64_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
+        for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
+            Value<UInt64> valKey(key);
+            auto expectedHash = expectedHashes[key][row];
+            auto calcHash = allH3Hashes[row]->calculate(valKey).getValue().getValue();
+            EXPECT_EQ(expectedHash, calcHash);
+        }
+    }
+}
+
+TEST_F(H3HashTest, simpleH3testUInt32) {
+    std::vector<std::array<uint32_t, NUMBER_OF_ROWS>> expectedHashes = {
+            {0x0,0x0,0x0},
+            {0xcbea3db3,0x9b6698bb,0x2a26e2c5},
+            {0x2ef5950e,0x46a7e1ec,0x88ba159a},
+            {0xe51fa8bd,0xddc17957,0xa29cf75f},
+            {0xc799d447,0x4bd8949c,0x7c1dd13d},
+            {0xc73e9f4,0xd0be0c27,0x563b33f8}
+    };
+
+
+    for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>(allH3Seeds[row], sizeof(uint32_t) * 8));
+    }
+    for (uint32_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
+        for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
+            Value<UInt32> valKey(key);
+            auto expectedHash = expectedHashes[key][row];
+            auto calcHash = allH3Hashes[row]->calculate(valKey).getValue().getValue();
+            EXPECT_EQ(expectedHash, calcHash);
+        }
+    }
+}
+
+} // namespace NES
