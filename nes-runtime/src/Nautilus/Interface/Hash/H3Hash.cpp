@@ -43,7 +43,7 @@ uint64_t hashValue(uint64_t seed, T value, void* h3SeedsPtr) {
 
 
 HashFunction::HashValue H3Hash::init() {
-    return 0UL;
+    return (uint64_t)0UL;
 }
 
 HashFunction::HashValue H3Hash::calculate(HashFunction::HashValue& hash, Value<>& value) {
