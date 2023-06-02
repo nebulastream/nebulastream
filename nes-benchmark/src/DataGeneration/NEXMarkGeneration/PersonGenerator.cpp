@@ -25,13 +25,13 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
     std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
-    std::uniform_int_distribution<uint16_t> uniformFirstnameDistribution(0, PersonDataPool().firstnames.size());
-    std::uniform_int_distribution<uint16_t> uniformLastnameDistribution(0, PersonDataPool().lastnames.size());
-    std::uniform_int_distribution<uint8_t> uniformEmailDistribution(0, PersonDataPool().emails.size());
-    std::uniform_int_distribution<uint16_t> uniformCityDistribution(0, PersonDataPool().cities.size());
-    std::uniform_int_distribution<uint8_t> uniformCountryDistribution(0, PersonDataPool().countries.size());
-    std::uniform_int_distribution<uint8_t> uniformProvinceDistribution(0, PersonDataPool().provinces.size());
-    std::uniform_int_distribution<uint8_t> uniformEducationDistribution(0, PersonDataPool().education.size());
+    std::uniform_int_distribution<uint16_t> uniformFirstnameDistribution(0, PersonDataPool().firstnames.size() - 1);
+    std::uniform_int_distribution<uint16_t> uniformLastnameDistribution(0, PersonDataPool().lastnames.size() - 1);
+    std::uniform_int_distribution<uint8_t> uniformEmailDistribution(0, PersonDataPool().emails.size() - 1);
+    std::uniform_int_distribution<uint16_t> uniformCityDistribution(0, PersonDataPool().cities.size() - 1);
+    std::uniform_int_distribution<uint8_t> uniformCountryDistribution(0, PersonDataPool().countries.size() - 1);
+    std::uniform_int_distribution<uint8_t> uniformProvinceDistribution(0, PersonDataPool().provinces.size() - 1);
+    std::uniform_int_distribution<uint8_t> uniformEducationDistribution(0, PersonDataPool().education.size() - 1);
     std::uniform_int_distribution<uint32_t> uniformZipcodeDistribution(1, 99999);
     std::uniform_int_distribution<uint8_t> uniformStreetNumDistribution(1, 99);
     std::uniform_int_distribution<uint8_t> uniformCountryUSDistribution(0, 3);
@@ -47,7 +47,7 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
     auto persons = dependencyGeneratorInstance.getPersons();
     auto numberOfPersons = persons.size();
     auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
-    auto personsToProcess = numberOfRecords / 10 < numberOfPersons ? numberOfRecords / 10 : numberOfPersons;
+    auto personsToProcess = (numberOfRecords / 10) < numberOfPersons ? (numberOfRecords / 10) : numberOfPersons;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = 1 + personsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;

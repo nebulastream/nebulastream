@@ -26,7 +26,7 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
     auto bids = dependencyGeneratorInstance.getBids();
     auto numberOfBids = bids.size();
     auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
-    auto bidsToProcess = numberOfRecords * 10 < numberOfBids ? numberOfRecords * 10 : numberOfBids;
+    auto bidsToProcess = (numberOfRecords * 10) < numberOfBids ? (numberOfRecords * 10) : numberOfBids;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = 1 + bidsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
