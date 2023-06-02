@@ -17,9 +17,9 @@
 #include <Execution/Operators/Relational/Sort/BatchSort.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -52,7 +52,7 @@ void BatchSort::execute(ExecutionContext& ctx, Record& record) const {
     auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler);
 
     auto entrySize = Nautilus::FunctionCall("getStateEntrySize", getStateEntrySize, globalOperatorHandler);
-    auto vector = Interface::PagedVectorRef(state ,entrySize->getValue());
+    auto vector = Interface::PagedVectorRef(state, entrySize->getValue());
 
     // create entry and store it in state
     auto entry = vector.allocateEntry();

@@ -15,12 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHSORTOPERATORHANDLER_HPP_
 
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 #include <vector>
@@ -31,13 +31,13 @@ namespace NES::Runtime::Execution::Operators {
  * @brief Sort operator handler that manages the state of the BatchSort and BatchSortScan operators.
  */
 class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
-                         public NES::detail::virtual_enable_shared_from_this<BatchSortOperatorHandler, false> {
+                                 public NES::detail::virtual_enable_shared_from_this<BatchSortOperatorHandler, false> {
   public:
     /**
      * @brief Creates the operator handler for the sort operator.
      * @param entrySize size of the entry
      */
-    explicit BatchSortOperatorHandler(uint64_t entrySize) : entrySize(entrySize) {};
+    explicit BatchSortOperatorHandler(uint64_t entrySize) : entrySize(entrySize){};
 
     /**
      * @brief Sets up the state for the sort operator
@@ -54,13 +54,13 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
      * @brief Returns the state of the sort operator
      * @return Stack state
      */
-    Nautilus::Interface::PagedVector *getState() const { return stack.get(); }
+    Nautilus::Interface::PagedVector* getState() const { return stack.get(); }
 
     /**
      * @brief Returns the temporary state of the sort operator
      * @return Stack state
      */
-    Nautilus::Interface::PagedVector *getTempState() const { return tempStack.get(); }
+    Nautilus::Interface::PagedVector* getTempState() const { return tempStack.get(); }
 
     /**
      * @brief Returns the size of the entry
@@ -68,12 +68,10 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
      */
     uint64_t getStateEntrySize() const { return entrySize; }
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr,
-               Runtime::StateManagerPtr,
-               uint32_t) override {};
+    void start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) override{};
 
-    void stop(Runtime::QueryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr) override {};
+    void stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) override{};
+
   private:
     std::unique_ptr<Nautilus::Interface::PagedVector> stack;
     std::unique_ptr<Nautilus::Interface::PagedVector> tempStack;

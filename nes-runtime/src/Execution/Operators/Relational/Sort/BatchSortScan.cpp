@@ -44,8 +44,8 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -67,23 +67,30 @@ const uint64_t COL_SIZE = 8;
  * @param locations locations array as working memory
  * @param swap swap temp and orig
  */
-void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const uint64_t &col_offset,
-                  const uint64_t &row_width, const uint64_t &comp_width, const uint64_t &offset, uint64_t locations[], bool swap) {
+void RadixSortMSD(void* orig_ptr,
+                  void* temp_ptr,
+                  const uint64_t& count,
+                  const uint64_t& col_offset,
+                  const uint64_t& row_width,
+                  const uint64_t& comp_width,
+                  const uint64_t& offset,
+                  uint64_t locations[],
+                  bool swap) {
     // Set source and target pointers based on the swap flag
-    uint8_t *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
-    uint8_t *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+    uint8_t* source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+    uint8_t* target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
 
     // Initialize locations array to zero
     memset(locations, 0, MSD_RADIX_LOCATIONS * sizeof(uint64_t));
 
     // Set the counts pointer to the next position of the locations array
-    uint64_t *counts = locations + 1;
+    uint64_t* counts = locations + 1;
 
     // Calculate the total offset as the sum of column offset and provided offset
     const uint64_t total_offset = col_offset + offset;
 
     // Set the offset_ptr to point at the source data plus the total_offset
-    auto *offset_ptr = const_cast<uint8_t*>(source_ptr + total_offset);
+    auto* offset_ptr = const_cast<uint8_t*>(source_ptr + total_offset);
 
     // Loop through rows and collect counts of byte values at the specified offset
     for (uint64_t i = 0; i < count; i++) {
@@ -102,9 +109,9 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
 
     // If maximum count is not equal to the total count, reorder the rows based on the calculated locations
     if (max_count != count) {
-        const uint8_t *row_ptr = source_ptr;
+        const uint8_t* row_ptr = source_ptr;
         for (uint64_t i = 0; i < count; i++) {
-            const uint64_t &radix_offset = locations[*(row_ptr + total_offset)]++;
+            const uint64_t& radix_offset = locations[*(row_ptr + total_offset)]++;
             std::memcpy((void*) (target_ptr + radix_offset * row_width), row_ptr, row_width);
             row_ptr += row_width;
         }
@@ -122,8 +129,15 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
 
     // If the maximum count is equal to the total count, call RadixSortMSD recursively with an increased offset
     if (max_count == count) {
-        RadixSortMSD(orig_ptr, temp_ptr, count, col_offset, row_width, comp_width, offset + 1,
-                     locations + MSD_RADIX_LOCATIONS, swap);
+        RadixSortMSD(orig_ptr,
+                     temp_ptr,
+                     count,
+                     col_offset,
+                     row_width,
+                     comp_width,
+                     offset + 1,
+                     locations + MSD_RADIX_LOCATIONS,
+                     swap);
         return;
     }
 
@@ -131,13 +145,20 @@ void RadixSortMSD(void *orig_ptr, void *temp_ptr, const uint64_t &count, const u
     uint64_t radix_count = locations[0];
     for (uint64_t radix = 0; radix < VALUES_PER_RADIX; radix++) {
         const uint64_t loc = (locations[radix] - radix_count) * row_width;
-        RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc, static_cast<uint8_t*>(temp_ptr) + loc, radix_count, col_offset, row_width, comp_width, offset + 1,
-                     locations + MSD_RADIX_LOCATIONS, swap);
+        RadixSortMSD(static_cast<uint8_t*>(orig_ptr) + loc,
+                     static_cast<uint8_t*>(temp_ptr) + loc,
+                     radix_count,
+                     col_offset,
+                     row_width,
+                     comp_width,
+                     offset + 1,
+                     locations + MSD_RADIX_LOCATIONS,
+                     swap);
         radix_count = locations[radix + 1] - locations[radix];
     }
 }
 
-void RadixSortMSDProxy(void *op) {
+void RadixSortMSDProxy(void* op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // TODO issue #3773 add support for data larger than page size
     auto origPtr = handler->getState()->getEntry(0);
@@ -148,19 +169,19 @@ void RadixSortMSDProxy(void *op) {
     auto rowWidth = handler->getStateEntrySize();
     // TODO issue #3773 add support for columns other sizes
     auto compWidth = COL_SIZE;
-    auto offset = 0; // init to 0
+    auto offset = 0;// init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
-    auto swap = false; // init false
+    auto swap = false;// init false
     RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
     delete[] locations;
 }
 
-void *getStateProxy(void *op){
+void* getStateProxy(void* op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     return handler->getState();
 }
 
-uint64_t getSortStateEntrySizeProxy(void *op){
+uint64_t getSortStateEntrySizeProxy(void* op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     return handler->getStateEntrySize();
 }
@@ -185,7 +206,7 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // 3. emit the records
     for (uint64_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
         Record record;
-        auto entry  = state.getEntry(Value<UInt64>(entryIndex));
+        auto entry = state.getEntry(Value<UInt64>(entryIndex));
         for (uint64_t i = 0; i < fieldIdentifiers.size(); i++) {
             auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
             record.write(fieldIdentifiers[i], value);
