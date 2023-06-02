@@ -26,7 +26,7 @@ void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& change
 //FIXME: implement as part of the issue #3797
 void ChangeLog::performChangeLogCompaction(uint64_t) { NES_NOT_IMPLEMENTED(); }
 
-std::vector<ChangeLogEntryPtr> ChangeLog::getChangeLogEntries(uint64_t timestamp) {
+std::vector<ChangeLogEntryPtr> ChangeLog::getChangeLogEntriesBefore(uint64_t timestamp) {
 
     //TODO: enable as part of #3797
     //performChangeLogCompaction(timestamp);

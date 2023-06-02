@@ -54,7 +54,7 @@ class ChangeLog {
      * @param timestamp : the timestamp after which the change log entries need to be retrieved
      * @return a vector of change log entries
      */
-    std::vector<ChangeLogEntryPtr> getChangeLogEntries(uint64_t timestamp);
+    std::vector<ChangeLogEntryPtr> getChangeLogEntriesBefore(uint64_t timestamp);
 
     /**
      * @brief: Update the timestamp till which the change log entries are processed
