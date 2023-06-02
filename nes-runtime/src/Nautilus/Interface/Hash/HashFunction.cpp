@@ -26,4 +26,9 @@ HashFunction::HashValue HashFunction::calculate(std::vector<Value<>>& values) {
     }
     return hash;
 }
+
+HashFunction::HashValue HashFunction::calculateWithState(Value<> value, Value<MemRef> state) {
+    auto hash = init();
+    return calculateWithState(hash, value, state);
+}
 }// namespace NES::Nautilus::Interface

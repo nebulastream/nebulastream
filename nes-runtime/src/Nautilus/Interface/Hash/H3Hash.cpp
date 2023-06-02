@@ -46,48 +46,35 @@ HashFunction::HashValue H3Hash::init() {
     return (uint64_t)0UL;
 }
 
-HashFunction::HashValue H3Hash::calculate(HashFunction::HashValue& hash, Value<>& value) {
-    auto h3SeedMemRef = Value<MemRef>((int8_t*)h3Seeds.data());
+HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
 
     if (value->isType<Int8>()) {
-        return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>(), h3SeedMemRef);
+        return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>(), state);
     } else if (value->isType<Int16>()) {
-        return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>(), h3SeedMemRef);
+        return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>(), state);
     } else if (value->isType<Int32>()) {
-        return FunctionCall("hashValueI32", hashValue<typename Int32::RawType>, hash, value.as<Int32>(), h3SeedMemRef);
+        return FunctionCall("hashValueI32", hashValue<typename Int32::RawType>, hash, value.as<Int32>(), state);
     } else if (value->isType<Int64>()) {
-        return FunctionCall("hashValueI64", hashValue<typename Int64::RawType>, hash, value.as<Int64>(), h3SeedMemRef);
+        return FunctionCall("hashValueI64", hashValue<typename Int64::RawType>, hash, value.as<Int64>(), state);
     } else if (value->isType<UInt8>()) {
-        return FunctionCall("hashValueUI8", hashValue<typename UInt8::RawType>, hash, value.as<UInt8>(), h3SeedMemRef);
+        return FunctionCall("hashValueUI8", hashValue<typename UInt8::RawType>, hash, value.as<UInt8>(), state);
     } else if (value->isType<UInt16>()) {
-        return FunctionCall("hashValueUI16", hashValue<typename UInt16::RawType>, hash, value.as<UInt16>(), h3SeedMemRef);
+        return FunctionCall("hashValueUI16", hashValue<typename UInt16::RawType>, hash, value.as<UInt16>(), state);
     } else if (value->isType<UInt32>()) {
-        return FunctionCall("hashValueUI32", hashValue<typename UInt32::RawType>, hash, value.as<UInt32>(), h3SeedMemRef);
+        return FunctionCall("hashValueUI32", hashValue<typename UInt32::RawType>, hash, value.as<UInt32>(), state);
     } else if (value->isType<UInt64>()) {
-        return FunctionCall("hashValueUI64", hashValue<typename UInt64::RawType>, hash, value.as<UInt64>(), h3SeedMemRef);
+        return FunctionCall("hashValueUI64", hashValue<typename UInt64::RawType>, hash, value.as<UInt64>(), state);
     } else if (value->isType<Float>()) {
-        return FunctionCall("hashValueF", hashValue<typename Float::RawType>, hash, value.as<Float>(), h3SeedMemRef);
+        return FunctionCall("hashValueF", hashValue<typename Float::RawType>, hash, value.as<Float>(), state);
     } else if (value->isType<Double>()) {
-        return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>(), h3SeedMemRef);
+        return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>(), state);
     }
 
     NES_NOT_IMPLEMENTED();
 }
 
-H3Hash::H3Hash(const std::vector<uint64_t> &h3Seeds, uint64_t numberOfKeyBits)  : h3Seeds(h3Seeds) {
-    uint64_t mask = getBitMask(numberOfKeyBits);
-    for (auto& seed : this->h3Seeds) {
-        seed &= mask;
-    }
+HashFunction::HashValue H3Hash::calculate(HashFunction::HashValue&, Value<>&) {
+    NES_THROW_RUNTIME_ERROR("Wrong function call! Please use calculateWithState() as H3 requires a seed vector");
 }
 
-    uint64_t H3Hash::getBitMask(uint64_t numberOfKeyBits) const {
-        switch (numberOfKeyBits) {
-            case  8: return 0xFF;
-            case 16: return 0xFFFF;
-            case 32: return 0xFFFFFFFF;
-            case 64: return 0xFFFFFFFFFFFFFFFF;
-            default: NES_THROW_RUNTIME_ERROR("getBitMask got a numberOfKeyBits that was not expected!");
-        }
-    }
 } // namespace NES::Nautilus::Interface

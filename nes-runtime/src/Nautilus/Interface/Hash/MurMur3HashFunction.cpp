@@ -141,4 +141,8 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>&
     NES_NOT_IMPLEMENTED();
 }
 
+HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, Value<>&, Value<MemRef>&) {
+    NES_THROW_RUNTIME_ERROR("This does not hash the value. Please use calculate().");
+}
+
 }// namespace NES::Nautilus::Interface

@@ -54,6 +54,33 @@ public:
     static void TearDownTestCase() { NES_INFO2("H3HashTest test class TearDownTestCase."); }
 };
 
+/**
+ * @brief Gets a bitmask for a given number of bits, for example 8 --> 0xFF and 32 -> 0xFFFF
+ * @param numberOfKeyBits
+ * @return uint64_t
+ */
+uint64_t getBitMask(uint64_t numberOfKeyBits) {
+    switch (numberOfKeyBits) {
+        case  8: return 0xFF;
+        case 16: return 0xFFFF;
+        case 32: return 0xFFFFFFFF;
+        case 64: return 0xFFFFFFFFFFFFFFFF;
+        default: NES_THROW_RUNTIME_ERROR("getBitMask got a numberOfKeyBits that was not expected!");
+    }
+}
+
+/**
+ * @brief Masks the bits that are larger than numberOfKeyBits
+ * @param allSeeds
+ */
+void maskSeeds(std::vector<uint64_t>& allSeeds, uint64_t numberOfKeyBits) {
+    uint64_t mask = getBitMask(numberOfKeyBits);
+    for (auto& seed : allSeeds) {
+        seed &= mask;
+    }
+}
+
+
 TEST_F(H3HashTest, simpleH3testUInt64) {
     std::vector<std::array<uint64_t, NUMBER_OF_ROWS>> expectedHashes = {
             {0x0,0x0,0x0},
@@ -64,15 +91,19 @@ TEST_F(H3HashTest, simpleH3testUInt64) {
             {0xe482280c0c73e9f4,0x63f8ced3d0be0c27,0x6b1cefee563b33f8}
     };
 
+    const auto numberOfKeyBits = sizeof(uint64_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>(allH3Seeds[row], sizeof(uint64_t) * 8));
+        maskSeeds(allH3Seeds[row], numberOfKeyBits);
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
     }
 
     for (uint64_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
             Value<UInt64> valKey(key);
+            Value<MemRef> h3SeedMemRef((int8_t*) allH3Seeds[row].data());
+
             auto expectedHash = expectedHashes[key][row];
-            auto calcHash = allH3Hashes[row]->calculate(valKey).getValue().getValue();
+            auto calcHash = allH3Hashes[row]->calculateWithState(valKey, h3SeedMemRef).getValue().getValue();
             EXPECT_EQ(expectedHash, calcHash);
         }
     }
@@ -89,14 +120,20 @@ TEST_F(H3HashTest, simpleH3testUInt32) {
     };
 
 
+    const auto numberOfKeyBits = sizeof(uint32_t) * 8;
     for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
-        allH3Hashes.emplace_back(std::make_unique<H3Hash>(allH3Seeds[row], sizeof(uint32_t) * 8));
+        maskSeeds(allH3Seeds[row], numberOfKeyBits);
+        allH3Hashes.emplace_back(std::make_unique<H3Hash>());
     }
+
+
     for (uint32_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key) {
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
             Value<UInt32> valKey(key);
+            Value<MemRef> h3SeedMemRef((int8_t*) allH3Seeds[row].data());
+
             auto expectedHash = expectedHashes[key][row];
-            auto calcHash = allH3Hashes[row]->calculate(valKey).getValue().getValue();
+            auto calcHash = allH3Hashes[row]->calculateWithState(valKey, h3SeedMemRef).getValue().getValue();
             EXPECT_EQ(expectedHash, calcHash);
         }
     }
