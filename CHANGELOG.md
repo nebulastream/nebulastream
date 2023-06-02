@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.99](https://github.com/nebulastream/nebulastream/tree/v0.5.99) (2023-06-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.98...v0.5.99)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Reviewer Lottery [\#3795](https://github.com/nebulastream/nebulastream/issues/3795)
+- \[TASK\] Batch Sort Operator [\#3695](https://github.com/nebulastream/nebulastream/issues/3695)
+
+## [v0.5.98](https://github.com/nebulastream/nebulastream/tree/v0.5.98) (2023-06-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.97...v0.5.98)
+
 ## [v0.5.97](https://github.com/nebulastream/nebulastream/tree/v0.5.97) (2023-05-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.96...v0.5.97)
