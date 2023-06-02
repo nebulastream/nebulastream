@@ -12,4 +12,4 @@
 # limitations under the License.
 
 add_nes_runtime_test(nautilus-murmur3-hash-function-test "MurMur3HashFunctionTest.cpp")
-
+add_nes_runtime_test(h3-function-test "H3HashTest.cpp")
