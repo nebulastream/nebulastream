@@ -60,21 +60,28 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
                 continue;
             }
 
-            auto downStreamOperatorsToVisit = visitingOperator->getChildren();
+            auto downStreamOperatorsToVisit = visitingOperator->getParents();
 
             //If there are more than 1 downstream operators then
             if (downStreamOperatorsToVisit.size() > 1) {
-                // visit only those downstream operators that are connected
-                // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
+                // Check all downstream operators if they need to be visited or not
                 for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
                     bool visit = false;
-                    for (const auto& downstreamOperator : downstreamOperators) {
-                        if (downStreamOperatorToVisit->as<OperatorNode>()->containAsGrandChild(downstreamOperator)) {
-                            visit = true;
-                            //skip rest of the checks
-                            break;
+                    // If the operator to visit is one of the input downstream operators then add the operator to visit list
+                    if (downstreamOperators.find(downStreamOperatorToVisit->as<OperatorNode>()) != downstreamOperators.end()) {
+                        visit = true;
+                    } else { // Check if the path is to be explored
+                             // visit only those downstream operators that are connected
+                             // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
+                        for (const auto& downstreamOperator : downstreamOperators) {
+                            if (downStreamOperatorToVisit->as<OperatorNode>()->containAsGrandParent(downstreamOperator)) {
+                                visit = true;
+                                //skip rest of the checks
+                                break;
+                            }
                         }
                     }
+
                     if (visit) {
                         //insert the downstream operator for further visit
                         operatorsToVisit.push(downStreamOperatorToVisit);

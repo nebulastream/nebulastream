@@ -31,48 +31,28 @@ namespace NES {
 class ChangeLogTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryPlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryPlanIteratorTest test class.");
+        NES::Logger::setupLogging("ChangeLogTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ChangeLogTest test class.");
     }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
-
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-        pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
-        pred3 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
-        pred4 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
-        pred5 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
-        pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
-        pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
-
         sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical2"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sinkOp3 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-
-        children.clear();
-        parents.clear();
     }
 
   protected:
     DumpContextPtr dumpContext;
 
-    ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    LogicalOperatorNodePtr sourceOp1, sourceOp2;
+    ExpressionNodePtr pred1;
+    LogicalOperatorNodePtr sourceOp1;
 
-    LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4;
-    LogicalOperatorNodePtr sinkOp1, sinkOp2, sinkOp3;
-
-    std::vector<NodePtr> children{};
-    std::vector<NodePtr> parents{};
+    LogicalOperatorNodePtr filterOp1;
+    LogicalOperatorNodePtr sinkOp1;
 };
 
 //Insert and fetch change log entry
@@ -130,7 +110,6 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
     EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2]);
 }
 
-
 //Insert and fetch change log entries
 TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
 
@@ -175,7 +154,6 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     EXPECT_EQ(changelogEntry4, extractedChangeLogEntries[0]);
     EXPECT_EQ(changelogEntry5, extractedChangeLogEntries[1]);
     EXPECT_EQ(changelogEntry6, extractedChangeLogEntries[2]);
-
 }
 
 }// namespace NES

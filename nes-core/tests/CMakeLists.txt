@@ -517,7 +517,8 @@ add_nes_unit_test(request-execution-exception-test "UnitTests/Exceptions/Request
 ### ChangeLog Test ###
 add_nes_unit_test(change-log-test "UnitTests/Plans/ChangeLog/ChangeLogTest.cpp")
 
-
+### ChangeLogEntry Test ###
+add_nes_unit_test(change-log-entry-test "UnitTests/Plans/ChangeLog/ChangeLogEntryTest.cpp")
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
