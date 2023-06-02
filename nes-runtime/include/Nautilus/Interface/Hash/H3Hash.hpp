@@ -28,34 +28,31 @@ namespace NES::Nautilus::Interface {
 class H3Hash : public HashFunction {
   public:
     /**
-     * @brief Creates an object of this class. Expects the seeds and the number of bits in the key
-     * @param h3Seeds
-     * @param numberOfKeyBits
-     */
-    explicit H3Hash(const std::vector<uint64_t>& h3Seeds, uint64_t numberOfKeyBits);
-
-    /**
      * @brief Initis the hash by just returning zero
      * @return HashValue
      */
     HashValue init() override;
 
     /**
-     * @brief Calculates the hash for a given key by hashing the key and then xoring with hash
+     * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO
      * @param hash
      * @param value
+     * @param state
      * @return HashValue
      */
     HashValue calculate(HashValue &hash, Value<> &value) override;
 
-private:
     /**
-     * @brief Gets a bitmask for a given number of bits, for example 8 --> 0xFF and 32 -> 0xFFFF
-     * @param numberOfKeyBits
-     * @return uint64_t
+     * @brief Calculates the hash for a given value by hashing the value and then xor-ing with hash. This version
+     * expects an additional state.
+     * @param hash
+     * @param value
+     * @param state
+     * @return HashValue
      */
-    uint64_t getBitMask(uint64_t numberOfKeyBits) const;
+    HashValue calculateWithState(HashValue &hash, Value<> &value, Value<MemRef>& state) override;
 
+private:
     std::vector<uint64_t> h3Seeds;
 };
 
