@@ -22,21 +22,23 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSize) {
     // using a seed to generate a predictable sequence of values for deterministic behavior
-    std::mt19937 generator(103984);
+    //std::mt19937 generator(103984);
+    std::random_device rndDevice;
+    std::mt19937 generator(rndDevice());
     std::uniform_int_distribution<uint64_t> uniformPersonGenerationDistribution(0, 9);
     std::uniform_int_distribution<uint64_t> uniformOpenAuctionGenerationDistribution(0, 2);
     std::uniform_int_distribution<uint64_t> uniformBidGenerationDistribution(0, 20);
 
-    auto timeInSec = 0UL;
-    auto recordsInit = 50;
-
     // calculate how many records to create
-    auto personSchemaSize = PersonGenerator().getSchema()->getSchemaSizeInBytes();
-    auto auctionSchemaSize = OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes();
+    // note that a person buffer will have 12 additional text fields and an auction buffer one
+    auto personSchemaSize = PersonGenerator().getSchema()->getSchemaSizeInBytes() + 12 * bufferSize;
+    auto auctionSchemaSize = OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes() + bufferSize;
     auto bidSchemaSize = BidGenerator().getSchema()->getSchemaSizeInBytes();
     auto totalBufferSizeInBytes = numberOfBuffers * bufferSize;
     numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10 + auctionSchemaSize + 10 * bidSchemaSize);
     NES_ASSERT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
+
+    auto timeInSec = 0UL;
 
     // first generate some persons and open auctions that can be bid on
     for (auto i = 0; i < recordsInit; ++i) {

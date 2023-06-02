@@ -22,6 +22,8 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
+auto constexpr recordsInit = 50;
+
 class DependencyGenerator {
   public:
     /**
