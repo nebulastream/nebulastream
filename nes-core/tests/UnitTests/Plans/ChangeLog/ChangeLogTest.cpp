@@ -125,160 +125,57 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
     // Fetch change log entries before timestamp 4
     auto extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(4);
     EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-
-
-
+    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0]);
+    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1]);
+    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2]);
 }
 
-/**
- * @brief Query:
- *
- * --- Sink 1 --- Filter ---
- *                          \
- *                           --- Filter --- Source 1
- *                          /
- *            --- Sink 2 ---
- *
- *//*
-TEST_F(ChangeLogTest, iterateMultiSinkQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    queryPlan->addRootOperator(sinkOp2);
-    filterOp1->addParent(sinkOp2);
 
-    NES_DEBUG(queryPlan->toString());
+//Insert and fetch change log entries
+TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-}
-
-*//**
- * @brief Query:
- *
- *                            --- Source 1
- *                          /
- * -- Sink 1 --- Filter ---
- *                          \
- *                            --- Filter --- Source 2
- *
- *//*
-TEST_F(ChangeLogTest, iterateMultiSourceQueryPlan) {
+    // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    filterOp1->addChild(filterOp2);
-    filterOp2->addChild(sourceOp2);
-
     NES_DEBUG(queryPlan->toString());
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp2, *queryPlanIter);
+    // Initialize change log
+    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
+    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry3 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry4 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry5 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry6 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
+    changeLog->addChangeLogEntry(3, std::move(changelogEntry3));
+    changeLog->addChangeLogEntry(6, std::move(changelogEntry6));
+    changeLog->addChangeLogEntry(5, std::move(changelogEntry5));
+    changeLog->addChangeLogEntry(4, std::move(changelogEntry4));
+    changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
+
+    // Fetch change log entries before timestamp 4
+    auto extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(4);
+    EXPECT_EQ(extractedChangeLogEntries.size(), 3);
+    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0]);
+    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1]);
+    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2]);
+
+    //Update the processing time
+    changeLog->updateProcessedChangeLogTimestamp(4);
+
+    // Fetch change log entries before timestamp 4
+    extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(4);
+    EXPECT_EQ(extractedChangeLogEntries.size(), 0);
+
+    // Fetch change log entries before timestamp 7
+    extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(7);
+    EXPECT_EQ(extractedChangeLogEntries.size(), 3);
+    EXPECT_EQ(changelogEntry4, extractedChangeLogEntries[0]);
+    EXPECT_EQ(changelogEntry5, extractedChangeLogEntries[1]);
+    EXPECT_EQ(changelogEntry6, extractedChangeLogEntries[2]);
+
 }
-
-*//**
- * @brief Query:
- *
- *                                        --- Filter3 --- Source 1
- *                                      /
- * --- Sink 1 --- Filter1 --- Filter2 ---
- *                         /            \
- *                        /               --- Filter4 --- Source 2
- *            --- Sink 2                              /
- *                                        --- Sink 3
- *
- *//*
-TEST_F(ChangeLogTest, iterateMultiSinkMultiSourceQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp3);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    filterOp2->addParent(sinkOp2);
-    queryPlan->addRootOperator(sinkOp2);
-    filterOp2->addChild(filterOp4);
-    filterOp4->addChild(sourceOp2);
-    sourceOp2->addParent(sinkOp3);
-    queryPlan->addRootOperator(sinkOp3);
-
-    NES_DEBUG(queryPlan->toString());
-
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp4, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp2, *queryPlanIter);
-}
-
-*//**
- * @brief Query:
- *
- *                                        --- Filter3 ---
- *                                      /                 \
- * --- Sink 1 --- Filter1 --- Filter2 ---                  --- Source
- *                         /            \                 /
- *                        /               --- Filter4 ---
- *            --- Sink 2
- *
- *
- *//*
-TEST_F(ChangeLogTest, iterateMultiSinkRemergeQueryPlan) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp3);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
-    queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    filterOp2->addParent(sinkOp2);
-    queryPlan->addRootOperator(sinkOp2);
-    filterOp2->addChild(filterOp4);
-    filterOp4->addChild(sourceOp1);
-
-    NES_DEBUG(queryPlan->toString());
-
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
-    ASSERT_EQ(sinkOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp1, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sinkOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp2, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(filterOp4, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-}*/
 
 }// namespace NES
