@@ -24,11 +24,6 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 class PersonGenerator : public DataGenerator {
   public:
     /**
-     * @brief creates a PersonGenerator
-     */
-    explicit PersonGenerator();
-
-    /**
      * @brief creates data
      * @param numberOfBuffers
      * @param bufferSize

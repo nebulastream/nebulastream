@@ -18,9 +18,6 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-BidGenerator::BidGenerator()
-    : DataGenerator() {}
-
 std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     auto& dependencyGeneratorInstance = DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
     auto bids = dependencyGeneratorInstance.getBids();

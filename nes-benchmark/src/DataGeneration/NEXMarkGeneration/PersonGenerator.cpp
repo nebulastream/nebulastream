@@ -15,11 +15,9 @@
 #include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
-
-PersonGenerator::PersonGenerator()
-    : DataGenerator() {}
 
 std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::random_device rndDevice;
@@ -47,7 +45,7 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
     auto persons = dependencyGeneratorInstance.getPersons();
     auto numberOfPersons = persons.size();
     auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
-    auto personsToProcess = (numberOfRecords / 10) < numberOfPersons ? (numberOfRecords / 10) : numberOfPersons;
+    auto personsToProcess = (recordsInit + numberOfRecords / 10) < numberOfPersons ? (recordsInit + numberOfRecords / 10) : numberOfPersons;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = 1 + personsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
@@ -128,13 +126,9 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
 
             // write strings to childBuffer in order to store them in TupleBuffer
             std::vector<uint32_t> childIdx;
-            for (const std::string& field : fields) {
-                auto childTupleBuffer = allocateBuffer();
-                auto sizeOfInputField = field.size();
-                (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfInputField;
-                std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), field.c_str(), sizeOfInputField);
-                childIdx.emplace_back(dynamicBuffer.getBuffer().storeChildBuffer(childTupleBuffer));
-            }
+            childIdx.reserve(fields.size());
+            for (const std::string& field : fields) childIdx.emplace_back(
+                    Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), field));
 
             dynamicBuffer[curRecord]["id"].write<uint64_t>(personsIndex);
             dynamicBuffer[curRecord]["name"].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx[0]);

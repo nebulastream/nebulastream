@@ -23,11 +23,6 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 class OpenAuctionGenerator : public DataGenerator {
   public:
     /**
-     * @brief creates a OpenAuctionGenerator
-     */
-    explicit OpenAuctionGenerator();
-
-    /**
      * @brief creates data with the schema "id, reserve, privacy, sellerId, category, quantity, type, startTime, endTime"
      * from the auctions vector of dependencyGeneratorInstance. All values except sellerId, startTime and endTime are drawn
      * randomly from uniform distributions in a predefined range

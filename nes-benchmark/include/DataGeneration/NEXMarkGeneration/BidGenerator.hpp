@@ -23,11 +23,6 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 class BidGenerator : public DataGenerator {
   public:
     /**
-     * @brief creates a BidGenerator
-     */
-    explicit BidGenerator();
-
-    /**
      * @brief creates data with the schema "auctionId, bidderId, price, timestamp" from the bids vector of dependencyGeneratorInstance
      * @param numberOfBuffers
      * @param bufferSize

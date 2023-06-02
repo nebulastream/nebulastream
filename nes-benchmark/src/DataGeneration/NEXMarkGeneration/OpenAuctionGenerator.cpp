@@ -15,11 +15,9 @@
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Core.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
-
-OpenAuctionGenerator::OpenAuctionGenerator()
-    : DataGenerator() {}
 
 std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::random_device rndDevice;
@@ -33,7 +31,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
     auto auctions = dependencyGeneratorInstance.getAuctions();
     auto numberOfAuctions = auctions.size();
     auto numberOfRecords = dependencyGeneratorInstance.getNumberOfRecords();
-    auto auctionsToProcess = numberOfRecords < numberOfAuctions ? numberOfRecords : numberOfAuctions;
+    auto auctionsToProcess = (numberOfRecords + recordsInit) < numberOfAuctions ? (numberOfRecords + recordsInit) : numberOfAuctions;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
     uint64_t numberOfBuffersToCreate = 1 + auctionsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
@@ -64,11 +62,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
             auto type = oss.str();
 
             // write type string to childBuffer in order to store it in TupleBuffer
-            auto childTupleBuffer = allocateBuffer();
-            auto sizeOfInputField = type.size();
-            (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfInputField;
-            std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), type.c_str(), sizeOfInputField);
-            auto childIdx = dynamicBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
+            auto childIdx = Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), type);
 
             dynamicBuffer[curRecord]["id"].write<uint64_t>(auctionsIndex);
             dynamicBuffer[curRecord]["reserve"].write<uint64_t>(reserve);
