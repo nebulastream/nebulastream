@@ -44,6 +44,10 @@ class NEXMarkDataGeneratorTest : public Testing::NESBaseTest {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down NEXMarkDataGeneratorTest test class."); }
+
+    std::shared_ptr<Runtime::BufferManager> bufferManager = std::make_shared<Runtime::BufferManager>();
+    NEXMarkGeneration::DependencyGenerator& dependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(
+        bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
 };
 
 /**
@@ -51,12 +55,8 @@ class NEXMarkDataGeneratorTest : public Testing::NESBaseTest {
  * getBids() and getNumberOfRecords() to expected values
  */
 TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
-    size_t numberOfBuffers = 1024; // TODO set numberOfBuffers
-    size_t bufferSize = 512; // TODO set bufferSize
-    auto& dependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
-
-    // testing getInstance
-    auto& newDependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(numberOfBuffers, bufferSize);
+    // testing getInstance - though the function is called with different arguments it should still return the original instance
+    auto& newDependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(64, 512);
     ASSERT_EQ(&dependencyGeneratorInstance, &newDependencyGeneratorInstance);
 
     // testing getPersons()
@@ -79,7 +79,6 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
  */
 TEST_F(NEXMarkDataGeneratorTest, personGeneratorTest) {
     auto personGenerator = std::make_unique<NEXMarkGeneration::PersonGenerator>();
-    auto bufferManager = std::make_shared<Runtime::BufferManager>();
     personGenerator->setBufferManager(bufferManager);
 
     // testing getSchema()
@@ -116,8 +115,7 @@ TEST_F(NEXMarkDataGeneratorTest, personGeneratorTest) {
     ASSERT_EQ(stringDefault, expectedString);
 
     // testing createData()
-    size_t numberOfBuffers = 10; // TODO set numberOfBuffers
-    auto dataDefault = personGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
+    auto dataDefault = personGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
     // TODO generate expected data
 }
 
@@ -127,7 +125,6 @@ TEST_F(NEXMarkDataGeneratorTest, personGeneratorTest) {
  */
 TEST_F(NEXMarkDataGeneratorTest, openAuctionGeneratorTest) {
     auto openAuctionGenerator = std::make_unique<NEXMarkGeneration::OpenAuctionGenerator>();
-    auto bufferManager = std::make_shared<Runtime::BufferManager>();
     openAuctionGenerator->setBufferManager(bufferManager);
 
     // testing getSchema()
@@ -155,8 +152,7 @@ TEST_F(NEXMarkDataGeneratorTest, openAuctionGeneratorTest) {
     ASSERT_EQ(stringDefault, expectedString);
 
     // testing createData()
-    size_t numberOfBuffers = 10; // TODO set numberOfBuffers
-    auto dataDefault = openAuctionGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
+    auto dataDefault = openAuctionGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
     // TODO generate expected data
 }
 
@@ -166,7 +162,6 @@ TEST_F(NEXMarkDataGeneratorTest, openAuctionGeneratorTest) {
  */
 TEST_F(NEXMarkDataGeneratorTest, bidGeneratorTest) {
     auto bidGenerator = std::make_unique<NEXMarkGeneration::BidGenerator>();
-    auto bufferManager = std::make_shared<Runtime::BufferManager>();
     bidGenerator->setBufferManager(bufferManager);
 
     // testing getSchema()
@@ -189,8 +184,7 @@ TEST_F(NEXMarkDataGeneratorTest, bidGeneratorTest) {
     ASSERT_EQ(stringDefault, expectedString);
 
     // testing createData()
-    size_t numberOfBuffers = 10; // TODO set numberOfBuffers
-    auto dataDefault = bidGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
+    auto dataDefault = bidGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
     // TODO generate expected data
 }
 
