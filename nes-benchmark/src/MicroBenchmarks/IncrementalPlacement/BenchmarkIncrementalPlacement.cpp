@@ -422,8 +422,7 @@ int main(int argc, const char* argv[]) {
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                bool placed =
-                    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+                bool placed = queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();

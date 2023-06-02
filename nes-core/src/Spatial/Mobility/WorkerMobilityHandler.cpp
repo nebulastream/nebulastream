@@ -180,7 +180,9 @@ std::optional<uint64_t> NES::Spatial::Mobility::Experimental::WorkerMobilityHand
 }
 
 std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
-NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap) {
+NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
+    uint64_t nodeId,
+    std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap) {
     if (neighbourWorkerIdToLocationMap.contains(nodeId)) {
         return NES::Spatial::Util::S2Utilities::s2pointToLocation(neighbourWorkerIdToLocationMap.at(nodeId));
     }
