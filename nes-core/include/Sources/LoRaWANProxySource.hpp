@@ -8,7 +8,7 @@
 #include "EndDeviceProtocol.pb.h"
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
-#include <mqtt/async_client.h>
+#include <mqtt/client.h>
 namespace NES {
 class LoRaWANProxySource : public DataSource {
   public:
@@ -57,8 +57,51 @@ class LoRaWANProxySource : public DataSource {
     const LoRaWANProxySourceTypePtr& getSourceConfig() const;
 
   private:
+    //Classes to handle network communication
+    class NetworkServer {
+      public:
+        NetworkServer(const std::string&, const std::string&, const std::string&, std::vector<std::string>&);
+        virtual ~NetworkServer() = default;
+        virtual bool connect() = 0;
+        virtual bool isConnected() = 0;
+        virtual bool disconnect() = 0;
+        virtual EndDeviceProtocol::Output receiveData() = 0;
+        virtual bool sendMessage(EndDeviceProtocol::Message) = 0;
+
+      protected:
+        std::string url;
+        std::string user;
+        std::string appId;
+        std::vector<std::string>& deviceEUIs;
+    };
+    class ChirpStackServer : public NetworkServer {
+      private:
+        mqtt::client client;
+
+        std::string topicBase;
+        std::string topicAll;
+        std::string topicDevice;
+        std::string topicReceiveSuffix;
+        std::string topicSendSuffix;
+        std::string topicAllDevicesReceive;
+        enum class ChirpStackEvent { UP, STATUS, JOIN, ACK, TXACK, LOG, LOCATION, INTEGRATION };
+        ChirpStackEvent strToEvent(const std::string& s);
+
+      public:
+        ChirpStackServer(const std::string& url,
+                         const std::string& user,
+                         const std::string& appId,
+                         std::vector<std::string>& deviceEUIs);
+        ~ChirpStackServer() override;
+        bool connect() override;
+        bool isConnected() override;
+        bool disconnect() override;
+        EndDeviceProtocol::Output receiveData() override;
+        bool sendMessage(EndDeviceProtocol::Message) override;
+    };
+    class TheThingsNetworkServer : NetworkServer {};
     LoRaWANProxySourceTypePtr sourceConfig;
-    mqtt::async_client_ptr client;
+    std::string url;
     std::string user;
     std::string appId;
     std::vector<std::string> deviceEUIs;
@@ -71,6 +114,8 @@ class LoRaWANProxySource : public DataSource {
     std::string capath;
     std::string certpath;
     std::string keypath;
+
+    NetworkServer& server;
 
     std::unique_ptr<Parser> inputParser;
     std::vector<QueryId> runningQueries;
