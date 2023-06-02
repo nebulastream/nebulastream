@@ -139,7 +139,8 @@ class WorkerMobilityHandler {
      * @param nodeId: the id of the fixed location node
      * @return the geolocation of the node or nullopt if no node with the replied id was found in the node index
      */
-    static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap);
+    static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
+    getNodeGeoLocation(uint64_t nodeId, std::unordered_map<uint64_t, S2Point> neighbourWorkerIdToLocationMap);
 
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the

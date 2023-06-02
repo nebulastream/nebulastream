@@ -141,7 +141,8 @@ void GlobalQueryPlan::removeSharedQueryPlan(QueryId sharedQueryPlanId) {
         throw Exceptions::RuntimeException("GlobalQueryPlan: Cannot remove shared query plan with invalid id.");
     }
     auto sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryPlanId];
-    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed) {
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped
+        || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed) {
         NES_TRACE2("Found stopped or failed query plan. Removing query plan from shared query plan.");
         sharedQueryIdToPlanMap.erase(sharedQueryPlanId);
     }
@@ -173,17 +174,16 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
     queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
-    std::string sourceNameAndPlacementStrategy = queryPlan->getSourceConsumed() + "_" + std::to_string(magic_enum::enum_integer(queryPlan->getPlacementStrategy()));
+    std::string sourceNameAndPlacementStrategy =
+        queryPlan->getSourceConsumed() + "_" + std::to_string(magic_enum::enum_integer(queryPlan->getPlacementStrategy()));
     //Add Shared Query Plan to the SourceName index
     auto item = sourceNamesAndPlacementStrategyToSharedQueryPlanMap.find(sourceNameAndPlacementStrategy);
     if (item != sourceNamesAndPlacementStrategyToSharedQueryPlanMap.end()) {
         auto sharedQueryPlans = item->second;
         sharedQueryPlans.emplace_back(sharedQueryPlan);
-        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] =
-            sharedQueryPlans;
+        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = sharedQueryPlans;
     } else {
-        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = {
-            sharedQueryPlan};
+        sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = {sharedQueryPlan};
     }
 
     return true;

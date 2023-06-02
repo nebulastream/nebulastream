@@ -653,7 +653,7 @@ std::vector<NodeId> CoordinatorRPCClient::getParents(NodeId nodeId) {
 
     coordinatorStub->GetParents(&context, request, &reply);
     std::vector<NodeId> parentIds;
-    for (auto parentId : reply.parentids() ) {
+    for (auto parentId : reply.parentids()) {
         parentIds.push_back(parentId);
     }
     return parentIds;
