@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Util/Logger/Logger.hpp"
+#include <Util/Logger/Logger.hpp>
 #include <DataGeneration/NEXMarkGeneration/BidGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
@@ -33,7 +33,7 @@ DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSi
     auto auctionSchemaSize = OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes() + bufferSize;
     auto bidSchemaSize = BidGenerator().getSchema()->getSchemaSizeInBytes();
     auto totalBufferSizeInBytes = numberOfBuffers * bufferSize;
-    numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10 + auctionSchemaSize + 10 * bidSchemaSize);
+    numberOfRecords = (totalBufferSizeInBytes - recordsInit * (personSchemaSize + auctionSchemaSize)) / (personSchemaSize / 10.0 + auctionSchemaSize + 10.0 * bidSchemaSize);
     NES_ASSERT(numberOfRecords > 0, "numberOfPreAllocatedBuffer or bufferSizeInBytes is too small!");
 
     auto timeInSec = 0UL;

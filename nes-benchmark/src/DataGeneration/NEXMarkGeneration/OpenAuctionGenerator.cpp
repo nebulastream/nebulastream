@@ -14,6 +14,7 @@
 
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
 #include <Util/Core.hpp>
+#include <cmath>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
@@ -25,15 +26,14 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
     auto auctionsToProcess = (recordsInit + numberOfRecords) < numberOfAuctions ? (recordsInit + numberOfRecords) : numberOfAuctions;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
-    uint64_t numberOfBuffersToCreate = 1 + auctionsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
+    uint64_t numberOfBuffersToCreate = std::ceil(auctionsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize * 1.0);
     createdBuffers.reserve(numberOfBuffersToCreate);
+    NES_INFO("auctionsToProcess: " << auctionsToProcess << "\tnumberOfAuctionsBuffersToCreate: " << numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedAuctions = 0UL;
 
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffersToCreate; ++curBuffer) {
-        if (processedAuctions >= auctionsToProcess) break;
-
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 

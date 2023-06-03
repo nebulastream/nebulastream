@@ -14,7 +14,7 @@
 
 #include <DataGeneration/NEXMarkGeneration/BidGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <cmath>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
@@ -26,15 +26,14 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
     auto bidsToProcess = (numberOfRecords * 10) < numberOfBids ? (numberOfRecords * 10) : numberOfBids;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
-    uint64_t numberOfBuffersToCreate = 1 + bidsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
+    uint64_t numberOfBuffersToCreate = std::ceil(bidsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize * 1.0);
     createdBuffers.reserve(numberOfBuffersToCreate);
+    NES_INFO("bidsToProcess: " << bidsToProcess << "\tnumberOfBidsBuffersToCreate: " << numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedBids = 0UL;
 
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffersToCreate; ++curBuffer) {
-        if (processedBids >= bidsToProcess) break;
-
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 

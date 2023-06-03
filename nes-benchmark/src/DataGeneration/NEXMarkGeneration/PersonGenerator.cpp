@@ -13,8 +13,8 @@
 */
 
 #include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Core.hpp>
+#include <cmath>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
@@ -26,15 +26,14 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
     auto personsToProcess = (recordsInit + numberOfRecords / 10) < numberOfPersons ? (recordsInit + numberOfRecords / 10) : numberOfPersons;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
-    uint64_t numberOfBuffersToCreate = 1 + personsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize;
+    uint64_t numberOfBuffersToCreate = std::ceil(personsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize * 1.0);
     createdBuffers.reserve(numberOfBuffersToCreate);
+    NES_INFO("personsToProcess: " << personsToProcess << "\tnumberOfPersonsBuffersToCreate: " << numberOfBuffersToCreate);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
     auto processedPersons = 0UL;
 
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffersToCreate; ++curBuffer) {
-        if (processedPersons >= personsToProcess) break;
-
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
