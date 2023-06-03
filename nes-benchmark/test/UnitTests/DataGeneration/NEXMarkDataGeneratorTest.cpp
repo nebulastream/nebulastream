@@ -60,15 +60,18 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
     ASSERT_EQ(&dependencyGeneratorInstance, &newDependencyGeneratorInstance);
 
     // testing getPersons()
+    auto persons = dependencyGeneratorInstance.getPersons();
 
     // testing getAuctions()
+    auto auctions = dependencyGeneratorInstance.getAuctions();
 
     // testing getBids()
+    auto bids = dependencyGeneratorInstance.getBids();
 
     // testing getNumberOfRecords
-    NES_INFO("BidSchemaSize: " << NEXMarkGeneration::BidGenerator().getSchema()->getSchemaSizeInBytes());
-    NES_INFO("OpenAuctionSchemaSize: " << NEXMarkGeneration::OpenAuctionGenerator().getSchema()->getSchemaSizeInBytes());
-    NES_INFO("PersonSchemaSize: " << NEXMarkGeneration::PersonGenerator().getSchema()->getSchemaSizeInBytes());
+    auto numberOfRecordsDefault = dependencyGeneratorInstance.getNumberOfRecords();
+    auto expectedNumberOfRecords = 166UL;
+    ASSERT_EQ(numberOfRecordsDefault, expectedNumberOfRecords);
 
     // TODO check if generated data has expected values
 }

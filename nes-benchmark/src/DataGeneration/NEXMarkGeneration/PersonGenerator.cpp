@@ -26,7 +26,7 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
     auto personsToProcess = (recordsInit + numberOfRecords / 10) < numberOfPersons ? (recordsInit + numberOfRecords / 10) : numberOfPersons;
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
-    uint64_t numberOfBuffersToCreate = std::ceil(personsToProcess * getSchema()->getSchemaSizeInBytes() / bufferSize * 1.0);
+    uint64_t numberOfBuffersToCreate = std::ceil(personsToProcess * getSchema()->getSchemaSizeInBytes() / (bufferSize * 1.0));
     createdBuffers.reserve(numberOfBuffersToCreate);
     NES_INFO("personsToProcess: " << personsToProcess << "\tnumberOfPersonsBuffersToCreate: " << numberOfBuffersToCreate);
 
