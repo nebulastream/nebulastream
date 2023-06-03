@@ -43,7 +43,7 @@ class OpenAuctionGenerator : public DataGenerator {
      * randomly from uniform distributions in predefined ranges
      * @param numberOfBuffers
      * @param bufferSize
-     * @return the TupleBuffer
+     * @return the TupleBuffer vector
      */
     std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
 

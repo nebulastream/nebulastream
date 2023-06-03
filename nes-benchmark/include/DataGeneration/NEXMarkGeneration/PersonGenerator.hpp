@@ -18,16 +18,42 @@
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/PersonDataPool.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
+
+/**
+ * @brief struct of a PersonRecord
+ */
+typedef struct PersonRecordStruct {
+    Runtime::TupleBuffer::NestedTupleBufferKey name;
+    Runtime::TupleBuffer::NestedTupleBufferKey email;
+    Runtime::TupleBuffer::NestedTupleBufferKey phone;
+    Runtime::TupleBuffer::NestedTupleBufferKey street;
+    Runtime::TupleBuffer::NestedTupleBufferKey city;
+    Runtime::TupleBuffer::NestedTupleBufferKey country;
+    Runtime::TupleBuffer::NestedTupleBufferKey province;
+    uint32_t zipcode;
+    Runtime::TupleBuffer::NestedTupleBufferKey homepage;
+    Runtime::TupleBuffer::NestedTupleBufferKey creditcard;
+    double income;
+    Runtime::TupleBuffer::NestedTupleBufferKey interest;
+    Runtime::TupleBuffer::NestedTupleBufferKey education;
+    Runtime::TupleBuffer::NestedTupleBufferKey gender;
+    bool business;
+    uint8_t age;
+    uint64_t timestamp;
+} PersonRecord;
 
 class PersonGenerator : public DataGenerator {
   public:
     /**
-     * @brief creates data
+     * @brief creates data with the schema "id, name, email, phone, street, city, country, province, zipcode, homepage,
+     * creditcard, income, interest, education, gender, business, age, timestamp" from the persons vector of
+     * dependencyGeneratorInstance. All values except timestamp are drawn randomly from uniform distributions in predefined ranges
      * @param numberOfBuffers
      * @param bufferSize
-     * @return the TupleBuffer
+     * @return the TupleBuffer vector
      */
     std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
 
@@ -48,6 +74,17 @@ class PersonGenerator : public DataGenerator {
      * @return the string representation of the PersonGenerator
      */
     std::string toString() override;
+
+  private:
+    /**
+     * @brief generates a PersonRecord
+     * @param persons
+     * @param personsIndex
+     * @param dynamicBuffer
+     * @return PersonRecord
+     */
+    PersonRecord generatePersonRecord(std::vector<uint64_t>& persons, uint64_t personsIndex,
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer);
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 

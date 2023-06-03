@@ -36,19 +36,19 @@ class DependencyGenerator {
 
     /**
      * @brief getter for persons vector
-     * @return persons
+     * @return persons vector
      */
     std::vector<uint64_t>& getPersons();
 
     /**
      * @brief getter for auctions vector
-     * @return auctions
+     * @return auctions vector
      */
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getAuctions();
 
     /**
      * @brief getter for bids vector
-     * @return bids
+     * @return bids vector
      */
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& getBids();
 
