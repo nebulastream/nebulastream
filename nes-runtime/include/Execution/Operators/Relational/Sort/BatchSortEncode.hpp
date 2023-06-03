@@ -21,141 +21,118 @@
 #include <cstring>
 #include <climits>
 #include <cstdint>
+#include <bit>
 
 namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief Our radix sort sorts in chunks of bytes. To perform our radix sort, we need to encode the sort column.
- * Insprired by DuckDB's radix sort implementation.
+ * Inspired by DuckDB's radix sort implementation.
  * https://github.com/duckdb/duckdb/blob/e9f6ba553a108769f7c34a6af9354f3044e338e8/src/include/duckdb/common/radix.hpp
  */
 
-#define BSWAP16(x) ((uint16_t)((((uint16_t)(x)&0xff00) >> 8) | (((uint16_t)(x)&0x00ff) << 8)))
-
-#define BSWAP32(x)                                                                                                     \
-	((uint32_t)((((uint32_t)(x)&0xff000000) >> 24) | (((uint32_t)(x)&0x00ff0000) >> 8) |                               \
-	            (((uint32_t)(x)&0x0000ff00) << 8) | (((uint32_t)(x)&0x000000ff) << 24)))
-
-#define BSWAP64(x)                                                                                                     \
-	((uint64_t)((((uint64_t)(x)&0xff00000000000000ull) >> 56) | (((uint64_t)(x)&0x00ff000000000000ull) >> 40) |        \
-	            (((uint64_t)(x)&0x0000ff0000000000ull) >> 24) | (((uint64_t)(x)&0x000000ff00000000ull) >> 8) |         \
-	            (((uint64_t)(x)&0x00000000ff000000ull) << 8) | (((uint64_t)(x)&0x0000000000ff0000ull) << 24) |         \
-	            (((uint64_t)(x)&0x000000000000ff00ull) << 40) | (((uint64_t)(x)&0x00000000000000ffull) << 56)))
-
-template <typename T>
-const T Load(uint8_t *ptr) {
-    T ret;
-    memcpy(&ret, ptr, sizeof(ret));
-    return ret;
-}
-
-static inline uint8_t FlipSign(uint8_t key_byte) {
+inline constexpr uint8_t FlipSign(uint8_t key_byte) {
     return key_byte ^ 128;
 }
 
-template <typename T, typename R>
-R encodeData(T) {
-    throw Exceptions::NotImplementedException("encodeData not implemented for this type");
+// Utility functions for byte swapping
+template <typename T>
+inline constexpr T BSWAP(T value) {
+    static_assert(std::is_integral<T>::value, "BSWAP can only be used with integral types.");
+    if (sizeof(T) == 1) {
+        return value;
+    } else if (sizeof(T) == 2) {
+        return std::endian::big == std::endian::native ? value : __builtin_bswap16(value);
+    } else if (sizeof(T) == 4) {
+        return std::endian::big == std::endian::native ? value : __builtin_bswap32(value);
+    } else if (sizeof(T) == 8) {
+        return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
+
+    } else {
+        static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
+                      "BSWAP only supports integral types with sizes 1, 2, 4, or 8 bytes.");
+    }
 }
+
+template <typename T, typename = void>
+struct EncoderTraits {
+    using EncodedType = T;
+
+    static EncodedType Encode(T) {
+        throw Exceptions::NotImplementedException("Encode not implemented for this type");
+    }
+};
 
 template <>
-bool encodeData(bool value) {
-    return (value ? 1 : 0);
-}
+struct EncoderTraits<bool> {
+    using EncodedType = bool;
 
-template <>
-int8_t encodeData(int8_t value) {
-    auto* firstBytePtr = reinterpret_cast<uint8_t*>(&value);
-    *firstBytePtr = FlipSign(*firstBytePtr);
-    return value;
-}
-
-int16_t encodeData(int16_t value) {
-    int16_t tmp = BSWAP16(value);
-    auto* firstBytePtr = reinterpret_cast<uint8_t*>(&tmp);
-    *firstBytePtr = FlipSign(*firstBytePtr);
-    return tmp;
-}
-
-int32_t encodeData(int32_t value) {
-    int32_t tmp = BSWAP32(value);
-    auto* firstBytePtr = reinterpret_cast<uint8_t*>(&tmp);
-    *firstBytePtr = FlipSign(*firstBytePtr);
-    return tmp;
-}
-
-int64_t encodeData(int64_t value) {
-    int64_t tmp = BSWAP64(value);
-    auto* firstBytePtr = reinterpret_cast<uint8_t*>(&tmp);
-    *firstBytePtr = FlipSign(*firstBytePtr);
-    return tmp;
-}
-
-uint8_t encodeData(uint8_t value) {
-    return value;
-}
-
-uint16_t encodeData(uint16_t value) {
-    return BSWAP16(value);
-}
-
-uint32_t encodeData(uint32_t value) {
-    return BSWAP32(value);
-}
-
-uint64_t encodeData(uint64_t value) {
-    return BSWAP64(value);
-}
-
-uint32_t encodeData(float value) {
-    uint64_t buff;
-    //! zero
-    if (value == 0) {
-        buff = 0;
-        buff |= (1u << 31);
-        return buff;
+    static EncodedType Encode(bool value) {
+        return value;
     }
-    //! infinity
-    if (value > FLT_MAX) {
-        return UINT_MAX - 1;
-    }
-    //! -infinity
-    if (value < -FLT_MAX) {
-        return 0;
-    }
-    buff = Load<uint64_t>((uint8_t*)&value);
-    if ((buff & (1u << 31)) == 0) { //! +0 and positive numbers
-        buff |= (1u << 31);
-    } else {          //! negative numbers
-        buff = ~buff; //! complement 1
-    }
+};
 
-    return BSWAP32(buff);
-}
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_same<T, bool>::value>::type> {
+    using EncodedType = bool;
 
-uint64_t encodeData(double value) {
-    uint64_t buff;
-    //! zero
-    if (value == 0) {
-        buff = 0;
-        buff += (1ull << 63);
-        return buff;
+    static EncodedType Encode(bool value) {
+        return value;
     }
-    //! infinity
-    if (value > DBL_MAX) {
-        return ULLONG_MAX - 1;
+};
+
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type> {
+    using EncodedType = T;
+
+    static EncodedType Encode(T value) {
+        value = BSWAP(value);
+        auto* firstBytePtr = reinterpret_cast<uint8_t*>(&value);
+        *firstBytePtr = FlipSign(*firstBytePtr);
+        return value;
     }
-    //! -infinity
-    if (value < -DBL_MAX) {
-        return 0;
+};
+
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type> {
+    using EncodedType = T;
+
+    static EncodedType Encode(T value) {
+        return BSWAP(value);
     }
-    buff = Load<uint64_t>((uint8_t*)&value);
-    if (buff < (1ull << 63)) { //! +0 and positive numbers
-        buff += (1ull << 63);
-    } else {          //! negative numbers
-        buff = ~buff; //! complement 1
+};
+
+template <typename T>
+struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+    using EncodedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
+
+    static EncodedType Encode(T value) {
+        using UnsignedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
+        UnsignedType encodedValue;
+        if (value == 0) {
+            encodedValue = 0;
+            encodedValue |= (1ull << (sizeof(UnsignedType) * 8 - 1));
+            return encodedValue;
+        }
+        if (value > std::numeric_limits<T>::max()) {
+            return std::numeric_limits<UnsignedType>::max() - 1;
+        }
+        if (value < -std::numeric_limits<T>::max()) {
+            return 0;
+        }
+        encodedValue = *reinterpret_cast<UnsignedType*>(&value);
+        if (encodedValue < (1ull << (sizeof(UnsignedType) * 8 - 1))) {
+            encodedValue += (1ull << (sizeof(UnsignedType) * 8 - 1));
+        } else {
+            encodedValue = ~encodedValue;
+        }
+        return BSWAP(encodedValue);
     }
-    return BSWAP64(buff);
+};
+
+template <typename T>
+typename EncoderTraits<T>::EncodedType encodeData(T value) {
+    return EncoderTraits<T>::Encode(value);
 }
 
 } // namespace NES::Runtime::Execution::Operators
