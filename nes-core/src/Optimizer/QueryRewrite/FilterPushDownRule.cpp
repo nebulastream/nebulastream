@@ -25,10 +25,17 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <queue>
 
 namespace NES::Optimizer {
@@ -126,7 +133,26 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         pushDownFilter(filterOperator, grandChildren[0], curOperator);
         pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>(), grandChildren[1], curOperator);
     } else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
-        // TODO: implement filter pushdown for window aggregations: https://github.com/nebulastream/nebulastream/issues/3804
+        std::shared_ptr<Windowing::LogicalWindowDefinition> windowDefinition = curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition();
+        if(windowDefinition->isKeyed()){
+            std::vector<FieldAccessExpressionNodePtr> groupByKeys = curOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
+            std::vector<std::string> groupByKeyNames;
+            groupByKeyNames.reserve(groupByKeys.size());
+            for(const auto& groupByKey:groupByKeys){
+                groupByKeyNames.push_back(groupByKey->getFieldName());
+            }
+            bool areAllFilterAttributesInGroupByKeys = true;
+            std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
+            for(const auto& filterAttribute: fieldNamesUsedByFilter) {
+                if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end()) {
+                    areAllFilterAttributesInGroupByKeys = false;
+                }
+            }
+            if(areAllFilterAttributesInGroupByKeys){
+                pushed = true;
+                pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
+            }
+        }
     } else if (curOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         pushed = true;
         pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
