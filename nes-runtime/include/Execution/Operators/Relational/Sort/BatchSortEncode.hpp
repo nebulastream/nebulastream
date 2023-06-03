@@ -31,14 +31,23 @@ namespace NES::Runtime::Execution::Operators {
  * https://github.com/duckdb/duckdb/blob/e9f6ba553a108769f7c34a6af9354f3044e338e8/src/include/duckdb/common/radix.hpp
  */
 
+/**
+ * @brief Flip the sign bit of a signed integer value.
+ * @param value
+ * @return uint8_t
+ */
 inline constexpr uint8_t FlipSign(uint8_t key_byte) {
     return key_byte ^ 128;
 }
 
-// Utility functions for byte swapping
+/**
+ * @brief Byte swap a value
+ * @param value
+ * @return uint8_t
+ */
 template <typename T>
-inline constexpr T BSWAP(T value) {
-    static_assert(std::is_integral<T>::value, "BSWAP can only be used with integral types.");
+inline constexpr T byteSwap(T value) {
+    static_assert(std::is_integral<T>::value, "byteSwap can only be used with integral types.");
     if (sizeof(T) == 1) {
         return value;
     } else if (sizeof(T) == 2) {
@@ -50,10 +59,15 @@ inline constexpr T BSWAP(T value) {
 
     } else {
         static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
-                      "BSWAP only supports integral types with sizes 1, 2, 4, or 8 bytes.");
+                      "byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
     }
 }
 
+/**
+ * @brief Traits class for encoding values for sorting
+ * @tparam T
+ * @tparam void
+ */
 template <typename T, typename = void>
 struct EncoderTraits {
     using EncodedType = T;
@@ -63,6 +77,10 @@ struct EncoderTraits {
     }
 };
 
+/**
+ * @brief Encode bool values for sorting
+ * @tparam T
+ */
 template <>
 struct EncoderTraits<bool> {
     using EncodedType = bool;
@@ -72,61 +90,64 @@ struct EncoderTraits<bool> {
     }
 };
 
-template <typename T>
-struct EncoderTraits<T, typename std::enable_if<std::is_same<T, bool>::value>::type> {
-    using EncodedType = bool;
-
-    static EncodedType Encode(bool value) {
-        return value;
-    }
-};
-
+/**
+ * @brief Encode signed integral values for sorting
+ * @tparam T
+ */
 template <typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type> {
     using EncodedType = T;
 
     static EncodedType Encode(T value) {
-        value = BSWAP(value);
+        value = byteSwap(value);
         auto* firstBytePtr = reinterpret_cast<uint8_t*>(&value);
         *firstBytePtr = FlipSign(*firstBytePtr);
         return value;
     }
 };
 
+/**
+ * @brief Encode unsigned integral values for sorting
+ * @tparam T
+ */
 template <typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type> {
     using EncodedType = T;
 
     static EncodedType Encode(T value) {
-        return BSWAP(value);
+        return byteSwap(value);
     }
 };
 
+/**
+ * @brief Encode floating point values for sorting
+ * @tparam T
+ */
 template <typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+    // float and double are encoded as uint32_t and uint64_t respectively
     using EncodedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
 
     static EncodedType Encode(T value) {
-        using UnsignedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
-        UnsignedType encodedValue;
+        EncodedType encodedValue;
         if (value == 0) {
             encodedValue = 0;
-            encodedValue |= (1ull << (sizeof(UnsignedType) * 8 - 1));
+            encodedValue |= (1ull << (sizeof(EncodedType) * 8 - 1));
             return encodedValue;
         }
         if (value > std::numeric_limits<T>::max()) {
-            return std::numeric_limits<UnsignedType>::max() - 1;
+            return std::numeric_limits<EncodedType>::max() - 1;
         }
         if (value < -std::numeric_limits<T>::max()) {
             return 0;
         }
-        encodedValue = *reinterpret_cast<UnsignedType*>(&value);
-        if (encodedValue < (1ull << (sizeof(UnsignedType) * 8 - 1))) {
-            encodedValue += (1ull << (sizeof(UnsignedType) * 8 - 1));
+        encodedValue = *reinterpret_cast<EncodedType*>(&value);
+        if (encodedValue < (1ull << (sizeof(EncodedType) * 8 - 1))) {
+            encodedValue += (1ull << (sizeof(EncodedType) * 8 - 1));
         } else {
             encodedValue = ~encodedValue;
         }
-        return BSWAP(encodedValue);
+        return byteSwap(encodedValue);
     }
 };
 
