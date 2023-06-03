@@ -21,8 +21,6 @@
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
 DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSize) {
-    // using a seed to generate a predictable sequence of values for deterministic behavior
-    //std::mt19937 generator(103984);
     std::random_device rndDevice;
     std::mt19937 generator(rndDevice());
     std::uniform_int_distribution<uint64_t> uniformPersonGenerationDistribution(0, 9);
@@ -82,21 +80,17 @@ void DependencyGenerator::generatePersonDependencies(uint64_t& curTime, uint64_t
 }
 
 void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uint64_t numOpenAuctions) {
+    static std::random_device rndDevice;
+    static std::mt19937 generator(rndDevice());
+    // generate a random seller id from the pool of persons
+    static std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, persons.size() - 1);
+    // generate a random initial price that is between one and two-hundred dollars
+    static std::uniform_int_distribution<uint64_t> uniformCurPriceDistribution(1, 200);
+    // generate a random end time that is between two and twenty-six hours after the start time
+    static std::uniform_int_distribution<uint64_t> uniformEndTimeDistribution(2 * 60 * 60, 26 * 60 * 60 - 1);
+
     curTime = incrementTime(curTime);
     auto copyOfCurTime = curTime;
-
-    std::random_device rndDevice;
-    std::mt19937 generator(rndDevice());
-
-    // generate a random seller id from the pool of persons
-    auto maxSellerId = persons.size() - 1;
-    std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, maxSellerId);
-
-    // generate a random initial price that is between one and two-hundred dollars
-    std::uniform_int_distribution<uint64_t> uniformCurPriceDistribution(1, 200);
-
-    // generate a random end time that is between two and twenty-six hours after the start time
-    std::uniform_int_distribution<uint64_t> uniformEndTimeDistribution(2 * 60 * 60, 26 * 60 * 60 - 1);
 
     for (uint64_t i = 0; i < numOpenAuctions; ++i) {
         auto sellerId = uniformPersonIdDistribution(generator);
@@ -109,22 +103,17 @@ void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uin
 }
 
 void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t numBids) {
+    static std::random_device rndDevice;
+    static std::mt19937 generator(rndDevice());
+    // generate a random auction id from the pool of auctions
+    static std::uniform_int_distribution<uint64_t> uniformAuctionIdDistribution(0, auctions.size() - 1);
+    // generate a random seller id from the pool of persons
+    static std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, persons.size() - 1);
+    // generate a random bid that increases the current price between one and twenty-five dollars
+    static std::uniform_int_distribution<uint64_t> uniformNewBidDistribution(1, 25);
+
     curTime = incrementTime(curTime);
     auto copyOfCurTime = curTime;
-
-    std::random_device rndDevice;
-    std::mt19937 generator(rndDevice());
-
-    // generate a random auction id from the pool of auctions
-    auto maxAuctionId = auctions.size() - 1;
-    std::uniform_int_distribution<uint64_t> uniformAuctionIdDistribution(0, maxAuctionId);
-
-    // generate a random seller id from the pool of persons
-    auto maxBidderId = persons.size() - 1;
-    std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, maxBidderId);
-
-    // generate a random bid that increases the current price between one and twenty-five dollars
-    std::uniform_int_distribution<uint64_t> uniformNewBidDistribution(1, 25);
 
     for (uint64_t i = 0; i < numBids; ++i) {
         auto auctionId = uniformAuctionIdDistribution(generator);
@@ -141,9 +130,9 @@ void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t nu
 
 uint64_t DependencyGenerator::incrementTime(uint64_t curTimeInSec) {
     // generate a random new time that is at most one minute in the future
-    std::random_device rndDevice;
-    std::mt19937 generator(rndDevice());
-    std::uniform_int_distribution<uint64_t> uniformTimeDistribution(0, 59);
+    static std::random_device rndDevice;
+    static std::mt19937 generator(rndDevice());
+    static std::uniform_int_distribution<uint64_t> uniformTimeDistribution(0, 59);
 
     return curTimeInSec + uniformTimeDistribution(generator);
 }

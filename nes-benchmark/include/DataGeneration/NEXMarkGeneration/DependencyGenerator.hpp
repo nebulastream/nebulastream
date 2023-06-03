@@ -95,7 +95,7 @@ class DependencyGenerator {
     void generateBidDependencies(uint64_t& curTime, uint64_t numBids);
 
     /**
-     * @brief increments the current time up to 60 seconds
+     * @brief increments the current time up to a minute
      * @param curTimeInSec
      * @return incremented time
      */
