@@ -54,25 +54,25 @@ void BatchSort::setup(ExecutionContext& ctx) const {
 
 Value<> encodeData(Value<> value) {
     if (value->isType<Boolean>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<bool, bool>, value.as<Boolean>());
+        return Nautilus::FunctionCall("encodeData", encodeData<bool>, value.as<Boolean>());
     } else if (value->isType<Int8>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<int8_t, int8_t>, value.as<Int8>());
+        return Nautilus::FunctionCall("encodeData", encodeData<int8_t>, value.as<Int8>());
     } else if (value->isType<Int16>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<int16_t, int16_t>, value.as<Int16>());
+        return Nautilus::FunctionCall("encodeData", encodeData<int16_t>, value.as<Int16>());
     } else if (value->isType<Int32>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<int32_t, int32_t>, value.as<Int32>());
+        return Nautilus::FunctionCall("encodeData", encodeData<int32_t>, value.as<Int32>());
     } else if (value->isType<UInt8>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<uint8_t, uint8_t>, value.as<UInt8>());
+        return Nautilus::FunctionCall("encodeData", encodeData<uint8_t>, value.as<UInt8>());
     } else if (value->isType<UInt16>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<uint16_t, uint16_t>, value.as<UInt16>());
+        return Nautilus::FunctionCall("encodeData", encodeData<uint16_t>, value.as<UInt16>());
     } else if (value->isType<UInt32>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<uint32_t, uint32_t>, value.as<UInt32>());
+        return Nautilus::FunctionCall("encodeData", encodeData<uint32_t>, value.as<UInt32>());
     } else if (value->isType<UInt64>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<uint64_t, uint64_t>, value.as<UInt64>());
+        return Nautilus::FunctionCall("encodeData", encodeData<uint64_t>, value.as<UInt64>());
     } else if (value->isType<Float>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<float, uint32_t>, value.as<Float>());
+        return Nautilus::FunctionCall("encodeData", encodeData<float>, value.as<Float>());
     } else if (value->isType<Double>()) {
-        return Nautilus::FunctionCall("encodeData", encodeData<double, uint64_t>, value.as<Double>());
+        return Nautilus::FunctionCall("encodeData", encodeData<double>, value.as<Double>());
     } else {
         throw Exceptions::NotImplementedException("encodeData is not implemented for the given type.");
     }
@@ -89,12 +89,14 @@ void BatchSort::execute(ExecutionContext& ctx, Record& record) const {
     auto entry = vector.allocateEntry();
     auto fields = record.getAllFields();
     // first store sort fields encoded for radix sort
-    for (uint64_t i = 0; i < fields.size(); ++i) {
-        if (fieldIdentifiers[i] == sortFieldIdentifiers[i]) {
-            auto val = record.read(fields[i]);
-            val = encodeData(val);
-            entry.store(val);
-            entry = entry + dataTypes[i]->size();
+    for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i) {
+        for (uint64_t j = 0; j < sortFieldIdentifiers.size(); ++j) {
+            if (fieldIdentifiers[i] == sortFieldIdentifiers[j]) {
+                auto val = record.read(fields[i]);
+                val = encodeData(val);
+                entry.store(val);
+                entry = entry + dataTypes[i]->size();
+            }
         }
     }
     // store all fields after the encoded sort fields

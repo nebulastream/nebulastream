@@ -34,7 +34,7 @@ class BatchSort : public ExecutableOperator {
      * @param operatorHandlerIndex operator handler index
      * @param dataTypes data types of the input tuples
      */
-    BatchSort(const uint64_t operatorHandlerIndex,
+    BatchSort(uint64_t operatorHandlerIndex,
               const std::vector<PhysicalTypePtr>& dataTypes,
               const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
               const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers);

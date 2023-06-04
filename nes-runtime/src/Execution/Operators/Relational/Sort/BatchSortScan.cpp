@@ -52,18 +52,14 @@ namespace NES::Runtime::Execution::Operators {
 
 // issue #3773: get rid of hard-coded parameters
 // 256 is the number of possible byte values ranging from 0 to 255
-const uint64_t VALUES_PER_RADIX = 256;
-const uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
-const uint64_t INSERTION_SORT_THRESHOLD = 24;
-const uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
+constexpr uint64_t VALUES_PER_RADIX = 256;
+constexpr uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
+constexpr uint64_t INSERTION_SORT_THRESHOLD = 24;
+constexpr uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
 
 /**
  * @brief Insertion sort implementation
  * It is efficient for small data sets and mostly sorted data.
- *
- * Code take from DuckDB (MIT license):
- * https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp
- *
  * @param orig_ptr pointer to original data
  * @param temp_ptr pointer to temporary data as working memory
  * @param count number of rows to sort
@@ -106,10 +102,6 @@ inline void InsertionSort(void* orig_ptr,
 
 /**
  * @brief Radix sort implementation as least significant digit (lsd) radix sort
- *
- * Code take from DuckDB (MIT license):
- * https://github.com/duckdb/duckdb/blob/42ea342a29e802b2a8e7e71b88b5bc0c3a029279/src/common/sort/radix_sort.cpp#L239
- *
  * @param orig_ptr pointer to original data
  * @param temp_ptr pointer to temporary data as working memory
  * @param count number of rows to sort
@@ -287,13 +279,13 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
     auto swap = false;// init false
 
-    if (count <= INSERTION_SORT_THRESHOLD) {
+    //if (count <= INSERTION_SORT_THRESHOLD) {
         InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
-    } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
-        RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
-    } else {
-        RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
-    }
+    //} else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
+    //    RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
+    //} else {
+    //    RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+    //}
 
     delete[] locations;
 }
@@ -312,7 +304,7 @@ void BatchSortScan::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // TODO multi-column sort
     auto currentSortColIndex = 0;
-    auto currentSortCol = sortIndices[currentSortColIndex];
+    auto currentSortCol = 0UL; // TODO different cols
     // Width of the current column to sort
     uint64_t compWidth = dataTypes[currentSortCol]->size();
     // Offset of the current column to sort
@@ -333,15 +325,20 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // 2. load the state
     auto stateProxy = Nautilus::FunctionCall("getStateProxy", getStateProxy, globalOperatorHandler);
     auto entrySize = Nautilus::FunctionCall("getSortStateEntrySizeProxy", getSortStateEntrySizeProxy, globalOperatorHandler);
-    auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
+    auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue()*2);
 
     // 3. emit the records
     for (uint64_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
         Record record;
         auto entry = state.getEntry(Value<UInt64>(entryIndex));
-        // TODO: Test!
-        entry = entry + dataTypes[0]->size();
-        //
+        // skip encoded data
+        for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i) {
+            for (uint64_t j = 0; j < sortFieldIdentifiers.size(); ++j) {
+                if (fieldIdentifiers[i] == sortFieldIdentifiers[j]) {
+                    entry = entry + dataTypes[i]->size();
+                }
+            }
+        }
         for (uint64_t i = 0; i < fieldIdentifiers.size(); i++) {
             auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
             record.write(fieldIdentifiers[i], value);

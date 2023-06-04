@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
@@ -48,20 +47,23 @@ class BatchSortScanOperatorTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO2("Tear down BatchSortScanOperatorTest test class."); }
 };
 
+constexpr uint32_t SEED = 42;
+
 // Fills the state of the sort operator with values in descending order
 template<typename TypeParam>
 void fillState(uint64_t numberOfRecord, const std::shared_ptr<BatchSortOperatorHandler>& handler) {
     auto state = handler->getState();
     auto entrySize = sizeof(TypeParam) + sizeof(TypeParam);
     auto stateRef = Nautilus::Interface::PagedVectorRef(Value<MemRef>((int8_t*) state), entrySize);
-    std::mt19937 random(42);
-    auto min = std::numeric_limits<TypeParam>::min();
-    auto max = std::numeric_limits<TypeParam>::max();
-    std::uniform_int_distribution<TypeParam> dist(min, max);
-    for (size_t j = 0; j < numberOfRecord; j++) {
-        auto tmp = dist(random);
-        Value<> val((TypeParam) encodeData(tmp));
-        Value<> tmpVal(tmp);
+    std::mt19937 random(SEED);
+    for (size_t j = 0; j < numberOfRecord; ++j) {
+        auto tmp = static_cast<TypeParam>(random());
+        std::cout << "tmp: " << (TypeParam)tmp << std::endl;
+        auto tmpp = encodeData<TypeParam>(tmp);
+        Value<> val(tmpp);
+        //std::cout << "val: " << (TypeParam) encodeData(tmp) << std::endl;
+        Value<> tmpVal((TypeParam) tmp);
+        //Value<> tmpVal(tmp);
         auto entry = stateRef.allocateEntry();
         entry.store(val);
         entry = entry + sizeof(TypeParam);
@@ -69,7 +71,13 @@ void fillState(uint64_t numberOfRecord, const std::shared_ptr<BatchSortOperatorH
     }
 }
 
-using TestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, uint16_t, int16_t, uint8_t, int8_t>;
+using TestTypes = ::testing::Types<std::pair<uint64_t, UInt64>,std::pair<int64_t, Int64>,std::pair<uint32_t, UInt32>,
+                                   std::pair<int32_t, Int32>, std::pair<uint16_t, UInt16>, std::pair<int16_t, Int16>,
+                                   std::pair<uint8_t, UInt8>,
+                                        std::pair<int8_t, Int8>,
+                                            std::pair<float, Nautilus::Float>,
+                                    std::pair<double, Nautilus::Double>
+        >;
 TYPED_TEST_SUITE(BatchSortScanOperatorTest, TestTypes);
 
 /**
@@ -89,11 +97,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
     handler->setup(pipelineContext);
     fillState<cType>(numberOfRecords, handler);
 
-    auto type = Util::getPhysicalTypePtr<cType>();
-    auto dataTypes = std::vector<PhysicalTypePtr>{type};
-    std::vector<Record::RecordFieldIdentifier> fieldNames = {"f1"};
-
-    auto sortScanOperator = BatchSortScan(0, fieldNames, dataTypes, {0});
+    auto sortScanOperator = BatchSortScan(0, {"f1"}, {Util::getPhysicalTypePtr<cType>()}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortScanOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -107,8 +111,8 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
 
     // Records should be in ascending order
     auto prev = collector->records[0].read("f1").as<nType>();
-    for (int i = 1; i < numberOfRecords; i++) {
-        auto cur = collector->records[i].read("f1").as<nType>();
+    for (int i = 1; i < numberOfRecords; ++i) {
+        Value<nType> cur = collector->records[i].read("f1").as<nType>();
         std::cout << prev << " " << cur << std::endl;
         ASSERT_LE(prev, cur);
         prev = cur;

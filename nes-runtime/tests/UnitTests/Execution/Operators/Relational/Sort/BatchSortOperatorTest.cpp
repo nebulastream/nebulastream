@@ -53,7 +53,7 @@ class BatchSortOperatorTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO2("Tear down BatchSortOperatorTest test class."); }
 };
 
-using TestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, uint16_t, int16_t, uint8_t, int8_t>;
+using TestTypes = ::testing::Types<uint32_t, int32_t, uint64_t, int64_t, uint16_t, int16_t, uint8_t, int8_t, float, double>;
 TYPED_TEST_SUITE(BatchSortOperatorTest, TestTypes);
 
 /**
