@@ -29,14 +29,15 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t) {
+uint8_t* FixedPage::append(const uint64_t hash) {
     if (currentPos >= capacity) {
         return nullptr;
     }
 
-    //TODO: this is somehow not working anymore
-    //    bloomFilter->add(hash);
-    // I think the reason is that the page is reused and a copy into the global HT will move the bloomfilter unique
+    if (bloomFilter == nullptr) {
+        NES_ERROR("Bloomfilter become empty")
+    }
+    bloomFilter->add(hash);
     uint8_t* ptr = &data[currentPos * sizeOfRecord];
     currentPos++;
     return ptr;
@@ -61,6 +62,7 @@ FixedPage::FixedPage(FixedPage&& otherPage)
     otherPage.data = nullptr;
     otherPage.currentPos = 0;
     otherPage.capacity = 0;
+    otherPage.bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
 }
 FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
     if (this == std::addressof(otherPage)) {
@@ -81,5 +83,8 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
 
 FixedPage::FixedPage(FixedPage* otherPage)
     : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
-      capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {}
+      capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {
+    otherPage->bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+//    otherPage->currentPos = 0;
+}
 }// namespace NES::Runtime::Execution::Operators

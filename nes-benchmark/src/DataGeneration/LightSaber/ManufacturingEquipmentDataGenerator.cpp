@@ -1,26 +1,41 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 #include <API/Schema.hpp>
-#include <DataGenerators/LightSaber/ManufacturingEquipmentDataGenerator.hpp>
+#include <DataGeneration/LightSaber/ManufacturingEquipmentDataGenerator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
-namespace NES {
-
-ManufacturingEquipmentDataGenerator::ManufacturingEquipmentDataGenerator(Runtime::BufferManagerPtr bufferManager)
-    : DataGenerator(std::move(bufferManager)) {}
+namespace NES::Benchmark::DataGeneration{
+ManufacturingEquipmentDataGenerator::ManufacturingEquipmentDataGenerator()
+    : DataGenerator() {}
 
 std::string ManufacturingEquipmentDataGenerator::getName() { return "ManufacturingEquipment"; }
 
-std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createData(uint64_t numberOfBuffers, uint64_t bufferSize) {
+std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> buffers;
+    buffers.reserve(numberOfBuffers);
+
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
-    std::ifstream file(std::string(RESOURCES_PATH) + "/manufacturing_equipment/DEBS2012-small.txt");
+    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/manufacturing_equipment/DEBS2012-small.txt");
     std::string line;
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
-        auto buffer = allocateBuffer(bufferSize);
+        auto buffer = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
             // check if we reached the end of the file and start from the beginning
@@ -53,20 +68,20 @@ std::vector<Runtime::TupleBuffer> ManufacturingEquipmentDataGenerator::createDat
 }
 SchemaPtr ManufacturingEquipmentDataGenerator::getSchema() {
     return Schema::create()
-        ->addField("creationTS", INT64)
-        ->addField("messageIndex", INT64)
-        ->addField("mf01", INT16)
-        ->addField("mf02", INT16)
-        ->addField("mf03", INT16)
-        ->addField("pc13", INT16)
-        ->addField("pc14", INT16)
-        ->addField("pc15", INT16)
-        ->addField("pc25", UINT16)
-        ->addField("pc26", UINT16)
-        ->addField("pc27", UINT16)
-        ->addField("res", UINT16)
-        ->addField("bm05", INT16)
-        ->addField("bm06", INT16);
+        ->addField("creationTS", BasicType::INT64)
+        ->addField("messageIndex", BasicType::INT64)
+        ->addField("mf01", BasicType::INT16)
+        ->addField("mf02", BasicType::INT16)
+        ->addField("mf03", BasicType::INT16)
+        ->addField("pc13", BasicType::INT16)
+        ->addField("pc14", BasicType::INT16)
+        ->addField("pc15", BasicType::INT16)
+        ->addField("pc25", BasicType::UINT16)
+        ->addField("pc26", BasicType::UINT16)
+        ->addField("pc27", BasicType::UINT16)
+        ->addField("res", BasicType::UINT16)
+        ->addField("bm05", BasicType::INT16)
+        ->addField("bm06", BasicType::INT16);
 }
 
 }// namespace NES

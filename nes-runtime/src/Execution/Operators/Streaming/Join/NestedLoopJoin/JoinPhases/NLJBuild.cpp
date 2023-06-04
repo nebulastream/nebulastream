@@ -17,12 +17,13 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 
@@ -54,12 +55,8 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
 
     //TODO: Multi threaded this can become a problem
     auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(watermarkTs, sequenceNumber, originId);
-    for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
-        auto buffer = workerCtx->allocateTupleBuffer();
-        std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
-        buffer.setNumberOfTuples(1);
-        pipelineCtx->dispatchBuffer(buffer);
-        NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
+    if (windowIdentifiersToBeTriggered.size() > 0) {
+        opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
     }
 }
 
@@ -69,12 +66,7 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // TODO for now, this is okay but we have to fix this with issue #3652
     //TODO change to timestampfunction
-    Value<UInt64> timestampVal = (uint64_t) 0;
-    if (timeStampField == "IngestionTime") {
-        timestampVal = ctx.getCurrentTs();
-    } else {
-        timestampVal = record.read(timeStampField).as<UInt64>();
-    }
+    Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
 
     // Get the memRef to the new entry
     auto entryMemRef = Nautilus::FunctionCall("insertEntryMemRefProxy",
@@ -98,8 +90,6 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // Update the watermark for the nlj operator and trigger windows
-    //TODO SZ: I am not sure this is doing it at the end of the buffer which is maybe fine for now but if a particular tuple within the buffer
-    // can trigger window this will be missed?
     Nautilus::FunctionCall("checkWindowsTriggerProxy",
                            checkWindowsTriggerProxyForNLJBuild,
                            operatorHandlerMemRef,
@@ -114,8 +104,9 @@ NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const SchemaPtr& schema,
                    const std::string& joinFieldName,
                    const std::string& timeStampField,
-                   bool isLeftSide)
+                   bool isLeftSide,
+                   TimeFunctionPtr timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      isLeftSide(isLeftSide) {}
+      isLeftSide(isLeftSide), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -109,7 +109,6 @@ void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
     auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
     // emit global slice when we have a tumbling window.
     emitWindow(ctx, startSliceTs, endSliceTs, globalSliceState);
-    this->child->terminate(ctx);
 }
 
 Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,

@@ -103,30 +103,26 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      * */
     BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
 
-    UIntOption numberOfPartitions = {NUMBER_OF_PARTITIONS,
-                                  0,
-                                  "Partitions in the hash table"};
-    UIntOption pageSize   = {PAGE_SIZE,
-                            0,
-                            "Page size of hash table"};
-    UIntOption preAllocPageCnt   = {PREALLOC_PAGE_CNT,
-                            0,
-                            "Page cnt of pre allocated pages in each bucket hash table"};
-
+    UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG, 1, "Partitions in the hash table"};
+    UIntOption pageSize = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG, 4096, "Page size of hash table"};
+    UIntOption preAllocPageCnt = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
+                                  1,
+                                  "Page cnt of pre allocated pages in each bucket hash table"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&queryCompilerType,
-                &compilationStrategy,
-                &pipeliningStrategy,
-                &nautilusBackend,
-                &outputBufferOptimizationLevel,
-                &windowingStrategy,
-                &useCompilationCache,
+        return {
+            &queryCompilerType,
+            &compilationStrategy,
+            &pipeliningStrategy,
+            &nautilusBackend,
+            &outputBufferOptimizationLevel,
+            &windowingStrategy,
+            &useCompilationCache,
             &numberOfPartitions,
             &pageSize,
-                &preAllocPageCnt,
-            };
+            &preAllocPageCnt,
+        };
     }
 };
 

@@ -40,6 +40,7 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param windowStart
      * @param windowEnd
      * @param pageSize
+     * @param preAllocPageSizeCnt
      * @param numPartitions
      */
     explicit StreamHashJoinWindow(size_t numberOfWorkerThreads,

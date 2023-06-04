@@ -43,8 +43,6 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
                                            size_t preAllocPageSizeCnt)
     : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
 
-    NES_ASSERT2_FMT(preAllocPageSizeCnt > 0, "numPreAllocatedPage is 0");
-
     for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
@@ -52,8 +50,10 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
 }
 
 void FixedPagesLinkedList::printStatistics() {
-    NES_DEBUG(" FixPagesLinkedList reports pageFullCnt=" << pageFullCnt << " allocateNewPageCnt=" << allocateNewPageCnt
-                                                         << " emptyPageStillExistsCnt=" << emptyPageStillExistsCnt)
+    NES_DEBUG2(" FixPagesLinkedList reports pageFullCnt={} allocateNewPageCnt={} emptyPageStillExistsCnt={}",
+               pageFullCnt,
+               allocateNewPageCnt,
+               emptyPageStillExistsCnt)
 }
 
 }// namespace NES::Runtime::Execution::Operators

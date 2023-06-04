@@ -48,11 +48,9 @@ class LocalHashTable {
 
     LocalHashTable(const LocalHashTable&) = delete;
 
-    ~LocalHashTable(){NES_DEBUG("Local hash table shutdown")};
-
     LocalHashTable& operator=(const LocalHashTable&) = delete;
 
-    //    virtual ~LocalHashTable() = default;
+    virtual ~LocalHashTable() = default;
 
     /**
      * @brief Inserts the key into this hash table by returning a pointer to a free memory space
@@ -79,6 +77,12 @@ class LocalHashTable {
      * @brief debug mehtod to print the statistics of the hash table
      */
     void printStatistics();
+
+    /**
+     * @brief get number of tuples in hash table
+     * @return
+     */
+    uint64_t getNumberOfTuples();
 
   private:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;

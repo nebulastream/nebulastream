@@ -15,7 +15,7 @@
 add_subdirectory(NestedLoopJoin)
 add_subdirectory(StreamHashJoin)
 
-add_source(nes-runtime
+add_source_files(nes-runtime
         StreamWindow.cpp
         StreamJoinOperatorHandler.cpp
         StreamJoinUtil.cpp

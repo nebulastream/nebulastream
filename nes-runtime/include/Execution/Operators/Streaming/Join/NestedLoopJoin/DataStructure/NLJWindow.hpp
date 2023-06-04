@@ -76,8 +76,6 @@ class NLJWindow : public StreamWindow {
     std::vector<uint8_t> rightTuples;
     std::mutex leftTuplesMutex;
     std::mutex rightTuplesMutex;
-    uint64_t windowStart;
-    uint64_t windowEnd;
 };
 }// namespace NES::Runtime::Execution
 

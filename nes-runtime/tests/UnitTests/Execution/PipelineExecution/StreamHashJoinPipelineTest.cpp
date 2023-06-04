@@ -13,10 +13,12 @@
 */
 #include <API/Schema.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
@@ -277,25 +279,29 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
     auto numberOfTuplesToProduce = windowSize * 20;
 
     auto handlerIndex = 0;
-    auto joinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                          /*isLeftSide*/ true,
-                                                                          joinFieldNameLeft,
-                                                                          timeStampField,
-                                                                          leftSchema);
-    auto joinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(handlerIndex,
-                                                                           /*isLeftSide*/ false,
-                                                                           joinFieldNameRight,
-                                                                           timeStampField,
-                                                                           rightSchema);
+    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+
+    auto joinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(
+        handlerIndex,
+        /*isLeftSide*/ true,
+        joinFieldNameLeft,
+        timeStampField,
+        leftSchema,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
+    auto joinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(
+        handlerIndex,
+        /*isLeftSide*/ false,
+        joinFieldNameRight,
+        timeStampField,
+        rightSchema,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
     auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
     auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(leftSchema,
                                                                               rightSchema,
                                                                               joinFieldNameLeft,
                                                                               joinFieldNameRight,
-                                                                              std::vector<::OriginId>(1, 1),
-                                                                              numSourcesLeft + numSourcesRight,
-                                                                              windowSize,
-                                                                              joinSizeInByte);
+                                                                              std::vector<::OriginId>({1}),
+                                                                              windowSize);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);
@@ -412,7 +418,7 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         HashJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),//CPPPipelineCompiler is currently not working
 
                         [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;

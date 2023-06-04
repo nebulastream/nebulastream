@@ -90,6 +90,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
         tupleCount++;
     }
     buffer.setNumberOfTuples(tupleCount);
+    buffer.getBuffer().setWatermark(1000);
     return buffer;
 }
 
@@ -132,7 +133,7 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
 
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
-
+//TODO enable again
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$f1_left", BasicType::UINT64)
@@ -181,8 +182,16 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
+
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -273,7 +282,14 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     ASSERT_TRUE(!!sourceLeft);
     ASSERT_TRUE(!!sourceRight);
 
+    leftBuffer.getBuffer().setWatermark(1000);
+    leftBuffer.getBuffer().setOriginId(2);
+    leftBuffer.getBuffer().setSequenceNumber(1);
     sourceLeft->emitBuffer(leftBuffer);
+
+    rightBuffer.getBuffer().setWatermark(1000);
+    rightBuffer.getBuffer().setOriginId(3);
+    rightBuffer.getBuffer().setSequenceNumber(1);
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 

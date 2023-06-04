@@ -49,7 +49,6 @@ class FixedPagesLinkedList {
      */
     const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
 
-
     /**
      * @brief debug method to print the statistics of the Linked list
      */
@@ -62,7 +61,7 @@ class FixedPagesLinkedList {
     const size_t sizeOfRecord;
     const size_t pageSize;
 
-    //for debug
+    //used for printStatistics
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;

@@ -16,34 +16,37 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <optional>
 
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* NLJOperatorHandler::allocateNewEntry(uint64_t timestamp, bool isLeftSide) {
-    auto window = getWindowByTimestamp(timestamp);
-    while (!window.has_value()) {
+    auto currentWindow = getWindowByTimestamp(timestamp);
+    while (!currentWindow.has_value()) {
         createNewWindow(timestamp);
-        window = getWindowByTimestamp(timestamp);
     }
+    currentWindow = getWindowByTimestamp(timestamp);
+
     auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
-    NLJWindow* ptr = static_cast<NLJWindow*>(window->get());
+    NLJWindow* ptr = static_cast<NLJWindow*>(currentWindow->get());
     return ptr->allocateNewTuple(sizeOfTupleInByte, isLeftSide);
 }
 
-NLJOperatorHandler::NLJOperatorHandler(size_t windowSize,
-                                       const SchemaPtr& joinSchemaLeft,
+NLJOperatorHandler::NLJOperatorHandler(const SchemaPtr& joinSchemaLeft,
                                        const SchemaPtr& joinSchemaRight,
                                        const std::string& joinFieldNameLeft,
                                        const std::string& joinFieldNameRight,
-                                       const std::vector<OriginId>& origins)
-    : StreamJoinOperatorHandler(windowSize,
-                                joinSchemaLeft,
+                                       const std::vector<OriginId>& origins,
+                                       size_t windowSize)
+    : StreamJoinOperatorHandler(joinSchemaLeft,
                                 joinSchemaRight,
                                 joinFieldNameLeft,
                                 joinFieldNameRight,
                                 origins,
-                                StreamJoinOperatorHandler::JoinType::NLJ) {}
+                                windowSize,
+                                StreamJoinOperatorHandler::JoinType::NESTED_LOOP_JOIN) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG("start HashJoinOperatorHandler");
@@ -51,19 +54,31 @@ void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uin
 
 void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop HashJoinOperatorHandler"); }
 
-NLJOperatorHandlerPtr NLJOperatorHandler::create(size_t windowSize,
-                                                 const SchemaPtr& joinSchemaLeft,
+void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                                        WorkerContext* workerCtx,
+                                        PipelineExecutionContext* pipelineCtx) {
+    for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
+        auto buffer = workerCtx->allocateTupleBuffer();
+        std::memcpy(buffer.getBuffer(), &windowIdentifier, sizeof(uint64_t));
+        buffer.setNumberOfTuples(1);
+        pipelineCtx->dispatchBuffer(buffer);
+        NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
+    }
+}
+
+NLJOperatorHandlerPtr NLJOperatorHandler::create(const SchemaPtr& joinSchemaLeft,
                                                  const SchemaPtr& joinSchemaRight,
                                                  const std::string& joinFieldNameLeft,
                                                  const std::string& joinFieldNameRight,
-                                                 const std::vector<OriginId>& origins) {
+                                                 const std::vector<OriginId>& origins,
+                                                 size_t windowSize) {
 
-    return std::make_shared<NLJOperatorHandler>(windowSize,
-                                                joinSchemaLeft,
+    return std::make_shared<NLJOperatorHandler>(joinSchemaLeft,
                                                 joinSchemaRight,
                                                 joinFieldNameLeft,
                                                 joinFieldNameRight,
-                                                origins);
+                                                origins,
+                                                windowSize);
 }
 
 }// namespace NES::Runtime::Execution::Operators

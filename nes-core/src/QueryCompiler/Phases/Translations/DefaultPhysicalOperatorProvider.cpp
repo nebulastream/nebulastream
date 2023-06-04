@@ -355,7 +355,6 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             timeStampFieldNameLeft = "IngestionTime";
             timeStampFieldNameRight = "IngestionTime";
         } else {
-
             // FIXME Once #3407 is done, we can change this to get the left and right fieldname
             auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
 
@@ -399,22 +398,16 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
 
-        auto pageSize = options->getPageSize();
-        auto numberOfPartitions = options->getNumberOfPartitions();
-        auto preallocPageSizeCnt = options->getPreAllocPageCnt();
-
-        auto joinOperatorHandler = StreamHashJoinOperatorHandler::create(
-            joinOperator->getLeftInputSchema(),
-            joinOperator->getRightInputSchema(),
-            joinFieldNameLeft,
-            joinFieldNameRight,
-            joinOperator->getAllInputOriginIds(),
-            numSourcesLeft + numSourcesRight,
-            windowSize,
-            NES::Runtime::Execution::DEFAULT_MEM_SIZE_JOIN,
-            pageSize == 0 ? NES::Runtime::Execution::PAGE_SIZE : pageSize,
-            preallocPageSizeCnt == 0 ? NES::Runtime::Execution::NUM_PREALLOC_PAGES : preallocPageSizeCnt,
-            numberOfPartitions == 0 ? NES::Runtime::Execution::NUM_PARTITIONS : numberOfPartitions);
+        auto joinOperatorHandler = StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                                         joinOperator->getRightInputSchema(),
+                                                                         joinFieldNameLeft,
+                                                                         joinFieldNameRight,
+                                                                         joinOperator->getAllInputOriginIds(),
+                                                                         windowSize,
+                                                                         options->getHashJoinOptions()->getTotalSizeForDataStructures(),
+                                                                         options->getHashJoinOptions()->getPageSize(),
+                                                                         options->getHashJoinOptions()->getPreAllocPageCnt(),
+                                                                         options->getHashJoinOptions()->getNumberOfPartitions());
 
         auto leftInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());

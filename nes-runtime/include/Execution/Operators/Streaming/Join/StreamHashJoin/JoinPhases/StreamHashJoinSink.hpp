@@ -40,12 +40,6 @@ class StreamHashJoinSink : public Operator {
      */
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-    /**
-     * @brief Terminates the operator and clears all operator state.
-     * @param executionCtx the RuntimeExecutionContext
-     */
-    void reportNumbersStreamJoinSink() const;
-
   private:
     uint64_t handlerIndex;
 };

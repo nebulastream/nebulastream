@@ -37,11 +37,11 @@ uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t se
     }
     if (!found) {
         std::stringstream ss;
-        for(auto& id : origins)
-        {
+        for (auto& id : origins) {
             ss << id << ",";
         }
-        NES_THROW_RUNTIME_ERROR("update watermark for non existing origin " << origin << " number of origins=" << origins.size() << " ids=" << ss.str());
+        NES_THROW_RUNTIME_ERROR("update watermark for non existing origin " << origin << " number of origins=" << origins.size()
+                                                                            << " ids=" << ss.str());
     }
     return getCurrentWatermark();
 }

@@ -285,9 +285,9 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     // set nautilus backend
     queryCompilationOptions->setNautilusBackend(queryCompilerConfiguration.nautilusBackend);
 
-    queryCompilationOptions->setNumberOfPartitions(queryCompilerConfiguration.numberOfPartitions.getValue());
-    queryCompilationOptions->setPageSize(queryCompilerConfiguration.pageSize.getValue());
-    queryCompilationOptions->setPreAllocPageCnt(queryCompilerConfiguration.preAllocPageCnt.getValue());
+    queryCompilationOptions->getHashJoinOptions()->setNumberOfPartitions(queryCompilerConfiguration.numberOfPartitions.getValue());
+    queryCompilationOptions->getHashJoinOptions()->setPageSize(queryCompilerConfiguration.pageSize.getValue());
+    queryCompilationOptions->getHashJoinOptions()->setPreAllocPageCnt(queryCompilerConfiguration.preAllocPageCnt.getValue());
 
     return queryCompilationOptions;
 }

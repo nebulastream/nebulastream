@@ -18,7 +18,7 @@
 
 namespace NES::Benchmark::Measurements {
 
-std::string Measurements::getthroughputAsString() {
+std::string Measurements::getThroughputAsString() {
     std::stringstream ss;
     size_t avgValue = 0;
     size_t avgCnt = 0;

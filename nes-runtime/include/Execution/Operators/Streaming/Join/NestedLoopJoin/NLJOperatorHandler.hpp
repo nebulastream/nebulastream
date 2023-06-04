@@ -39,12 +39,12 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param joinFieldNameRight
      * @param origins
      */
-    explicit NLJOperatorHandler(size_t windowSize,
-                                const SchemaPtr& joinSchemaLeft,
+    explicit NLJOperatorHandler(const SchemaPtr& joinSchemaLeft,
                                 const SchemaPtr& joinSchemaRight,
                                 const std::string& joinFieldNameLeft,
                                 const std::string& joinFieldNameRight,
-                                const std::vector<OriginId>& origins);
+                                const std::vector<OriginId>& origins,
+                                size_t windowSize);
 
     ~NLJOperatorHandler() = default;
     /**
@@ -72,12 +72,22 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      */
     uint8_t* allocateNewEntry(uint64_t timestamp, bool isLeftSide);
 
-    static NLJOperatorHandlerPtr create(size_t windowSize,
-                                        const SchemaPtr& joinSchemaLeft,
+    /**
+     * @brief method to trigger the finished windows
+     * @param windowIdentifiersToBeTriggered
+     * @param workerCtx
+     * @param pipelineCtx
+     */
+    void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                        WorkerContext* workerCtx,
+                        PipelineExecutionContext* pipelineCtx) override;
+
+    static NLJOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
                                         const SchemaPtr& joinSchemaRight,
                                         const std::string& joinFieldNameLeft,
                                         const std::string& joinFieldNameRight,
-                                        const std::vector<OriginId>& origins);
+                                        const std::vector<OriginId>& origins,
+                                        size_t windowSize);
 };
 }// namespace NES::Runtime::Execution::Operators
 

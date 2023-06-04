@@ -127,13 +127,12 @@ class QueryStatistics {
     /**
     * @brief increment latency sum
     */
-    void incTasksPerPipeline(uint64_t pipeId);
+    void incTasksPerPipelineId(uint64_t pipelineId);
 
     /**
     * @brief increment Pipeline cnt
     */
-    std::map<uint64_t, uint64_t>& getPipelineToTaskMap();
-
+    std::map<uint64_t, std::atomic<uint64_t>>& getPipelineIdToTaskMap();
 
     /**
      * @brief get sum of all latencies
@@ -238,7 +237,7 @@ class QueryStatistics {
     std::atomic<uint64_t> queryId = 0;
     std::atomic<uint64_t> subQueryId = 0;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
-    std::map<uint64_t, uint64_t> pipeLineToTaskThroughputMap;
+    std::map<uint64_t, std::atomic<uint64_t>> pipelineIdToTaskThroughputMap;
 };
 
 }// namespace NES::Runtime

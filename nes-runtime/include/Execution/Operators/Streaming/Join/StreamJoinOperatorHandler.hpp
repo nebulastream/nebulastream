@@ -15,6 +15,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
 #include <API/Schema.hpp>
+#include <Common/Identifiers.hpp>
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
@@ -29,7 +30,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class StreamJoinOperatorHandler : public OperatorHandler {
   public:
-    enum class JoinType : uint8_t { HASH_JOIN, NLJ };
+    enum class JoinType : uint8_t { HASH_JOIN, NESTED_LOOP_JOIN };
 
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
@@ -41,12 +42,12 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param origins
      * @param joinType
      */
-    StreamJoinOperatorHandler(size_t windowSize,
-                              const SchemaPtr& joinSchemaLeft,
+    StreamJoinOperatorHandler(const SchemaPtr& joinSchemaLeft,
                               const SchemaPtr& joinSchemaRight,
                               const std::string& joinFieldNameLeft,
                               const std::string& joinFieldNameRight,
                               const std::vector<OriginId>& origins,
+                              size_t windowSize,
                               const JoinType joinType);
 
     virtual ~StreamJoinOperatorHandler() = default;
@@ -117,6 +118,16 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     std::vector<uint64_t> checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId);
 
     /**
+     * @brief method to trigger the finished windows
+     * @param windowIdentifiersToBeTriggered
+     * @param workerCtx
+     * @param pipelineCtx
+     */
+    virtual void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                                WorkerContext* workerCtx,
+                                PipelineExecutionContext* pipelineCtx) = 0;
+
+    /**
      * @brief Getter for the left join schema
      * @return left join schema
      */
@@ -164,7 +175,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @brief Creates a new window that corresponds to this timestamp
      * @param timestamp
      */
-    void createNewWindow(uint64_t timestamp);
+    std::optional<StreamWindowPtr> createNewWindow(uint64_t timestamp);
 
     /**
      * @brief get the number of windows
@@ -185,6 +196,12 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      */
     uint64_t getMinWatermarkForWorker();
 
+    /**
+     * @brief Add the id of the operator this handler is responsilbe for
+     * @param operatorId
+     */
+    void addOperatorId(OperatorId operatorId);
+
   protected:
     size_t numberOfWorkerThreads = 1;
     std::list<StreamWindowPtr> windows;
@@ -196,8 +213,8 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     std::string joinFieldNameRight;
     JoinType joinType;
     std::atomic<bool> alreadySetup{false};
-    std::atomic<bool> alreadyStoped{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
+    OperatorId operatorId;
 };
 
 }// namespace NES::Runtime::Execution::Operators

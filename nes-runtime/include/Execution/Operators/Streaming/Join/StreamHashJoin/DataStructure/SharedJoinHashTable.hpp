@@ -76,8 +76,7 @@ class SharedJoinHashTable {
 
     /**
      * @brief Returns the number buckets
-     * @param bucketPos
-     * @return number of pages
+     * @return number of buckets
      */
     size_t getNumBuckets() const;
 

@@ -43,7 +43,8 @@ class NLJBuild : public ExecutableOperator {
              const SchemaPtr& schema,
              const std::string& joinFieldName,
              const std::string& timeStampField,
-             bool isLeftSide);
+             bool isLeftSide,
+             TimeFunctionPtr timeFunction);
 
     /**
      * @brief Stores the record in the corresponding window
@@ -65,6 +66,7 @@ class NLJBuild : public ExecutableOperator {
     std::string joinFieldName;
     std::string timeStampField;
     const bool isLeftSide;
+    TimeFunctionPtr timeFunction;
 };
 }// namespace NES::Runtime::Execution::Operators
 

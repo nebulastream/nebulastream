@@ -11,9 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        ../StreamJoinOperatorHandler.cpp
-        ../StreamWindow.cpp
-        ../StreamJoinUtil.cpp
         NLJOperatorHandler.cpp)
 
 add_subdirectory(JoinPhases)

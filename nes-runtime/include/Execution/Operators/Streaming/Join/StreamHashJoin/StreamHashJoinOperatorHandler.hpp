@@ -63,7 +63,6 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                            std::string joinFieldNameLeft,
                                            std::string joinFieldNameRight,
                                            const std::vector<OriginId>& origins,
-                                           uint64_t numberOfWorker,
                                            size_t windowSize,
                                            size_t totalSizeForDataStructures,
                                            size_t pageSize,
@@ -89,7 +88,6 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                                    const std::string& joinFieldNameLeft,
                                                    const std::string& joinFieldNameRight,
                                                    const std::vector<OriginId>& origins,
-                                                   uint64_t numberOfWorker,
                                                    size_t windowSize,
                                                    size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
                                                    size_t pageSize = PAGE_SIZE,
@@ -113,14 +111,6 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
-     * @brief Creates an entry for a new tuple by first getting the responsible window for the timestamp. This method is thread safe.
-     * @param timestamp
-     * @param isLeftSide
-     * @return Pointer
-     */
-    uint8_t* allocateNewEntry(uint64_t timestamp, uint64_t index, bool isLeftSide);
-
-    /**
      * @brief get the number of prealllcated pages per bucket
      * @return
      */
@@ -138,9 +128,23 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      */
     size_t getNumPartitions() const;
 
+    /**
+     * @brief get the maximal total size of the hash table
+     * @return size
+     */
+    size_t getTotalSizeForDataStructures() const;
+
+    /**
+     * @brief method to trigger the finished windows
+     * @param windowIdentifiersToBeTriggered
+     * @param workerCtx
+     * @param pipelineCtx
+     */
+    void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                        WorkerContext* workerCtx,
+                        PipelineExecutionContext* pipelineCtx) override;
+
   private:
-    std::list<StreamHashJoinWindow> hashJoinWindows;
-    uint64_t numberOfWorker;
     size_t totalSizeForDataStructures;
     size_t preAllocPageSizeCnt;
     size_t pageSize;

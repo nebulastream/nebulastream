@@ -1,23 +1,40 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 #include <API/Schema.hpp>
-#include <DataGenerators/LightSaber/ClusterMonitoringDataGenerator.hpp>
+#include <DataGeneration/LightSaber/ClusterMonitoringDataGenerator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
-namespace NES {
+namespace NES::Benchmark::DataGeneration{
 
-ClusterMonitoringDataGenerator::ClusterMonitoringDataGenerator(Runtime::BufferManagerPtr bufferManager)
-    : DataGenerator(std::move(bufferManager)) {}
+ClusterMonitoringDataGenerator::ClusterMonitoringDataGenerator()
+    : DataGenerator() {}
 
 std::string ClusterMonitoringDataGenerator::getName() { return "ClusterMonitoring"; }
 
-std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(uint64_t numberOfBuffers, uint64_t bufferSize) {
+std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> buffers;
+    buffers.reserve(numberOfBuffers);
+
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
     std::string filePath = "resources/datasets/google-cluster-data/";
-    std::ifstream file(std::string(RESOURCES_PATH) + "/google-cluster-data/google-cluster-data.txt");
+    //TODO fix path
+    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/google-cluster-data/google-cluster-data.txt");
 
     std::string line;
     std::vector<std::vector<std::string>> lines;
@@ -29,7 +46,7 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(uin
 
     uint64_t currentLineIndex = 0;
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
-        auto buffer = allocateBuffer(bufferSize);
+        auto buffer = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
             // check if we reached the end of the file and start from the beginning
@@ -59,18 +76,18 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(uin
 }
 SchemaPtr ClusterMonitoringDataGenerator::getSchema() {
     return Schema::create()
-        ->addField("creationTS", INT64)
-        ->addField("jobId", INT64)
-        ->addField("taskId", INT64)
-        ->addField("machineId", INT64)
-        ->addField("eventType", INT16)
-        ->addField("userId", INT16)
-        ->addField("category", INT16)
-        ->addField("priority", INT16)
-        ->addField("cpu", FLOAT32)
-        ->addField("ram", FLOAT32)
-        ->addField("disk", FLOAT32)
-        ->addField("constraints", INT16);
+        ->addField("creationTS", BasicType::INT64)
+        ->addField("jobId", BasicType::INT64)
+        ->addField("taskId", BasicType::INT64)
+        ->addField("machineId", BasicType::INT64)
+        ->addField("eventType", BasicType::INT16)
+        ->addField("userId", BasicType::INT16)
+        ->addField("category", BasicType::INT16)
+        ->addField("priority", BasicType::INT16)
+        ->addField("cpu", BasicType::FLOAT32)
+        ->addField("ram", BasicType::FLOAT32)
+        ->addField("disk", BasicType::FLOAT32)
+        ->addField("constraints", BasicType::INT16);
 }
 
 }// namespace NES

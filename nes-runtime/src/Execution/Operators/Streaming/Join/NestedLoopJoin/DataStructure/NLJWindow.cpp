@@ -23,7 +23,7 @@ NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd)
 
 
 uint8_t* NLJWindow::allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
-    //TODO: I am not sure if this rezizing is really efficient expecially if we know the tuple sizes
+    //TODO: I am not sure if this resizing is really efficient expecially if we know the tuple sizes
     // maybe we should preallocate here too
     if (leftSide) {
         std::lock_guard<std::mutex> lock(leftTuplesMutex);

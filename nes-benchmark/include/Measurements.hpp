@@ -72,7 +72,7 @@ class Measurements {
      * @brief get only the throughput number
      * @return string
      */
-    std::string getthroughputAsString();
+    std::string getThroughputAsString();
 
 
   private:

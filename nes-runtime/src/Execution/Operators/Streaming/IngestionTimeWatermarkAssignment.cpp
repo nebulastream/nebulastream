@@ -15,8 +15,10 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 
 class WatermarkState : public OperatorState {
@@ -25,22 +27,25 @@ class WatermarkState : public OperatorState {
     Value<> currentWatermark = Value<UInt64>((uint64_t) 0);
 };
 
+IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction)
+    : timeFunction(std::move(timeFunction)){};
+
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     Operator::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
-}
-
-void IngestionTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const {
-    auto state = (WatermarkState*) ctx.getLocalState(this);
-    Value<>  tsField = timeFunction->getTs(ctx, record);
+    auto state = (WatermarkState*) executionCtx.getLocalState(this);
+    auto emptyRecord = Record();
+    Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
     if (tsField > state->currentWatermark) {
         state->currentWatermark = tsField;
     }
     // call next operator
-    ctx.setWatermarkTs(state->currentWatermark.as<UInt64>());
+    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
+}
 
-    child->execute(ctx, record);
+void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const {
+    child->execute(executionCtx, record);
 }
 void IngestionTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     auto state = (WatermarkState*) executionCtx.getLocalState(this);

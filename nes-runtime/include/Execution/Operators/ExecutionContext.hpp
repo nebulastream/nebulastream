@@ -120,6 +120,18 @@ class ExecutionContext final {
     void setWatermarkTs(Value<UInt64> watermarkTs);
 
     /**
+     * @brief Sets the current sequence number
+     * @param sequenceNumber
+     */
+    void setSequenceNumber(Value<UInt64> sequenceNumber);
+
+    /**
+     * @brief Returns current sequence number
+     * @return Value<UInt64> sequence number
+     */
+    const Value<UInt64>& getSequenceNumber() const;
+
+    /**
      * @brief Returns the current time stamp ts. This is set by a time function
      * @return Value<UInt64> timestamp ts
      */
@@ -138,6 +150,7 @@ class ExecutionContext final {
     Value<UInt64> origin;
     Value<UInt64> watermarkTs;
     Value<UInt64> currentTs;
+    Value<UInt64> sequenceNumber;
 };
 
 }// namespace NES::Runtime::Execution

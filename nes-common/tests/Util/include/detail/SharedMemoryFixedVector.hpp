@@ -21,6 +21,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <thread>
 #include <unistd.h>
 namespace NES::Testing::detail {
 
@@ -60,9 +61,10 @@ class SharedMemoryFixedVector {
             }
             NES_ASSERT(ret, "cannot create shared area");
         } else {
-            while (!std::filesystem::exists(std::filesystem::temp_directory_path() / "nes.tests.begin")) {
-                NES_DEBUG("File " << (std::filesystem::temp_directory_path() / "nes.tests.begin") << " does not exists");
-                sleep(1);
+            std::string filePath = std::filesystem::temp_directory_path() / "nes.tests.begin";
+            while (!std::filesystem::exists(filePath)) {
+                NES_DEBUG2("File {} does not exists", filePath);
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
         }
         mem = reinterpret_cast<uint8_t*>(mmap(nullptr, mmapSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmemFd, 0));

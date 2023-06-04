@@ -105,14 +105,13 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
 #endif
 
         switch (result) {
-                //OK comes only from final operators
+                //OK comes from sinks and intermediate operators
             case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
                 return ExecutionResult::Ok;
             }
-                //Finished comes also from intermediate ppelines
+                //Finished indicate that the processing is done
             case ExecutionResult::Finished: {
-                completedWork(task, workerContext);
                 return ExecutionResult::Finished;
             }
             default: {
@@ -269,7 +268,7 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 void DynamicQueryManager::updateStatistics(const Task& task,
                                            QueryId queryId,
                                            QuerySubPlanId querySubPlanId,
-                                           PipeLineId pipelineId,
+                                           PipelineId pipelineId,
                                            WorkerContext& workerContext) {
     AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, pipelineId, workerContext);
 #ifndef LIGHT_WEIGHT_STATISTICS
@@ -285,7 +284,7 @@ void DynamicQueryManager::updateStatistics(const Task& task,
 void MultiQueueQueryManager::updateStatistics(const Task& task,
                                               QueryId queryId,
                                               QuerySubPlanId querySubPlanId,
-                                              PipeLineId pipelineId,
+                                              PipelineId pipelineId,
                                               WorkerContext& workerContext) {
     AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, pipelineId, workerContext);
 #ifndef LIGHT_WEIGHT_STATISTICS
@@ -300,7 +299,7 @@ void MultiQueueQueryManager::updateStatistics(const Task& task,
 void AbstractQueryManager::updateStatistics(const Task& task,
                                             QueryId queryId,
                                             QuerySubPlanId querySubPlanId,
-                                            PipeLineId pipeId,
+                                            PipelineId pipelineId,
                                             WorkerContext& workerContext) {
     tempCounterTasksCompleted[workerContext.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 #ifndef LIGHT_WEIGHT_STATISTICS
@@ -325,7 +324,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
 
-        statistics->incTasksPerPipeline(pipeId);
+        statistics->incTasksPerPipelineId(pipelineId);
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
@@ -347,7 +346,7 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
 
     QuerySubPlanId querySubPlanId = -1;
     QueryId queryId = -1;
-    PipeLineId pipeId = -1;
+    PipelineId pipelineId = -1;
     auto executable = task.getExecutable();
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
         querySubPlanId = (*sink)->getParentPlanId();
@@ -356,11 +355,11 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
         queryId = (*executablePipeline)->getQueryId();
-        pipeId =  (*executablePipeline)->getPipelineId();
+        pipelineId = (*executablePipeline)->getPipelineId();
         NES_TRACE2("AbstractQueryManager::completedWork: task for exec pipeline isreconfig={}",
                    (*executablePipeline)->isReconfiguration());
     }
-    updateStatistics(task, queryId, querySubPlanId, pipeId, wtx);
+    updateStatistics(task, queryId, querySubPlanId, pipelineId, wtx);
 }
 
 bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,

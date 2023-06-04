@@ -19,7 +19,6 @@ file(COPY testData DESTINATION .)
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
 
-
 include(FetchContent)
 FetchContent_Declare(tpch-dbgen
         GIT_REPOSITORY https://github.com/nebulastream/tpch-dbgen.git

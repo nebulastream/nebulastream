@@ -1,26 +1,41 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 #include <API/Schema.hpp>
-#include <DataGenerators/LightSaber/LinarRoadDataGenerator.hpp>
+#include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
-namespace NES {
-
-LinearRoadDataGenerator::LinearRoadDataGenerator(Runtime::BufferManagerPtr bufferManager)
-    : DataGenerator(std::move(bufferManager)) {}
+namespace NES::Benchmark::DataGeneration{
+LinearRoadDataGenerator::LinearRoadDataGenerator()
+    : DataGenerator() {}
 
 std::string LinearRoadDataGenerator::getName() { return "LinearRoad"; }
 
-std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(uint64_t numberOfBuffers, uint64_t bufferSize) {
+std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> buffers;
+    buffers.reserve(numberOfBuffers);
+
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
-    std::ifstream file(std::string(RESOURCES_PATH) + "/lrb/lrb-data-small-ht.txt");
+    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/lrb/lrb-data-small-ht.txt");
     std::string line;
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
-        auto buffer = allocateBuffer(bufferSize);
+        auto buffer = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
             // check if we reached the end of the file and start from the beginning
@@ -50,13 +65,13 @@ std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(uint64_t n
 }
 SchemaPtr LinearRoadDataGenerator::getSchema() {
     return Schema::create()
-        ->addField("creationTS", INT64)
-        ->addField("vehicle", INT16)
-        ->addField("speed", FLOAT32)
-        ->addField("highway", INT16)
-        ->addField("lane", INT16)
-        ->addField("direction", INT16)
-        ->addField("position", INT16);
+        ->addField("creationTS", BasicType::INT64)
+        ->addField("vehicle", BasicType::INT16)
+        ->addField("speed", BasicType::FLOAT32)
+        ->addField("highway", BasicType::INT16)
+        ->addField("lane", BasicType::INT16)
+        ->addField("direction", BasicType::INT16)
+        ->addField("position", BasicType::INT16);
 }
 
 }// namespace NES

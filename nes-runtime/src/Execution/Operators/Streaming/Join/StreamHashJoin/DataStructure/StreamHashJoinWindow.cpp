@@ -25,7 +25,18 @@ Operators::LocalHashTable* StreamHashJoinWindow::getLocalHashTable(size_t index,
     }
 }
 
-size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool) { return 0; }
+size_t StreamHashJoinWindow::getNumberOfTuples(size_t, bool) {
+    //TODO: implement this function
+    size_t cnt = 0;
+    for (auto& leftBucket : localHashTableLeftSide) {
+        cnt += leftBucket->getNumberOfTuples();
+    }
+    for (auto& rightBucket : localHashTableRightSide) {
+        cnt += rightBucket->getNumberOfTuples();
+    }
+
+    return cnt;
+}
 
 Operators::SharedJoinHashTable& StreamHashJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
     if (isLeftSide) {
@@ -63,9 +74,13 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                                                                          pageSize,
                                                                                          preAllocPageSizeCnt));
     }
-    NES_DEBUG("Create new StreamHashJoinWindow with numberOfWorkerThreads="
-              << numberOfWorker << " HTs with numPartitions=" << numPartitions << " of pageSize=" << pageSize
-              << " sizeOfRecordLeft=" << sizeOfRecordLeft << " sizeOfRecordRight=" << sizeOfRecordRight);
+    NES_DEBUG2("Create new StreamHashJoinWindow with numberOfWorkerThreads={} HTs with numPartitions={} of pageSize={} "
+               "sizeOfRecordLeft={} sizeOfRecordRight={}",
+               numberOfWorker,
+               numPartitions,
+               pageSize,
+               sizeOfRecordLeft,
+               sizeOfRecordRight);
 }
 
 bool StreamHashJoinWindow::markPartionAsFinished() { return partitionFinishedCounter.fetch_sub(1) == 1; }

@@ -34,7 +34,7 @@
 namespace NES::Benchmark {
 
 void E2ESingleRun::setupCoordinatorConfig() {
-    NES_INFO("Creating coordinator and worker configuration...");
+    NES_INFO2("Creating coordinator and worker configuration...");
     coordinatorConf = Configurations::CoordinatorConfiguration::create();
 
     // Coordinator configuration
@@ -59,10 +59,12 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
-//    coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
-    coordinatorConf->worker.queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::INTERPRETER;
+    coordinatorConf->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
+        QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    coordinatorConf->worker.queryCompiler.nautilusBackend =
+        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
 
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
@@ -73,12 +75,12 @@ void E2ESingleRun::setupCoordinatorConfig() {
         coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     }
 
-    NES_INFO("Created coordinator and worker configuration!");
+    NES_INFO2("Created coordinator and worker configuration!");
 }
 
 void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
-    NES_INFO("Creating sources and the accommodating data generation and data providing...");
+    NES_INFO2("Creating sources and the accommodating data generation and data providing...");
 
     for (const auto& item : configOverAllRuns.sourceNameToDataGenerator) {
         auto logicalSourceName = item.first;
@@ -95,8 +97,10 @@ void E2ESingleRun::createSources() {
 
         allBufferManagers.emplace_back(bufferManager);
 
-        NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source "
-                              << logicalSource->getLogicalSourceName());
+        NES_INFO2("Creating #{}physical sources for logical source {}",
+                  numberOfPhysicalSrc,
+                  logicalSource->getLogicalSourceName());
+
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
 
             auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
@@ -157,24 +161,24 @@ void E2ESingleRun::createSources() {
                 coordinatorConf->worker.physicalSources.add(physicalSource);
             }
             sourceCnt += 1;
-            NES_INFO("Created physical source #" << numberOfPhysicalSrc << " for " << logicalSource->getLogicalSourceName());
+            NES_INFO2("Created physical source #{} for {}", numberOfPhysicalSrc, logicalSource->getLogicalSourceName());
         }
     }
-    NES_INFO("Created sources and the accommodating data generation and data providing!");
+    NES_INFO2("Created sources and the accommodating data generation and data providing!");
 }
 
 void E2ESingleRun::runQuery() {
-    NES_INFO("Starting nesCoordinator...");
+    NES_INFO2("Starting nesCoordinator...");
     coordinator = std::make_shared<NesCoordinator>(coordinatorConf);
     auto rpcPort = coordinator->startCoordinator(/* blocking */ false);
-    NES_INFO("Started nesCoordinator at " << rpcPort << "!");
+    NES_INFO2("Started nesCoordinator at {}", rpcPort);
 
     auto queryService = coordinator->getQueryService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         QueryId queryId = 0;
-        NES_INFO("E2EBase: Submit query = " << configOverAllRuns.query->getValue());
+        NES_INFO2("E2EBase: Submit query = {}", configOverAllRuns.query->getValue());
         queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
 
         submittedIds.push_back(queryId);
@@ -184,7 +188,7 @@ void E2ESingleRun::runQuery() {
             if (!res) {
                 NES_THROW_RUNTIME_ERROR("run does not succeed for id=" << id);
             }
-            NES_INFO("E2EBase: query started with id=" << id);
+            NES_INFO2("E2EBase: query started with id={}", id);
         }
     }
     NES_DEBUG("Starting the data providers...");
@@ -193,12 +197,12 @@ void E2ESingleRun::runQuery() {
     }
 
     // Wait for the system to come to a steady state
-    NES_INFO("Now waiting for " << configOverAllRuns.startupSleepIntervalInSeconds->getValue()
-                                << "s to let the system come to a steady state!");
+    NES_INFO2("Now waiting for {} s to let the system come to a steady state!",
+              configOverAllRuns.startupSleepIntervalInSeconds->getValue());
     sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
 
     // For now, we only support one way of collecting the measurements
-    NES_INFO("Starting to collect measurements...");
+    NES_INFO2("Starting to collect measurements...");
 
     uint64_t found = 0;
     while (found != submittedIds.size()) {
@@ -210,13 +214,13 @@ void E2ESingleRun::runQuery() {
                                                << ". Sleeping for a second now...");
                     sleep(1);
                 }
-                NES_INFO("Query with id " << id << " Ready with no. tuples = " << iter->getProcessedTuple());
+                NES_INFO2("Query with id {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
                 ++found;
             }
         }
     }
 
-    NES_INFO("Starting measurements...");
+    NES_INFO2("Starting measurements...");
     // We have to measure once more than the required numMeasurementsToCollect as we calculate deltas later on
     for (uint64_t cnt = 0; cnt <= configOverAllRuns.numMeasurementsToCollect->getValue(); ++cnt) {
         int64_t nextPeriodStartTime = configOverAllRuns.experimentMeasureIntervalInSeconds->getValue() * 1000;
@@ -259,9 +263,9 @@ void E2ESingleRun::runQuery() {
                 std::stringstream ss;
                 size_t pipeCnt = 0;
 
-                ss << "time=" << timeStamp << " subplan=" << subPlanStatistics->getSubQueryId() << " procTasks=" << processedTasks;
-                for(auto& pipe : subPlanStatistics->getPipelineToTaskMap())
-                {
+                ss << "time=" << timeStamp << " subplan=" << subPlanStatistics->getSubQueryId()
+                   << " procTasks=" << processedTasks;
+                for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
                     ss << " pipeNo:" << pipeCnt++ << " tasks=" << pipe.second;
                 }
                 std::cout << ss.str() << std::endl;
@@ -275,12 +279,12 @@ void E2ESingleRun::runQuery() {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     }
 
-    NES_INFO("Done measuring!");
-    NES_INFO("Done with single run!");
+    NES_INFO2("Done measuring!");
+    NES_INFO2("Done with single run!");
 }
 
 void E2ESingleRun::stopQuery() {
-    NES_INFO("Stopping the query...");
+    NES_INFO2("Stopping the query...");
 
     auto queryService = coordinator->getQueryService();
     auto queryCatalog = coordinator->getQueryCatalogService();
@@ -332,19 +336,19 @@ void E2ESingleRun::stopQuery() {
         }
     });
 
-    NES_INFO("Stopping coordinator...");
+    NES_INFO2("Stopping coordinator...");
     bool retStoppingCoord = coordinator->stopCoordinator(true);
     stopPromiseCord->set_value(retStoppingCoord);
     NES_ASSERT(stopPromiseCord, retStoppingCoord);
 
     waitThreadCoordinator.join();
-    NES_INFO("Coordinator stopped!");
+    NES_INFO2("Coordinator stopped!");
 
-    NES_INFO("Stopped the query!");
+    NES_INFO2("Stopped the query!");
 }
 
 void E2ESingleRun::writeMeasurementsToCsv() {
-    NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
+    NES_INFO2("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
     std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
     std::string queryString = configOverAllRuns.query->getValue();
@@ -374,9 +378,9 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     ofs << outputCsvStream.str();
     ofs.close();
 
-    NES_INFO("Done writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
-    NES_INFO("Statistics are: " << outputCsvStream.str())
-    std::cout << "Throughput=" << measurements.getthroughputAsString() << std::endl;
+    NES_INFO2("Done writing the measurements to {}", configOverAllRuns.outputFile->getValue());
+    NES_INFO2("Statistics are: {}", outputCsvStream.str())
+    std::cout << "Throughput=" << measurements.getThroughputAsString() << std::endl;
 }
 
 E2ESingleRun::E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,

@@ -14,10 +14,11 @@
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
-#include <cstddef>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -26,25 +27,20 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchem
                                                              std::string joinFieldNameLeft,
                                                              std::string joinFieldNameRight,
                                                              const std::vector<OriginId>& origins,
-                                                             uint64_t numberOfWorker,
                                                              size_t windowSize,
                                                              size_t totalSizeForDataStructures,
                                                              size_t pageSize,
                                                              size_t preAllocPageSizeCnt,
                                                              size_t numPartitions)
-    : StreamJoinOperatorHandler(windowSize,
-                                joinSchemaLeft,
+    : StreamJoinOperatorHandler(joinSchemaLeft,
                                 joinSchemaRight,
                                 joinFieldNameLeft,
                                 joinFieldNameRight,
                                 origins,
+                                windowSize,
                                 StreamJoinOperatorHandler::JoinType::HASH_JOIN),
-      numberOfWorker(numberOfWorker), totalSizeForDataStructures(totalSizeForDataStructures),
-      preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {
-
-    NES_DEBUG("Setup StreamHashJoinOperatorHandler counterFinishedBuildingStart="
-              << numberOfWorker << " counterFinishedSinkStart=" << numberOfWorker
-              << " totalSizeForDataStructures=" << totalSizeForDataStructures);
+      totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
+      numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
 }
 
@@ -56,12 +52,45 @@ void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecution
     NES_DEBUG("stop HashJoinOperatorHandler");
 }
 
+void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                                                   WorkerContext* workerCtx,
+                                                   PipelineExecutionContext* pipelineCtx) {
+    //for every window
+    for (auto& windowIdentifier : windowIdentifiersToBeTriggered) {
+        //for every partition within the window create one task
+        //get current window
+        auto currentWindow = getWindowByWindowIdentifier(windowIdentifier);
+        NES_ASSERT2_FMT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
+        auto hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
+        auto& sharedJoinHashTableLeft = hashWindow->getSharedJoinHashTable(true);
+        auto& sharedJoinHashTableRight = hashWindow->getSharedJoinHashTable(false);
+
+        for (auto i = 0UL; i < getNumPartitions(); ++i) {
+            //push actual bucket from local to global hash table for left side
+            auto localHashTableLeft = hashWindow->getLocalHashTable(workerCtx->getId(), true);
+            sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
+
+            //push actual bucket from local to global hash table for right side
+            auto localHashTableRight = hashWindow->getLocalHashTable(workerCtx->getId(), false);
+            sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+
+            //create task for current window and current partition
+            auto buffer = workerCtx->allocateTupleBuffer();
+            auto bufferAs = buffer.getBuffer<JoinPartitionIdTWindowIdentifier>();
+            bufferAs->partitionId = i;
+            bufferAs->windowIdentifier = windowIdentifier;
+            buffer.setNumberOfTuples(1);
+            pipelineCtx->dispatchBuffer(buffer);
+            NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
+        }
+    }
+}
+
 StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const SchemaPtr& joinSchemaLeft,
                                                                        const SchemaPtr& joinSchemaRight,
                                                                        const std::string& joinFieldNameLeft,
                                                                        const std::string& joinFieldNameRight,
                                                                        const std::vector<OriginId>& origins,
-                                                                       uint64_t numberOfWorker,
                                                                        size_t windowSize,
                                                                        size_t totalSizeForDataStructures,
                                                                        size_t pageSize,
@@ -73,7 +102,6 @@ StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const Sch
                                                            joinFieldNameLeft,
                                                            joinFieldNameRight,
                                                            origins,
-                                                           numberOfWorker,
                                                            windowSize,
                                                            totalSizeForDataStructures,
                                                            pageSize,
@@ -83,5 +111,6 @@ StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const Sch
 size_t StreamHashJoinOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 size_t StreamHashJoinOperatorHandler::getPageSize() const { return pageSize; }
 size_t StreamHashJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
+size_t StreamHashJoinOperatorHandler::getTotalSizeForDataStructures() const { return totalSizeForDataStructures; }
 
 }// namespace NES::Runtime::Execution::Operators

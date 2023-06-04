@@ -80,7 +80,7 @@ void DynamicTupleBuffer::setNumberOfTuples(uint64_t value) { buffer.setNumberOfT
 
 DynamicTuple DynamicTupleBuffer::operator[](std::size_t tupleIndex) const {
     if (tupleIndex >= getCapacity()) {
-        throw BufferAccessException("index " + std::to_string(tupleIndex) + " is out of bound");
+        throw BufferAccessException("index " + std::to_string(tupleIndex) + " is out of bound for capacity" + std::to_string(getCapacity()));
     }
     return {tupleIndex, memoryLayout, buffer};
 }
