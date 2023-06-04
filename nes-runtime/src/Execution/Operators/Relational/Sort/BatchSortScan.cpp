@@ -82,13 +82,12 @@ inline void InsertionSort(void* orig_ptr,
     if (count > 1) {
         const uint64_t total_offset = col_offset + offset;
         auto temp_val = std::unique_ptr<uint8_t[]>(new uint8_t[row_width]);
-        uint8_t *val = temp_val.get();
+        uint8_t* val = temp_val.get();
         const auto comp_width = total_comp_width - offset;
         for (uint64_t i = 1; i < count; i++) {
             std::memcpy(val, source_ptr + i * row_width, row_width);
             uint64_t j = i;
-            while (j > 0 &&
-                   std::memcmp(source_ptr + (j - 1) * row_width + total_offset, val + total_offset, comp_width) > 0) {
+            while (j > 0 && std::memcmp(source_ptr + (j - 1) * row_width + total_offset, val + total_offset, comp_width) > 0) {
                 std::memcpy(source_ptr + j * row_width, source_ptr + (j - 1) * row_width, row_width);
                 j--;
             }
@@ -121,11 +120,11 @@ void RadixSortLSD(void* orig_ptr,
         // Init counts to 0
         memset(counts, 0, sizeof(counts));
         // Const some values for convenience
-        auto *source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
-        auto *target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
+        auto* source_ptr = static_cast<uint8_t*>(swap ? temp_ptr : orig_ptr);
+        auto* target_ptr = static_cast<uint8_t*>(swap ? orig_ptr : temp_ptr);
         const uint64_t offset = col_offset + sorting_size - r;
         // Compute the prefix sum of the radix counts
-        uint8_t *offset_ptr = source_ptr + offset;
+        uint8_t* offset_ptr = source_ptr + offset;
         for (uint64_t i = 0; i < count; i++) {
             counts[*offset_ptr]++;
             offset_ptr += row_width;
@@ -139,9 +138,9 @@ void RadixSortLSD(void* orig_ptr,
             continue;
         }
         // Re-order the data in temporary array starting from the end
-        uint8_t *row_ptr = source_ptr + (count - 1) * row_width;
+        uint8_t* row_ptr = source_ptr + (count - 1) * row_width;
         for (uint64_t i = 0; i < count; i++) {
-            uint64_t &radix_offset = --counts[*(row_ptr + offset)];
+            uint64_t& radix_offset = --counts[*(row_ptr + offset)];
             std::memcpy(target_ptr + radix_offset * row_width, row_ptr, row_width);
             row_ptr -= row_width;
         }
@@ -274,18 +273,18 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto origPtr = handler->getState()->getEntry(0);
     auto tempPtr = handler->getTempState()->getEntry(0);
     auto count = handler->getState()->getNumberOfEntries();
-    auto rowWidth = handler->getStateEntrySize() *2; // TODO change back
+    auto rowWidth = handler->getStateEntrySize();
     auto offset = 0;// init to 0
     auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
     auto swap = false;// init false
 
-    //if (count <= INSERTION_SORT_THRESHOLD) {
+    if (count <= INSERTION_SORT_THRESHOLD) {
         InsertionSort(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, swap);
-    //} else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
-    //    RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
-    //} else {
-    //    RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
-    //}
+    } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
+        RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
+    } else {
+        RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+    }
 
     delete[] locations;
 }
@@ -304,14 +303,15 @@ void BatchSortScan::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // TODO multi-column sort
     auto currentSortColIndex = 0;
-    auto currentSortCol = 0UL; // TODO different cols
+    auto currentSortCol = 0UL;// TODO different cols
     // Width of the current column to sort
     uint64_t compWidth = dataTypes[currentSortCol]->size();
     // Offset of the current column to sort
     uint64_t colOffset = 0;
     for (uint64_t cols = 0; cols < currentSortCol; cols++) {
-        colOffset += dataTypes[cols]->size()*2; // TODO change back
+        colOffset += dataTypes[cols]->size() * 2;// TODO change back
     }
+
     // perform sort
     Nautilus::FunctionCall("SortProxy", SortProxy, globalOperatorHandler, Value<UInt64>(compWidth), Value<UInt64>(colOffset));
 }
@@ -325,7 +325,7 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // 2. load the state
     auto stateProxy = Nautilus::FunctionCall("getStateProxy", getStateProxy, globalOperatorHandler);
     auto entrySize = Nautilus::FunctionCall("getSortStateEntrySizeProxy", getSortStateEntrySizeProxy, globalOperatorHandler);
-    auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue()*2);
+    auto state = Nautilus::Interface::PagedVectorRef(stateProxy, entrySize->getValue());
 
     // 3. emit the records
     for (uint64_t entryIndex = 0; entryIndex < state.getNumberOfEntries(); entryIndex++) {
@@ -339,7 +339,7 @@ void BatchSortScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
                 }
             }
         }
-        for (uint64_t i = 0; i < fieldIdentifiers.size(); i++) {
+        for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i) {
             auto value = MemRefUtils::loadValue(entry, dataTypes[i]);
             record.write(fieldIdentifiers[i], value);
             entry = entry + dataTypes[i]->size();
