@@ -315,6 +315,10 @@ PhysicalTypePtr getPhysicalTypePtr() {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
     } else if (typeid(uint8_t) == typeid(T)) {
         type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt8());
+    } else if (typeid(float) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+    } else if (typeid(double) == typeid(T)) {
+        type = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     } else {
         NES_THROW_RUNTIME_ERROR("Type not supported");
     }

@@ -29,6 +29,7 @@ namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief Sort operator handler that manages the state of the BatchSort and BatchSortScan operators.
+ * It stores the tuples in a PagedVector that are sorted by the sort key when open() is called on BatchSortScan.
  */
 class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
                                  public NES::detail::virtual_enable_shared_from_this<BatchSortOperatorHandler, false> {

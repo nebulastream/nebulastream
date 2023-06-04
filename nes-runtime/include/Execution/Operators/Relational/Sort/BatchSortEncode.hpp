@@ -36,8 +36,8 @@ namespace NES::Runtime::Execution::Operators {
  * @param value
  * @return uint8_t
  */
-inline constexpr uint8_t FlipSign(uint8_t key_byte) {
-    return key_byte ^ 128;
+inline constexpr uint8_t FlipSign(uint8_t keyByte) {
+    return keyByte ^ 128;
 }
 
 /**
@@ -65,6 +65,8 @@ inline constexpr T byteSwap(T value) {
 
 /**
  * @brief Traits class for encoding values for sorting
+ * Trait classes are discussed in detail in e.g.:
+ * https://accu.org/journals/overload/9/43/frogley_442/
  * @tparam T
  * @tparam void
  */
