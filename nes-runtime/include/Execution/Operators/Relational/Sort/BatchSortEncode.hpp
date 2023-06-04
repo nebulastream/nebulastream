@@ -56,7 +56,6 @@ inline constexpr T byteSwap(T value) {
         return std::endian::big == std::endian::native ? value : __builtin_bswap32(value);
     } else if (sizeof(T) == 8) {
         return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
-
     } else {
         static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
                       "byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
@@ -74,7 +73,7 @@ template <typename T, typename = void>
 struct EncoderTraits {
     using EncodedType = T;
 
-    static EncodedType Encode(T) {
+    static EncodedType Encode(T, bool) {
         throw Exceptions::NotImplementedException("Encode not implemented for this type");
     }
 };
@@ -87,7 +86,9 @@ template <>
 struct EncoderTraits<bool> {
     using EncodedType = bool;
 
-    static EncodedType Encode(bool value) {
+    static EncodedType Encode(bool value, bool descending) {
+        if (descending)
+            value = !value;
         return value;
     }
 };
@@ -100,10 +101,12 @@ template <typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type> {
     using EncodedType = T;
 
-    static EncodedType Encode(T value) {
+    static EncodedType Encode(T value, bool descending) {
         value = byteSwap(value);
         auto* firstBytePtr = reinterpret_cast<uint8_t*>(&value);
         *firstBytePtr = FlipSign(*firstBytePtr);
+        if (descending)
+            value = ~value;
         return value;
     }
 };
@@ -116,8 +119,11 @@ template <typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type> {
     using EncodedType = T;
 
-    static EncodedType Encode(T value) {
-        return byteSwap(value);
+    static EncodedType Encode(T value, bool descending) {
+        value = byteSwap(value);
+        if (descending)
+            value = ~value;
+        return value;
     }
 };
 
@@ -130,7 +136,7 @@ struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value
     // float and double are encoded as uint32_t and uint64_t respectively
     using EncodedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
 
-    static EncodedType Encode(T value) {
+    static EncodedType Encode(T value, bool descending) {
         EncodedType encodedValue;
         if (value == 0) {
             encodedValue = 0;
@@ -149,13 +155,15 @@ struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value
         } else {
             encodedValue = ~encodedValue;
         }
+        if (descending)
+            encodedValue = ~encodedValue;
         return byteSwap(encodedValue);
     }
 };
 
 template <typename T>
-typename EncoderTraits<T>::EncodedType encodeData(T value) {
-    return EncoderTraits<T>::Encode(value);
+typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = false) {
+    return EncoderTraits<T>::Encode(value, descending);
 }
 
 } // namespace NES::Runtime::Execution::Operators
