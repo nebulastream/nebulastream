@@ -15,10 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTOPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTOPERATORHANDLER_HPP_
 
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -36,9 +38,29 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
   public:
     /**
      * @brief Creates the operator handler for the sort operator.
-     * @param entrySize size of the entry
+     * @param dataTypes data types of the records
+     * @param fieldIdentifiers field identifiers of the records
+     * @param sortFieldIdentifiers field identifiers of the records to sort
      */
-    explicit BatchSortOperatorHandler(uint64_t entrySize) : entrySize(entrySize){};
+    explicit BatchSortOperatorHandler(const std::vector<PhysicalTypePtr>& dataTypes,
+                             const std::vector<Record::RecordFieldIdentifier>& fieldIdentifiers,
+                             const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers) {
+        NES_ASSERT(dataTypes.size() == fieldIdentifiers.size(), "Data types and field identifiers must have the same size");
+        // Entry size is the sum of the sizes of the fields to sort, with will be stored encoded and the complete record
+        entrySize = 0;
+        // 1) sort fields
+        for (const auto& sortFieldIdentifier : sortFieldIdentifiers) {
+            for (uint64_t j = 0; j < fieldIdentifiers.size(); ++j) {
+                if (sortFieldIdentifier == fieldIdentifiers[j]) {
+                    entrySize += dataTypes[j]->size();
+                }
+            }
+        }
+        // 2) complete record
+        for (const auto& dataType : dataTypes) {
+            entrySize += dataType->size();
+        }
+    };
 
     /**
      * @brief Sets up the state for the sort operator
