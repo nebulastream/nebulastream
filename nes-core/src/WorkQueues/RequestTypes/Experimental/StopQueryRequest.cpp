@@ -19,6 +19,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
+#include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -29,8 +30,8 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
-#include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
 #include <string>
 #include <utility>
 

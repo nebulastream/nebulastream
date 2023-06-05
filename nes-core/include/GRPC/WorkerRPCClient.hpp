@@ -95,9 +95,8 @@ class WorkerRPCClient {
     * @brief register a query asynchronously
     * @param address: address of node where query plan need to be registered
     * @param query plan to register
-    * @return true if succeeded, else false
     */
-    static bool registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
+    static void registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
 
     /**
      * @brief ungregisters a query
@@ -124,9 +123,8 @@ class WorkerRPCClient {
       * @brief method to start a already deployed query asynchronously
       * @note if query is not deploy, false is returned
       * @param queryId to start
-      * @return bool indicating success
       */
-    static bool startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    static void startQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to stop a query
