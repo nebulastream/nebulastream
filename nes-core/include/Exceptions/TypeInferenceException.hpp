@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief This class is used for raising exceptions in the type inference phase
  */
-class TypeInferenceException : public RequestExecutionException {
+class TypeInferenceException : public RequestExecutionException, public std::runtime_error {
   public:
     explicit TypeInferenceException(const std::string& message);
     TypeInferenceException(QueryId queryId, const std::string& message);

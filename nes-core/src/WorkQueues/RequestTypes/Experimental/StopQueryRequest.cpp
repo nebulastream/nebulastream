@@ -30,6 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/Experimental/FailQueryRequest.hpp>
 #include <string>
 #include <utility>
 
@@ -105,9 +106,12 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
         //mark single query for hard stop
         auto markedForHardStopSuccessful = queryCatalogService->checkAndMarkForHardStop(queryId);
         if (!markedForHardStopSuccessful) {
-            throw InvalidQueryStatusException(
-                {QueryStatus::OPTIMIZING, QueryStatus::REGISTERED, QueryStatus::DEPLOYED, QueryStatus::RUNNING, QueryStatus::RESTARTING},
-                queryCatalogService->getEntryForQuery(queryId)->getQueryStatus());
+            throw InvalidQueryStatusException({QueryStatus::OPTIMIZING,
+                                               QueryStatus::REGISTERED,
+                                               QueryStatus::DEPLOYED,
+                                               QueryStatus::RUNNING,
+                                               QueryStatus::RESTARTING},
+                                              queryCatalogService->getEntryForQuery(queryId)->getQueryStatus());
         }
         //remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
@@ -117,6 +121,10 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
                                          + " in the global query plan");
         }
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        if (sharedQueryPlan == nullptr) {
+            throw QueryNotFoundException("Could not find a a valid shared query plan for query with id " + std::to_string(queryId)
+                                         + " in the global query plan");
+        }
         //undeploy SQP
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
@@ -221,4 +229,4 @@ void StopQueryRequestExperimental::rollBack(const RequestExecutionException& ex,
     }
     //todo: #3723 need to add instanceOf to errors to handle failures correctly
 }
-}// namespace NES
+}// namespace NES::Experimental

@@ -82,7 +82,7 @@ std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
 void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId) {
     std::unique_lock lock(mutex);
     if (querySubPlanMetaDataMap.find(querySubPlanId) != querySubPlanMetaDataMap.end()) {
-        throw InvalidQueryException("Query catalog entry already contain the query sub plan id "
+        throw InvalidQueryException("Query catalog entry already contains the query sub plan id "
                                     + std::to_string(querySubPlanId));
     }
 

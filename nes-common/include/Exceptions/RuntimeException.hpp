@@ -15,6 +15,7 @@
 #ifndef NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 #define NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <Util/SourceLocation.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <exception>
@@ -27,7 +28,7 @@ namespace NES::Exceptions {
  * @brief Exception to be used to report errors and stacktraces
  * This is meant to be used for NES-related errors, wrap std exceptions with their own stacktrace, etc..
  */
-class RuntimeException : virtual public std::exception {
+class RuntimeException : public RequestExecutionException {
 
   protected:
     std::string errorMessage;///< Error message
