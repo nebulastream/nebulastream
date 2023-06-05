@@ -80,9 +80,9 @@ using TestTypes = ::testing::Types<std::pair<uint64_t, UInt64>,
 TYPED_TEST_SUITE(BatchSortScanOperatorTest, TestTypes);
 
 /**
- * @brief Tests if the sort operator collects records with multiple fields
+ * @brief Tests if the sort operator sorts records
  */
-TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
+TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
     using NativeType = typename TypeParam::first_type;
     using NautilusType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 100;
@@ -96,7 +96,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
                                                    std::vector<Record::RecordFieldIdentifier>({"f1"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, /* ascending */ false);
+    fillState<NativeType>(handler, NUM_RECORDS, /* descending */ false);
 
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
@@ -137,7 +137,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
                                                               std::vector<Record::RecordFieldIdentifier>({"f2"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, /* ascending */ false);
+    fillState<NativeType>(handler, NUM_RECORDS, /* descending */ false);
 
     auto sortScanOperator = BatchSortScan(0, {pType, pType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
@@ -162,9 +162,9 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
 }
 
 /**
- * @brief Tests if the sort operator collects records with multiple fields in Descending order
+ * @brief Tests if the sort operator sorts correctly in descending order
  */
-TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingMultipleFieldsTest) {
+TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
     using NativeType = typename TypeParam::first_type;
     using NautilusType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 100;
