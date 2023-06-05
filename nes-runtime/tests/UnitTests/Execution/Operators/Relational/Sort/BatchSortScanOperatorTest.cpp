@@ -121,6 +121,47 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorMultipleFieldsTest) {
 }
 
 /**
+ * @brief Tests if the sort operator sorts correctly when the sort field is not the first column
+ */
+TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
+    using NativeType = typename TypeParam::first_type;
+    using NautilusType = typename TypeParam::second_type;
+    constexpr auto NUM_RECORDS = 100;
+
+    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
+
+    auto pType = Util::getPhysicalTypePtr<NativeType>();
+    auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({pType, pType}),
+                                                              std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
+                                                              std::vector<Record::RecordFieldIdentifier>({"f2"}));
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    handler->setup(pipelineContext);
+    fillState<NativeType>(handler, NUM_RECORDS, /* ascending */ false);
+
+    auto sortScanOperator = BatchSortScan(0, {pType, pType}, {"f1", "f2"}, {"f2"});
+    auto collector = std::make_shared<CollectOperator>();
+    sortScanOperator.setChild(collector);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    sortScanOperator.setup(ctx);
+    auto tupleBuffer = bm->getBufferBlocking();
+    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    sortScanOperator.open(ctx, record);
+
+    ASSERT_EQ(collector->records.size(), NUM_RECORDS);
+    ASSERT_EQ(collector->records[0].numberOfFields(), 1);
+
+    // Records in f2 should be in ascending order
+    auto prev = collector->records[0].read("f2").as<NautilusType>();
+    for (int i = 1; i < NUM_RECORDS; ++i) {
+        Value<NautilusType> cur = collector->records[i].read("f2").as<NautilusType>();
+        std::cout << prev << " " << cur << std::endl;
+        ASSERT_LE(prev, cur);
+        prev = cur;
+    }
+}
+
+/**
  * @brief Tests if the sort operator collects records with multiple fields in Descending order
  */
 TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingMultipleFieldsTest) {
