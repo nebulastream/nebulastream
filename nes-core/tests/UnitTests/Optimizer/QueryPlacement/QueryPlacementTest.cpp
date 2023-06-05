@@ -131,7 +131,6 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    // TODO: add more nodes according to JSON
     void setupICCSTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
         topology = Topology::create();
         std::map<std::string, std::any> properties;
@@ -149,7 +148,6 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
         sourceNode2->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
-        // TODO: change schema to match ICCS
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string sourceName = "car";
@@ -881,14 +879,14 @@ TEST_F(QueryPlacementTest, testICCSPlacement) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
-    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
-                                                     {false, true, true, false, false},
-                                                     {false, false, false, true, true}};
-    NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+    std::ifstream jsonFile(std::string(TEST_DATA_DIRECTORY) + "iccs-planner-input.json");
+    std::stringstream buffer;
+    buffer << jsonFile.rdbuf();
+    NES::Optimizer::BasePlacementStrategy::pinICCSPlacement(queryPlan, topology, buffer.str());
 
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan);
+    queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 }
 
@@ -912,11 +910,11 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
-    std::ifstream jsonFile(std::string(TEST_DATA_DIRECTORY) + "iccs-planner-input.json");
-    std::stringstream buffer;
-    buffer << jsonFile.rdbuf();
-    NES::Optimizer::BasePlacementStrategy::pinICCSPlacement(queryPlan, topology, buffer.str());
+    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
+                                                     {false, true, true, false, false},
+                                                     {false, false, false, true, true}};
 
+    NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
