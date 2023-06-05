@@ -119,6 +119,7 @@ class ChainedHashMap {
      * @param numberOfEntries
      */
     void insertPage(int8_t* page, uint64_t numberOfEntries);
+    void printDistribution();
 
     /**
      * @brief Destructs the hash map and releases all associated resources.

@@ -2,6 +2,7 @@
 
 add_library(nes-runtime-test-util SHARED
         "src/AbstractCompilationBackendTest.cpp"
+        "src/BlackholePipelineExecutionContext.cpp"
         "src/MockedPipelineExecutionContext.cpp"
         "src/CollectOperator.cpp")
 

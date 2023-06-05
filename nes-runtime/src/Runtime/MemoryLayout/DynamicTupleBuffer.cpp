@@ -25,14 +25,14 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-DynamicField::DynamicField(uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType) {}
+DynamicField::DynamicField(TupleBuffer& buffer, uint8_t* address, PhysicalTypePtr physicalType) : buffer(buffer), address(address), physicalType(physicalType) {}
 
 DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
     auto physicalType = memoryLayout->getPhysicalTypes()[fieldIndex];
-    return DynamicField{basePointer, physicalType};
+    return DynamicField{buffer, basePointer, physicalType};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) {

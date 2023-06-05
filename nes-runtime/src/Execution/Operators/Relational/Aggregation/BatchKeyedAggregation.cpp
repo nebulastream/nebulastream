@@ -35,6 +35,11 @@ void setupHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
 }
 
+void stopHandler(void* ss) {
+    auto handler = static_cast<BatchKeyedAggregationHandler*>(ss);
+    handler->stop();
+}
+
 class LocalKeyedStoreState : public Operators::OperatorState {
   public:
     explicit LocalKeyedStoreState(Interface::ChainedHashMapRef hm) : hm(std::move(hm)){};
@@ -114,5 +119,12 @@ void BatchKeyedAggregation::execute(NES::Runtime::Execution::ExecutionContext& c
         aggregationFunctions[i]->lift(valuePtr, record);
         valuePtr = valuePtr + aggregationFunctions[i]->getSize();
     }
+}
+
+void BatchKeyedAggregation::terminate(ExecutionContext& ctx) const {
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("stopHandler",
+                           stopHandler,
+                           globalOperatorHandler);
 }
 }// namespace NES::Runtime::Execution::Operators

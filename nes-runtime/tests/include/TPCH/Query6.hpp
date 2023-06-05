@@ -44,7 +44,8 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <TPCH/PipelinePlan.hpp>
+#include <PipelinePlan.hpp>
+#include <Table.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 

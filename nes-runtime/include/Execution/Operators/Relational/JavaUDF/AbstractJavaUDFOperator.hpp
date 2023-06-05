@@ -33,9 +33,11 @@ class AbstractJavaUDFOperator : public ExecutableOperator {
   protected:
     class LocalUDFState : public OperatorState {
       public:
-        explicit LocalUDFState(Value<MemRef>& handler, Value<MemRef>& instance) : handler(handler), instance(instance) {}
+        explicit LocalUDFState(Value<MemRef>& handler, Value<MemRef>& instance, Value<MemRef>& inputClazz)
+            : handler(handler), instance(instance), inputClazz(inputClazz) {}
         Value<MemRef> handler;
         Value<MemRef> instance;
+        Value<MemRef> inputClazz;
     };
 
   public:
@@ -57,7 +59,7 @@ class AbstractJavaUDFOperator : public ExecutableOperator {
     // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
     const SchemaPtr operatorInputSchema, operatorOutputSchema;
 
-    Nautilus::Value<MemRef> createInputPojo(Record& record, Value<MemRef>& handler) const;
+    Nautilus::Value<MemRef> createInputPojo(Record& record, Value<MemRef>& handler, Value<MemRef>& inputClassPtr) const;
     Record extractRecordFromPojo(const Value<MemRef>& handler, const Value<MemRef>& outputPojoPtr) const;
 };
 

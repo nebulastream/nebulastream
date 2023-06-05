@@ -52,5 +52,8 @@ void BatchKeyedAggregationHandler::stop(Runtime::QueryTerminationType queryTermi
 BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
 
 void BatchKeyedAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
+void BatchKeyedAggregationHandler::stop() {
+    threadLocalSliceStores.clear();
+}
 
 }// namespace NES::Runtime::Execution::Operators

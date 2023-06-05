@@ -40,9 +40,9 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto outputIndex = emitState->outputIndex;
     memoryProvider->write(outputIndex, emitState->bufferReference, recordBuffer);
-    emitState->outputIndex = outputIndex + (uint64_t) 1;
+    //emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer) {
+    /*if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;
         resultBuffer.setNumRecords(emitState->outputIndex);
         resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
@@ -52,7 +52,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferReference = emitState->resultBuffer.getBuffer();
         emitState->outputIndex = (uint64_t) 0;
-    }
+    }*/
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {

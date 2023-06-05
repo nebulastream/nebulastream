@@ -42,11 +42,13 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <PipelinePlan.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
+#include <TestUtils/BlackholePipelineExecutionContext.hpp>
+#include <cstdint>
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
@@ -54,16 +56,19 @@ class TPCH_Query3 {
   public:
     static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
                                         Runtime::BufferManagerPtr) {
+        uint64_t pageSize = 1024UL * 1024UL * 1024UL * 8UL;
         PipelinePlan plan;
-        auto joinHandler = createPipeline1(plan, tables);
-        auto joinHandler2 = createPipeline2(plan, tables, joinHandler);
+        auto joinHandler = createPipeline1(plan, tables, pageSize);
+        auto joinHandler2 = createPipeline2(plan, tables, joinHandler, pageSize);
         createPipeline3(plan, tables, joinHandler2);
 
         return plan;
     }
 
     static Runtime::Execution::OperatorHandlerPtr
-    createPipeline1(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
+    createPipeline1(PipelinePlan& plan,
+                    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                    int64_t pageSize) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
         PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
@@ -89,14 +94,16 @@ class TPCH_Query3 {
                                                                   std::vector<PhysicalTypePtr>{integerType},
                                                                   std::vector<Expressions::ExpressionPtr>(),
                                                                   std::vector<PhysicalTypePtr>(),
-                                                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+                                                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+                                                                  pageSize);
         selection->setChild(joinOp);
 
         // create customerJoinBuildPipeline pipeline
         auto customerJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
         customerJoinBuildPipeline->setRootOperator(customersScan);
-        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
-        auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(joinHandler);
+        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {
+            std::make_shared<Operators::BatchJoinHandler>(pageSize)};
+        auto pipeline1Context = std::make_shared<BlackholePipelineExecutionContext>(joinHandler);
         plan.appendPipeline(customerJoinBuildPipeline, pipeline1Context);
         return joinHandler[0];
     }
@@ -104,7 +111,8 @@ class TPCH_Query3 {
     static std::shared_ptr<BatchJoinHandler>
     createPipeline2(PipelinePlan& plan,
                     std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                    const Runtime::Execution::OperatorHandlerPtr& joinHandler) {
+                    const Runtime::Execution::OperatorHandlerPtr& joinHandler,
+                    int64_t pageSize) {
         auto& orders = tables[TPCHTable::Orders];
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -158,16 +166,17 @@ class TPCH_Query3 {
                                                         std::vector<PhysicalTypePtr>{integerType},
                                                         order_customersJoinBuildValues,
                                                         std::vector<PhysicalTypePtr>{integerType, integerType},
-                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+                                                        pageSize);
 
         customersJoinProbe->setChild(order_customersJoinBuild);
 
         // create order_customersJoinBuild pipeline
         auto orderCustomersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
         orderCustomersJoinBuild->setRootOperator(orderScan);
-        auto joinHandler2 = std::make_shared<Operators::BatchJoinHandler>();
+        auto joinHandler2 = std::make_shared<Operators::BatchJoinHandler>(pageSize);
         std::vector<Execution::OperatorHandlerPtr> handlers = {joinHandler, joinHandler2};
-        auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        auto pipeline2Context = std::make_shared<BlackholePipelineExecutionContext>(handlers);
         plan.appendPipeline(orderCustomersJoinBuild, pipeline2Context);
         return joinHandler2;
     }
@@ -247,7 +256,7 @@ class TPCH_Query3 {
         lineitems_ordersJoinBuild->setRootOperator(lineitemsScan);
         auto aggHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
         std::vector<Execution::OperatorHandlerPtr> handlers2 = {joinHandler, aggHandler};
-        auto pipeline3Context = std::make_shared<MockedPipelineExecutionContext>(handlers2);
+        auto pipeline3Context = std::make_shared<BlackholePipelineExecutionContext>(handlers2);
         plan.appendPipeline(lineitems_ordersJoinBuild, pipeline3Context);
     }
 };

@@ -54,6 +54,7 @@ class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
     ~BatchKeyedAggregationHandler() override;
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+    void stop();
 
   private:
     std::vector<std::unique_ptr<Nautilus::Interface::ChainedHashMap>> threadLocalSliceStores;

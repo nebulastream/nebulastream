@@ -81,6 +81,8 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
+    Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
+    removeBrOnlyBlocksPhase.apply(ir);
     timer.snapshot("IR Generation");
     dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);

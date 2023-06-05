@@ -39,7 +39,7 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
     /**
      * @brief Creates the operator handler for the join operator.
      */
-    BatchJoinHandler();
+    BatchJoinHandler(const uint64_t pageSize);
 
     /**
      * @brief Initializes the thread local state for the join operator
@@ -79,8 +79,10 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
     ~BatchJoinHandler();
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+    void stop();
 
   private:
+    const uint64_t pageSize;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> threadLocalStateStores;
     std::unique_ptr<Nautilus::Interface::ChainedHashMap> globalMap;
     uint64_t keySize;

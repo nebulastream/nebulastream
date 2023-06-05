@@ -49,7 +49,7 @@ FlounderLoweringProvider::FlounderLoweringProvider() = default;
 std::unique_ptr<flounder::Executable> FlounderLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir,
                                                                       const NES::DumpHelper& dumpHelper) {
     flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
-                                                     /*collect the asm code to print later*/ true};
+                                                     /*collect the asm code to print later*/ false};
     auto ctx = LoweringContext(std::move(ir));
     return ctx.process(compiler, dumpHelper);
 }
@@ -62,7 +62,9 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
     auto root = ir->getRootOperation();
     this->process(root);
     auto executable = std::make_unique<flounder::Executable>();
+
     const auto flounder_code = program.code();
+
     std::stringstream flounderCode;
     flounderCode << "\n == Flounder Code == \n";
     for (const auto& line : flounder_code) {
@@ -70,7 +72,7 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
     }
     dumpHelper.dump("3. flounder.ir", flounderCode.str());
     const auto isCompilationSuccessful = compiler.compile(program, *executable.get());
-    if (isCompilationSuccessful) {
+    if (!isCompilationSuccessful) {
         NES_THROW_RUNTIME_ERROR("Flounder compilation failed!");
     }
     if (executable->compilate().has_code()) {
@@ -146,7 +148,7 @@ flounder::VregInstruction FlounderLoweringProvider::LoweringContext::requestVreg
     NES_THROW_RUNTIME_ERROR("Stamp for vreg not supported by flounder " << stamp->toString());
 }
 
-flounder::Register FlounderLoweringProvider::LoweringContext::createVreg(IR::Operations::OperationIdentifier id,
+flounder::Register FlounderLoweringProvider::LoweringContext::createVreg(const IR::Operations::OperationIdentifier& id,
                                                                          IR::Types::StampPtr stamp,
                                                                          FlounderFrame& frame) {
     auto result = program.vreg(id.c_str());
@@ -399,7 +401,7 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
         }
         case IR::Operations::Operation::OperationType::CompareOp: {
             auto compOpt = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
-            process(compOpt, frame);
+            //process(compOpt, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::IfOp: {

@@ -32,9 +32,14 @@ function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     message(STATUS "Added benchmark ${TARGET_NAME}")
 endfunction()
 
+add_nes_benchmarks(nautilus-backend-benchmark "Nautilus/BackendCompilationBenchmark.cpp")
+target_include_directories(nautilus-backend-benchmark INTERFACE ${CMAKE_SOURCE_DIR}/Nautilus)
 add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
 add_executable(tpch-benchmark "TPCH/TPCHBenchmark.cpp")
 target_link_libraries(tpch-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
+
+add_executable(udf-benchmark "UDFs/UDFBenchmark.cpp")
+target_link_libraries(udf-benchmark PUBLIC nes-runtime-benchmark)
 
 set(SHELL_SCRIPT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/path/to/shell/file")
 

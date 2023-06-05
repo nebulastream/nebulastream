@@ -14,6 +14,8 @@
 
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
+#include <vector>
 namespace NES::Nautilus::Interface {
 
 /**
@@ -91,6 +93,31 @@ ChainedHashMap::~ChainedHashMap() {
         allocator->deallocate(page, pageSize);
     }
     allocator->deallocate(entries, capacity * sizeof(Entry*));
+}
+
+void ChainedHashMap::printDistribution() {
+
+    std::vector<size_t> counters;
+    counters.resize(capacity);
+    std::fill_n(counters.begin(), capacity, 0);
+    for (size_t i = 0; i < capacity; i++) {
+        auto entry = entries[i];
+        while (entry != nullptr) {
+            counters[i]++;
+            entry = entry->next;
+        }
+    }
+
+    std::sort(counters.begin(), counters.end());
+    std::vector<size_t> histogram;
+    histogram.resize(20);
+    std::fill_n(histogram.begin(), 20, 0);
+    for(auto c : counters){
+        histogram[c]++;
+    }
+    std::stringstream result;
+    std::copy(histogram.begin(), histogram.end(), std::ostream_iterator<int>(result, " "));
+    NES_DEBUG(result.str());
 }
 
 int8_t* ChainedHashMap::getPage(uint64_t pageIndex) { return pages[pageIndex]; }

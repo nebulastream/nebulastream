@@ -17,7 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <TPCH/Table.hpp>
+#include <Table.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>

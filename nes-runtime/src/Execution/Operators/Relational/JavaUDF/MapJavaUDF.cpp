@@ -55,8 +55,7 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = state->handler;
 
     // Convert the input record to the input field of UDF input object
-    auto inputPojoPtr = createInputPojo(record, handler);
-
+    auto inputPojoPtr = createInputPojo(record, handler, state->inputClazz);
     // Get output class and call udf
     auto outputPojoPtr = FunctionCall<>("executeMapUdf", executeMapUdf, handler, state->instance, inputPojoPtr);
     FunctionCall<>("freeObject", freeObject, inputPojoPtr);

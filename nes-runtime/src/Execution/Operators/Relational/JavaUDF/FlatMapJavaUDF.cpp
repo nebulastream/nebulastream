@@ -76,7 +76,7 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = state->handler;
 
     // create variables for input pojo ptr java input class
-    auto inputPojoPtr = createInputPojo(record, handler);
+    auto inputPojoPtr = createInputPojo(record, handler, state->inputClazz);
 
     // Call udf and get the result value.
     // For flatmap we assume that they return a collection of values.

@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
 
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
@@ -47,7 +48,7 @@ class DynamicField {
      * @brief Constructor to create a DynamicField
      * @param address for the field
      */
-    explicit DynamicField(uint8_t* address, PhysicalTypePtr physicalType);
+    explicit DynamicField(TupleBuffer& buffer, uint8_t* address, PhysicalTypePtr physicalType);
 
     /**
      * @brief Read a pointer type and return the value as a pointer.
@@ -97,6 +98,19 @@ class DynamicField {
         *reinterpret_cast<Type*>(address) = value;
     };
 
+    template<class Type>
+        requires(std::is_same_v<std::remove_pointer_t<Type>, Nautilus::TextValue>)
+    inline void write(Type value) {
+        if (!PhysicalTypes::isText(physicalType)) {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
+        auto text = static_cast<Nautilus::TextValue*>(value);
+        auto tb = text->getBuffer();
+        auto index = buffer.storeChildBuffer(tb);
+        *reinterpret_cast<uint32_t*>(address) = index;
+    };
+
     /**
      * @brief get a string representation of this dynamic tuple
      * @return a string
@@ -131,6 +145,7 @@ class DynamicField {
     const PhysicalTypePtr& getPhysicalType() const;
 
   private:
+    TupleBuffer& buffer;
     uint8_t* address;
     const PhysicalTypePtr physicalType;
 };

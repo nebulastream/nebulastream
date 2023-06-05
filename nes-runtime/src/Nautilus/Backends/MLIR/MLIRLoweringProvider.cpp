@@ -492,6 +492,8 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
                                              getMLIRType(proxyCallOp->getInputArguments()),
                                              true);
     }
+
+
     std::vector<mlir::Value> functionArgs;
     for (auto arg : proxyCallOp->getInputArguments()) {
         functionArgs.push_back(frame.getValue(arg->getIdentifier()));

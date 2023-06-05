@@ -82,7 +82,7 @@ std::shared_ptr<BasicBlock> BasicBlock::addFalseBlock(std::shared_ptr<BasicBlock
 
 void BasicBlock::addPredecessor(std::shared_ptr<BasicBlock> predecessor) { this->predecessors.emplace_back(predecessor); }
 std::vector<std::weak_ptr<BasicBlock>>& BasicBlock::getPredecessors() { return predecessors; }
-void BasicBlock::addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> ops) {
+void BasicBlock::addNextBlock(std::shared_ptr<BasicBlock> nextBlock, const std::vector<Operations::Operation*> ops) {
     auto branchOp = std::make_shared<Operations::BranchOperation>();
     auto& nextBlockIn = branchOp->getNextBlockInvocation();
     nextBlockIn.setBlock(nextBlock);

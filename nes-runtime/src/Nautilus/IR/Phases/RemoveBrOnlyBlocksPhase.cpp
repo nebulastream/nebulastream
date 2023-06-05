@@ -110,7 +110,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, const
                         predecessor.lock()->removeOperation(predecessor.lock()->getTerminatorOp());
                         auto newBranchOperation = std::make_shared<Operations::BranchOperation>();
                         newBranchOperation->getNextBlockInvocation().setBlock(nonBrOnlyBlock);
-                        for (const auto& arg : ifOp->getFalseBlockInvocation().getArguments()) {
+                        for (auto arg : ifOp->getFalseBlockInvocation().getArguments()) {
                             newBranchOperation->getNextBlockInvocation().addArgument(arg);
                         }
                         predecessor.lock()->addOperation(std::move(newBranchOperation));

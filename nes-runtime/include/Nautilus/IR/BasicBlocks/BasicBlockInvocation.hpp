@@ -24,6 +24,7 @@ class BasicBlockInvocation : public Operation {
     void setBlock(BasicBlockPtr block);
     BasicBlockPtr getBlock() const;
     void addArgument(OperationPtr argument);
+    void addArgument(Operation* argument);
     void removeArgument(uint64_t argumentIndex);
 
     /**
@@ -38,12 +39,12 @@ class BasicBlockInvocation : public Operation {
      * 
      * @return std::vector<OperationPtr> : vector with all arguments of the next block invocation.
      */
-    std::vector<OperationPtr> getArguments() const;
+    const std::vector<Operation*>& getArguments() const;
     std::string toString() override;
 
   private:
     BasicBlockPtr basicBlock;
-    std::vector<OperationWPtr> operations;
+    std::vector<Operation*> operations;
 };
 
 }// namespace NES::Nautilus::IR::Operations

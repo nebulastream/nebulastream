@@ -17,15 +17,15 @@
 
 namespace NES::Nautilus::Interface {
 
-PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize)
-    : allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0) {
+PagedVector::PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize, uint64_t pageSize)
+    : pageSize(pageSize) , allocator(std::move(allocator)), entrySize(entrySize), totalNumberOfEntries(0){
     appendPage();
     NES_ASSERT2_FMT(entrySize > 0, "Entrysize for a pagedVector has to be larger than 0!");
     NES_ASSERT2_FMT(capacityPerPage() > 0, "There has to fit at least one tuple on a page!");
 }
 
 int8_t* PagedVector::appendPage() {
-    auto page = reinterpret_cast<int8_t*>(allocator->allocate(PAGE_SIZE));
+    auto page = reinterpret_cast<int8_t*>(allocator->allocate(pageSize));
     pages.emplace_back(page);
     currentPage = page;
     numberOfEntries = 0;
@@ -41,14 +41,14 @@ int8_t* PagedVector::getEntry(uint64_t pos) {
 
 PagedVector::~PagedVector() {
     for (auto* page : pages) {
-        allocator->deallocate(page, PAGE_SIZE);
+        allocator->deallocate(page, pageSize);
     }
 }
 size_t PagedVector::getNumberOfEntries() { return totalNumberOfEntries; }
 
 size_t PagedVector::getNumberOfPages() { return pages.size(); }
 
-size_t PagedVector::capacityPerPage() { return PAGE_SIZE / entrySize; }
+size_t PagedVector::capacityPerPage() { return pageSize / entrySize; }
 
 const std::vector<int8_t*> PagedVector::getPages() { return pages; }
 

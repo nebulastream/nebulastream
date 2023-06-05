@@ -62,7 +62,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
     std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
     std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
-    void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> inputArguments);
+    void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, const std::vector<Operations::Operation*> inputArguments);
     std::shared_ptr<BasicBlock> addTrueBlock(std::shared_ptr<BasicBlock> thenBlock);
     std::shared_ptr<BasicBlock> addFalseBlock(std::shared_ptr<BasicBlock> elseBlock);
     void removeOperation(Operations::OperationPtr operation);

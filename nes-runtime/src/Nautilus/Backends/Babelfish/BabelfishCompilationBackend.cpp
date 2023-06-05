@@ -89,8 +89,10 @@ BabelfishCompilationBackend::BabelfishCompilationBackend() {
     auto& jvm = jni::JVM::get();
     // jvm.addOption("-verbose:class");
     // jvm.addOption("-verbose:jni");
-    //jvm.addOption("-Dgraal.Dump=Truffle:1");
-    //jvm.addOption("-Dgraal.PrintGraph=Network");
+    //jvm.addOption("-Dgraal.Dump=1");
+    jvm.addOption("-Dgraal.Dump=Truffle:1");
+   // jvm.addOption("-Dgraal.CompilationFailureAction=Diagnose");
+    jvm.addOption("-Dgraal.PrintGraph=Network");
     jvm.addOption("-Dgraal.GenLoopSafepoints=false");
     jvm.addOption("-Dgraalvm.locatorDisabled=true");
     jvm.addClasspath(classpath);

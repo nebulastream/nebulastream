@@ -50,7 +50,7 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <TPCH/PipelinePlan.hpp>
+#include <PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 namespace NES::Runtime::Execution {
 using namespace Expressions;

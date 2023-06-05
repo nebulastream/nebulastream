@@ -89,7 +89,7 @@ T getObjectTypeValue(jobject object,
                      const std::string_view& className,
                      const std::string_view& getterName,
                      const std::string_view& getterSignature) {
-    NES_ASSERT(getEnv()->GetObjectRefType(object) != JNIInvalidRefType, "object ref is invalid");
+    //NES_ASSERT(getEnv()->GetObjectRefType(object) != JNIInvalidRefType, "object ref is invalid");
     auto env = getEnv();
     auto clazz = env->FindClass(className.data());
     jniErrorCheck();

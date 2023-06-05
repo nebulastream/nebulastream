@@ -88,7 +88,9 @@ auto transformReturnValues(Arg argument) {
         return Value<UInt32>(std::make_unique<UInt32>(argument));
     } else if constexpr (std::is_same<Arg, uint64_t>::value) {
         return Value<UInt64>(std::make_unique<UInt64>(argument));
-    } else if constexpr (std::is_same<Arg, void*>::value) {
+    } else if constexpr (std::is_same<Arg, unsigned long long>::value) {
+        return Value<UInt64>(std::make_unique<UInt64>(argument));
+    }else if constexpr (std::is_same<Arg, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int8_t*) argument));
     } else if constexpr (std::is_same<Arg, uint8_t*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
@@ -133,6 +135,8 @@ auto createDefault() {
     } else if constexpr (std::is_same<R, uint32_t>::value) {
         return Value<UInt32>(std::make_unique<UInt32>(0));
     } else if constexpr (std::is_same<R, uint64_t>::value) {
+        return Value<UInt64>(std::make_unique<UInt64>(0));
+    } else if constexpr (std::is_same<R, unsigned long long>::value) {
         return Value<UInt64>(std::make_unique<UInt64>(0));
     } else if constexpr (std::is_same<R, float>::value) {
         return Value<Float>(std::make_unique<Float>(0.0f));

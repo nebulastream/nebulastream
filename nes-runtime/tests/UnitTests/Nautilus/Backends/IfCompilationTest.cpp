@@ -203,8 +203,7 @@ TEST_P(IfCompilationTest, andConditionTest) {
         Tracing::TraceContext::get()->addTraceArgument(y.ref);
         return andCondition(x, y);
     });
-    auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t, int32_t, int32_t>("execute");
+   ff
     ASSERT_EQ(function(42, 42), 1);
     ASSERT_EQ(function(8, 42), 1);
     ASSERT_EQ(function(42, 1), 1);

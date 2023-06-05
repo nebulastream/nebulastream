@@ -48,10 +48,11 @@ BatchJoinBuild::BatchJoinBuild(uint64_t operatorHandlerIndex,
                                const std::vector<PhysicalTypePtr>& keyDataTypes,
                                const std::vector<Expressions::ExpressionPtr>& valueExpressions,
                                const std::vector<PhysicalTypePtr>& valueDataTypes,
-                               std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
+                               std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+                               const uint64_t pageSize)
     : operatorHandlerIndex(operatorHandlerIndex), keyExpressions(keyExpressions), keyDataTypes(keyDataTypes),
-      valueExpressions(valueExpressions), valueDataTypes(valueDataTypes), hashFunction(std::move(hashFunction)), keySize(0),
-      valueSize(0) {
+      valueExpressions(valueExpressions), valueDataTypes(valueDataTypes), hashFunction(std::move(hashFunction)),
+      pageSize(pageSize), keySize(0), valueSize(0) {
 
     for (auto& keyType : keyDataTypes) {
         keySize = keySize + keyType->size();
@@ -81,7 +82,7 @@ void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // 2. load the thread local pagedVector according to the worker id.
     auto state = Nautilus::FunctionCall("getPagedVectorProxy", getPagedVectorProxy, globalOperatorHandler, ctx.getWorkerId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
-    auto pagedVector = Interface::PagedVectorRef(state, entrySize);
+    auto pagedVector = Interface::PagedVectorRef(state, entrySize, pageSize);
     // 3. store the reference to the pagedVector in the local operator state.
     auto sliceStoreState = std::make_unique<LocalJoinBuildState>(pagedVector);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));

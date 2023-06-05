@@ -26,11 +26,13 @@ AbstractJavaUDFOperator::AbstractJavaUDFOperator(uint64_t operatorHandlerIndex,
       operatorOutputSchema(std::move(operatorOutputSchema)){};
 
 void* getInstance(void* state) {
+    NES_DEBUG("getInstance");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
     return handler->getFlatMapUDFObject();
 }
 
 void setupHandler(void* state) {
+    NES_DEBUG("setupHandler");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
     handler->setup();
 }
@@ -45,7 +47,8 @@ void AbstractJavaUDFOperator::open(ExecutionContext& ctx, RecordBuffer& recordBu
     Operator::open(ctx, recordBuffer);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto udfInstance = FunctionCall<>("getInstance", getInstance, handler);
-    ctx.setLocalOperatorState(this, std::make_unique<LocalUDFState>(handler, udfInstance));
+    auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
+    ctx.setLocalOperatorState(this, std::make_unique<LocalUDFState>(handler, udfInstance, inputClassPtr));
 }
 
 void AbstractJavaUDFOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
@@ -138,7 +141,7 @@ Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handl
     return resultRecord;
 }
 
-Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record, Value<MemRef>& handler) const {
+Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record, Value<MemRef>& handler, Value<MemRef>& inputClassPtr) const {
     // Loading record values into java input class
     // We derive the types of the values from the schema. The type can be complex of simple.
     // 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
@@ -169,7 +172,6 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
     } else {
-        auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
         auto inputPojoPtr = FunctionCall("allocateObject", allocateObject, inputClassPtr);
         // 2. Complex, a plain old java object with multiple primitive types as map input
         for (int i = 0; i < (int) operatorInputSchema->fields.size(); i++) {

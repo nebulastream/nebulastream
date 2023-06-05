@@ -29,7 +29,7 @@ class PagedVectorRef;
  */
 class PagedVector {
   public:
-    static const uint64_t PAGE_SIZE = 4096;
+    static const uint64_t DEFAULT_PAGE_SIZE = 4096;
 
     /**
      * @brief Creates a new paged vector with a specific entry size
@@ -37,7 +37,7 @@ class PagedVector {
      * @param entrySize the size of an entry.
      * TODO pass page size dynamically and adjust PagedVectorRef if needed.
      */
-    PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize);
+    PagedVector(std::unique_ptr<std::pmr::memory_resource> allocator, uint64_t entrySize, uint64_t pageSiz = DEFAULT_PAGE_SIZE);
 
     /**
      * @brief Return the number of pages in the sequential data
@@ -101,6 +101,7 @@ class PagedVector {
 
   private:
     friend PagedVectorRef;
+    const uint64_t pageSize;
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
     std::vector<int8_t*> pages;

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Runtime/QueryTerminationType.hpp"
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
@@ -23,12 +24,16 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <utility>
-
 namespace NES::Runtime::Execution::Operators {
 
 void* getProbeHashMapProxy(void* op) {
     auto handler = static_cast<BatchJoinHandler*>(op);
     return handler->getGlobalHashMap();
+}
+
+void stopJoinHandler(void* op) {
+    auto handler = static_cast<BatchJoinHandler*>(op);
+    handler->stop();
 }
 
 class LocalJoinProbeState : public Operators::OperatorState {
@@ -102,6 +107,11 @@ void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
         }
         this->child->execute(ctx, record);
     }
+}
+void BatchJoinProbe::terminate(ExecutionContext& ctx) const {
+    ExecutableOperator::terminate(ctx);
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("stopJoinHandler", stopJoinHandler, globalOperatorHandler);
 }
 
 }// namespace NES::Runtime::Execution::Operators

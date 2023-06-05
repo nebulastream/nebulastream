@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Runtime/MemoryLayout/ColumnLayout.hpp"
+#include "Table.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -39,29 +41,27 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <PipelinePlan.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <PipelinePlan.hpp>
-#include <TPCH/Query1.hpp>
-#include <TPCH/Query3.hpp>
-#include <TPCH/Query6.hpp>
-#include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
+#include <UDF/DistanceMap.hpp>
+#include <UDF/SimpleMap.hpp>
+#include <UDF/UppercaseMap.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <benchmark/benchmark.h>
-#include <gtest/gtest.h>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 
 namespace NES::Runtime::Execution {
 
 struct BenchmarkOptions {
-    TPCH_Scale_Factor targetScaleFactor;
-    std::string factor;
     std::string compiler;
     uint64_t compileIterations;
     uint64_t executionWarmup;
@@ -78,11 +78,8 @@ class BenchmarkRunner {
         table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
-        tables = TPCHTableGenerator(table_bm, bmOptions.targetScaleFactor).generate();
         options.setOptimize(true);
-        options.setDumpToConsole(true);
         options.setDumpToFile(true);
-        options.setOptimizationLevel(3);
     }
     void run() {
         setup();
@@ -104,9 +101,8 @@ class BenchmarkRunner {
         for (uint64_t i = 0; i < bmOptions.executionBenchmark; i++) {
             Timer executionTimeTimer("Execution");
             runQuery(executionTimeTimer);
-            NES_INFO(executionTimeTimer);
             sumExecution += executionTimeTimer.getPrintTime();
-            NES_INFO2("Run {} execute time {}", i, executionTimeTimer.getPrintTime());
+            NES_INFO2("Run {} warmup time {}", i, executionTimeTimer.getPrintTime());
         }
 
         auto avgCompilationTime = (sumCompilation / (double) bmOptions.compileIterations);
@@ -116,12 +112,7 @@ class BenchmarkRunner {
         std::ofstream file(bmOptions.identifier, std::ios::app);
         if (file.is_open()) {
             // Append the file: query, compiler, compiletime, execution time
-            file << fmt::format("{},{},{},{},{}",
-                                bmOptions.factor,
-                                bmOptions.query,
-                                bmOptions.compiler,
-                                avgCompilationTime,
-                                avgExecutionTime)
+            file << fmt::format("{},{},{},{}", bmOptions.query, bmOptions.compiler, avgCompilationTime, avgExecutionTime)
                  << std::endl;
             file.flush();
             file.close();
@@ -140,57 +131,86 @@ class BenchmarkRunner {
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
     std::shared_ptr<WorkerContext> wc;
-    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
     BenchmarkOptions bmOptions;
 };
 
-class Query6Runner : public BenchmarkRunner {
+class SimpleMapRunner : public BenchmarkRunner {
   public:
-    Query6Runner(BenchmarkOptions options) : BenchmarkRunner(options){};
+    SimpleMapRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
     PipelinePlan plan;
     std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
     std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
-    void setup() override { plan = TPCH_Query6::getPipelinePlan(tables, bm); }
+    std::unique_ptr<Table> table;
+    void setup() override {
+        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::INT32);
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, table_bm->getBufferSize());
+        auto tb = TableBuilder(table_bm, memoryLayout);
+
+        // create 100MB of data
+        int32_t integers = (1024 * 1024 * 5) / sizeof(int32_t);
+        for (int32_t i = 0; i < integers; i++) {
+            tb.append(std::make_tuple((int32_t) i));
+        }
+
+        table = tb.finishTable();
+        plan = NES::Runtime::Execution::SimpleMap::getPipelinePlan(table, bm);
+    }
     void compileQuery(Timer<>& compileTimeTimer) override {
+
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
+
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
-        auto pipeline2 = plan.getPipeline(1);
         aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
-        emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
         // we call setup here to force compilation
         aggExecutablePipeline->setup(*pipeline1.ctx);
-        emitExecutablePipeline->setup(*pipeline2.ctx);
         compileTimeTimer.snapshot("compilation");
         compileTimeTimer.pause();
     }
     void runQuery(Timer<>& executionTimeTimer) override {
-        auto& lineitems = tables[TPCHTable::LineItem];
         auto pipeline1 = plan.getPipeline(0);
-        auto pipeline2 = plan.getPipeline(1);
         executionTimeTimer.start();
         aggExecutablePipeline->setup(*pipeline1.ctx);
-        emitExecutablePipeline->setup(*pipeline2.ctx);
-        for (auto& chunk : lineitems->getChunks()) {
+        for (auto& chunk : table->getChunks()) {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
-        executionTimeTimer.snapshot("execute agg");
-        auto dummyBuffer = NES::Runtime::TupleBuffer();
-        emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
         executionTimeTimer.snapshot("execute emit");
         executionTimeTimer.pause();
         aggExecutablePipeline->stop(*pipeline1.ctx);
-        emitExecutablePipeline->stop(*pipeline2.ctx);
     }
 };
 
-class Query1Runner : public BenchmarkRunner {
+class DistanceMapRunner : public BenchmarkRunner {
   public:
-    Query1Runner(BenchmarkOptions options) : BenchmarkRunner(options){};
+    DistanceMapRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
     PipelinePlan plan;
     std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
+    std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
+    std::unique_ptr<Table> table;
+    void setup() override {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("lat1", BasicType::FLOAT64)
+                          ->addField("long1", BasicType::FLOAT64)
+                          ->addField("lat2", BasicType::FLOAT64)
+                          ->addField("long2", BasicType::FLOAT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, table_bm->getBufferSize());
+        auto tb = TableBuilder(table_bm, memoryLayout);
 
-    void setup() override { plan = TPCH_Query1::getPipelinePlan(tables, bm); }
+        // create 100MB of data
+        int32_t integers = (1024 * 1024) / sizeof(int32_t);
+        for (int32_t i = 0; i < integers; i++) {
+            tb.append(std::make_tuple(53.551086, 9.993682, 52.520008, 13.404954));
+        }
+
+        table = tb.finishTable();
+        plan = NES::Runtime::Execution::DistanceMap::getPipelinePlan(table, bm);
+    }
     void compileQuery(Timer<>& compileTimeTimer) override {
+
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
+
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
         aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
@@ -198,109 +218,70 @@ class Query1Runner : public BenchmarkRunner {
         aggExecutablePipeline->setup(*pipeline1.ctx);
         compileTimeTimer.snapshot("compilation");
         compileTimeTimer.pause();
-
     }
     void runQuery(Timer<>& executionTimeTimer) override {
-        auto& lineitems = tables[TPCHTable::LineItem];
         auto pipeline1 = plan.getPipeline(0);
         executionTimeTimer.start();
-        for (auto& chunk : lineitems->getChunks()) {
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        for (auto& chunk : table->getChunks()) {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
-        executionTimeTimer.snapshot("execute agg");
+        executionTimeTimer.snapshot("execute emit");
         executionTimeTimer.pause();
         aggExecutablePipeline->stop(*pipeline1.ctx);
     }
 };
 
-class Query3Runner : public BenchmarkRunner {
+class UppercaseMapRunner : public BenchmarkRunner {
   public:
-    Query3Runner(BenchmarkOptions options) : BenchmarkRunner(options){};
+    UppercaseMapRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
     PipelinePlan plan;
     std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
-    std::unique_ptr<ExecutablePipelineStage> orderCustomersJoinBuildPipeline;
-    std::unique_ptr<ExecutablePipelineStage> lineitems_ordersJoinBuildPipeline;
-    void setup() override { plan = TPCH_Query3::getPipelinePlan(tables, bm); }
+    std::unique_ptr<Table> table;
+    void setup() override {
+        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("lat1", BasicType::TEXT);
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, table_bm->getBufferSize());
+        auto tb = TableBuilder(table_bm, memoryLayout);
+
+        // create 100MB of data
+        int32_t integers = (1024*10) / sizeof(int32_t);
+        for (int32_t i = 0; i < integers; i++) {
+            auto text = TextValue::create("hello");
+            tb.append(std::make_tuple(text));
+            text->~TextValue();
+        }
+
+        table = tb.finishTable();
+        plan = NES::Runtime::Execution::UppercaseMap::getPipelinePlan(table, bm);
+    }
     void compileQuery(Timer<>& compileTimeTimer) override {
+
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
+
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
-        auto pipeline2 = plan.getPipeline(1);
-        auto pipeline3 = plan.getPipeline(2);
         aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
-        orderCustomersJoinBuildPipeline = provider->create(pipeline2.pipeline, options);
-        lineitems_ordersJoinBuildPipeline = provider->create(pipeline3.pipeline, options);
         // we call setup here to force compilation
         aggExecutablePipeline->setup(*pipeline1.ctx);
-        orderCustomersJoinBuildPipeline->setup(*pipeline2.ctx);
-        lineitems_ordersJoinBuildPipeline->setup(*pipeline3.ctx);
         compileTimeTimer.snapshot("compilation");
         compileTimeTimer.pause();
-        aggExecutablePipeline->stop(*pipeline1.ctx);
-        orderCustomersJoinBuildPipeline->stop(*pipeline2.ctx);
-        lineitems_ordersJoinBuildPipeline->stop(*pipeline3.ctx);
     }
     void runQuery(Timer<>& executionTimeTimer) override {
-        auto& customers = tables[TPCHTable::Customer];
-        auto& orders = tables[TPCHTable::Orders];
-        auto& lineitems = tables[TPCHTable::LineItem];
         auto pipeline1 = plan.getPipeline(0);
-        auto pipeline2 = plan.getPipeline(1);
-        auto pipeline3 = plan.getPipeline(2);
-        aggExecutablePipeline->setup(*pipeline1.ctx);
-        orderCustomersJoinBuildPipeline->setup(*pipeline2.ctx);
-        lineitems_ordersJoinBuildPipeline->setup(*pipeline3.ctx);
-        // process query
         executionTimeTimer.start();
-        for (auto& chunk : customers->getChunks()) {
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        for (auto& chunk : table->getChunks()) {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
-        executionTimeTimer.snapshot("p1");
-        auto joinHandler = pipeline1.ctx->getOperatorHandler<BatchJoinHandler>(0);
-        auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-        joinHandler->mergeState();
-        executionTimeTimer.snapshot("p1 - merge");
-        for (auto& chunk : orders->getChunks()) {
-            orderCustomersJoinBuildPipeline->execute(chunk, *pipeline2.ctx, *wc);
-        }
-        executionTimeTimer.snapshot("p2");
-        auto joinHandler2 = pipeline2.ctx->getOperatorHandler<BatchJoinHandler>(1);
-
-        joinHandler2->mergeState();
-        executionTimeTimer.snapshot("p2 - merge");
-        for (auto& chunk : lineitems->getChunks()) {
-            lineitems_ordersJoinBuildPipeline->execute(chunk, *pipeline3.ctx, *wc);
-        }
-        executionTimeTimer.snapshot("p3");
+        executionTimeTimer.snapshot("execute emit");
         executionTimeTimer.pause();
-        auto aggHandler = pipeline3.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1);
         aggExecutablePipeline->stop(*pipeline1.ctx);
-        orderCustomersJoinBuildPipeline->stop(*pipeline2.ctx);
-        lineitems_ordersJoinBuildPipeline->stop(*pipeline3.ctx);
     }
 };
 
 }// namespace NES::Runtime::Execution
-
-NES::TPCH_Scale_Factor getScaleFactor(std::map<std::string, std::string> commandLineParams) {
-    auto scaleFactor = commandLineParams["scaleFactor"];
-    if (scaleFactor == "0.001") {
-        return NES::TPCH_Scale_Factor::F0_001;
-    } else if (scaleFactor == "0.01") {
-        return NES::TPCH_Scale_Factor::F0_01;
-    } else if (scaleFactor == "0.1") {
-        return NES::TPCH_Scale_Factor::F0_1;
-    } else if (scaleFactor == "1") {
-        return NES::TPCH_Scale_Factor::F1;
-    } else if (scaleFactor == "10") {
-        return NES::TPCH_Scale_Factor::F10;
-    } else if (scaleFactor == "100") {
-        return NES::TPCH_Scale_Factor::F100;
-    }
-    NES_THROW_RUNTIME_ERROR("Wrong scale factor " + scaleFactor);
-}
-
 int main(int argc, char** argv) {
-
     // Convert the POSIX command line arguments to a map of strings.
     std::map<std::string, std::string> commandLineParams;
     for (int i = 1; i < argc; ++i) {
@@ -312,9 +293,7 @@ int main(int argc, char** argv) {
     auto compileIterations = std::stoul(commandLineParams["compileIterations"]);
     auto executionWarmup = std::stoul(commandLineParams["executionWarmup"]);
     auto executionBenchmark = std::stoul(commandLineParams["executionBenchmark"]);
-    NES::Runtime::Execution::BenchmarkOptions options = {.targetScaleFactor = getScaleFactor(commandLineParams),
-                                                         .factor = commandLineParams["scaleFactor"],
-                                                         .compiler = commandLineParams["compiler"],
+    NES::Runtime::Execution::BenchmarkOptions options = {.compiler = commandLineParams["compiler"],
                                                          .compileIterations = compileIterations,
                                                          .executionWarmup = executionWarmup,
                                                          .executionBenchmark = executionBenchmark,
@@ -322,11 +301,12 @@ int main(int argc, char** argv) {
                                                          .query = commandLineParams["query"]};
 
     auto query = commandLineParams["query"];
-    if (query == "q1") {
-        NES::Runtime::Execution::Query1Runner(options).run();
-    } else if (query == "q3") {
-        NES::Runtime::Execution::Query3Runner(options).run();
-    } else if (query == "q6") {
-        NES::Runtime::Execution::Query6Runner(options).run();
+    if (query == "simpleMap") {
+        NES::Runtime::Execution::SimpleMapRunner(options).run();
+    } else if (query == "distance") {
+        NES::Runtime::Execution::DistanceMapRunner(options).run();
+    } else if (query == "uppercase") {
+        NES::Runtime::Execution::UppercaseMapRunner(options).run();
     }
+    return 0;
 }

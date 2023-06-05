@@ -75,7 +75,11 @@ void JavaUDFOperatorHandler::setup() {
         jni::jniErrorCheck();
     }
     this->udfInstance = env->NewGlobalRef(instance);
+
+    auto clazz = jni::findClass(getInputClassJNIName());
+    this->inputClass = (jclass) jni::getEnv()->NewGlobalRef(clazz);
 }
+jni::jobject JavaUDFOperatorHandler::getInputClass() const { return inputClass; }
 
 const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& javaClassName) const {
     std::string copy = javaClassName;

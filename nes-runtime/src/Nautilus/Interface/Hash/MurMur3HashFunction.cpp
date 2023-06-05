@@ -14,7 +14,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-
+#include <x86intrin.h>
 namespace NES::Nautilus::Interface {
 
 HashFunction::HashValue MurMur3HashFunction::init() { return SEED; }
@@ -97,9 +97,26 @@ uint64_t hashBytes(void* data, uint64_t length) {
 
 template<typename T>
 uint64_t hashValue(uint64_t seed, T value) {
-    // Combine two hashes by XORing them
-    // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashInt(value);
+    uint64_t k = (uint64_t) value;
+
+   /* const uint64_t m = 0xc6a4a7935bd1e995;
+    const int r = 47;
+    uint64_t h = seed ^ 0x8445d61a4e774912 ^ (8 * m);
+    k *= m;
+    k ^= k >> r;
+    k *= m;
+    h ^= k;
+    h *= m;
+    h ^= h >> r;
+    h *= m;
+    h ^= h >> r;
+    return h;*/
+    uint64_t result1 = _mm_crc32_u64(seed, k);
+    uint64_t result2 = _mm_crc32_u64(0x04c11db7, k);
+    return ((result2 << 32) | result1) * 0x2545F4914F6CDD1Dull;
+   // return seed ^ hashInt(value);
+
+
 }
 
 uint64_t hashTextValue(uint64_t seed, TextValue* value) {

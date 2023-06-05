@@ -41,7 +41,8 @@ class BatchJoinBuild : public ExecutableOperator {
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
                    const std::vector<Expressions::ExpressionPtr>& valueExpressions,
                    const std::vector<PhysicalTypePtr>& valueDataTypes,
-                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+                   const uint64_t pageSize);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -53,6 +54,7 @@ class BatchJoinBuild : public ExecutableOperator {
     const std::vector<Expressions::ExpressionPtr> valueExpressions;
     const std::vector<PhysicalTypePtr> valueDataTypes;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
+    const uint64_t pageSize;
     uint64_t keySize;
     uint64_t valueSize;
 

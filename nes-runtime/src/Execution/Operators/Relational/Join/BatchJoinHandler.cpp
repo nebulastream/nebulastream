@@ -18,7 +18,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-BatchJoinHandler::BatchJoinHandler() = default;
+BatchJoinHandler::BatchJoinHandler(const uint64_t pageSize) : pageSize(pageSize){};
 
 Nautilus::Interface::PagedVector* BatchJoinHandler::getThreadLocalState(uint64_t workerId) {
     auto index = workerId % threadLocalStateStores.size();
@@ -33,7 +33,7 @@ void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
     this->valueSize = valueSize;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
-        auto pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
+        auto pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize, pageSize);
         threadLocalStateStores.emplace_back(std::move(pagedVector));
     }
 }
@@ -45,10 +45,11 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
     for (const auto& pagedVector : threadLocalStateStores) {
         numberOfKeys += pagedVector->getNumberOfEntries();
     }
+    NES_INFO2("number of keys in hash map {}", numberOfKeys);
     // 2. allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     globalMap =
-        std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), 4096);
+        std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), pageSize);
 
     // 3. iterate over pagedVectors and insert the whole page to the hash table
     // Note. This dose not perform any memory and only results in a seqential scan over all entries  plus a random lookup in the hash table.
@@ -66,6 +67,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
         globalMap->insertPage(pages[pages.size() - 1], numberOfEntries);
         pagedVector->clear();
     }
+    // globalMap->printDistribution();
     return globalMap.get();
 }
 
@@ -81,5 +83,10 @@ void BatchJoinHandler::stop(Runtime::QueryTerminationType queryTerminationType, 
 BatchJoinHandler::~BatchJoinHandler() { NES_DEBUG("~BatchJoinHandler"); }
 
 void BatchJoinHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
+
+void BatchJoinHandler::stop() {
+    threadLocalStateStores.clear();
+    globalMap.reset();
+}
 
 }// namespace NES::Runtime::Execution::Operators

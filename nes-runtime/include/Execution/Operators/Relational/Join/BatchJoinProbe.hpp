@@ -44,6 +44,7 @@ class BatchJoinProbe : public ExecutableOperator {
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
   private:
     const uint64_t operatorHandlerIndex;

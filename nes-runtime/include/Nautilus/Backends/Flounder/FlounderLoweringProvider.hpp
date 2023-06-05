@@ -60,7 +60,7 @@ class FlounderLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::Operation>&, FlounderFrame& frame);
         FlounderFrame processBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
         FlounderFrame processInlineBlockInvocation(IR::Operations::BasicBlockInvocation&, FlounderFrame& frame);
-        flounder::Register createVreg(IR::Operations::OperationIdentifier id, IR::Types::StampPtr stamp, FlounderFrame& frame);
+        flounder::Register createVreg(const IR::Operations::OperationIdentifier& id, IR::Types::StampPtr stamp, FlounderFrame& frame);
         flounder::VregInstruction requestVreg(flounder::Register& reg, const IR::Types::StampPtr& stamp);
 
       private:

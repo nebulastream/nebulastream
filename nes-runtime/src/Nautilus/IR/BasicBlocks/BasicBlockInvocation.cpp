@@ -24,6 +24,11 @@ void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = bl
 BasicBlockPtr BasicBlockInvocation::getBlock() const { return basicBlock; }
 
 void BasicBlockInvocation::addArgument(OperationPtr argument) {
+    this->operations.emplace_back(argument.get());
+    argument->addUsage(this);
+}
+
+void BasicBlockInvocation::addArgument( NES::Nautilus::IR::Operations::Operation* argument) {
     this->operations.emplace_back(argument);
     argument->addUsage(this);
 }
@@ -32,19 +37,19 @@ void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { operations.e
 
 int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
     for (uint64_t i = 0; i < operations.size(); i++) {
-        if (operations[i].lock() == arg) {
+        if (operations[i] == arg.get()) {
             return i;
         }
     }
     return -1;
 }
 
-std::vector<OperationPtr> BasicBlockInvocation::getArguments() const {
-    std::vector<OperationPtr> arguments;
+const std::vector<Operation*>& BasicBlockInvocation::getArguments() const {
+    /*std::vector<OperationPtr> arguments;
     for (auto& arg : this->operations) {
         arguments.emplace_back(arg.lock());
-    }
-    return arguments;
+    }*/
+    return operations;
 }
 std::string BasicBlockInvocation::toString() { return "BasicBlockInvocation"; }
 
