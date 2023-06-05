@@ -131,21 +131,19 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
+    // TODO: match with expected topology from JSON
     void setupICCSTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
         topology = Topology::create();
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
 
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
-        rootNode->addNodeProperty("tf_installed", true);
         topology->setAsRoot(rootNode);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1], properties);
-        sourceNode1->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2], properties);
-        sourceNode2->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -154,6 +152,16 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+        globalExecutionPlan = GlobalExecutionPlan::create();
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
     void setupComplexTopologyAndStreamCatalog(std::vector<uint16_t> resources) {
