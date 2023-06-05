@@ -29,6 +29,8 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 
+using allMobileResponse = std::map<std::string, std::vector<std::map<std::string, nlohmann::json>>>;
+
 namespace NES {
 class LocationControllerIntegrationTest : public Testing::NESBaseTest {
   public:
@@ -232,9 +234,13 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationsNoMobileNodes
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    //no mobile nodes added yet, response should be empty
-    ASSERT_TRUE(res.empty());
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text).get<allMobileResponse>());
+    //no mobile nodes added yet, response should not conatain any nodes or edges
+    ASSERT_EQ(res.size(), 2);
+    ASSERT_TRUE(res.contains("nodes"));
+    ASSERT_TRUE(res.contains("edges"));
+    ASSERT_EQ(res["nodes"].size(), 0);
+    ASSERT_EQ(res["edges"].size(), 0);
     bool stopwrk1 = wrk1->stop(true);
     ASSERT_TRUE(stopwrk1);
     bool stopCrd = coordinator->stopCoordinator(true);
@@ -296,22 +302,32 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
     EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG2("{}", res);
-    ASSERT_TRUE(res.is_array());
-    ASSERT_TRUE(res.size() == 2);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text).get<allMobileResponse>());
+    ASSERT_EQ(res.size(), 2);
+    ASSERT_TRUE(res.contains("nodes"));
+    ASSERT_TRUE(res.contains("edges"));
+    auto nodes = res["nodes"];
+    auto edges = res["edges"];
+    ASSERT_EQ(nodes.size(), 2);
+    ASSERT_EQ(edges.size(), 2);
+
     auto locationData = std::vector<double>(2, 0);
-    for (auto entry : res) {
-        if (entry["id"] == workerNodeId2) {
+    for (auto node : nodes) {
+        if (node["id"] == workerNodeId2) {
             locationData[0] = 52.5523;
             locationData[1] = 13.3517;
-        }
-        if (entry["id"] == workerNodeId3) {
+        } else if (node["id"] == workerNodeId3) {
             locationData[0] = 53.5523;
             locationData[1] = -13.3517;
+        } else {
+            FAIL();
         }
-        EXPECT_TRUE(entry.contains("location"));
-        EXPECT_EQ(entry["location"], nlohmann::json(locationData));
+        EXPECT_TRUE(node.contains("location"));
+        EXPECT_EQ(node["location"], nlohmann::json(locationData));
+    }
+    for (auto edge : edges) {
+        ASSERT_TRUE(edge["source"] == workerNodeId2 || edge["source"] == workerNodeId3);
+        ASSERT_EQ(edge["target"], 1);
     }
     bool stopwrk1 = wrk1->stop(true);
     ASSERT_TRUE(stopwrk1);
