@@ -66,7 +66,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
-        auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
+        auto locationsJson = locationService->requestLocationAndParentDataFromAllMobileNodes();
         return createResponse(Status::CODE_200, locationsJson.dump());
     }
 
