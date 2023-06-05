@@ -67,18 +67,15 @@ class QueryUndeploymentPhase {
     /**
      * @brief method remove query from nodes
      * @param sharedQueryId : the id of the shared query plan
-     * @return bool indicating success
      */
-    bool undeployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void undeployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to stop a query
      * @param sharedQueryId : the id of the shared query plan
-     * @return bool indicating success
      */
-    bool stopQuery(SharedQueryId sharedQueryId,
-                   const std::vector<ExecutionNodePtr>& executionNodes,
-                   SharedQueryPlanStatus sharedQueryPlanStatus);
+    void
+    stopQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes, SharedQueryPlanStatus sharedQueryPlanStatus);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;

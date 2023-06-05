@@ -109,9 +109,8 @@ class WorkerRPCClient {
     /**
      * @brief ungregisters a query asynchronously
      * @param queryId to unregister query
-     * @return true if succeeded, else false
      */
-    static bool unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    static void unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to start a already deployed query
@@ -144,9 +143,8 @@ class WorkerRPCClient {
      * @param queryId to stop
      * @param terminationType: the termination type
      * @param cq: completion queue of grpc requests
-     * @return bool indicating success
      */
-    static bool stopQueryAsync(const std::string& address,
+    static void stopQueryAsync(const std::string& address,
                                QueryId queryId,
                                Runtime::QueryTerminationType terminationType,
                                const CompletionQueuePtr& cq);

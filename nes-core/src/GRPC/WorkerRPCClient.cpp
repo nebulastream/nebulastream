@@ -147,8 +147,7 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
     NES_DEBUG("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
     return result;
 }
-
-bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
+void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, queryId);
 
     UnregisterQueryRequest request;
@@ -176,8 +175,6 @@ bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId q
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
 }
 
 bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryId) {
@@ -277,7 +274,7 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
 }
 
-bool WorkerRPCClient::stopQueryAsync(const std::string& address,
+void WorkerRPCClient::stopQueryAsync(const std::string& address,
                                      QueryId queryId,
                                      Runtime::QueryTerminationType terminationType,
                                      const CompletionQueuePtr& cq) {
@@ -309,8 +306,6 @@ bool WorkerRPCClient::stopQueryAsync(const std::string& address,
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
 }
 
 bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
