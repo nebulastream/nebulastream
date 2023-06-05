@@ -77,6 +77,11 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
+namespace Experimental {
+
+class StopQueryRequestExperimental;
+using StopQueryRequestExperimentalPtr = std::shared_ptr<StopQueryRequestExperimental>;
+
 struct StopQueryResponse : public AbstractRequestResponse {
     bool success;
 };
@@ -86,9 +91,9 @@ struct StopQueryResponse : public AbstractRequestResponse {
 class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
 
   public:
-    static StopQueryRequestPtr create(RequestId requestId,
-                                      QueryId queryId,
-                                      size_t maxRetries,
+    static StopQueryRequestPtr create(const RequestId requestId,
+                                      const QueryId queryId,
+                                      const size_t maxRetries,
                                       WorkerRPCClientPtr workerRpcClient,
                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                       std::promise<StopQueryResponse> responsePromise);
@@ -129,6 +134,7 @@ class StopQueryRequestExperimental : public AbstractRequest<StopQueryResponse> {
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
+}// namespace Experimental
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_STOPQUERYREQUESTEXPERIMENTAL_HPP_

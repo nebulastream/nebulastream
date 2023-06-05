@@ -13,6 +13,6 @@
 
 add_source_files(nes-core
         FailQueryRequest.cpp
-        StopQueryRequestExperimental.cpp
+        StopQueryRequest.cpp
         AddQueryRequest.cpp
         )
