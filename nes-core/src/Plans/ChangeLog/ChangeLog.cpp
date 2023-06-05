@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -23,13 +24,35 @@ void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& change
     changeLogEntries[timestamp] = changeLogEntry;
 }
 
-//FIXME: implement as part of the issue #3797
-void ChangeLog::performChangeLogCompaction(uint64_t) { NES_NOT_IMPLEMENTED(); }
+void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
+
+    std::vector<ChangeLogEntryPtr> changeLogEntriesToCompact;
+    //Find the range of keys to be fetched
+    auto firstElement = changeLogEntries.lower_bound(0);
+    auto lastElement = changeLogEntries.lower_bound(timestamp);
+
+    //Fetch the change log entries to be compacted
+    auto iterator = firstElement;
+    while (iterator != lastElement) {
+        changeLogEntriesToCompact.emplace_back(iterator->second);
+        iterator++;
+    }
+
+    for (uint32_t i = 0; i < changeLogEntriesToCompact.size(); i++) {
+        auto sourceChangeLog = changeLogEntriesToCompact.at(i);
+        for (uint32_t j = i + 1; j < changeLogEntriesToCompact.size(); j++) {
+
+            changeLogEntriesToCompact.erase(changeLogEntriesToCompact.begin() + j);
+            break;
+        }
+        changeLogEntriesToCompact.erase(changeLogEntriesToCompact.begin() + i);
+    }
+}
 
 std::vector<ChangeLogEntryPtr> ChangeLog::getChangeLogEntriesBefore(uint64_t timestamp) {
 
-    //TODO: enable as part of #3797
-    //performChangeLogCompaction(timestamp);
+    //Perform compaction before fetching change log
+    performChangeLogCompaction(timestamp);
 
     std::vector<ChangeLogEntryPtr> changeLogEntriesToReturn;
     //Find the range of keys to be fetched
@@ -57,6 +80,40 @@ void ChangeLog::cleanup(uint64_t timestamp) {
 
     //Remove the keys from the change log entry
     changeLogEntries.erase(firstElement, lastElement);
+}
+
+ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<ChangeLogEntryPtr>& changeLogEntries) {
+
+    ChangeLogEntryPtr firstChangeLogEntry = changeLogEntries.at(0);
+    std::set<OperatorNodePtr> upstreamOperators;
+    upstreamOperators.insert(firstChangeLogEntry->upstreamOperators.begin(), firstChangeLogEntry->upstreamOperators.end());
+    std::set<OperatorNodePtr> downstreamOperators;
+    downstreamOperators.insert(firstChangeLogEntry->downstreamOperators.begin(), firstChangeLogEntry->downstreamOperators.end());
+
+    for (uint32_t index = 1; index < changeLogEntries.size(); index++) {
+
+        // check if the upstream operators in the temp is also the upstream operator of the change log entry under consideration
+        // push the most upstream operator into the new upstream Operator set
+
+        std::set<OperatorNodePtr> tempUpstreamOperators;
+
+        for (const auto& upstreamOperator1 : upstreamOperators) {
+            for (const auto& upstreamOperator2 : changeLogEntries[index]->upstreamOperators) {
+                if (upstreamOperator1->getId() == upstreamOperator2->getId()) {
+                    tempUpstreamOperators.insert(upstreamOperator1);
+                } else if (upstreamOperator1->containAsGrandParent(upstreamOperator2)) {
+                    tempUpstreamOperators.insert(upstreamOperator1);
+                } else if (upstreamOperator2->containAsGrandParent(upstreamOperator1)) {
+                    tempUpstreamOperators.insert(upstreamOperator2);
+                }
+            }
+        }
+
+        // check if the downstream operators in the temp is also the downstream operator of the change log entry under consideration
+        // push the most downstream operator into the new downstream Operator set
+    }
+
+    return ChangeLogEntry::create(upstreamOperators, downstreamOperators);
 }
 
 }// namespace NES::Optimizer::Experimental
