@@ -105,7 +105,7 @@ class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
     * @brief stop and undeploy the query
     * @param sharedQueryId: the shraed query id of the query to be undeployed
     */
-    void updateGlobalQueryPlan(SharedQueryId sharedQueryId);
+    void postUndeployment(SharedQueryId sharedQueryId);
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     WorkerRPCClientPtr workerRpcClient;

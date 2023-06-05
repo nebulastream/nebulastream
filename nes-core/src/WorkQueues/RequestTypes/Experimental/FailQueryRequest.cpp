@@ -70,7 +70,7 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException& ex, N
             undeployQueries(storageHandler, sharedQueryId.value());
 
             //update global query plan
-            updateGlobalQueryPlan(sharedQueryId.value());
+            postUndeployment(sharedQueryId.value());
         }
     }
 }
@@ -104,22 +104,25 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
+    //todo: what does this call actually do if we can still retrieve the sqp in the postUndeployment funciton
+    //todo: is this tested?
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
 
     //undeploy queries
-    undeployQueries(sharedQueryId);
+    undeployQueries(storageHandle, sharedQueryId);
 
     //update global query plan
-    updateGlobalQueryPlan(sharedQueryId);
+    postUndeployment(sharedQueryId);
 
     //todo: cleanup
 }
 
-//todo: rename
-void NES::Experimental::FailQueryRequest::updateGlobalQueryPlan(SharedQueryId sharedQueryId) {
+//todo: rename to after undeployment
+void NES::Experimental::FailQueryRequest::postUndeployment(SharedQueryId sharedQueryId) {
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
     }
-    //todo: remove failed shared query plan from global query plan
+
+    //todo: remove failed shared query plan from global query plan (how?)
 }
 }// namespace NES::Experimental
