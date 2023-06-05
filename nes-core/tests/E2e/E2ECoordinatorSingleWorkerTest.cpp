@@ -815,6 +815,75 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(response == 0);
 }
 
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingThresholdWindowTrigonometricQueryKTMUseCase) {
+    NES_INFO(" start coordinator");
+    std::string testFile = getTestResourceFolder() / "ktm-trig-results.csv";
+    NES_INFO("testFile = " << testFile);
+    remove(testFile.c_str());
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::setDistributedWindowChildThreshold(1000),
+                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    std::stringstream schema;
+    schema
+            << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
+               ":\"Schema::create()->addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT64))->"
+               "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",BasicType::INT32));\"}";
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+
+    auto worker = TestUtils::startWorker(
+            {TestUtils::rpcPort(0),
+             TestUtils::dataPort(0),
+             TestUtils::coordinatorPort(*rpcCoordinatorPort),
+             TestUtils::sourceType(SourceType::CSV_SOURCE),
+             TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm_threshold_single_col.csv"),
+             TestUtils::physicalSourceName("test_stream"),
+             TestUtils::logicalSourceName("ktm"),
+             TestUtils::numberOfBuffersToProduce(1),
+             TestUtils::enableNautilus(),
+             TestUtils::numberOfTuplesToProducePerBuffer(4),
+             TestUtils::sourceGatheringInterval(1),
+             TestUtils::enableThreadLocalWindowing()});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"ktm\"))";
+    ss << R"(.project(Attribute(\"ABS_Lean_Angle\"), Attribute(\"ECU_Oil_Temp_Sensor_Data\")))";
+    ss << R"(.map(Attribute(\"Radians_Lean\") = RADIANS(Attribute(\"ABS_Lean_Angle\"))))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ABS_Lean_Angle\") > 2.)))";
+    ss << R"(.apply(ABS(COS(Attribute(\"Radians_Lean\")) / SIN(Attribute(\"Radians_Lean\"))) * (POWER(Attribute(\"ABS_Front_Wheel_Speed\"), 2) / 3.6)) / 9.81))";
+    ss << R"(.sink(FileSinkDescriptor::create(\")";
+    ss << testFile;
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
+    ss << R"(;","placement" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+
+    string expectedContent = "ktm$Radians_Lean:(Float)\n"
+                             "0.251327\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+
+    int response = remove(testFile.c_str());
+    EXPECT_TRUE(response == 0);
+}
+
 //TODO 3608 fixing bykey()
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey) {
     NES_INFO(" start coordinator");
