@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/QueryUndeploymentException.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
@@ -27,12 +29,13 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
-#include <WorkQueues/RequestTypes/Experimental/StopQueryRequestExperimental.hpp>
+#include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
 
+namespace NES::Experimental {
 StopQueryRequestExperimental::StopQueryRequestExperimental(const RequestId requestId,
                                                            const QueryId queryId,
                                                            const size_t maxRetries,

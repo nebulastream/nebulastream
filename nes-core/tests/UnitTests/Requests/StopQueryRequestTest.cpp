@@ -23,7 +23,7 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <WorkQueues/RequestTypes/Experimental/StopQueryRequestExperimental.hpp>
+#include <WorkQueues/RequestTypes/Experimental/StopQueryRequest.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <gtest/gtest.h>
 
