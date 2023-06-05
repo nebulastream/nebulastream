@@ -86,9 +86,8 @@ class QueryDeploymentPhase {
     /**
      * @brief method to start a already deployed query
      * @param queryId
-     * @return bool indicating success
      */
-    bool startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;

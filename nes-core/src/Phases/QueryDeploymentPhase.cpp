@@ -109,14 +109,7 @@ bool QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     NES_DEBUG("QueryService: start query");
-    bool successStart = startQuery(sharedQueryId, executionNodes);
-    if (successStart) {
-        NES_DEBUG("QueryDeploymentPhase: Successfully started deployed shared query  {}", sharedQueryId);
-    } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to start the deployed shared query {}", sharedQueryId);
-        throw QueryDeploymentException(sharedQueryId,
-                                       "QueryDeploymentPhase: Failed to deploy query " + std::to_string(sharedQueryId));
-    }
+    startQuery(sharedQueryId, executionNodes);
     return true;
 }
 
@@ -224,13 +217,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
 
             //enable this for sync calls
             //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
-            bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
-            if (success) {
-                NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {} successful", queryId, rpcAddress);
-            } else {
-                NES_ERROR("QueryDeploymentPhase:deployQuery: {} to {} failed", queryId, rpcAddress);
-                return false;
-            }
+            workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
         }
         completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
@@ -239,7 +226,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
     return result;
 }
 
-bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
+void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId= {}", queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
@@ -254,19 +241,12 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
         NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
         //enable this for sync calls
         //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
-        if (success) {
-            NES_DEBUG("QueryDeploymentPhase::startQuery {} to {} successful", queryId, rpcAddress);
-        } else {
-            NES_ERROR("QueryDeploymentPhase::startQuery {} to {} failed", queryId, rpcAddress);
-            return false;
-        }
+        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         completionQueues[queueForExecutionNode] = 1;
     }
 
     bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
     NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {} success={}", queryId, result);
-    return result;
 }
 
 }// namespace NES

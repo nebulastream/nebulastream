@@ -58,7 +58,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
-bool WorkerRPCClient::registerQueryAsync(const std::string& address,
+void WorkerRPCClient::registerQueryAsync(const std::string& address,
                                          const QueryPlanPtr& queryPlan,
                                          const CompletionQueuePtr& cq) {
     QueryId queryId = queryPlan->getQueryId();
@@ -96,8 +96,6 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
 }
 
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
@@ -220,7 +218,7 @@ bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
 }
 
-bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
+void WorkerRPCClient::startQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::startQueryAsync address={} queryId={}", address, queryId);
 
     StartQueryRequest request;
@@ -248,8 +246,6 @@ bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
 }
 
 bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType) {
