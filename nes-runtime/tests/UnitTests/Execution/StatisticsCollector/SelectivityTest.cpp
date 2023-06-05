@@ -224,7 +224,7 @@ TEST_P(SelectivityTest, runtimeTest) {
         auto runtime =
             std::make_unique<PipelineRuntime>(std::move(adwinRuntime), nautilusExecutablePipelineStage, 1000);
 
-        csvFile << "Selectivity " << ((double) j / 100);
+        csvFile << "Selectivity\t" << ((double) j / 100);
 
         nautilusExecutablePipelineStage->setup(pipelineContext);
         for (auto buffer : bufferVector) {

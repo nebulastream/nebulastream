@@ -61,7 +61,7 @@ class ChangeDetectionTest : public testing::Test, public AbstractPipelineExecuti
     void SetUp() override {
         std::cout << "Setup ChangeDetectionTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>((8*1024), 262144);
+        bm = std::make_shared<Runtime::BufferManager>((16*1024), 262144);
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
@@ -340,16 +340,16 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinDeltaTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with abrupt distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2500000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2000000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     // create buffers with incremental distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::INCREMENTAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(44000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(22000);
 
     // create buffers with gradual distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -357,7 +357,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinDeltaTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 5);
+    auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
     auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 5); // 0.1 und 3 oder 0.01 und 5
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
@@ -382,13 +382,13 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinDeltaTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 10000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 6000);
 
     // try different deltas for Adwin
     std::vector<double> deltas = {0.001,0.005,0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1};
 
     for (int i = 0; i < (int)deltas.size(); i ++) {
-        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeAdwinDeltaTest{}.csv",i));
+        std::ofstream csvFile(fmt::format("ChangeAbruptAdwinDeltaTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
         auto adwinTest = std::make_unique<Adwin>(deltas[i], 5); // 0.1 und 3 oder 0.01 und 5
@@ -430,16 +430,16 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinBucketsTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2500000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2000000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     // create buffers with incremental distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::INCREMENTAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(44000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(22000);
 
     // create buffers with gradual distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -447,7 +447,7 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinBucketsTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 5);
+    auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
     auto adwinBranchMisses = std::make_unique<Adwin>(0.01, 5); // 0.1 und 3 oder 0.01 und 5
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
@@ -472,16 +472,16 @@ TEST_P(ChangeDetectionTest, branchMissesAbruptChangeAdwinBucketsTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 10000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 6000);
 
     // try different number of buckets for Adwin
     std::vector<int> buckets = {2,3,4,5,8,16,32,64,128};
 
     for (int i = 0; i < (int)buckets.size(); i ++) {
-        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeAdwinBucketsTest{}.csv",i));
+        std::ofstream csvFile(fmt::format("ChangeAbruptAdwinBucketsTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto adwinTest = std::make_unique<Adwin>(0.01, buckets[i]); // 0.1 und 3 oder 0.01 und 5
+        auto adwinTest = std::make_unique<Adwin>(0.6, buckets[i]); // 0.1 und 3 oder 0.01 und 5
         auto normalizerTest = Normalizer(10, std::move(adwinTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -520,16 +520,16 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeDeltaTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2500000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2000000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     // create buffers with incremental distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::INCREMENTAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(44000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(22000);
 
     // create buffers with gradual distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -537,8 +537,8 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeDeltaTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 5);
-    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 500); // 0.01 und 400
+    auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
+    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 200);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -562,16 +562,16 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeDeltaTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 10000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 6000);
 
     // try different deltas for SeqDrift
     std::vector<double> deltas = {0.001,0.005,0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1};
 
     for (int i = 0; i < (int)deltas.size(); i ++) {
-        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeSeqDriftDeltaTest{}.csv",i));
+        std::ofstream csvFile(fmt::format("ChangeAbruptSeqDriftDeltaTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto seqDriftTest = std::make_unique<SeqDrift2>(deltas[i], 50); // 0.01 und 400
+        auto seqDriftTest = std::make_unique<SeqDrift2>(deltas[i], 200); // 0.01 und 400
         auto normalizerTest = Normalizer(10, std::move(seqDriftTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -610,16 +610,16 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeMTest) {
     pipeline->setRootOperator(scanOperator);
 
     // create buffers with distribution change
-    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2500000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::ABRUPT, 2000000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     // create buffers with incremental distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::INCREMENTAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(44000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(22000);
 
     // create buffers with gradual distribution change
     //auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2000000);
-    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    //std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -627,8 +627,8 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeMTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 5);
-    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 500); // 0.01 und 400
+    auto adwinSelectivity = std::make_unique<Adwin>(0.01, 5);
+    auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 200); // 0.01 und 400
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -652,16 +652,16 @@ TEST_P(ChangeDetectionTest, seqDriftAbruptChangeMTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 10000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 6000);
 
     // try different deltas for SeqDrift
     std::vector<int> blocks = {50,100,200,250,300,400,500,600,700};
 
     for (int i = 0; i < (int)blocks.size(); i ++) {
-        std::ofstream csvFile(fmt::format("BranchMissesAbruptChangeSeqDriftBlocksTest{}.csv",i));
+        std::ofstream csvFile(fmt::format("ChangeAbruptSeqDriftBlocksTest{}.csv",i));
         csvFile << "Selectivity;Branch misses;Change\n";
 
-        auto seqDriftTest = std::make_unique<SeqDrift2>(0.01, blocks[i]); // 0.01 und 400
+        auto seqDriftTest = std::make_unique<SeqDrift2>(0.3, blocks[i]); // 0.01 und 400
         auto normalizerTest = Normalizer(10, std::move(seqDriftTest));
 
         for (uint64_t j = 0; j < (uint64_t)branchMissesValues.size(); ++j) {
@@ -701,7 +701,7 @@ TEST_P(ChangeDetectionTest, branchMissesIncrementalChangeTest) {
 
     // create buffers with distribution change
     auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::INCREMENTAL, 2000000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(44000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(22000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -709,8 +709,8 @@ TEST_P(ChangeDetectionTest, branchMissesIncrementalChangeTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 50);
-   auto adwinBranchMisses = std::make_unique<Adwin>(0.1, 3);
+    auto adwinSelectivity = std::make_unique<Adwin>(0.1, 5);
+    auto adwinBranchMisses = std::make_unique<Adwin>(0.6, 5);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -735,7 +735,7 @@ TEST_P(ChangeDetectionTest, branchMissesIncrementalChangeTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 44000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 22000);
 
     csvFile.close();
 }
@@ -769,7 +769,7 @@ TEST_P(ChangeDetectionTest, branchMissesGradualChangeTest) {
 
     // create buffers with distribution change
     auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::GRADUAL, 2000000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(10000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(6000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -777,8 +777,8 @@ TEST_P(ChangeDetectionTest, branchMissesGradualChangeTest) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
-    auto adwinBranchMisses = std::make_unique<Adwin>(0.1, 3);
+    auto adwinSelectivity = std::make_unique<Adwin>(0.1, 5);
+    auto adwinBranchMisses = std::make_unique<Adwin>(0.6, 5);
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);
 
@@ -803,7 +803,7 @@ TEST_P(ChangeDetectionTest, branchMissesGradualChangeTest) {
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
-    ASSERT_EQ(pipelineContext.buffers.size(), 10000);
+    ASSERT_EQ(pipelineContext.buffers.size(), 6000);
 
     csvFile.close();
 }
@@ -842,15 +842,15 @@ TEST_P(ChangeDetectionTest, reorderPointDetectionTest) {
 
     // create buffers with distribution change
     auto changeDataGenerator = ChangeDataGenerator(bm, memoryLayout, Execution::ChangeType::REOCCURRING, 1000000);
-    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(42000);
+    std::vector<TupleBuffer> bufferVector = changeDataGenerator.generateBuffers(21000);
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
-    auto adwinBranchMisses = std::make_unique<Adwin>(0.01,5);
+    auto adwinSelectivity = std::make_unique<Adwin>(0.6, 5);
+    auto adwinBranchMisses = std::make_unique<Adwin>(0.6,5);
     //auto seqDriftBranchMisses = std::make_unique<SeqDrift2>(0.01, 250); // 0.5 500 0.8 250
     auto profiler = std::make_shared<Profiler>();
     nautilusExecutablePipelineStage->setProfiler(profiler);

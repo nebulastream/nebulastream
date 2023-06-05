@@ -38,7 +38,7 @@ class ChangeDetectorsTest : public testing::Test {
 
 TEST(ChangeDetectorsTest, adwin) {
     auto adwin = Adwin(0.01, 5);
-    auto tuples = 1000000;
+    auto tuples = 10000;
     auto value = 0.1;
 
     auto runtimeStart = std::chrono::high_resolution_clock::now();
@@ -58,8 +58,8 @@ TEST(ChangeDetectorsTest, adwin) {
 }
 
 TEST(ChangeDetectorsTest, seqDrift) {
-    auto seqDrift = SeqDrift2(0.01,200);
-    auto tuples = 1000000;
+    auto seqDrift = SeqDrift2(0.01,50);
+    auto tuples = 10000;
     auto value = 0.1;
 
     auto runtimeStart = std::chrono::high_resolution_clock::now();
@@ -70,7 +70,7 @@ TEST(ChangeDetectorsTest, seqDrift) {
     std::chrono::duration<double, std::milli> duration = runtimeEnd - runtimeStart;
     std::chrono::duration<float> secs = runtimeEnd - runtimeStart;
 
-    std::cout << "ms " << duration.count() << std::endl;
+    std::cout << "SeqDrift ms " << duration.count() << std::endl;
     std::cout << "tuples/ms " << tuples/duration.count() << std::endl;
 
     std::cout << "sec " << secs.count() << std::endl;

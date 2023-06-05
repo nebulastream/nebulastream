@@ -52,7 +52,7 @@ std::vector<TupleBuffer> ChangeDataGenerator::generateBuffers(size_t numberOfBuf
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutPtr, buffer);
-        for (uint64_t j = 0; j < 5; j++) {
+        for (uint64_t j = 0; j < 10; j++) {
             std::shuffle(std::begin(field1Values), std::end(field1Values), rng);
             std::shuffle(std::begin(field2Values), std::end(field2Values), rng);
             for (uint64_t k = 0; k < field1ValuesSize; k++) {
@@ -102,11 +102,11 @@ std::vector<int64_t> ChangeDataGenerator::getNextValuesGradual(){
     if (distributionF1Start == 1 || gradualDeclinePeriod < 0){
         distributionF1Start = 50;
         noChangeRemain = gradualChangePeriod;
-        gradualChangePeriod += 10000;
+        gradualChangePeriod += 20000;
     } else {
         distributionF1Start = 1;
         noChangeRemain = gradualDeclinePeriod;
-        gradualDeclinePeriod -= 10000;
+        gradualDeclinePeriod -= 20000;
     }
     std::vector<int64_t> fieldValues(100);
     std::iota(std::begin(fieldValues), std::end(fieldValues), distributionF1Start);

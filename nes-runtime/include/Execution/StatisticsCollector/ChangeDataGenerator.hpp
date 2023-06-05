@@ -55,8 +55,8 @@ class ChangeDataGenerator {
     int64_t distributionF2Start = 1;
     int64_t incrementSteps = 5;
     bool reoccur = false;
-    int64_t gradualChangePeriod = 10000;
-    int64_t gradualDeclinePeriod = 100000;
+    int64_t gradualChangePeriod = 20000;
+    int64_t gradualDeclinePeriod = 200000;
     std::random_device rd = std::random_device {};
     std::default_random_engine rng = std::default_random_engine {rd()};
 
