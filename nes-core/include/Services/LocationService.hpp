@@ -78,7 +78,7 @@ class LocationService {
      *          ]
      *  }
      */
-    nlohmann::json requestLocationDataFromAllMobileNodesAsJson();
+    nlohmann::json requestLocationAndParentDataFromAllMobileNodes();
 
     /**
      * @brief get information about a mobile workers predicted trajectory the last update position of the devices local

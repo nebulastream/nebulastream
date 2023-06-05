@@ -81,7 +81,7 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
     NES_NOT_IMPLEMENTED();
 }
 
-nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
+nlohmann::json LocationService::requestLocationAndParentDataFromAllMobileNodes() {
     auto nodeVector = locationIndex->getAllNodeLocations();
     auto locMapJson = nlohmann::json::array();
     auto mobileEdgesJson = nlohmann::json::array();

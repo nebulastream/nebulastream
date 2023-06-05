@@ -36,6 +36,8 @@ namespace NES {
 
 std::string ip = "127.0.0.1";
 
+using allMobileResponse = std::map<std::string, std::vector<std::map<std::string, nlohmann::json>>>;
+
 class LocationServiceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
@@ -117,7 +119,6 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     cmpLoc[1] = 13.351743136322877;
 }
 
-//todo #3390: set mobile node locations via rpc calls so locations can acutally be returned
 TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto rpcPortWrk1 = getAvailablePort();
     auto rpcPortWrk2 = getAvailablePort();
@@ -129,9 +130,11 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
     topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
-    auto responseNoNodes = locationService->requestLocationDataFromAllMobileNodesAsJson();
+    auto response = locationService->requestLocationAndParentDataFromAllMobileNodes()
+        .get<allMobileResponse>();
 
-    ASSERT_EQ(responseNoNodes.get<std::vector<nlohmann::json>>().size(), 0);
+    ASSERT_EQ(response["nodes"].size(), 0);
+    ASSERT_EQ(response["edges"].size(), 0);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -148,48 +151,66 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node4Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties);
 
-    auto response0 = locationService->requestLocationDataFromAllMobileNodesAsJson();
+    response = locationService->requestLocationAndParentDataFromAllMobileNodes()
+        .get<allMobileResponse>();
 
-    ASSERT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
+    ASSERT_EQ(response["nodes"].size(), 0);
+    ASSERT_EQ(response["edges"].size(), 0);
 
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
-    auto response1 = locationService->requestLocationDataFromAllMobileNodesAsJson();
-    auto getLocResp1 = response1.get<std::vector<nlohmann::json>>();
-    ASSERT_TRUE(getLocResp1.size() == 1);
+    auto response1 = locationService->requestLocationAndParentDataFromAllMobileNodes();
+    auto getLocResp1 = response1.get<allMobileResponse>();
+    ASSERT_TRUE(getLocResp1.size() == 2);
 
     nlohmann::json cmpLoc;
     cmpLoc[0] = 52.55227464714949;
     cmpLoc[1] = 13.351743136322877;
-    auto entry = getLocResp1[0].get<std::map<std::string, nlohmann::json>>();
+    auto nodes = getLocResp1["nodes"];
+    ASSERT_EQ(nodes.size(), 1);
+
+    auto entry = nodes[0];
     EXPECT_EQ(entry.size(), 2);
     EXPECT_TRUE(entry.find("id") != entry.end());
     EXPECT_EQ(entry.at("id"), node3Id);
     EXPECT_TRUE(entry.find("location") != entry.end());
     ASSERT_EQ(entry.at("location"), cmpLoc);
 
+    auto edges = getLocResp1["edges"];
+    ASSERT_EQ(edges.size(), 1);
+
+    auto edge = edges[0];
+    EXPECT_EQ(edge.size(), 2);
+    EXPECT_NE(edge.find("source"), edge.end());
+    EXPECT_EQ(edge.at("source"), node3Id);
+    EXPECT_NE(edge.find("target"), edge.end());
+    EXPECT_EQ(edge.at("target"), 1);
+
     topologyManagerService->updateGeoLocation(node4Id, {53.55227464714949, -13.351743136322877});
 
-    auto response2 = locationService->requestLocationDataFromAllMobileNodesAsJson();
-    auto getLocResp2 = response2.get<std::vector<nlohmann::json>>();
+    auto response2 = locationService->requestLocationAndParentDataFromAllMobileNodes();
+    auto getLocResp2 = response2.get<allMobileResponse>();
     ASSERT_EQ(getLocResp2.size(), 2);
+    nodes = getLocResp2["nodes"];
+    edges = getLocResp2["edges"];
+    ASSERT_EQ(nodes.size(), 2);
+    ASSERT_EQ(edges.size(), 2);
 
-    for (auto e : getLocResp2) {
-        entry = e.get<std::map<std::string, nlohmann::json>>();
-        EXPECT_EQ(entry.size(), 2);
-        EXPECT_TRUE(entry.find("id") != entry.end());
-        NES_DEBUG2("checking element with id {}", entry.at("id"));
-        EXPECT_TRUE(entry.at("id") == node3Id || entry.at("id") == node4Id);
-        if (entry.at("id") == node3Id) {
+    for (auto node : nodes) {
+        EXPECT_EQ(node.size(), 2);
+        EXPECT_TRUE(node.find("id") != node.end());
+        NES_DEBUG2("checking element with id " << node.at("id"));
+        EXPECT_TRUE(node.at("id") == node3Id || node.at("id") == node4Id);
+        if (node.at("id") == node3Id) {
             cmpLoc[0] = 52.55227464714949;
             cmpLoc[1] = 13.351743136322877;
         }
-        if (entry.at("id") == node4Id) {
+        if (node.at("id") == node4Id) {
             cmpLoc[0] = 53.55227464714949;
             cmpLoc[1] = -13.351743136322877;
         }
-        EXPECT_TRUE(entry.find("location") != entry.end());
-        EXPECT_EQ(entry.at("location"), cmpLoc);
+        EXPECT_TRUE(node.find("location") != node.end());
+        EXPECT_EQ(node.at("location"), cmpLoc);
     }
 }
 
