@@ -67,10 +67,10 @@ class ChangeLog {
 
     /**
      * Merge all change log entries together
-     * @param changeLogEntries: entries to be merged
+     * @param changeLogEntriesToMerge: entries to be merged
      * @return merged change log entry
      */
-    ChangeLogEntryPtr mergeChangeLogs(std::vector<ChangeLogEntryPtr>& changeLogEntries);
+    ChangeLogEntryPtr mergeChangeLogs(std::vector<std::pair<uint64_t, ChangeLogEntryPtr>>& changeLogEntriesToMerge);
 
     /**
      * Clean up the change log entries created before the provided timestamp
