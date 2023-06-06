@@ -26,6 +26,7 @@ using Exceptions::RequestExecutionException;
 namespace Configurations {
 class OptimizerConfiguration;
 }
+using RequestId = uint64_t;
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
@@ -57,10 +58,12 @@ class AbstractRequest {
   public:
     /**
      * @brief constructor
+     * @param requestId: this requests id
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      */
-    explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
+     //todo: at what point in the lifecyclye shoud the request id be assigned?
+    explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -129,6 +132,9 @@ class AbstractRequest {
      * request
      */
     virtual void executeRequestLogic(StorageHandler& storageHandle) = 0;
+
+  protected:
+    RequestId requestId;
 
   private:
     uint8_t maxRetries;

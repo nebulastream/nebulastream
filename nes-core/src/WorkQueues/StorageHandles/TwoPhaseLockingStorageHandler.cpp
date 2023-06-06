@@ -18,16 +18,18 @@
 
 namespace NES {
 
-TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(TwoPhaseLockManagerPtr lockManager)
-    : lockManager(std::move(lockManager)), resourcesLocked(false) {}
+TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                             TopologyPtr topology,
+                                                             QueryCatalogServicePtr queryCatalogService,
+                                                             GlobalQueryPlanPtr globalQueryPlan,
+                                                             Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                             Catalogs::UDF::UDFCatalogPtr udfCatalog) : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)), queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 
-void TwoPhaseLockingStorageHandler::acquireResources(std::vector<ResourceType> requiredResources) {
+void TwoPhaseLockingStorageHandler::acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) {
     //do not allow performing resource acquisition more than once
-    if (resourcesLocked) {
+    if (isLockHolder(requestId)) {
         //todo #3611: more verbose exception handling
         throw std::exception();
-    } else if (!requiredResources.empty()) {
-        resourcesLocked = true;
     }
 
     //sort the resource list to ensure that resources are acquired in a deterministic order for deadlock prevention
@@ -35,70 +37,137 @@ void TwoPhaseLockingStorageHandler::acquireResources(std::vector<ResourceType> r
 
     //lock the resources
     for (const auto& type : requiredResources) {
-        lockResource(type);
+        lockResource(type, requestId);
     }
 }
 
-void TwoPhaseLockingStorageHandler::lockResource(ResourceType resourceType) {
+void TwoPhaseLockingStorageHandler::lockResource(std::atomic<uint64_t>& holder, RequestId requestId) {
+    auto expected = INVALID_REQUEST_ID;
+    while (!holder.compare_exchange_weak(expected, requestId)) {
+        holder.wait(expected);
+        expected = INVALID_REQUEST_ID;
+    }
+}
+
+//todo: define a function starting at a certain type only
+std::vector<ResourceType> TwoPhaseLockingStorageHandler::getResourcesHeldByRequest(RequestId requestId) {
+    std::vector<ResourceType> resourcesTypes;
+    for (uint8_t i = 0; i <= (uint8_t) ResourceType::Last; ++i) {
+        if (getHolder((ResourceType) i) == requestId) {
+            resourcesTypes.push_back((ResourceType) i);
+        }
+    }
+    return resourcesTypes;
+}
+
+bool TwoPhaseLockingStorageHandler::isLockHolder(RequestId requestId) {
+    for (uint8_t i = 0; i <= (uint8_t) ResourceType::Last; ++i) {
+        if (getHolder((ResourceType) i) == requestId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::atomic<RequestId>& TwoPhaseLockingStorageHandler::getHolder(ResourceType resourceType) {
     switch (resourceType) {
-        case ResourceType::Topology: topology = lockManager->getTopologyHandle(); break;
-        case ResourceType::QueryCatalogService: queryCatalogService = lockManager->getQueryCatalogHandle(); break;
-        case ResourceType::SourceCatalog: sourceCatalog = lockManager->getSourceCatalogHandle(); break;
-        case ResourceType::GlobalExecutionPlan: globalExecutionPlan = lockManager->getGlobalExecutionPlanHandle(); break;
-        case ResourceType::GlobalQueryPlan: globalQueryPlan = lockManager->getGlobalQueryPlanHandle(); break;
-        case ResourceType::UdfCatalog: udfCatalog = lockManager->getUDFCatalogHandle(); break;
+        case ResourceType::Topology:
+            return topologyHolder;
+        case ResourceType::QueryCatalogService:
+            return queryCatalogServiceHolder;
+        case ResourceType::SourceCatalog:
+            return sourceCatalogHolder;
+        case ResourceType::GlobalExecutionPlan:
+            return globalExecutionPlanHolder;
+        case ResourceType::GlobalQueryPlan:
+            return globalQueryPlanHolder;
+        case ResourceType::UdfCatalog:
+            return udfCatalogHolder;
     }
 }
 
-GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle() {
-    if (!globalExecutionPlan) {
+
+void TwoPhaseLockingStorageHandler::lockResource(ResourceType resourceType, RequestId requestId) {
+    lockResource(getHolder(resourceType), requestId);
+    /*
+    switch (resourceType) {
+        case ResourceType::Topology:
+            lockResource(topologyHolder, requestId);
+            break;
+        case ResourceType::QueryCatalogService:
+            lockResource(queryCatalogServiceHolder, requestId);
+            break;
+        case ResourceType::SourceCatalog:
+            lockResource(sourceCatalogHolder, requestId);
+            break;
+        case ResourceType::GlobalExecutionPlan:
+            lockResource(globalExecutionPlanHolder, requestId);
+            break;
+        case ResourceType::GlobalQueryPlan:
+            lockResource(globalQueryPlanHolder, requestId);
+            break;
+        case ResourceType::UdfCatalog:
+            lockResource(udfCatalogHolder, requestId);
+            break;
+    }
+     */
+}
+
+GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(RequestId requestId) {
+    if (globalExecutionPlanHolder != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
     return globalExecutionPlan;
 }
 
-TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle() {
-    if (!topology) {
+TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(RequestId requestId) {
+    if (topologyHolder != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
     return topology;
 }
 
-QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle() {
-    if (!queryCatalogService) {
+QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle(RequestId requestId) {
+    if (queryCatalogServiceHolder != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
     return queryCatalogService;
 }
 
-GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle() {
-    if (!globalQueryPlan) {
+GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(RequestId requestId) {
+    if (globalQueryPlanHolder != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
     return globalQueryPlan;
 }
 
-SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle() {
-    if (!sourceCatalog) {
+SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(RequestId requestId) {
+    if (sourceCatalogHolder != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
     return sourceCatalog;
 }
 
-UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle() {
-    if (!udfCatalog) {
+UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(RequestId requestId) {
+    if (udfCatalogHolder != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
     return udfCatalog;
 }
-
-std::shared_ptr<TwoPhaseLockingStorageHandler> TwoPhaseLockingStorageHandler::create(const TwoPhaseLockManagerPtr& lockManager) {
-    return std::make_shared<TwoPhaseLockingStorageHandler>(lockManager);
+std::shared_ptr<TwoPhaseLockingStorageHandler>
+TwoPhaseLockingStorageHandler::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                      TopologyPtr topology,
+                                      QueryCatalogServicePtr queryCatalogService,
+                                      GlobalQueryPlanPtr globalQueryPlan,
+                                      Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                      Catalogs::UDF::UDFCatalogPtr udfCatalog) {
+    return std::make_shared<TwoPhaseLockingStorageHandler>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
 }
+
 }// namespace NES
