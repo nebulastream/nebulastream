@@ -58,7 +58,9 @@ class WindowAggregationFunctionTest
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG2("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test class."); }
+    static void TearDownTestCase() {
+        NES_DEBUG2("WindowAggregationFunctionTest: Tear down WindowAggregationFunctionTest test class.");
+    }
 
     SchemaPtr sourceSchema;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
