@@ -26,11 +26,11 @@
 #include <utility>
 
 namespace NES::Experimental {
-FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
+FailQueryRequest::FailQueryRequest(RequestId requestId, NES::QueryId queryId,
                                    NES::QuerySubPlanId failedSubPlanId,
                                    uint8_t maxRetries,
                                    NES::WorkerRPCClientPtr workerRpcClient)
-    : AbstractRequest({ResourceType::GlobalQueryPlan,
+    : AbstractRequest(requestId, {ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},
@@ -49,10 +49,10 @@ void FailQueryRequest::postRollbackHandle(RequestExecutionException&, NES::Stora
 void FailQueryRequest::postExecution(NES::StorageHandler&) {}
 
 void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
-    globalQueryPlan = storageHandle.getGlobalQueryPlanHandle();
-    globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle();
-    queryCatalogService = storageHandle.getQueryCatalogServiceHandle();
-    topology = storageHandle.getTopologyHandle();
+    globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);
+    globalExecutionPlan = storageHandle.getGlobalExecutionPlanHandle(requestId);
+    queryCatalogService = storageHandle.getQueryCatalogServiceHandle(requestId);
+    topology = storageHandle.getTopologyHandle(requestId);
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)

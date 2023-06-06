@@ -53,43 +53,43 @@ class SerialStorageHandler : public StorageHandler {
      * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
      * @param requiredResources The resources required for request execution
      */
-    void acquireResources(std::vector<ResourceType> requiredResources) override;
+    void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
 
     /**
      * @brief Obtain a mutable topology handle.
      * @return a handle to the topology
      */
-    TopologyHandle getTopologyHandle() override;
+    TopologyHandle getTopologyHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable query catalog handle.
      * @return a handle to the query catalog.
      */
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle() override;
+    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable source catalog handle.
      * @return a handle to the source catalog.
      */
-    SourceCatalogHandle getSourceCatalogHandle() override;
+    SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
      * @return a handle to the global execution plan.
      */
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
+    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global query plan handle.
      * @return a handle to the global query plan.
      */
-    GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
+    GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
-    UDFCatalogHandle getUDFCatalogHandle() override;
+    UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
