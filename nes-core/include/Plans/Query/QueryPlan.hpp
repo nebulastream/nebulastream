@@ -14,7 +14,6 @@
 
 #ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
-#include <Util/PlacementStrategy.hpp>
 #include <Common/Identifiers.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
