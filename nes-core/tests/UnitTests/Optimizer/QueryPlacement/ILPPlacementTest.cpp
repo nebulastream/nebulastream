@@ -559,7 +559,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
     NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -757,7 +757,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
     NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlansToDeploy[0]);
+    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();

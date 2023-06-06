@@ -1358,7 +1358,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, true);
-    queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, sharedQueryPlan);
+    queryPlacementPhase->execute(sharedQueryPlan);
     NES_DEBUG2("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
