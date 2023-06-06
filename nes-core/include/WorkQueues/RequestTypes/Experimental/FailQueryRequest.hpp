@@ -57,6 +57,14 @@ class FailQueryRequest : public AbstractRequest<FailQueryResponse> {
                      uint8_t maxRetries,
                      NES::WorkerRPCClientPtr workerRpcClient, std::promise<FailQueryResponse> responsePromise);
 
+    /**
+     * @brief Constructor to be used if no failed sub plan id can be provided
+     * @param queryId: The id of the query that failed
+     * @param maxRetries: Maximum number of retry attempts for the request
+     * @param workerRpcClient: The worker rpc client to be used during undeployment
+     */
+    FailQueryRequest(QueryId queryId, uint8_t maxRetries, WorkerRPCClientPtr workerRpcClient);
+
   protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back

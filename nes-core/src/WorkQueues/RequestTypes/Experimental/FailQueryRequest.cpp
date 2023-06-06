@@ -55,6 +55,13 @@ std::shared_ptr<FailQueryRequest> FailQueryRequest::create(RequestId requestId,
                                               std::move(responsePromise));
 }
 
+FailQueryRequest::FailQueryRequest(NES::QueryId queryId,
+                                   uint8_t maxRetries,
+                                   NES::WorkerRPCClientPtr workerRpcClient)
+    : FailQueryRequest(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries, workerRpcClient) {}
+
+void FailQueryRequest::preRollbackHandle(RequestExecutionException&, NES::StorageHandler&) {}
+
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, NES::StorageHandler&) {}
 
 void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler&) {}
@@ -62,7 +69,19 @@ void FailQueryRequest::rollBack(const RequestExecutionException&, StorageHandler
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException& ex, NES::StorageHandler& storageHandler) {
 
     if (ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
-        auto undeploymentException = dynamic_cast<QueryUndeploymentException&>(ex);
+    //todo: move these cases to the back
+    if (ex.instanceOf<Exceptions::QueryNotFoundException>()) {
+        //todo: set flag that we do not want to retry this request?
+        NES_WARNING2("Exception {}", ex.as<Exceptions::QueryUndeploymentException>()->what());
+    } else if (ex.instanceOf<Exceptions::InvalidQueryStatusException>()) {
+        //query is already marked for failure, failed or stopped
+        //todo: set flag that we do not want to retry this request?
+        NES_WARNING2("Exception {}", ex.as<Exceptions::InvalidQueryStatusException>()->what());
+    } else if (ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
+        auto undeploymentException = dynamic_cast<Exceptions::QueryUndeploymentException&>(ex);
+        //todo: laura suggests setting query to stopped for any exception not related to grpc
+
+        //todo: keep this as handling for failed async results and differentiate it from the other cases (by subclassing undeployment exception?)
         auto sharedQueryId = undeploymentException.getSharedQueryId();
 
         if (sharedQueryId.has_value()) {
@@ -73,11 +92,13 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException& ex, N
             postUndeployment(sharedQueryId.value());
         }
     }
+    //todo: how to handle post undeploy exception
 }
 
 void FailQueryRequest::undeployQueries(SharedQueryId sharedQueryId) {//undeploy queries
     try {
     auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+        //this also removes the subplans from the global execution plan. does that mean we do not have to touch that separately?
         queryUndeploymentPhase->execute(queryId, SharedQueryPlanStatus::Failed);
     } catch (Exceptions::RuntimeException& e) {
         throw QueryUndeploymentException(sharedQueryId, "failed to undeploy query with id " + std::to_string(queryId));
@@ -102,7 +123,12 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
     response.sharedQueryId = sharedQueryId;
     responsePromise.set_value(response);
 
-    queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
+    //todo: mark for failure without query subplan id if none was supplied. laura had a function for this?
+    if (querySubPlanId == INVALID_QUERY_SUB_PLAN_ID) {
+        //todo: remove wihtout sublplan id
+    } else {
+        queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
+    }
 
     //todo: what does this call actually do if we can still retrieve the sqp in the postUndeployment funciton
     //todo: is this tested?
@@ -119,7 +145,11 @@ void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandle
 
 //todo: rename to after undeployment
 void NES::Experimental::FailQueryRequest::postUndeployment(SharedQueryId sharedQueryId) {
-    for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
+    auto sqp = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    if (!sqp) {
+        //todo throw PostUndeploymentException
+    }
+    for (auto& id : sqp->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryStatus::FAILED, "Failed");
     }
 
