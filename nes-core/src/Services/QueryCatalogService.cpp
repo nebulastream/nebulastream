@@ -128,6 +128,9 @@ void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
     //Mark queries for failure and return
     for (auto& queryCatalogEntry : queryCatalogEntries) {
         queryCatalogEntry->setQueryStatus(QueryStatus::MARKED_FOR_FAILURE);
+        if (querySubPlanId == INVALID_QUERY_SUB_PLAN_ID) {
+            continue;
+        }
         for (const auto& subQueryPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
             //Mark the sub query plan as already failed for which the failure message was received
             if (subQueryPlanMetaData->getQuerySubPlanId() == querySubPlanId) {
