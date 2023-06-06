@@ -28,6 +28,7 @@ enum class ResourceType : uint8_t {
     GlobalExecutionPlan,
     GlobalQueryPlan,
     UdfCatalog,
+    Last = UdfCatalog,
 };
 }// namespace NES
 

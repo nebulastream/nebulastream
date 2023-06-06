@@ -29,12 +29,14 @@ using PipelineId = uint64_t;
 using SharedQueryId = uint64_t;
 using QuerySubPlanId = uint64_t;
 using TopologyNodeId = uint64_t;
+using RequestId = uint64_t;
 static constexpr QueryId INVALID_QUERY_ID = 0;
 static constexpr QuerySubPlanId INVALID_QUERY_SUB_PLAN_ID = 0;
 static constexpr SharedQueryId INVALID_SHARED_QUERY_ID = 0;
 static constexpr OperatorId INVALID_OPERATOR_ID = 0;
 static constexpr OriginId INVALID_ORIGIN_ID = 0;
 static constexpr TopologyNodeId INVALID_TOPOLOGY_NODE_ID = 0;
+static constexpr RequestId INVALID_REQUEST_ID = 0;
 
 }// namespace NES
 

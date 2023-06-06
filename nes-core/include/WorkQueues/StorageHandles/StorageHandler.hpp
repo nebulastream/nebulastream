@@ -18,6 +18,7 @@
 #include <WorkQueues/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
 #include <vector>
+#include <Common/Identifiers.hpp>
 
 namespace NES {
 
@@ -72,43 +73,43 @@ class StorageHandler {
      * Performs tasks necessary before request execution and locks resources if necessary
      * @param requiredResources The resources required for executing the request.
      */
-    virtual void acquireResources(std::vector<ResourceType> requiredResources) = 0;
+    virtual void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) = 0;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
      * @return a handle to the global execution plan.
      */
-    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
+    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable topology handle.
      * @return a handle to the topology
      */
-    virtual TopologyHandle getTopologyHandle() = 0;
+    virtual TopologyHandle getTopologyHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable query catalog handle.
      * @return a handle to the query catalog.
      */
-    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle() = 0;
+    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable global query plan handle.
      * @return a handle to the global query plan.
      */
-    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
+    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable source catalog handle.
      * @return a handle to the source catalog.
      */
-    virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
+    virtual SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable udf catalog handle.
      * @return a handle to the udf catalog.
      */
-    virtual UDFCatalogHandle getUDFCatalogHandle() = 0;
+    virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) = 0;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_
