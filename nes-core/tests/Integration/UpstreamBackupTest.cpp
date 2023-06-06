@@ -68,7 +68,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 4;
         coordinatorConfig->bufferSizeInBytes = 131072;
-        coordinatorConfig->numberOfSlots = 1;
+        coordinatorConfig->numberOfSlots = 2;
         coordinatorConfig->worker.memoryCapacity = 200000;
         coordinatorConfig->worker.networkCapacity = 200000;
         coordinatorConfig->worker.mtbfValue = 386228;
@@ -84,7 +84,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numWorkerThreads = 4;
         workerConfig1->numberOfBuffersPerEpoch = 4;
         workerConfig1->bufferSizeInBytes = 131072;
-        workerConfig1->numberOfSlots = 1;
+        workerConfig1->numberOfSlots = 2;
         workerConfig1->memoryCapacity = 25000;
         workerConfig1->networkCapacity = 25000;
         workerConfig1->mtbfValue = 55000;
@@ -372,7 +372,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_LEAST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::MFTP);
+                                                                    FaultTolerancePlacement::NONE);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

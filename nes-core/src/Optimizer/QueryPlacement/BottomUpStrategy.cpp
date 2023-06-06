@@ -81,7 +81,6 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
-
         // 1. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedUpStreamOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedUpStreamOperator->getProperty(PLACED))) {
             //Fetch the execution node storing the operator

@@ -30,6 +30,7 @@ message SerializableQueryPlan{
   optional uint64 querySubPlanId = 4;
   optional uint64 faultToleranceMode = 5;
   optional uint64 lineageMode = 6;
+  optional uint64 epochValue = 7;
 }
 
 message SubmitQueryRequest {

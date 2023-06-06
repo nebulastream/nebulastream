@@ -57,6 +57,9 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
         NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
         serializableQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
         serializableQueryPlan->set_queryid(queryPlan->getQueryId());
+        serializableQueryPlan->set_faulttolerancemode(queryPlan->getFaultToleranceType());
+        serializableQueryPlan->set_lineagemode(queryPlan->getLineageType());
+        serializableQueryPlan->set_epochvalue(queryPlan->getEpochValue());
     }
 }
 
@@ -89,6 +92,7 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     //set properties of the query plan
     uint64_t queryId;
     uint64_t querySubPlanId;
+    uint64_t epochValue;
 
     if (serializedQueryPlan->has_queryid()) {
         queryId = serializedQueryPlan->queryid();
@@ -102,7 +106,13 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
         querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
     }
 
-    return QueryPlan::create(queryId, querySubPlanId, rootOperators);
+    if (serializedQueryPlan->has_epochvalue()) {
+        epochValue = serializedQueryPlan->epochvalue();
+    } else {
+        epochValue = 0;
+    }
+
+    return QueryPlan::create(queryId, querySubPlanId, rootOperators, epochValue);
 }
 
 }// namespace NES

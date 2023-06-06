@@ -24,8 +24,8 @@
 
 namespace NES {
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators) {
-    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators)));
+QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators, uint64_t epochValue) {
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators), epochValue));
 }
 
 QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
@@ -44,8 +44,8 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), 
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
-    : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId) {}
+QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators, uint64_t epochValue)
+    : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId), epochValue(epochValue) {}
 
 QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
 

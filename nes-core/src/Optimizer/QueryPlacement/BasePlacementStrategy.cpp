@@ -46,9 +46,6 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
     std::vector<TopologyNodePtr> topologyNodes;
     auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
     auto currentTopologyNode = (*topologyIterator.begin())->as<TopologyNode>();
-    if (currentTopologyNode->hasNodeProperty("epoch")) {
-        queryPlan->setEpochValue(std::any_cast<uint64_t>(currentTopologyNode->getNodeProperty("epoch")));
-    }
     for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         topologyNodes.emplace_back((*itr)->as<TopologyNode>());
     }
@@ -125,7 +122,7 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
     }
 
     uint64_t chosenPathId = 0;
-    if (ftPlacement == FaultTolerancePlacement::MFTP) {
+    if (ftPlacement == FaultTolerancePlacement::MFTP || ftPlacement == FaultTolerancePlacement::NAIVE) {
         std::optional<TopologyNodePtr> topologiesForPlacement;
         std::vector<std::vector<TopologyNodePtr>> availablePaths;
         for (auto upstreamTopologyNode : upstreamTopologyNodes) {
@@ -150,7 +147,7 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
             }
         }
         if (ftPlacement == FaultTolerancePlacement::NAIVE) {
-            placeFaultToleranceNaive(availablePaths);
+            selectedTopologyForPlacement = placeFaultToleranceNaive(availablePaths);
         } else {
             selectedTopologyForPlacement = placeFaultToleranceMFTP(availablePaths);
         }
@@ -199,7 +196,7 @@ BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<Topology
     auto maxScore = 0;
     auto selectedPath = std::vector<TopologyNodePtr>();
     for (auto path : availablePaths) {
-        auto topologyIterator = path.begin();
+        auto topologyIterator = ++path.begin();
         auto pathScore = 0;
         while (topologyIterator != path.end()) {
             auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
@@ -214,9 +211,12 @@ BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<Topology
             selectedPath = path;
         }
     }
-    for (auto currentTopologyNode : selectedPath) {
+    auto topologyIterator = ++selectedPath.begin();
+    while (topologyIterator != selectedPath.end()) {
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         currentTopologyNode->addNodeProperty("isBuffering", 1);
         currentTopologyNode->reduceResources(1);
+        ++topologyIterator;
     }
     return selectedPath;
 }
@@ -581,6 +581,8 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
                                                   FaultToleranceType::Value faultToleranceType,
                                                   LineageType::Value lineageType) {
     NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
+    auto anyTopologicalNode = topologyMap.begin();
+    auto currentEpoch = std::any_cast<uint64_t>(anyTopologicalNode->second->getEpochValue());
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (const auto& executionNode : executionNodes) {
         NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
@@ -595,6 +597,7 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
             typeInferencePhase->execute(querySubPlan);
             querySubPlan->setFaultToleranceType(faultToleranceType);
             querySubPlan->setLineageType(lineageType);
+            querySubPlan->setEpochValue(currentEpoch);
         }
     }
     return true;

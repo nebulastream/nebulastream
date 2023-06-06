@@ -51,9 +51,10 @@ class QueryPlan {
      * @param queryId :  the query id
      * @param querySubPlanId : the query sub-plan id
      * @param rootOperators : vector of root Operators
+     * @param epochValue
      * @return a pointer to the query plan.
      */
-    static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+    static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators,  uint64_t epochValue = 0);
 
     /**
      * @brief Creates a new query plan with a query id and a query sub plan id.
@@ -62,6 +63,8 @@ class QueryPlan {
      * @return a pointer to the query plan.
      */
     static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId);
+
+
 
     /**
      * @brief Creates a new query plan with a root operator.
@@ -295,8 +298,9 @@ class QueryPlan {
      * @param queryId :  the query id
      * @param querySubPlanId : the query sub-plan id
      * @param rootOperators : vector of root Operators
+     * @param epochValue
      */
-    QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+    QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators, uint64_t epochValue = 0);
 
     /**
      * @brief Creates a new query plan with a query id and a query sub plan id.
@@ -320,10 +324,10 @@ class QueryPlan {
     QueryId queryId;
     FaultToleranceType::Value faultToleranceType;
     FaultTolerancePlacement::Value ftPlacement;
-    uint64_t epochValue;
     LineageType::Value lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
+    uint64_t epochValue;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
