@@ -1,16 +1,16 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -64,13 +64,13 @@ using namespace NES;
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("ILPPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_DEBUG2("Setup ILPPlacementTest test class.");
+            NES_DEBUG("Setup ILPPlacementTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::TestWithErrorHandling::SetUp();
-            NES_DEBUG2("Setup ILPPlacementTest test case.");
+            NES_DEBUG("Setup ILPPlacementTest test case.");
             auto cppCompiler = Compiler::CPPCompiler::create();
             auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
             queryParsingService = QueryParsingService::create(jitCompiler);
@@ -231,16 +231,16 @@ using namespace NES;
         while (true) {
             if (sat == opt.check()) {
                 model m = opt.get_model();
-                NES_DEBUG2(m);
-                NES_DEBUG2("-------------------------------");
+                NES_DEBUG(m);
+                NES_DEBUG("-------------------------------");
                 if (m.eval(P21).get_numeral_int() == 1) {
-                    NES_DEBUG2("Operator on Node 1");
+                    NES_DEBUG("Operator on Node 1");
                 } else if (m.eval(P22).get_numeral_int() == 1) {
-                    NES_DEBUG2("Operator on Node 2");
+                    NES_DEBUG("Operator on Node 2");
                 } else if (m.eval(P23).get_numeral_int() == 1) {
-                    NES_DEBUG2("Operator on Node 3");
+                    NES_DEBUG("Operator on Node 3");
                 }
-                NES_DEBUG2("-------------------------------");
+                NES_DEBUG("-------------------------------");
                 break;
             } else {
                 break;
@@ -559,7 +559,7 @@ using namespace NES;
         //Assertion to check correct amount of shared query plans to deploy are extracted.
         ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-        NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+        NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
         queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
         sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
         executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
@@ -757,12 +757,12 @@ using namespace NES;
         //Assertion to check correct amount of shared query plans to deploy are extracted.
         ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-        NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+        NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
         queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
         sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
         executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-        NES_INFO2("{}", globalExecutionPlan->getAsString());
+        NES_INFO(globalExecutionPlan->getAsString());
 
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
@@ -926,7 +926,7 @@ using namespace NES;
         SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
         std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-        NES_INFO2("{}", globalExecutionPlan->getAsString());
+        NES_INFO(globalExecutionPlan->getAsString());
 
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
