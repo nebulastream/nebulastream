@@ -288,7 +288,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.67...v0.5.68)
 
-#### Runtime 
+#### Runtime
 
 - \[JIT Compiler\] add debug mode to print ir [\#3093](https://github.com/nebulastream/nebulastream/issues/3093)
 
@@ -713,7 +713,7 @@
 
 - \[TASK\] Add JSON to current Kafka source [\#3474](https://github.com/nebulastream/nebulastream/issues/3474)
 
-#### Operators 
+#### Operators
 
 - Old Jointests compatibility with new StreamJoin [\#3395](https://github.com/nebulastream/nebulastream/issues/3395)
 
@@ -795,7 +795,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.3...v0.5.4)
 
-#### Documentation 
+#### Documentation
 
 - \[Feature\] creation timestamp unit [\#3490](https://github.com/nebulastream/nebulastream/issues/3490)
 
@@ -919,7 +919,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.35...v0.4.36)
 
-#### Runtime 
+#### Runtime
 
 - \[Feature\] Integrate StreamJoin into Nautilus and the QueryPlan [\#3339](https://github.com/nebulastream/nebulastream/issues/3339)
 
@@ -941,7 +941,7 @@
 
 - Parsing Oatpp String into nlohmann::json throws error [\#2967](https://github.com/nebulastream/nebulastream/issues/2967)
 
-#### REST API 
+#### REST API
 
 - Find and Add Json library [\#2950](https://github.com/nebulastream/nebulastream/issues/2950)
 - Make host and port of REST Server configuratble when using Oatpp framework [\#2905](https://github.com/nebulastream/nebulastream/issues/2905)
@@ -966,11 +966,11 @@
 
 - \[BUG\] arm64 images break when running queries [\#3437](https://github.com/nebulastream/nebulastream/issues/3437)
 
-#### Runtime 
+#### Runtime
 
 - \[Feature\] Bool Support in Nautilus MemoryProvider/MemoryLayout [\#3373](https://github.com/nebulastream/nebulastream/issues/3373)
 
-#### REST API 
+#### REST API
 
 - Delete all components of old REST API and ccprest usages [\#3001](https://github.com/nebulastream/nebulastream/issues/3001)
 
@@ -1028,7 +1028,7 @@
 - \[BUG\] Docker Build Failing: ubuntu-20\_04-Linux.arm64.deb Not Found [\#3428](https://github.com/nebulastream/nebulastream/issues/3428)
 - \[BUG\] Error if NebulaStream demo is on aarch64 [\#3145](https://github.com/nebulastream/nebulastream/issues/3145)
 
-#### Runtime 
+#### Runtime
 
 - \[Feature\] General Memory Provider [\#3408](https://github.com/nebulastream/nebulastream/issues/3408)
 
@@ -1098,7 +1098,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.18...v0.4.19)
 
-#### Runtime 
+#### Runtime
 
 - \[Feature\] Cleanup tests in nes-runtime [\#3360](https://github.com/nebulastream/nebulastream/issues/3360)
 
@@ -1114,7 +1114,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.17...v0.4.18)
 
-#### Operators 
+#### Operators
 
 - Implement Non-Partitioned Lazy Join for Engine Paper [\#2501](https://github.com/nebulastream/nebulastream/issues/2501)
 
@@ -1122,7 +1122,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.16...v0.4.17)
 
-#### Runtime 
+#### Runtime
 
 - \[Feature\] add test macro for nes-runtime tests [\#3369](https://github.com/nebulastream/nebulastream/issues/3369)
 
@@ -1554,7 +1554,7 @@
 
 - \[BUG\] CEP requires logical operators  [\#2986](https://github.com/nebulastream/nebulastream/issues/2986)
 
-#### REST API 
+#### REST API
 
 - Remove all occurences of CppRestSdk from NebulaStream [\#3028](https://github.com/nebulastream/nebulastream/issues/3028)
 
@@ -1737,7 +1737,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.29...v0.3.30)
 
-#### REST API 
+#### REST API
 
 - Remove CPPRestSdk from RemoteClient [\#3096](https://github.com/nebulastream/nebulastream/issues/3096)
 
@@ -1761,7 +1761,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.26...v0.3.27)
 
-#### REST API 
+#### REST API
 
 - Remove cpprestsdk from TestUtils class [\#3097](https://github.com/nebulastream/nebulastream/issues/3097)
 
@@ -1802,7 +1802,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.21...v0.3.22)
 
-#### Operators 
+#### Operators
 
 - \[Feature\] Introduce Variable Length Datatype support in memory management layer [\#3068](https://github.com/nebulastream/nebulastream/issues/3068)
 
@@ -1852,7 +1852,7 @@
 
 - \[Feature\] Benchmarking Multiple Sources [\#3007](https://github.com/nebulastream/nebulastream/issues/3007)
 
-#### Runtime 
+#### Runtime
 
 - Design: Remove struct types in code generation [\#457](https://github.com/nebulastream/nebulastream/issues/457)
 
@@ -1917,7 +1917,7 @@
 
 - Load march and mtune automatically based on architecture [\#2147](https://github.com/nebulastream/nebulastream/issues/2147)
 
-#### State Management 
+#### State Management
 
 - Investigate State Allocation Overhead [\#1391](https://github.com/nebulastream/nebulastream/issues/1391)
 
@@ -1973,7 +1973,7 @@
 
 - Feature-Next-JIT: Refactor MLIR Code [\#3003](https://github.com/nebulastream/nebulastream/issues/3003)
 
-#### REST API 
+#### REST API
 
 - Make SourceCatalogController an oatpp endpoint \(Move to oatapp REST server\)  [\#2841](https://github.com/nebulastream/nebulastream/issues/2841)
 
@@ -2158,7 +2158,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.76...v0.2.77)
 
-#### Operators 
+#### Operators
 
 - \[Feature\] CASE WHEN expressions in map operator [\#2881](https://github.com/nebulastream/nebulastream/issues/2881)
 
@@ -2230,7 +2230,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.67...v0.2.68)
 
-#### REST API 
+#### REST API
 
 - Move to oatapp REST server: start oatapp server on NES startup [\#2770](https://github.com/nebulastream/nebulastream/issues/2770)
 
@@ -2447,11 +2447,11 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.42...v0.2.43)
 
-#### Runtime 
+#### Runtime
 
 - \[Feature\] Source Sharing at Node [\#2790](https://github.com/nebulastream/nebulastream/issues/2790)
 
-#### Documentation 
+#### Documentation
 
 - Create a design document for embedding of CUDA kernels to NES [\#2777](https://github.com/nebulastream/nebulastream/issues/2777)
 
@@ -2459,7 +2459,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.41...v0.2.42)
 
-#### Operators 
+#### Operators
 
 - \[Feature\] Enable thread local window aggregation for global windows [\#2800](https://github.com/nebulastream/nebulastream/issues/2800)
 
@@ -2471,7 +2471,7 @@
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.40...v0.2.41)
 
-#### Runtime 
+#### Runtime
 
 - Batch Join Prototype [\#2429](https://github.com/nebulastream/nebulastream/issues/2429)
 
@@ -2627,7 +2627,7 @@
 - Performant multi-arch build process [\#1969](https://github.com/nebulastream/nebulastream/issues/1969)
 - Enable ProjectionTest [\#1673](https://github.com/nebulastream/nebulastream/issues/1673)
 
-#### Runtime 
+#### Runtime
 
 - Check LockFreeWatermarkProcessor [\#2540](https://github.com/nebulastream/nebulastream/issues/2540)
 
@@ -2733,7 +2733,7 @@
 
 - Create Documentation of Monitoring REST [\#2363](https://github.com/nebulastream/nebulastream/issues/2363)
 
-#### REST API 
+#### REST API
 
 - Revisit the response codes returned by the Query Controller  [\#2671](https://github.com/nebulastream/nebulastream/issues/2671)
 
@@ -2920,7 +2920,7 @@
 - Implement general mapping for CEP Operator towards ASP operators [\#2198](https://github.com/nebulastream/nebulastream/issues/2198)
 - Enable CEP Iteration Operator for multiple event streams  [\#1868](https://github.com/nebulastream/nebulastream/issues/1868)
 
-#### Runtime 
+#### Runtime
 
 - Refactor QueryManager [\#2455](https://github.com/nebulastream/nebulastream/issues/2455)
 
@@ -2946,7 +2946,7 @@
 - Gtest from dependencies [\#2406](https://github.com/nebulastream/nebulastream/issues/2406)
 - Reduce the size of docker executable image [\#2122](https://github.com/nebulastream/nebulastream/issues/2122)
 
-#### Documentation 
+#### Documentation
 
 - Prepare documentation for release [\#2680](https://github.com/nebulastream/nebulastream/issues/2680)
 - Add Documentation to Configure Coordinator, Worker, Sink, Sources [\#2677](https://github.com/nebulastream/nebulastream/issues/2677)
@@ -3453,7 +3453,7 @@
 - Create Event Connectors as Query Tree Nodes  [\#744](https://github.com/nebulastream/nebulastream/issues/744)
 - Execute CEP Patterns for single event types and single-class predicates [\#743](https://github.com/nebulastream/nebulastream/issues/743)
 
-#### Runtime 
+#### Runtime
 
 - One queue per numa node [\#2160](https://github.com/nebulastream/nebulastream/issues/2160)
 - Create Timer Util [\#2062](https://github.com/nebulastream/nebulastream/issues/2062)
@@ -3558,7 +3558,7 @@
 - Make vcpkg depencencies more automated [\#2099](https://github.com/nebulastream/nebulastream/issues/2099)
 - VCPK: add mac os support [\#1951](https://github.com/nebulastream/nebulastream/issues/1951)
 
-#### Operators 
+#### Operators
 
 - Proper ProtoBuf serialize of a query plan with multiple root operators [\#1980](https://github.com/nebulastream/nebulastream/issues/1980)
 - QueryPlan: Introduce iterator for query plan [\#1694](https://github.com/nebulastream/nebulastream/issues/1694)
@@ -3575,14 +3575,14 @@
 - Integrate Merge Operator: Serialization [\#834](https://github.com/nebulastream/nebulastream/issues/834)
 - Integrate Merge Operator in API [\#749](https://github.com/nebulastream/nebulastream/issues/749)
 
-#### State Management 
+#### State Management
 
 - Use unique id for state variables [\#1867](https://github.com/nebulastream/nebulastream/issues/1867)
 -  remove singleton at some point [\#1685](https://github.com/nebulastream/nebulastream/issues/1685)
 - Discussing Memory Management in NebulaStream [\#177](https://github.com/nebulastream/nebulastream/issues/177)
 - Add Basic State Management Component [\#118](https://github.com/nebulastream/nebulastream/issues/118)
 
-#### REST API 
+#### REST API
 
 - Refactor RESTEndpointTest [\#2201](https://github.com/nebulastream/nebulastream/issues/2201)
 - Cleanup BaseController interface and implementation [\#2197](https://github.com/nebulastream/nebulastream/issues/2197)
@@ -3602,7 +3602,7 @@
 - Update Rest API  [\#479](https://github.com/nebulastream/nebulastream/issues/479)
 - Return proper error code and messages for REST calls [\#348](https://github.com/nebulastream/nebulastream/issues/348)
 
-#### Documentation 
+#### Documentation
 
 - Add documentation of the existing NES roles [\#1934](https://github.com/nebulastream/nebulastream/issues/1934)
 - Introduce Apache2 Licence [\#1140](https://github.com/nebulastream/nebulastream/issues/1140)
@@ -4268,6 +4268,5 @@
 - visualize graph [\#3](https://github.com/nebulastream/nebulastream/issues/3)
 - visualize graph [\#2](https://github.com/nebulastream/nebulastream/issues/2)
 - visualize graph [\#1](https://github.com/nebulastream/nebulastream/issues/1)
-
 
 
