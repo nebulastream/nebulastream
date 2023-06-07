@@ -62,21 +62,21 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator) {
     std::vector<NodePtr> childrenOfFilter = filterOperator->getChildren();
 
-    if (childrenOfFilter.empty()){
+    if (childrenOfFilter.empty()) {
         NES_ERROR2("FilterPushDownRule: Filter is the leaf, something is wrong");
         throw std::logic_error("FilterPushDownRule: Filter is the leaf, something is wrong");
     }
 
-    if (childrenOfFilter.size() > 1){
+    if (childrenOfFilter.size() > 1) {
         NES_ERROR2("FilterPushDownRule: Filter has multiple children, case not handled");
         throw std::logic_error("FilterPushDownRule: Filter has multiple children, case not handled");
     }
 
     NodePtr child = childrenOfFilter[0];
 
-    if (child -> instanceOf<ProjectionLogicalOperatorNode>()) {
+    if (child->instanceOf<ProjectionLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for projection: https://github.com/nebulastream/nebulastream/issues/3799
-    } else if (child -> instanceOf<MapLogicalOperatorNode>()) {
+    } else if (child->instanceOf<MapLogicalOperatorNode>()) {
         std::string mapFieldName = getFieldNameUsedByMapOperator(child);
         bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
         if (!predicateFieldManipulated) {
@@ -84,29 +84,29 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
             child->insertBetweenThisAndChildNodes(filterOperator);
             pushDownFilter(filterOperator);
         }
-    } else if(child->instanceOf<JoinLogicalOperatorNode>()) {
+    } else if (child->instanceOf<JoinLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for joins: https://github.com/nebulastream/nebulastream/issues/3765
-    } else if(child ->instanceOf<UnionLogicalOperatorNode>()) {
+    } else if (child->instanceOf<UnionLogicalOperatorNode>()) {
         std::vector<NodePtr> grandChildren = child->getChildren();
 
-        if (grandChildren.size() != 2){
+        if (grandChildren.size() != 2) {
             NES_ERROR2("FilterPushDownRule: Union should have exactly two children");
             throw std::logic_error("FilterPushDownRule: Union should have exactly two children");
         }
 
-        filterOperator -> removeAndJoinParentAndChildren();
-        NodePtr filterOperatorCopy = filterOperator -> copy();
+        filterOperator->removeAndJoinParentAndChildren();
+        NodePtr filterOperatorCopy = filterOperator->copy();
 
         NodePtr leftChild = grandChildren[0];
         NodePtr rightChild = grandChildren[1];
 
-        leftChild -> insertBetweenThisAndParentNodes(filterOperator);
+        leftChild->insertBetweenThisAndParentNodes(filterOperator);
         pushDownFilter(filterOperator);
 
-        rightChild -> insertBetweenThisAndParentNodes(filterOperatorCopy);
+        rightChild->insertBetweenThisAndParentNodes(filterOperatorCopy);
         pushDownFilter(filterOperatorCopy->as<FilterLogicalOperatorNode>());
 
-    } else if(child ->instanceOf<WindowLogicalOperatorNode>()) {
+    } else if (child->instanceOf<WindowLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for window aggregations: https://github.com/nebulastream/nebulastream/issues/3804
         // Windows can be used either in joins or aggregations.
         // For window joins, the push-down below join policy is applied.

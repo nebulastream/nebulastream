@@ -630,7 +630,8 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ2->toString(), (*itr)->toString());
     ++itr;
     EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
-    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ3->toString(), (*itr)->toString());++itr;
+    NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", filterOperatorPQ3->toString(), (*itr)->toString());
+    ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
     NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorPQ->toString(), (*itr)->toString());
     ++itr;
@@ -645,7 +646,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     ++itr;
     EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
     NES_DEBUG2("Expected Plan Node: {}  Actual in updated Query plan: {}", srcOperatorSQ->toString(), (*itr)->toString());
-    }
+}
 TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
