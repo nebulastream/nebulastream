@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.101](https://github.com/nebulastream/nebulastream/tree/v0.5.101) (2023-06-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.100...v0.5.101)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor FilterPushdownRule [\#3764](https://github.com/nebulastream/nebulastream/issues/3764)
+- \[TASK\] keep storage handler as a member variable of the request class [\#3725](https://github.com/nebulastream/nebulastream/issues/3725)
+
 ## [v0.5.100](https://github.com/nebulastream/nebulastream/tree/v0.5.100) (2023-06-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.99...v0.5.100)
