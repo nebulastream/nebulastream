@@ -104,7 +104,6 @@ class AbstractHealthCheckService {
     std::string healthServiceName;
     std::condition_variable cv;
     std::mutex cvMutex;
-    std::mutex cvMutex2;
     std::set<uint64_t> inactiveWorkers;
 };
 
