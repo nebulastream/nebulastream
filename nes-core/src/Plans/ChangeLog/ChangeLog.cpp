@@ -139,7 +139,6 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
         // push the most upstream operator into the new upstream Operator set
 
         std::set<OperatorNodePtr> tempUpstreamOperators;
-
         std::set<OperatorNodePtr> upstreamOperatorsToCheck = changeLogEntriesToMerge[index].second->upstreamOperators;
         for (const auto& upstreamOperator1 : upstreamOperators) {
             for (const auto& upstreamOperator2 : upstreamOperatorsToCheck) {
@@ -172,6 +171,37 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
 
         // check if the downstream operators in the temp is also the downstream operator of the change log entry under consideration
         // push the most downstream operator into the new downstream Operator set
+
+        std::set<OperatorNodePtr> tempDownstreamOperators;
+        std::set<OperatorNodePtr> downstreamOperatorsToCheck = changeLogEntriesToMerge[index].second->downstreamOperators;
+        for (const auto& downstreamOperator1 : downstreamOperators) {
+            for (const auto& downstreamOperator2 : downstreamOperatorsToCheck) {
+                if (downstreamOperator1->getId() == downstreamOperator2->getId()) {
+                    tempUpstreamOperators.insert(downstreamOperator1);
+                    downstreamOperators.erase(downstreamOperator1);
+                    downstreamOperatorsToCheck.erase(downstreamOperator2);
+                    break;
+                } else if (downstreamOperator1->containAsGrandParent(downstreamOperator2)) {
+                    tempDownstreamOperators.insert(downstreamOperator2);
+                    downstreamOperators.erase(downstreamOperator1);
+                    break;
+                } else if (downstreamOperator2->containAsGrandParent(downstreamOperator1)) {
+                    tempDownstreamOperators.insert(downstreamOperator1);
+                    downstreamOperatorsToCheck.erase(downstreamOperator2);
+                }
+            }
+        }
+
+        if (!upstreamOperators.empty()) {
+            tempUpstreamOperators.insert(upstreamOperators.begin(), upstreamOperators.end());
+        }
+
+        if (!downstreamOperatorsToCheck.empty()) {
+            tempDownstreamOperators.insert(downstreamOperatorsToCheck.begin(), downstreamOperatorsToCheck.end());
+        }
+
+        downstreamOperators = tempDownstreamOperators;
+        tempDownstreamOperators.clear();
     }
 
     return ChangeLogEntry::create(upstreamOperators, downstreamOperators);
