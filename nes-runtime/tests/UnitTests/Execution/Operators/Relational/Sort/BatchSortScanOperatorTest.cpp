@@ -54,14 +54,14 @@ constexpr uint32_t SEED = 42;
  *  @param handler
  *  @param numberOfRecord number of records to fill
  *  @param numberOfFields number of fields to fill
- *  @param sortFieldIndex index of column to sort on
+ *  @param sortFieldIndexes vector of index of column to sort on
  *  @param descending sort descending or ascending
  */
 template<typename T>
 void fillState(const std::shared_ptr<BatchSortOperatorHandler>& handler,
                uint64_t numberOfRecord,
                uint64_t numberOfFields,
-               uint64_t sortFieldIndex,
+               const std::vector<uint64_t>& sortFieldIndexes,
                bool descending = false) {
     auto state = handler->getState();
     auto entrySize = sizeof(T) * (numberOfFields + 1 /*sort col*/);
@@ -73,10 +73,12 @@ void fillState(const std::shared_ptr<BatchSortOperatorHandler>& handler,
         for (size_t i = 0; i < numberOfFields; ++i) {
             recordValues[i] = static_cast<T>(random());
         }
-        // allocate entry and fill encoded field and full record
+        // allocate entry and fill encoded fields and full record
         auto entry = stateRef.allocateEntry();
-        Value<> encodedVal(encodeData<T>(recordValues[sortFieldIndex], descending));
-        entry.store(encodedVal);
+        for (size_t i = 0; i < sortFieldIndexes.size(); ++i) {
+            Value<> encodedVal(encodeData<T>(recordValues[sortFieldIndexes[i]], descending));
+            entry.store(encodedVal);
+        }
 
         for (size_t i = 0; i < numberOfFields; ++i) {
             Value<> val(recordValues[i]);
@@ -116,7 +118,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
                                                    std::vector<Record::RecordFieldIdentifier>({"f1"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, 0, /* descending */ false);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ false);
 
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
@@ -157,7 +159,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
                                                               std::vector<Record::RecordFieldIdentifier>({"f2"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, 1, /* descending */ false);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {1}, /* descending */ false);
 
     auto sortScanOperator = BatchSortScan(0, {pType, pType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
@@ -198,7 +200,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
                                                    std::vector<Record::RecordFieldIdentifier>({"f1"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, 0, /* descending */ true);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ true);
 
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
