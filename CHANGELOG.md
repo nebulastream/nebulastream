@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.102](https://github.com/nebulastream/nebulastream/tree/v0.5.102) (2023-06-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.101...v0.5.102)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement H3 hash function [\#3793](https://github.com/nebulastream/nebulastream/issues/3793)
+
+#### User Defined Functions
+
+- \[TASK\] Add JVM to NebulaStream executable image [\#3754](https://github.com/nebulastream/nebulastream/issues/3754)
+
 ## [v0.5.101](https://github.com/nebulastream/nebulastream/tree/v0.5.101) (2023-06-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.100...v0.5.101)
