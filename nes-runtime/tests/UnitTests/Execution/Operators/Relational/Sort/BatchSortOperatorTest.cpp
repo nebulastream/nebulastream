@@ -111,6 +111,50 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
 }
 
 /**
+ * @brief Tests if the sort operator collects records for sorting on the second field
+ */
+TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest) {
+    using Type = typename TypeParam::first_type;
+    using EncodedType = typename TypeParam::second_type;
+    constexpr size_t NUM_RECORDS = 100;
+
+    std::vector<Record> records;
+    records.reserve(NUM_RECORDS);
+    for (size_t i = 0; i < NUM_RECORDS; i++) {
+        Type val1 = i * 10;
+        Type val2 = i;
+        records.push_back(Record({{"f1", Value<>(val1)}, {"f2", Value<>(val2)}}));
+    }
+
+    auto nType = Util::getPhysicalTypePtr<Type>();
+    auto handler = std::make_shared<BatchSortOperatorHandler>(std::vector<PhysicalTypePtr>({nType, nType}),
+                                                              std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
+                                                              std::vector<Record::RecordFieldIdentifier>({"f2"}));
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+
+    auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f2"});
+    auto collector = std::make_shared<CollectOperator>();
+    sortOperator.setChild(collector);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    sortOperator.setup(ctx);
+
+    for (auto& record : records) {
+        sortOperator.execute(ctx, record);
+    }
+
+    // Check if the records have been collected in the operator handler state
+    auto state = handler->getState();
+    ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
+
+    for (size_t i = 0; i < NUM_RECORDS; i++) {
+        auto entry = state->getEntry(i);
+        ASSERT_EQ(*(reinterpret_cast<EncodedType*>(entry)), encodeData(static_cast<Type>(i)));// f2 encoded value
+        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 1), static_cast<Type>(i * 10));          // f1 original value
+        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 2), static_cast<Type>(i));               // f2 original value
+    }
+}
+
+/**
  * @brief Tests if the sort operator collects records over multiple pages
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
