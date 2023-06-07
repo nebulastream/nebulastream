@@ -62,6 +62,15 @@ uint64_t TopologyManagerService::registerWorker(const uint64_t configWorkerId,
             NES_ERROR2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running", configWorkerId);
             return INVALID_TOPOLOGY_NODE_ID;
         }
+        // check if an inactive worker with workerId already exists
+        if (healthCheckService) {
+            if (healthCheckService->isWorkerInactive(configWorkerId)) {
+                // node is reregistering (was inactive and became active again)
+                NES_TRACE2("TopologyManagerService::registerWorker: node with worker id {} is reregistering", configWorkerId);
+                id = configWorkerId;
+                isWorkerReregistering = true;
+            }
+        }
         else {
             // there is no active worker with workerId and there is no inactive worker with workerId,
             // assume worker was misconfigured => assign next available workerId
@@ -94,6 +103,12 @@ uint64_t TopologyManagerService::registerWorker(const uint64_t configWorkerId,
     }
 
     if (healthCheckService) {
+        if (isWorkerReregistering) {
+            TopologyNodePtr workerWithOldConfig = healthCheckService->getWorkerByWorkerId(id);
+            if (workerWithOldConfig) {
+                healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
+            }
+        }
         //add node to health check
         healthCheckService->addNodeToHealthCheck(newTopologyNode);
     }

@@ -49,6 +49,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                 auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
                     NES_TRACE2("NesCoordinator::healthCheck: node={} is alive", destAddress);
+                    removeWorkerFromSetOfInactiveWorkers(node.first);
                 } else {
                     NES_WARNING2("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
                     if (topologyManagerService->getRootNode()->getId() == node.second->getId()) {
@@ -57,6 +58,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                         return;
                     } else {
                         auto ret = topologyManagerService->removePhysicalNode(node.second);
+                        addWorkerToSetOfInactiveWorkers(node.first);
                         if (ret) {
                             NES_TRACE2("NesCoordinator::healthCheck: remove node={} successfully", destAddress);
                         } else {
@@ -77,6 +79,31 @@ void CoordinatorHealthCheckService::startHealthCheck() {
         shutdownRPC->set_value(true);
         NES_DEBUG2("NesCoordinator: stop health checking");
     }));
+}
+
+void CoordinatorHealthCheckService::addWorkerToSetOfInactiveWorkers(uint64_t workerId) {
+    NES_DEBUG2("NesCoordinator::healthCheck: adding worker id {} to set of inactive workers.", workerId);
+    std::lock_guard<std::mutex> lock(cvMutex2);
+    inactiveWorkers.insert(workerId);
+    NES_DEBUG2("NesCoordinator::healthCheck: updated set of inactive workers: ");
+    for (unsigned long worker : inactiveWorkers) {
+        std::cout << worker << " ";
+    }
+    std::cout << std::endl;
+}
+
+void CoordinatorHealthCheckService::removeWorkerFromSetOfInactiveWorkers(uint64_t workerId) {
+    NES_DEBUG2("NesCoordinator::healthCheck: removing worker id {} from set of inactive workers.", workerId);
+    std::lock_guard<std::mutex> lock(cvMutex2);
+    if (inactiveWorkers.contains(workerId)) {
+        inactiveWorkers.erase(workerId);
+    } else return;
+    NES_DEBUG2("NesCoordinator::healthCheck: updated set of inactive workers:\n");
+    for (unsigned long worker : inactiveWorkers) {
+        std::cout << worker << " ";
+    }
+    std::cout << std::endl;
+
 }
 
 }// namespace NES

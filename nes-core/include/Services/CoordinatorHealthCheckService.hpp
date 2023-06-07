@@ -36,6 +36,18 @@ class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
      */
     void startHealthCheck() override;
 
+    /**
+     * Method to add id of a worker to set of active workers
+     * @param workerId
+     */
+    void addWorkerToSetOfInactiveWorkers(uint64_t workerId);
+
+    /**
+     * Method to remove id of a worker from set of active workers
+     * @param workerId
+     */
+    void removeWorkerFromSetOfInactiveWorkers(uint64_t workerId);
+
   private:
     TopologyManagerServicePtr topologyManagerService;
     WorkerRPCClientPtr workerRPCClient;
