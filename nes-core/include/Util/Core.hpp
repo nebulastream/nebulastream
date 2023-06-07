@@ -70,7 +70,7 @@ namespace Util {
  * @return index of the childTupleBuffer
  */
 uint32_t writeStringToTupleBuffer (Runtime::TupleBuffer parentTupleBuffer, Runtime::TupleBuffer childTupleBuffer,
-                                  const std::string& field);
+                                  const std::string& string);
 
 /**
 * @brief Outputs a tuple buffer in text format
