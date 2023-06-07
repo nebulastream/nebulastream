@@ -125,9 +125,10 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
 uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG2("NesWorker: start with blocking {} coordinatorIp={} coordinatorPort={} localWorkerIp={} localWorkerRpcPort={} "
+    NES_DEBUG2("NesWorker: start with blocking {} workerId={} coordinatorIp={} coordinatorPort={} localWorkerIp={} localWorkerRpcPort={} "
                "localWorkerZmqPort={} windowStrategy={}",
                blocking,
+               workerConfig->workerId.getValue(),
                workerConfig->coordinatorIp.getValue(),
                workerConfig->coordinatorPort.getValue(),
                workerConfig->localWorkerIp.getValue(),
@@ -305,6 +306,7 @@ bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
+    registrationRequest.set_workerid(workerConfig->workerId.getValue());
     registrationRequest.set_address(workerConfig->localWorkerIp.getValue());
     registrationRequest.set_grpcport(localWorkerRpcPort.load());
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
