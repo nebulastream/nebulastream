@@ -244,9 +244,27 @@ TEST_F(NEXMarkDataGeneratorTest, bidGeneratorTest) {
 
     // testing createData()
     auto dataDefault = bidGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
+    auto bids = dependencyGeneratorInstance.getBids();
 
-    for (auto& buffer : dataDefault) NES_INFO(Util::printTupleBufferAsCSV(buffer, bidGenerator->getSchema()))
-    // TODO generate expected data
+    auto index = 0UL;
+    for (auto& buffer : dataDefault) {
+        auto numBuffers = buffer.getNumberOfTuples();
+
+        std::ostringstream oss;
+        for (auto i = index; i < index + numBuffers; ++i) {
+            if (i < bids.size()) {
+                auto bid = bids[i];
+                oss << std::get<0>(bid) << ",";
+                oss << std::get<1>(bid) << ",";
+                oss << std::get<2>(bid) << ",";
+                oss << std::get<3>(bid) << "\n";
+            }
+            else oss << "0,0,0,0\n";
+        }
+        ASSERT_EQ(oss.str(), Util::printTupleBufferAsCSV(buffer, bidGenerator->getSchema()));
+
+        index += numBuffers;
+    }
 }
 
 } //namespace NES::Benchmark::DataGeneration
