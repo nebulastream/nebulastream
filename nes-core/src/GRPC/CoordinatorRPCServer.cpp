@@ -48,6 +48,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             RegisterWorkerReply* reply) {
 
     NES_DEBUG2("Received worker registration request {}", registrationRequest->DebugString());
+    auto configWorkerId = registrationRequest->workerid();
     auto address = registrationRequest->address();
     auto grpcPort = registrationRequest->grpcport();
     auto dataPort = registrationRequest->dataport();
@@ -62,7 +63,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
 
     NES_DEBUG2("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
-    uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
+    uint64_t workerId = topologyManagerService->registerWorker(configWorkerId, address, grpcPort, dataPort, slots, workerProperties);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());

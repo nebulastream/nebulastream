@@ -90,12 +90,11 @@ class Topology {
                                                  const std::vector<TopologyNodePtr>& destinationNodes);
 
     /**
-     * @brief a Physical Node with the ip address and grpc port exists
-     * @param ipAddress: ipaddress of the node
-     * @param grpcPort: grpc port of the node
-     * @return true if node exists else false
+     * @brief checks if a Physical Node with workerId exists
+     * @param workerId: workerId of the node
+     * @return true if exists, false otherwise
      */
-    bool nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t grpcPort);
+    bool existsNodeWithWorkerId(uint64_t workerId);
 
     /**
      * @brief Print the current topology information

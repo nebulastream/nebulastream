@@ -40,7 +40,8 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
     this->healthCheckService = healthCheckService;
 }
 
-uint64_t TopologyManagerService::registerWorker(const std::string& address,
+uint64_t TopologyManagerService::registerWorker(const uint64_t configWorkerId,
+                                                const std::string& address,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
                                                 const uint16_t numberOfSlots,
@@ -51,16 +52,30 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     NES_DEBUG2("TopologyManagerService::registerWorker: topology before insert");
     NES_DEBUG2("", topology->toString());
 
-    if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
-        NES_ERROR2("TopologyManagerService::registerWorker: node with address {} and grpc port {} already exists",
-                   address,
-                   grpcPort);
-        return INVALID_TOPOLOGY_NODE_ID;
+    uint64_t id;
+    bool isWorkerReregistering = false;
+
+    // if worker is started with a workerId
+    if (configWorkerId != INVALID_TOPOLOGY_NODE_ID) {
+        // check if an active worker with workerId already exists
+        if (topology->existsNodeWithWorkerId(configWorkerId)) {
+            NES_ERROR2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running", configWorkerId);
+            return INVALID_TOPOLOGY_NODE_ID;
+        }
+        else {
+            // there is no active worker with workerId and there is no inactive worker with workerId,
+            // assume worker was misconfigured => assign next available workerId
+            id = getNextTopologyNodeId();
+        }
+    }
+
+    if (configWorkerId == INVALID_TOPOLOGY_NODE_ID) {
+        // worker does not have a workerId yet => assign next available workerId
+        id = getNextTopologyNodeId();
     }
 
     NES_DEBUG2("TopologyManagerService::registerWorker: register node");
-    //get unique id for the new node
-    uint64_t id = getNextTopologyNodeId();
+
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots, workerProperties);
 
     if (!newTopologyNode) {

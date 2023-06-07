@@ -84,10 +84,6 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     TopologyPtr topology = crd->getTopology();
 
-    //    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // this is the worker inside the coordinator
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node1RpcPort));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node2RpcPort));
-
     TopologyNodePtr rootNode = topology->getRoot();
     //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
@@ -164,10 +160,6 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NES_INFO2("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
-
-    //    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // worker inside the coordinator
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node1RpcPort));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
     //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
