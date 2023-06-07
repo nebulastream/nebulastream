@@ -301,16 +301,17 @@ uint64_t getSortStateEntrySizeProxy(void* op) {
 
 void BatchSortScan::setup(ExecutionContext& ctx) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // TODO multi-column sort
-    auto currentSortColIndex = 0;
-    auto currentSortCol = 0UL;// TODO different cols
-    // Width of the current column to sort
-    uint64_t compWidth = dataTypes[currentSortCol]->size();
-    // Offset of the current column to sort
-    uint64_t colOffset = 0;
-    for (uint64_t cols = 0; cols < currentSortCol; cols++) {
-        colOffset += dataTypes[cols]->size() * 2;// TODO change back
+    // Set the width of the current column to sort
+    uint64_t compWidth = 0;
+    for (const auto& sortFieldIdentifier : sortFieldIdentifiers) {
+        for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i) {
+            if (fieldIdentifiers[i] == sortFieldIdentifier) {
+                compWidth += dataTypes[i]->size();
+            }
+        }
     }
+    // Offset of the current column to sort: For now this is always 0
+    constexpr uint64_t colOffset = 0;
 
     // perform sort
     Nautilus::FunctionCall("SortProxy", SortProxy, globalOperatorHandler, Value<UInt64>(compWidth), Value<UInt64>(colOffset));
