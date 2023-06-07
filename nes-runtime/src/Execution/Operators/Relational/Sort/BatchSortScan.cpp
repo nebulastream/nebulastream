@@ -50,11 +50,14 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-// issue #3773: get rid of hard-coded parameters
+// We perform a radix sort on the byte level
 // 256 is the number of possible byte values ranging from 0 to 255
 constexpr uint64_t VALUES_PER_RADIX = 256;
+// Size of locations mem area for MSD sort
 constexpr uint64_t MSD_RADIX_LOCATIONS = VALUES_PER_RADIX + 1;
+// Upper bound of number of records for which we use insertion sort
 constexpr uint64_t INSERTION_SORT_THRESHOLD = 24;
+// Lower bound of bytes to compare in mem region for which we use MSD sort
 constexpr uint64_t MSD_RADIX_SORT_SIZE_THRESHOLD = 4;
 
 /**
@@ -275,7 +278,6 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto count = handler->getState()->getNumberOfEntries();
     auto rowWidth = handler->getStateEntrySize();
     auto offset = 0;// init to 0
-    auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
     auto swap = false;// init false
 
     if (count <= INSERTION_SORT_THRESHOLD) {
@@ -283,10 +285,10 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     } else if (compWidth <= MSD_RADIX_SORT_SIZE_THRESHOLD) {
         RadixSortLSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth);
     } else {
+        auto locations = new uint64_t[compWidth * MSD_RADIX_LOCATIONS];
         RadixSortMSD(origPtr, tempPtr, count, colOffset, rowWidth, compWidth, offset, locations, swap);
+        delete[] locations;
     }
-
-    delete[] locations;
 }
 
 void* getStateProxy(void* op) {
