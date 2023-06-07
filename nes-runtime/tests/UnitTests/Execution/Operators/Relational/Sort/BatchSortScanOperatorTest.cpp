@@ -134,7 +134,6 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
     auto prev = collector->records[0].read("f1").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i) {
         Value<NautilusType> cur = collector->records[i].read("f1").as<NautilusType>();
-        std::cout << prev << " " << cur << std::endl;
         ASSERT_LE(prev, cur);
         prev = cur;
     }
@@ -176,7 +175,6 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
     auto prev = collector->records[0].read("f2").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i) {
         Value<NautilusType> cur = collector->records[i].read("f2").as<NautilusType>();
-        std::cout << prev << " " << cur << std::endl;
         ASSERT_LE(prev, cur);
         prev = cur;
     }
@@ -218,7 +216,6 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
     auto prev = collector->records[0].read("f1").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i) {
         Value<NautilusType> cur = collector->records[i].read("f1").as<NautilusType>();
-        std::cout << prev << " " << cur << std::endl;
         ASSERT_GE(prev, cur);
         prev = cur;
     }
