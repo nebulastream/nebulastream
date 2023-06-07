@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Util/Logger/Logger.hpp>
-
 
 namespace NES::Nautilus::Interface {
 
@@ -45,10 +44,7 @@ uint64_t hashValue(uint64_t seed, T value, void* h3SeedsPtr) {
     return seed ^ hashInt(newValue, static_cast<uint64_t*>(h3SeedsPtr));
 }
 
-
-HashFunction::HashValue H3Hash::init() {
-    return (uint64_t)0UL;
-}
+HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
 
@@ -81,4 +77,4 @@ HashFunction::HashValue H3Hash::calculate(HashFunction::HashValue&, Value<>&) {
     NES_THROW_RUNTIME_ERROR("Wrong function call! Please use calculateWithState() as H3 requires a seed vector");
 }
 
-} // namespace NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface
