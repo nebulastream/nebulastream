@@ -24,6 +24,16 @@ void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& change
     changeLogEntries[timestamp] = changeLogEntry;
 }
 
+std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> ChangeLog::getCompressedChangeLogEntriesBefore(uint64_t timestamp) {
+    performChangeLogCompaction(timestamp);
+    return getChangeLogEntriesBefore(timestamp);
+}
+
+void ChangeLog::updateProcessedChangeLogTimestamp(uint64_t timestamp) {
+    this->lastProcessedChangeLogTimestamp = timestamp;
+    removeChangeLogsBefore(lastProcessedChangeLogTimestamp);
+}
+
 void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
 
     //Get all change log entries to compact
@@ -51,8 +61,8 @@ void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
             for (uint32_t j = i + 1; j < changeLogEntriesToCompact.size(); j++) {
                 auto destinationChangeLog = changeLogEntriesToCompact.at(j);
                 std::set<uint32_t> diff;
-                //compute difference among the poset of two change log entries
-                std::set_difference(sourceChangeLogPoSet.begin(),
+                //compute intersection among the poset of two change log entries
+                std::set_intersection(sourceChangeLogPoSet.begin(),
                                     sourceChangeLogPoSet.end(),
                                     destinationChangeLog.second->poSetOfSubQueryPlan.begin(),
                                     destinationChangeLog.second->poSetOfSubQueryPlan.end(),
@@ -92,7 +102,7 @@ void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
     removeChangeLogsBefore(timestamp);
 
     //Insert compacted changelog entries
-    for (auto& compactedChangeLogEntry : changeLogEntriesToCompact){
+    for (auto& compactedChangeLogEntry : changeLogEntriesToCompact) {
         addChangeLogEntry(compactedChangeLogEntry.first, std::move(compactedChangeLogEntry.second));
     }
 }
@@ -110,11 +120,6 @@ std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> ChangeLog::getChangeLogEntri
         iterator++;
     }
     return changeLogEntriesToReturn;
-}
-
-void ChangeLog::updateProcessedChangeLogTimestamp(uint64_t timestamp) {
-    this->lastProcessedChangeLogTimestamp = timestamp;
-    removeChangeLogsBefore(lastProcessedChangeLogTimestamp);
 }
 
 void ChangeLog::removeChangeLogsBefore(uint64_t timestamp) {

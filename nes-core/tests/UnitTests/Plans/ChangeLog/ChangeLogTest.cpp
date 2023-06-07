@@ -42,6 +42,7 @@ class ChangeLogTest : public Testing::NESBaseTest {
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
+        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred1);
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     }
 
@@ -50,8 +51,8 @@ class ChangeLogTest : public Testing::NESBaseTest {
 
     ExpressionNodePtr pred1;
     LogicalOperatorNodePtr sourceOp1;
-
     LogicalOperatorNodePtr filterOp1;
+    LogicalOperatorNodePtr filterOp2;
     LogicalOperatorNodePtr sinkOp1;
 };
 
@@ -70,11 +71,11 @@ TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry) {
     changeLog->addChangeLogEntry(1, std::move(changelogEntry));
 
     // Fetch change log entries before timestamp 1
-    auto extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(1);
+    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(1);
     EXPECT_EQ(extractedChangeLogEntries.size(), 0);
 
     // Fetch change log entries before timestamp 2
-    extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(2);
+    extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(2);
     EXPECT_EQ(extractedChangeLogEntries.size(), 1);
 }
 
@@ -103,11 +104,11 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(4);
+    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
     EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0]);
-    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1]);
-    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2]);
+    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0].second);
+    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1].second);
+    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2].second);
 }
 
 //Insert and fetch change log entries
@@ -135,25 +136,48 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(4);
+    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
     EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0]);
-    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1]);
-    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2]);
+    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0].second);
+    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1].second);
+    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2].second);
 
     //Update the processing time
     changeLog->updateProcessedChangeLogTimestamp(4);
 
     // Fetch change log entries before timestamp 4
-    extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(4);
+    extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
     EXPECT_EQ(extractedChangeLogEntries.size(), 0);
 
     // Fetch change log entries before timestamp 7
-    extractedChangeLogEntries = changeLog->getChangeLogEntriesBefore(7);
+    extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(7);
     EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-    EXPECT_EQ(changelogEntry4, extractedChangeLogEntries[0]);
-    EXPECT_EQ(changelogEntry5, extractedChangeLogEntries[1]);
-    EXPECT_EQ(changelogEntry6, extractedChangeLogEntries[2]);
+    EXPECT_EQ(changelogEntry4, extractedChangeLogEntries[0].second);
+    EXPECT_EQ(changelogEntry5, extractedChangeLogEntries[1].second);
+    EXPECT_EQ(changelogEntry6, extractedChangeLogEntries[2].second);
 }
 
+//Insert and fetch change log entries
+TEST_F(ChangeLogTest, PerformLogCompactionForNonOverlappingChangeLogs) {
+
+    // Compute Plan
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp2);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    NES_DEBUG(queryPlan->toString());
+
+    // Initialize change log
+    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
+    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp2}, {sinkOp1});
+    changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
+    changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
+
+    // Fetch change log entries before timestamp 4
+    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
+    EXPECT_EQ(extractedChangeLogEntries.size(), 2);
+    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0].second);
+    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1].second);
+}
 }// namespace NES

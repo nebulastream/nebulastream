@@ -42,17 +42,25 @@ class ChangeLog {
     void addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& changeLogEntry);
 
     /**
-     * @brief Get all non-overlapping change log entries created after the indicated timestamp
-     * @param timestamp : the timestamp after which the change log entries need to be retrieved
-     * @return a vector of change log entries
+     * @brief Get non-overlapping change log entries before the timestamp
+     * @param timestamp: the timestamp before which the changelog entries need to be sent
+     * @return vector of non-overlapping change log entries
      */
-    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> getChangeLogEntriesBefore(uint64_t timestamp);
+    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> getCompressedChangeLogEntriesBefore(uint64_t timestamp);
 
     /**
      * @brief: Update the timestamp till which the change log entries are processed
      * @param timestamp: the timestamp after which the change log entries need to be retrieved
      */
     void updateProcessedChangeLogTimestamp(uint64_t timestamp);
+
+  protected:
+    /**
+     * @brief Get all non-overlapping change log entries created after the indicated timestamp
+     * @param timestamp : the timestamp after which the change log entries need to be retrieved
+     * @return a vector of change log entries
+     */
+    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> getChangeLogEntriesBefore(uint64_t timestamp);
 
   private:
     ChangeLog() = default;
