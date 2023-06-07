@@ -46,7 +46,7 @@ class ChangeLog {
      * @param timestamp : the timestamp after which the change log entries need to be retrieved
      * @return a vector of change log entries
      */
-    std::vector<ChangeLogEntryPtr> getChangeLogEntriesBefore(uint64_t timestamp);
+    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> getChangeLogEntriesBefore(uint64_t timestamp);
 
     /**
      * @brief: Update the timestamp till which the change log entries are processed
@@ -66,17 +66,17 @@ class ChangeLog {
     void performChangeLogCompaction(uint64_t timestamp);
 
     /**
-     * Merge all change log entries together
+     * @brief Merge all change log entries together
      * @param changeLogEntriesToMerge: entries to be merged
      * @return merged change log entry
      */
     ChangeLogEntryPtr mergeChangeLogs(std::vector<std::pair<uint64_t, ChangeLogEntryPtr>>& changeLogEntriesToMerge);
 
     /**
-     * Clean up the change log entries created before the provided timestamp
+     * @brief Clean up the change log entries created before the provided timestamp
      * @param timestamp : the timestamp before which the change log entries need to be removed
      */
-    void cleanup(uint64_t timestamp);
+    void removeChangeLogsBefore(uint64_t timestamp);
 
     // time stamp till which all change log entries are processed
     uint64_t lastProcessedChangeLogTimestamp;

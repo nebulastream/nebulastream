@@ -26,65 +26,87 @@ void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& change
 
 void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
 
-    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEntriesToCompact;
-    //Find the range of keys to be fetched
-    auto firstElement = changeLogEntries.lower_bound(0);
-    auto lastElement = changeLogEntries.lower_bound(timestamp);
+    //Get all change log entries to compact
+    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEntriesToCompact = getChangeLogEntriesBefore(timestamp);
 
-    //Fetch the change log entries to be compacted
-    auto iterator = firstElement;
-    while (iterator != lastElement) {
-        changeLogEntriesToCompact.emplace_back(iterator->first, iterator->second);
-        iterator++;
-    }
+    // Repeat this process till all change log entries within the timestamp are non-overlapping or are compacted.
+    bool repeat = true;
+    while (repeat) {
+        repeat = false;//set to false after entering the loop to prevent infinite loop.
 
-    //Iterate over all change log entries to be compacted and find the changelogs that can be merged together
-    for (uint32_t i = 0; i < changeLogEntriesToCompact.size(); i++) {
+        //Iterate over the fetched change log entries to be compacted and find the changelogs that can be merged together.
+        for (uint32_t i = 0; i < changeLogEntriesToCompact.size(); i++) {
 
-        auto sourceChangeLog = changeLogEntriesToCompact.at(i);
-        std::set<OperatorId> sourceChangeLogPoSet = sourceChangeLog.second->poSetOfSubQueryPlan;
-        std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEnteriesToMerge;
-        //Iterate over the remaining change logs entries. Find all change logs that are overlapping with the first change log by
-        // comparing their posets
-        for (uint32_t j = i + 1; j < changeLogEntriesToCompact.size(); j++) {
-            auto destinationChangeLog = changeLogEntriesToCompact.at(j);
-            std::set<uint32_t> diff;
-            std::set_difference(sourceChangeLogPoSet.begin(),
-                                sourceChangeLogPoSet.end(),
-                                destinationChangeLog.second->poSetOfSubQueryPlan.begin(),
-                                destinationChangeLog.second->poSetOfSubQueryPlan.end(),
-                                std::inserter(diff, diff.begin()));
+            //state with a change log entry and find all following overlapping change log entries.
+            auto candidateChangeLog = changeLogEntriesToCompact.at(i);
 
-            //If diff is not empty then the change log is overlapping
-            if (!diff.empty()) {
-                changeLogEnteriesToMerge.emplace_back(changeLogEntriesToCompact.at(j));
+            //Fetch the poset of the candidate change log
+            std::set<OperatorId> sourceChangeLogPoSet = candidateChangeLog.second->poSetOfSubQueryPlan;
+
+            // temp container to store all overlapping change log entries
+            std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEntriesToMerge;
+
+            //Iterate over the remaining change logs entries. Find all change logs that are overlapping with the first change log by
+            // comparing their respective poset.
+            for (uint32_t j = i + 1; j < changeLogEntriesToCompact.size(); j++) {
+                auto destinationChangeLog = changeLogEntriesToCompact.at(j);
+                std::set<uint32_t> diff;
+                //compute difference among the poset of two change log entries
+                std::set_difference(sourceChangeLogPoSet.begin(),
+                                    sourceChangeLogPoSet.end(),
+                                    destinationChangeLog.second->poSetOfSubQueryPlan.begin(),
+                                    destinationChangeLog.second->poSetOfSubQueryPlan.end(),
+                                    std::inserter(diff, diff.begin()));
+
+                //If diff is not empty then the change log entries are overlapping
+                if (!diff.empty()) {
+                    //add the change log entry into the temp container
+                    changeLogEntriesToMerge.emplace_back(changeLogEntriesToCompact.at(j));
+                }
+            }
+
+            //If found overlapping change logs then merge them together
+            if (!changeLogEntriesToMerge.empty()) {
+                //inset the candidate change log entry into the temp container storing all overlapping change log entries.
+                changeLogEntriesToMerge.emplace_back(candidateChangeLog);
+
+                //Union all the change log entries and proceed further
+                auto mergedChangeLog = mergeChangeLogs(changeLogEntriesToMerge);
+
+                // store the union change log entry into the btree with key as the timestamp of the candidate change log entry.
+                changeLogEntriesToCompact.emplace_back(candidateChangeLog.first, mergedChangeLog);
+
+                //remove merged change log entries from the compacted change log entries.
+                for (const auto& mergedChangeLogEntry : changeLogEntriesToMerge) {
+                    changeLogEntriesToCompact.erase(
+                        std::remove(changeLogEntriesToCompact.begin(), changeLogEntriesToCompact.end(), mergedChangeLogEntry),
+                        changeLogEntriesToCompact.end());
+                }
+                repeat = true;
+                break;
             }
         }
+    }
 
-        //If found overlapping change logs then merge them together
-        if (!changeLogEnteriesToMerge.empty()) {
-            changeLogEnteriesToMerge.emplace_back(sourceChangeLog);
-            auto mergedChangeLog = mergeChangeLogs(changeLogEnteriesToMerge);
-            changeLogEntries[sourceChangeLog.first] = mergedChangeLog;
-        }
+    //clear all un-compacted change log entries before the timestamp
+    removeChangeLogsBefore(timestamp);
 
-        changeLogEntriesToCompact.erase(changeLogEntriesToCompact.begin() + i);
+    //Insert compacted changelog entries
+    for (auto& compactedChangeLogEntry : changeLogEntriesToCompact){
+        addChangeLogEntry(compactedChangeLogEntry.first, std::move(compactedChangeLogEntry.second));
     }
 }
 
-std::vector<ChangeLogEntryPtr> ChangeLog::getChangeLogEntriesBefore(uint64_t timestamp) {
+std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> ChangeLog::getChangeLogEntriesBefore(uint64_t timestamp) {
 
-    //Perform compaction before fetching change log
-    performChangeLogCompaction(timestamp);
-
-    std::vector<ChangeLogEntryPtr> changeLogEntriesToReturn;
+    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEntriesToReturn;
     //Find the range of keys to be fetched
     auto firstElement = changeLogEntries.lower_bound(0);
     auto lastElement = changeLogEntries.lower_bound(timestamp);
 
     auto iterator = firstElement;
     while (iterator != lastElement) {
-        changeLogEntriesToReturn.emplace_back(iterator->second);
+        changeLogEntriesToReturn.emplace_back(iterator->first, iterator->second);
         iterator++;
     }
     return changeLogEntriesToReturn;
@@ -92,10 +114,10 @@ std::vector<ChangeLogEntryPtr> ChangeLog::getChangeLogEntriesBefore(uint64_t tim
 
 void ChangeLog::updateProcessedChangeLogTimestamp(uint64_t timestamp) {
     this->lastProcessedChangeLogTimestamp = timestamp;
-    cleanup(lastProcessedChangeLogTimestamp);
+    removeChangeLogsBefore(lastProcessedChangeLogTimestamp);
 }
 
-void ChangeLog::cleanup(uint64_t timestamp) {
+void ChangeLog::removeChangeLogsBefore(uint64_t timestamp) {
 
     //Find the range of keys to be removed
     auto firstElement = changeLogEntries.lower_bound(0);
