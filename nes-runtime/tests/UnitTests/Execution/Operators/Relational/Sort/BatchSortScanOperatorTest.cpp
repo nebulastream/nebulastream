@@ -49,21 +49,30 @@ class BatchSortScanOperatorTest : public Testing::NESBaseTest {
 
 constexpr uint32_t SEED = 42;
 
-// Fills the state of the sort operator with random values.
+// Fills the state of the sort operator with random values
+// Sort field is here always the first field
 template<typename T>
-void fillState(const std::shared_ptr<BatchSortOperatorHandler>& handler, uint64_t numberOfRecord, bool descending = false) {
+void fillState(const std::shared_ptr<BatchSortOperatorHandler>& handler,
+               uint64_t numberOfRecord,
+               uint64_t numberOfFields,
+               bool descending = false) {
     auto state = handler->getState();
-    auto entrySize = sizeof(T) * 2;
+    auto entrySize = sizeof(T) * (numberOfFields + 1 /*sort col*/);
     auto stateRef = Nautilus::Interface::PagedVectorRef(Value<MemRef>((int8_t*) state), entrySize);
     std::mt19937 random(SEED);
     for (size_t j = 0; j < numberOfRecord; ++j) {
-        auto rand = static_cast<T>(random());
-        Value<> val(encodeData<T>(rand, descending));
-        Value<> tmpVal((T) rand);
         auto entry = stateRef.allocateEntry();
-        entry.store(val);
-        entry = entry + sizeof(T);
-        entry.store(tmpVal);
+        for (size_t i = 0; i < numberOfFields; ++i) {
+            auto rand = static_cast<T>(random());
+            // Sort column is fist field thus we encode it here
+            if (i == 0) {
+                Value<> encodedVal(encodeData<T>(rand, descending));
+                entry.store(encodedVal);
+            }
+            Value<> val((T) rand);
+            entry = entry + sizeof(T);
+            entry.store(val);
+        }
     }
 }
 
@@ -86,6 +95,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
     using NativeType = typename TypeParam::first_type;
     using NautilusType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 100;
+    constexpr auto NUM_FIELDS = 1;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -96,7 +106,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
                                                    std::vector<Record::RecordFieldIdentifier>({"f1"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, /* descending */ false);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, /* descending */ false);
 
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
@@ -127,6 +137,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
     using NativeType = typename TypeParam::first_type;
     using NautilusType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 100;
+    constexpr auto NUM_FIELDS = 2;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -137,7 +148,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
                                                               std::vector<Record::RecordFieldIdentifier>({"f2"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, /* descending */ false);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, /* descending */ false);
 
     auto sortScanOperator = BatchSortScan(0, {pType, pType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
@@ -168,6 +179,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
     using NativeType = typename TypeParam::first_type;
     using NautilusType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 100;
+    constexpr auto NUM_FIELDS = 1;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -178,7 +190,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
                                                    std::vector<Record::RecordFieldIdentifier>({"f1"}));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     handler->setup(pipelineContext);
-    fillState<NativeType>(handler, NUM_RECORDS, /* descending */ true);
+    fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, /* descending */ true);
 
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
