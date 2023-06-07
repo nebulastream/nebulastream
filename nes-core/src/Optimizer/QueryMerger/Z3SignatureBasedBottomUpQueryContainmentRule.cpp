@@ -80,7 +80,8 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
             bool foundMatch = false;
             //Before the bottom up check, we first check the whole query for equality.
-            if (signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature())
+            if (signatureContainmentUtil->checkContainmentForBottomUpMerging(hostSink->getZ3Signature(),
+                                                                             targetSink->getZ3Signature())
                 == ContainmentType::EQUALITY) {
                 NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 //                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
@@ -293,8 +294,8 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
     }
 
     NES_DEBUG("Compare target {} and host {} operators.", targetOperator->toString(), hostOperator->toString());
-    auto containmentType =
-        signatureContainmentUtil->checkContainment(hostOperator->getZ3Signature(), targetOperator->getZ3Signature());
+    auto containmentType = signatureContainmentUtil->checkContainmentForBottomUpMerging(hostOperator->getZ3Signature(),
+                                                                                        targetOperator->getZ3Signature());
     if (containmentType == ContainmentType::EQUALITY) {
         NES_DEBUG("Check containment relationship for parents of target operator.");
         uint16_t matchCount = 0;

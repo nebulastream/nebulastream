@@ -29,6 +29,11 @@ class expr;
 using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
+namespace NES {
+class LogicalOperatorNode;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+}// namespace NES
+
 namespace NES::Optimizer {
 
 class QuerySignature;
@@ -66,11 +71,14 @@ class SignatureContainmentUtil {
      *      First check for WindowContainment
      *      In case of window equality, we continue to check for projection containment
      *      In case of projection equality, we finally check for filter containment
+     *      only return containment cases for filter containment, if checkFilterContainment is true
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentType checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+
+    std::tuple<ContainmentType, LogicalOperatorNodePtr> checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftSignature, const LogicalOperatorNodePtr& rightSignature);
 
   private:
     /**
@@ -95,9 +103,8 @@ class SignatureContainmentUtil {
      * check if right sig ⊆ left sig for filters
      *      true: check if left sig ⊆ right sig
      *          true: return EQUALITY
-     *          false: checkFilterContainmentPossible
-     *              true: return RIGHT_SIG_CONTAINED
-     *      false: check if left sig ⊆ right sig && checkFilterContainmentPossible
+     *          false: return RIGHT_SIG_CONTAINED
+     *      false: check if left sig ⊆ right sig
      *          true: return LEFT_SIG_CONTAINED
      *      false: return NO_CONTAINMENT
      * @param leftSignature
@@ -135,7 +142,7 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    std::tuple<uint8_t, ContainmentType> checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief creates conditions for checking projection containment:

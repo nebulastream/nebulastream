@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 
 namespace NES::Optimizer {
 
@@ -29,7 +31,7 @@ SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& context
     this->solver = std::make_unique<z3::solver>(*this->context);
 }
 
-ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature,
                                                            const QuerySignaturePtr& rightSignature) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
@@ -46,13 +48,19 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
         // First check for WindowContainment
         // In case of window equality, we continue to check for projection containment
         // In case of projection equality, we finally check for filter containment
-        containmentRelationship = checkWindowContainment(leftSignature, rightSignature);
+        containmentRelationship = get<1>(checkWindowContainment(leftSignature, rightSignature));
         NES_TRACE("Check window containment returned: {}", magic_enum::enum_name(containmentRelationship));
         if (containmentRelationship == ContainmentType::EQUALITY) {
             containmentRelationship = checkProjectionContainment(leftSignature, rightSignature);
             NES_TRACE("Check projection containment returned: {}", magic_enum::enum_name(containmentRelationship));
             if (containmentRelationship == ContainmentType::EQUALITY) {
                 containmentRelationship = checkFilterContainment(leftSignature, rightSignature);
+                if ((containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED
+                     && !checkFilterContainmentPossible(rightSignature, leftSignature))
+                    || (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED
+                        && !checkFilterContainmentPossible(leftSignature, rightSignature))) {
+                    containmentRelationship = ContainmentType::NO_CONTAINMENT;
+                }
                 NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));
             }
         }
@@ -67,6 +75,64 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
         }
     }
     return containmentRelationship;
+}
+
+std::tuple<ContainmentType, LogicalOperatorNodePtr>
+SignatureContainmentUtil::checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
+                                                            const LogicalOperatorNodePtr& rightOperator) {
+    NES_TRACE("Checking for containment.");
+    ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
+    LogicalOperatorNodePtr containmentOperators = nullptr;
+    auto otherConditions = leftOperator->getZ3Signature()->getConditions();
+    auto conditions = rightOperator->getZ3Signature()->getConditions();
+    NES_TRACE("Left signature: {}", conditions->to_string());
+    NES_TRACE("Right signature: {}", otherConditions->to_string());
+    if (!conditions || !otherConditions) {
+        NES_WARNING("Can't obtain containment relationships for null signatures");
+        return {};
+    }
+    try {
+        // In the following, we
+        // First check for WindowContainment
+        // In case of window equality, we continue to check for projection containment
+        // In case of projection equality, we finally check for filter containment
+        auto windowContainment = checkWindowContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
+        containmentRelationship = get<1>(windowContainment);
+        NES_TRACE("Check window containment returned: {}", magic_enum::enum_name(containmentRelationship));
+        if (containmentRelationship == ContainmentType::EQUALITY) {
+            containmentRelationship = checkProjectionContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
+            NES_TRACE("Check projection containment returned: {}", magic_enum::enum_name(containmentRelationship));
+            if (containmentRelationship == ContainmentType::EQUALITY) {
+                containmentRelationship = checkFilterContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
+                NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));
+                if (containmentRelationship == ContainmentType::EQUALITY) {
+                    return {ContainmentType::EQUALITY, {}};
+                } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
+                    //todo: create new filter operator from right signature
+                } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
+                    //todo: create new filter operator from left signature
+                }
+            } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
+                //todo: create new projection operator from right signature
+            } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
+                //todo: create new projection operator from left signature
+            }
+        } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
+            //todo: create new window operator from right signature
+        } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
+            //todo: create new window operator from left sig
+        }
+    } catch (...) {
+        auto exception = std::current_exception();
+        try {
+            std::rethrow_exception(exception);
+        } catch (const std::exception& e) {
+            NES_ERROR("SignatureContainmentUtil: Exception occurred while performing containment check among "
+                       "queryIdAndCatalogEntryMapping {}",
+                       e.what());
+        }
+    }
+    return std::tuple(containmentRelationship, containmentOperators);
 }
 
 ContainmentType SignatureContainmentUtil::checkProjectionContainment(const QuerySignaturePtr& leftSignature,
@@ -102,11 +168,12 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
     return ContainmentType::NO_CONTAINMENT;
 }
 
-ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
-                                                                 const QuerySignaturePtr& rightSignature) {
+std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
+                                                                                      const QuerySignaturePtr& rightSignature) {
     // if no window signature is present, return equality
     if (leftSignature->getWindowsExpressions().empty() && rightSignature->getWindowsExpressions().empty()) {
-        return ContainmentType::EQUALITY;
+        //0 indicates that there are no window operations in the queries
+        return std::tuple(0, ContainmentType::EQUALITY);
     }
     // obtain the number of window operations. Use the number of window operations from the signature that has less window operations
     size_t numberOfWindows = rightSignature->getWindowsExpressions().size();
@@ -118,7 +185,8 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
     // the previous operations are completely sharable. As soon as there is no equality in window operations, we return the
     // obtained relationship
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
-    for (size_t i = 0; i < numberOfWindows; ++i) {
+    uint8_t currentWindow = 0;
+    for (size_t i = 1; i <= numberOfWindows; ++i) {
         // obtain each window signature in bottom up fashion
         const auto& leftWindow = leftSignature->getWindowsExpressions()[i];
         const auto& rightWindow = rightSignature->getWindowsExpressions()[i];
@@ -210,24 +278,25 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
         }
         // stop the loop as soon as there is no equality relationship
         if (containmentRelationship != ContainmentType::EQUALITY) {
-            return containmentRelationship;
+            return std::tuple(i, containmentRelationship);
         }
+        currentWindow = i;
     }
-    return containmentRelationship;
+    return std::tuple(currentWindow, containmentRelationship);
 }
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
-    NES_TRACE("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
+    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
     z3::expr_vector rightQueryFilterConditions(*context);
-    NES_TRACE("SignatureContainmentUtil::checkContainment: Add filter conditions.");
+    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: Add filter conditions.");
     leftQueryFilterConditions.push_back(to_expr(*context, *leftSignature->getConditions()));
     rightQueryFilterConditions.push_back(to_expr(*context, *rightSignature->getConditions()));
-    NES_TRACE("SignatureContainmentUtil::checkContainment: content of left sig expression vectors: {}",
-              leftQueryFilterConditions.to_string());
-    NES_TRACE("SignatureContainmentUtil::checkContainment: content of right sig expression vectors: {}",
-              rightQueryFilterConditions.to_string());
+    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: content of left sig expression vectors: {}",
+               leftQueryFilterConditions.to_string());
+    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: content of right sig expression vectors: {}",
+               rightQueryFilterConditions.to_string());
     //The rest of the method checks for filter containment as follows:
     //check if right sig ⊆ left sig for filters, i.e. if ((right cond && !left condition) == unsat) <=> right sig ⊆ left sig,
     //since we're checking for projection containment, the negation is on the side of the contained condition,
@@ -235,25 +304,20 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     //      check if right sig ⊆ left sig for filters
     //           true: check if left sig ⊆ right sig
     //               true: return EQUALITY
-    //               false: checkFilterContainmentPossible
-    //                   true: return RIGHT_SIG_CONTAINED
-    //           false: check if left sig ⊆ right sig && checkFilterContainmentPossible
+    //               false: return RIGHT_SIG_CONTAINED
+    //           false: check if left sig ⊆ right sig
     //               true: return LEFT_SIG_CONTAINED
     //           false: return NO_CONTAINMENT
     if (checkContainmentConditionsUnsatisfied(leftQueryFilterConditions, rightQueryFilterConditions)) {
         if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
-            NES_TRACE("SignatureContainmentUtil::checkContainment: Equal filters.");
+            NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: Equal filters.");
             return ContainmentType::EQUALITY;
-        } else if (checkFilterContainmentPossible(leftSignature, rightSignature)) {
-            NES_TRACE("SignatureContainmentUtil::checkContainment: left sig contains right sig for filters.");
-            return ContainmentType::RIGHT_SIG_CONTAINED;
         }
-    } else {
-        if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)
-            && checkFilterContainmentPossible(rightSignature, leftSignature)) {
-            NES_TRACE("SignatureContainmentUtil::checkContainment: right sig contains left sig for filters.");
-            return ContainmentType::LEFT_SIG_CONTAINED;
-        }
+        NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: left sig contains right sig for filters.");
+        return ContainmentType::RIGHT_SIG_CONTAINED;
+    } else if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
+        NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: right sig contains left sig for filters.");
+        return ContainmentType::LEFT_SIG_CONTAINED;
     }
     return ContainmentType::NO_CONTAINMENT;
 }
