@@ -40,7 +40,7 @@ class H3Hash : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculate(HashValue &hash, Value<> &value) override;
+    HashValue calculate(HashValue& hash, Value<>& value) override;
 
     /**
      * @brief Calculates the hash for a given value by hashing the value and then xor-ing with hash. This version
@@ -50,12 +50,12 @@ class H3Hash : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(HashValue &hash, Value<> &value, Value<MemRef>& state) override;
+    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
 
-private:
+  private:
     std::vector<uint64_t> h3Seeds;
 };
 
-} // namespace NES::Nautilus::Interface
+}// namespace NES::Nautilus::Interface
 
-#endif //NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_H3HASH_HPP
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_H3HASH_HPP
