@@ -36,9 +36,13 @@ template<typename T>
 uint64_t hashValue(uint64_t seed, T value, void* h3SeedsPtr) {
     NES_ASSERT2_FMT(h3SeedsPtr != nullptr, "h3SeedsPtr can not be NULL!");
 
+    // We do not want to cast, but rather just copy the bytes as-is
+    uint64_t newValue = 0;
+    std::memcpy(&newValue, &value, sizeof(T));
+
     // Combine two hashes by XORing them
     // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashInt(value, static_cast<uint64_t*>(h3SeedsPtr));
+    return seed ^ hashInt(newValue, static_cast<uint64_t*>(h3SeedsPtr));
 }
 
 

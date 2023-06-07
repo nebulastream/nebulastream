@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_H3HASH_HPP
-#define NES_H3HASH_HPP
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_H3HASH_HPP
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_H3HASH_HPP
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -28,7 +28,7 @@ namespace NES::Nautilus::Interface {
 class H3Hash : public HashFunction {
   public:
     /**
-     * @brief Initis the hash by just returning zero
+     * @brief Initializes the hash by just returning zero
      * @return HashValue
      */
     HashValue init() override;
@@ -58,4 +58,4 @@ private:
 
 } // namespace NES::Nautilus::Interface
 
-#endif //NES_H3HASH_HPP
+#endif //NES_NES_RUNTIME_INCLUDE_EXECUTION_DATASTRUCTURES_HASH_H3HASH_HPP
