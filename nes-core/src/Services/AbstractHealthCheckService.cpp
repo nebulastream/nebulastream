@@ -64,4 +64,20 @@ void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node)
 
 bool AbstractHealthCheckService::getRunning() { return isRunning; }
 
+bool AbstractHealthCheckService::isWorkerInactive(uint64_t workerId) {
+    NES_DEBUG2("HealthCheckService: checking if node with id {} is inactive", workerId);
+    std::lock_guard<std::mutex> lock(cvMutex);
+    bool isNotActive = inactiveWorkers.contains(workerId);
+    if (isNotActive) {
+        NES_DEBUG2("HealthCheckService: node with id {} is inactive", workerId);
+        return true;
+    }
+    NES_DEBUG2("HealthCheckService: node with id {} is active", workerId);
+    return false;
+}
+
+TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(uint64_t workerId) {
+    return nodeIdToTopologyNodeMap.find(workerId);
+}
+
 }// namespace NES

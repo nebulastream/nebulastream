@@ -83,14 +83,14 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk1, 0, 0, properties);
+    auto node1Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties);
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk2, 0, 0, properties);
+    auto node2Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties);
     topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk3, 0, 0, properties);
+    auto node3Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID,"127.0.0.1", *rpcPortWrk3, 0, 0, properties);
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system

@@ -21,6 +21,7 @@
 #include <memory>
 #include <stdint.h>
 #include <thread>
+#include <set>
 
 namespace NES {
 
@@ -80,6 +81,20 @@ class AbstractHealthCheckService {
      */
     bool getRunning();
 
+    /**
+     * Method to check if a worker is inactive
+     * @param workerId id of the worker
+     * @return true if worker is active otherwise false
+     */
+    bool isWorkerInactive(uint64_t workerId);
+
+    /**
+     * Method to return a worker from healthcheck by its id
+     * @param workerId id of the worker
+     * @return worker with workerId
+     */
+    TopologyNodePtr getWorkerByWorkerId(uint64_t workerId);
+
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     std::atomic<bool> isRunning = false;
@@ -89,6 +104,8 @@ class AbstractHealthCheckService {
     std::string healthServiceName;
     std::condition_variable cv;
     std::mutex cvMutex;
+    std::mutex cvMutex2;
+    std::set<uint64_t> inactiveWorkers;
 };
 
 }// namespace NES
