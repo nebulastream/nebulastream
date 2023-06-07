@@ -318,9 +318,9 @@ std::string Topology::toString() {
 
 void Topology::print() { NES_DEBUG2("Topology print:{}", toString()); }
 
-bool Topology::nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t grpcPort) {
+bool Topology::existsNodeWithWorkerId(uint64_t workerId) {
     std::unique_lock lock(topologyLock);
-    NES_INFO2("Topology: Finding if a physical node with ip {} and port {} exists.", ipAddress, grpcPort);
+    NES_INFO2("Topology: Finding if a physical node with worker id {} exists.", workerId);
     if (!rootNode) {
         NES_WARNING2("Topology: Root node not found.");
         return false;
@@ -329,11 +329,8 @@ bool Topology::nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t gr
     BreadthFirstNodeIterator bfsIterator(rootNode);
     for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         auto physicalNode = (*itr)->as<TopologyNode>();
-        if (physicalNode->getIpAddress() == ipAddress && physicalNode->getGrpcPort() == grpcPort) {
-            NES_TRACE2("Topology: Found a physical node {} with ip {} and port {}",
-                       physicalNode->toString(),
-                       ipAddress,
-                       grpcPort);
+        if (physicalNode->getId() == workerId) {
+            NES_TRACE2("Topology: Found a physical node {} with worker id {}", physicalNode->toString(), workerId);
             return true;
         }
     }

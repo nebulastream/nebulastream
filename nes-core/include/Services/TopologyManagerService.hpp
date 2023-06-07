@@ -51,6 +51,7 @@ class TopologyManagerService {
 
     /**
      * @brief registers a worker.
+     * @param configWorkerId: id of the worker as given in its configuration
      * @param address: address of the worker in ip:port format
      * @param grpcPort: grpc port used by the worker for communication
      * @param dataPort: port used by the worker for receiving or transmitting data
@@ -58,7 +59,8 @@ class TopologyManagerService {
      * @param workerProperties: Additional properties of worker
      * @return unique identifier of the worker
      */
-    uint64_t registerWorker(const std::string& address,
+    uint64_t registerWorker(uint64_t configWorkerId,
+                            const std::string& address,
                             int64_t grpcPort,
                             int64_t dataPort,
                             uint16_t numberOfSlots,

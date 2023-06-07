@@ -77,14 +77,14 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
 
-    uint64_t nodeId = topologyManagerService->registerWorker(ip, publish_port, 5000, 6, properties);
+    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, ip, publish_port, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
-    uint64_t nodeId1 = topologyManagerService->registerWorker(ip, publish_port + 2, 5000, 6, properties);
+    uint64_t nodeId1 = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, ip, publish_port + 2, 5000, 6, properties);
     EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
-    uint64_t nodeId2 = topologyManagerService->registerWorker(ip, publish_port, 5000, 6, properties);
+    uint64_t nodeId2 = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID,ip, publish_port, 5000, 6, properties);
     EXPECT_EQ(nodeId2, 0u);
 
     //test unregister not existing node
