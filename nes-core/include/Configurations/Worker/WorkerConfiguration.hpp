@@ -52,6 +52,12 @@ class WorkerConfiguration : public BaseConfiguration {
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
+     * @brief Id of the Worker.
+     * This is used to uniquely identify workers within the cluster.
+     */
+    UIntOption workerId = {WORKER_ID, INVALID_TOPOLOGY_NODE_ID, "Worker id."};
+
+    /**
      * @brief IP of the Worker.
      */
     StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP."};
@@ -257,7 +263,8 @@ class WorkerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&localWorkerIp,
+        return {&workerId,
+                &localWorkerIp,
                 &coordinatorIp,
                 &rpcPort,
                 &dataPort,

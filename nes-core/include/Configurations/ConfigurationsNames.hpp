@@ -79,6 +79,7 @@ const std::string ELEGANT = "elegant";                        // elegant configu
 const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";// accelerate java udfs supplied in Map UDF operator
 
 //Worker Configuration Names
+const std::string WORKER_ID = "workerId";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
 const std::string PARENT_ID_CONFIG = "parentId";
