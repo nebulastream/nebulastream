@@ -66,9 +66,8 @@ class QueryDeploymentPhase {
     /**
      * @brief method for deploying and starting the query
      * @param queryId : the query Id of the query to be deployed and started
-     * @return true if successful else false
      */
-    bool execute(const SharedQueryPlanPtr& sharedQueryPlan);
+    void execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
     explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
