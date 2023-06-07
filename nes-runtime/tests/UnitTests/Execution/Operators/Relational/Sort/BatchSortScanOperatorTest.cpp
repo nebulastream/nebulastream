@@ -160,7 +160,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
     sortScanOperator.open(ctx, record);
 
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
-    ASSERT_EQ(collector->records[0].numberOfFields(), 1);
+    ASSERT_EQ(collector->records[0].numberOfFields(), 2);
 
     // Records in f2 should be in ascending order
     auto prev = collector->records[0].read("f2").as<NautilusType>();
