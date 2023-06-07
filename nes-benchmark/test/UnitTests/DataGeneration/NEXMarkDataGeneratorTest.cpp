@@ -60,22 +60,28 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
     auto& newDependencyGeneratorInstance = NEXMarkGeneration::DependencyGenerator::getInstance(64, 512);
     ASSERT_EQ(&dependencyGeneratorInstance, &newDependencyGeneratorInstance);
 
+    // ------------------------------------------------------------------
     // testing getPersons()
     auto persons = dependencyGeneratorInstance.getPersons();
     // check if number of persons is correct
     ASSERT_EQ(persons.size(), 63);
+
     // check if values of persons are correct
     for (auto i = 0UL; i < persons.size(); ++i) {
+        // verify that time wasn't decreased
         if (i == 0) ASSERT_TRUE(persons[0] >= 0);
         else ASSERT_TRUE(persons[i] >= persons[i - 1]);
     }
+
     // timestamp should have increased - NOTE that there is a slight chance (practically not existent) the timestamp was never increased
     EXPECT_NE(persons[persons.size() - 1], persons[0]);
 
+    // ------------------------------------------------------------------
     // testing getAuctions()
     auto auctions = dependencyGeneratorInstance.getAuctions();
     // check if number of auctions is correct
     ASSERT_EQ(auctions.size(), 203);
+
     // check if values of auctions are correct
     bool sellerIdLargerInit = false;
     for (auto i = 0UL; i < auctions.size(); ++i) {
@@ -83,50 +89,64 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
         auto price = std::get<1>(auctions[i]);
         auto timestamp = std::get<2>(auctions[i]);
         auto expires = std::get<3>(auctions[i]);
+
+        // check if seller already exists at this time
         ASSERT_TRUE(persons[sellerId] <= timestamp);
+        // verify that price and endTime are within an interval of accepted values
         ASSERT_TRUE(price > 0);
         ASSERT_TRUE(expires >= timestamp + 2 * 60 * 60 && expires < timestamp + 26 * 60 * 60);
+        // verify that time wasn't decreased
         if (i == 0) ASSERT_TRUE(timestamp >= 0);
         else ASSERT_TRUE(timestamp >= std::get<2>(auctions[i - 1]));
 
         if (sellerId >= NEXMarkGeneration::recordsInit) sellerIdLargerInit = true;
-
         //NES_INFO("Auction " << i << ": sellerId is " << sellerId << ", price is " << price << ", timestamp is " << timestamp << ", endTime is " << expires);
     }
+
     // timestamp should have increased - NOTE that there is a slight chance (practically not existent) the timestamp was never increased
     EXPECT_NE(std::get<2>(auctions[auctions.size() - 1]), std::get<2>(auctions[0]));
     // sellerId may also increase over time and should not just be drawn from 0 to constant x every time
     EXPECT_TRUE(sellerIdLargerInit);
 
+    // ------------------------------------------------------------------
     // testing getBids()
     auto bids = dependencyGeneratorInstance.getBids();
     // check if number of bids is correct
     ASSERT_EQ(bids.size(), 1580);
+
     // check if values of bids are correct
+    std::vector<uint64_t> prices(auctions.size(), 0);
     bool auctionIdLargerInit = false;
     bool bidderIdLargerInit = false;
+
     for (auto i = 0UL; i < bids.size(); ++i) {
         auto auctionId = std::get<0>(bids[i]);
         auto bidderId = std::get<1>(bids[i]);
         auto price = std::get<2>(bids[i]);
         auto timestamp = std::get<3>(bids[i]);
+
+        // check if auction and bidder already exist at this time
         ASSERT_TRUE(std::get<2>(auctions[auctionId]) <= timestamp);
         ASSERT_TRUE(persons[bidderId] <= timestamp);
+        // verify that new bid on an auction is larger than the last bid on that auction but not larger than the final bid
         ASSERT_TRUE(std::get<1>(auctions[auctionId]) >= price);
+        ASSERT_TRUE(prices[auctionId] < price);
+        prices[auctionId] = price;
+        // verify that time wasn't decreased
         if (i == 0) ASSERT_TRUE(timestamp >= 0);
         else ASSERT_TRUE(timestamp >= std::get<3>(bids[i - 1]));
 
         if (auctionId >= NEXMarkGeneration::recordsInit) auctionIdLargerInit = true;
         if (bidderId >= NEXMarkGeneration::recordsInit) bidderIdLargerInit = true;
-
         //NES_INFO("Bid " << i << ": auctionId is " << auctionId << ", bidderId is " << bidderId << ", price is " << price << ", timestamp is " << timestamp);
     }
+
     // timestamp should have increased - NOTE that there is a slight chance (practically not existent) the timestamp was never increased
     EXPECT_NE(std::get<3>(bids[bids.size() - 1]), std::get<3>(bids[0]));
     // auctionId and bidderId may also increase over time and should not just be drawn from 0 to constant x every time
     EXPECT_TRUE(auctionIdLargerInit && bidderIdLargerInit);
-    // TODO check that for two bids on the same auction the second price is higher
 
+    // ------------------------------------------------------------------
     // testing getNumberOfRecords()
     auto numberOfRecordsDefault = dependencyGeneratorInstance.getNumberOfRecords();
     ASSERT_EQ(numberOfRecordsDefault, 166);
