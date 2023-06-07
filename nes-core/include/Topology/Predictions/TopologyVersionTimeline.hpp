@@ -39,7 +39,7 @@ class TopologyVersionTimeline {
 
  private:
   TopologyChangeLogPtr latestChange;
-   void applyAggregatedChangeLog(TopologyPtr topology,
+   static void applyAggregatedChangeLog(TopologyPtr topology,
                                  NES::Experimental::TopologyPrediction::AggregatedTopologyChangeLog changeLog);
 };
 }

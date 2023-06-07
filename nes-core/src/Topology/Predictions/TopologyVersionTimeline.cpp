@@ -22,13 +22,14 @@ TopologyPtr TopologyVersionTimeline::getTopologyVersion(Timestamp time) {
   while (topologyChange && topologyChange->getTime() > time) {
     topologyChange = topologyChange->getPreviousChange();
   }
+  //todo: can this be moved up?
   if (!topologyChange) {
     return copyTopology(originalTopology);
   }
   auto nodeChanges = topologyChange->getChangeLog();
   auto topologyCopy = copyTopology(originalTopology);
-  applyAggregatedChangeLog(originalTopology, nodeChanges);
-  return originalTopology;
+  applyAggregatedChangeLog(topologyCopy, nodeChanges);
+  return topologyCopy;
 }
 
 TopologyVersionTimeline::TopologyVersionTimeline(TopologyPtr originalTopology)
@@ -92,6 +93,7 @@ bool TopologyVersionTimeline::removeTopologyChange(Timestamp predictedTime, cons
   }
   if (predictedTime == latestChange->getTime()) {
     latestChange->erase(delta);
+    //todo: what is going on here with the empty if?
     if (latestChange->empty());
     latestChange = latestChange->getPreviousChange();
     return true;
@@ -102,7 +104,6 @@ bool TopologyVersionTimeline::removeTopologyChange(Timestamp predictedTime, cons
     //todo: garbage collect?
   }
   if (!previousChange || previousChange->getTime() == predictedTime) {
-    //todo: reactivate after setting log level
     NES_DEBUG2("Trying to remove prediction at time {} but no topology change was predicted at that time", predictedTime);
     return false;
   }
@@ -208,9 +209,21 @@ TopologyPtr TopologyVersionTimeline::copyTopology(const TopologyPtr& originalTop
 
 //todo:implement
 void TopologyVersionTimeline::applyAggregatedChangeLog(TopologyPtr topology, AggregatedTopologyChangeLog changeLog) {
-  (void) topology;
-  (void) changeLog;
-
+    for (auto &addedEdge : changeLog.getAdded()) {
+        //todp: check that nodes exist?
+        //topology->findNodeWithId(addedEdge.parent)->addChild(topology->findNodeWithId(addedEdge.child));
+        auto parent = topology->findNodeWithId(addedEdge.parent);
+        auto child = topology->findNodeWithId(addedEdge.child);
+        topology->addNewTopologyNodeAsChild(parent, child);
+    }
+    for (auto &removedEdge : changeLog.getRemoved()) {
+        auto child = topology->findNodeWithId(removedEdge.child);
+        if (!child) {
+            NES_DEBUG2("Node with id {} not found, possibly because its only parents was removed", removedEdge.child);
+            continue;
+        }
+        topology->findNodeWithId(removedEdge.parent)->removeChild(child);
+        //todo: do we nned to remove nodes without parents here?
+    }
 }
-
 }

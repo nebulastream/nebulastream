@@ -16,12 +16,17 @@
 #include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Topology/Predictions/TopologyVersionTimeline.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fstream>
 #include <gtest/gtest.h>
-#include <Topology/Predictions/TopologyVersionTimeline.hpp>
+#include <nlohmann/json.hpp>
+#include <Topology/Predictions/Edge.hpp>
+#include <Topology/Predictions/TopologyDelta.hpp>
 
+using json = nlohmann::json;
 namespace NES {
 
 class TopologyVersionTimelineTest : public Testing::NESBaseTest {
@@ -93,6 +98,73 @@ class TopologyVersionTimelineTest : public Testing::NESBaseTest {
 
     }
 
+    TopologyPtr constructTopologyFromJson(std::string path) {
+        std::map<std::string, std::any> properties;
+        std::ifstream i(path);
+        json j;
+        i >> j;
+        uint64_t grpcPort = 4000;
+        uint64_t dataPort = 5000;
+
+        std::map<uint64_t, std::vector<uint64_t>> graphMap;
+        //auto topology = std::make_shared<Topology>();
+        auto topology = Topology::create();
+        topology->setAsRoot(TopologyNode::create(1, "localhost", grpcPort, dataPort, 4, properties));
+        ++grpcPort;
+        ++dataPort;
+        auto nodes = j["nodes"].get<std::vector<uint64_t>>();
+        auto edges = j["edges"].get<std::vector<json>>();
+        for (auto e : edges) {
+            auto childId = nodes[e[0].get<uint64_t>()];
+            auto parentId = nodes[e[1].get<uint64_t>()];
+            //topology->addNewTopologyNodeAsChild(topology->findNodeWithId(parentId), TopologyNode::create(childId));
+            graphMap[parentId].push_back(childId);
+        }
+
+        std::stack<uint64_t> stack;
+
+        size_t nodeCount = 0;
+        std::set<uint64_t> visited;
+        stack.push(1);
+        while (!stack.empty()) {
+            auto id = stack.top();
+            stack.pop();
+
+            if (graphMap.contains(id)) {
+                auto children = graphMap.at(id);
+                for (auto child : children) {
+                    auto childNode = topology->findNodeWithId(child);
+                    if (!childNode) {
+                        topology->addNewTopologyNodeAsChild(topology->findNodeWithId(id), TopologyNode::create(child, "localhost", grpcPort, dataPort, 4, properties));
+                        ++grpcPort;
+                        ++dataPort;
+                        stack.push(child);
+                    } else {
+                        childNode->addParent(topology->findNodeWithId(id));
+                    }
+                }
+            }
+        }
+
+        return topology;
+    }
+
+
+    Experimental::TopologyPrediction::TopologyDelta getDeltaFromJson(json json) {
+        Experimental::TopologyPrediction::TopologyDelta changeLog({}, {});
+        for (auto add : json["added"]) {
+            changeLog.added.push_back(getEdgeFromJson(add));
+        }
+        for (auto rem : json["removed"]) {
+            changeLog.removed.push_back(getEdgeFromJson(rem));
+        }
+        return changeLog;
+    }
+
+    Experimental::TopologyPrediction::Edge getEdgeFromJson(json json) {
+        EXPECT_TRUE(json.is_array());
+        return {json[0], json[1]};
+    }
 
   protected:
     TopologyNodePtr rootNode, mid1, mid2, mid3, src1, src2, src3, src4;
@@ -117,7 +189,6 @@ TEST_F(TopologyVersionTimelineTest, testLinearTopology) {
 
     NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
 
-    ///todo: teting
     auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
     testTopologyEquality(topology, topologyCopy);
 }
@@ -147,23 +218,8 @@ TEST_F(TopologyVersionTimelineTest, testMultipleSources) {
 
     NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
-
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
+    testTopologyEquality(topology, topologyCopy);
 }
 
 /**
@@ -195,27 +251,8 @@ TEST_F(TopologyVersionTimelineTest, testTopologyWithDiffernetDepths) {
 
     NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
-
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
+    testTopologyEquality(topology, topologyCopy);
 }
 
 /**
@@ -247,27 +284,8 @@ TEST_F(TopologyVersionTimelineTest, testTopologyWithLongerFirstBranch) {
 
     NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
+    testTopologyEquality(topology, topologyCopy);
 }
 
 /**
@@ -305,27 +323,8 @@ TEST_F(TopologyVersionTimelineTest, testBranchedAndMergedTopology) {
 
     NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid3, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid3, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
+    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
+    testTopologyEquality(topology, topologyCopy);
 }
 
 /**
@@ -374,37 +373,42 @@ TEST_F(TopologyVersionTimelineTest, testWithHiearchicalTopology) {
 
     NES_DEBUG("TopologyVersionTimelineTest::testLinearTopology topology:" << topology->toString());
 
-    // BF iteration
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src3, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src4, *bfIterator);
+    auto topologyCopy = Experimental::TopologyPrediction::TopologyVersionTimeline::copyTopology(topology);
+    testTopologyEquality(topology, topologyCopy);
+}
 
-    // DF iteration
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src4, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src3, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
-    ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+TEST_F(TopologyVersionTimelineTest, testPredictionsBigGraph) {
+    std::string TEST_DIR = "/home/x/predictedTopologyViews/predictedView_tests/test_data/";
+
+    std::string filename = TEST_DIR + "graph_time0.json";
+    auto topology = constructTopologyFromJson(filename);
+    std::cout << topology->toString() << std::endl;
+
+    Experimental::TopologyPrediction::TopologyVersionTimeline versionDeltaList(topology);
+
+    std::ifstream i(TEST_DIR + "timeline.json");
+    json j;
+    i >> j;
+
+    auto timeline = j.get<std::map<std::string, json>>();
+
+    for (auto [timeString, changelog] : timeline) {
+        auto delta = getDeltaFromJson(changelog);
+        versionDeltaList.addTopologyChange(std::stoi(timeString), delta);
+    }
+
+    std::cout << versionDeltaList.predictionsToString() << std::endl;
+
+    for (uint64_t i = 1; i <= timeline.size(); ++i) {
+        //std::cout << versionDeltaList.toString(i) << std::endl;
+        std::cout << versionDeltaList.getTopologyVersion(i)->toString() << std::endl;
+
+        std::string filename = TEST_DIR + "graph_time" + std::to_string(i) + ".json";
+        auto topology = constructTopologyFromJson(filename);
+        //EXPECT_TRUE(versionDeltaList.getTopologyView(i).matches(*topology));
+        //EXPECT_TRUE(matches(versionDeltaList.getTopologyView(i), *topology));
+        testTopologyEquality(versionDeltaList.getTopologyVersion(i), topology);
+    }
 }
 
 }// namespace NES
