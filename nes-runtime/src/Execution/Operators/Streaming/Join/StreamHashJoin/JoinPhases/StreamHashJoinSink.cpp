@@ -127,8 +127,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                 }
 
                 if (!rhsPage.bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
-                    //                    NES_DEBUG("No bloom filter hit");
-                    //                    continue;
+                    continue;
                 }
 
                 // Iterating through all tuples of the page as we do not know where the exact tuple is
