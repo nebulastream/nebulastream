@@ -15,8 +15,8 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
 #include <atomic>
+#include <Util/Common.hpp>
 #include <cstring>
 
 namespace NES::Runtime::Execution::Operators {

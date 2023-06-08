@@ -28,7 +28,6 @@
 #include <Experimental/Interpreter/Operators/GroupedAggregation.hpp>
 #include <Experimental/Utility/TPCHUtil.hpp>
 #include <Util/Timer.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif

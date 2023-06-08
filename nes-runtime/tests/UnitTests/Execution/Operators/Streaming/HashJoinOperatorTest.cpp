@@ -29,9 +29,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/CommonUtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution {
 
