@@ -47,7 +47,8 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @brief Adds the record to this sample
      * @param record
      */
-    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) override;
+    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
+                       Runtime::Execution::Operators::OperatorState *pState) override;
 
     /**
      * @brief Once we have finished building our sample, we can ask for an approximate
@@ -58,6 +59,10 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
                                                      Runtime::Execution::ExecutionContext& ctx,
                                                      Runtime::BufferManagerPtr bufferManager) override;
+
+    void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator *op,
+                                 Runtime::Execution::ExecutionContext &ctx,
+                                 Runtime::Execution::RecordBuffer buffer) override;
 
     /**
      * @brief Deconstructor

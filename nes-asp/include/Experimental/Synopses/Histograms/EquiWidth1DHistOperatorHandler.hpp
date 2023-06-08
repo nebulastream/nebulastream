@@ -16,13 +16,25 @@
 #define NES_EQUIWIDTH1DHISTOPERATORHANDLER_HPP
 
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArray.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <memory>
 
 namespace NES::ASP {
-class EquiWidth1DHistOperatorHandler {
+class EquiWidth1DHistOperatorHandler : public Runtime::Execution::OperatorHandler {
 
+public:
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+               Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
+
+    void stop(Runtime::QueryTerminationType terminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+
+    void* getBinsRef();
+
+    void setup(uint64_t entrySize, uint64_t numberOfBins);
 
 private:
-    std::unique_ptr<Nautilus::Interface::Fixed2DArray> fixed2DArray;
+    std::unique_ptr<Nautilus::Interface::Fixed2DArray> bins;
 };
 } // namespace NES::ASP
 

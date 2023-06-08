@@ -33,7 +33,7 @@ constexpr auto GENERATOR_SEED_DEFAULT = 42;
 
 /**
  * @brief The synopsis does not take care of any window semantics. This is done in the AbstractSynopsesWindow class, which will be
- * added in issue #3628
+ * added in issue #3628. This is also not thread safe, which will be added in #3825
  */
 class AbstractSynopsis {
 
@@ -45,10 +45,14 @@ class AbstractSynopsis {
     explicit AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig);
 
     /**
-     * @brief This is the first step of receiving an approximation. This method adds the record to the underlying synopsis
+     * @brief This is the first step of performing an approximation. This method adds the record to the underlying synopsis
+     * @param handlerIndex
+     * @param ctx
      * @param record
+     * @param pState
      */
-    virtual void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx, Nautilus::Record record) = 0;
+    virtual void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                               Nautilus::Record record, Runtime::Execution::Operators::OperatorState* pState) = 0;
 
     /**
      * @brief Once all records have been inserted, we can ask for an approximation
@@ -67,6 +71,18 @@ class AbstractSynopsis {
      *  - resetting and writing zeros to the 2D array for a Count-min sketch
      */
     virtual void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) = 0;
+
+    /**
+     * @brief This method gets called in open() of the synopses operator class and gives the synopses a possibility
+     * to store a local state, for example a reference to a data structure
+     * @param handlerIndex
+     * @param op
+     * @param ctx
+     * @param buffer
+     */
+    virtual void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+                                         Runtime::Execution::ExecutionContext &ctx,
+                                         Runtime::Execution::RecordBuffer buffer) = 0;
 
     /**
      * @brief Creates the synopsis from the SynopsisArguments

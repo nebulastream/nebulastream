@@ -38,6 +38,8 @@ class SynopsesOperator : public ExecutableOperator {
      */
     void setup(ExecutionContext& executionCtx) const override;
 
+    void open(ExecutionContext &executionCtx, RecordBuffer &recordBuffer) const override;
+
     /**
      * @brief Passes the record to the synopsis so that it can see and act upon it
      * @param ctx
