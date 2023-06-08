@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.103](https://github.com/nebulastream/nebulastream/tree/v0.5.103) (2023-06-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.102...v0.5.103)
+
+**Implemented enhancements:**
+
+- \[TASK\] Introduce spdlog syntax in tests [\#3745](https://github.com/nebulastream/nebulastream/issues/3745)
+
 ## [v0.5.102](https://github.com/nebulastream/nebulastream/tree/v0.5.102) (2023-06-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.101...v0.5.102)
