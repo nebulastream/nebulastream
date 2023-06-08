@@ -317,4 +317,81 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
     EXPECT_TRUE(retStopCord);
 }
 
+TEST_F(MultiWorkerTest, startWorkersWithDifferentWorkerIds) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    cout << "start coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    cout << "coordinator started successfully" << endl;
+
+    cout << "start worker 1" << endl;
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort = port;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    cout << "worker1 started successfully" << endl;
+
+    cout << "start worker 2" << endl;
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->coordinatorPort = port;
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    EXPECT_EQ(wrk2->getWorkerId(), 3u);
+    cout << "worker2 started successfully" << endl;
+
+    cout << "stopping worker 1" << endl;
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    cout << "start worker 3" << endl;
+    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+    wrkConf3->coordinatorPort = port;
+    wrkConf3->workerId = 123;
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    EXPECT_EQ(wrk3->getWorkerId(), 4u);
+    cout << "worker3 started successfully" << endl;
+
+    cout << "start another worker with worker id 3" << endl;
+    WorkerConfigurationPtr wrkConf2copy = WorkerConfiguration::create();
+    wrkConf2copy->coordinatorPort = port;
+    wrkConf2copy->workerId = 3u;
+    NesWorkerPtr wrk2copy = std::make_shared<NesWorker>(std::move(wrkConf2copy));
+    bool retStart2copy = wrk2copy->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2copy);
+    bool connected = wrk2copy->connect();
+    EXPECT_FALSE(connected);
+    cout << "could not connect a new worker with an id that belongs to an active worker" << endl;
+
+    cout << "restart worker 1" << endl;
+    WorkerConfigurationPtr wrkConf1restart = WorkerConfiguration::create();
+    wrkConf1restart->coordinatorPort = port;
+    wrkConf1restart->workerId = 2u;
+    NesWorkerPtr wrk1restart = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retRestart1 = wrk1restart->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retRestart1);
+    bool connectedAfterRestart = wrk1restart->connect();
+    EXPECT_TRUE(connectedAfterRestart);
+    cout << "worker1 started successfully" << endl;
+
+    cout << "stopping worker 2" << endl;
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+
+    cout << "stopping worker 3" << endl;
+    bool retStopWrk3 = wrk3->stop(false);
+    EXPECT_TRUE(retStopWrk3);
+
+    cout << "stopping coordinator" << endl;
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
 }// namespace NES

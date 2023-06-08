@@ -71,11 +71,9 @@ uint64_t TopologyManagerService::registerWorker(const uint64_t configWorkerId,
                 isWorkerReregistering = true;
             }
         }
-        else {
-            // there is no active worker with workerId and there is no inactive worker with workerId,
-            // assume worker was misconfigured => assign next available workerId
-            id = getNextTopologyNodeId();
-        }
+        // there is no active worker with workerId and there is no inactive worker with workerId,
+        // assume worker was misconfigured => assign next available workerId
+        id = getNextTopologyNodeId();
     }
 
     if (configWorkerId == INVALID_TOPOLOGY_NODE_ID) {
