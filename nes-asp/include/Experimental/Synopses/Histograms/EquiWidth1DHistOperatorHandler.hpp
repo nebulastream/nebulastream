@@ -20,8 +20,11 @@
 #include <memory>
 
 namespace NES::ASP {
-class EquiWidth1DHistOperatorHandler : public Runtime::Execution::OperatorHandler {
 
+/**
+ * @brief Operator handler for a 1-D equi-width histogram, which just stores the bins
+ */
+class EquiWidth1DHistOperatorHandler : public Runtime::Execution::OperatorHandler {
 public:
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
@@ -29,8 +32,17 @@ public:
     void stop(Runtime::QueryTerminationType terminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief Getter for the bins memRef
+     * @return void*
+     */
     void* getBinsRef();
 
+    /**
+     * @brief Initializes the histogram by creating new bins
+     * @param entrySize
+     * @param numberOfBins
+     */
     void setup(uint64_t entrySize, uint64_t numberOfBins);
 
 private:
