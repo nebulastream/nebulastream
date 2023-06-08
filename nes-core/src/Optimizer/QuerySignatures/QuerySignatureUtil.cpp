@@ -150,7 +150,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::Co
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, sourceNameVar, sourceNameVal)));
 
     //Compute signature
-    return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {}, {});
+    return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {}, {}, {});
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const ProjectionLogicalOperatorNodePtr& projectOperator) {
@@ -212,11 +212,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
     auto conditions = childQuerySignature->getConditions();
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto unionExpressions = childQuerySignature->getUnionExpressions();
+    auto filterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
     return QuerySignature::create(std::move(conditions),
                                   std::move(updatedColumns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowExpressions),
-                                  std::move(unionExpressions));
+                                  std::move(unionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 
 #ifdef TFDEF
@@ -272,12 +274,14 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
 
     auto windowsExpressions = childQuerySignature->getWindowsExpressions();
     auto unionExpressions = childQuerySignature->getUnionExpressions();
+    auto filterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
     //Compute signature
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowsExpressions),
-                                  std::move(unionExpressions));
+                                  std::move(unionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 #endif// TFDEF
 
@@ -289,8 +293,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::Conte
     NES_ASSERT(children.size() == 1, "Map operator should only have one non null children.");
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
-
-    auto exprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
+    auto filterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
+    auto exprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(),
+                                                                       context,
+                                                                       filterAttributesAndIsMapFunctionApplied,
+                                                                       true);
     auto mapExpr = exprAndFieldMap->getExpr();
     auto rhsOperandFieldMap = exprAndFieldMap->getFieldMap();
 
@@ -339,7 +346,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::Conte
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowsExpressions),
-                                  std::move(unionExpressions));
+                                  std::move(unionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::ContextPtr& context,
@@ -350,8 +358,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     NES_ASSERT(children.size() == 1, "Map operator should only have one non null children.");
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
-
-    auto filterExprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
+    auto filterAttributeAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
+    auto filterExprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(),
+                                                                             context,
+                                                                             filterAttributeAndIsMapFunctionApplied,
+                                                                             false);
     auto filterFieldMap = filterExprAndFieldMap->getFieldMap();
     auto filterExpr = filterExprAndFieldMap->getExpr();
 
@@ -402,7 +413,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
                                   std::move(columns),
                                   std::move(schemaFieldToExprMaps),
                                   std::move(windowExpressions),
-                                  std::move(unionExpressions));
+                                  std::move(unionExpressions),
+                                  std::move(filterAttributeAndIsMapFunctionApplied));
 }
 
 QuerySignaturePtr
@@ -460,12 +472,14 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
     auto columns = childQuerySignature->getColumns();
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
     auto unionExpressions = childQuerySignature->getUnionExpressions();
+    auto filterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
 
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(schemaFieldToExprMaps),
                                   std::move(windowExpressions),
-                                  std::move(unionExpressions));
+                                  std::move(unionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::ContextPtr& context,
@@ -529,6 +543,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
 
     combinedUnionExpressions[unionOperator->getRightInputSchema()->getSourceNameQualifier()] = rightSignature->getConditions();
     combinedUnionExpressions[unionOperator->getLeftInputSchema()->getSourceNameQualifier()] = leftSignature->getConditions();
+    //Create combined filter attributes and is map function applied map
+    auto filterAttributesAndIsMapFunctionApplied = leftSignature->getFilterAttributesAndIsMapFunctionApplied();
+    auto rightFilterattributeAndIsMapFunctionApplied = rightSignature->getFilterAttributesAndIsMapFunctionApplied();
+    filterAttributesAndIsMapFunctionApplied.merge(rightFilterattributeAndIsMapFunctionApplied);
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
@@ -536,7 +554,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
                                   std::move(leftColumns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(combinedWindowExpressions),
-                                  std::move(combinedUnionExpressions));
+                                  std::move(combinedUnionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::ContextPtr& context,
@@ -673,11 +692,17 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
         combinedUnionExpressions[sourceName] = conditions;
     }
 
+    //Create combined filter attributes and is map function applied map
+    auto filterAttributesAndIsMapFunctionApplied = leftSignature->getFilterAttributesAndIsMapFunctionApplied();
+    auto rightFilterattributeAndIsMapFunctionApplied = rightSignature->getFilterAttributesAndIsMapFunctionApplied();
+    filterAttributesAndIsMapFunctionApplied.merge(rightFilterattributeAndIsMapFunctionApplied);
+
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(combinedWindowExpressions),
-                                  std::move(combinedUnionExpressions));
+                                  std::move(combinedUnionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::ContextPtr& context,
@@ -871,10 +896,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto combinedWindowExpressions = childQuerySignature->getWindowsExpressions();
     combinedWindowExpressions.push_back(windowExpression);
     auto unionExpressions = childQuerySignature->getUnionExpressions();
+    auto filterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(combinedWindowExpressions),
-                                  std::move(unionExpressions));
+                                  std::move(unionExpressions),
+                                  std::move(filterAttributesAndIsMapFunctionApplied));
 }
 }// namespace NES::Optimizer

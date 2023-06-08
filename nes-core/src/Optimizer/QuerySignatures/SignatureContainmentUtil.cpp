@@ -12,13 +12,22 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES::Optimizer {
 
@@ -77,12 +86,12 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
     return containmentRelationship;
 }
 
-std::tuple<ContainmentType, LogicalOperatorNodePtr>
+std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
 SignatureContainmentUtil::checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
                                                             const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
-    LogicalOperatorNodePtr containmentOperators = nullptr;
+    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     auto otherConditions = leftOperator->getZ3Signature()->getConditions();
     auto conditions = rightOperator->getZ3Signature()->getConditions();
     NES_TRACE("Left signature: {}", conditions->to_string());
@@ -108,19 +117,41 @@ SignatureContainmentUtil::checkContainmentForTopDownMerging(const LogicalOperato
                 if (containmentRelationship == ContainmentType::EQUALITY) {
                     return {ContainmentType::EQUALITY, {}};
                 } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
-                    //todo: create new filter operator from right signature
+                    containmentOperators = createFilterOperators(leftOperator, rightOperator);
+                    if (containmentOperators.empty()) {
+                        containmentRelationship = ContainmentType::NO_CONTAINMENT;
+                    }
                 } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
-                    //todo: create new filter operator from left signature
+                    containmentOperators = createFilterOperators(rightOperator, leftOperator);
+                    if (containmentOperators.empty()) {
+                        containmentRelationship = ContainmentType::NO_CONTAINMENT;
+                    }
                 }
             } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
-                //todo: create new projection operator from right signature
+                auto projectionOperator = createProjectionOperator(rightOperator);
+                if (projectionOperator == nullptr) {
+                    containmentRelationship = ContainmentType::NO_CONTAINMENT;
+                } else {
+                    containmentOperators.push_back(projectionOperator);
+                }
             } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
-                //todo: create new projection operator from left signature
+                auto projectionOperator = createProjectionOperator(leftOperator);
+                if (projectionOperator == nullptr) {
+                    containmentRelationship = ContainmentType::NO_CONTAINMENT;
+                } else {
+                    containmentOperators.push_back(projectionOperator);
+                }
             }
         } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
-            //todo: create new window operator from right signature
+            containmentOperators = createContainedWindowOperator(rightOperator, get<0>(windowContainment));
+            if (containmentOperators.empty()) {
+                containmentRelationship = ContainmentType::NO_CONTAINMENT;
+            }
         } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
-            //todo: create new window operator from left sig
+            containmentOperators = createContainedWindowOperator(leftOperator, get<0>(windowContainment));
+            if (containmentOperators.empty()) {
+                containmentRelationship = ContainmentType::NO_CONTAINMENT;
+            }
         }
     } catch (...) {
         auto exception = std::current_exception();
@@ -320,6 +351,70 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
         return ContainmentType::LEFT_SIG_CONTAINED;
     }
     return ContainmentType::NO_CONTAINMENT;
+}
+
+std::vector<LogicalOperatorNodePtr>
+SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
+                                                        const uint8_t containedWindowIndex) {
+    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
+    auto windowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
+    //get the correct window operator
+    if (containedWindowIndex >= 0 && containedWindowIndex < windowOperators.size()) {
+        LogicalOperatorNodePtr windowOperator = windowOperators[windowOperators.size() - 1 - containedWindowIndex];
+        auto windowDefinition = windowOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition();
+        //check that containee is a time based window, else return false
+        if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+            auto timeBasedWindow = windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType());
+            //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
+            auto field = windowOperator->getOutputSchema()->hasFieldName("start");
+            //return false if this is not possible
+            if (field == nullptr) {
+                return {};
+            }
+            timeBasedWindow->getTimeCharacteristic()->setField(field);
+            containmentOperators.push_back(windowOperator);
+            //obtain the watermark operator
+            containmentOperators.push_back(windowOperator->getChildren()[0]->as<LogicalOperatorNode>());
+            NES_TRACE2("Window containment possible.");
+        }
+    }
+    return containmentOperators;
+}
+
+LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const LogicalOperatorNodePtr& containedOperator) {
+    auto projectionOperators = containedOperator->getNodesByType<ProjectionLogicalOperatorNode>();
+    //get the correct projection operator
+    if (!projectionOperators.empty()) {
+        return projectionOperators.at(0);
+    }
+    return nullptr;
+}
+
+std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
+                                                                                    const LogicalOperatorNodePtr& containee) {
+    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
+    for (const auto& attributeName : container->getZ3Signature()->getColumns()) {
+        auto filterAttributeAndIsMapFunction =
+            containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied().find(attributeName);
+        if (filterAttributeAndIsMapFunction != containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied().end()
+            && filterAttributeAndIsMapFunction->second == false) {
+            auto containedFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
+            if (!containedFilterOperators.empty()) {
+                auto downstreamFilterOperator = containedFilterOperators.at(0);
+                downstreamFilterOperator->removeChildren();
+                containmentOperators.push_back(downstreamFilterOperator);
+                for (size_t i = 1; i < containedFilterOperators.size(); ++i) {
+                    containedFilterOperators.at(i)->removeAllParent();
+                    containedFilterOperators.at(i)->addParent(downstreamFilterOperator);
+                    downstreamFilterOperator->addChild(containedFilterOperators.at(i));
+                    containmentOperators.push_back(containedFilterOperators.at(i));
+                    downstreamFilterOperator = containedFilterOperators.at(i);
+                }
+                return containmentOperators;
+            }
+        }
+    }
+    return containmentOperators;
 }
 
 void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {

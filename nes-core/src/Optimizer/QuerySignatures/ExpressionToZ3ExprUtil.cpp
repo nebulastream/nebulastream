@@ -35,7 +35,9 @@
 namespace NES::Optimizer {
 
 Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const ExpressionNodePtr& expression,
-                                                                 const z3::ContextPtr& context) {
+                                                                 const z3::ContextPtr& context,
+                                                                 std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
+                                                                 bool isMapExpression) {
     NES_DEBUG("Creating Z3 expression for input expression {}", expression->toString());
     if (expression->instanceOf<LogicalExpressionNode>()) {
         return createForLogicalExpressions(expression, context);
@@ -50,6 +52,12 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForExpression(const Expressio
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
         std::string fieldName = fieldAccessExpression->getFieldName();
         DataTypePtr fieldType = fieldAccessExpression->getStamp();
+        //Indicate whether reordering for containment is possible
+        if (isMapExpression && filterAttributesAndIsMapFunctionApplied.find(fieldName) != filterAttributesAndIsMapFunctionApplied.end()) {
+            filterAttributesAndIsMapFunctionApplied.find(fieldName)->second = true;
+        } else {
+            filterAttributesAndIsMapFunctionApplied[fieldName] = false;
+        }
         return DataTypeToZ3ExprUtil::createForField(fieldName, fieldType, context);
     } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
         auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
