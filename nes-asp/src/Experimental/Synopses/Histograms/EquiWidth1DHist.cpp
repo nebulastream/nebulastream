@@ -44,7 +44,7 @@ void EquiWidth1DHist::addToSynopsis(uint64_t, Runtime::Execution::ExecutionConte
     auto localState = dynamic_cast<LocalBinsOperatorState*>(pState);
     auto& bins = localState->bins;
 
-    auto binDimensionPos = ((readBinDimension->execute(record).as<Nautilus::UInt64>() - minValue) / numberOfBins);
+    auto binDimensionPos = ((readBinDimension->execute(record).as<Nautilus::Int64>() - minValue) / binWidth);
     aggregationFunction->lift(bins[(uint64_t)0][binDimensionPos], record);
 }
 
@@ -104,6 +104,13 @@ void EquiWidth1DHist::setup(uint64_t handlerIndex, Runtime::Execution::Execution
     Nautilus::FunctionCall("setupOpHandlerProxy", setupOpHandlerProxy, opHandler,
                            Nautilus::Value<Nautilus::UInt64>(entrySize),
                            Nautilus::Value<Nautilus::UInt64>(numberOfBins));
+
+    // Calling the reset function across all bins
+    auto binsMemRef = Nautilus::FunctionCall("getBinsRefProxy", getBinsRefProxy, opHandler);
+    auto binsRef = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
+    for (Nautilus::Value<> bin = (uint64_t) 0; bin < numberOfBins; bin = bin + 1) {
+        aggregationFunction->reset(binsRef[(uint64_t)0][bin]);
+    }
 }
 
 void EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
@@ -118,12 +125,10 @@ void EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runti
 
 EquiWidth1DHist::EquiWidth1DHist(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
                                  const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
+                                 const std::string& lowerBinBoundString, const std::string& upperBinBoundString,
                                  std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension)
         : AbstractSynopsis(aggregationConfig), minValue(minValue), maxValue(maxValue), numberOfBins(numberOfBins),
-        binWidth((maxValue - minValue) / numberOfBins), entrySize(entrySize), readBinDimension(std::move(readBinDimension)) {
-
-    // Adding bucket ranges to the schema
-    outputSchema->addField(lowerBinBoundString, BasicType::UINT64);
-    outputSchema->addField(upperBinBoundString, BasicType::UINT64);
+        binWidth((maxValue - minValue) / numberOfBins), entrySize(entrySize), lowerBinBoundString(lowerBinBoundString),
+        upperBinBoundString(upperBinBoundString), readBinDimension(std::move(readBinDimension)) {
 }
 } // namespace NES::ASP

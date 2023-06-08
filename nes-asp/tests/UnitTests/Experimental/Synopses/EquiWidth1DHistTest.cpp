@@ -57,54 +57,61 @@ public:
         NESBaseTest::SetUp();
         NES_INFO("Setup EquiWidth1DHistTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
+        readBinDimension = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);
+
+        // Creating the worker context and the pipeline necessary for testing the sampling
+        opHandler = std::make_shared<EquiWidth1DHistOperatorHandler>();
+        std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
+        workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
+        pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
+        executionContext = std::make_unique<Runtime::Execution::ExecutionContext>(
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
+                Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
     }
 
     Runtime::BufferManagerPtr bufferManager;
+
+    // Input and output variables
+    const std::string idString = "id";
+    const std::string aggregationString = "value";
+    const std::string approximateString = "aggregation";
+    const std::string timestampFieldName = "ts";
+    const std::string lowerBoundBinName = "lowerBinValue";
+    const std::string upperBoundBinName = "upperBinValue";
+    const uint64_t numberOfBins = 5;
+    const uint64_t minValue = 0;
+    const uint64_t maxValue = 5;
+    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension;
+
+    const uint64_t handlerIndex = 0;
+    std::shared_ptr<EquiWidth1DHistOperatorHandler> opHandler;
+    std::unique_ptr<Runtime::Execution::ExecutionContext> executionContext;
+    Runtime::WorkerContextPtr workerContext;
+    std::shared_ptr<MockedPipelineExecutionContext> pipelineContext;
 };
 
 
 TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
-
-    // Input and output variables
-    const auto idString = "id";
-    const auto aggregationString = "value";
-    const auto approximateString = "aggregation";
-    const auto timestampFieldName = "ts";
-    const auto lowerBoundBinName = "lowerBoundBin";
-    const auto upperBoundBinName = "upperBoundBin";
     const auto entrySize = sizeof(uint64_t);
-    const auto numberOfBins = 5;
-    const auto minValue = 0;
-    const auto maxValue = 4;
-    auto readBinDimension = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);
 
     const auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField(idString, BasicType::UINT64)
-            ->addField(aggregationString, BasicType::INT64)
-            ->addField(timestampFieldName, BasicType::UINT64);
+                            ->addField(idString, BasicType::UINT64)
+                            ->addField(aggregationString, BasicType::INT64)
+                            ->addField(timestampFieldName, BasicType::UINT64);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema, aggregationString);
-
-    outputSchema->addField(lowerBoundBinName, BasicType::UINT64);
-    outputSchema->addField(upperBoundBinName, BasicType::UINT64);
+    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
+    outputSchema->addField(upperBoundBinName, BasicType::INT64);
 
     // Creating aggregation config and the histogram
     auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                         timestampFieldName, inputSchema, outputSchema);
-    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins, std::move(readBinDimension));
-
-    // Creating the worker context and the pipeline necessary for testing the sampling
-    auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
-    auto handlerIndex = 0;
-    auto opHandler = std::make_shared<EquiWidth1DHistOperatorHandler>();
-    std::vector<Runtime::Execution::OperatorHandlerPtr> opHandlers = {opHandler};
-    auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(opHandlers);
-    Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
-    Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
+    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
 
 
     // Setting up the synopsis and creating the local operator state
-    histSynopsis.setup(handlerIndex, executionContext);
+    histSynopsis.setup(handlerIndex, *executionContext);
     auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
     auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
@@ -136,37 +143,370 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     });
 
     // Inserting records
-    histSynopsis.addToSynopsis(handlerIndex, executionContext, record1, opState.get());
-    histSynopsis.addToSynopsis(handlerIndex, executionContext, record2, opState.get());
-    histSynopsis.addToSynopsis(handlerIndex, executionContext, record3, opState.get());
-    histSynopsis.addToSynopsis(handlerIndex, executionContext, record4, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record1, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record2, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
 
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, executionContext, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
     EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
-    EXPECT_EQ(dynamicBuffer[0][approximateString].read<uint64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<uint64_t>(), 0);
-    EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<uint64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
 
-    EXPECT_EQ(dynamicBuffer[1][approximateString].read<uint64_t>(), 0);
-    EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<uint64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<uint64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
 
-    EXPECT_EQ(dynamicBuffer[2][approximateString].read<uint64_t>(), 1);
-    EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<uint64_t>(), 2);
-    EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<uint64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[2][approximateString].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
 
-    EXPECT_EQ(dynamicBuffer[3][approximateString].read<uint64_t>(), 0);
-    EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<uint64_t>(), 3);
-    EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<uint64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
 
-    EXPECT_EQ(dynamicBuffer[4][approximateString].read<uint64_t>(), 2);
-    EXPECT_EQ(dynamicBuffer[4][lowerBoundBinName].read<uint64_t>(), 4);
-    EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<uint64_t>(), 5);
+    EXPECT_EQ(dynamicBuffer[4][approximateString].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[4][lowerBoundBinName].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
+}
 
+TEST_F(EquiWidth1DHistTest, simpleHistTestSum) {
+    auto aggregationType = Parsing::Aggregation_Type::SUM;
+    const auto entrySize = sizeof(uint64_t);
+
+    const auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+            ->addField(idString, BasicType::UINT64)
+            ->addField(aggregationString, BasicType::INT64)
+            ->addField(timestampFieldName, BasicType::UINT64);
+    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema, aggregationString);
+    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
+    outputSchema->addField(upperBoundBinName, BasicType::INT64);
+
+    // Creating aggregation config and the histogram
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
+                                                                        timestampFieldName, inputSchema, outputSchema);
+    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+
+    // Setting up the synopsis and creating the local operator state
+    histSynopsis.setup(handlerIndex, *executionContext);
+    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
+    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
+    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+
+
+    // Creating records
+    Nautilus::Record record1({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 42)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
+    });
+
+    Nautilus::Record record2({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 1234)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record3({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 404)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record4({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 100)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    // Inserting records
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record1, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record2, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
+
+
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                              outputSchema);
+
+    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
+    EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 42);
+    EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
+
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
+
+    EXPECT_EQ(dynamicBuffer[2][approximateString].read<int64_t>(), 1234);
+    EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
+
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
+
+    EXPECT_EQ(dynamicBuffer[4][approximateString].read<int64_t>(), 504);
+    EXPECT_EQ(dynamicBuffer[4][lowerBoundBinName].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
+}
+
+TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
+    auto aggregationType = Parsing::Aggregation_Type::MIN;
+    const auto entrySize = sizeof(uint64_t);
+
+    const auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+            ->addField(idString, BasicType::UINT64)
+            ->addField(aggregationString, BasicType::INT64)
+            ->addField(timestampFieldName, BasicType::UINT64);
+    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema, aggregationString);
+    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
+    outputSchema->addField(upperBoundBinName, BasicType::INT64);
+
+    // Creating aggregation config and the histogram
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
+                                                                        timestampFieldName, inputSchema, outputSchema);
+    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+
+
+    // Setting up the synopsis and creating the local operator state
+    histSynopsis.setup(handlerIndex, *executionContext);
+    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
+    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
+    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+
+
+    // Creating records
+    Nautilus::Record record1({
+         {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
+         {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 42)},
+         {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
+    });
+
+    Nautilus::Record record2({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 1234)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record3({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 404)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record4({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 100)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    // Inserting records
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record1, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record2, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
+
+
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                              outputSchema);
+
+    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
+    EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 42);
+    EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
+
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<int64_t>(), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
+
+    EXPECT_EQ(dynamicBuffer[2][approximateString].read<int64_t>(), 1234);
+    EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
+
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<int64_t>(), std::numeric_limits<int64_t>::max());
+    EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
+
+    EXPECT_EQ(dynamicBuffer[4][approximateString].read<int64_t>(), 100);
+    EXPECT_EQ(dynamicBuffer[4][lowerBoundBinName].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
+}
+
+TEST_F(EquiWidth1DHistTest, simpleHistTestMax) {
+    auto aggregationType = Parsing::Aggregation_Type::MAX;
+    const auto entrySize = sizeof(uint64_t);
+
+    const auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+            ->addField(idString, BasicType::UINT64)
+            ->addField(aggregationString, BasicType::INT64)
+            ->addField(timestampFieldName, BasicType::UINT64);
+    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema, aggregationString);
+    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
+    outputSchema->addField(upperBoundBinName, BasicType::INT64);
+
+    // Creating aggregation config and the histogram
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
+                                                                        timestampFieldName, inputSchema, outputSchema);
+    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+
+    // Setting up the synopsis and creating the local operator state
+    histSynopsis.setup(handlerIndex, *executionContext);
+    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
+    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
+    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+
+
+    // Creating records
+    Nautilus::Record record1({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 42)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
+    });
+
+    Nautilus::Record record2({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 1234)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record3({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 404)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record4({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 100)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    // Inserting records
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record1, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record2, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
+
+
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                              outputSchema);
+
+    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
+    EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 42);
+    EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
+
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<int64_t>(), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
+
+    EXPECT_EQ(dynamicBuffer[2][approximateString].read<int64_t>(), 1234);
+    EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
+
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<int64_t>(), std::numeric_limits<int64_t>::min());
+    EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
+
+    EXPECT_EQ(dynamicBuffer[4][approximateString].read<int64_t>(), 404);
+    EXPECT_EQ(dynamicBuffer[4][lowerBoundBinName].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
+}
+
+TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
+    auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
+    const auto entrySize = sizeof(uint64_t) * 2; // one for the count and one for the sum
+
+    const auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+            ->addField(idString, BasicType::UINT64)
+            ->addField(aggregationString, BasicType::FLOAT64)
+            ->addField(timestampFieldName, BasicType::UINT64);
+    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema, aggregationString);
+    outputSchema->addField(lowerBoundBinName, BasicType::INT64);
+    outputSchema->addField(upperBoundBinName, BasicType::INT64);
+
+    // Creating aggregation config and the histogram
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
+                                                                        timestampFieldName, inputSchema, outputSchema);
+    EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
+                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+
+
+    // Setting up the synopsis and creating the local operator state
+    histSynopsis.setup(handlerIndex, *executionContext);
+    auto binMemRef = Nautilus::Value<Nautilus::MemRef>((int8_t*) opHandler->getBinsRef());
+    auto bins = Nautilus::Interface::Fixed2DArrayRef(binMemRef, entrySize, numberOfBins);
+    auto opState = std::make_unique<EquiWidth1DHist::LocalBinsOperatorState>(bins);
+
+
+    // Creating records
+    Nautilus::Record record1({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 42)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
+    });
+
+    Nautilus::Record record2({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 1234)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record3({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 404)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    Nautilus::Record record4({
+        {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+        {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 101)},
+        {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+    });
+
+    // Inserting records
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record1, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record2, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
+    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
+
+
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                              outputSchema);
+
+    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
+    EXPECT_EQ(dynamicBuffer[0][approximateString].read<double_t>(), 42.0);
+    EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
+
+    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
+    EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
+
+    EXPECT_EQ(dynamicBuffer[2][approximateString].read<double_t>(), 1234.0);
+    EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<int64_t>(), 2);
+    EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
+
+    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), 0);
+    EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
+    EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
+
+    EXPECT_EQ(dynamicBuffer[4][approximateString].read<double_t>(), 252.5);
+    EXPECT_EQ(dynamicBuffer[4][lowerBoundBinName].read<int64_t>(), 4);
+    EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
 }
 
 } // namespace NES::ASP
