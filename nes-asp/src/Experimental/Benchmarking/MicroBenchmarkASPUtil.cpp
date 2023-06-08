@@ -24,6 +24,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES::ASP::Util {
 

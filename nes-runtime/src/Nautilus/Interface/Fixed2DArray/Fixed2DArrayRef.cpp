@@ -23,7 +23,7 @@ namespace NES::Nautilus::Interface {
 Fixed2DArrayRef::Fixed2DArrayRef(const Value<MemRef>& fixed2DArrayRef, const uint64_t& entrySize, const uint64_t& numCols)
     : fixed2DArrayRef(fixed2DArrayRef), entrySize(entrySize), sizeOfOneRow(entrySize * numCols) {}
 
-Fixed2DArrayRowRef Fixed2DArrayRef::operator[](const Value<UInt64>& rowIndex) const {
+Fixed2DArrayRowRef Fixed2DArrayRef::operator[](const Value<>& rowIndex) const {
     auto numRows = getMember(fixed2DArrayRef, Fixed2DArray, numRows).load<UInt64>();
     NES_ASSERT2_FMT(numRows > rowIndex, "Trying to access a row, which does not exist!");
 
@@ -35,8 +35,8 @@ Fixed2DArrayRowRef Fixed2DArrayRef::operator[](const Value<UInt64>& rowIndex) co
 Fixed2DArrayRowRef::Fixed2DArrayRowRef(Value<MemRef>& baseAddress, uint64_t entrySize)
     : baseAddress(baseAddress), entrySize(entrySize) {}
 
-Value<MemRef> Fixed2DArrayRowRef::operator[](const Value<UInt64>& colIndex) const {
-    auto offSet = (colIndex * entrySize).as<UInt64>();
+Value<MemRef> Fixed2DArrayRowRef::operator[](const Value<>& colIndex) const {
+    auto offSet = (colIndex * entrySize);
     return (baseAddress + offSet).as<MemRef>();
 }
 

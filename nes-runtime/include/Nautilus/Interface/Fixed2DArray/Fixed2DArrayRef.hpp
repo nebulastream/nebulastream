@@ -40,7 +40,7 @@ class Fixed2DArrayRef {
      * @param rowIndex
      * @return Fixed2DArrayRowRef
      */
-    Fixed2DArrayRowRef operator[](const Value<UInt64>& rowIndex) const;
+    Fixed2DArrayRowRef operator[](const Value<>& rowIndex) const;
 
   private:
     Value<MemRef> fixed2DArrayRef;
@@ -65,7 +65,7 @@ class Fixed2DArrayRowRef {
      * @param colIndex
      * @return MemRef to the start of the cell
      */
-    Value<MemRef> operator[](const Value<UInt64>& colIndex) const;
+    Value<MemRef> operator[](const Value<>& colIndex) const;
 
   private:
     Value<MemRef> baseAddress;

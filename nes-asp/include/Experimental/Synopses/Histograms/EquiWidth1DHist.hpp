@@ -16,22 +16,47 @@
 #define NES_EQUIWIDTH1DHIST_HPP
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
+#include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 
 namespace NES::ASP {
 class EquiWidth1DHist : public AbstractSynopsis {
 
 public:
-    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record) override;
+
+    class LocalBinsOperatorState : public Runtime::Execution::Operators::OperatorState {
+      public:
+        explicit LocalBinsOperatorState(const Nautilus::Interface::Fixed2DArrayRef& binsRef) : bins(binsRef) {}
+
+        Nautilus::Interface::Fixed2DArrayRef bins;
+    };
+
+    EquiWidth1DHist(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
+                    const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
+                    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension);
+
+    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
+                       Runtime::Execution::Operators::OperatorState *pState) override;
 
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
 
+    void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+                                 Runtime::Execution::ExecutionContext &ctx,
+                                 Runtime::Execution::RecordBuffer buffer) override;
+
 private:
     const int64_t minValue;
     const int64_t maxValue;
-    const int64_t numberOfBins;
+    const uint64_t numberOfBins;
+    const uint64_t binWidth;
+    const uint64_t entrySize;
+    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension;
+
+    const std::string lowerBinBoundString = "lowerBinValue";
+    const std::string upperBinBoundString = "upperBinValue";
 };
 } // namespace NES::ASP
 

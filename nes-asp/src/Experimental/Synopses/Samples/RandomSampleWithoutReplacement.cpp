@@ -78,8 +78,9 @@ RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::Synopsis
                          AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
 }
 
-void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx,
-                                                   Nautilus::Record record) {
+void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                                   Nautilus::Record record,
+                                                   Runtime::Execution::Operators::OperatorState*) {
 
     // TODO this can be pulled out of this function and into the open() #3743
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -191,4 +192,10 @@ Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Naut
     }
 }
 
+void RandomSampleWithoutReplacement::storeLocalOperatorState(uint64_t,
+                                                             const Runtime::Execution::Operators::Operator*,
+                                                             Runtime::Execution::ExecutionContext&,
+                                                             Runtime::Execution::RecordBuffer) {
+    // TODO this will be used in issue #3743
+}
 } // namespace NES::ASP

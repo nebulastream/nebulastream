@@ -92,6 +92,7 @@ namespace NES::ASP {
         }
         NES_INFO("Running test for " << magic_enum::enum_name(aggregationType));
 
+        // Input and output variables
         auto aggregationString = "value";
         auto approximateString = "aggregation";
         auto timestampFieldName = "ts";
@@ -103,15 +104,16 @@ namespace NES::ASP {
                                ->addField(timestampFieldName, BasicType::UINT64);
         auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema, aggregationString);
 
+        // Filling the buffers and creating the synopsis and aggregation
         auto allRecords = fillBuffer(*inputSchema, numberOfTuplesToProduce);
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
         auto sampleSynopsis = RandomSampleWithoutReplacement(aggregationConfig, sampleSize);
-
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
         auto exactAggFunction = aggregationConfig.createAggregationFunction();
 
+        // Creating the worker context and the pipeline necessary for testing the sampling
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         auto handlerIndex = 0;
         auto opHandler = std::make_shared<SRSWoROperatorHandler>();
@@ -121,24 +123,26 @@ namespace NES::ASP {
                                                               Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
         sampleSynopsis.setup(handlerIndex, executionContext);
 
+        // Inserting the records into the synopsis
         exactAggFunction->reset(exactAggValueMemRef);
         for (auto& record : allRecords) {
-            sampleSynopsis.addToSynopsis(handlerIndex, executionContext, record);
+            sampleSynopsis.addToSynopsis(handlerIndex, executionContext, record, nullptr);
             exactAggFunction->lift(exactAggValueMemRef, record);
         }
 
         auto approximateBuffers = sampleSynopsis.getApproximate(handlerIndex, executionContext, bufferManager);
         EXPECT_EQ(approximateBuffers.size(), 1);
 
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
-                                                                                                  outputSchema);
+        // Creating the expected exact record
         Nautilus::Record exactRecord;
         exactAggFunction->lower(exactAggValueMemRef, exactRecord);
         ASSERT_EQ(exactRecord.getAllFields().size(), 1);
         auto fieldIdentifier = exactRecord.getAllFields()[0];
         auto exactValue = exactRecord.read(fieldIdentifier);
 
-
+        // Checking if we have an expected result
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                                  outputSchema);
         EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), 1);
         if (outputSchema->get(approximateString)->getDataType()->isEquals(DataTypeFactory::createType(BasicType::INT64))) {
             EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), exactValue.getValue().staticCast<Nautilus::Int64>().getValue());
@@ -173,6 +177,7 @@ namespace NES::ASP {
         }
         NES_INFO("Running test for " << magic_enum::enum_name(aggregationType));
 
+        // Input and output variables
         auto aggregationString = "value";
         auto approximateString = "aggregation";
         auto timestampFieldName = "ts";
@@ -198,19 +203,19 @@ namespace NES::ASP {
             posOfRecordsForSamples.emplace_back(pos);
         }
 
-
+        // Filling the buffers and creating the synopsis and aggregation
         auto allRecords = fillBuffer(*inputSchema, numberOfTuplesToProduce);
         auto synopsisConfig = ASP::Parsing::SynopsisConfiguration::create(ASP::Parsing::Synopsis_Type::SRSWoR, sampleSize);
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
         auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig, aggregationConfig);
-
-
         auto exactAggValue = aggregationConfig.createAggregationValue();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
         auto exactAggFunction = aggregationConfig.createAggregationFunction();
         exactAggFunction->reset(exactAggValueMemRef);
 
+
+        // Creating the worker context and the pipeline necessary for testing the sampling
         auto workerContext = std::make_shared<Runtime::WorkerContext>(0, bufferManager, 100);
         auto handlerIndex = 0;
         auto opHandler = std::make_shared<SRSWoROperatorHandler>();
@@ -220,6 +225,7 @@ namespace NES::ASP {
                                                               Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
         auto synopsesOperator = std::make_shared<Runtime::Execution::Operators::SynopsesOperator>(handlerIndex, synopsis);
 
+        // Inserting the records into the synopsis
         synopsesOperator->setup(executionContext);
         for (auto& record : allRecords) {
             synopsesOperator->execute(executionContext, record);
@@ -231,14 +237,16 @@ namespace NES::ASP {
             exactAggFunction->lift(exactAggValueMemRef, allRecords[pos]);
         }
 
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
-                                                                                                  outputSchema);
+        // Creating the expected exact record
         Nautilus::Record exactRecord;
         exactAggFunction->lower(exactAggValueMemRef, exactRecord);
         ASSERT_EQ(exactRecord.getAllFields().size(), 1);
         auto fieldIdentifier = exactRecord.getAllFields()[0];
         auto exactValue = exactRecord.read(fieldIdentifier);
 
+        // Checking if we have an expected result
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
+                                                                                                  outputSchema);
         auto scalingFactor = getScalingFactor(aggregationType, sampleSize, numberOfTuplesToProduce);
         EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), 1);
         if (outputSchema->get(approximateString)->getDataType()->isEquals(DataTypeFactory::createType(BasicType::INT64))) {
