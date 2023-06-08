@@ -78,7 +78,7 @@ class SignatureContainmentUtil {
      */
     ContainmentType checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
-    std::tuple<ContainmentType, LogicalOperatorNodePtr> checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftSignature, const LogicalOperatorNodePtr& rightSignature);
+    std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>> checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftSignature, const LogicalOperatorNodePtr& rightSignature);
 
   private:
     /**
@@ -143,6 +143,12 @@ class SignatureContainmentUtil {
      * @return enum with containment relationships
      */
     std::tuple<uint8_t, ContainmentType> checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+
+    std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator, const uint8_t containedWindowIndex);
+
+    LogicalOperatorNodePtr createProjectionOperator(const LogicalOperatorNodePtr& containedOperator);
+
+    std::vector<LogicalOperatorNodePtr> createFilterOperators(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee);
 
     /**
      * @brief creates conditions for checking projection containment:

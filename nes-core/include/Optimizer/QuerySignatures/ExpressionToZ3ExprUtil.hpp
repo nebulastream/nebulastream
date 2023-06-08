@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_EXPRESSIONTOZ3EXPRUTIL_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_EXPRESSIONTOZ3EXPRUTIL_HPP_
 
+#include <map>
 #include <memory>
 
 namespace z3 {
@@ -46,7 +47,10 @@ class ExpressionToZ3ExprUtil {
      * @param context: Z3 context
      * @return returns Z3 expression and field map
      */
-    static Z3ExprAndFieldMapPtr createForExpression(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
+    static Z3ExprAndFieldMapPtr createForExpression(const ExpressionNodePtr& expression,
+                                                    const z3::ContextPtr& context,
+                                                    std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
+                                                    bool isMapExpression);
 
   private:
     /**
