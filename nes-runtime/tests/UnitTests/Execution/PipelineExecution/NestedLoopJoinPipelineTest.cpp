@@ -110,6 +110,10 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
         auto rightBuffers =
             Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
         auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
+        NES_DEBUG("read file=" << fileNameBuffersSink);
+
+        NES_DEBUG("leftBuffer: \n" << Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
+        NES_DEBUG("rightBuffers: \n" << Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
         // Creating the scan (for build) and emit operator (for sink)
         auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
@@ -326,7 +330,6 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
     const std::string fileNameBuffersLeft(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
     const std::string fileNameBuffersSink(std::string(TEST_DATA_DIRECTORY) + "window_sink3.csv");
-
     ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
                                 fileNameBuffersRight,
                                 fileNameBuffersSink,

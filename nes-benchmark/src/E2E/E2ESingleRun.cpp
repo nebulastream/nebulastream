@@ -374,7 +374,8 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     }
 
     std::ofstream ofs;
-    ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out);
+    ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::app);
+    NES_DEBUG("write to file=" << configOverAllRuns.outputFile->getValue());
     ofs << outputCsvStream.str();
     ofs.close();
 
