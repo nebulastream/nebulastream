@@ -1,8 +1,9 @@
 #ifndef TOPOLOGYPREDICTION_CHANGELOG_H
 #define TOPOLOGYPREDICTION_CHANGELOG_H
 
-#include <unordered_set>
+#include "Common/Identifiers.hpp"
 #include <Topology/Predictions/Edge.hpp>
+#include <unordered_set>
 namespace NES::Experimental {
 
 namespace TopologyPrediction {
@@ -20,13 +21,17 @@ class AggregatedTopologyChangeLog {
 
     void add(const AggregatedTopologyChangeLog& addedChangelog);
 
-    const std::unordered_set<Edge>& getAdded();
+    //const std::unordered_set<Edge>& getAdded();
 
-    const std::unordered_set<Edge>& getRemoved();
+    //const std::unordered_set<Edge>& getRemoved();
 
+    std::vector<TopologyNodeId> getAddedChildren(TopologyNodeId nodeId);
+    std::vector<TopologyNodeId> getRemoveChildren(TopologyNodeId nodeId);
   private:
-    std::unordered_set<Edge> changelogAdded;
-    std::unordered_set<Edge> changelogRemoved;
+    //std::unordered_set<Edge> changelogAdded;
+    //std::unordered_set<Edge> changelogRemoved;
+    std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> changelogAdded;
+    std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> changelogRemoved;
 };
 }
 }
