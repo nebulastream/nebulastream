@@ -33,6 +33,7 @@ public:
 
     EquiWidth1DHist(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
                     const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
+                    const std::string& lowerBinBoundString, const std::string& upperBinBoundString,
                     std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension);
 
     void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
@@ -53,10 +54,10 @@ private:
     const uint64_t numberOfBins;
     const uint64_t binWidth;
     const uint64_t entrySize;
-    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension;
 
-    const std::string lowerBinBoundString = "lowerBinValue";
-    const std::string upperBinBoundString = "upperBinValue";
+    const std::string lowerBinBoundString;
+    const std::string upperBinBoundString;
+    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension;
 };
 } // namespace NES::ASP
 

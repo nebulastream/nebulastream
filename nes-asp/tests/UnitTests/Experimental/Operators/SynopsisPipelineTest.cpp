@@ -29,6 +29,8 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Experimental/Synopses/Samples/SRSWoROperatorHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
+#include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 #include <vector>
