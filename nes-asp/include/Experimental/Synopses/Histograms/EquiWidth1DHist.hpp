@@ -20,7 +20,6 @@
 namespace NES::ASP {
 class EquiWidth1DHist : public AbstractSynopsis {
 
-
 public:
     void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record) override;
 

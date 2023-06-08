@@ -39,7 +39,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
                                             size_t sampleSize);
 
     /**
-     * @brief Initializes the sample by calling
+     * @brief Initializes the sample by calling the setup method of the operator handler
      */
     void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) override;
 
