@@ -47,6 +47,7 @@ size_t LocalHashTable::getBucketPos(uint64_t hash) const {
 
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) {
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
+
     return buckets[bucketPos].get();
 }
 
