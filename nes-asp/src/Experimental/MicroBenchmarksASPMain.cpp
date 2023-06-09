@@ -89,7 +89,7 @@ int main(int argc, const char* argv[]) {
 
     NES_INFO2("Running all micro-benchmarks...");
     for (auto& microBenchmark : allMicroBenchmarks) {
-        NES_INFO("Running current micro-benchmark: " << microBenchmark.toString());
+        NES_DEBUG2("Running current micro-benchmark: {}", microBenchmark.toString());
         microBenchmark.run();
     }
 

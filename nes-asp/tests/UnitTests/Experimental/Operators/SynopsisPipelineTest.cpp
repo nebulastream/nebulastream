@@ -67,13 +67,13 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SynopsisPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SynopsisPipelineTest test class.");
+        NES_INFO2("Setup SynopsisPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO("Setup SynopsisPipelineTest test case.");
+        NES_INFO2("Setup SynopsisPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -206,8 +206,8 @@ TEST_P(SynopsisPipelineTest, simpleSynopsisPipelineTest) {
     auto approximateBuffer = synopsis->getApproximate(handlerIndex, executionContext, bufferManager);
 
     ASSERT_EQ(approximateBuffer.size(), 1);
-    NES_INFO("approximateBuffer: " << Util::printTupleBufferAsCSV(approximateBuffer[0], outputSchema));
-    NES_INFO("expectedBuffer: " << Util::printTupleBufferAsCSV(expectedBuffer, outputSchema));
+    NES_DEBUG2("approximateBuffer: {}", Util::printTupleBufferAsCSV(approximateBuffer[0], outputSchema));
+    NES_DEBUG2("expectedBuffer: {}", Util::printTupleBufferAsCSV(expectedBuffer, outputSchema));
 
     auto dynamicApproxBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffer[0], outputSchema);
     ASSERT_EQ(dynamicApproxBuffer.getNumberOfTuples(), 1);
