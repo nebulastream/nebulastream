@@ -56,7 +56,7 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t numPartitions)
     : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
       leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
-      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(DEFAULT_MEM_SIZE_JOIN),
+      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(preAllocPageSizeCnt),
       partitionFinishedCounter(numPartitions) {
 
     for (auto i = 0UL; i < numberOfWorker; ++i) {
