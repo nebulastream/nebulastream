@@ -99,8 +99,6 @@ auto transformReturnValues(Arg argument) {
         return Value<Float>(std::make_unique<Float>(argument));
     } else if constexpr (std::is_same<Arg, double>::value) {
         return Value<Double>(std::make_unique<Double>(argument));
-    } else if constexpr (std::is_same<Arg, double>::value) {
-        return Value<Double>(std::make_unique<Double>(argument));
     } else {
         static_assert(dependent_false<Arg>::value);
     }
@@ -141,8 +139,6 @@ auto createDefault() {
         return Value<Double>(std::make_unique<Double>(0.0));
     } else if constexpr (std::is_same<R, bool>::value) {
         return Value<Boolean>(std::make_unique<Boolean>(false));
-    } else if constexpr (std::is_same<R, void*>::value) {
-        return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     } else if constexpr (std::is_same<R, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     } else {
