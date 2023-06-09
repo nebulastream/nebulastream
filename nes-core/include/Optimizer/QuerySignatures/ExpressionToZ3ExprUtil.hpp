@@ -59,7 +59,10 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns Z3 expression and field map
      */
-    static Z3ExprAndFieldMapPtr createForLogicalExpressions(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
+    static Z3ExprAndFieldMapPtr createForLogicalExpressions(const ExpressionNodePtr& expression,
+                                                            const z3::ContextPtr& context,
+                                                            std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
+                                                            bool isMapExpression);
 
     /**
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
@@ -67,8 +70,11 @@ class ExpressionToZ3ExprUtil {
      * @param context: the Z3 context
      * @return returns Z3 expression and field map
      */
-    static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(const ExpressionNodePtr& expression,
-                                                                 const z3::ContextPtr& context);
+    static Z3ExprAndFieldMapPtr
+    createForArithmeticalExpressions(const ExpressionNodePtr& expression,
+                                     const z3::ContextPtr& context,
+                                     std::map<std::string, bool>& filterAttributesAndIsMapFunctionApplied,
+                                     bool isMapExpression);
 };
 }// namespace NES::Optimizer
 

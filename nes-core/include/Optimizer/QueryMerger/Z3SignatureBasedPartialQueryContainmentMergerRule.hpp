@@ -12,10 +12,16 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_
-#define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_
+#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYCONTAINMENTMERGERRULE_HPP_
+#define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYCONTAINMENTMERGERRULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+
+namespace NES {
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
+}
 
 namespace NES::Optimizer {
 
@@ -72,6 +78,11 @@ class Z3SignatureBasedPartialQueryContainmentMergerRule final : public BaseQuery
   private:
     explicit Z3SignatureBasedPartialQueryContainmentMergerRule(z3::ContextPtr context);
     SignatureContainmentUtilPtr SignatureContainmentUtil;
+    void addContainmentOperatorChain(
+        SharedQueryPlanPtr& containerQueryPlan,
+        const OperatorNodePtr& containedOperation,
+        const OperatorNodePtr& containerOperator,
+        const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
 };
 }// namespace NES::Optimizer
 

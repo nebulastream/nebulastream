@@ -545,8 +545,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
     combinedUnionExpressions[unionOperator->getLeftInputSchema()->getSourceNameQualifier()] = leftSignature->getConditions();
     //Create combined filter attributes and is map function applied map
     auto filterAttributesAndIsMapFunctionApplied = leftSignature->getFilterAttributesAndIsMapFunctionApplied();
-    auto rightFilterattributeAndIsMapFunctionApplied = rightSignature->getFilterAttributesAndIsMapFunctionApplied();
-    filterAttributesAndIsMapFunctionApplied.merge(rightFilterattributeAndIsMapFunctionApplied);
+    auto rightFilterAttributeAndIsMapFunctionApplied = rightSignature->getFilterAttributesAndIsMapFunctionApplied();
+    filterAttributesAndIsMapFunctionApplied.merge(rightFilterAttributeAndIsMapFunctionApplied);
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
@@ -896,12 +896,27 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto combinedWindowExpressions = childQuerySignature->getWindowsExpressions();
     combinedWindowExpressions.push_back(windowExpression);
     auto unionExpressions = childQuerySignature->getUnionExpressions();
-    auto filterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
+    std::map<std::string, bool> updatedFilterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
+    //when we create a window, we apply a window function to all attributes that either removes the attributes from the output schema
+    //or aggregates. Either way, extracting an upstream filter operation is a problem, unless it is applied to the window's key
+    for (const auto& [attributeName, isMapFunctionApplied] : updatedFilterAttributesAndIsMapFunctionApplied) {
+        NES_TRACE2("Checking attribute {} for map function application", attributeName);
+        if (windowDefinition->getKeys().empty()){
+            updatedFilterAttributesAndIsMapFunctionApplied[attributeName] = true;
+        } else {
+            for (const auto& key : windowDefinition->getKeys()) {
+                if (key->getFieldName() != attributeName) {
+                    NES_TRACE2("Setting attribute {} to true", attributeName);
+                    updatedFilterAttributesAndIsMapFunctionApplied[attributeName] = true;
+                }
+            }
+        }
+    }
     return QuerySignature::create(std::move(conditions),
                                   std::move(columns),
                                   std::move(updatedSchemaFieldToExprMaps),
                                   std::move(combinedWindowExpressions),
                                   std::move(unionExpressions),
-                                  std::move(filterAttributesAndIsMapFunctionApplied));
+                                  std::move(updatedFilterAttributesAndIsMapFunctionApplied));
 }
 }// namespace NES::Optimizer
