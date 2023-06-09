@@ -22,7 +22,6 @@
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Parsing/SynopsisConfiguration.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
-#include <Experimental/Operators/SynopsesOperator.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::ASP {
@@ -82,7 +81,7 @@ class AbstractSynopsis {
      * @param buffer
      * @return True if a state has been added
      */
-    virtual bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::SynopsesOperator* op,
+    virtual bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                          Runtime::Execution::ExecutionContext &ctx,
                                          Runtime::Execution::RecordBuffer buffer) = 0;
 

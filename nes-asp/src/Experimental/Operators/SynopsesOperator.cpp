@@ -18,7 +18,8 @@
 namespace NES::Runtime::Execution::Operators {
 
 SynopsesOperator::SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSynopsesPtr& synopses) : handlerIndex(handlerIndex),
-                                                                                                      synopses(synopses) {}
+                                                                                                      synopses(synopses),
+                                                                                                      hasLocalState(false){}
 
 
 void SynopsesOperator::execute(ExecutionContext& ctx, Record& record) const {
@@ -37,11 +38,7 @@ void SynopsesOperator::setup(ExecutionContext& ctx) const {
 }
 
 void SynopsesOperator::open(ExecutionContext &executionCtx, RecordBuffer &recordBuffer) const {
-    synopses->storeLocalOperatorState(handlerIndex, this, executionCtx, recordBuffer);
-}
-
-void SynopsesOperator::setHasLocalState(bool hasLocalState) {
-    SynopsesOperator::hasLocalState = hasLocalState;
+    hasLocalState = synopses->storeLocalOperatorState(handlerIndex, this, executionCtx, recordBuffer);
 }
 
 } // namespace NES::Runtime::Execution::Operators

@@ -132,7 +132,7 @@ void CountMin::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext
     }
 }
 
-void CountMin::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::SynopsesOperator *op,
+bool CountMin::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator *op,
                                        Runtime::Execution::ExecutionContext &ctx,
                                        Runtime::Execution::RecordBuffer) {
 
@@ -142,7 +142,7 @@ void CountMin::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Exe
     auto sketchArray = Nautilus::Interface::Fixed2DArrayRef(sketchArrayMemRef, entrySize, numberOfCols);
 
     ctx.setLocalOperatorState(op, std::make_unique<LocalCountMinState>(sketchArray, h3SeedsMemRef));
-    op->setHasLocalState(true);
+    return true;
 }
 
 CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows,
