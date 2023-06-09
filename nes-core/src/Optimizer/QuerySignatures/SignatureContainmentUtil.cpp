@@ -64,12 +64,6 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
             NES_TRACE("Check projection containment returned: {}", magic_enum::enum_name(containmentRelationship));
             if (containmentRelationship == ContainmentType::EQUALITY) {
                 containmentRelationship = checkFilterContainment(leftSignature, rightSignature);
-                if ((containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED
-                     && !checkFilterContainmentPossible(rightSignature, leftSignature))
-                    || (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED
-                        && !checkFilterContainmentPossible(leftSignature, rightSignature))) {
-                    containmentRelationship = ContainmentType::NO_CONTAINMENT;
-                }
                 NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));
             }
         }
@@ -204,20 +198,21 @@ std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContai
     // if no window signature is present, return equality
     if (leftSignature->getWindowsExpressions().empty() && rightSignature->getWindowsExpressions().empty()) {
         //0 indicates that there are no window operations in the queries
-        return std::tuple(0, ContainmentType::EQUALITY);
+        return std::tuple(NO_WINDOW_PRESENT, ContainmentType::EQUALITY);
     }
     // obtain the number of window operations. Use the number of window operations from the signature that has less window operations
     size_t numberOfWindows = rightSignature->getWindowsExpressions().size();
     if (numberOfWindows > leftSignature->getWindowsExpressions().size()) {
         numberOfWindows = leftSignature->getWindowsExpressions().size();
     }
+    NES_TRACE2("Number of windows: {}", numberOfWindows);
     // each vector entry in the windowExpressions vector represents the signature of one window
     // we assume a bottom up approach for our containment algorithm, hence a window operation can only be partially shared if
     // the previous operations are completely sharable. As soon as there is no equality in window operations, we return the
     // obtained relationship
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     uint8_t currentWindow = 0;
-    for (size_t i = 1; i <= numberOfWindows; ++i) {
+    for (size_t i = 0; i < numberOfWindows; ++i) {
         // obtain each window signature in bottom up fashion
         const auto& leftWindow = leftSignature->getWindowsExpressions()[i];
         const auto& rightWindow = rightSignature->getWindowsExpressions()[i];
@@ -281,11 +276,10 @@ std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContai
                 if (checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                     NES_TRACE("Equal windows.");
                     containmentRelationship = ContainmentType::EQUALITY;
+                } else {
+                    NES_TRACE("Left window contained.");
+                    containmentRelationship = ContainmentType::LEFT_SIG_CONTAINED;
                 }
-                NES_TRACE("Left window contained.");
-                containmentRelationship = ContainmentType::LEFT_SIG_CONTAINED;
-                // checks if the number of aggregates for the left signature is larger than the number of aggregates for the right
-                // signature
             } else {
                 containmentRelationship = ContainmentType::NO_CONTAINMENT;
             }
@@ -309,25 +303,23 @@ std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContai
         }
         // stop the loop as soon as there is no equality relationship
         if (containmentRelationship != ContainmentType::EQUALITY) {
-            return std::tuple(i, containmentRelationship);
+            return std::tuple(i + 1, containmentRelationship);
         }
-        currentWindow = i;
+        currentWindow = i + 1;
     }
     return std::tuple(currentWindow, containmentRelationship);
 }
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
                                                                  const QuerySignaturePtr& rightSignature) {
-    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: Create new condition vectors.");
+    NES_TRACE("Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
     z3::expr_vector rightQueryFilterConditions(*context);
-    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: Add filter conditions.");
+    NES_TRACE("Add filter conditions.");
     leftQueryFilterConditions.push_back(to_expr(*context, *leftSignature->getConditions()));
     rightQueryFilterConditions.push_back(to_expr(*context, *rightSignature->getConditions()));
-    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: content of left sig expression vectors: {}",
-               leftQueryFilterConditions.to_string());
-    NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: content of right sig expression vectors: {}",
-               rightQueryFilterConditions.to_string());
+    NES_TRACE("content of left sig expression vectors: {}", leftQueryFilterConditions.to_string());
+    NES_TRACE("content of right sig expression vectors: {}", rightQueryFilterConditions.to_string());
     //The rest of the method checks for filter containment as follows:
     //check if right sig ⊆ left sig for filters, i.e. if ((right cond && !left condition) == unsat) <=> right sig ⊆ left sig,
     //since we're checking for projection containment, the negation is on the side of the contained condition,
@@ -341,13 +333,15 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     //           false: return NO_CONTAINMENT
     if (checkContainmentConditionsUnsatisfied(leftQueryFilterConditions, rightQueryFilterConditions)) {
         if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
-            NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: Equal filters.");
+            NES_TRACE("Equal filters.");
             return ContainmentType::EQUALITY;
+        } else if (checkFilterContainmentPossible(leftSignature, rightSignature)) {
+            NES_TRACE("left sig contains right sig for filters.");
+            return ContainmentType::RIGHT_SIG_CONTAINED;
         }
-        NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: left sig contains right sig for filters.");
-        return ContainmentType::RIGHT_SIG_CONTAINED;
-    } else if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
-        NES_TRACE("SignatureContainmentUtil::checkContainmentForBottomUpMerging: right sig contains left sig for filters.");
+    } else if (checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)
+               && checkFilterContainmentPossible(rightSignature, leftSignature)) {
+        NES_TRACE("right sig contains left sig for filters.");
         return ContainmentType::LEFT_SIG_CONTAINED;
     }
     return ContainmentType::NO_CONTAINMENT;
@@ -359,8 +353,8 @@ SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNod
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     auto windowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
     //get the correct window operator
-    if (containedWindowIndex >= 0 && containedWindowIndex < windowOperators.size()) {
-        LogicalOperatorNodePtr windowOperator = windowOperators[windowOperators.size() - 1 - containedWindowIndex];
+    if (containedWindowIndex > 0 && containedWindowIndex <= windowOperators.size()) {
+        LogicalOperatorNodePtr windowOperator = windowOperators[windowOperators.size() - containedWindowIndex];
         auto windowDefinition = windowOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition();
         //check that containee is a time based window, else return false
         if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
@@ -374,8 +368,9 @@ SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNod
             timeBasedWindow->getTimeCharacteristic()->setField(field);
             containmentOperators.push_back(windowOperator);
             //obtain the watermark operator
-            containmentOperators.push_back(windowOperator->getChildren()[0]->as<LogicalOperatorNode>());
-            NES_TRACE2("Window containment possible.");
+            auto watermarkOperator = windowOperator->getChildren()[0]->as<LogicalOperatorNode>();
+            containmentOperators.push_back(watermarkOperator);
+            NES_TRACE("Window containment possible.");
         }
     }
     return containmentOperators;
@@ -393,22 +388,16 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
 std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
                                                                                     const LogicalOperatorNodePtr& containee) {
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    for (const auto& attributeName : container->getZ3Signature()->getColumns()) {
-        auto filterAttributeAndIsMapFunction =
-            containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied().find(attributeName);
-        if (filterAttributeAndIsMapFunction != containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied().end()
-            && filterAttributeAndIsMapFunction->second == false) {
-            auto containedFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
-            if (!containedFilterOperators.empty()) {
-                auto downstreamFilterOperator = containedFilterOperators.at(0);
-                downstreamFilterOperator->removeChildren();
-                containmentOperators.push_back(downstreamFilterOperator);
-                for (size_t i = 1; i < containedFilterOperators.size(); ++i) {
-                    containedFilterOperators.at(i)->removeAllParent();
-                    containedFilterOperators.at(i)->addParent(downstreamFilterOperator);
-                    downstreamFilterOperator->addChild(containedFilterOperators.at(i));
-                    containmentOperators.push_back(containedFilterOperators.at(i));
-                    downstreamFilterOperator = containedFilterOperators.at(i);
+    for (const auto& [attributeName, isMapFunctionApplied] :
+         containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied()) {
+        NES_TRACE2("Check if a map function {} was applied to {}.", isMapFunctionApplied, attributeName);
+        if (!isMapFunctionApplied) {
+            auto attributeStillPresent = std::binary_search(container->getZ3Signature()->getColumns().begin(),
+                                                            container->getZ3Signature()->getColumns().end(),
+                                                            attributeName);
+            if (attributeStillPresent) {
+                for (const auto& item : containee->getNodesByType<FilterLogicalOperatorNode>()) {
+                    containmentOperators.push_back(item);
                 }
                 return containmentOperators;
             }

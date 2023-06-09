@@ -43,7 +43,8 @@ void SignatureInferencePhase::execute(const QueryPlanPtr& queryPlan) {
     } else if (queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
                || queryMergerRule == QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule
                || queryMergerRule == QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule
-               || queryMergerRule == QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule) {
+               || queryMergerRule == QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule
+               || queryMergerRule == QueryMergerRule::Z3SignatureBasedPartialQueryContainmentRule) {
         NES_INFO("SignatureInferencePhase: computing Z3 based signature for the query {}", queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {
