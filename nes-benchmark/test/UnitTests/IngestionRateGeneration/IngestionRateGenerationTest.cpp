@@ -32,24 +32,24 @@ namespace NES::Benchmark {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("IngestionRateGenerationTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup IngestionRateGenerationTest test class.");
+            NES_INFO2("Setup IngestionRateGenerationTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
             bufferManager =  std::make_shared<Runtime::BufferManager>();
-            NES_INFO("Setup IngestionRateGenerationTest test case.");
+            NES_INFO2("Setup IngestionRateGenerationTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
-            NES_INFO("Tear down IngestionRateGenerationTest test case.");
+            NES_INFO2("Tear down IngestionRateGenerationTest test case.");
             Testing::NESBaseTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO("Tear down IngestionRateGenerationTest test class."); }
+        static void TearDownTestCase() { NES_INFO2("Tear down IngestionRateGenerationTest test class."); }
 
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };

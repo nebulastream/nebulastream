@@ -30,7 +30,7 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
     createdBuffers.reserve(numberOfBuffers);
 
     auto memoryLayout = this->getMemoryLayout(bufferSize);
-    NES_INFO("Default source mode");
+    NES_INFO2("Default source mode");
 
     // Prints every five percent the current progress
     uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
@@ -66,14 +66,14 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
         }
 
         if (curBuffer % noTuplesInFivePercent == 0) {
-            NES_INFO("DefaultDataGenerator: currently at " << (((double) curBuffer / numberOfBuffers) * 100) << "%");
+            NES_INFO2("DefaultDataGenerator: currently at {}%", (((double) curBuffer / numberOfBuffers) * 100));
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         createdBuffers.emplace_back(bufferRef);
     }
 
-    NES_INFO("Created all buffers!");
+    NES_INFO2("Created all buffers!");
     return createdBuffers;
 }
 

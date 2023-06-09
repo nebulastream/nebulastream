@@ -35,7 +35,7 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
                           << callStack;
 
-        NES_FATAL_ERROR(fatalErrorMessage.str());
+        NES_FATAL_ERROR2("{}", fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
     }
 
@@ -43,7 +43,7 @@ class BenchmarkRunner : public NES::Exceptions::ErrorListener {
         std::ostringstream fatalExceptionMessage;
         fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
 
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
+        NES_FATAL_ERROR2({}, fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
 };
@@ -99,7 +99,7 @@ int main(int argc, const char* argv[]) {
 
         NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), rpcPort, restPort);
 
-        NES_INFO("Done with single experiment run!");
+        NES_INFO2("Done with single experiment run!");
     }
 
     return 0;

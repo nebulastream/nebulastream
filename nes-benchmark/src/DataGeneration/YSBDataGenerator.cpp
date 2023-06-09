@@ -25,7 +25,7 @@ namespace NES::Benchmark::DataGeneration {
 std::string YSBDataGenerator::getName() { return "YSB"; }
 
 std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
-    NES_INFO("YSB Mode source mode");
+    NES_INFO2("YSB Mode source mode");
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
     createdBuffers.reserve(numberOfBuffers);
@@ -53,7 +53,7 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         createdBuffers.emplace_back(buffer);
     }
-    NES_INFO("Created all buffers!");
+    NES_INFO2("Created all buffers!");
     return createdBuffers;
 }
 std::string YSBDataGenerator::toString() {

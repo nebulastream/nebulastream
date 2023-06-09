@@ -124,7 +124,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
                 DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
             ;
         }
-        NES_DEBUG("No additional sources have been added!");
+        NES_DEBUG2("No additional sources have been added!");
     }
 
     return configOverAllRuns;

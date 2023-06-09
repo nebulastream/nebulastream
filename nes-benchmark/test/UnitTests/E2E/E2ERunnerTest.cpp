@@ -24,18 +24,18 @@ namespace NES::Benchmark {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("E2ERunnerTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup E2ERunnerTest test class.");
+            NES_INFO2("Setup E2ERunnerTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO("Setup E2ERunnerTest test case.");
+            NES_INFO2("Setup E2ERunnerTest test case.");
         }
 
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() {
-            NES_INFO("Tear down E2ERunnerTest test class.");
+            NES_INFO2("Tear down E2ERunnerTest test class.");
         }
     };
 
