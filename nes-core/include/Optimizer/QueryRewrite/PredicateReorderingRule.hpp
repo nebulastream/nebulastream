@@ -39,7 +39,7 @@ using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
 
 /**
  * @brief This rewrite rule identifies chains of adjacent predicates with various expected cardinalities.
- * The adjacent predicates are sorted and executed such that the predicates with a low selectivity are executed first.
+ * The adjacent predicates are sorted and executed such that the predicates with a high selectivity are executed first.
  * This rule can reduce the size of intermediate results.
  *
  * Example:
@@ -56,10 +56,11 @@ using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
  *  basic horsepower of 70 is high with an estimated selectivity of about 0.9.
  *  The estimated cardinality of the predicate P2 (od.order_date > DATE(NOW() - interval 16 day)) which limits the records
  *  fetched to the previous 15 days is low with an estimated selectivity of just 0.1.
- *  The rule will execute the predicate P2 with low selectivity first and potentially reduce the records going
- *  to the P1 significantly.
+ *  The rule will execute the predicate P1 with high selectivity first and potentially reduce the records going
+ *  to the P2 significantly.
  *
  */
+
 class PredicateReorderingRule : public BaseRewriteRule {
 
   public:
@@ -80,15 +81,7 @@ class PredicateReorderingRule : public BaseRewriteRule {
      * @param OperatorNodePtr: the node to be check
      * @return boolean, true when a consecutive filter is found
      */
-    static bool hasConsecutiveFilters(const OperatorNodePtr& operatorNode);
-
-    /**
-     * @brief Given a node, check if the parent or the child is a filter.
-     * @param OperatorNodePtr: the node to be check
-     * @return boolean, true when a consecutive filter is found
-     */
-    static std::set<FilterLogicalOperatorNodePtr> getConsecutiveFilters(OperatorNodePtr operatorNode);
-
+    static std::vector<FilterLogicalOperatorNodePtr> getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& firstFilter);
 
 };
 }// namespace NES::Optimizer

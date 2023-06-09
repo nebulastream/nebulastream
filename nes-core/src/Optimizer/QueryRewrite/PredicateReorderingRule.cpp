@@ -12,57 +12,85 @@
     limitations under the License.
 */
 
-#include <Common/ValueTypes/ArrayValue.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <numeric>
-#include <utility>
 
 namespace NES::Optimizer {
 
 PredicateReorderingRulePtr PredicateReorderingRule::create() { return std::make_shared<PredicateReorderingRule>(); }
 
 QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
-
+    std::vector<NodeId> visitedNodesIds;
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
-    // TODO: if the filter has a parent or children which is also a filter,
-    //  save all consecutive filters
-    std::set<FilterLogicalOperatorNodePtr> consecutiveFilters;
+    NES_DEBUG2("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
     for (auto& filter : filterOperators) {
-        if(!consecutiveFilters.contains(filter) && hasConsecutiveFilters(filter)){
-            consecutiveFilters = getConsecutiveFilters(filter);
+        if(std::find(visitedNodesIds.begin(), visitedNodesIds.end(), filter->getId()) == visitedNodesIds.end() ) {
+            std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
+            NES_DEBUG2("PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
+            if (consecutiveFilters.size() >= 2){
+                NES_DEBUG2("PredicateReorderingRule: Copy consecutive filters");
+                std::vector<FilterLogicalOperatorNodePtr> orderedFilters(filterOperators);
+                NES_DEBUG2("PredicateReorderingRule: Sort all filter nodes in increasing order of selectivity");
+                std::sort(orderedFilters.begin(),
+                          orderedFilters.end(),
+                          [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
+                              return lhs->getSelectivity() < rhs->getSelectivity();
+                          });
+                NES_DEBUG2("PredicateReorderingRule: Start re-writing the new query plan");
+                NES_DEBUG2("PredicateReorderingRule: Least selective filter goes to the top (close to the sink), his new parents will be the first filter parents'");
+                std::vector<NodePtr> filterChainParent = consecutiveFilters.at(0)->getParents();
+                std::vector<NodePtr> filterChainChildren = consecutiveFilters.back()->getChildren();
+                orderedFilters.at(0)->removeAllParent();
+                for(auto& firstFilterParent : filterChainParent){
+                    orderedFilters.at(0)->addParent(firstFilterParent);
+                }
+                NES_DEBUG2("PredicateReorderingRule: For each filter, reassign parents according to new order");
+                for (unsigned int i = 1; i < orderedFilters.size(); i++) {
+                     std::shared_ptr<OperatorNode> filterToUpdate = queryPlan->getOperatorWithId(orderedFilters.at(i)->getId());
+                    if(filterToUpdate == nullptr){
+                        NES_ERROR2("PredicateReorderingRule: Filter to update not found in the plan, something is wrong'");
+                        continue;
+                    }
+                    filterToUpdate->removeAllParent();
+                    filterToUpdate->addParent(orderedFilters.at(i-1));
+                }
+                NES_DEBUG2("PredicateReorderingRule: Most selective filter goes to the bottom (close to the source), his new children will be the last filter children'");
+                orderedFilters.back()->removeChildren();
+                for (auto& previousChild : filterChainChildren){
+                    orderedFilters.back()->addChild(previousChild);
+                }
+                NES_DEBUG2("PredicateReorderingRule: Mark the involved nodes as visited");
+                for (auto& orderedFilter : orderedFilters){
+                    visitedNodesIds.push_back(orderedFilter->getId());
+                }
+                NES_DEBUG2("PredicateReorderingRule: Finished re-writing query plan");
+            }
+            else{
+                NES_DEBUG2("PredicateReorderingRule: No consecutive filters found");
+            }
+        } else{
+            NES_DEBUG2("PredicateReorderingRule: Filter node already visited");
         }
-        // TODO: reorder filters by selectivity
-
-        // TODO: do filter->replace(filter2) according to order
     }
     return queryPlan;
 }
 
-bool PredicateReorderingRule::hasConsecutiveFilters(const NES::OperatorNodePtr& operatorNode){
-    NES_DEBUG2("Checking if node {} has consecutive filters", operatorNode->getId());
-
+std::vector<FilterLogicalOperatorNodePtr> PredicateReorderingRule::getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& filter){
+    std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = {};
+    DepthFirstNodeIterator queryPlanNodeIterator(filter);
+    auto itr = queryPlanNodeIterator.begin();
+    auto node = (*itr);
+    while (node->instanceOf<FilterLogicalOperatorNode>()){
+        NES_DEBUG2("Found consecutive filter in the chain, adding it the list");
+        consecutiveFilters.push_back(node->as<FilterLogicalOperatorNode>());
+        ++itr;
+        node = (*itr);
+    }
+    NES_DEBUG2("Found {} consecutive filters", consecutiveFilters.size());
+    return consecutiveFilters;
 }
 
 }// namespace NES::Optimizer
