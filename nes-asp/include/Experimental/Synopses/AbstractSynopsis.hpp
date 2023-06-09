@@ -62,7 +62,6 @@ class AbstractSynopsis {
      */
     virtual std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
                                                              Runtime::Execution::ExecutionContext& ctx,
-                                                             std::vector<> keyToApproximate,
                                                              Runtime::BufferManagerPtr bufferManager) = 0;
 
     /**
