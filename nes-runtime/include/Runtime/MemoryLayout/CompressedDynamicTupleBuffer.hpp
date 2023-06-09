@@ -24,8 +24,8 @@ limitations under the License.
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, RLE, BINARY_RLE, FSST, SPRINTZ };
-enum class CompressionMode { HORIZONTAL, VERTICAL };
+enum CompressionAlgorithm { NONE, LZ4, SNAPPY, RLE, BINARY_RLE, FSST, SPRINTZ };
+enum CompressionMode { HORIZONTAL, VERTICAL };
 
 const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
     switch (ca) {
@@ -36,6 +36,13 @@ const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
         case CompressionAlgorithm::BINARY_RLE: return "Binary RLE";
         case CompressionAlgorithm::FSST: return "FSST";
         case CompressionAlgorithm::SPRINTZ: return "Sprintz";
+    }
+}
+
+const char* getCompressionModeName(enum CompressionMode cm) {
+    switch (cm) {
+        case HORIZONTAL: return "Horizontal";
+        case VERTICAL: return "Vertical";
     }
 }
 
@@ -50,12 +57,12 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
                                           const CompressionMode& compressionMode);
     ~CompressedDynamicTupleBuffer();
 
-    void setNumberOfTuples(uint64_t value);
-
     std::vector<CompressionAlgorithm> getCompressionAlgorithms();
     CompressionMode getCompressionMode();
     std::vector<uint64_t> getOffsets();
-    std::vector<size_t> getCompressedSize();
+    std::vector<size_t> getCompressedSizes();
+    size_t getTotalCompressedSize();
+    size_t getTotalOriginalSize();
     double getCompressionRatio();
 
     void compress(CompressionAlgorithm ca);
@@ -80,7 +87,6 @@ class CompressedDynamicTupleBuffer : public DynamicTupleBuffer {
     std::vector<std::shared_ptr<PhysicalType>> columnTypes;
     size_t currColumn = 0;
     std::vector<size_t> compressedSizes;
-    size_t totalOriginalSize;
     bool compressedWithFsst = false;
     fsst_encoder_t* fsstEncoder = nullptr;
     size_t fsstOutSize = 0;
