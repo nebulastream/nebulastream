@@ -14,7 +14,9 @@
 #include <NesBaseTest.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
-#include <boost/process/spawn.hpp>
+//#include <boost/process/spawn.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <gtest/gtest.h>
 #include <mqtt/client.h>
 
@@ -49,7 +51,7 @@ class LoRaWANProxySourceTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("LORAWANPROXYSOURCETEST::SetUp() LoRaWANProxySource test cases set up.");
-        schema = Schema::create()->addField("var", UINT32);
+        schema = Schema::create()->addField("var", BasicType::UINT32);
         loRaWANProxySourceType = LoRaWANProxySourceType::create(sourceConfig);
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)

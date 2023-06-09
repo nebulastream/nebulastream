@@ -13,25 +13,6 @@
 #include <utility>
 
 namespace NES {
-//class NetworkServer {
-//  public:
-//    NetworkServer(const std::string& url, const std::string& user, const std::string& appId, const std::vector<std::string>& deviceEuIs)
-//        : url(url), user(user), appId(appId), deviceEUIs(deviceEuIs) {}
-//
-//    // Functions to implement
-//    virtual ~NetworkServer() = default;;
-//    virtual bool connect() = 0;
-//    virtual bool isConnected() = 0;
-//    virtual bool disconnect() = 0;
-//    virtual EndDeviceProtocol::Output receiveData() = 0;
-//    virtual bool sendMessage(EndDeviceProtocol::Message) = 0;
-//
-//  protected:
-//    std::string url;
-//    std::string user;
-//    std::string appId;
-//    std::vector<std::string> deviceEUIs;
-//};
 
 LoRaWANProxySource::NetworkServer::NetworkServer(const std::string& url,
                                                  const std::string& user,

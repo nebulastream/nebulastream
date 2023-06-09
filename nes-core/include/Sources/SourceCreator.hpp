@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 #define NES_CORE_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 
+#include <Network/NetworkForwardRefs.hpp>
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
