@@ -290,6 +290,10 @@ add_nes_unit_test(type-inference-tests "UnitTests/Optimizer/Phases/TypeInference
 add_nes_unit_test(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
 
 
+# PredicateReorderingTest
+add_nes_unit_test(predicate-reordering-rule-test "UnitTests/Optimizer/QueryRewrite/PredicateReorderingRuleTest.cpp")
+
+
 # DistributeWindowRuleTest
 add_nes_unit_test(distribute-window-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
 
