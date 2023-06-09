@@ -63,10 +63,10 @@ void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
                 std::set<uint32_t> diff;
                 //compute intersection among the poset of two change log entries
                 std::set_intersection(sourceChangeLogPoSet.begin(),
-                                    sourceChangeLogPoSet.end(),
-                                    destinationChangeLog.second->poSetOfSubQueryPlan.begin(),
-                                    destinationChangeLog.second->poSetOfSubQueryPlan.end(),
-                                    std::inserter(diff, diff.begin()));
+                                      sourceChangeLogPoSet.end(),
+                                      destinationChangeLog.second->poSetOfSubQueryPlan.begin(),
+                                      destinationChangeLog.second->poSetOfSubQueryPlan.end(),
+                                      std::inserter(diff, diff.begin()));
 
                 //If diff is not empty then the change log entries are overlapping
                 if (!diff.empty()) {
@@ -135,81 +135,115 @@ void ChangeLog::removeChangeLogsBefore(uint64_t timestamp) {
 ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, ChangeLogEntryPtr>>& changeLogEntriesToMerge) {
 
     ChangeLogEntryPtr firstChangeLogEntry = changeLogEntriesToMerge.at(0).second;
-    std::set<OperatorNodePtr> upstreamOperators = firstChangeLogEntry->upstreamOperators;
-    std::set<OperatorNodePtr> downstreamOperators = firstChangeLogEntry->downstreamOperators;
+    std::set<OperatorNodePtr> firstUpstreamOperators = firstChangeLogEntry->upstreamOperators;
+    std::set<OperatorNodePtr> firstDownstreamOperators = firstChangeLogEntry->downstreamOperators;
 
     for (uint32_t index = 1; index < changeLogEntriesToMerge.size(); index++) {
 
         // check if the upstream operators in the temp is also the upstream operator of the change log entry under consideration
         // push the most upstream operator into the new upstream Operator set
-
         std::set<OperatorNodePtr> tempUpstreamOperators;
-        std::set<OperatorNodePtr> upstreamOperatorsToCheck = changeLogEntriesToMerge[index].second->upstreamOperators;
-        for (const auto& upstreamOperator1 : upstreamOperators) {
-            for (const auto& upstreamOperator2 : upstreamOperatorsToCheck) {
-                if (upstreamOperator1->getId() == upstreamOperator2->getId()) {
-                    tempUpstreamOperators.insert(upstreamOperator1);
-                    upstreamOperators.erase(upstreamOperator1);
-                    upstreamOperatorsToCheck.erase(upstreamOperator2);
+        std::set<OperatorNodePtr> nextUpstreamOperators = changeLogEntriesToMerge[index].second->upstreamOperators;
+
+        for (auto firstItr = firstUpstreamOperators.begin(); firstItr != firstUpstreamOperators.end();) {
+            bool incFirstItr = true;
+            for (auto nextItr = nextUpstreamOperators.begin(); nextItr != nextUpstreamOperators.end();) {
+                if ((*firstItr)->getId() == (*nextItr)->getId()) {
+                    // Insert item in the temp upstream operator list
+                    tempUpstreamOperators.insert((*firstItr));
+                    // It is okay to erase these operators as there won't be any other operators with same id in the change logs entries.
+                    firstItr =
+                        firstUpstreamOperators.erase(firstItr);// Please note that we are assigning the iterator to the next item
+                    nextUpstreamOperators.erase(nextItr);
+                    incFirstItr = false;
                     break;
-                } else if (upstreamOperator1->containAsGrandParent(upstreamOperator2)) {
-                    tempUpstreamOperators.insert(upstreamOperator1);
-                    upstreamOperatorsToCheck.erase(upstreamOperator2);
-                } else if (upstreamOperator2->containAsGrandParent(upstreamOperator1)) {
-                    tempUpstreamOperators.insert(upstreamOperator2);
-                    upstreamOperators.erase(upstreamOperator1);
+                } else if ((*firstItr)->containAsGrandParent((*nextItr))) {
+                    // Insert item in the temp upstream operator list
+                    tempUpstreamOperators.insert((*firstItr));
+                    // It is okay to erase this next operator as there won't be any other operator in the first upstream operator list
+                    // that can be this operator's upstream operator
+                    nextItr =
+                        nextUpstreamOperators.erase(nextItr);// Please note that we are assigning the iterator to the next item
+                } else if ((*nextItr)->containAsGrandParent((*firstItr))) {
+                    tempUpstreamOperators.insert((*nextItr));
+                    //It is okay to erase this first operator as no other upstream operator can be its upstream operator
+                    firstItr =
+                        firstUpstreamOperators.erase(firstItr);// Please note that we are assigning the iterator to the next item
+                    incFirstItr = false;
                     break;
+                } else {
+                    nextItr++;// move to the next item
                 }
+            }
+
+            // Increment the first iterator
+            if (incFirstItr) {
+                firstItr++;
             }
         }
 
-        if (!upstreamOperators.empty()) {
-            tempUpstreamOperators.insert(upstreamOperators.begin(), upstreamOperators.end());
+        if (!firstUpstreamOperators.empty()) {
+            tempUpstreamOperators.insert(firstUpstreamOperators.begin(), firstUpstreamOperators.end());
         }
 
-        if (!upstreamOperatorsToCheck.empty()) {
-            tempUpstreamOperators.insert(upstreamOperatorsToCheck.begin(), upstreamOperatorsToCheck.end());
+        if (!nextUpstreamOperators.empty()) {
+            tempUpstreamOperators.insert(nextUpstreamOperators.begin(), nextUpstreamOperators.end());
         }
 
-        upstreamOperators = tempUpstreamOperators;
+        firstUpstreamOperators = tempUpstreamOperators;
         tempUpstreamOperators.clear();
 
         // check if the downstream operators in the temp is also the downstream operator of the change log entry under consideration
         // push the most downstream operator into the new downstream Operator set
 
         std::set<OperatorNodePtr> tempDownstreamOperators;
-        std::set<OperatorNodePtr> downstreamOperatorsToCheck = changeLogEntriesToMerge[index].second->downstreamOperators;
-        for (const auto& downstreamOperator1 : downstreamOperators) {
-            for (const auto& downstreamOperator2 : downstreamOperatorsToCheck) {
-                if (downstreamOperator1->getId() == downstreamOperator2->getId()) {
-                    tempUpstreamOperators.insert(downstreamOperator1);
-                    downstreamOperators.erase(downstreamOperator1);
-                    downstreamOperatorsToCheck.erase(downstreamOperator2);
+        std::set<OperatorNodePtr> nextDownstreamOperators = changeLogEntriesToMerge[index].second->downstreamOperators;
+        for (auto firstItr = firstDownstreamOperators.begin(); firstItr != firstDownstreamOperators.end();) {
+            bool incFirstItr = true;
+            for (auto nextItr = nextDownstreamOperators.begin(); nextItr != nextDownstreamOperators.end();) {
+                if ((*firstItr)->getId() == (*nextItr)->getId()) {
+                    // Insert item in the temp downstream operator list
+                    tempDownstreamOperators.insert((*firstItr));
+
+                    // It is okay to erase these operators as there won't be any other operators with same id in the change logs entries.
+                    firstItr = firstDownstreamOperators.erase(
+                        firstItr);// Please note that we are assigning the iterator to the next item
+                    nextDownstreamOperators.erase(nextItr);
+                    incFirstItr = false;
                     break;
-                } else if (downstreamOperator1->containAsGrandParent(downstreamOperator2)) {
-                    tempDownstreamOperators.insert(downstreamOperator2);
-                    downstreamOperators.erase(downstreamOperator1);
+                } else if ((*firstItr)->containAsGrandParent((*nextItr))) {
+                    tempDownstreamOperators.insert((*nextItr));
+                    firstItr = firstDownstreamOperators.erase(
+                        firstItr);// Please note that we are assigning the iterator to the next item
+                    incFirstItr = false;
                     break;
-                } else if (downstreamOperator2->containAsGrandParent(downstreamOperator1)) {
-                    tempDownstreamOperators.insert(downstreamOperator1);
-                    downstreamOperatorsToCheck.erase(downstreamOperator2);
+                } else if ((*nextItr)->containAsGrandParent((*firstItr))) {
+                    tempDownstreamOperators.insert((*firstItr));
+                    nextDownstreamOperators.erase(nextItr);
+                } else {
+                    nextItr++;// move to the next item
                 }
+            }
+
+            // Increment the first iterator
+            if (incFirstItr) {
+                firstItr++;
             }
         }
 
-        if (!upstreamOperators.empty()) {
-            tempUpstreamOperators.insert(upstreamOperators.begin(), upstreamOperators.end());
+        if (!firstDownstreamOperators.empty()) {
+            tempUpstreamOperators.insert(firstDownstreamOperators.begin(), firstDownstreamOperators.end());
         }
 
-        if (!downstreamOperatorsToCheck.empty()) {
-            tempDownstreamOperators.insert(downstreamOperatorsToCheck.begin(), downstreamOperatorsToCheck.end());
+        if (!nextDownstreamOperators.empty()) {
+            tempDownstreamOperators.insert(nextDownstreamOperators.begin(), nextDownstreamOperators.end());
         }
 
-        downstreamOperators = tempDownstreamOperators;
+        firstDownstreamOperators = tempDownstreamOperators;
         tempDownstreamOperators.clear();
     }
 
-    return ChangeLogEntry::create(upstreamOperators, downstreamOperators);
+    return ChangeLogEntry::create(firstUpstreamOperators, firstDownstreamOperators);
 }
 
 }// namespace NES::Optimizer::Experimental

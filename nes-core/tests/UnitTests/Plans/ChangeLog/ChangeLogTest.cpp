@@ -105,10 +105,15 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
 
     // Fetch change log entries before timestamp 4
     auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
-    EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0].second);
-    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1].second);
-    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2].second);
+    EXPECT_EQ(1, extractedChangeLogEntries.size());
+
+    const auto actualUpstreamOperators = extractedChangeLogEntries[0].second->upstreamOperators;
+    EXPECT_EQ(1, actualUpstreamOperators.size());
+    EXPECT_EQ(sourceOp1, (*actualUpstreamOperators.begin()));
+
+    const auto actualDownstreamOperators = extractedChangeLogEntries[0].second->downstreamOperators;
+    EXPECT_EQ(1, actualDownstreamOperators.size());
+    EXPECT_EQ(sinkOp1, (*actualDownstreamOperators.begin()));
 }
 
 //Insert and fetch change log entries
@@ -117,17 +122,25 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp2);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
     NES_DEBUG2("{}", queryPlan->toString());
 
     // Initialize change log
     auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
-    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry3 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry4 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry5 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+
+    //three overlapping change log entries
+    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry3 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+
+    //two more overlapping change log entries
+    auto changelogEntry4 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp2}, {sinkOp1});
+    auto changelogEntry5 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp2}, {sinkOp1});
+
+    //one more overlapping change log entries
     auto changelogEntry6 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+
     changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
     changeLog->addChangeLogEntry(3, std::move(changelogEntry3));
     changeLog->addChangeLogEntry(6, std::move(changelogEntry6));
@@ -137,10 +150,15 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
 
     // Fetch change log entries before timestamp 4
     auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
-    EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0].second);
-    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1].second);
-    EXPECT_EQ(changelogEntry3, extractedChangeLogEntries[2].second);
+    EXPECT_EQ(1, extractedChangeLogEntries.size());
+
+    const auto actualUpstreamOperators = extractedChangeLogEntries[0].second->upstreamOperators;
+    EXPECT_EQ(1, actualUpstreamOperators.size());
+    EXPECT_EQ(sourceOp1, (*actualUpstreamOperators.begin()));
+
+    const auto actualDownstreamOperators = extractedChangeLogEntries[0].second->downstreamOperators;
+    EXPECT_EQ(1, actualDownstreamOperators.size());
+    EXPECT_EQ(filterOp1, (*actualDownstreamOperators.begin()));
 
     //Update the processing time
     changeLog->updateProcessedChangeLogTimestamp(4);
@@ -151,10 +169,16 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
 
     // Fetch change log entries before timestamp 7
     extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(7);
-    EXPECT_EQ(extractedChangeLogEntries.size(), 3);
-    EXPECT_EQ(changelogEntry4, extractedChangeLogEntries[0].second);
-    EXPECT_EQ(changelogEntry5, extractedChangeLogEntries[1].second);
-    EXPECT_EQ(changelogEntry6, extractedChangeLogEntries[2].second);
+    //Will return one change log entry as it will merge change logs between 4 till 6
+    EXPECT_EQ(1, extractedChangeLogEntries.size());
+
+    const auto actualUpstreamOperatorsNext = extractedChangeLogEntries[0].second->upstreamOperators;
+    EXPECT_EQ(1, actualUpstreamOperatorsNext.size());
+    EXPECT_EQ(sourceOp1, (*actualUpstreamOperatorsNext.begin()));
+
+    const auto actualDownstreamOperatorsNext = extractedChangeLogEntries[0].second->downstreamOperators;
+    EXPECT_EQ(1, actualDownstreamOperatorsNext.size());
+    EXPECT_EQ(sinkOp1, (*actualDownstreamOperatorsNext.begin()));
 }
 
 //Insert and fetch change log entries
