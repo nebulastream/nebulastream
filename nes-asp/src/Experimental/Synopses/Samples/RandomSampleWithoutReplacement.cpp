@@ -154,7 +154,8 @@ double RandomSampleWithoutReplacement::getScalingFactor(Nautilus::Interface::Pag
     double retValue = 1;
 
     if ((aggregationType == Parsing::Aggregation_Type::COUNT) || (aggregationType == Parsing::Aggregation_Type::SUM)) {
-        auto numberOfTuplesInWindow = pagedVecRef.getTotalNumberOfEntries().getValue().getRawInt();
+        // As we use one entry in the PagedVector for calculating the approximate, we have to subtract it here
+        auto numberOfTuplesInWindow = pagedVecRef.getTotalNumberOfEntries().getValue().getRawInt() - 1;
         auto minSize = std::min(sampleSize, (uint64_t) numberOfTuplesInWindow);
         retValue = ((double) numberOfTuplesInWindow / minSize);
     }
@@ -192,11 +193,10 @@ Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Naut
     }
 }
 
-void RandomSampleWithoutReplacement::storeLocalOperatorState(uint64_t,
-                                                             const Runtime::Execution::Operators::SynopsesOperator* op,
+bool RandomSampleWithoutReplacement::storeLocalOperatorState(uint64_t, const Runtime::Execution::Operators::Operator*,
                                                              Runtime::Execution::ExecutionContext&,
                                                              Runtime::Execution::RecordBuffer) {
     // TODO this will be used in issue #3743
-    op->setHasLocalState(true);
+    return false;
 }
 } // namespace NES::ASP

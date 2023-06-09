@@ -87,7 +87,7 @@ public:
      * @param ctx
      * @param buffer
      */
-    void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::SynopsesOperator* op,
+    bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                  Runtime::Execution::ExecutionContext &ctx,
                                  Runtime::Execution::RecordBuffer buffer) override;
 

@@ -47,12 +47,10 @@ class SynopsesOperator : public ExecutableOperator {
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    void setHasLocalState(bool hasLocalState);
-
 private:
     uint64_t handlerIndex;
     ASP::AbstractSynopsesPtr synopses;
-    bool hasLocalState;
+    mutable bool hasLocalState;
 };
 
 }// namespace NES::Runtime::Execution::Operators

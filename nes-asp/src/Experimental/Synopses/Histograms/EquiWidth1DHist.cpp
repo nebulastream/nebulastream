@@ -112,7 +112,7 @@ void EquiWidth1DHist::setup(uint64_t handlerIndex, Runtime::Execution::Execution
     }
 }
 
-void EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
+bool EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                               Runtime::Execution::ExecutionContext& ctx,
                                               Runtime::Execution::RecordBuffer) {
     auto opHandler = ctx.getGlobalOperatorHandler(handlerIndex);
