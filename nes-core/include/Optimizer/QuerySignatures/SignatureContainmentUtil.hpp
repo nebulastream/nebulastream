@@ -220,6 +220,7 @@ class SignatureContainmentUtil {
     uint64_t counter;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
+    const int8_t NO_WINDOW_PRESENT = 0;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
