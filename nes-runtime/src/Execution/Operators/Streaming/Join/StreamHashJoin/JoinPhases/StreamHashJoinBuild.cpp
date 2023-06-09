@@ -32,22 +32,21 @@
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
-    NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
-    StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto currentWindow = opHandler->getWindowByTimestamp(timeStamp);
+uint64_t lastTimeStamp = std::numeric_limits<uint64_t>::max();
+StreamHashJoinWindow* lastHashWindow;
 
-    //create window because it does not exists
-    if (!currentWindow.has_value()) {
-        opHandler->createNewWindow(timeStamp);
-    }
-    currentWindow = opHandler->getWindowByTimestamp(timeStamp);
-    NES_ASSERT(currentWindow.has_value(), "Window could not be created");
-    if (currentWindow.has_value()) {
-        StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
-        return static_cast<void*>(hashWindow);
+void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
+    if (timeStamp == lastTimeStamp) {
+        return static_cast<void*>(lastHashWindow);
     } else {
-        return nullptr;
+        NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
+        StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+        auto currentWindow = opHandler->getWindowByTimestampOrCreateIt(timeStamp);
+        StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow.get());
+
+        lastTimeStamp = timeStamp;
+        lastHashWindow = hashWindow;
+        return static_cast<void*>(hashWindow);
     }
 }
 
@@ -93,52 +92,43 @@ void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
     }
 }
 
-void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-
-    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
-}
-
 void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
+    //void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
 
     Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
-
+    //
     auto localHashWindowRef = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
                                                      getStreamHashJoinWindowProxy,
                                                      operatorHandlerMemRef,
                                                      Value<UInt64>(tsValue));
+    //
+    //    auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableProxy",
+    //                                                       getLocalHashTableProxy,
+    //                                                       localHashWindowRef,
+    //                                                       ctx.getWorkerId(),
+    //                                                       Value<Boolean>(isLeftSide));
 
-    auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableProxy",
-                                                       getLocalHashTableProxy,
-                                                       localHashWindowRef,
-                                                       ctx.getWorkerId(),
-                                                       Value<Boolean>(isLeftSide));
-
-    //get position in the HT where to write to
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
-                                              insertFunctionProxy,
-                                              localHashTableMemRef,
-                                              record.read(joinFieldName).as<UInt64>());
-    //write data
-    for (auto& field : schema->fields) {
-        auto const fieldName = field->getName();
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-
-        entryMemRef.store(record.read(fieldName));
-        entryMemRef = entryMemRef + fieldType->size();
-    }
+    //    //get position in the HT where to write to
+    //    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    //    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
+    //                                              insertFunctionProxy,
+    //                                              localHashTableMemRef,
+    //                                              record.read(joinFieldName).as<UInt64>());
+    //    //write data
+    //    for (auto& field : schema->fields) {
+    //        auto const fieldName = field->getName();
+    //        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+    //
+    //        entryMemRef.store(record.read(fieldName));
+    //        entryMemRef = entryMemRef + fieldType->size();
+    //    }
 }
 
 void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-
+    NES_DEBUG(isLeftSide);
     // Update the watermark and trigger windows
     Nautilus::FunctionCall("checkWindowsTriggerProxy",
                            checkWindowsTriggerProxyForJoinBuild,
@@ -148,6 +138,16 @@ void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                            ctx.getWatermarkTs(),
                            ctx.getSequenceNumber(),
                            ctx.getOriginId());
+}
+
+void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+
+    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
 }
 
 void StreamHashJoinBuild::setup(ExecutionContext& ctx) const {

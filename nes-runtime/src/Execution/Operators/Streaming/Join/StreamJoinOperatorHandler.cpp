@@ -23,7 +23,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-std::optional<StreamWindowPtr> StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
+StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
     for (auto& curWindow : windows) {
         if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
             return curWindow;
@@ -48,7 +48,7 @@ std::optional<StreamWindowPtr> StreamJoinOperatorHandler::createNewWindow(uint64
                                                                     ptr->getNumPartitions()));
         NES_DEBUG2("Create Hash Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
     }
-    return getWindowByTimestamp(timestamp);
+    return getWindowByTimestampOrCreateIt(timestamp);
 }
 
 const std::string& StreamJoinOperatorHandler::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
@@ -65,7 +65,7 @@ void StreamJoinOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
     }
 }
 
-std::optional<StreamWindowPtr> StreamJoinOperatorHandler::getWindowByTimestamp(uint64_t timestamp) {
+StreamWindowPtr StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt(uint64_t timestamp) {
     for (auto& curWindow : windows) {
         if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
             return curWindow;

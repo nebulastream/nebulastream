@@ -266,7 +266,9 @@ void E2ESingleRun::runQuery() {
                 ss << "time=" << timeStamp << " subplan=" << subPlanStatistics->getSubQueryId()
                    << " procTasks=" << processedTasks;
                 for (auto& pipe : subPlanStatistics->getPipelineIdToTaskMap()) {
-                    ss << " pipeNo:" << pipeCnt++ << " tasks=" << pipe.second;
+                    for (auto& worker : pipe.second) {
+                        ss << " pipeNo:" << pipe.first << " worker=" << worker.first << " tasks=" << worker.second;
+                    }
                 }
                 std::cout << ss.str() << std::endl;
             }

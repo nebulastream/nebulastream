@@ -25,19 +25,19 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord) {
     NES_ASSERT2_FMT(0 < capacity, "Capacity is zero " << capacity);
 
-    bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+//    bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t hash) {
+uint8_t* FixedPage::append(const uint64_t) {
     if (currentPos >= capacity) {
         return nullptr;
     }
 
-    if (bloomFilter == nullptr) {
-        NES_ERROR("Bloomfilter become empty")
-    }
-    bloomFilter->add(hash);
+//    if (bloomFilter == nullptr) {
+//        NES_ERROR("Bloomfilter become empty " << hash)
+//    }
+//    bloomFilter->add(hash);
     uint8_t* ptr = &data[currentPos * sizeOfRecord];
     currentPos++;
     return ptr;

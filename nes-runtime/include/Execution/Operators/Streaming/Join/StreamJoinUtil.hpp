@@ -35,7 +35,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 namespace NES::Runtime::Execution {
 
 static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
-
 static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;

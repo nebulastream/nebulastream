@@ -23,14 +23,10 @@
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* NLJOperatorHandler::allocateNewEntry(uint64_t timestamp, bool isLeftSide) {
-    auto currentWindow = getWindowByTimestamp(timestamp);
-    while (!currentWindow.has_value()) {
-        createNewWindow(timestamp);
-    }
-    currentWindow = getWindowByTimestamp(timestamp);
+    auto currentWindow = getWindowByTimestampOrCreateIt(timestamp);
 
     auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
-    NLJWindow* ptr = static_cast<NLJWindow*>(currentWindow->get());
+    NLJWindow* ptr = static_cast<NLJWindow*>(currentWindow.get());
     return ptr->allocateNewTuple(sizeOfTupleInByte, isLeftSide);
 }
 

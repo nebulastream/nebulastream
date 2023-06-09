@@ -324,7 +324,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
 
-        statistics->incTasksPerPipelineId(pipelineId);
+        statistics->incTasksPerPipelineId(pipelineId, workerContext.getId());
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
