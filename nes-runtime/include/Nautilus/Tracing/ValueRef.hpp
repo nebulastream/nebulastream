@@ -23,40 +23,6 @@ namespace NES::Nautilus::Tracing {
  */
 class ValueRef {
   public:
-    ValueRef();
-    /**
-     * @brief Constructor to create a new value reference
-     * @param blockId
-     * @param operationId
-     * @param type
-     */
-    ValueRef(uint32_t blockId, uint32_t operationId, IR::Types::StampPtr type);
-
-    /**
-     * @brief Copy constructor
-     * @param other
-     */
-    ValueRef(const ValueRef& other);
-
-    /**
-     * @brief Move constructor
-     * @param other
-     */
-    ValueRef(const ValueRef&& other);
-
-    /**
-     * @brief Copy assignment
-     * @param other
-     * @return ValueRef
-     */
-    ValueRef& operator=(const ValueRef& other);
-
-    /**
-     * @brief Move assignment
-     * @param rhs
-     * @return ValueRef
-     */
-    ValueRef& operator=(const ValueRef&& other);
     bool operator==(const ValueRef& rhs) const;
     bool operator!=(const ValueRef& rhs) const;
     friend std::ostream& operator<<(std::ostream& os, const ValueRef& tag);

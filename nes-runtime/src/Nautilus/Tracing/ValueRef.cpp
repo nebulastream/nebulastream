@@ -19,29 +19,6 @@
 
 namespace NES::Nautilus::Tracing {
 
-ValueRef::ValueRef() : blockId(), operationId(){};
-
-ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, NES::Nautilus::IR::Types::StampPtr type)
-    : blockId(blockId), operationId(operationId), type(std::move(type)){};
-
-ValueRef::ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type){};
-ValueRef::ValueRef(const ValueRef&& other)
-    : blockId(other.blockId), operationId(other.operationId), type(std::move(other.type)){};
-
-ValueRef& ValueRef::operator=(const ValueRef& other) {
-    this->operationId = other.operationId;
-    this->blockId = other.blockId;
-    this->type = other.type;
-    return *this;
-}
-
-ValueRef& ValueRef::operator=(const ValueRef&& other) {
-    this->operationId = other.operationId;
-    this->blockId = other.blockId;
-    this->type = other.type;
-    return *this;
-}
-
 ValueRef createNextRef(const NES::Nautilus::IR::Types::StampPtr& stamp) {
     if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
         return ctx->createNextRef(stamp);

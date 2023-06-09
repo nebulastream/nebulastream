@@ -37,7 +37,7 @@ void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     // 2. load the thread local state.
 
     // TODO merge all thread local states to support concurrent aggregations with multiple thread local states.
-    auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerId());
+    auto state = Nautilus::FunctionCall("getThreadLocalState"sv, getStates, globalOperatorHandler, ctx.getWorkerId());
 
     // 3. perform final aggregation.
     Record result;

@@ -27,13 +27,13 @@ class RowMemoryProvider final : public MemoryProvider {
      * @brief Creates a row memory provider based on a valid row memory layout pointer.
      * @param Row memory layout pointer used to create the RowMemoryProvider.
      */
-    RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr);
+    RowMemoryProvider(const Runtime::MemoryLayouts::RowLayoutPtr& rowMemoryLayoutPtr,
+                      const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections = {});
     ~RowMemoryProvider() = default;
 
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+    Nautilus::Record read(Nautilus::Value<Nautilus::MemRef>& bufferAddress,
                           Nautilus::Value<Nautilus::UInt64>& recordIndex) const override;
 
     void write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,

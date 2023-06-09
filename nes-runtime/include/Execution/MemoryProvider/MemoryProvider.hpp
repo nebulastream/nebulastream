@@ -16,6 +16,8 @@
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <tuple>
+#include <vector>
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
@@ -27,6 +29,8 @@ using MemoryProviderPtr = std::unique_ptr<MemoryProvider>;
  */
 class MemoryProvider {
   public:
+    MemoryProvider(const Runtime::MemoryLayouts::MemoryLayoutPtr& layout,
+                   const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections);
     virtual ~MemoryProvider();
 
     /**
@@ -50,8 +54,7 @@ class MemoryProvider {
      * @param recordIndex: Index of the specific value that is accessed by 'read'.
      * @return Nautilus::Record: A Nautilus record constructed using the given projections.
      */
-    virtual Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                  Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+    virtual Nautilus::Record read(Nautilus::Value<Nautilus::MemRef>& bufferAddress,
                                   Nautilus::Value<Nautilus::UInt64>& recordIndex) const = 0;
 
     /**
@@ -95,6 +98,9 @@ class MemoryProvider {
      */
     [[nodiscard]] bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
                                      const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const;
+
+  protected:
+    std::vector<std::tuple<uint64_t, Nautilus::Record::RecordFieldIdentifier>> fields;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider

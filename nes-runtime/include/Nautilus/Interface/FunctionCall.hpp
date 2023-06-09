@@ -22,9 +22,10 @@
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <cstdio>
 #include <memory>
+#include <string_view>
 #include <unistd.h>
 namespace NES::Nautilus {
-
+using namespace std::literals;
 template<class T>
 struct dependent_false : std::false_type {};
 
@@ -157,7 +158,7 @@ void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector
 void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments);
 
 template<typename... ValueArguments>
-auto getArgumentReferences(std::string functionName, void* fnptr, ValueArguments... arguments) {
+auto getArgumentReferences(std::string_view functionName, void* fnptr, ValueArguments... arguments) {
     std::vector<Nautilus::Tracing::InputVariant> functionArgumentReferences = {
         Nautilus::Tracing::FunctionCallTarget(functionName, fnptr)};
     if constexpr (sizeof...(ValueArguments) > 0) {
@@ -169,7 +170,7 @@ auto getArgumentReferences(std::string functionName, void* fnptr, ValueArguments
 }
 
 template<typename R, typename... FunctionArguments, typename... ValueArguments>
-auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), ValueArguments... arguments) {
+auto FunctionCall(std::string_view functionName, R (*fnptr)(FunctionArguments...), ValueArguments... arguments) {
     if constexpr (std::is_void_v<R>) {
         if (Tracing::TraceUtil::inInterpreter()) {
             fnptr(transform(std::forward<ValueArguments>(arguments))...);

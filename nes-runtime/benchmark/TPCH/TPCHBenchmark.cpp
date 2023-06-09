@@ -39,11 +39,11 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <PipelinePlan.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <PipelinePlan.hpp>
 #include <TPCH/Query1.hpp>
 #include <TPCH/Query3.hpp>
 #include <TPCH/Query6.hpp>
@@ -156,30 +156,30 @@ class Query6Runner : public BenchmarkRunner {
         auto pipeline1 = plan.getPipeline(0);
         auto pipeline2 = plan.getPipeline(1);
         aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
-        emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
+        //emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
         // we call setup here to force compilation
         aggExecutablePipeline->setup(*pipeline1.ctx);
-        emitExecutablePipeline->setup(*pipeline2.ctx);
+        // emitExecutablePipeline->setup(*pipeline2.ctx);
         compileTimeTimer.snapshot("compilation");
         compileTimeTimer.pause();
     }
     void runQuery(Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto pipeline1 = plan.getPipeline(0);
-        auto pipeline2 = plan.getPipeline(1);
+        // auto pipeline2 = plan.getPipeline(1);
         executionTimeTimer.start();
         aggExecutablePipeline->setup(*pipeline1.ctx);
-        emitExecutablePipeline->setup(*pipeline2.ctx);
+        //   emitExecutablePipeline->setup(*pipeline2.ctx);
         for (auto& chunk : lineitems->getChunks()) {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
         executionTimeTimer.snapshot("execute agg");
-        auto dummyBuffer = NES::Runtime::TupleBuffer();
-        emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
+        // auto dummyBuffer = NES::Runtime::TupleBuffer();
+        // emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
         executionTimeTimer.snapshot("execute emit");
         executionTimeTimer.pause();
         aggExecutablePipeline->stop(*pipeline1.ctx);
-        emitExecutablePipeline->stop(*pipeline2.ctx);
+        //  emitExecutablePipeline->stop(*pipeline2.ctx);
     }
 };
 
@@ -198,7 +198,6 @@ class Query1Runner : public BenchmarkRunner {
         aggExecutablePipeline->setup(*pipeline1.ctx);
         compileTimeTimer.snapshot("compilation");
         compileTimeTimer.pause();
-
     }
     void runQuery(Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];

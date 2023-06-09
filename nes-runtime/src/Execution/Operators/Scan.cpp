@@ -21,8 +21,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
-    : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
+Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
+    : memoryProvider(std::move(memoryProvider)) {}
 
 void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // initialize global state variables to keep track of the watermark ts and the origin id
@@ -34,7 +34,7 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
     for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
-        auto record = memoryProvider->read(projections, bufferAddress, i);
+        auto record = memoryProvider->read( bufferAddress, i);
         child->execute(ctx, record);
     }
 }

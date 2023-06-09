@@ -19,8 +19,9 @@
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
-ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr)
-    : columnMemoryLayoutPtr(columnMemoryLayoutPtr){};
+ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr,
+                                           const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections)
+    : MemoryProvider(columnMemoryLayoutPtr, projections), columnMemoryLayoutPtr(columnMemoryLayoutPtr){};
 
 MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr() { return columnMemoryLayoutPtr; }
 
@@ -34,19 +35,13 @@ Nautilus::Value<Nautilus::MemRef> ColumnMemoryProvider::calculateFieldAddress(Na
     return fieldAddress.as<Nautilus::MemRef>();
 }
 
-Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                            Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+Nautilus::Record ColumnMemoryProvider::read(Nautilus::Value<Nautilus::MemRef>& bufferAddress,
                                             Nautilus::Value<Nautilus::UInt64>& recordIndex) const {
-    auto& schema = columnMemoryLayoutPtr->getSchema();
     // read all fields
     Nautilus::Record record;
-    for (uint64_t i = 0; i < schema->getSize(); i++) {
-        auto& fieldName = schema->fields[i]->getName();
-        if (!includesField(projections, fieldName)) {
-            continue;
-        }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = load(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress);
+    for (auto [fieldIndex, fieldName] : fields) {
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, fieldIndex);
+        auto value = load(columnMemoryLayoutPtr->getPhysicalTypes()[fieldIndex], bufferAddress, fieldAddress);
         record.write(fieldName, value);
     }
     return record;
@@ -55,12 +50,10 @@ Nautilus::Record ColumnMemoryProvider::read(const std::vector<Nautilus::Record::
 void ColumnMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,
                                  Nautilus::Value<Nautilus::MemRef>& bufferAddress,
                                  NES::Nautilus::Record& rec) const {
-    auto& fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
-    auto& schema = columnMemoryLayoutPtr->getSchema();
-    for (uint64_t i = 0; i < fieldSizes.size(); i++) {
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = rec.read(schema->fields[i]->getName());
-        store(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);
+    for (const auto& [fieldIndex, fieldName] : fields) {
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, fieldIndex);
+        auto value = rec.read(fieldName);
+        store(columnMemoryLayoutPtr->getPhysicalTypes()[fieldIndex], bufferAddress, fieldAddress, value);
     }
 }
 

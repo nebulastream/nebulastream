@@ -75,10 +75,11 @@ class TPCH_Query3 {
         PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
         auto& customers = tables[TPCHTable::Customer];
 
-        auto c_scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customers->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_mksegment", "c_custkey"};
-        auto customersScan = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr), customersProjection);
+        auto c_scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customers->getLayout()),
+            customersProjection);
+        auto customersScan = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr));
 
         // c_mksegment = 'BUILDING' -> currently modeled as 1
         auto BUILDING = std::make_shared<ConstantInt32ValueExpression>(1);
@@ -123,13 +124,15 @@ class TPCH_Query3 {
         /**
         * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
         */
-        auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orders->getLayout()));
+
         std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"o_orderdate",
                                                                                  "o_shippriority",
                                                                                  "o_custkey",
                                                                                  "o_orderkey"};
-        auto orderScan = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
+        auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orders->getLayout()),
+            ordersProjection);
+        auto orderScan = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr));
 
         //  o_orderdate < date '1995-03-15'
         auto const_1995_03_15 = std::make_shared<ConstantInt32ValueExpression>(19950315);
@@ -194,13 +197,14 @@ class TPCH_Query3 {
         /**
    * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
    */
-        auto lineitemsMP = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection = {"l_orderkey",
                                                                                    "l_extendedprice",
                                                                                    "l_discount",
                                                                                    "l_shipdate"};
-        auto lineitemsScan = std::make_shared<Operators::Scan>(std::move(lineitemsMP), lineItemProjection);
+        auto lineitemsMP = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()),
+            lineItemProjection);
+        auto lineitemsScan = std::make_shared<Operators::Scan>(std::move(lineitemsMP));
 
         //   date '1995-03-15' < l_shipdate
         auto readL_shipdate = std::make_shared<ReadFieldExpression>("l_shipdate");

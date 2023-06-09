@@ -27,13 +27,13 @@ class ColumnMemoryProvider final : public MemoryProvider {
      * @brief Creates a column memory provider based on a valid column memory layout pointer.
      * @param Column memory layout pointer used to create the ColumnMemoryProvider.
      */
-    ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr);
+    ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr,
+                         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections = {});
     ~ColumnMemoryProvider() = default;
 
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+    Nautilus::Record read(Nautilus::Value<Nautilus::MemRef>& bufferAddress,
                           Nautilus::Value<Nautilus::UInt64>& recordIndex) const override;
 
     void write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,

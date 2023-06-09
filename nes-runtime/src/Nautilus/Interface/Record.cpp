@@ -23,7 +23,7 @@ Record::Record() {}
 
 Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields)) {}
 
-Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
+Value<Any>& Record::read(const RecordFieldIdentifier& fieldIdentifier) {
     auto fieldValue = fields.find(fieldIdentifier);
     if (fieldValue == fields.end()) {
         std::stringstream ss;
@@ -31,14 +31,15 @@ Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
             ss << entry.first;
             ss << ", ";
         });
-        throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
+        throw InterpreterException("Could not find field: fieldIdentifier = " + std::string(fieldIdentifier)
+                                   + "; known fields = " + ss.str());
     }
     return fieldValue->second;
 }
 
 uint64_t Record::numberOfFields() { return fields.size(); }
 
-void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
+void Record::write(const RecordFieldIdentifier& fieldIndex, Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
 
 bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
 

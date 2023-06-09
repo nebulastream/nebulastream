@@ -119,8 +119,8 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     for (Value<UInt64> leftPos((uint64_t) 0); leftPos < numberOfTuplesLeft; leftPos = leftPos + 1) {
         for (Value<UInt64> rightPos((uint64_t) 0); rightPos < numberOfTuplesRight; rightPos = rightPos + 1) {
-            auto leftRecord = leftMemProvider->read({}, firstTupleLeft, leftPos);
-            auto rightRecord = rightMemProvider->read({}, firstTupleRight, rightPos);
+            auto leftRecord = leftMemProvider->read(firstTupleLeft, leftPos);
+            auto rightRecord = rightMemProvider->read(firstTupleRight, rightPos);
 
             /* This can be later replaced by an interface that returns bool and gets passed the
                  * two Nautilus::Records (left and right) #3691 */

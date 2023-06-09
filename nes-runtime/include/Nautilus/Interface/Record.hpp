@@ -28,12 +28,12 @@ namespace NES::Nautilus {
  */
 class Record {
   public:
-    using RecordFieldIdentifier = std::string;
+    using RecordFieldIdentifier = std::string_view;
     explicit Record();
     explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
     ~Record() = default;
-    Value<>& read(RecordFieldIdentifier fieldName);
-    void write(RecordFieldIdentifier fieldName, Value<>& value);
+    Value<>& read(const RecordFieldIdentifier& fieldName);
+    void write(const RecordFieldIdentifier& fieldName, Value<>& value);
     uint64_t numberOfFields();
     bool hasField(RecordFieldIdentifier fieldName);
     std::vector<RecordFieldIdentifier> getAllFields();

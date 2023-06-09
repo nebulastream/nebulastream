@@ -81,7 +81,7 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
       minCount(minCount), operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
 void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
+    NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->data())
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -94,9 +94,9 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
             NES_DEBUG2("Threshold window starts, opening value:{}",
                        std::accumulate(allFieldNames.begin(),
                                        allFieldNames.end(),
-                                       std::string{},
-                                       [&record](std::string acc, std::string s) {
-                                           return acc + s + "=" + record.read(s)->toString() + ",";
+                                       Nautilus::Record::RecordFieldIdentifier{},
+                                       [&record](Nautilus::Record::RecordFieldIdentifier acc, Nautilus::Record::RecordFieldIdentifier s) {
+                                           return std::string(acc) + std::string(s) + "=" + record.read(s)->toString() + ",";
                                        }));
         }
 
@@ -128,15 +128,15 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                 NES_DEBUG2("Threshold window ends, closing value:{} | aggVal:{}",
                            std::accumulate(allFieldNames.begin(),
                                            allFieldNames.end(),
-                                           std::string{},
-                                           [&record](std::string acc, std::string s) {
-                                               return acc + s + "=" + record.read(s)->toString() + ",";
+                                           Nautilus::Record::RecordFieldIdentifier{},
+                                           [&record](Nautilus::Record::RecordFieldIdentifier acc, Nautilus::Record::RecordFieldIdentifier s) {
+                                               return std::string(acc) + std::string(s) + "=" + record.read(s)->toString() + ",";
                                            }),
-                           std::accumulate(aggregationResultFieldIdentifiers.begin(),
-                                           aggregationResultFieldIdentifiers.end(),
-                                           std::string{},
-                                           [&resultRecord](std::string acc, std::string s) {
-                                               return acc + " " + s + "=" + resultRecord.read(s)->toString();
+                           std::accumulate(allFieldNames.begin(),
+                                           allFieldNames.end(),
+                                           Nautilus::Record::RecordFieldIdentifier{},
+                                           [&record](Nautilus::Record::RecordFieldIdentifier acc, Nautilus::Record::RecordFieldIdentifier s) {
+                                               return std::string(acc) + std::string(s) + "=" + record.read(s)->toString() + ",";
                                            }));
 
                 // crucial to release the handler here before we execute the rest of the pipeline

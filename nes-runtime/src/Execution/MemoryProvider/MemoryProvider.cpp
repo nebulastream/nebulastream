@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
@@ -23,6 +24,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
@@ -31,6 +33,18 @@ Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIn
     auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto childBuffer = tb.loadChildBuffer(childIndex);
     return Nautilus::TextValue::load(childBuffer);
+}
+
+MemoryProvider::MemoryProvider(const Runtime::MemoryLayouts::MemoryLayoutPtr& layout,
+                               const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections) {
+    auto schema = layout->getSchema();
+    for (uint64_t i = 0; i < schema->getSize(); i++) {
+        auto& fieldName = schema->fields[i]->getName();
+        if (!includesField(projections, fieldName)) {
+            continue;
+        }
+        fields.emplace_back(i, fieldName);
+    }
 }
 
 Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
@@ -119,11 +133,11 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
 }
 
 bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                   const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const {
+                                   const Nautilus::Record::RecordFieldIdentifier& fieldIdentifier) const {
     if (projections.empty()) {
         return true;
     }
-    return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
+    return std::find(projections.begin(), projections.end(), fieldIdentifier) != projections.end();
 }
 
 MemoryProvider::~MemoryProvider() {}

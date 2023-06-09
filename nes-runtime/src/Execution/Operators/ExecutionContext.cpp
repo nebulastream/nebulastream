@@ -41,7 +41,7 @@ void* allocateBufferProxy(void* workerContextPtr) {
 }
 
 Value<MemRef> ExecutionContext::allocateBuffer() {
-    auto bufferPtr = Nautilus::FunctionCall("allocateBufferProxy", allocateBufferProxy, workerContext);
+    auto bufferPtr = Nautilus::FunctionCall("allocateBufferProxy"sv, allocateBufferProxy, workerContext);
     return bufferPtr;
 }
 

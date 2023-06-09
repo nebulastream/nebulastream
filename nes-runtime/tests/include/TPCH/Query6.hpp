@@ -41,13 +41,14 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <PipelinePlan.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <PipelinePlan.hpp>
-#include <Table.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
+#include <Table.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <string_view>
 
 namespace NES::Runtime::Execution {
 using namespace Expressions;
@@ -59,10 +60,11 @@ class TPCH_Query6 {
         PipelinePlan plan;
         auto& lineitems = tables[TPCHTable::LineItem];
 
+        std::vector<Record::RecordFieldIdentifier> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
         auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
-        std::vector<std::string> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
-        auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()),
+            projections);
+        auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
         /*
         *   l_shipdate >= date '1994-01-01'
