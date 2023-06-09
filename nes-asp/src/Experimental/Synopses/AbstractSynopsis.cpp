@@ -32,8 +32,7 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
 
 
 AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
-    : aggregationFunction(aggregationConfig.createAggregationFunction()),
-      aggregationValue(aggregationConfig.createAggregationValue()), aggregationType(aggregationConfig.type),
+    : aggregationFunction(aggregationConfig.createAggregationFunction()), aggregationType(aggregationConfig.type),
       fieldNameAggregation(aggregationConfig.fieldNameAggregation), fieldNameApproximate(aggregationConfig.fieldNameApproximate),
       inputSchema(aggregationConfig.inputSchema), outputSchema(aggregationConfig.outputSchema) {}
 

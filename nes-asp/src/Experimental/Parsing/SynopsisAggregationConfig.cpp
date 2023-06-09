@@ -14,7 +14,6 @@
 
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -89,11 +88,9 @@ SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregation
 }
 
 Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfig::createAggregationFunction() {
-    // Converting the DataType into a PhysicalDataType
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    auto inputType = defaultPhysicalTypeFactory.getPhysicalType(inputSchema->get(fieldNameAggregation)->getDataType());
-    auto finalType = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
-    auto readFieldExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldNameAggregation);
+    auto inputType = getInputType();
+    auto finalType = getFinalType();
+    auto readFieldExpression = getReadFieldExpression();
     auto resultFieldIdentifier = fieldNameApproximate;
 
 
@@ -119,166 +116,6 @@ Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfi
                                                                                                                          readFieldExpression,
                                                                                                                          resultFieldIdentifier);
         case Aggregation_Type::NONE: NES_NOT_IMPLEMENTED();
-    }
-}
-
-AggregationValuePtr SynopsisAggregationConfig::createAggregationValue() {
-    switch(type) {
-        case Aggregation_Type::NONE: NES_THROW_RUNTIME_ERROR("Can not create aggregation value for the Aggregation_Type::NONE!");
-        case Aggregation_Type::MIN: return createAggregationValueMin();
-        case Aggregation_Type::MAX: return createAggregationValueMax();
-        case Aggregation_Type::SUM: return createAggregationValueSum();
-        case Aggregation_Type::AVERAGE: return createAggregationValueAverage();
-        case Aggregation_Type::COUNT: return createAggregationValueCount();
-    }
-}
-AggregationValuePtr SynopsisAggregationConfig::createAggregationValueMin() {
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
-    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
-
-    switch (basicType->nativeType) {
-        case BasicPhysicalType::NativeType::UINT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint8_t>>();
-        case BasicPhysicalType::NativeType::UINT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint16_t>>();
-        case BasicPhysicalType::NativeType::UINT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint32_t>>();
-        case BasicPhysicalType::NativeType::UINT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint64_t>>();
-        case BasicPhysicalType::NativeType::INT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int8_t>>();
-        case BasicPhysicalType::NativeType::INT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int16_t>>();
-        case BasicPhysicalType::NativeType::INT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int32_t>>();
-        case BasicPhysicalType::NativeType::INT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>>();
-        case BasicPhysicalType::NativeType::FLOAT:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<float_t>>();
-        case BasicPhysicalType::NativeType::DOUBLE:
-            return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<double_t>>();
-        default: NES_THROW_RUNTIME_ERROR("Unsupported data type!");
-    }
-}
-
-AggregationValuePtr SynopsisAggregationConfig::createAggregationValueMax() {
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
-    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
-
-    switch (basicType->nativeType) {
-        case BasicPhysicalType::NativeType::UINT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint8_t>>();
-        case BasicPhysicalType::NativeType::UINT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint16_t>>();
-        case BasicPhysicalType::NativeType::UINT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint32_t>>();
-        case BasicPhysicalType::NativeType::UINT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint64_t>>();
-        case BasicPhysicalType::NativeType::INT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int8_t>>();
-        case BasicPhysicalType::NativeType::INT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int16_t>>();
-        case BasicPhysicalType::NativeType::INT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int32_t>>();
-        case BasicPhysicalType::NativeType::INT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>>();
-        case BasicPhysicalType::NativeType::FLOAT:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<float_t>>();
-        case BasicPhysicalType::NativeType::DOUBLE:
-            return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<double_t>>();
-        default: NES_THROW_RUNTIME_ERROR("Unsupported data type!");
-    }
-}
-
-AggregationValuePtr SynopsisAggregationConfig::createAggregationValueCount() {
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
-    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
-
-    switch (basicType->nativeType) {
-        case BasicPhysicalType::NativeType::UINT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint8_t>>();
-        case BasicPhysicalType::NativeType::UINT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint16_t>>();
-        case BasicPhysicalType::NativeType::UINT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint32_t>>();
-        case BasicPhysicalType::NativeType::UINT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint64_t>>();
-        case BasicPhysicalType::NativeType::INT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int8_t>>();
-        case BasicPhysicalType::NativeType::INT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int16_t>>();
-        case BasicPhysicalType::NativeType::INT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int32_t>>();
-        case BasicPhysicalType::NativeType::INT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>>();
-        case BasicPhysicalType::NativeType::FLOAT:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<float_t>>();
-        case BasicPhysicalType::NativeType::DOUBLE:
-            return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<double_t>>();
-        default: NES_THROW_RUNTIME_ERROR("Unsupported data type!");
-    }
-}
-
-AggregationValuePtr SynopsisAggregationConfig::createAggregationValueAverage() {
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
-    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
-
-    switch (basicType->nativeType) {
-        case BasicPhysicalType::NativeType::UINT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint8_t>>();
-        case BasicPhysicalType::NativeType::UINT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint16_t>>();
-        case BasicPhysicalType::NativeType::UINT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint32_t>>();
-        case BasicPhysicalType::NativeType::UINT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint64_t>>();
-        case BasicPhysicalType::NativeType::INT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int8_t>>();
-        case BasicPhysicalType::NativeType::INT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int16_t>>();
-        case BasicPhysicalType::NativeType::INT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int32_t>>();
-        case BasicPhysicalType::NativeType::INT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int64_t>>();
-        case BasicPhysicalType::NativeType::FLOAT:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<float_t>>();
-        case BasicPhysicalType::NativeType::DOUBLE:
-            return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<double_t>>();
-        default: NES_THROW_RUNTIME_ERROR("Unsupported data type!");
-    }
-}
-
-AggregationValuePtr SynopsisAggregationConfig::createAggregationValueSum() {
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
-    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalField);
-
-    switch (basicType->nativeType) {
-        case BasicPhysicalType::NativeType::UINT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint8_t>>();
-        case BasicPhysicalType::NativeType::UINT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint16_t>>();
-        case BasicPhysicalType::NativeType::UINT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint32_t>>();
-        case BasicPhysicalType::NativeType::UINT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint64_t>>();
-        case BasicPhysicalType::NativeType::INT_8:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int8_t>>();
-        case BasicPhysicalType::NativeType::INT_16:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int16_t>>();
-        case BasicPhysicalType::NativeType::INT_32:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int32_t>>();
-        case BasicPhysicalType::NativeType::INT_64:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>>();
-        case BasicPhysicalType::NativeType::FLOAT:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<float_t>>();
-        case BasicPhysicalType::NativeType::DOUBLE:
-            return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<double_t>>();
-        default: NES_THROW_RUNTIME_ERROR("Unsupported data type!");
     }
 }
 
@@ -315,6 +152,21 @@ SynopsisAggregationConfig SynopsisAggregationConfig::create(const Aggregation_Ty
                                                             const SchemaPtr& outputSchema) {
     return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApproximate, timestampFieldName,
                                      inputSchema, outputSchema);
+}
+
+PhysicalTypePtr SynopsisAggregationConfig::getFinalType() const {
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+    return defaultPhysicalTypeFactory.getPhysicalType(outputSchema->get(fieldNameApproximate)->getDataType());
+}
+
+PhysicalTypePtr SynopsisAggregationConfig::getInputType() const {
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+    return defaultPhysicalTypeFactory.getPhysicalType(inputSchema->get(fieldNameAggregation)->getDataType());
+}
+
+std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>
+SynopsisAggregationConfig::getReadFieldExpression() const {
+    return std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldNameAggregation);
 }
 
 } // namespace NES::ASP::Parsing

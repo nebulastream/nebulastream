@@ -109,7 +109,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
                                                           Nautilus::Value<Nautilus::UInt64>((uint64_t)sampleSize));
 
     // Approximate over the sample and write the approximation into record
-    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
+    auto aggregationValueMemRef = pagedVectorRef.allocateEntry();
     aggregationFunction->reset(aggregationValueMemRef);
 
     auto memoryProviderInput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
@@ -193,9 +193,10 @@ Nautilus::Value<> RandomSampleWithoutReplacement::multiplyWithScalingFactor(Naut
 }
 
 void RandomSampleWithoutReplacement::storeLocalOperatorState(uint64_t,
-                                                             const Runtime::Execution::Operators::Operator*,
+                                                             const Runtime::Execution::Operators::SynopsesOperator* op,
                                                              Runtime::Execution::ExecutionContext&,
                                                              Runtime::Execution::RecordBuffer) {
     // TODO this will be used in issue #3743
+    op->setHasLocalState(true);
 }
 } // namespace NES::ASP

@@ -60,7 +60,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
                                                      Runtime::Execution::ExecutionContext& ctx,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
-    void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator *op,
+    void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::SynopsesOperator *op,
                                  Runtime::Execution::ExecutionContext &ctx,
                                  Runtime::Execution::RecordBuffer buffer) override;
 

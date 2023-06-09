@@ -19,6 +19,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <string>
@@ -103,10 +104,24 @@ class SynopsisAggregationConfig {
     Runtime::Execution::Aggregation::AggregationFunctionPtr createAggregationFunction();
 
     /**
-     * @brief Creates an aggregation value from the current parameters
-     * @return AggregationValue
+     * @brief Gets the physical type of the input
+     * @return PhysicalTypePtr
      */
-    AggregationValuePtr createAggregationValue();
+    PhysicalTypePtr getInputType() const;
+
+    /**
+     * @brief Gets the physical type of the final output
+     * @return PhysicalTypePtr
+     */
+    PhysicalTypePtr getFinalType() const;
+
+
+    /**
+     * @brief Gets the ReadFieldExpression for this configuration
+     * @return Shared pointer of type ReadFieldExpression
+     */
+    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression> getReadFieldExpression() const;
+
 
 
   private:
@@ -126,36 +141,6 @@ class SynopsisAggregationConfig {
                                        const std::string& timestampFieldName,
                                        const SchemaPtr& inputSchema,
                                        const SchemaPtr& outputSchema);
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a min aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueMin();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a max aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueMax();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a count aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueCount();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for an average aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueAverage();
-
-    /**
-     * @brief Creates an aggregation value from the current parameters for a sum aggregation function
-     * @return AggregationValue
-     */
-    AggregationValuePtr createAggregationValueSum();
 
   public:
     Aggregation_Type type;

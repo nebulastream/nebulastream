@@ -67,10 +67,6 @@ EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::Execu
     Nautilus::Value<UInt64> recordIndex((uint64_t) 0);
     Nautilus::Value<> lowerBinBound((int64_t) minValue);
     for (Nautilus::Value<Nautilus::UInt64> binPos = (uint64_t) 0; binPos < numberOfBins; binPos = binPos + 1) {
-        auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
-        auto bufferAddress = recordBuffer.getBuffer();
-
-
         // Writing the approximation value of the current bin to the current record
         Nautilus::Record record;
         aggregationFunction->lower(bins[(uint64_t)0][binPos], record);
@@ -81,6 +77,8 @@ EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::Execu
         record.write(upperBinBoundString, lowerBinBound);
 
         // Writing the values to the buffer
+        auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
+        auto bufferAddress = recordBuffer.getBuffer();
         memoryProviderOutput->write(recordIndex, bufferAddress, record);
         recordIndex = recordIndex + 1;
         recordBuffer.setNumRecords(recordIndex);
@@ -122,6 +120,7 @@ void EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runti
     auto binsRef = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
 
     ctx.setLocalOperatorState(op, std::make_unique<LocalBinsOperatorState>(binsRef));
+    return true;
 }
 
 EquiWidth1DHist::EquiWidth1DHist(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
