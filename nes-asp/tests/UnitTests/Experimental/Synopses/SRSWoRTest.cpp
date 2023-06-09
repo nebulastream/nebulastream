@@ -109,7 +109,7 @@ namespace NES::ASP {
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
         auto sampleSynopsis = RandomSampleWithoutReplacement(aggregationConfig, sampleSize);
-        auto exactAggValue = aggregationConfig.createAggregationValue();
+        auto exactAggValue = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationValue<uint64_t>>();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
         auto exactAggFunction = aggregationConfig.createAggregationFunction();
 
@@ -209,7 +209,7 @@ namespace NES::ASP {
         auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
                                                                             timestampFieldName, inputSchema, outputSchema);
         auto synopsis = ASP::AbstractSynopsis::create(*synopsisConfig, aggregationConfig);
-        auto exactAggValue = aggregationConfig.createAggregationValue();
+        auto exactAggValue = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationValue<uint64_t>>();
         auto exactAggValueMemRef = Nautilus::MemRef((int8_t*)exactAggValue.get());
         auto exactAggFunction = aggregationConfig.createAggregationFunction();
         exactAggFunction->reset(exactAggValueMemRef);

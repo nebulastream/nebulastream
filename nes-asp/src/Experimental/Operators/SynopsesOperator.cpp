@@ -23,7 +23,10 @@ SynopsesOperator::SynopsesOperator(uint64_t handlerIndex, const ASP::AbstractSyn
 
 void SynopsesOperator::execute(ExecutionContext& ctx, Record& record) const {
     // Retrieve operator state
-    auto state = ctx.getLocalState(this);
+    Runtime::Execution::Operators::OperatorState* state = nullptr;
+    if (hasLocalState) {
+        state = ctx.getLocalState(this);
+    }
 
     // For now, we do not have to care about calling getApproximate once the window is done #3628
     synopses->addToSynopsis(handlerIndex, ctx, record, state);
@@ -35,6 +38,10 @@ void SynopsesOperator::setup(ExecutionContext& ctx) const {
 
 void SynopsesOperator::open(ExecutionContext &executionCtx, RecordBuffer &recordBuffer) const {
     synopses->storeLocalOperatorState(handlerIndex, this, executionCtx, recordBuffer);
+}
+
+void SynopsesOperator::setHasLocalState(bool hasLocalState) {
+    SynopsesOperator::hasLocalState = hasLocalState;
 }
 
 } // namespace NES::Runtime::Execution::Operators

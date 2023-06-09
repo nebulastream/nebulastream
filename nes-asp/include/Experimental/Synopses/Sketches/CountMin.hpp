@@ -16,22 +16,56 @@
 #define NES_COUNTMIN_HPP
 
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
+#include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
+#include <Nautilus/Interface/Hash/H3Hash.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Expressions/WriteFieldExpression.hpp>
 
 
 namespace NES::ASP {
 class CountMin : public AbstractSynopsis {
+  public:
 
-public:
-    void
-    addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record) override;
+    class LocalCountMinState : public Runtime::Execution::Operators::OperatorState {
+      public:
+        LocalCountMinState(const Nautilus::Interface::Fixed2DArrayRef &sketchArray,
+                           const Nautilus::Value<Nautilus::MemRef> &h3SeedsMemRef) : sketchArray(sketchArray),
+                                                                                     h3SeedsMemRef(h3SeedsMemRef) {}
+
+
+        Nautilus::Interface::Fixed2DArrayRef sketchArray;
+        Nautilus::Value<Nautilus::MemRef> h3SeedsMemRef;
+    };
+
+    CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows,
+             const uint64_t numberOfCols, const uint64_t entrySize, const uint64_t keySizeInB,
+             const std::string &keyFieldNameString,
+             std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readKeyExpression);
+
+    void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
+                       Runtime::Execution::Operators::OperatorState *pState) override;
 
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
 
-    ~CountMin() override = default;
+    void storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::SynopsesOperator *op,
+                                 Runtime::Execution::ExecutionContext &ctx,
+                                 Runtime::Execution::RecordBuffer buffer) override;
 
+
+  private:
+    const uint64_t numberOfRows;
+    const uint64_t numberOfCols;
+    const uint64_t entrySize;
+
+    const uint64_t keySizeInB;
+    const std::string keyFieldNameString;
+
+    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readKeyExpression;
+    std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
+    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunctionMergeRows;
 };
 } // namespace NES::ASP
 

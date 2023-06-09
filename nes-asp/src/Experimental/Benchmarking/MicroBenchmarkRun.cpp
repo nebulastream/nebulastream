@@ -229,9 +229,10 @@ std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime:
 
 std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,
                                                                            Runtime::BufferManagerPtr bufferManager) {
+
     auto aggregationFunction = aggregation.createAggregationFunction();
-    auto aggregationValue = aggregation.createAggregationValue();
-    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValue.get());
+    auto aggregationValueBuffer = bufferManager->getBufferBlocking();
+    auto aggregationValueMemRef = Nautilus::MemRef((int8_t*)aggregationValueBuffer.getBuffer());
 
     auto memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), aggregation.inputSchema);
 

@@ -24,18 +24,22 @@ namespace NES::ASP {
 class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
 
   public:
-    /**
-     * @brief Initializes the fixed2DArray
-     * @param numRows
-     * @param numCols
-     * @param entrySize
-     */
-    void setup(uint64_t numRows, uint64_t numCols, uint64_t entrySize);
 
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+               Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
 
+    void stop(Runtime::QueryTerminationType terminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-  private:
-    std::unique_ptr<Nautilus::Interface::Fixed2DArray> fixed2DArray;
+    void setup(uint64_t entrySize, uint64_t numberOfRows, uint64_t numberOfCols);
+
+    void* getSketchRef();
+
+    void* getH3SeedsRef();
+
+private:
+    std::unique_ptr<Nautilus::Interface::Fixed2DArray> sketchArray;
+    std::vector<uint64_t> h3Seeds;
 
 };
 } // namespace NES::ASP

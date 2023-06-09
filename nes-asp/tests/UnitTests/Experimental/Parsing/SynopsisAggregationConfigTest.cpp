@@ -134,46 +134,4 @@ namespace NES::ASP::Parsing {
             }
         }
     }
-
-    TEST_F(SynopsisAggregationConfigTest, testCreateAggregationValue) {
-        for (auto& type : magic_enum::enum_values<Aggregation_Type>()) {
-            switch (type) {
-                case Aggregation_Type::MIN: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::MAX: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::SUM: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::AVERAGE: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::AvgAggregationValue<double>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::COUNT: {
-                    synopsisAggregationConfig.type = type;
-                    auto aggregationValue = synopsisAggregationConfig.createAggregationValue();
-                    EXPECT_NE(static_cast<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>*>(aggregationValue.get()), nullptr);
-                    break;
-                }
-                case Aggregation_Type::NONE: {
-                    synopsisAggregationConfig.type = type;
-                    EXPECT_ANY_THROW(synopsisAggregationConfig.createAggregationValue());
-                    break;
-                }
-            }
-        }
-    }
 } // namespace NES::ASP:Parsing
