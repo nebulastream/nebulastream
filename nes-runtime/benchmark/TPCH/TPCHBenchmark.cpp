@@ -80,8 +80,8 @@ class BenchmarkRunner {
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, bmOptions.targetScaleFactor).generate();
         options.setOptimize(true);
-        options.setDumpToConsole(true);
-        options.setDumpToFile(true);
+        options.setDumpToConsole(false);
+        options.setDumpToFile(false);
         options.setOptimizationLevel(3);
     }
     void run() {

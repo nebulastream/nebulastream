@@ -13,7 +13,9 @@
 */
 #ifndef NES_NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
 #define NES_NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#include <functional>
 #include <memory>
+#include <string_view>
 #include <string>
 namespace NES {
 
@@ -41,6 +43,7 @@ class DumpHelper {
      * @param output the content that should be dumped.
      */
     void dump(const std::string_view& name, const std::string_view& output) const;
+    void dump(const std::string_view& name, std::function<const std::string()>) const;
 
     /**
      * @brief get outputPath

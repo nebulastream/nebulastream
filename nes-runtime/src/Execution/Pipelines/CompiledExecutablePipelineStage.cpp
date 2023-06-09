@@ -72,11 +72,16 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
         rootOperator->open(ctx, recordBuffer);
         rootOperator->close(ctx, recordBuffer);
     });
-    dumpHelper.dump("O. AfterTracing.trace", executionTrace->toString());
+
+    dumpHelper.dump("O. AfterTracing.trace", [&]() {
+        return executionTrace->toString();
+    });
 
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    dumpHelper.dump("1. AfterTracing.trace", executionTrace->toString());
+    dumpHelper.dump("1. AfterTracing.trace", [&]() {
+        return executionTrace->toString();
+    });
     timer.snapshot("Trace Generation");
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -84,7 +89,9 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     removeBrOnlyBlocksPhase.apply(ir);
     timer.snapshot("IR Generation");
-    dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
+    dumpHelper.dump("2. IR AfterGeneration.ir", [&]() {
+        return ir->toString();
+    });
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
     auto executable = compiler->compile(ir, options, dumpHelper);
     timer.snapshot("Compilation");
