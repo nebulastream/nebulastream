@@ -89,7 +89,7 @@ OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<st
         oss << "Featured";
     }
     if (record.quantity > 1 && uniformBooleanDistribution(generator)) {
-        oss << ", Dutch";
+        oss << "; Dutch";
     }
     // write type string to childBuffer in order to store it in TupleBuffer
     record.type = Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), oss.str());

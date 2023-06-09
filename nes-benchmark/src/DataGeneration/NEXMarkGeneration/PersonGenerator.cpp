@@ -155,7 +155,7 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
         for (auto i = 0; i < numInterests; ++i) {
             interest << uniformCategoryDistribution(generator);
             if (i < numInterests - 1) {
-                interest << ", ";
+                interest << "; ";
             }
         }
         if (uniformBooleanDistribution(generator)) {

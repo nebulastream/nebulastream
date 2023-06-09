@@ -19,8 +19,8 @@
 #include <DataGeneration/NEXMarkGeneration/PersonGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Core.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 class NEXMarkDataGeneratorTest : public Testing::NESBaseTest {
@@ -76,7 +76,7 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
             ASSERT_TRUE(persons[i] >= persons[i - 1]);
         }
 
-        NES_INFO("Person " << i << ": timestamp is " << persons[i]);
+        //NES_INFO("Person " << i << ": timestamp is " << persons[i]);
     }
 
     // timestamp should have increased
@@ -113,7 +113,7 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
         if (sellerId >= NEXMarkGeneration::recordsInit) {
             sellerIdLargerInit = true;
         }
-        NES_INFO("Auction " << i << ": sellerId is " << sellerId << ", price is " << price << ", timestamp is " << timestamp << ", endTime is " << expires);
+        //NES_INFO("Auction " << i << ": sellerId is " << sellerId << ", price is " << price << ", timestamp is " << timestamp << ", endTime is " << expires);
     }
 
     // timestamp should have increased
@@ -159,7 +159,7 @@ TEST_F(NEXMarkDataGeneratorTest, dependencyGeneratorTest) {
         if (bidderId >= NEXMarkGeneration::recordsInit) {
             bidderIdLargerInit = true;
         }
-        NES_INFO("Bid " << i << ": auctionId is " << auctionId << ", bidderId is " << bidderId << ", price is " << price << ", timestamp is " << timestamp);
+        //NES_INFO("Bid " << i << ": auctionId is " << auctionId << ", bidderId is " << bidderId << ", price is " << price << ", timestamp is " << timestamp);
     }
 
     // timestamp should have increased
@@ -216,7 +216,65 @@ TEST_F(NEXMarkDataGeneratorTest, personGeneratorTest) {
 
     // testing createData()
     auto dataDefault = personGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
-    // TODO generate expected data
+    auto persons = dependencyGeneratorInstance.getPersons();
+
+    auto index = 0UL;
+    for (auto& buffer : dataDefault) {
+        auto numBuffers = buffer.getNumberOfTuples();
+        auto bufferAsCSV = Util::printTupleBufferAsCSV(buffer, personGenerator->getSchema());
+        auto bufferRecordsAsString = Util::splitWithStringDelimiter<std::string>(bufferAsCSV, "\n");
+
+        for (auto i = index; i < index + numBuffers; ++i) {
+            auto bufferRecord = bufferRecordsAsString[i % bufferRecordsAsString.size()];
+
+            if (i < persons.size()) {
+                auto items = Util::splitWithStringDelimiter<std::string>(bufferRecord, ",");
+                auto person = persons[i];
+
+                auto personId = std::stoi(items[0]);
+                auto name = items[1];
+                auto email = items[2];
+                auto phone = items[3];
+                auto street = items[4];
+                auto city = items[5];
+                auto country = items[6];
+                auto province = items[7];
+                auto zipcode = std::stoi(items[8]);
+                auto homepage = items[9];
+                auto creditcard = items[10];
+                auto income = std::stod(items[11]);
+                auto interest = items[12];
+                auto education = items[13];
+                auto gender = items[14];
+                auto business = std::stoi(items[15]);
+                auto age = std::stoi(items[16]);
+                auto timestamp = std::stoi(items[17]);
+
+                ASSERT_EQ(personId, i);
+                ASSERT_FALSE(name.empty());
+                ASSERT_FALSE(email.empty());
+                ASSERT_TRUE(phone.empty() || phone.starts_with("+"));
+                ASSERT_TRUE(street.empty() || street.ends_with(" St"));
+                // city, country, province could be anything so there is no need to check the values
+                ASSERT_TRUE(zipcode >= 0 && zipcode <= 99999);
+                ASSERT_TRUE(homepage.empty() || homepage.starts_with("http://www."));
+                ASSERT_TRUE(creditcard.empty() || creditcard.size() == 19);
+                ASSERT_TRUE(income == 0.0 || (income >= 40000.00 && income <= 69999.99));
+                ASSERT_TRUE(interest.empty() || interest.size() <= 18);
+                ASSERT_TRUE(education == "High School" || education == "College" || education == "Graduate School" || education == "Other" || education.empty());
+                ASSERT_TRUE(gender == "female" || gender == "male" || gender.empty());
+                ASSERT_TRUE(business == 0 || business == 1);
+                ASSERT_TRUE(age == 0 || (age >= 30 && age <= 44));
+                ASSERT_EQ(timestamp, person);
+            }
+            else {
+                auto expectedRecord = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+                ASSERT_EQ(expectedRecord, bufferRecord);
+            }
+        }
+
+        index += numBuffers;
+    }
 }
 
 /**
@@ -253,7 +311,49 @@ TEST_F(NEXMarkDataGeneratorTest, openAuctionGeneratorTest) {
 
     // testing createData()
     auto dataDefault = openAuctionGenerator->createData(bufferManager->getNumOfPooledBuffers(), bufferManager->getBufferSize());
-    // TODO generate expected data
+    auto auctions = dependencyGeneratorInstance.getAuctions();
+
+    auto index = 0UL;
+    for (auto& buffer : dataDefault) {
+        auto numBuffers = buffer.getNumberOfTuples();
+        auto bufferAsCSV = Util::printTupleBufferAsCSV(buffer, openAuctionGenerator->getSchema());
+        auto bufferRecordsAsString = Util::splitWithStringDelimiter<std::string>(bufferAsCSV, "\n");
+
+        for (auto i = index; i < index + numBuffers; ++i) {
+            auto bufferRecord = bufferRecordsAsString[i % bufferRecordsAsString.size()];
+
+            if (i < auctions.size()) {
+                auto items = Util::splitWithStringDelimiter<std::string>(bufferRecord, ",");
+                auto auction = auctions[i];
+
+                auto auctionId = std::stoi(items[0]);
+                auto reserve = std::stoi(items[1]);
+                auto privacy = std::stoi(items[2]);
+                auto sellerId = std::stoi(items[3]);
+                auto category = std::stoi(items[4]);
+                auto quantity = std::stoi(items[5]);
+                auto type = items[6];
+                auto startTime = std::stoi(items[7]);
+                auto endTime = std::stoi(items[8]);
+
+                ASSERT_EQ(auctionId, i);
+                ASSERT_TRUE(reserve == 0 || (reserve >= round(std::get<1>(auction) * 2.2) && reserve <= round(std::get<1>(auction) * 3.2)));
+                ASSERT_TRUE(privacy == 0 || privacy == 1);
+                ASSERT_EQ(sellerId, std::get<0>(auction));
+                ASSERT_TRUE(category >= 0 || category <= 302);
+                ASSERT_TRUE(quantity >= 1 || quantity <= 10);
+                ASSERT_TRUE(type == "Featured" || type == "Regular" || type == "Featured; Dutch" || type == "Regular; Dutch");
+                ASSERT_EQ(startTime, std::get<2>(auction));
+                ASSERT_EQ(endTime, std::get<3>(auction));
+            }
+            else {
+                auto expectedRecord = "0,0,0,0,0,0,0,0,0";
+                ASSERT_EQ(expectedRecord, bufferRecord);
+            }
+        }
+
+        index += numBuffers;
+    }
 }
 
 /**
@@ -290,21 +390,22 @@ TEST_F(NEXMarkDataGeneratorTest, bidGeneratorTest) {
     auto index = 0UL;
     for (auto& buffer : dataDefault) {
         auto numBuffers = buffer.getNumberOfTuples();
+        auto bufferDefault = Util::printTupleBufferAsCSV(buffer, bidGenerator->getSchema());
 
-        std::ostringstream oss;
+        std::ostringstream expectedBuffer;
         for (auto i = index; i < index + numBuffers; ++i) {
             if (i < bids.size()) {
                 auto bid = bids[i];
-                oss << std::get<0>(bid) << ",";
-                oss << std::get<1>(bid) << ",";
-                oss << std::get<2>(bid) << ",";
-                oss << std::get<3>(bid) << "\n";
+                expectedBuffer << std::get<0>(bid) << ",";
+                expectedBuffer << std::get<1>(bid) << ",";
+                expectedBuffer << std::get<2>(bid) << ",";
+                expectedBuffer << std::get<3>(bid) << "\n";
             }
             else {
-                oss << "0,0,0,0\n";
+                expectedBuffer << "0,0,0,0\n";
             }
         }
-        ASSERT_EQ(oss.str(), Util::printTupleBufferAsCSV(buffer, bidGenerator->getSchema()));
+        ASSERT_EQ(expectedBuffer.str(), bufferDefault);
 
         index += numBuffers;
     }
