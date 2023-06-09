@@ -17,7 +17,7 @@ namespace NES::QueryCompilation {
 static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 16;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 128;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 16;
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 1024;
+static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 1024 * 1024 * 1024;
 
 QueryCompilerOptions::OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const {
     return outputBufferOptimizationLevel;
