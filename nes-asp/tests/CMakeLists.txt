@@ -43,3 +43,7 @@ target_link_libraries(simple-sampling-without-replacement-test PRIVATE nes-asp)
 # Adding unit test for equi-width 1d hist
 add_nes_runtime_test(equi-width-1d-hist-test "UnitTests/Experimental/Synopses/EquiWidth1DHistTest.cpp")
 target_link_libraries(equi-width-1d-hist-test PRIVATE nes-asp)
+
+# Adding unit test for count-min sketch
+add_nes_runtime_test(count-min-test "UnitTests/Experimental/Synopses/CountMinTest.cpp")
+target_link_libraries(count-min-test PRIVATE nes-asp)

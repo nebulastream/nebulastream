@@ -30,6 +30,10 @@ void CountMinOperatorHandler::stop(Runtime::QueryTerminationType,
 void CountMinOperatorHandler::setup(uint64_t entrySize, uint64_t numberOfRows, uint64_t numberOfCols) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     sketchArray = std::make_unique<Nautilus::Interface::Fixed2DArray>(*allocator, numberOfRows, numberOfCols, entrySize);
+
+    for (auto row = 0UL; row < numberOfRows; ++row) {
+
+    }
 }
 
 void *CountMinOperatorHandler::getSketchRef() {

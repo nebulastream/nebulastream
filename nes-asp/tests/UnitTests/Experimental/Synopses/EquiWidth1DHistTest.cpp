@@ -49,13 +49,13 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EquiWidth1DHistTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup EquiWidth1DHistTest test class.");
+        NES_INFO2("Setup EquiWidth1DHistTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO("Setup EquiWidth1DHistTest test case.");
+        NES_INFO2("Setup EquiWidth1DHistTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
         readBinDimension = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);
 
