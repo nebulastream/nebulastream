@@ -27,23 +27,23 @@ namespace NES::Benchmark {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("E2EBenchmarkConfigOverAllRunsTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup E2EBenchmarkConfigOverAllRunsTest test class.");
+            NES_INFO2("Setup E2EBenchmarkConfigOverAllRunsTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO("Setup E2EBenchmarkConfigOverAllRunsTest test case.");
+            NES_INFO2("Setup E2EBenchmarkConfigOverAllRunsTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
-            NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test case.");
+            NES_INFO2("Tear down E2EBenchmarkConfigOverAllRunsTest test case.");
             Testing::NESBaseTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test class."); }
+        static void TearDownTestCase() { NES_INFO2("Tear down E2EBenchmarkConfigOverAllRunsTest test class."); }
     };
 
     /**

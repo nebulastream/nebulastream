@@ -28,24 +28,24 @@ namespace NES::Benchmark::DataProvision {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("InternalProviderTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup InternalProviderTest test class.");
+            NES_INFO2("Setup InternalProviderTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
             bufferManager =  std::make_shared<Runtime::BufferManager>();
-            NES_INFO("Setup InternalProviderTest test case.");
+            NES_INFO2("Setup InternalProviderTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
-            NES_INFO("Tear down InternalProviderTest test case.");
+            NES_INFO2("Tear down InternalProviderTest test case.");
             Testing::NESBaseTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO("Tear down InternalProviderTest test class."); }
+        static void TearDownTestCase() { NES_INFO2("Tear down InternalProviderTest test class."); }
 
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };

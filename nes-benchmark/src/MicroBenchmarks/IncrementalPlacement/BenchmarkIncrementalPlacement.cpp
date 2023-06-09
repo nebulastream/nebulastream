@@ -236,19 +236,19 @@ std::vector<std::string> split(const std::string input, char delim) {
  */
 Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
 
-    NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: " << filePath << " .");
+    NES_INFO2("BenchmarkIncrementalPlacement: Using config file with path: {} .", filePath);
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
             return config;
         } catch (std::exception& e) {
-            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file."
-                      << e.what());
+            NES_ERROR2("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}",
+                      e.what());
             throw e;
         }
     }
-    NES_ERROR("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at " << filePath << ".");
+    NES_ERROR2("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at {}.", filePath);
     NES_THROW_RUNTIME_ERROR("Unable to find benchmark run configuration.");
 }
 
@@ -291,7 +291,7 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         configs = loadConfigFromYAMLFile(configPath->second);
     } else {
-        NES_ERROR("Configuration file is not provided");
+        NES_ERROR2("Configuration file is not provided");
         return -1;
     }
 
@@ -327,7 +327,7 @@ int main(int argc, const char* argv[]) {
     //If no available thread then set number of threads to 1
     uint64_t numThreads = std::thread::hardware_concurrency();
     if (numThreads == 0) {
-        NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
+        NES_WARNING2"No available threads. Going to use only 1 thread for parsing input queries.");
         numThreads = 1;
     }
     std::cout << "Using " << numThreads << " of threads for parallel parsing." << std::endl;

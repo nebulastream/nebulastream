@@ -28,23 +28,23 @@ namespace NES::Benchmark::DataGeneration {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("DefaultDataGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup DefaultDataGeneratorTest test class.");
+            NES_INFO2("Setup DefaultDataGeneratorTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO("Setup DefaultDataGeneratorTest test case.");
+            NES_INFO2("Setup DefaultDataGeneratorTest test case.");
         }
 
         /* Will be called before a test is executed. */
         void TearDown() override {
-            NES_INFO("Tear down DefaultDataGeneratorTest test case.");
+            NES_INFO2("Tear down DefaultDataGeneratorTest test case.");
             Testing::NESBaseTest::TearDown();
         }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class."); }
+        static void TearDownTestCase() { NES_INFO2("Tear down DefaultDataGeneratorTest test class."); }
     };
 
     /**

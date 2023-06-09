@@ -120,7 +120,7 @@ void E2ESingleRun::createSources() {
 
                 std::string destinationTopic;
 
-                NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << connectionStringVec[1])
+                NES_DEBUG2("Source no={} connects to topic={}", sourceCnt, connectionStringVec[1])
                 auto kafkaSourceType = KafkaSourceType::create();
                 kafkaSourceType->setBrokers(connectionStringVec[0]);
                 kafkaSourceType->setTopic(connectionStringVec[1]);
@@ -191,7 +191,7 @@ void E2ESingleRun::runQuery() {
             NES_INFO2("E2EBase: query started with id={}", id);
         }
     }
-    NES_DEBUG("Starting the data providers...");
+    NES_DEBUG2("Starting the data providers...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->start();
     }
@@ -210,8 +210,7 @@ void E2ESingleRun::runQuery() {
             auto stats = coordinator->getNodeEngine()->getQueryStatistics(id);
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
-                    NES_DEBUG("Query with id " << id << " not ready with no. tuples = " << iter->getProcessedTuple()
-                                               << ". Sleeping for a second now...");
+                    NES_DEBUG2("Query with id {} not ready with no. tuples = {}. Sleeping for a second now...", id, iter->getProcessedTuple());
                     sleep(1);
                 }
                 NES_INFO2("Query with id {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
@@ -294,23 +293,22 @@ void E2ESingleRun::stopQuery() {
         queryService->validateAndQueueStopQueryRequest(id);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
-            NES_TRACE("checkStoppedOrTimeout: check query status for " << id);
+            NES_TRACE2("checkStoppedOrTimeout: check query status for {}", id);
             if (queryCatalog->getEntryForQuery(id)->getQueryStatus() == QueryStatus::STOPPED) {
-                NES_TRACE("checkStoppedOrTimeout: status for " << id << " reached stopped");
+                NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped", id);
                 break;
             }
-            NES_DEBUG("checkStoppedOrTimeout: status not reached for "
-                      << id << " as status is=" << queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
+            NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}", id, queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
             std::this_thread::sleep_for(stopQuerySleep);
         }
-        NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+        NES_TRACE2("checkStoppedOrTimeout: expected status not reached within set timeout");
     }
 
-    NES_DEBUG("Stopping data providers...");
+    NES_DEBUG2("Stopping data providers...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->stop();
     }
-    NES_DEBUG("Stopped data providers!");
+    NES_DEBUG2("Stopped data providers!");
 
     // Starting a new thread that waits
     std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
@@ -325,10 +323,9 @@ void E2ESingleRun::stopQuery() {
                 case std::future_status::timeout:
                 case std::future_status::deferred: {
                     if (coordinator->isCoordinatorRunning()) {
-                        NES_DEBUG("Waiting for stop wrk cause #tasks in the queue: "
-                                  << coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
+                        NES_DEBUG2("Waiting for stop wrk cause #tasks in the queue: {}", coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
                     } else {
-                        NES_DEBUG("worker stopped");
+                        NES_DEBUG2("worker stopped");
                     }
                     break;
                 }
@@ -416,17 +413,17 @@ void E2ESingleRun::run() {
 bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
                                        const QueryCatalogServicePtr& queryCatalogService,
                                        std::chrono::seconds timeoutInSec) {
-    NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
+    NES_TRACE2("TestUtils: wait till the query {} gets into Running status.", queryId);
     auto start_timestamp = std::chrono::system_clock::now();
 
-    NES_TRACE("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
+    NES_TRACE2("TestUtils: Keep checking the status of query {} until a fixed time out", queryId);
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
         if (!queryCatalogEntry) {
-            NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+            NES_ERROR2("TestUtils: unable to find the entry for query {} in the query catalog.", queryId);
             return false;
         }
-        NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
+        NES_TRACE2("TestUtils: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
         QueryStatus status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
@@ -439,19 +436,19 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
                 return true;
             }
             case QueryStatus::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found "
-                          + std::string(magic_enum::enum_name(status)));
+                NES_ERROR2("Query failed to start. Expected: Running or Optimizing but found {}",
+                          std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found " + std::string(magic_enum::enum_name(status)));
+                NES_WARNING2("Expected: Running or Scheduling but found {}", std::string(magic_enum::enum_name(status)));
                 break;
             }
         }
 
         std::this_thread::sleep_for(E2ESingleRun::sleepDuration);
     }
-    NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
+    NES_TRACE2("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
     return false;
 }
 

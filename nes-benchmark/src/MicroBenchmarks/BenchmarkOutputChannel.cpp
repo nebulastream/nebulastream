@@ -114,8 +114,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
             double bytes = numSenderThreads * totalNumBuffer * bufferSize;
             double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
-            NES_INFO("Sent " << bytes << " bytes / " << (elapsed.count() / 1e9) << " seconds = throughput " << throughput
-                             << " MiB/s");
+            NES_INFO2("Sent {}bytes / {}seconds = throughput {}MiB/s", bytes, (elapsed.count() / 1e9), throughput);
             bytesSent.set_value(bytes);
             elapsedSeconds.set_value(elapsed.count() / 1e9);
             netManager->unregisterSubpartitionConsumer(nesPartition);
@@ -132,7 +131,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
                         netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
                     secondBarrier->wait();
                     if (senderChannel == nullptr) {
-                        NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
+                        NES_DEBUG2("NetworkStackTest: Error in registering DataChannel!");
                         completedProm.set_value(false);
                     } else {
                         for (uint64_t i = 0; i < totalNumBuffer; ++i) {

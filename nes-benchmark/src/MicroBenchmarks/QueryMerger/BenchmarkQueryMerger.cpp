@@ -172,7 +172,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
-            NES_INFO("NesE2EBenchmarkConfig: Using config file with path: " << filePath << " .");
+            NES_INFO2("NesE2EBenchmarkConfig: Using config file with path: {} .", filePath);
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
 
@@ -208,12 +208,12 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
 
             logLevel = config["logLevel"].As<std::string>();
         } catch (std::exception& e) {
-            NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
+            NES_ERROR2("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file. {}", e.what());
         }
         return;
     }
-    NES_ERROR("NesE2EBenchmarkConfig: No file path was provided or file could not be found at " << filePath << ".");
-    NES_WARNING("Keeping default values for Worker Config.");
+    NES_ERROR2("NesE2EBenchmarkConfig: No file path was provided or file could not be found at {}.", filePath);
+    NES_WARNING2"Keeping default values for Worker Config.");
 }
 
 void compileQuery(const std::string& stringQuery,
@@ -253,7 +253,7 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second);
     } else {
-        NES_ERROR("Configuration file is not provided");
+        NES_ERROR2("Configuration file is not provided");
         return -1;
     }
 
@@ -282,7 +282,7 @@ int main(int argc, const char* argv[]) {
         //If no available thread then set number of threads to 1
         uint64_t numThreads = std::thread::hardware_concurrency();
         if (numThreads == 0) {
-            NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
+            NES_WARNING2"No available threads. Going to use only 1 thread for parsing input queries.");
             numThreads = 1;
         }
         std::cout << "Using " << numThreads << " of threads for parallel parsing." << std::endl;

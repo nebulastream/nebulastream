@@ -53,10 +53,10 @@ Benchmark::E2EBenchmarkConfig Benchmark::E2EBenchmarkConfig::createBenchmarks(co
         Yaml::Node configFile;
         Yaml::Parse(configFile, yamlConfigFile.c_str());
 
-        NES_INFO("Generating configOverAllRuns...");
+        NES_INFO2("Generating configOverAllRuns...");
         e2EBenchmarkConfig.configOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(configFile);
 
-        NES_INFO("Generating configsPerRun...");
+        NES_INFO2("Generating configsPerRun...");
         e2EBenchmarkConfig.allConfigPerRuns = E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(configFile);
 
     } catch (std::exception& e) {
