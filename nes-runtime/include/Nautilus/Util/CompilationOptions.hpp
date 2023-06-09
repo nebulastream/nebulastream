@@ -131,7 +131,7 @@ class CompilationOptions {
     bool optimize = false;
     bool debug = true;
     bool proxyInlining = false;
-    uint8_t optimizationLevel = 1;
+    uint8_t optimizationLevel = 3;
 };
 }// namespace NES::Nautilus
 

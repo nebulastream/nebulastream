@@ -46,6 +46,8 @@ class StreamHashJoinBuild : public ExecutableOperator {
                         SchemaPtr schema,
                         std::shared_ptr<TimeFunction> timeFunction);
 
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
     /**
      * @brief Setting up the pipeline by initializing the operator handler
      * @param executionCtx
