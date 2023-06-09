@@ -11,10 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
-add_subdirectory(Streaming)
-add_subdirectory(Vectorization)
-
-add_nes_execution_test(execution-scan-operator-test "ScanOperatorTest.cpp")
-add_nes_execution_test(execution-emit-operator-test "EmitOperatorTest.cpp")
+add_nes_runtime_test(runtime-vectorize-operator-test "VectorizeOperatorTests.cpp")
+add_nes_runtime_test(runtime-unvectorize-operator-test "UnvectorizeOperatorTests.cpp")
