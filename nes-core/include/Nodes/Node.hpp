@@ -248,7 +248,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param node: node to look for
      * @return true if present as false
      */
-    bool containAsGrandParent(NodePtr node);
+    virtual bool containAsGrandParent(NodePtr node);
 
     /**
      * @brief Check if input node is present as parent to this
@@ -261,7 +261,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @param node: node to look for
      * @return true if present as false
      */
-    bool containAsGrandChild(NodePtr node);
+    virtual bool containAsGrandChild(NodePtr node);
 
     /**
      * @brief Check if input node is present as children to this

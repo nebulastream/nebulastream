@@ -170,4 +170,32 @@ bool OperatorNode::hasProperty(const std::string& key) { return properties.find(
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
+bool OperatorNode::containAsGrandChild(NodePtr node) {
+    auto operatorIdToCheck = node->as<OperatorNode>()->getId();
+    // populate all ancestors
+    std::vector<NodePtr> ancestors{};
+    for (auto& child : children) {
+        std::vector<NodePtr> childAndGrandChildren = child->getAndFlattenAllChildren(false);
+        ancestors.insert(ancestors.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
+    }
+    //Check if an operator with the id exists as ancestor
+    return std::ranges::any_of(ancestors, [operatorIdToCheck](const NodePtr& ancestor) {
+        return ancestor->as<OperatorNode>()->getId() == operatorIdToCheck;
+    });
+}
+
+bool OperatorNode::containAsGrandParent(NES::NodePtr node) {
+    auto operatorIdToCheck = node->as<OperatorNode>()->getId();
+    // populate all ancestors
+    std::vector<NodePtr> ancestors{};
+    for (auto& parent : parents) {
+        std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
+    }
+    //Check if an operator with the id exists as ancestor
+    return std::ranges::any_of(ancestors, [operatorIdToCheck](const NodePtr& ancestor) {
+        return ancestor->as<OperatorNode>()->getId() == operatorIdToCheck;
+    });
+}
+
 }// namespace NES
