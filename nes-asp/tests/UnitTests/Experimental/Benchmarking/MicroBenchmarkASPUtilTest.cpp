@@ -23,13 +23,13 @@ namespace NES::ASP::Util {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("MicroBenchmarkASPUtilTest.log", NES::LogLevel::LOG_DEBUG);
-            NES_INFO("Setup MicroBenchmarkASPUtilTest test class.");
+            NES_INFO2("Setup MicroBenchmarkASPUtilTest test class.");
         }
 
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
-            NES_INFO("Setup MicroBenchmarkASPUtilTest test case.");
+            NES_INFO2("Setup MicroBenchmarkASPUtilTest test case.");
         }
     };
 
