@@ -23,7 +23,7 @@ namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSize) {
     // using seed to generate a predictable sequence of values for deterministic behavior
     // note that this particular seed is from the original java files
-    std::mt19937 generator(103984);
+    static std::mt19937 initGenerator(103984);
     std::uniform_int_distribution<uint64_t> uniformPersonGenerationDistribution(0, 9);
     std::uniform_int_distribution<uint64_t> uniformOpenAuctionGenerationDistribution(0, 2);
     std::uniform_int_distribution<uint64_t> uniformBidGenerationDistribution(0, 20);
@@ -50,16 +50,16 @@ DependencyGenerator::DependencyGenerator(size_t numberOfBuffers, size_t bufferSi
     // now generate approximately numberOfRecords many auctions as well as corresponding persons and bids
     for (auto i = 0UL; i < numberOfRecords; ++i) {
         // create on average one person per ten auctions
-        if (uniformPersonGenerationDistribution(generator) == 0) {
+        if (uniformPersonGenerationDistribution(initGenerator) == 0) {
             generatePersonDependencies(timeInSec, 1);
         }
 
         // create on average one open auction
-        auto numOpenAuctions = uniformOpenAuctionGenerationDistribution(generator);
+        auto numOpenAuctions = uniformOpenAuctionGenerationDistribution(initGenerator);
         generateOpenAuctionDependencies(timeInSec, numOpenAuctions);
 
         // create on average ten bids per auction
-        auto numBids = uniformBidGenerationDistribution(generator);
+        auto numBids = uniformBidGenerationDistribution(initGenerator);
         generateBidDependencies(timeInSec, numBids);
     }
 }
@@ -81,8 +81,8 @@ void DependencyGenerator::generatePersonDependencies(uint64_t& curTime, uint64_t
 }
 
 void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uint64_t numOpenAuctions) {
-    static std::random_device rndAuctionDevice;
-    static std::mt19937 auctionGenerator(rndAuctionDevice());
+    // using seed to generate a predictable sequence of values for deterministic behavior
+    static std::mt19937 generator(42);
     // generate a random seller id from the pool of persons
     std::uniform_int_distribution<uint64_t> uniformPersonIdDistribution(0, persons.size() - 1);
     // generate a random initial price that is between one and two-hundred dollars
@@ -94,9 +94,9 @@ void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uin
     auto copyOfCurTime = curTime;
 
     for (uint64_t i = 0; i < numOpenAuctions; ++i) {
-        auto sellerId = uniformPersonIdDistribution(auctionGenerator);
-        auto curPrice = uniformCurPriceDistribution(auctionGenerator);
-        auto endTime = curTime + uniformEndTimeDistribution(auctionGenerator);
+        auto sellerId = uniformPersonIdDistribution(generator);
+        auto curPrice = uniformCurPriceDistribution(generator);
+        auto endTime = curTime + uniformEndTimeDistribution(generator);
         // create a new element for the auctions vector
         std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> auctionRecord = std::make_tuple(sellerId, curPrice, copyOfCurTime, endTime);
         auctions.emplace_back(auctionRecord);
@@ -104,8 +104,8 @@ void DependencyGenerator::generateOpenAuctionDependencies(uint64_t& curTime, uin
 }
 
 void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t numBids) {
-    static std::random_device rndBidDevice;
-    static std::mt19937 bidGenerator(rndBidDevice());
+    // using seed to generate a predictable sequence of values for deterministic behavior
+    static std::mt19937 generator(42);
     // generate a random auction id from the pool of auctions
     std::uniform_int_distribution<uint64_t> uniformAuctionIdDistribution(0, auctions.size() - 1);
     // generate a random seller id from the pool of persons
@@ -117,11 +117,11 @@ void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t nu
     auto copyOfCurTime = curTime;
 
     for (uint64_t i = 0; i < numBids; ++i) {
-        auto auctionId = uniformAuctionIdDistribution(bidGenerator);
-        auto bidderId = uniformPersonIdDistribution(bidGenerator);
+        auto auctionId = uniformAuctionIdDistribution(generator);
+        auto bidderId = uniformPersonIdDistribution(generator);
         // get latest bid on the auction, generate a higher bid and update the auction record in auctions vector
         auto& curPrice = std::get<1>(auctions[auctionId]);
-        auto newBid = curPrice + uniformNewBidDistribution(bidGenerator);
+        auto newBid = curPrice + uniformNewBidDistribution(generator);
         curPrice = newBid;
         // create a new element for the bids vector
         std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> bidRecord = std::make_tuple(auctionId, bidderId, newBid, copyOfCurTime);
@@ -130,12 +130,11 @@ void DependencyGenerator::generateBidDependencies(uint64_t& curTime, uint64_t nu
 }
 
 uint64_t DependencyGenerator::incrementTime(uint64_t curTimeInSec) {
-    // generate a random new time that is at most one minute in the future
-    static std::random_device rndTimeDevice;
-    static std::mt19937 timeGenerator(rndTimeDevice());
+    // using seed to generate a predictable sequence of values for deterministic behavior
+    static std::mt19937 generator(42);
     static std::uniform_int_distribution<uint64_t> uniformTimeDistribution(0, 59);
 
-    return curTimeInSec + uniformTimeDistribution(timeGenerator);
+    return curTimeInSec + uniformTimeDistribution(generator);
 }
 
 std::vector<uint64_t>& DependencyGenerator::getPersons() { return persons; }

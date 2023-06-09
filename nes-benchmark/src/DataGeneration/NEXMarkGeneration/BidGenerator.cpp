@@ -37,7 +37,6 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
         for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedBids < numberOfBids; ++curRecord) {
             auto bidsIndex = processedBids++;
 

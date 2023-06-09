@@ -37,8 +37,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
-        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedAuctions < numberOfAuctions; ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedAuctions < auctionsToProcess; ++curRecord) {
             auto auctionsIndex = processedAuctions++;
             auto record = generateOpenAuctionRecord(auctions, auctionsIndex, dynamicBuffer);
 
@@ -62,8 +61,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
 
 OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& auctions,
                                                                   uint64_t auctionsIndex, Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    static std::random_device rndDevice;
-    static std::mt19937 generator(rndDevice());
+    static std::mt19937 generator(42);
     static std::uniform_int_distribution<uint16_t> uniformReserveDistribution(1000, 2000);
     static std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
     static std::uniform_int_distribution<uint16_t> uniformCategoryDistribution(0, 302);
@@ -73,16 +71,26 @@ OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<st
 
     // create random data
     record.reserve = 0UL;
-    if (uniformBooleanDistribution(generator)) record.reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + uniformReserveDistribution(generator) / 1000.0));
+    if (uniformBooleanDistribution(generator)) {
+        record.reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + uniformReserveDistribution(generator) / 1000.0));
+    }
     record.privacy = false;
-    if (uniformBooleanDistribution(generator)) record.privacy = true;
+    if (uniformBooleanDistribution(generator)) {
+        record.privacy = true;
+    }
     record.category = uniformCategoryDistribution(generator);
     record.quantity = uniformQuantityDistribution(generator);
 
     std::ostringstream oss;
-    if (uniformBooleanDistribution(generator)) oss << "Regular";
-    else oss << "Featured";
-    if (record.quantity > 1 && uniformBooleanDistribution(generator)) oss << ", Dutch";
+    if (uniformBooleanDistribution(generator)) {
+        oss << "Regular";
+    }
+    else {
+        oss << "Featured";
+    }
+    if (record.quantity > 1 && uniformBooleanDistribution(generator)) {
+        oss << ", Dutch";
+    }
     // write type string to childBuffer in order to store it in TupleBuffer
     record.type = Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), oss.str());
 

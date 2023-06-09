@@ -37,8 +37,7 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        // TODO add designated branch for RowLayout to make it faster (cmp. DefaultDataGenerator.cpp)
-        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedPersons < numberOfPersons; ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedPersons < personsToProcess; ++curRecord) {
             auto personsIndex = processedPersons++;
             auto record = generatePersonRecord(persons, personsIndex, dynamicBuffer);
 
@@ -71,8 +70,8 @@ std::vector<Runtime::TupleBuffer> PersonGenerator::createData(size_t numberOfBuf
 
 PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& persons, uint64_t personsIndex,
                                                    Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    static std::random_device rndDevice;
-    static std::mt19937 generator(rndDevice());
+    // using seed to generate a predictable sequence of values for deterministic behavior
+    static std::mt19937 generator(42);
     static std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
     static std::uniform_int_distribution<uint16_t> uniformFirstnameDistribution(0, PersonDataPool().firstnames.size() - 1);
     static std::uniform_int_distribution<uint16_t> uniformLastnameDistribution(0, PersonDataPool().lastnames.size() - 1);
@@ -94,6 +93,7 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
 
     PersonRecord record;
     std::vector<std::string> fields;
+    fields.reserve(12);
 
     // create random data
     auto firstnameIdx = uniformFirstnameDistribution(generator);
@@ -102,7 +102,9 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
     auto emailIdx = uniformEmailDistribution(generator);
     fields.emplace_back(PersonDataPool().lastnames[lastnameIdx] + "@" + PersonDataPool().emails[emailIdx]);
     std::ostringstream phone;
-    if (uniformBooleanDistribution(generator)) phone << "+" << uniformHundredDistribution(generator) << "(" << uniformPhonePrefixDistribution(generator) << ")" << uniformPhoneSuffixDistribution(generator);
+    if (uniformBooleanDistribution(generator)) {
+        phone << "+" << uniformHundredDistribution(generator) << "(" << uniformPhonePrefixDistribution(generator) << ")" << uniformPhoneSuffixDistribution(generator);
+    }
     fields.emplace_back(phone.str());
 
     std::ostringstream street;
@@ -132,10 +134,14 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
     fields.emplace_back(province.str());
 
     std::ostringstream homepage;
-    if (uniformBooleanDistribution(generator)) homepage << "http://www." << PersonDataPool().emails[emailIdx] << "/~" << PersonDataPool().lastnames[lastnameIdx];
+    if (uniformBooleanDistribution(generator)) {
+        homepage << "http://www." << PersonDataPool().emails[emailIdx] << "/~" << PersonDataPool().lastnames[lastnameIdx];
+    }
     fields.emplace_back(homepage.str());
     std::ostringstream creditcard;
-    if (uniformBooleanDistribution(generator)) creditcard << uniformCreditcardDistribution(generator) << " " << uniformCreditcardDistribution(generator) << " " << uniformCreditcardDistribution(generator) << " " << uniformCreditcardDistribution(generator);
+    if (uniformBooleanDistribution(generator)) {
+        creditcard << uniformCreditcardDistribution(generator) << " " << uniformCreditcardDistribution(generator) << " " << uniformCreditcardDistribution(generator) << " " << uniformCreditcardDistribution(generator);
+    }
     fields.emplace_back(creditcard.str());
 
     std::ostringstream interest;
@@ -148,12 +154,22 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
         auto numInterests = uniformInterestDistribution(generator);
         for (auto i = 0; i < numInterests; ++i) {
             interest << uniformCategoryDistribution(generator);
-            if (i < numInterests - 1) interest << ", ";
+            if (i < numInterests - 1) {
+                interest << ", ";
+            }
         }
-        if (uniformBooleanDistribution(generator)) education << PersonDataPool().education[uniformEducationDistribution(generator)];
-        if (uniformBooleanDistribution(generator)) gender << (uniformBooleanDistribution(generator) == 0 ? "male" : "female");
-        if (uniformBooleanDistribution(generator)) record.age = uniformAgeDistribution(generator);
-        if (uniformBooleanDistribution(generator)) record.business = true;
+        if (uniformBooleanDistribution(generator)) {
+            education << PersonDataPool().education[uniformEducationDistribution(generator)];
+        }
+        if (uniformBooleanDistribution(generator)) {
+            gender << (uniformBooleanDistribution(generator) == 0 ? "male" : "female");
+        }
+        if (uniformBooleanDistribution(generator)) {
+            record.age = uniformAgeDistribution(generator);
+        }
+        if (uniformBooleanDistribution(generator)) {
+            record.business = true;
+        }
         record.income = uniformIncomeDistribution(generator) + uniformHundredDistribution(generator) / 100.0;
     }
     fields.emplace_back(interest.str());
@@ -163,8 +179,9 @@ PersonRecord PersonGenerator::generatePersonRecord(std::vector<uint64_t>& person
     // write strings to childBuffer in order to store them in TupleBuffer
     std::vector<uint32_t> childIdx;
     childIdx.reserve(fields.size());
-    for (const std::string& field : fields) childIdx.emplace_back(
-            Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), field));
+    for (const std::string& field : fields) {
+        childIdx.emplace_back(Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), field));
+    }
 
     record.name = childIdx[0];
     record.email = childIdx[1];
