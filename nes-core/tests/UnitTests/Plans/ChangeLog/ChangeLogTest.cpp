@@ -40,20 +40,30 @@ class ChangeLogTest : public Testing::NESBaseTest {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+        pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+        pred3 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+        sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred1);
+        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
+        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+        sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     }
 
   protected:
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1;
+    ExpressionNodePtr pred2;
+    ExpressionNodePtr pred3;
     LogicalOperatorNodePtr sourceOp1;
+    LogicalOperatorNodePtr sourceOp2;
     LogicalOperatorNodePtr filterOp1;
     LogicalOperatorNodePtr filterOp2;
+    LogicalOperatorNodePtr filterOp3;
     LogicalOperatorNodePtr sinkOp1;
+    LogicalOperatorNodePtr sinkOp2;
 };
 
 //Insert and fetch change log entry
@@ -181,15 +191,28 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     EXPECT_EQ(sinkOp1, (*actualDownstreamOperatorsNext.begin()));
 }
 
-//Insert and fetch change log entries
-TEST_F(ChangeLogTest, PerformLogCompactionForNonOverlappingChangeLogs) {
+/**
+ * @brief Fetch change log entry with partially overlapping change log entries
+ *
+ * Query:
+ *
+ * Sink 2 --- Filter3 ---                  --- Filter2 --- Source 2
+ *                       \               /
+ *                        --- Filter1 ---
+ *                       |               \
+ * Sink 1 ---------------                 --- Source 1
+ *
+ */
+TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyOverlappingChangeLogs) {
 
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
-    queryPlan->appendOperatorAsNewRoot(filterOp2);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    NES_DEBUG(queryPlan->toString());
+    filterOp1->addChild(filterOp2);
+    filterOp2->addChild(sourceOp2);
+    filterOp1->addParent(filterOp3);
+    filterOp3->addParent(sinkOp2);
 
     // Initialize change log
     auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
@@ -199,9 +222,70 @@ TEST_F(ChangeLogTest, PerformLogCompactionForNonOverlappingChangeLogs) {
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
-    EXPECT_EQ(extractedChangeLogEntries.size(), 2);
-    EXPECT_EQ(changelogEntry1, extractedChangeLogEntries[0].second);
-    EXPECT_EQ(changelogEntry2, extractedChangeLogEntries[1].second);
+    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(3);
+    //Will return one change log entry as it will merge change logs between 1 till 2
+    EXPECT_EQ(1, extractedChangeLogEntries.size());
+
+    const auto actualUpstreamOperatorsNext = extractedChangeLogEntries[0].second->upstreamOperators;
+    EXPECT_EQ(2, actualUpstreamOperatorsNext.size());
+    EXPECT_EQ(sourceOp1, (*actualUpstreamOperatorsNext.begin()));
+    EXPECT_EQ(filterOp2, (*(++(actualUpstreamOperatorsNext.begin()))));
+
+    const auto actualDownstreamOperatorsNext = extractedChangeLogEntries[0].second->downstreamOperators;
+    EXPECT_EQ(1, actualDownstreamOperatorsNext.size());
+    EXPECT_EQ(sinkOp1, (*actualDownstreamOperatorsNext.begin()));
+}
+
+/**
+ * @brief Fetch change log entry with non overlapping change log entries
+ *
+ * Query:
+ *
+ * Sink 2 --- Filter3 ---                  --- Filter2--- Source 2
+ *                       \               /
+ *                        --- Filter1 ---
+ *                       |               \
+ * Sink 1 ---------------                 --- Source 1
+ *
+ */
+TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyNonOverlappingChangeLogs) {
+
+    // Compute Plan
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    filterOp1->addChild(filterOp2);
+    filterOp2->addChild(sourceOp2);
+    filterOp1->addParent(filterOp3);
+    filterOp3->addParent(sinkOp2);
+
+    // Initialize change log
+    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
+    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1, sourceOp2}, {filterOp2});
+    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp3}, {sinkOp1});
+    changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
+    changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
+
+    // Fetch change log entries before timestamp 4
+    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(3);
+    //Will return one change log entry as it will merge change logs between 1 till 2
+    EXPECT_EQ(2, extractedChangeLogEntries.size());
+
+    const auto actualUpstreamOperators = extractedChangeLogEntries[0].second->upstreamOperators;
+    EXPECT_EQ(2, actualUpstreamOperators.size());
+    EXPECT_EQ(sourceOp1, (*actualUpstreamOperators.begin()));
+    EXPECT_EQ(sourceOp2, (*(++(actualUpstreamOperators.begin()))));
+
+    const auto actualDownstreamOperators = extractedChangeLogEntries[0].second->downstreamOperators;
+    EXPECT_EQ(1, actualDownstreamOperators.size());
+    EXPECT_EQ(filterOp2, (*actualDownstreamOperators.begin()));
+
+    const auto actualUpstreamOperatorsNext = extractedChangeLogEntries[1].second->upstreamOperators;
+    EXPECT_EQ(1, actualUpstreamOperatorsNext.size());
+    EXPECT_EQ(filterOp3, (*actualUpstreamOperatorsNext.begin()));
+
+    const auto actualDownstreamOperatorsNext = extractedChangeLogEntries[1].second->downstreamOperators;
+    EXPECT_EQ(1, actualDownstreamOperatorsNext.size());
+    EXPECT_EQ(sinkOp1, (*actualDownstreamOperatorsNext.begin()));
 }
 }// namespace NES

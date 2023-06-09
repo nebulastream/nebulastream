@@ -608,7 +608,7 @@ void Node::getAndFlattenAllChildrenHelper(const NodePtr& node,
 }
 
 std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
-    NES_INFO2("Node: Get this node, all its parents, and Ancestors");
+    NES_TRACE2("Node: Get this node, all its parents, and Ancestors");
     std::vector<NodePtr> result{shared_from_this()};
     for (auto& parent : parents) {
         NES_TRACE2("Node: Get this node, all its parents, and Ancestors");

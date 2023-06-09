@@ -157,14 +157,14 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
                     nextUpstreamOperators.erase(nextItr);
                     incFirstItr = false;
                     break;
-                } else if ((*firstItr)->containAsGrandParent((*nextItr))) {
+                } else if ((*firstItr)->as<OperatorNode>()->containAsGrandParent((*nextItr))) {
                     // Insert item in the temp upstream operator list
                     tempUpstreamOperators.insert((*firstItr));
                     // It is okay to erase this next operator as there won't be any other operator in the first upstream operator list
                     // that can be this operator's upstream operator
                     nextItr =
                         nextUpstreamOperators.erase(nextItr);// Please note that we are assigning the iterator to the next item
-                } else if ((*nextItr)->containAsGrandParent((*firstItr))) {
+                } else if ((*nextItr)->as<OperatorNode>()->containAsGrandParent((*firstItr))) {
                     tempUpstreamOperators.insert((*nextItr));
                     //It is okay to erase this first operator as no other upstream operator can be its upstream operator
                     firstItr =
@@ -211,15 +211,15 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
                     nextDownstreamOperators.erase(nextItr);
                     incFirstItr = false;
                     break;
-                } else if ((*firstItr)->containAsGrandParent((*nextItr))) {
+                } else if ((*firstItr)->as<OperatorNode>()->containAsGrandParent((*nextItr))) {
                     tempDownstreamOperators.insert((*nextItr));
                     firstItr = firstDownstreamOperators.erase(
                         firstItr);// Please note that we are assigning the iterator to the next item
                     incFirstItr = false;
                     break;
-                } else if ((*nextItr)->containAsGrandParent((*firstItr))) {
+                } else if ((*nextItr)->as<OperatorNode>()->containAsGrandParent((*firstItr))) {
                     tempDownstreamOperators.insert((*firstItr));
-                    nextDownstreamOperators.erase(nextItr);
+                    nextItr = nextDownstreamOperators.erase(nextItr);
                 } else {
                     nextItr++;// move to the next item
                 }
