@@ -72,6 +72,7 @@ class SynopsisAggregationConfig {
      * @return SynopsisAggregationConfig
      */
     static SynopsisAggregationConfig create(const Aggregation_Type& type,
+                                            const std::string& fieldNameKey,
                                             const std::string& fieldNameAggregation,
                                             const std::string& fieldNameApproximate,
                                             const std::string& timestampFieldName,
@@ -115,12 +116,18 @@ class SynopsisAggregationConfig {
      */
     PhysicalTypePtr getFinalType() const;
 
-
     /**
-     * @brief Gets the ReadFieldExpression for this configuration
+     * @brief Gets a ReadFieldExpression for reading the aggregation value
      * @return Shared pointer of type ReadFieldExpression
      */
-    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression> getReadFieldExpression() const;
+    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression> getReadFieldAggregationExpression() const;
+
+    /**
+     * @brief Gets a ReadFieldExpression for reading the key value
+     * @return Shared pointer of type ReadFieldExpression
+     */
+    std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression> getReadFieldKeyExpression() const;
+
 
 
 
@@ -136,6 +143,7 @@ class SynopsisAggregationConfig {
      * @param outputSchema
      */
     explicit SynopsisAggregationConfig(const Aggregation_Type& type,
+                                       const std::string& fieldNameKey,
                                        const std::string& fieldNameAggregation,
                                        const std::string& fieldNameApproximate,
                                        const std::string& timestampFieldName,
@@ -144,6 +152,7 @@ class SynopsisAggregationConfig {
 
   public:
     Aggregation_Type type;
+    std::string fieldNameKey;
     std::string fieldNameAggregation;
     std::string fieldNameApproximate;
     std::string timeStampFieldName;

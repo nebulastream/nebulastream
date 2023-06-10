@@ -37,15 +37,15 @@ class CountMin : public AbstractSynopsis {
         Nautilus::Value<Nautilus::MemRef> h3SeedsMemRef;
     };
 
-    CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows,
-             const uint64_t numberOfCols, const uint64_t entrySize, const uint64_t keySizeInB,
-             const std::string &keyFieldNameString,
-             std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readKeyExpression);
+    CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig,
+             const uint64_t numberOfRows, const uint64_t numberOfCols, const uint64_t entrySize,
+             const uint64_t keySizeInB, const std::string &keyFieldNameString);
 
     void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
                        Runtime::Execution::Operators::OperatorState *pState) override;
 
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                                     std::vector<Nautilus::Value<>>& keyValues,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
@@ -63,7 +63,6 @@ class CountMin : public AbstractSynopsis {
     const uint64_t keySizeInB;
     const std::string keyFieldNameString;
 
-    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readKeyExpression;
     std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunctionMergeRows;
 };

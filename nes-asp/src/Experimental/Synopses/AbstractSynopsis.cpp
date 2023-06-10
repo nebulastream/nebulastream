@@ -24,7 +24,8 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
 
     // TODO For now this is okay, but later on we want to have a separate factory class, see issue #3734
     if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
-        return std::make_shared<RandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue());
+        return std::make_shared<RandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue(),
+                                                                aggregationConfig.fieldNameKey);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -32,8 +33,10 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
 
 
 AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
-    : aggregationFunction(aggregationConfig.createAggregationFunction()), aggregationType(aggregationConfig.type),
-      fieldNameAggregation(aggregationConfig.fieldNameAggregation), fieldNameApproximate(aggregationConfig.fieldNameApproximate),
-      inputSchema(aggregationConfig.inputSchema), outputSchema(aggregationConfig.outputSchema) {}
+    : readKeyExpression(aggregationConfig.getReadFieldKeyExpression()),
+    aggregationFunction(aggregationConfig.createAggregationFunction()), aggregationType(aggregationConfig.type),
+    fieldNameAggregation(aggregationConfig.fieldNameAggregation),
+    fieldNameApproximate(aggregationConfig.fieldNameApproximate), inputSchema(aggregationConfig.inputSchema),
+    outputSchema(aggregationConfig.outputSchema) {}
 
 } // namespace NES::ASP

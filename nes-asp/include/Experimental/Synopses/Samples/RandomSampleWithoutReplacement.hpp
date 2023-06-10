@@ -36,7 +36,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @param sampleSize
      */
     explicit RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                            size_t sampleSize);
+                                            size_t sampleSize, const std::string& keyFieldName);
 
     /**
      * @brief Initializes the sample by calling the setup method of the operator handler
@@ -54,10 +54,12 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @brief Once we have finished building our sample, we can ask for an approximate
      * @param ctx
      * @param bufferManager
+     * @param keyValues
      * @return Record(s) with the approximation
      */
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
                                                      Runtime::Execution::ExecutionContext& ctx,
+                                                     std::vector<Nautilus::Value<>>& keyValues,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
@@ -89,6 +91,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
     const size_t sampleSize;
     const size_t recordSize;
+    const std::string keyFieldName;
 };
 } // namespace NES::ASP
 

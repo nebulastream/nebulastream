@@ -62,6 +62,7 @@ class AbstractSynopsis {
      */
     virtual std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
                                                              Runtime::Execution::ExecutionContext& ctx,
+                                                             std::vector<Nautilus::Value<>>& keyValues,
                                                              Runtime::BufferManagerPtr bufferManager) = 0;
 
     /**
@@ -100,6 +101,7 @@ class AbstractSynopsis {
     virtual ~AbstractSynopsis() = default;
 
   protected:
+    Runtime::Execution::Expressions::ReadFieldExpressionPtr readKeyExpression;
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     Parsing::Aggregation_Type aggregationType;
     std::string fieldNameAggregation;

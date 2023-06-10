@@ -74,8 +74,10 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
     opHandler->setup(entrySize);
 }
 
-RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig, size_t sampleSize):
-                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), recordSize(inputSchema->getSchemaSizeInBytes()) {
+RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
+                                                               size_t sampleSize, const std::string& keyFieldName):
+                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize),
+                         recordSize(inputSchema->getSchemaSizeInBytes()), keyFieldName(keyFieldName) {
 }
 
 void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
@@ -100,48 +102,72 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
 
 std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate(uint64_t handlerIndex,
                                                                                  Runtime::Execution::ExecutionContext& ctx,
+                                                                                 std::vector<Nautilus::Value<>>& keyValues,
                                                                                  Runtime::BufferManagerPtr bufferManager) {
+    using namespace Runtime::Execution;
+
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, recordSize);
-
     auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, pagedVectorMemRef,
                                                           Nautilus::Value<Nautilus::UInt64>((uint64_t)sampleSize));
 
-    // Approximate over the sample and write the approximation into record
-    auto aggregationValueMemRef = pagedVectorRef.allocateEntry();
-    aggregationFunction->reset(aggregationValueMemRef);
 
-    auto memoryProviderInput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
-                                                                                                   inputSchema);
+    auto memoryProviderInput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                    inputSchema);
+    auto memoryProviderOutput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
+                                                                                     outputSchema);
 
-    Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
-    for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.at(numberOfRecordsInSample); ++it) {
-        auto entryMemRef = *it;
-        auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
-        aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
+    auto buffer = bufferManager->getBufferBlocking();
+    auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
+    std::vector<Runtime::TupleBuffer> retTupleBuffers;
+    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
+    for (auto& key : keyValues) {
+        // Approximate over the sample and write the approximation into record
+        auto aggregationValueMemRef = pagedVectorRef.allocateEntry();
+        aggregationFunction->reset(aggregationValueMemRef);
+
+        // Iterating over the sample and creating the aggregation for all keys
+        Nautilus::Value<Nautilus::UInt64> zeroValue(0UL);
+        for (auto it = pagedVectorRef.begin(); it != pagedVectorRef.at(numberOfRecordsInSample); ++it) {
+            auto entryMemRef = *it;
+            auto tmpRecord = memoryProviderInput->read({}, entryMemRef, zeroValue);
+            if (readKeyExpression->execute(tmpRecord) == key) {
+                aggregationFunction->lift(aggregationValueMemRef, tmpRecord);
+            }
+        }
+
+        // Lower the aggregation
+        Nautilus::Record record;
+        aggregationFunction->lower(aggregationValueMemRef, record);
+        auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor(pagedVectorRef));
+        auto approximatedValue = multiplyWithScalingFactor(record.read(fieldNameApproximate), scalingFactor);
+
+        // Writing the approximate to the record as well as the key
+
+        record.write(fieldNameApproximate, approximatedValue);
+        record.write(keyFieldName, key);
+
+
+        // Writing the values to the buffer
+        auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
+        auto bufferAddress = recordBuffer.getBuffer();
+        memoryProviderOutput->write(recordIndex, bufferAddress, record);
+        recordIndex = recordIndex + 1;
+        recordBuffer.setNumRecords(recordIndex);
+
+        if (recordIndex >= maxRecordsPerBuffer) {
+            retTupleBuffers.emplace_back(buffer);
+            buffer = bufferManager->getBufferBlocking();
+            recordIndex = (uint64_t) 0;
+        }
     }
 
-    // Lower the aggregation
-    Nautilus::Record record;
-    aggregationFunction->lower(aggregationValueMemRef, record);
-    auto scalingFactor = Nautilus::Value<Nautilus::Double>(getScalingFactor(pagedVectorRef));
-    auto approximatedValue = multiplyWithScalingFactor(record.read(fieldNameApproximate), scalingFactor);
-    record.write(fieldNameApproximate, approximatedValue);
+    if (recordIndex > 0) {
+        retTupleBuffers.emplace_back(buffer);
+    }
 
-    // Create an output buffer and write the approximation into it
-    auto outputBuffer = bufferManager->getBufferBlocking();
-    auto outputRecordBuffer = Runtime::Execution::RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(outputBuffer)));
-
-    auto memoryProviderOutput = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
-                                                                                                        outputSchema);
-    Nautilus::Value<Nautilus::UInt64> recordIndex(0UL);
-    Nautilus::Value<Nautilus::UInt64> numRecords(1UL);
-    auto bufferAddress = outputRecordBuffer.getBuffer();
-    memoryProviderOutput->write(recordIndex, bufferAddress, record);
-    outputRecordBuffer.setNumRecords(numRecords);
-
-    return {outputBuffer};
+    return retTupleBuffers;
 }
 
 void RandomSampleWithoutReplacement::setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) {

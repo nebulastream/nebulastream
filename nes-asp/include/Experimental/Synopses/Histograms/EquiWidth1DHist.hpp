@@ -45,12 +45,10 @@ public:
      * @param numberOfBins
      * @param lowerBinBoundString
      * @param upperBinBoundString
-     * @param readBinDimension
      */
     EquiWidth1DHist(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
                     const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
-                    const std::string& lowerBinBoundString, const std::string& upperBinBoundString,
-                    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension);
+                    const std::string& lowerBinBoundString, const std::string& upperBinBoundString);
 
     /**
      * @brief Adds the record to the histogram, by first calculating the position and then calling the aggregation function
@@ -67,9 +65,11 @@ public:
      * @param handlerIndex
      * @param ctx
      * @param bufferManager
+     * @param keyValues
      * @return Vector of TupleBuffers, which contain the records of the bins
      */
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                                     std::vector<Nautilus::Value<>>& keyValues,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     /**
@@ -100,7 +100,6 @@ private:
 
     const std::string lowerBinBoundString;
     const std::string upperBinBoundString;
-    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension;
 };
 } // namespace NES::ASP
 
