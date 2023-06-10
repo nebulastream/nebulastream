@@ -205,7 +205,7 @@ std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContai
     if (numberOfWindows > leftSignature->getWindowsExpressions().size()) {
         numberOfWindows = leftSignature->getWindowsExpressions().size();
     }
-    NES_TRACE2("Number of windows: {}", numberOfWindows);
+    NES_TRACE("Number of windows: {}", numberOfWindows);
     // each vector entry in the windowExpressions vector represents the signature of one window
     // we assume a bottom up approach for our containment algorithm, hence a window operation can only be partially shared if
     // the previous operations are completely sharable. As soon as there is no equality in window operations, we return the
@@ -273,7 +273,7 @@ std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContai
             // then check if the left window is contained
             if (checkWindowContainmentPossible(rightWindow, leftWindow, leftSignature, rightSignature)
                 && checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
-                if (checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
+                if (checkContainmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
                     NES_TRACE("Equal windows.");
                     containmentRelationship = ContainmentType::EQUALITY;
                 } else {
@@ -390,7 +390,7 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     for (const auto& [attributeName, isMapFunctionApplied] :
          containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied()) {
-        NES_TRACE2("Check if a map function {} was applied to {}.", isMapFunctionApplied, attributeName);
+        NES_TRACE("Check if a map function {} was applied to {}.", isMapFunctionApplied, attributeName);
         if (!isMapFunctionApplied) {
             auto attributeStillPresent = std::binary_search(container->getZ3Signature()->getColumns().begin(),
                                                             container->getZ3Signature()->getColumns().end(),
