@@ -215,15 +215,12 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         auto containerOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         addContainmentOperatorChain(hostSharedQueryPlan,
-                                                    targetOperator,
                                                     containerOperator,
                                                     containedOperatorChain);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentType::LEFT_SIG_CONTAINED) {
-                        auto containedOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         addContainmentOperatorChain(hostSharedQueryPlan,
-                                                    containedOperator,
                                                     targetOperator,
                                                     containedOperatorChain);
                     }
@@ -254,24 +251,21 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
 
 void Z3SignatureBasedPartialQueryContainmentMergerRule::addContainmentOperatorChain(
     SharedQueryPlanPtr& containerQueryPlan,
-    const OperatorNodePtr& containedOperation,
     const OperatorNodePtr& containerOperator,
     const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const {
     auto downstreamOperator = containedOperatorChain.front();
     auto upstreamContainedOperator = containedOperatorChain.back();
-    //if the target and the downstream operator are not equal, add the target operator's parents as parents to the
-    //downstream operator
-    if (!containedOperation->equal(downstreamOperator)) {
-        containedOperation->removeChildren();
-        downstreamOperator->removeAllParent();
-        downstreamOperator->addParent(containedOperation);
-    }
+    NES_TRACE2("ContainerOperator: {}", containerOperator->toString());
+    NES_TRACE2("DownstreamOperator: {}", downstreamOperator->toString());
     //remove the children of the upstreamOperator
     upstreamContainedOperator->removeChildren();
     if (upstreamContainedOperator->instanceOf<FilterLogicalOperatorNode>()) {
+        NES_TRACE2("FilterOperator: {}", upstreamContainedOperator->toString());
         for (const auto& filterOperator : containedOperatorChain) {
+            NES_TRACE2("FilterOperators: {}", filterOperator->toString());
             //if downstreamOperator and filterOperator are not equal, add the downstream filter operation as a parent
             //to the currently traversed filter operator
+            filterOperator->removeChildren();
             if (downstreamOperator->equal(filterOperator)) {
                 continue;
             }

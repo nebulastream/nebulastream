@@ -80,7 +80,6 @@ class Z3SignatureBasedPartialQueryContainmentMergerRule final : public BaseQuery
     SignatureContainmentUtilPtr SignatureContainmentUtil;
     void addContainmentOperatorChain(
         SharedQueryPlanPtr& containerQueryPlan,
-        const OperatorNodePtr& containedOperation,
         const OperatorNodePtr& containerOperator,
         const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
 };

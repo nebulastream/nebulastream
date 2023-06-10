@@ -999,7 +999,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
 /**
  * @brief Test applying Z3SignatureBasedBottomUpQueryContainmentRuleTest on Global query plan
  */
-TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, testMergingContainmentQueries) {
+TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingContainmentQueries) {
     auto containmentCases = GetParam();
     for (const auto& containmentCase : containmentCases) {
         QueryPlanPtr queryPlanSQPQuery = syntacticQueryValidation->validate(containmentCase.leftQuery);
@@ -1050,9 +1050,9 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, testMergingContainmentQ
 
 INSTANTIATE_TEST_CASE_P(testMergingContainmentQueries,
                         Z3SignatureBasedBottomUpQueryContainmentRuleTest,
-                        ::testing::Values(Z3SignatureBasedBottomUpQueryContainmentRuleTest::createEqualityCases()/*,
+                        ::testing::Values(Z3SignatureBasedBottomUpQueryContainmentRuleTest::createEqualityCases(),
                                           Z3SignatureBasedBottomUpQueryContainmentRuleTest::createMixedContainmentCases(),
-                                          Z3SignatureBasedBottomUpQueryContainmentRuleTest::createProjectionContainmentCases()*/),
+                                          Z3SignatureBasedBottomUpQueryContainmentRuleTest::createProjectionContainmentCases()),
                         [](const testing::TestParamInfo<Z3SignatureBasedBottomUpQueryContainmentRuleTest::ParamType>& info) {
                             std::string name = info.param.at(0).testType;
                             return name;

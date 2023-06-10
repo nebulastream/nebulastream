@@ -273,7 +273,7 @@ std::tuple<uint8_t, ContainmentType> SignatureContainmentUtil::checkWindowContai
             // then check if the left window is contained
             if (checkWindowContainmentPossible(rightWindow, leftWindow, leftSignature, rightSignature)
                 && checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
-                if (checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
+                if (checkContainmentConditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions)) {
                     NES_TRACE2("Equal windows.");
                     containmentRelationship = ContainmentType::EQUALITY;
                 } else {
