@@ -51,10 +51,10 @@ void CountMin::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&, Na
     auto& sketchArray = localState->sketchArray;
     auto& h3SeedsMemRef = localState->h3SeedsMemRef;
 
-    auto keyVal = readKeyExpression->execute(record);
+    auto key = readKeyExpression->execute(record);
     for (Nautilus::Value<> row = 0; row < numberOfRows; row = row + 1) {
         auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
-        auto hash = h3HashFunction->calculateWithState(keyVal, h3SeedsCurRow);
+        auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
         auto colPos = hash % numberOfCols;
         aggregationFunction->lift(sketchArray[row][colPos], record);
     }
@@ -62,6 +62,7 @@ void CountMin::addToSynopsis(uint64_t, Runtime::Execution::ExecutionContext&, Na
 
 std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex,
                                                            Runtime::Execution::ExecutionContext &ctx,
+                                                           std::vector<Nautilus::Value<>>& keyValues,
                                                            Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
@@ -79,22 +80,25 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
     Nautilus::Value<UInt64> recordIndex((uint64_t) 0);
 
     Nautilus::Value<UInt64> maxValueKey(((uint64_t) 1 << (keySizeInB * 8)) - 1);
-    for(Nautilus::Value<> keyVal = (uint64_t) 0; keyVal < maxValueKey; keyVal = keyVal + 1) {
-        Nautilus::Record retRecord;
-        retRecord.write(keyFieldNameString, keyVal);
-
-        auto hashFirstRow = h3HashFunction->calculateWithState(keyVal, h3SeedsMemRef);
+    for(auto& key : keyValues) {
+        // Calculating the position
+        auto hashFirstRow = h3HashFunction->calculateWithState(key, h3SeedsMemRef);
         auto colPosFirstRow = hashFirstRow % numberOfCols;
 
         // Getting the actual value out over all rows
         for (Nautilus::Value<> row = 1; row < numberOfRows; row = row + 1) {
             auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
-            auto hash = h3HashFunction->calculateWithState(keyVal, h3SeedsCurRow);
+            auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
             auto colPos = hash % numberOfCols;
             aggregationFunctionMergeRows->combine(sketchArray[(uint64_t) 0][colPosFirstRow], sketchArray[row][colPos]);
         }
+
+        // Writing the key and the approximation to the record
+        Nautilus::Record retRecord;
+        retRecord.write(keyFieldNameString, key);
         aggregationFunctionMergeRows->lower(sketchArray[(uint64_t) 0][colPosFirstRow], retRecord);
 
+        // Write the record to the buffer
         auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
         auto bufferAddress = recordBuffer.getBuffer();
         memoryProviderOutput->write(recordIndex, bufferAddress, retRecord);
@@ -147,16 +151,14 @@ bool CountMin::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Exe
 
 CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows,
                    const uint64_t numberOfCols, const uint64_t entrySize, const uint64_t keySizeInB,
-                   const std::string &keyFieldNameString,
-                   std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readKeyExpression)
+                   const std::string &keyFieldNameString)
                    : AbstractSynopsis(aggregationConfig), numberOfRows(numberOfRows), numberOfCols(numberOfCols),
                    entrySize(entrySize), keySizeInB(keySizeInB), keyFieldNameString(keyFieldNameString),
-                   readKeyExpression(std::move(readKeyExpression)),
                    h3HashFunction(std::make_unique<Nautilus::Interface::H3Hash>()) {
 
     auto inputType = aggregationConfig.getInputType();
     auto finalType = aggregationConfig.getFinalType();
-    auto readFieldExpression = aggregationConfig.getReadFieldExpression();
+    auto readFieldExpression = aggregationConfig.getReadFieldAggregationExpression();
     auto resultFieldIdentifier = aggregationConfig.fieldNameApproximate;
 
 

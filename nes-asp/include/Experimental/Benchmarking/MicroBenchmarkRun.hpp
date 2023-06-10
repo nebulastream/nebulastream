@@ -141,6 +141,15 @@ class MicroBenchmarkRun {
                                                                         Runtime::BufferManagerPtr bufferManager);
 
     /**
+     * @brief Creates a vector of keys to be queried after the synopses has been filled
+     * @param inputBuffers
+     * @param bufferManager
+     * @return Vector of Nautilus::Value<>
+     */
+    std::vector<Nautilus::Value<>> createQueryKeyValues(std::vector<Runtime::TupleBuffer>& inputBuffers,
+                                                        Runtime::BufferManagerPtr bufferManager);
+
+    /**
      * @brief Compares the approximated with the exact query output and returns an accuracy.
      * @param allAccuracyRecords
      * @param allApproximateBuffers

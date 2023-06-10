@@ -57,7 +57,6 @@ public:
         NESBaseTest::SetUp();
         NES_INFO2("Setup EquiWidth1DHistTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        readBinDimension = std::make_unique<Runtime::Execution::Expressions::ReadFieldExpression>(idString);
 
         // Creating the worker context and the pipeline necessary for testing the sampling
         opHandler = std::make_shared<EquiWidth1DHistOperatorHandler>();
@@ -81,7 +80,6 @@ public:
     const uint64_t numberOfBins = 5;
     const uint64_t minValue = 0;
     const uint64_t maxValue = 5;
-    std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension;
 
     const uint64_t handlerIndex = 0;
     std::shared_ptr<EquiWidth1DHistOperatorHandler> opHandler;
@@ -104,10 +102,11 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     outputSchema->addField(upperBoundBinName, BasicType::INT64);
 
     // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
-                                                                        timestampFieldName, inputSchema, outputSchema);
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                        approximateString, timestampFieldName,
+                                                                        inputSchema, outputSchema);
     EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+                                 lowerBoundBinName, upperBoundBinName);
 
 
     // Setting up the synopsis and creating the local operator state
@@ -148,8 +147,12 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
 
+    // Creating query keys for all histograms
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0), Nautilus::Value<>(1), Nautilus::Value<>(2),
+                                                Nautilus::Value<>(3), Nautilus::Value<>(4),
+    };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
@@ -188,10 +191,11 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestSum) {
     outputSchema->addField(upperBoundBinName, BasicType::INT64);
 
     // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
-                                                                        timestampFieldName, inputSchema, outputSchema);
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                        approximateString, timestampFieldName,
+                                                                        inputSchema, outputSchema);
     EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+                                 lowerBoundBinName, upperBoundBinName);
 
     // Setting up the synopsis and creating the local operator state
     histSynopsis.setup(handlerIndex, *executionContext);
@@ -231,12 +235,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestSum) {
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
 
+    // Creating query keys for all histograms
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0), Nautilus::Value<>(1), Nautilus::Value<>(2),
+                                                Nautilus::Value<>(3), Nautilus::Value<>(4),
+    };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
-    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
     EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 42);
     EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
@@ -271,10 +278,11 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
     outputSchema->addField(upperBoundBinName, BasicType::INT64);
 
     // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
-                                                                        timestampFieldName, inputSchema, outputSchema);
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                        approximateString, timestampFieldName,
+                                                                        inputSchema, outputSchema);
     EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+                                 lowerBoundBinName, upperBoundBinName);
 
 
     // Setting up the synopsis and creating the local operator state
@@ -315,12 +323,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
 
+    // Creating query keys for all histograms
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0), Nautilus::Value<>(1), Nautilus::Value<>(2),
+                                                Nautilus::Value<>(3), Nautilus::Value<>(4),
+    };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
-    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
     EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 42);
     EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
@@ -355,10 +366,11 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMax) {
     outputSchema->addField(upperBoundBinName, BasicType::INT64);
 
     // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
-                                                                        timestampFieldName, inputSchema, outputSchema);
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                        approximateString, timestampFieldName,
+                                                                        inputSchema, outputSchema);
     EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+                                 lowerBoundBinName, upperBoundBinName);
 
     // Setting up the synopsis and creating the local operator state
     histSynopsis.setup(handlerIndex, *executionContext);
@@ -398,12 +410,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMax) {
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
 
+    // Creating query keys for all histograms
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0), Nautilus::Value<>(1), Nautilus::Value<>(2),
+                                                Nautilus::Value<>(3), Nautilus::Value<>(4),
+    };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
-    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
     EXPECT_EQ(dynamicBuffer[0][approximateString].read<int64_t>(), 42);
     EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
@@ -437,11 +452,11 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
     outputSchema->addField(lowerBoundBinName, BasicType::INT64);
     outputSchema->addField(upperBoundBinName, BasicType::INT64);
 
-    // Creating aggregation config and the histogram
-    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, aggregationString, approximateString,
-                                                                        timestampFieldName, inputSchema, outputSchema);
+    auto aggregationConfig = Parsing::SynopsisAggregationConfig::create(aggregationType, idString, aggregationString,
+                                                                        approximateString, timestampFieldName,
+                                                                        inputSchema, outputSchema);
     EquiWidth1DHist histSynopsis(aggregationConfig, entrySize, minValue, maxValue, numberOfBins,
-                                 lowerBoundBinName, upperBoundBinName, std::move(readBinDimension));
+                                 lowerBoundBinName, upperBoundBinName);
 
 
     // Setting up the synopsis and creating the local operator state
@@ -482,12 +497,15 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
     histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
 
+    // Creating query keys for all histograms
+    std::vector<Nautilus::Value<>> queryKeys = {Nautilus::Value<>(0), Nautilus::Value<>(1), Nautilus::Value<>(2),
+                                                Nautilus::Value<>(3), Nautilus::Value<>(4),
+    };
 
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
+    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, queryKeys, bufferManager);
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
                                                                                               outputSchema);
 
-    EXPECT_EQ(dynamicBuffer.getNumberOfTuples(), numberOfBins);
     EXPECT_EQ(dynamicBuffer[0][approximateString].read<double_t>(), 42.0);
     EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);

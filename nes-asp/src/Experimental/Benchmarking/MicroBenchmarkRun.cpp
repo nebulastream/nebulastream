@@ -45,6 +45,9 @@ void MicroBenchmarkRun::run() {
         NES_INFO2("Creating accuracy buffer...");
         auto allAccuracyBuffers = this->createAccuracyRecords(allRecordBuffers, bufferManager);
 
+        NES_INFO2("Creating the query keys...");
+        auto queryKeyValues = this->createQueryKeyValues(allRecordBuffers, bufferManager);
+
         // Create the synopsis, so we can call getApproximate after all buffers have been executed
         NES_INFO2("Creating the synopsis...");
         auto synopsis = AbstractSynopsis::create(*synopsesArguments, aggregation);
@@ -79,7 +82,8 @@ void MicroBenchmarkRun::run() {
         timer.snapshot(executePipelineSnapshotName);
         Runtime::Execution::ExecutionContext executionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                               Nautilus::Value<Nautilus::MemRef>((int8_t*) pipelineContext.get()));
-        auto allApproximateBuffers = synopsis->getApproximate(handlerIndex, executionContext, bufferManager);
+        auto allApproximateBuffers = synopsis->getApproximate(handlerIndex, executionContext, queryKeyValues,
+                                                              bufferManager);
 
         timer.snapshot(getApproximateSnapshotName);
         timer.pause();
@@ -225,6 +229,14 @@ const std::string MicroBenchmarkRun::toString() const {
 std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createInputRecords(Runtime::BufferManagerPtr bufferManager) {
     return NES::Util::createBuffersFromCSVFile(inputFile, aggregation.inputSchema, bufferManager,
                                                aggregation.timeStampFieldName, windowSize);
+}
+
+
+
+std::vector<Nautilus::Value<>> MicroBenchmarkRun::createQueryKeyValues(std::vector<Runtime::TupleBuffer>&,
+                                                                       Runtime::BufferManagerPtr) {
+    // TODO we will implement this as part of the issue #3837
+    NES_NOT_IMPLEMENTED();
 }
 
 std::vector<Runtime::TupleBuffer> MicroBenchmarkRun::createAccuracyRecords(std::vector<Runtime::TupleBuffer>& inputBuffers,

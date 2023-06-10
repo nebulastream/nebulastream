@@ -44,12 +44,13 @@ void EquiWidth1DHist::addToSynopsis(uint64_t, Runtime::Execution::ExecutionConte
     auto localState = dynamic_cast<LocalBinsOperatorState*>(pState);
     auto& bins = localState->bins;
 
-    auto binDimensionPos = ((readBinDimension->execute(record).as<Nautilus::Int64>() - minValue) / binWidth);
+    auto binDimensionPos = ((readKeyExpression->execute(record) - minValue) / binWidth);
     aggregationFunction->lift(bins[(uint64_t)0][binDimensionPos], record);
 }
 
 std::vector<Runtime::TupleBuffer>
 EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
+                                std::vector<Nautilus::Value<>>& keyValues,
                                 Runtime::BufferManagerPtr bufferManager) {
     using namespace Runtime::Execution;
 
@@ -57,24 +58,23 @@ EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::Execu
     auto binsMemRef = Nautilus::FunctionCall("getBinsRefProxy", getBinsRefProxy, opHandler);
     auto bins = Nautilus::Interface::Fixed2DArrayRef(binsMemRef, entrySize, numberOfBins);
 
-
     auto memoryProviderOutput = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(),
                                                                                      outputSchema);
     auto buffer = bufferManager->getBufferBlocking();
     auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
     std::vector<Runtime::TupleBuffer> retTupleBuffers;
+    Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
 
-    Nautilus::Value<UInt64> recordIndex((uint64_t) 0);
-    Nautilus::Value<> lowerBinBound((int64_t) minValue);
-    for (Nautilus::Value<Nautilus::UInt64> binPos = (uint64_t) 0; binPos < numberOfBins; binPos = binPos + 1) {
-        // Writing the approximation value of the current bin to the current record
+    for (auto& key : keyValues) {
+        auto binDimensionPos = ((key - minValue) / binWidth);
         Nautilus::Record record;
-        aggregationFunction->lower(bins[(uint64_t)0][binPos], record);
+        aggregationFunction->lower(bins[(uint64_t) 0][binDimensionPos], record);
 
         // Writing the lower and upper value of the current bin
+        auto lowerBinBound = binDimensionPos * binWidth;
+        auto upperBinBound = (binDimensionPos + 1) * binWidth;
         record.write(lowerBinBoundString, lowerBinBound);
-        lowerBinBound = lowerBinBound + binWidth;
-        record.write(upperBinBoundString, lowerBinBound);
+        record.write(upperBinBoundString, upperBinBound);
 
         // Writing the values to the buffer
         auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));
@@ -125,10 +125,9 @@ bool EquiWidth1DHist::storeLocalOperatorState(uint64_t handlerIndex, const Runti
 
 EquiWidth1DHist::EquiWidth1DHist(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t entrySize,
                                  const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
-                                 const std::string& lowerBinBoundString, const std::string& upperBinBoundString,
-                                 std::unique_ptr<Runtime::Execution::Expressions::ReadFieldExpression> readBinDimension)
+                                 const std::string& lowerBinBoundString, const std::string& upperBinBoundString)
         : AbstractSynopsis(aggregationConfig), minValue(minValue), maxValue(maxValue), numberOfBins(numberOfBins),
         binWidth((maxValue - minValue) / numberOfBins), entrySize(entrySize), lowerBinBoundString(lowerBinBoundString),
-        upperBinBoundString(upperBinBoundString), readBinDimension(std::move(readBinDimension)) {
+        upperBinBoundString(upperBinBoundString){
 }
 } // namespace NES::ASP

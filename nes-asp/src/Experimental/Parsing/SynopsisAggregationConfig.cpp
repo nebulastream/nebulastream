@@ -31,13 +31,15 @@
 namespace NES::ASP::Parsing {
 
 SynopsisAggregationConfig::SynopsisAggregationConfig(const Aggregation_Type& type,
-                                 const std::string& fieldNameAggregation,
-                                 const std::string& fieldNameApproximate,
-                                 const std::string& timeStampFieldName,
-                                 const SchemaPtr& inputSchema,
-                                 const SchemaPtr& outputSchema)
-    : type(type), fieldNameAggregation(fieldNameAggregation), fieldNameApproximate(fieldNameApproximate),
-      timeStampFieldName(timeStampFieldName), inputSchema(inputSchema), outputSchema(outputSchema) {}
+                                                     const std::string& fieldNameKey,
+                                                     const std::string& fieldNameAggregation,
+                                                     const std::string& fieldNameApproximate,
+                                                     const std::string& timeStampFieldName,
+                                                     const SchemaPtr& inputSchema,
+                                                     const SchemaPtr& outputSchema)
+    : type(type), fieldNameKey(fieldNameKey), fieldNameAggregation(fieldNameAggregation),
+    fieldNameApproximate(fieldNameApproximate), timeStampFieldName(timeStampFieldName), inputSchema(inputSchema),
+    outputSchema(outputSchema) {}
 
 const std::string SynopsisAggregationConfig::toString() const {
     std::stringstream stringStream;
@@ -72,6 +74,7 @@ std::pair<SynopsisAggregationConfig, std::string>
 SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregationNode,
                                                                const std::filesystem::path& data) {
     auto type = magic_enum::enum_cast<Aggregation_Type>(aggregationNode["type"].As<std::string>()).value();
+    auto fieldNameKey = aggregationNode["fieldNameKey"].As<std::string>();
     auto fieldNameAggregation = aggregationNode["fieldNameAgg"].As<std::string>();
     auto fieldNameApprox = aggregationNode["fieldNameApprox"].As<std::string>();
     auto inputFile = data / std::filesystem::path(aggregationNode["inputFile"].As<std::string>());
@@ -83,14 +86,14 @@ SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregation
     NES_ASSERT(inputSchema->get(timeStampFieldName)->getDataType()->isEquals(DataTypeFactory::createUInt64()),
                "The timestamp has to be a UINT64!");
 
-    return {SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
+    return {SynopsisAggregationConfig(type, fieldNameKey, fieldNameAggregation, fieldNameApprox, timeStampFieldName,
                            inputSchema, outputSchema), inputFile};
 }
 
 Runtime::Execution::Aggregation::AggregationFunctionPtr SynopsisAggregationConfig::createAggregationFunction() {
     auto inputType = getInputType();
     auto finalType = getFinalType();
-    auto readFieldExpression = getReadFieldExpression();
+    auto readFieldExpression = getReadFieldAggregationExpression();
     auto resultFieldIdentifier = fieldNameApproximate;
 
 
@@ -145,12 +148,13 @@ SynopsisAggregationConfig& SynopsisAggregationConfig::operator=(const SynopsisAg
 }
 
 SynopsisAggregationConfig SynopsisAggregationConfig::create(const Aggregation_Type& type,
+                                                            const std::string& fieldNameKey,
                                                             const std::string& fieldNameAggregation,
                                                             const std::string& fieldNameApproximate,
                                                             const std::string& timestampFieldName,
                                                             const SchemaPtr& inputSchema,
                                                             const SchemaPtr& outputSchema) {
-    return SynopsisAggregationConfig(type, fieldNameAggregation, fieldNameApproximate, timestampFieldName,
+    return SynopsisAggregationConfig(type, fieldNameKey, fieldNameAggregation, fieldNameApproximate, timestampFieldName,
                                      inputSchema, outputSchema);
 }
 
@@ -165,8 +169,12 @@ PhysicalTypePtr SynopsisAggregationConfig::getInputType() const {
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>
-SynopsisAggregationConfig::getReadFieldExpression() const {
+SynopsisAggregationConfig::getReadFieldAggregationExpression() const {
     return std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldNameAggregation);
+}
+std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>
+SynopsisAggregationConfig::getReadFieldKeyExpression() const {
+    return std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldNameKey);
 }
 
 } // namespace NES::ASP::Parsing
