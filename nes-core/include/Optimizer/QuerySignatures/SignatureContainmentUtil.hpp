@@ -67,18 +67,30 @@ class SignatureContainmentUtil {
 
     /**
      * @brief Check containment relationships for the given signatures as follows
-     * check if right sig ⊆ left sig for projections (including map conditions)
      *      First check for WindowContainment
      *      In case of window equality, we continue to check for projection containment
      *      In case of projection equality, we finally check for filter containment
-     *      only return containment cases for filter containment, if checkFilterContainment is true
      * @param leftSignature
      * @param rightSignature
      * @return enum with containment relationships
      */
     ContainmentType checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
-    std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>> checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftSignature, const LogicalOperatorNodePtr& rightSignature);
+    /**
+     * @brief Check containment relationships for the given signatures as follows
+     *      First check for WindowContainment
+     *      In case of window equality, we continue to check for projection containment
+     *      In case of projection equality, we finally check for filter containment
+     *      We assume that a merging algorithm checks the containment relationships in a top-down manner and merges the
+     *      upstream operator chains in case of an equivalence. In case of a containment relationship, we extract the contained operators
+     *      and add them to the container's upstream operator chain
+     * @param leftOperator the current operator of the left query
+     * @param rightOperator the current operator of the right query
+     * @return tuple with the containment relationship and a vector of the contained upstream operators. The vector is empty if
+     * equivalence or no containment was detected.
+     */
+    std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
+    checkContainmentRelationshipFromTopToBottom(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
 
   private:
     /**
@@ -144,10 +156,27 @@ class SignatureContainmentUtil {
      */
     std::tuple<uint8_t, ContainmentType> checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
+    /**
+     * @brief extracts the contained window operator together with its watermark operator
+     * @param containedOperator operator that we identified as contained
+     * @param containedWindowIndex index of the contained window operator
+     * @return contained window operator and its watermark operator
+     */
     std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator, const uint8_t containedWindowIndex);
 
+    /**
+     * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
+     * @param containedOperator operator that we identified as contained
+     * @return contained projection operator
+     */
     LogicalOperatorNodePtr createProjectionOperator(const LogicalOperatorNodePtr& containedOperator);
 
+    /**
+     * @brief extracts all upstream filter operators from the contained operator chain
+     * @param container the current operator from the container query
+     * @param containee the current operator from the contained query
+     * @return all filter upstream filter operations from the contained query
+     */
     std::vector<LogicalOperatorNodePtr> createFilterOperators(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee);
 
     /**

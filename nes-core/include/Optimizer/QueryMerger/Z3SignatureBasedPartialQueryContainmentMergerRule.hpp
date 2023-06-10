@@ -32,7 +32,7 @@ class Z3SignatureBasedPartialQueryContainmentMergerRule;
 using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedPartialQueryContainmentMergerRule>;
 
 /**
- * @brief Z3SignatureBasedPartialQueryMergerRule is responsible for merging together all Queries sharing a common upstream operator
+ * @brief Z3SignatureBasedPartialQueryContainmentMergerRule is responsible for merging together all Queries sharing a common upstream operator
  * chain. After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
  * upstream operator chain.
  * Effectively this rule will prune the global query plan for duplicate operators.
@@ -66,6 +66,14 @@ using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3S
  *                                                           |
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
+ * Additionally, in case a containment relationship was detected by the signature containment util, the contained operations from the
+ * contained query will be added to the equivalent operator chain of the container query. We can do this for
+ * 1. filter operations: All upstream filter operators from the contained query will be extracted and added to the equivalent
+ * container's upstream operator chain
+ * 2. projection operations: We extract all upstream projection operators and add the most downstream projection operator to the
+ * container's upstream operator chain
+ * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
+ * upstream operator chain
  */
 class Z3SignatureBasedPartialQueryContainmentMergerRule final : public BaseQueryMergerRule {
 
@@ -77,11 +85,27 @@ class Z3SignatureBasedPartialQueryContainmentMergerRule final : public BaseQuery
 
   private:
     explicit Z3SignatureBasedPartialQueryContainmentMergerRule(z3::ContextPtr context);
-    SignatureContainmentUtilPtr SignatureContainmentUtil;
+
+    /**
+     * @brief adds the containment operator chain to the correct container operator
+     * * 1. filter operations: All upstream filter operators from the contained query will be extracted and added to the equivalent
+     * container's upstream operator chain
+     * 2. projection operations: We extract all upstream projection operators and add the most downstream projection operator to the
+     * container's upstream operator chain
+     * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
+     * upstream operator chain
+     * @param containerQueryPlan the containers query plan to add the contained operator chain to
+     * @param containerOperator the current container operator
+     * @param containedOperatorChain vector with all extracted operators from the contained query
+     */
     void addContainmentOperatorChain(
         SharedQueryPlanPtr& containerQueryPlan,
         const OperatorNodePtr& containerOperator,
+        const OperatorNodePtr& containedOperator,
         const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
+
+    SignatureContainmentUtilPtr SignatureContainmentUtil;
+
 };
 }// namespace NES::Optimizer
 

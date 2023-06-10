@@ -121,7 +121,8 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
 
                             //Match the target and host operator signatures to see if a match is present
                             relationshipAndOperators =
-                                SignatureContainmentUtil->checkContainmentForTopDownMerging(hostOperator, targetOperator);
+                                SignatureContainmentUtil->checkContainmentRelationshipFromTopToBottom(hostOperator,
+                                                                                                      targetOperator);
                             if (get<0>(relationshipAndOperators) != ContainmentType::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
@@ -177,14 +178,11 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                     }
 
                     //Iterate over the target operators and remove the upstream operators covered by downstream matched operators
-                    //todo: find out what the fuck this is doing?????
                     for (uint64_t i = 0; i < matchedTargetOperators.size(); i++) {
                         for (uint64_t j = 0; j < matchedTargetOperators.size(); j++) {
                             if (i == j) {
                                 continue;//Skip chk with itself
                             }
-                            NES_TRACE2("Current Target Operator i: {}", matchedTargetOperators[i]->toString());
-                            NES_TRACE2("Current Target Operator j: {}", matchedTargetOperators[j]->toString());
                             if (matchedTargetOperators[i]->containAsGrandChild(matchedTargetOperators[j])) {
                                 matchedTargetToHostOperatorMap.erase(matchedTargetOperators[j]);
                             } else if (matchedTargetOperators[i]->containAsGrandParent(matchedTargetOperators[j])) {
@@ -216,12 +214,15 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         addContainmentOperatorChain(hostSharedQueryPlan,
                                                     containerOperator,
+                                                    targetOperator,
                                                     containedOperatorChain);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentType::LEFT_SIG_CONTAINED) {
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
+                        auto containedOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         addContainmentOperatorChain(hostSharedQueryPlan,
                                                     targetOperator,
+                                                    containedOperator,
                                                     containedOperatorChain);
                     }
                 }
@@ -252,13 +253,33 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
 void Z3SignatureBasedPartialQueryContainmentMergerRule::addContainmentOperatorChain(
     SharedQueryPlanPtr& containerQueryPlan,
     const OperatorNodePtr& containerOperator,
+    const OperatorNodePtr& containedOperator,
     const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const {
     auto downstreamOperator = containedOperatorChain.front();
     auto upstreamContainedOperator = containedOperatorChain.back();
     NES_TRACE2("ContainerOperator: {}", containerOperator->toString());
     NES_TRACE2("DownstreamOperator: {}", downstreamOperator->toString());
+    NES_TRACE2("ContainedOperator: {}", containedOperator->toString());
+    if (!containedOperator->equal(downstreamOperator)) {
+        downstreamOperator->removeAllParent();
+        if (containedOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+            containedOperator->removeChildren();
+            downstreamOperator->addParent(containedOperator);
+        } else {
+            auto parents = containedOperator->getParents();
+            for (const auto& parent : parents) {
+                parent->removeChildren();
+                NES_TRACE2("Parent: {}", parent->toString());
+                downstreamOperator->addParent(parent);
+            }
+        }
+    }
     //remove the children of the upstreamOperator
     upstreamContainedOperator->removeChildren();
+    //If we deal with contained filter operators, we have to correctly prepare the operator chain to add to the container's
+    //equivalent operator chain.
+    //To do so, we add the most upstream filter operator as a parent to the container's equivalent operator chain.
+    //Then, we add iteratively add all downstream filter operators to the corresponding upstream filter operators as parents.
     if (upstreamContainedOperator->instanceOf<FilterLogicalOperatorNode>()) {
         NES_TRACE2("FilterOperator: {}", upstreamContainedOperator->toString());
         for (const auto& filterOperator : containedOperatorChain) {
