@@ -81,7 +81,7 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
 }
 
 std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
-SignatureContainmentUtil::checkContainmentForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
+SignatureContainmentUtil::checkContainmentRelationshipFromTopToBottom(const LogicalOperatorNodePtr& leftOperator,
                                                             const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
@@ -99,6 +99,7 @@ SignatureContainmentUtil::checkContainmentForTopDownMerging(const LogicalOperato
         // First check for WindowContainment
         // In case of window equality, we continue to check for projection containment
         // In case of projection equality, we finally check for filter containment
+        // If we detect a containment relationship at any point in the algorithm, we stop and extract the contained upstream operators
         auto windowContainment = checkWindowContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
         containmentRelationship = get<1>(windowContainment);
         NES_TRACE("Check window containment returned: {}", magic_enum::enum_name(containmentRelationship));
@@ -378,7 +379,7 @@ SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNod
 
 LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const LogicalOperatorNodePtr& containedOperator) {
     auto projectionOperators = containedOperator->getNodesByType<ProjectionLogicalOperatorNode>();
-    //get the correct projection operator
+    //get the most downstream projection operator
     if (!projectionOperators.empty()) {
         return projectionOperators.at(0);
     }
@@ -388,6 +389,8 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
 std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
                                                                                     const LogicalOperatorNodePtr& containee) {
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
+    //check if there was a map function applied to the filter attribute
+    //if that was the case, we cannot safely extract the filter anymore and therefore return an empty set
     for (const auto& [attributeName, isMapFunctionApplied] :
          containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied()) {
         NES_TRACE("Check if a map function {} was applied to {}.", isMapFunctionApplied, attributeName);
@@ -395,6 +398,8 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
             auto attributeStillPresent = std::binary_search(container->getZ3Signature()->getColumns().begin(),
                                                             container->getZ3Signature()->getColumns().end(),
                                                             attributeName);
+            //if the attribute is still present in the container's output schema and there was no map function applied,
+            //we extract the upstream filter operators and add them to the containment operators
             if (attributeStillPresent) {
                 for (const auto& item : containee->getNodesByType<FilterLogicalOperatorNode>()) {
                     containmentOperators.push_back(item);
