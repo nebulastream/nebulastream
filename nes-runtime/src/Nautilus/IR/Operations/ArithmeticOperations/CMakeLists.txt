@@ -15,5 +15,6 @@ add_source_files(nes-runtime
         AddOperation.cpp
         SubOperation.cpp
         DivOperation.cpp
+        ModOperation.cpp
         MulOperation.cpp
 )

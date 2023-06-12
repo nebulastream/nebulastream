@@ -13,6 +13,7 @@
 */
 
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
@@ -101,6 +102,10 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             processDiv(scope, frame, currentIrBlock, operation);
             return;
         };
+        case OpCode::MOD: {
+            processMod(scope, frame, currentIrBlock, operation);
+            return;
+        }
         case OpCode::MUL: {
             processMul(scope, frame, currentIrBlock, operation);
             return;
@@ -315,6 +320,17 @@ void TraceToIRConversionPhase::IRConversionContext::processDiv(int32_t,
     auto divOperation = std::make_shared<NES::Nautilus::IR::Operations::DivOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, divOperation);
     currentBlock->addOperation(divOperation);
+}
+void TraceToIRConversionPhase::IRConversionContext::processMod(int32_t,
+                                                               ValueFrame& frame,
+                                                               NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                               TraceOperation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto modOperation = std::make_shared<NES::Nautilus::IR::Operations::ModOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, modOperation);
+    currentBlock->addOperation(modOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processNegate(int32_t,
                                                                   ValueFrame& frame,

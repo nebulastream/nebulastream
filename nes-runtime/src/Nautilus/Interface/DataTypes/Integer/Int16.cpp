@@ -33,6 +33,10 @@ const std::shared_ptr<Int> Int16::div(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value / otherValue.value);
 }
+const std::shared_ptr<Int> Int16::mod(const Int& other) const {
+    auto& otherValue = other.staticCast<Int16>();
+    return create<Int16>(value % otherValue.value);
+}
 const std::shared_ptr<Int> Int16::mul(const Int& other) const {
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value * otherValue.value);

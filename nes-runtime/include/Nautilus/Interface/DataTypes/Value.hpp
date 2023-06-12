@@ -277,6 +277,7 @@ Value<> AddOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> SubOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> MulOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> DivOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> ModOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> EqualsOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> NegateOp(const Value<>& exp);
 Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
@@ -376,6 +377,23 @@ auto inline operator/(const LHS& left, const RHS& right) {
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator/(const LHS& left, const RHS& right) {
     return DivOp(left, right);
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator%(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left));
+    return leftValue % right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator%(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right));
+    return left % rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator%(const LHS& left, const RHS& right) {
+    return ModOp(left, right);
 };
 
 // --- logical operations ----
