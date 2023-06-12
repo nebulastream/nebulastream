@@ -46,10 +46,11 @@ class LocationService {
      * @return a json in the format:
         {
             "id": <node id>,
-            "location": [
-                <latitude>,
-                <longitude>
-            ]
+            "location":
+                  {
+                      "latitude": <latitude>,
+                      "longitude": <longitude>
+                  }
         }
      */
     nlohmann::json requestNodeLocationDataAsJson(uint64_t nodeId);
@@ -70,10 +71,10 @@ class LocationService {
      *              {
      *                  "id": <node id>,
      *                  "location":
-     *                      [
-     *                          <latitude>,
-     *                          <longitude>
-     *                      ]
+     *                      {
+     *                          "latitude": <latitude>,
+     *                          "longitude": <longitude>
+     *                      }
      *              }
      *          ]
      *  }

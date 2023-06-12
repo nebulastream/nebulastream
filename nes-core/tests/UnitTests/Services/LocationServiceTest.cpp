@@ -107,16 +107,16 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     cmpJson = locationService->requestNodeLocationDataAsJson(node2Id);
     auto entry = cmpJson.get<std::map<std::string, nlohmann::json>>();
     EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
-    cmpLoc[0] = 13.4;
-    cmpLoc[1] = -23;
+    cmpLoc["latitude"] = 13.4;
+    cmpLoc["longitude"] = -23;
     ASSERT_EQ(cmpJson.at("location"), cmpLoc);
 
     //test getting location of a mobile node
     cmpJson = nullptr;
     cmpJson = locationService->requestNodeLocationDataAsJson(node3Id);
     ASSERT_EQ(cmpJson["id"], node3Id);
-    cmpLoc[0] = 52.55227464714949;
-    cmpLoc[1] = 13.351743136322877;
+    cmpLoc["latitude"] = 52.55227464714949;
+    cmpLoc["longitude"] = 13.351743136322877;
 }
 
 TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
@@ -164,8 +164,8 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     ASSERT_TRUE(getLocResp1.size() == 2);
 
     nlohmann::json cmpLoc;
-    cmpLoc[0] = 52.55227464714949;
-    cmpLoc[1] = 13.351743136322877;
+    cmpLoc["latitude"] = 52.55227464714949;
+    cmpLoc["longitude"] = 13.351743136322877;
     auto nodes = getLocResp1["nodes"];
     ASSERT_EQ(nodes.size(), 1);
 
@@ -179,7 +179,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto edges = getLocResp1["edges"];
     ASSERT_EQ(edges.size(), 1);
 
-    auto edge = edges[0];
+    const auto& edge = edges[0];
     EXPECT_EQ(edge.size(), 2);
     EXPECT_NE(edge.find("source"), edge.end());
     EXPECT_EQ(edge.at("source"), node3Id);
@@ -196,21 +196,30 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     ASSERT_EQ(nodes.size(), 2);
     ASSERT_EQ(edges.size(), 2);
 
-    for (auto node : nodes) {
+    for (const auto& node : nodes) {
         EXPECT_EQ(node.size(), 2);
         EXPECT_TRUE(node.find("id") != node.end());
-        NES_DEBUG2("checking element with id " << node.at("id"));
+        NES_DEBUG2("checking element with id {}", node.at("id"));
         EXPECT_TRUE(node.at("id") == node3Id || node.at("id") == node4Id);
         if (node.at("id") == node3Id) {
-            cmpLoc[0] = 52.55227464714949;
-            cmpLoc[1] = 13.351743136322877;
+            cmpLoc["latitude"] = 52.55227464714949;
+            cmpLoc["longitude"] = 13.351743136322877;
         }
         if (node.at("id") == node4Id) {
-            cmpLoc[0] = 53.55227464714949;
-            cmpLoc[1] = -13.351743136322877;
+            cmpLoc["latitude"] = 53.55227464714949;
+            cmpLoc["longitude"] = -13.351743136322877;
         }
         EXPECT_TRUE(node.find("location") != node.end());
         EXPECT_EQ(node.at("location"), cmpLoc);
+    }
+
+    std::vector sources = {node3Id, node4Id};
+    for (const auto& topologyEdge : edges) {
+        ASSERT_EQ(topologyEdge.at("target"), 1);
+        auto edgeSource = topologyEdge.at("source");
+        auto sourcesIterator = std::find(sources.begin(), sources.end(), edgeSource);
+        ASSERT_NE(sourcesIterator, sources.end());
+        sources.erase(sourcesIterator);
     }
 }
 
