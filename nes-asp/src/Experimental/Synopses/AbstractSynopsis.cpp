@@ -24,8 +24,9 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
 
     // TODO For now this is okay, but later on we want to have a separate factory class, see issue #3734
     if (arguments.type.getValue() == Parsing::Synopsis_Type::SRSWoR) {
+        auto entrySize = aggregationConfig.inputSchema->getSchemaSizeInBytes();
         return std::make_shared<RandomSampleWithoutReplacement>(aggregationConfig, arguments.width.getValue(),
-                                                                aggregationConfig.fieldNameKey);
+                                                                entrySize);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -35,7 +36,7 @@ AbstractSynopsesPtr AbstractSynopsis::create(Parsing::SynopsisConfiguration& arg
 AbstractSynopsis::AbstractSynopsis(Parsing::SynopsisAggregationConfig& aggregationConfig)
     : readKeyExpression(aggregationConfig.getReadFieldKeyExpression()),
     aggregationFunction(aggregationConfig.createAggregationFunction()), aggregationType(aggregationConfig.type),
-    fieldNameAggregation(aggregationConfig.fieldNameAggregation),
+    fieldNameKey(aggregationConfig.fieldNameKey), fieldNameAggregation(aggregationConfig.fieldNameAggregation),
     fieldNameApproximate(aggregationConfig.fieldNameApproximate), inputSchema(aggregationConfig.inputSchema),
     outputSchema(aggregationConfig.outputSchema) {}
 

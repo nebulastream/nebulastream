@@ -34,9 +34,11 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      * @brief Constructor for a SampleRandomWithReplacement
      * @param aggregationConfig
      * @param sampleSize
+     * @param entrySize
+     * @param keyFieldName
      */
     explicit RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                            size_t sampleSize, const std::string& keyFieldName);
+                                            size_t sampleSize, uint64_t entrySize);
 
     /**
      * @brief Initializes the sample by calling the setup method of the operator handler
@@ -90,8 +92,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
     multiplyWithScalingFactor(Nautilus::Value<> approximatedValue, Nautilus::Value<Nautilus::Double> scalingFactor);
 
     const size_t sampleSize;
-    const size_t recordSize;
-    const std::string keyFieldName;
+    const size_t entrySize;
 };
 } // namespace NES::ASP
 

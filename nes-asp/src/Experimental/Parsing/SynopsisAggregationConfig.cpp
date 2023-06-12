@@ -81,7 +81,9 @@ SynopsisAggregationConfig::createAggregationFromYamlNode(Yaml::Node& aggregation
     auto timeStampFieldName = aggregationNode["timestamp"].As<std::string>();
 
     auto inputSchema = Benchmarking::inputFileSchemas[inputFile.filename()];
-    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema, fieldNameAggregation);
+    auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(type, *inputSchema,
+                                                                            fieldNameKey, fieldNameAggregation,
+                                                                            fieldNameKey, fieldNameApprox);
 
     NES_ASSERT(inputSchema->get(timeStampFieldName)->getDataType()->isEquals(DataTypeFactory::createUInt64()),
                "The timestamp has to be a UINT64!");
