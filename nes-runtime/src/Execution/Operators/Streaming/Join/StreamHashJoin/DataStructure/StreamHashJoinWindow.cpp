@@ -51,12 +51,13 @@ StreamHashJoinWindow::StreamHashJoinWindow(size_t numberOfWorker,
                                            size_t sizeOfRecordRight,
                                            uint64_t windowStart,
                                            uint64_t windowEnd,
+                                           size_t maxHashTableSize,
                                            size_t pageSize,
                                            size_t preAllocPageSizeCnt,
                                            size_t numPartitions)
     : StreamWindow(windowStart, windowEnd), numberOfWorker(numberOfWorker),
       leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
-      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(preAllocPageSizeCnt),
+      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       partitionFinishedCounter(numPartitions) {
 
     for (auto i = 0UL; i < numberOfWorker; ++i) {

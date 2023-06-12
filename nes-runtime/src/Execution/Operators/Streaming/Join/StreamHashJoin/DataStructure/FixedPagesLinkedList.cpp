@@ -43,6 +43,7 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
                                            size_t preAllocPageSizeCnt)
     : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
 
+    //pre allocate pages
     for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));

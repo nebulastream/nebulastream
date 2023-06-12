@@ -12,13 +12,10 @@
     limitations under the License.
 */
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+
 
 namespace NES::QueryCompilation {
-static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 16;
-static constexpr auto DEFAULT_HASH_PAGE_SIZE = 128;
-static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 16;
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 1024 * 1024 * 1024;
-
 QueryCompilerOptions::OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const {
     return outputBufferOptimizationLevel;
 };
@@ -44,10 +41,10 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setNautilusBackend(NautilusBackend::MLIR_COMPILER);
 
     QueryCompilerOptions::StreamHashJoinOptionsPtr hashOptions = std::make_shared<QueryCompilerOptions::StreamHashJoinOptions>();
-    hashOptions->setNumberOfPartitions(DEFAULT_HASH_NUM_PARTITIONS);
-    hashOptions->setPageSize(DEFAULT_HASH_PAGE_SIZE);
-    hashOptions->setPreAllocPageCnt(DEFAULT_HASH_PREALLOC_PAGE_COUNT);
-    hashOptions->setTotalSizeForDataStructures(DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
+    hashOptions->setNumberOfPartitions(NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
+    hashOptions->setPageSize(NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE);
+    hashOptions->setPreAllocPageCnt(NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
+    hashOptions->setTotalSizeForDataStructures(NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
 
     options.setHashJoinOptions(hashOptions);
     return std::make_shared<QueryCompilerOptions>(options);

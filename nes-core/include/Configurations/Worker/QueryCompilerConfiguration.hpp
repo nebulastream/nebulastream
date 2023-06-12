@@ -17,6 +17,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -103,10 +104,14 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      * */
     BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
 
-    UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG, 1, "Partitions in the hash table"};
-    UIntOption pageSize = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG, 4096, "Page size of hash table"};
+    UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
+                                     NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
+                                     "Partitions in the hash table"};
+    UIntOption pageSize = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG,
+                           NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
+                           "Page size of hash table"};
     UIntOption preAllocPageCnt = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
-                                  1,
+                                  NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
                                   "Page cnt of pre allocated pages in each bucket hash table"};
 
   private:

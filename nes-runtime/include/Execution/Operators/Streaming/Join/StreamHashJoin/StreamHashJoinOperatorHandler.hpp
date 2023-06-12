@@ -89,10 +89,10 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                                                    const std::string& joinFieldNameRight,
                                                    const std::vector<OriginId>& origins,
                                                    size_t windowSize,
-                                                   size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
-                                                   size_t pageSize = PAGE_SIZE,
-                                                   size_t preAllocPageSizeCnt = NUM_PREALLOC_PAGES,
-                                                   size_t numPartitions = NUM_PARTITIONS);
+                                                   size_t totalSizeForDataStructures,
+                                                   size_t pageSize,
+                                                   size_t preAllocPageSizeCnt,
+                                                   size_t numPartitions);
 
     /**
      * @brief Starts the operator handler

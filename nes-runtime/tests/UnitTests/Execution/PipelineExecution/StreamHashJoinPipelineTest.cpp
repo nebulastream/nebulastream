@@ -301,7 +301,11 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
                                                                               joinFieldNameLeft,
                                                                               joinFieldNameRight,
                                                                               std::vector<::OriginId>({1}),
-                                                                              windowSize);
+                                                                              windowSize,
+                                                                              NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                                                              NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
+                                                                              NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+                                                                              NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);

@@ -39,6 +39,7 @@ class StreamHashJoinWindow : public StreamWindow {
      * @param sizeOfRecordRight
      * @param windowStart
      * @param windowEnd
+     * @param maxHashTableSize
      * @param pageSize
      * @param preAllocPageSizeCnt
      * @param numPartitions
@@ -48,6 +49,7 @@ class StreamHashJoinWindow : public StreamWindow {
                                   size_t sizeOfRecordRight,
                                   uint64_t windowStart,
                                   uint64_t windowEnd,
+                                  size_t maxHashTableSize,
                                   size_t pageSize,
                                   size_t preAllocPageSizeCnt,
                                   size_t numPartitions);

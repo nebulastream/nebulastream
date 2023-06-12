@@ -15,8 +15,6 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/DataStructure/NLJWindow.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/StreamHashJoinWindow.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
@@ -44,6 +42,7 @@ std::optional<StreamWindowPtr> StreamJoinOperatorHandler::createNewWindow(uint64
                                                                     joinSchemaRight->getSchemaSizeInBytes(),
                                                                     windowStart,
                                                                     windowEnd,
+                                                                    ptr->getTotalSizeForDataStructures(),
                                                                     ptr->getPageSize(),
                                                                     ptr->getPreAllocPageSizeCnt(),
                                                                     ptr->getNumPartitions()));

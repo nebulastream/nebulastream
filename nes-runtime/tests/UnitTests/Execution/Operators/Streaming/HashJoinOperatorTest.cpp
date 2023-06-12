@@ -16,6 +16,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
@@ -28,10 +29,9 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -87,8 +87,8 @@ struct HashJoinBuildHelper {
                         const std::string& timeStampField,
                         HashJoinOperatorTest* hashJoinOperatorTest,
                         bool isLeftSide)
-        : pageSize(PAGE_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
-          noWorkerThreads(1), totalNumSources(2), joinSizeInByte(1 * 1024 * 1024), windowSize(1000), hashJoinBuild(hashJoinBuild),
+        : pageSize(131072), numPartitions(1), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128), noWorkerThreads(1),
+          totalNumSources(2), joinSizeInByte(1 * 1024 * 1024), windowSize(1000), hashJoinBuild(hashJoinBuild),
           joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema), timeStampField(timeStampField),
           hashJoinOperatorTest(hashJoinOperatorTest), isLeftSide(isLeftSide) {}
 };
@@ -104,7 +104,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
                                                                               buildHelper.windowSize,
                                                                               buildHelper.joinSizeInByte,
                                                                               buildHelper.pageSize,
-                                                                              NUM_PREALLOC_PAGES,
+                                                                              1,
                                                                               buildHelper.numPartitions);
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
@@ -189,7 +189,7 @@ struct HashJoinSinkHelper {
                        SchemaPtr rightSchema,
                        const std::string& timeStampField,
                        HashJoinOperatorTest* hashJoinOperatorTest)
-        : pageSize(PAGE_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
+        : pageSize(131072), numPartitions(1), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
           noWorkerThreads(1), numSourcesLeft(1), numSourcesRight(1), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
           joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager),
           leftSchema(leftSchema), rightSchema(rightSchema), timeStampField(timeStampField),
@@ -243,7 +243,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                                                               hashJoinSinkHelper.windowSize,
                                                                               hashJoinSinkHelper.joinSizeInByte,
                                                                               hashJoinSinkHelper.pageSize,
-                                                                              NUM_PREALLOC_PAGES,
+                                                                              1,
                                                                               hashJoinSinkHelper.numPartitions);
 
     auto hashJoinOperatorTest = hashJoinSinkHelper.hashJoinOperatorTest;
