@@ -86,15 +86,15 @@ SignatureContainmentUtil::checkContainmentRelationshipFromTopToBottom(const Logi
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    auto otherConditions = leftOperator->getZ3Signature()->getConditions();
-    auto conditions = rightOperator->getZ3Signature()->getConditions();
-    NES_TRACE("Left signature: {}", conditions->to_string());
-    NES_TRACE("Right signature: {}", otherConditions->to_string());
-    if (!conditions || !otherConditions) {
-        NES_WARNING("Can't obtain containment relationships for null signatures");
-        return {};
-    }
     try {
+        auto otherConditions = leftOperator->getZ3Signature()->getConditions();
+        auto conditions = rightOperator->getZ3Signature()->getConditions();
+        NES_TRACE("Left signature: {}", conditions->to_string());
+        NES_TRACE("Right signature: {}", otherConditions->to_string());
+        if (!conditions || !otherConditions) {
+            NES_WARNING("Can't obtain containment relationships for null signatures");
+            return {};
+        }
         // In the following, we
         // First check for WindowContainment
         // In case of window equality, we continue to check for projection containment
@@ -407,6 +407,7 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
                 return containmentOperators;
             }
         }
+        return containmentOperators;
     }
     return containmentOperators;
 }

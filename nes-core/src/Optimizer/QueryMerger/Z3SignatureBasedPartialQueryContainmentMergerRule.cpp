@@ -245,21 +245,28 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
+    for (const auto& item : globalQueryPlan->getAllSharedQueryPlans()) {
+        NES_DEBUG2("Shared Query Plans after merging: {}", item->getQueryPlan()->toString());
+    }
     //Remove all empty shared query metadata
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
+//todo: this algorithm needs to be changed for if left sig is contained, because we are loosing upstream operators
 void Z3SignatureBasedPartialQueryContainmentMergerRule::addContainmentOperatorChain(
     SharedQueryPlanPtr& containerQueryPlan,
     const OperatorNodePtr& containerOperator,
     const OperatorNodePtr& containedOperator,
     const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const {
+
     auto downstreamOperator = containedOperatorChain.front();
     auto upstreamContainedOperator = containedOperatorChain.back();
+    NES_TRACE2("ContainerQueryPlan: {}", containerQueryPlan->getQueryPlan()->toString());
     NES_TRACE2("ContainerOperator: {}", containerOperator->toString());
     NES_TRACE2("DownstreamOperator: {}", downstreamOperator->toString());
     NES_TRACE2("ContainedOperator: {}", containedOperator->toString());
+    NES_TRACE2("upstreamContainedOperator: {}", upstreamContainedOperator->toString());
     if (!containedOperator->equal(downstreamOperator)) {
         downstreamOperator->removeAllParent();
         if (containedOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
