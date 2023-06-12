@@ -59,7 +59,7 @@ class TopologyManagerService {
      * @param workerProperties: Additional properties of worker
      * @return unique identifier of the worker
      */
-    uint64_t registerWorker(TopologyNodeId workerId,
+    TopologyNodeId registerWorker(TopologyNodeId workerId,
                             const std::string& address,
                             int64_t grpcPort,
                             int64_t dataPort,
@@ -117,7 +117,7 @@ class TopologyManagerService {
      * @param nodeId
      * @return TopologyNodePtr (or a nullptr if there is no node with this id)
      */
-    TopologyNodePtr findNodeWithId(uint64_t nodeId);
+    TopologyNodePtr findNodeWithId(TopologyNodeId nodeId);
 
     /**
      * Experimental

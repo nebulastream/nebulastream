@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <thread>
 #include <set>
+#include <Common/Identifiers.hpp>
 
 namespace NES {
 

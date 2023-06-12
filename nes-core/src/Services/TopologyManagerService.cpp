@@ -40,7 +40,7 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
     this->healthCheckService = healthCheckService;
 }
 
-uint64_t TopologyManagerService::registerWorker(const TopologyNodeId workerId,
+TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
                                                 const std::string& address,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
@@ -52,7 +52,7 @@ uint64_t TopologyManagerService::registerWorker(const TopologyNodeId workerId,
     NES_DEBUG2("TopologyManagerService::registerWorker: topology before insert");
     NES_DEBUG2("", topology->toString());
 
-    uint64_t id;
+    TopologyNodeId id;
 
     // if worker is started with a workerId
     if (workerId != INVALID_TOPOLOGY_NODE_ID) {
