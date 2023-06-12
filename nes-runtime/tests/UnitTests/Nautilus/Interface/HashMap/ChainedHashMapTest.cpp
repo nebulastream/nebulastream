@@ -39,7 +39,7 @@ class ChainedHashMapTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HashTest test class.");
+        NES_INFO2("Setup HashTest test class.");
     }
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
@@ -47,7 +47,7 @@ class ChainedHashMapTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down HashTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down HashTest test class."); }
 };
 
 TEST_F(ChainedHashMapTest, insertEntryTableTest) {
@@ -64,7 +64,7 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest) {
 
     // findOrCreate entry
     auto hash = hf->calculate(f1);
-    NES_INFO("Hash: " << hash);
+    NES_INFO2("Hash: {}", hash);
     hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
     auto res2 = hashMapRef.findOne(hash, {f1});

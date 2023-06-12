@@ -205,7 +205,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
                                                                ValueFrame& frame,
                                                                NES::Nautilus::IR::BasicBlockPtr& block,
                                                                TraceOperation& operation) {
-    NES_DEBUG("current block " << block->getIdentifier() << " " << operation);
+    NES_DEBUG2("current block {} {}", block->getIdentifier(), operation);
     auto blockRef = get<BlockRef>(operation.input[0]);
     NES::Nautilus::IR::Operations::BasicBlockInvocation blockInvocation;
     createBlockArguments(frame, blockInvocation, blockRef);
@@ -224,7 +224,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
 #ifdef USE_BABELFISH
         if (isBlockInLoop(targetBlock.blockId, BasicType::UINT32_MAX)) {
-            NES_DEBUG("1. found loop");
+            NES_DEBUG2("1. found loop");
             auto loopOperator = std::make_shared<NES::Nautilus::IR::Operations::LoopOperation>(
                 NES::Nautilus::IR::Operations::LoopOperation::LoopType::ForLoop);
             loopOperator->setLoopInfo(std::make_shared<NES::Nautilus::IR::Operations::DefaultLoopInfo>());
@@ -258,9 +258,9 @@ void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
     auto falseCaseBlockRef = get<BlockRef>(operation.input[1]);
 
     //  if (isBlockInLoop(scope, currentBlock.blockId, trueCaseBlockRef.block)) {
-    //     NES_DEBUG("1. found loop");
+    //     NES_DEBUG2("1. found loop");
     //} else if (isBlockInLoop(scope, currentBlock.blockId, falseCaseBlockRef.block)) {
-    //    NES_DEBUG("2. found loop");
+    //    NES_DEBUG2("2. found loop");
     //} else {
     auto booleanValue = frame.getValue(createValueIdentifier(valueRef));
     auto ifOperation = std::make_shared<NES::Nautilus::IR::Operations::IfOperation>(booleanValue);

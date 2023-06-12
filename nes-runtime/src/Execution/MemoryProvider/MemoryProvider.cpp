@@ -79,7 +79,7 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
                 return variableSizeBuffer;
             };
             default: {
-                NES_ERROR("MemoryProvider::load: Physical Type: " << type << " is currently not supported");
+                NES_ERROR2("MemoryProvider::load: Physical Type: {} is currently not supported", type);
                 NES_NOT_IMPLEMENTED();
             };
         }

@@ -91,14 +91,14 @@ class YSBTest : public Testing::NESBaseTest,
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryExecutionTest test class.");
+        NES_INFO2("Setup QueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO("Setup Query6Test test case." << compiler);
+        NES_INFO2("Setup Query6Test test case.{}", compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -123,10 +123,10 @@ class YSBTest : public Testing::NESBaseTest,
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
+    void TearDown() override { NES_INFO2("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down QueryExecutionTest test class."); }
 };
 
 SchemaPtr getSchema() {
@@ -226,11 +226,10 @@ TEST_P(YSBTest, ysbSelectionCampain) {
     timer.snapshot("Execute");
     timer.pause();
 
-    NES_INFO(timer);
+    NES_INFO2("{}", timer);
     auto processedTuples = data.size() * memoryLayout->getCapacity() * 100;
     double recordsPerMs = (double) processedTuples / timer.getPrintTime();
-    NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
-                                << " Throughput: " << (recordsPerMs * 1000));
+    NES_INFO2("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
 }
 
 TEST_P(YSBTest, ysbTumblingWindow) {
@@ -291,12 +290,11 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     timer.snapshot("Execute");
     timer.pause();
 
-    NES_INFO(timer);
+    NES_INFO2("{}", timer);
 
     auto processedTuples = data.size() * memoryLayout->getCapacity() * 100;
     double recordsPerMs = (double) processedTuples / timer.getPrintTime();
-    NES_INFO("ProcessedTuple: " << processedTuples << " recordsPerMs: " << recordsPerMs
-                                << " Throughput: " << (recordsPerMs * 1000));
+    NES_INFO2("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
 
     ASSERT_EQ(sliceStore->getSlices().size(), 1);
 

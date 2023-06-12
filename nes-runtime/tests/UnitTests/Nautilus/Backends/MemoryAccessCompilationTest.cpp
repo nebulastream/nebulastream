@@ -30,11 +30,11 @@ class MemoryAccessCompilationTest : public Testing::NESBaseTest, public Abstract
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemoryAccessCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup MemoryAccessCompilationTest test class.");
+        NES_DEBUG2("Setup MemoryAccessCompilationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down MemoryAccessCompilationTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("Tear down MemoryAccessCompilationTest test class."); }
 };
 
 Value<> loadFunction(Value<MemRef> ptr) { return ptr.load<Int64>(); }

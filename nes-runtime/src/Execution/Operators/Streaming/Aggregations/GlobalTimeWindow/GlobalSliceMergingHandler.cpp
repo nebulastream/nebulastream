@@ -36,12 +36,12 @@ void GlobalSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionConte
 }
 
 void GlobalSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG("start GlobalSliceMergingHandler");
+    NES_DEBUG2("start GlobalSliceMergingHandler");
 }
 
 void GlobalSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                      Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop GlobalSliceMergingHandler: " << queryTerminationType);
+    NES_DEBUG2("stop GlobalSliceMergingHandler: {}", queryTerminationType);
 }
 
 GlobalSlicePtr GlobalSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
@@ -49,7 +49,7 @@ GlobalSlicePtr GlobalSliceMergingHandler::createGlobalSlice(SliceMergeTask* slic
 }
 const State* GlobalSliceMergingHandler::getDefaultState() const { return defaultState.get(); }
 
-GlobalSliceMergingHandler::~GlobalSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
+GlobalSliceMergingHandler::~GlobalSliceMergingHandler() { NES_DEBUG2("Destruct SliceStagingWindowHandler"); }
 std::weak_ptr<GlobalSliceStaging> GlobalSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Runtime::Execution::Operators

@@ -43,24 +43,24 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HashJoinOperatorTest test class.");
+        NES_INFO2("Setup HashJoinOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO("Setup HashJoinOperatorTest test case.");
+        NES_INFO2("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        NES_INFO("Tear down HashJoinOperatorTest test case.");
+        NES_INFO2("Tear down HashJoinOperatorTest test case.");
         NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down HashJoinOperatorTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down HashJoinOperatorTest test class."); }
 };
 
 struct HashJoinBuildHelper {
@@ -159,7 +159,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
 
         if (!correctlyInserted) {
             auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
-            NES_ERROR("Could not find record " << Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema) << " in bucket!");
+            NES_ERROR2("Could not find record {} in bucket!", Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema));
             return false;
         }
     }
@@ -202,16 +202,15 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
                                  uint64_t& removedBuffer) {
 
     bool foundBuffer = false;
-    NES_TRACE("NLJ buffer = " << Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
+    NES_TRACE2("NLJ buffer = {}", Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
 
     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
-        NES_TRACE("Comparing versus " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
+        NES_TRACE2("Comparing versus {}", Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
         if (memcmp(tupleBufferIt->getBuffer(),
                    expectedBuffer.getBuffer(),
                    joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples())
             == 0) {
-            NES_TRACE("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema)
-                                          << " of size " << joinSchema->getSchemaSizeInBytes());
+            NES_TRACE2("Removing buffer #{} {} of size {}", removedBuffer, Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema), joinSchema->getSchemaSizeInBytes());
             emittedBuffers.erase(tupleBufferIt);
             foundBuffer = true;
             removedBuffer += 1;
@@ -224,11 +223,11 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
 bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
     if (!hashJoinSinkHelper.leftSchema->contains(hashJoinSinkHelper.joinFieldNameLeft)) {
-        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameLeft << " is not in leftSchema!");
+        NES_ERROR2("JoinFieldNameLeft {} is not in leftSchema!", hashJoinSinkHelper.joinFieldNameLeft);
         return false;
     }
     if (!hashJoinSinkHelper.rightSchema->contains(hashJoinSinkHelper.joinFieldNameRight)) {
-        NES_ERROR("JoinFieldNameLeft " << hashJoinSinkHelper.joinFieldNameRight << " is not in leftSchema!");
+        NES_ERROR2("JoinFieldNameLeft {} is not in leftSchema!", hashJoinSinkHelper.joinFieldNameRight);
         return false;
     }
 
@@ -466,9 +465,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                             checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
 
                         if (!foundBuffer) {
-                            NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema)
-                                                               << " in emittedBuffers!");
-                            //                            return false;
+                            NES_ERROR2("Could not find buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
+                            //return false;
                         } else {
                             NES_WARNING("Found buffer buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema)
                                                                << " in emittedBuffers!");
@@ -489,7 +487,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                                                                hashJoinSinkHelper.bufferManager);
             bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
             if (!foundBuffer) {
-                NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema) << " in emittedBuffers!");
+                NES_ERROR2("Could not find buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
                 return false;
             }
         }
@@ -497,7 +495,7 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
 
     // Make sure that after we have joined all records together no more buffer exist
     if (sortedEmittedBuffers.size() > 0) {
-        NES_ERROR("Have not removed all buffers. So some tuples have not been joined together!");
+        NES_ERROR2("Have not removed all buffers. So some tuples have not been joined together!");
         return false;
     }
 
@@ -511,7 +509,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
                           << callStack;
 
-        NES_FATAL_ERROR(fatalErrorMessage.str());
+        NES_FATAL_ERROR2("{}", fatalErrorMessage.str());
         std::cerr << fatalErrorMessage.str() << std::endl;
     }
 
@@ -519,7 +517,7 @@ class TestRunner : public NES::Exceptions::ErrorListener {
         std::ostringstream fatalExceptionMessage;
         fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
 
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
+        NES_FATAL_ERROR2("{}", fatalExceptionMessage.str());
         std::cerr << fatalExceptionMessage.str() << std::endl;
     }
 };

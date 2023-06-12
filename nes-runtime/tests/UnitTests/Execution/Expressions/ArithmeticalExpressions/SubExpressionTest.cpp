@@ -25,11 +25,11 @@ class SubExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SubExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SubExpressionTest test class.");
+        NES_INFO2("Setup SubExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SubExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down SubExpressionTest test class."); }
 };
 
 TEST_F(SubExpressionTest, subIntegers) {

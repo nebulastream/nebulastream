@@ -26,11 +26,11 @@ class FactorialExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FactorialExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FactorialExpressionTest test class.");
+        NES_INFO2("Setup FactorialExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down FactorialExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down FactorialExpressionTest test class."); }
 };
 
 TEST_F(FactorialExpressionTest, factorialIntegers) {

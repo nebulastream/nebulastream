@@ -29,17 +29,17 @@ class SearchingRegexTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SearchingRegexTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SearchingRegexTest test class.");
+        NES_INFO2("Setup SearchingRegexTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG("Setup SearchingRegexTest test case.")
+        NES_DEBUG2("Setup SearchingRegexTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SearchingRegexTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down SearchingRegexTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };

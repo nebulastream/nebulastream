@@ -32,7 +32,7 @@ class MultiOriginWatermarkProcessorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultiOriginWatermarkProcessorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup MultiOriginWatermarkProcessorTest test class.");
+        NES_DEBUG2("Setup MultiOriginWatermarkProcessorTest test class.");
     }
 };
 

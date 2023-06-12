@@ -26,11 +26,11 @@ class TruncExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TruncExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TruncExpressionTest test class.");
+        NES_INFO2("Setup TruncExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TruncExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down TruncExpressionTest test class."); }
 };
 
 TEST_F(TruncExpressionTest, evaluateTruncExpressionInteger) {

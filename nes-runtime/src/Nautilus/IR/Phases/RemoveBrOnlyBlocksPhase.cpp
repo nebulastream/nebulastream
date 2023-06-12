@@ -37,7 +37,7 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     addPredecessors(rootOperation->getFunctionBasicBlock());
     removeBrOnlyBlocks(rootOperation->getFunctionBasicBlock());
-    NES_DEBUG(ir->toString());
+    NES_DEBUG2("{}", ir->toString());
 }
 
 void inline addPredecessorToBlock(IR::BasicBlockPtr currentBlock,
@@ -120,8 +120,8 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, const
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
                 branchOp->getNextBlockInvocation().setBlock(nonBrOnlyBlock);
             } else {
-                NES_ERROR("RemoveBrOnlyBlocksPhase::updateTerminatorOperation: Case not implemented: "
-                          << magic_enum::enum_name(terminatorOp->getOperationType()));
+                NES_ERROR2("RemoveBrOnlyBlocksPhase::updateTerminatorOperation: Case not implemented: {}",
+                          magic_enum::enum_name(terminatorOp->getOperationType()));
                 NES_NOT_IMPLEMENTED();
             }
         }

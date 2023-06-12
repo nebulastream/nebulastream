@@ -42,13 +42,13 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ScanEmitPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ScanEmitPipelineTest test class.");
+        NES_INFO2("Setup ScanEmitPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup ScanEmitPipelineTest test case.");
+        NES_INFO2("Setup ScanEmitPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -60,7 +60,7 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ScanEmitPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down ScanEmitPipelineTest test class."); }
 };
 
 /**

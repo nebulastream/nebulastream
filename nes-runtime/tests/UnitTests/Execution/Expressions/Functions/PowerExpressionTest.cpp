@@ -26,11 +26,11 @@ class PowerExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PowerExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup PowerExpressionTest test class.");
+        NES_INFO2("Setup PowerExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down PowerExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down PowerExpressionTest test class."); }
 };
 
 TEST_F(PowerExpressionTest, evaluatePowerExpressionInteger) {

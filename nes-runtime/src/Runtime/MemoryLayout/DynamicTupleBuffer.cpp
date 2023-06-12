@@ -112,8 +112,7 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
         auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
         physicalSizes.push_back(physicalType->size());
         types.push_back(physicalType);
-        NES_TRACE("DynamicTupleBuffer: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
-                  + std::to_string(physicalType->size()));
+        NES_TRACE2("DynamicTupleBuffer: {} {} {} {}", std::string("Field Size "), schema->get(i)->toString(), std::string(": "), std::to_string(physicalType->size()));
     }
 
     str << "+----------------------------------------------------+" << std::endl;

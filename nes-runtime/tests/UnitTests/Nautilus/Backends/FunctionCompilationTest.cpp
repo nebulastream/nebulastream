@@ -31,11 +31,11 @@ class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractComp
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FunctionCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup FunctionCompilationTest test class.");
+        NES_DEBUG2("Setup FunctionCompilationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down TraceTest test class."); }
 };
 
 int64_t addInt(int64_t x, int64_t y) { return x + y; };

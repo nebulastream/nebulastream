@@ -45,7 +45,7 @@ uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) con
                                     + " is larger the maximal capacity in the memory layout " + std::to_string(getCapacity()));
     }
     auto offSet = (tupleIndex * recordSize) + fieldOffSets[fieldIndex];
-    NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
+    NES_TRACE2("DynamicRowLayoutBuffer.calcOffset: offSet = {}", offSet);
     return offSet;
 }
 

@@ -88,7 +88,7 @@ void nesCxaThrowHook(void* ex, std::type_info* info, void (**deleter)(void*)) no
         const auto* exceptionName = const_cast<const char*>(realExceptionName.get());
         if (strcmp(zmqErrorType, exceptionName) != 0) {
             auto stacktrace = NES::collectAndPrintStacktrace();
-            NES_ERROR("Exception caught: " << exceptionName << " with stacktrace: " << stacktrace);
+            NES_ERROR2("Exception caught: {} with stacktrace: {}" <<exceptionName, stacktrace);
         }
     }
     //Ventura: do not invoke error handlers here, as we let the exception to be intercepted in some catch block

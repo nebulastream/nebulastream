@@ -89,14 +89,14 @@ class Query1Test : public Testing::NESBaseTest,
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryExecutionTest test class.");
+        NES_INFO2("Setup QueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO("Setup Query6Test test case." << compiler);
+        NES_INFO2("Setup Query6Test test case.{}", compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -121,10 +121,10 @@ class Query1Test : public Testing::NESBaseTest,
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
+    void TearDown() override { NES_INFO2("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down QueryExecutionTest test class."); }
 };
 
 TEST_P(Query1Test, tpchQ1) {
@@ -225,7 +225,7 @@ TEST_P(Query1Test, tpchQ1) {
     executablePipeline->execute(*runtimeWorkerContext, buffer);
     timer.snapshot("Execute");
     timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
+    NES_INFO2("QueryExecutionTime: {}", timer);
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GroupedAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto currentSize = globalState->threadLocalAggregationSlots[0].get()->numberOfEntries();
@@ -247,15 +247,15 @@ TEST_P(Query1Test, tpchQ1) {
 
     auto entries = entryBuffer[0].getBuffer<REntry>();
     for (auto i = 0; i < 4; i++) {
-        NES_DEBUG("K1 " << entries[i].k1);
-        NES_DEBUG("K2 " << entries[i].k2);
-        NES_DEBUG("ag1 " << entries[i].ag1.sum);
-        NES_DEBUG("ag2 " << entries[i].ag2.sum);
-        NES_DEBUG("ag3 " << entries[i].ag3.sum);
-        NES_DEBUG("ag4 " << entries[i].ag4.sum);
-        NES_DEBUG("ag8 " << entries[i].ag8.count);
-        NES_DEBUG("\n");
-        NES_DEBUG("\n");
+        NES_DEBUG2("K1 {}", entries[i].k1);
+        NES_DEBUG2("K2 {}", entries[i].k2);
+        NES_DEBUG2("ag1 {}", entries[i].ag1.sum);
+        NES_DEBUG2("ag2 {}", entries[i].ag2.sum);
+        NES_DEBUG2("ag3 {}", entries[i].ag3.sum);
+        NES_DEBUG2("ag4 {}", entries[i].ag4.sum);
+        NES_DEBUG2("ag8 {}", entries[i].ag8.count);
+        NES_DEBUG2("\n");
+        NES_DEBUG2("\n");
     }
 
     //ASSERT_EQ(entries[0].ag1, 37719753);

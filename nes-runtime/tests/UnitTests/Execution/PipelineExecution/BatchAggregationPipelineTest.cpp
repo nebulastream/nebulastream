@@ -57,13 +57,13 @@ class BatchAggregationPipelineTest : public Testing::NESBaseTest, public Abstrac
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BatchAggregationPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup BatchAggregationPipelineTest test class.");
+        NES_INFO2("Setup BatchAggregationPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup BatchAggregationPipelineTest test case.");
+        NES_INFO2("Setup BatchAggregationPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -73,7 +73,7 @@ class BatchAggregationPipelineTest : public Testing::NESBaseTest, public Abstrac
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BatchAggregationPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down BatchAggregationPipelineTest test class."); }
 };
 
 /**

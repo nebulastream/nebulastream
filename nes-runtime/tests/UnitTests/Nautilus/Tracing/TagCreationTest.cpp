@@ -28,19 +28,19 @@ class TagCreationTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TagCreationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TagCreationTest test class.");
+        NES_INFO2("Setup TagCreationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TagCreationTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down TagCreationTest test class."); }
 };
 
 TEST_F(TagCreationTest, tagCreation) {
     auto tr = TagRecorder::createTagRecorder();
     auto tag1 = tr.createTag();
-    NES_INFO(tag1);
+    NES_INFO2("{}", tag1);
     auto tag2 = tr.createTag();
-    NES_INFO(tag2);
+    NES_INFO2("{}", tag2);
     ASSERT_NE(tag1, tag2);
 }
 

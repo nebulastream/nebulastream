@@ -231,8 +231,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                                     inductionVar = compareOpConstants.first;
                                     upperBound = compareOpConstants.second;
                                 } else {
-                                    NES_DEBUG("Could not detect counted loop. The loop condition seems to "
-                                              << "lead to an infinite loop.");
+                                    NES_DEBUG2("Could not detect counted loop. The loop condition seems to lead to an infinite loop.");
                                     return;
                                 }
                             } else if (compareOp->getRightInput() == loopInductionVarArg) {
@@ -240,25 +239,21 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                                     inductionVar = compareOpConstants.second;
                                     upperBound = compareOpConstants.first;
                                 } else {
-                                    NES_DEBUG("Could not detect counted loop. The loop condition seems to "
-                                              << "lead to an infinite loop.");
+                                    NES_DEBUG2("Could not detect counted loop. The loop condition seems to lead to an infinite loop.");
                                     return;
                                 }
                             } else {
-                                NES_DEBUG("Could not detect counted loop. The loop induction variable is not part of "
-                                          << "the loop-header comparison operation.");
+                                NES_DEBUG2("Could not detect counted loop. The loop induction variable is not part of the loop-header comparison operation.");
                                 return;
                             }
                         } else {
-                            NES_DEBUG("Could not detect counted loop. Either the loop induction variable or the loop "
-                                      << "stop variable could not be detected.");
+                            NES_DEBUG2("Could not detect counted loop. Either the loop induction variable or the loop stop variable could not be detected.");
                             return;
                         }
                         // Get the stepSize from the loopEndBlock.
                         std::shared_ptr<Operations::ConstIntOperation> stepSize = getStepSize(priorBlock, countOp);
                         if (!stepSize) {
-                            NES_DEBUG("Could not detect counted loop. The loop induction and/or the stepSize is/are "
-                                      << "manipulated prior to the loopEndBlock.");
+                            NES_DEBUG2("Could not detect counted loop. The loop induction and/or the stepSize is/are manipulated prior to the loopEndBlock.");
                             return;
                         }
                         // Finally, we check whether the relation between the loop-induction-variable and the upperBound
@@ -269,25 +264,25 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                             countedLoopInfo->stepSize = stepSize->getValue();
                             countedLoopInfo->upperBound = upperBound->getValue() + comparisonContainsEqual;
                         } else {
-                            NES_DEBUG("Could not detect a counted loop. Reason 1: UpperBound == LowerBound, Reason 2: "
-                                      << "Found increasing loop (loop induction variable > loop stop variable), but "
-                                      << "the step size is negative.");
+                            NES_DEBUG2("Could not detect a counted loop. Reason 1: UpperBound == LowerBound, Reason 2: "
+                                      "Found increasing loop (loop induction variable > loop stop variable), but "
+                                      "the step size is negative.");
                             return;
                         }
                         // countedLoopInfo->loopEndBlock = std::move(priorBlock);
                         loopOp->setLoopType(Operations::LoopOperation::LoopType::CountedLoop);
                         loopOp->setLoopInfo(std::move(countedLoopInfo));
                     } else {
-                        NES_DEBUG("Could not detect counted loop. Possible reasons: \n"
-                                  << "1. The count-operation is not an addition operation.\n"
-                                  << "2. The loop-header comparison uses floating point types.\n"
-                                  << "3. The loop-end-block does not use a branch-operation to loop back\n"
-                                  << "4. The result of the count-operation is not an argument of the loop-header.\n"
-                                  << "5. The compare operation uses an equal comparator, which we do not support.\n");
+                        NES_DEBUG2("Could not detect counted loop. Possible reasons: \n"
+                                  "1. The count-operation is not an addition operation.\n"
+                                  "2. The loop-header comparison uses floating point types.\n"
+                                  "3. The loop-end-block does not use a branch-operation to loop back\n"
+                                  "4. The result of the count-operation is not an argument of the loop-header.\n"
+                                  "5. The compare operation uses an equal comparator, which we do not support.\n");
                     }
                 } else {
                     // loop-header does not use a comparison operation for boolean value.
-                    NES_DEBUG("Loop header without comparison operation not supported. This currently includes '!='");
+                    NES_DEBUG2("Loop header without comparison operation not supported. This currently includes '!='");
                 }
             }
         }

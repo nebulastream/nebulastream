@@ -45,11 +45,11 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchem
 }
 
 void StreamHashJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG("start HashJoinOperatorHandler");
+    NES_DEBUG2("start HashJoinOperatorHandler");
 }
 
 void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_DEBUG("stop HashJoinOperatorHandler");
+    NES_DEBUG2("stop HashJoinOperatorHandler");
 }
 
 void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,

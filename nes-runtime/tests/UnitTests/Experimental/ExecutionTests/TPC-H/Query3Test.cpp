@@ -89,14 +89,14 @@ class Query3Test : public Testing::NESBaseTest,
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryExecutionTest test class.");
+        NES_INFO2("Setup QueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO("Setup Query6Test test case." << compiler);
+        NES_INFO2("Setup Query6Test test case.{}", compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -121,10 +121,10 @@ class Query3Test : public Testing::NESBaseTest,
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
+    void TearDown() override { NES_INFO2("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down QueryExecutionTest test class."); }
 };
 
 TEST_P(Query3Test, tpchQ3) {
@@ -281,7 +281,7 @@ TEST_P(Query3Test, tpchQ3) {
         executablePipeline3->execute(*runtimeWorkerContext, buffer3);
         timer.snapshot("Execute Warmup");
         timer.pause();
-        NES_INFO("QueryExecutionTime Warmup: " << timer);
+        NES_INFO2("QueryExecutionTime Warmup: {}", timer);
         customersHashMap->clear();
         order_customersHashMap->clear();
         auto tag = *((int64_t*) aggregation.get());
@@ -322,8 +322,8 @@ TEST_P(Query3Test, tpchQ3) {
         EXPECT_EQ(currentSize, (int64_t) 11620);
     }
 
-    NES_INFO("QueryCompilationTime: " << compilationTimer);
-    NES_INFO("QueryExecutionTime: " << timer);
+    NES_INFO2("QueryCompilationTime: {}", compilationTimer);
+    NES_INFO2("QueryExecutionTime: {}", timer);
 }
 
 #ifdef USE_BABELFISH

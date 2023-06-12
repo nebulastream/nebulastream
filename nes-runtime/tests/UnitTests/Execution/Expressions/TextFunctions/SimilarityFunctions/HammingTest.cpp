@@ -29,17 +29,17 @@ class HammingTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HammingTestTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup HammingTestTest test class.");
+        NES_INFO2("Setup HammingTestTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG("Setup HammingTestTest test case.")
+        NES_DEBUG2("Setup HammingTestTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down HammingTestTest class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down HammingTestTest class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };

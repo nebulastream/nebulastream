@@ -25,11 +25,11 @@ class GreaterThanExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GreaterThanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup GreaterThanExpressionTest test class.");
+        NES_INFO2("Setup GreaterThanExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down GreaterThanExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down GreaterThanExpressionTest test class."); }
 };
 
 TEST_F(GreaterThanExpressionTest, signedIntegers) {

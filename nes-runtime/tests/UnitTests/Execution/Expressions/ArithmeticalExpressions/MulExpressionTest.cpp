@@ -26,11 +26,11 @@ class MulExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MulExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MulExpressionTest test class.");
+        NES_INFO2("Setup MulExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down MulExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down MulExpressionTest test class."); }
 };
 
 TEST_F(MulExpressionTest, mulIntegers) {

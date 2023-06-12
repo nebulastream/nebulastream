@@ -58,7 +58,7 @@ Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType
                 return fieldReference.load<Nautilus::Double>();
             };
             default: {
-                NES_ERROR("load for Physical Type: " << dataType << " is currently not supported");
+                NES_ERROR2("load for Physical Type: {} is currently not supported", dataType);
                 NES_NOT_IMPLEMENTED();
             };
         }
