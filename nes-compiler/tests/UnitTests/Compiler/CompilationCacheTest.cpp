@@ -32,13 +32,13 @@ class CompilationCacheTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CompilationCacheTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup CompilationCacheTest test class.");
+        NES_DEBUG2("Setup CompilationCacheTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG("Setup CompilationCacheTest test case.");
+        NES_DEBUG2("Setup CompilationCacheTest test case.");
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();
         compilerBuilder.registerLanguageCompiler(cppCompiler);

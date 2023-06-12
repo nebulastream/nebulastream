@@ -79,7 +79,7 @@ TEST_F(JITCompilerTest, compileCppCode) {
     auto mulFunction = compilationResult.getDynamicObject()->getInvocableMember<int (*)(int, int)>("_Z3mulii");
     auto mulRes = mulFunction(10, 10);
     ASSERT_EQ(mulRes, 100);
-    NES_DEBUG("CompilationTime:" << compilationResult.getCompilationTime());
+    NES_DEBUG2("CompilationTime:{}", compilationResult.getCompilationTime());
 }
 
 }// namespace NES::Compiler
