@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/Identifiers.hpp"
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -64,7 +65,7 @@ void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node)
 
 bool AbstractHealthCheckService::getRunning() { return isRunning; }
 
-bool AbstractHealthCheckService::isWorkerInactive(uint64_t workerId) {
+bool AbstractHealthCheckService::isWorkerInactive(TopologyNodeId workerId) {
     NES_DEBUG2("HealthCheckService: checking if node with id {} is inactive", workerId);
     std::lock_guard<std::mutex> lock(cvMutex);
     bool isNotActive = inactiveWorkers.contains(workerId);
@@ -76,7 +77,7 @@ bool AbstractHealthCheckService::isWorkerInactive(uint64_t workerId) {
     return false;
 }
 
-TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(uint64_t workerId) {
+TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(TopologyNodeId workerId) {
     return nodeIdToTopologyNodeMap.find(workerId);
 }
 

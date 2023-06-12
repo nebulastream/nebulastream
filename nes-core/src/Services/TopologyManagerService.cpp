@@ -40,7 +40,7 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
     this->healthCheckService = healthCheckService;
 }
 
-uint64_t TopologyManagerService::registerWorker(const uint64_t workerId,
+uint64_t TopologyManagerService::registerWorker(const TopologyNodeId workerId,
                                                 const std::string& address,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
