@@ -86,7 +86,14 @@ class BenchmarkRunner {
     }
     void run() {
         setup();
+
+        for (uint64_t i = 0; i < 5; i++) {
+            Timer compileTimeTimer("Warmup Compilation");
+            compileQuery(compileTimeTimer);
+            NES_INFO2("Run warmup {} compilation time {}", i, compileTimeTimer.getPrintTime());
+        }
         double sumCompilation = 0;
+
         for (uint64_t i = 0; i < bmOptions.compileIterations; i++) {
             Timer compileTimeTimer("Compilation");
             compileQuery(compileTimeTimer);
