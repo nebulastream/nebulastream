@@ -14,7 +14,9 @@
 
 #include <Experimental/Synopses/Sketches/CountMinOperatorHandler.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Nautilus/Interface/Hash/H3Hash.hpp>
 
+#include <random>
 namespace NES::ASP {
 
 void CountMinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
@@ -31,8 +33,14 @@ void CountMinOperatorHandler::setup(uint64_t entrySize, uint64_t numberOfRows, u
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     sketchArray = std::make_unique<Nautilus::Interface::Fixed2DArray>(*allocator, numberOfRows, numberOfCols, entrySize);
 
+    // Creating the h3Seeds
+    std::mt19937 gen(Nautilus::Interface::H3Hash::H3_SEED);
+    std::uniform_int_distribution<uint64_t> distribution;
+    auto numberOfBitsInKey = sizeof(uint64_t) * 8;
     for (auto row = 0UL; row < numberOfRows; ++row) {
-
+        for (auto col = 0UL; col < numberOfCols; ++col) {
+            h3Seeds.emplace_back(distribution(gen));
+        }
     }
 }
 
