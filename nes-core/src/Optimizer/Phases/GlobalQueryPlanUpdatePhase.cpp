@@ -55,7 +55,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(TopologyPtr topology,
         optimizerConfiguration.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
         || optimizerConfiguration.queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule
         || optimizerConfiguration.queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
-        || optimizerConfiguration.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
+        || optimizerConfiguration.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule
+        || optimizerConfiguration.queryMergerRule == QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule;
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     originIdInferencePhase = OriginIdInferencePhase::create();

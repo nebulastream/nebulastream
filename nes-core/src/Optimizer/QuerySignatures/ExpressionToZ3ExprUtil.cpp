@@ -54,15 +54,27 @@ ExpressionToZ3ExprUtil::createForExpression(const ExpressionNodePtr& expression,
         std::string fieldName = fieldAccessExpression->getFieldName();
         DataTypePtr fieldType = fieldAccessExpression->getStamp();
         //Indicate whether reordering for containment is possible
-        if (isMapExpression
-            && filterAttributesAndIsMapFunctionApplied.find(fieldName) != filterAttributesAndIsMapFunctionApplied.end()) {
-            filterAttributesAndIsMapFunctionApplied.find(fieldName)->second = true;
-        } else {
+        if (!isMapExpression
+            && filterAttributesAndIsMapFunctionApplied.find(fieldName) == filterAttributesAndIsMapFunctionApplied.end()) {
             filterAttributesAndIsMapFunctionApplied[fieldName] = false;
+        } else {
+            filterAttributesAndIsMapFunctionApplied[fieldName] = true;
+        }
+        for (const auto& item : filterAttributesAndIsMapFunctionApplied) {
+            NES_DEBUG2("Filter attribute {} and is map function applied {}", item.first, item.second);
         }
         return DataTypeToZ3ExprUtil::createForField(fieldName, fieldType, context);
     } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
         auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
+        if (!isMapExpression
+            && filterAttributesAndIsMapFunctionApplied.find(fieldAssignmentExpressionNode->getField()->getFieldName()) == filterAttributesAndIsMapFunctionApplied.end()) {
+            filterAttributesAndIsMapFunctionApplied[fieldAssignmentExpressionNode->getField()->getFieldName()] = false;
+        } else {
+            filterAttributesAndIsMapFunctionApplied[fieldAssignmentExpressionNode->getField()->getFieldName()] = true;
+        }
+        for (const auto& item : filterAttributesAndIsMapFunctionApplied) {
+            NES_DEBUG2("Filter attribute {} and is map function applied {}", item.first, item.second);
+        }
         return createForExpression(fieldAssignmentExpressionNode->getAssignment(),
                                    context,
                                    filterAttributesAndIsMapFunctionApplied,

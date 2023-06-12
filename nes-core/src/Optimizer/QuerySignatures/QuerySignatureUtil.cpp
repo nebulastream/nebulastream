@@ -328,6 +328,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::Conte
 
             //Perform replacement
             updatedMapExpr = std::make_shared<z3::expr>(updatedMapExpr->substitute(from, to));
+            NES_TRACE2("Map: updatedMapExpr: {}", updatedMapExpr->to_string());
         }
         schemaFieldToExprMap[fieldName] = updatedMapExpr;
         updatedSchemaFieldToExprMaps.emplace_back(schemaFieldToExprMap);
@@ -896,12 +897,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto combinedWindowExpressions = childQuerySignature->getWindowsExpressions();
     combinedWindowExpressions.push_back(windowExpression);
     auto unionExpressions = childQuerySignature->getUnionExpressions();
-    std::map<std::string, bool> updatedFilterAttributesAndIsMapFunctionApplied = childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
+    std::map<std::string, bool> updatedFilterAttributesAndIsMapFunctionApplied =
+        childQuerySignature->getFilterAttributesAndIsMapFunctionApplied();
     //when we create a window, we apply a window function to all attributes that either removes the attributes from the output schema
     //or aggregates. Either way, extracting an upstream filter operation is a problem, unless it is applied to the window's key
     for (const auto& [attributeName, isMapFunctionApplied] : updatedFilterAttributesAndIsMapFunctionApplied) {
         NES_TRACE2("Checking attribute {} for map function application", attributeName);
-        if (windowDefinition->getKeys().empty()){
+        if (windowDefinition->getKeys().empty()) {
             updatedFilterAttributesAndIsMapFunctionApplied[attributeName] = true;
         } else {
             for (const auto& key : windowDefinition->getKeys()) {
