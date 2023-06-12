@@ -39,6 +39,9 @@ using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 class FilterPushDownRule;
 using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
 
+class PredicateReorderingRule;
+using PredicateReorderingRulePtr = std::shared_ptr<PredicateReorderingRule>;
+
 class RenameSourceToProjectOperatorRule;
 using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
 
@@ -74,6 +77,7 @@ class QueryRewritePhase {
     bool isElegantAccelerationEnabled;
     bool applyRulesImprovingSharingIdentification;
     FilterPushDownRulePtr filterPushDownRule;
+    PredicateReorderingRulePtr predicateReorderingRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     AttributeSortRulePtr attributeSortRule;

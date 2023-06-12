@@ -21,6 +21,7 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
+#include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -49,6 +50,7 @@ QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool apply
     : isElegantAccelerationEnabled(elegantAccelerationEnabled),
       applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
     filterPushDownRule = FilterPushDownRule::create();
+    predicateReorderingRule = PredicateReorderingRule::create();
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     attributeSortRule = AttributeSortRule::create();
@@ -77,7 +79,9 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
 
     //Perform filter push down optimization
-    return filterPushDownRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
+    // Perform filter reordering optimization
+    return predicateReorderingRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES::Optimizer
