@@ -40,7 +40,7 @@ using namespace Configurations;
 class RemoteClientTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("RemoteClientTest.log", NES::LogLevel::LOG_DEBUG); }
-    static void TearDownTestCase() { NES_INFO("Tear down RemoteClientTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down RemoteClientTest test class."); }
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
@@ -51,28 +51,28 @@ class RemoteClientTest : public Testing::NESBaseTest {
         crdConf->rpcPort = (*rpcCoordinatorPort);
         crdConf->restPort = *restPort;
         wrkConf->coordinatorPort = *rpcCoordinatorPort;
-        NES_DEBUG("RemoteClientTest: Start coordinator");
+        NES_DEBUG2("RemoteClientTest: Start coordinator");
         crd = std::make_shared<NesCoordinator>(crdConf);
         uint64_t port = crd->startCoordinator(false);
         EXPECT_NE(port, 0UL);
-        NES_DEBUG("RemoteClientTest: Coordinator started successfully");
+        NES_DEBUG2("RemoteClientTest: Coordinator started successfully");
         ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
 
-        NES_DEBUG("RemoteClientTest: Start worker 1");
+        NES_DEBUG2("RemoteClientTest: Start worker 1");
         DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
         auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
         wrkConf->physicalSources.add(physicalSource1);
         wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool retStart1 = wrk->start(false, true);
         ASSERT_TRUE(retStart1);
-        NES_DEBUG("RemoteClientTest: Worker1 started successfully");
+        NES_DEBUG2("RemoteClientTest: Worker1 started successfully");
         ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
 
         client = std::make_shared<Client::RemoteClient>("localhost", *restPort, std::chrono::seconds(20), true);
     }
 
     void TearDown() override {
-        NES_DEBUG("Tear down RemoteClientTest class.");
+        NES_DEBUG2("Tear down RemoteClientTest class.");
         wrk->stop(true);
         crd->stopCoordinator(true);
         Testing::NESBaseTest::TearDown();
@@ -87,7 +87,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
                 if (status == QueryStatus::STOPPED) {
                     break;
                 }
-                NES_DEBUG("Query " << queryId << " not stopped yet but " << statusStr);
+                NES_DEBUG2("Query {} not stopped yet but {}", queryId, statusStr);
                 usleep(500 * 1000);// 500ms
             }
             return true;
@@ -102,7 +102,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
         while (std::chrono::system_clock::now() < startTs + timeoutInSec) {
             auto status = magic_enum::enum_cast<QueryStatus>(client->getQueryStatus(queryId));
             if (status == QueryStatus::REGISTERED || status == QueryStatus::OPTIMIZING || status == QueryStatus::DEPLOYED) {
-                NES_DEBUG("Query " << queryId << " not started yet");
+                NES_DEBUG2("Query {} not started yet", queryId);
                 sleep(1);
             } else {
                 return;
@@ -236,7 +236,7 @@ TEST_F(RemoteClientTest, GetExecutionPlanTest) {
     int64_t queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     std::string execution_plan = client->getQueryExecutionPlan(queryId);
-    NES_DEBUG("GetExecutionPlanTest: " + execution_plan);
+    NES_DEBUG2("GetExecutionPlanTest: {}", execution_plan);
     std::string expect = "{\"executionNodes\":[]}";
 
     ASSERT_TRUE(execution_plan.compare(0, expect.size() - 1, expect));
@@ -252,7 +252,7 @@ TEST_F(RemoteClientTest, AddAndGetLogicalSourceTest) {
 
     ASSERT_TRUE(success);
     std::string logical_source = client->getLogicalSources();
-    NES_DEBUG("AddAndGetLogicalSourceTest " + logical_source);
+    NES_DEBUG2("AddAndGetLogicalSourceTest {}", logical_source);
 }
 
 /**
@@ -261,7 +261,7 @@ TEST_F(RemoteClientTest, AddAndGetLogicalSourceTest) {
  */
 TEST_F(RemoteClientTest, GetLogicalSourceTest) {
     std::string logical_source = client->getLogicalSources();
-    NES_DEBUG("GetLogicalSourceTest: " + logical_source);
+    NES_DEBUG2("GetLogicalSourceTest: {}", logical_source);
     // Check only for default source
     std::string expect = "{\"default_logical\":\"id:INTEGER value:INTEGER \"";
     ASSERT_TRUE(logical_source.compare(0, expect.size() - 1, expect));
@@ -273,7 +273,7 @@ TEST_F(RemoteClientTest, GetLogicalSourceTest) {
  */
 TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
     std::string physicaSources = client->getPhysicalSources("default_logical");
-    NES_DEBUG("GetPhysicalSourceTest " + physicaSources);
+    NES_DEBUG2("GetPhysicalSourceTest {}", physicaSources);
     // Check only for default source
     std::string expect = "{\"default_logical\":\"id:INTEGER value:INTEGER";
     ASSERT_TRUE(physicaSources.compare(0, expect.size() - 1, expect));
