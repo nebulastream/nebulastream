@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.104](https://github.com/nebulastream/nebulastream/tree/v0.5.104) (2023-06-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.103...v0.5.104)
+
+**Implemented enhancements:**
+
+- \[TASK\] Join Multithreaded [\#3829](https://github.com/nebulastream/nebulastream/issues/3829)
+- \[TASK\] Create change log to record changes in a shared query plan due to query or topological change events [\#3730](https://github.com/nebulastream/nebulastream/issues/3730)
+
 ## [v0.5.103](https://github.com/nebulastream/nebulastream/tree/v0.5.103) (2023-06-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.102...v0.5.103)
