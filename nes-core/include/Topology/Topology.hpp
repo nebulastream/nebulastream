@@ -138,6 +138,25 @@ class Topology {
     bool reduceResources(uint64_t nodeId, uint16_t amountToReduce);
 
     /**
+     * @brief Reduce memory on the node with given id
+     * @param nodeId : the node id
+     * @param amountToReduce : amount of resources to reduce
+     * @return true if successful
+     */
+    bool reduceMemory(uint64_t nodeId, double amountToReduce);
+
+    /**
+     * @brief Reduce network on the node with given id
+     * @param nodeId : the node id
+     * @param amountToReduce : amount of resources to reduce
+     * @return true if successful
+     */
+    bool reduceNetwork(uint64_t nodeId, double amountToReduce);
+
+
+
+
+    /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph
      * @param startNodes : start nodes of the sub-graphs to be merged
      * @return start nodes of the merged sub-graph

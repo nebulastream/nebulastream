@@ -38,9 +38,8 @@ TopologyNode::TopologyNode(uint64_t id,
                            uint64_t networkCapacity,
                            std::map<std::string, std::any> properties)
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources),
-      memoryCapacity(memoryCapacity), initialMemoryCapacity(memoryCapacity), mtbfValue(mtbfValue), launchTime(launchTime),
-      epochValue(epochValue), ingestionRate(ingestionRate), initialNetworkCapacity(networkCapacity),
-      networkCapacity(networkCapacity), usedResources(0), nodeProperties(std::move(properties)) {}
+      initialMemoryCapacity(memoryCapacity), mtbfValue(mtbfValue), launchTime(launchTime),
+      epochValue(epochValue), ingestionRate(ingestionRate), initialNetworkCapacity(networkCapacity), usedResources(0), usedMemory(0), usedNetwork(0), nodeProperties(std::move(properties)) {}
 
 TopologyNodePtr TopologyNode::create(const uint64_t id,
                                      const std::string& ipAddress,
@@ -77,7 +76,9 @@ uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint64_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
-uint64_t TopologyNode::getMemoryCapacity() const { return memoryCapacity; }
+double TopologyNode::getAvailableMemory() const { return initialMemoryCapacity - usedMemory; }
+
+double TopologyNode::getAvailableNetwork() const { return initialNetworkCapacity - usedNetwork; }
 
 uint64_t TopologyNode::getMTBFValue() const { return mtbfValue; }
 
@@ -91,7 +92,7 @@ uint64_t TopologyNode::getInitialMemoryCapacity() const { return initialMemoryCa
 
 uint64_t TopologyNode::getInitialNetworkCapacity() const { return initialNetworkCapacity; }
 
-uint64_t TopologyNode::getNetworkCapacity() const { return networkCapacity; }
+uint64_t TopologyNode::getResourcesUsed() { return usedResources; };
 
 double TopologyNode::calculateReliability() const {
     auto now = std::chrono::system_clock::now();
@@ -125,20 +126,26 @@ void TopologyNode::reduceResources(uint64_t usedCapacity) {
     usedResources = usedResources + usedCapacity;
 }
 
-void TopologyNode::reduceMemoryCapacity(uint64_t usedMemory) {
-    NES_DEBUG("TopologyNode: Reducing memory " << memoryCapacity << " of " << usedMemory);
-    if (usedMemory > memoryCapacity) {
+void TopologyNode::reduceMemoryCapacity(double usedCapacity) {
+    NES_DEBUG("PhysicalNode: Reducing memory " << initialMemoryCapacity << " of " << usedMemory);
+    if (usedCapacity > initialMemoryCapacity) {
         NES_WARNING("PhysicalNode: amount of memory to be used should not be more than actual memory");
     }
-    memoryCapacity -= usedMemory;
+    if (usedCapacity > (initialMemoryCapacity - usedMemory)) {
+        NES_WARNING("PhysicalNode: amount of memory to be used should not be more than available memory");
+    }
+    usedMemory = usedMemory + usedCapacity;
 }
 
-void TopologyNode::reduceNetworkCapacity(uint64_t usedNetwork) {
-    NES_DEBUG("TopologyNode: Reducing network " << networkCapacity << " of " << usedNetwork);
-    if (usedNetwork > networkCapacity) {
+void TopologyNode::reduceNetworkCapacity(double usedCapacity) {
+    NES_DEBUG("PhysicalNode: Reducing network " << initialNetworkCapacity << " of " << usedNetwork);
+    if (usedCapacity > initialNetworkCapacity) {
         NES_WARNING("PhysicalNode: amount of network to be used should not be more than actual network");
     }
-    networkCapacity -= usedNetwork;
+    if (usedCapacity > (initialNetworkCapacity - usedNetwork)) {
+        NES_WARNING("PhysicalNode: amount of network to be used should not be more than available network");
+    }
+    usedNetwork = usedNetwork + usedCapacity;
 }
 
 TopologyNodePtr TopologyNode::copy() {
@@ -147,14 +154,16 @@ TopologyNodePtr TopologyNode::copy() {
                                                                        grpcPort,
                                                                        dataPort,
                                                                        resources,
-                                                                       memoryCapacity,
+                                                                       initialMemoryCapacity,
                                                                        mtbfValue,
                                                                        launchTime,
                                                                        epochValue,
                                                                        ingestionRate,
-                                                                       networkCapacity,
+                                                                       initialNetworkCapacity,
                                                                        nodeProperties));
     copy->reduceResources(usedResources);
+    copy->reduceMemoryCapacity(usedMemory);
+    copy->reduceNetworkCapacity(usedNetwork);
     copy->linkProperties = this->linkProperties;
     return copy;
 }

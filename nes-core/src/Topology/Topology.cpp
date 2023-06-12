@@ -377,6 +377,28 @@ bool Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
     return true;
 }
 
+bool Topology::reduceMemory(uint64_t nodeId, double amountToReduce) {
+    std::unique_lock lock(topologyLock);
+    NES_INFO("Topology: Reduce " << amountToReduce << " resources from node with id " << nodeId);
+    if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
+        NES_WARNING("Topology: Unable to find node with id " << nodeId);
+        return false;
+    }
+    indexOnNodeIds[nodeId]->reduceMemoryCapacity(amountToReduce);
+    return true;
+}
+
+bool Topology::reduceNetwork(uint64_t nodeId, double amountToReduce) {
+    std::unique_lock lock(topologyLock);
+    NES_INFO("Topology: Reduce " << amountToReduce << " resources from node with id " << nodeId);
+    if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
+        NES_WARNING("Topology: Unable to find node with id " << nodeId);
+        return false;
+    }
+    indexOnNodeIds[nodeId]->reduceNetworkCapacity(amountToReduce);
+    return true;
+}
+
 bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Increase " << amountToIncrease << " resources from node with id " << nodeId);

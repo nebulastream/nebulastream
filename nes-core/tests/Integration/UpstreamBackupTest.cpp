@@ -68,9 +68,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 4;
         coordinatorConfig->bufferSizeInBytes = 131072;
-        coordinatorConfig->numberOfSlots = 2;
-        coordinatorConfig->worker.memoryCapacity = 200000;
-        coordinatorConfig->worker.networkCapacity = 200000;
+        coordinatorConfig->numberOfSlots = 0;
+        coordinatorConfig->worker.memoryCapacity = 0;
+        coordinatorConfig->worker.networkCapacity = 0;
         coordinatorConfig->worker.mtbfValue = 386228;
         coordinatorConfig->worker.launchTime = 1652692028;
 
@@ -85,8 +85,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numberOfBuffersPerEpoch = 4;
         workerConfig1->bufferSizeInBytes = 131072;
         workerConfig1->numberOfSlots = 2;
-        workerConfig1->memoryCapacity = 25000;
-        workerConfig1->networkCapacity = 25000;
+        workerConfig1->memoryCapacity = 350;
+        workerConfig1->networkCapacity = 100;
         workerConfig1->mtbfValue = 55000;
         workerConfig1->launchTime = 1652692028;
         workerConfig1->ingestionRate = 900;
@@ -118,8 +118,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig3->numberOfBuffersPerEpoch = 4;
         workerConfig3->bufferSizeInBytes = 131072;
         workerConfig3->numberOfSlots = 2;
-        workerConfig3->memoryCapacity = 1000;
-        workerConfig3->networkCapacity = 1000;
+        workerConfig3->memoryCapacity = 350;
+        workerConfig3->networkCapacity = 100;
         workerConfig3->mtbfValue = 15000;
         workerConfig3->launchTime = 1652692028;
         workerConfig3->ingestionRate = 900;
@@ -336,15 +336,15 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     //    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
     //    workerConfig1->physicalSources.add(physicalSource1);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
-
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+//
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     workerConfig3->lambdaSource = 1;
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
@@ -358,25 +358,42 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
 
-    crd->getTopologyManagerService()->removeParent(4, 1);
-    crd->getTopologyManagerService()->removeParent(3, 1);
-    crd->getTopologyManagerService()->addParent(3, 2);
-    crd->getTopologyManagerService()->addParent(4, 3);
+//    crd->getTopologyManagerService()->removeParent(4, 1);
+//    crd->getTopologyManagerService()->removeParent(3, 1);
+//    crd->getTopologyManagerService()->addParent(3, 2);
+//    crd->getTopologyManagerService()->addParent(4, 3);
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
                    "Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
 
+    string query1 = "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), "
+                   "Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
+
+
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp",
                                                                     FaultToleranceType::AT_LEAST_ONCE,
                                                                     LineageType::IN_MEMORY,
-                                                                    FaultTolerancePlacement::NONE);
+                                                                    FaultTolerancePlacement::MFTP);
+
+    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+                                                                    "BottomUp",
+                                                                    FaultToleranceType::AT_LEAST_ONCE,
+                                                                    LineageType::IN_MEMORY,
+                                                                    FaultTolerancePlacement::MFTP);
+
+    queryId = queryService->validateAndQueueAddQueryRequest(query1,
+                                                            "BottomUp",
+                                                            FaultToleranceType::AT_LEAST_ONCE,
+                                                            LineageType::IN_MEMORY,
+                                                            FaultTolerancePlacement::MFTP);
+
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
@@ -388,7 +405,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
+    bool retStopWrk1 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
     //    NES_INFO("UpstreamBackupTest: Stop worker 2");

@@ -75,28 +75,22 @@ class TopologyNode : public Node {
 
 
     /**
-     * @brief method to get the overall memory capacity of the node
-     * @return uint64_t memory capacity
-     */
-    uint64_t getMemoryCapacity() const;
-
-    /**
      * @brief method to get the memory capacity of the node
-     * @return uint64_t initial memory capacity
+     * @return double initial memory capacity
      */
-    uint64_t getInitialMemoryCapacity() const;
+    double getAvailableMemory() const;
 
     /**
      * @brief method to reduce the memory capacity of the node
      * @param uint64_t used memory
      */
-    void reduceMemoryCapacity(uint64_t usedMemory);
+    void reduceMemoryCapacity(double usedMemory);
 
     /**
      * @brief method to reduce the network capacity of the node
      * @param uint64_t used network
      */
-    void reduceNetworkCapacity(uint64_t usedNetwork);
+    void reduceNetworkCapacity(double usedNetwork);
 
     /**
      * @brief method to get the mtbf value of the node
@@ -131,9 +125,16 @@ class TopologyNode : public Node {
 
     /**
      * @brief method to get the network capacity of the node
-     * @return uint64_t network capacity
+     * @return double network capacity
      */
-    uint64_t getNetworkCapacity() const;
+    double getAvailableNetwork() const;
+
+    /**
+     * @brief method to get the initial memory capacity of the node
+     * @return uint64_t initial memory capacity
+     */
+    uint64_t getInitialMemoryCapacity() const;
+
 
     /**
      * @brief method to get the intial network capacity of the node
@@ -146,6 +147,12 @@ class TopologyNode : public Node {
      * @param uint64_t of the value that has to be subtracted
      */
     void reduceResources(uint64_t usedCapacity);
+
+    /**
+     * @brief method to get the amount of used resources
+     * @return uint64_t used resources
+     */
+    uint64_t getResourcesUsed();
 
     /**
      * @brief method to increase CPU capacity
@@ -287,15 +294,15 @@ class TopologyNode : public Node {
     uint32_t grpcPort;
     uint32_t dataPort;
     uint64_t resources;
-    uint64_t memoryCapacity;
     uint64_t initialMemoryCapacity;
     uint64_t mtbfValue;
     uint64_t launchTime;
     uint64_t epochValue;
     uint64_t ingestionRate;
     uint64_t initialNetworkCapacity;
-    uint64_t networkCapacity;
     uint64_t usedResources;
+    double usedMemory;
+    double usedNetwork;
 
     /**
      * @brief A field to store a map of node properties

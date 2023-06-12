@@ -42,6 +42,14 @@ struct resourcesPerPath {
 
 typedef struct resourcesPerPath ResourcesPerPath;
 
+struct placementScore {
+    double score;
+    std::vector<TopologyNodePtr> path;
+    std::map<uint64_t, std::pair<double, double>> individualNodeScores;
+};
+
+typedef struct placementScore PlacementScore;
+
 class NESExecutionPlan;
 using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
 
@@ -91,7 +99,6 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 const std::string PLACED = "PLACED";
 const double TUPLE_SIZE = 0.131;
-const double NETWORK_DELAY = 0.2;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -281,10 +288,11 @@ class BasePlacementStrategy {
 
     /**
      * @brief place fault tolerance in elaborative way
-     * @param pathId: id of the path
      * @param subPathForPlacement : available paths between pinned operators
+     * @param originalPath: original path
+     * @return placement score
      */
-    std::pair<double, std::vector<TopologyNodePtr>> placeFaultTolerance(std::vector<TopologyNodePtr> subPathForPlacement);
+    PlacementScore placeFaultTolerance(std::vector<TopologyNodePtr> subPathForPlacement, const std::vector<TopologyNodePtr> originalPath);
 
     /**
      * Calculates the score based on the node location on a path
@@ -312,10 +320,11 @@ class BasePlacementStrategy {
 
     /**
  * @brief finds network, memory, safety available per path
- * @param path
+ * @param path: nodes for placement
+ * @param originalPath: original path
  * @return max and min available network, memory and safety on one path
  */
-    ResourcesPerPath findResourcesAvailable(const std::vector<TopologyNodePtr> path);
+    ResourcesPerPath findResourcesAvailable(const std::vector<TopologyNodePtr> path, const std::vector<TopologyNodePtr> originalPath);
 
     /**
      * @brief Add an execution node as root of the global execution plan

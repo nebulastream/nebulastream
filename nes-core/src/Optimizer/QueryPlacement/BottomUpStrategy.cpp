@@ -93,12 +93,12 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
                                         pinnedDownStreamOperators);
             }
         } else {// 2. If pinned operator is not placed then start by placing the operator
-            if (candidateTopologyNode->getAvailableResources() == 0
-                && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
-                NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw Exceptions::RuntimeException(
-                    "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-            }
+//            if (candidateTopologyNode->getAvailableResources() == 0
+//                && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
+//                NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+//                throw Exceptions::RuntimeException(
+//                    "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+//            }
             identifyPinningLocation(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
         }
     }
@@ -182,7 +182,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
                     if (!operatorNode->instanceOf<SinkLogicalOperatorNode>()
                         && !operatorNode->instanceOf<SourceLogicalOperatorNode>()
                         && !operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-                        candidateTopologyNode->reduceResources(1);
+                        topology->reduceResources(candidateTopologyNode->getId(), 1);
                     }
                     NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : "
                               << candidateTopologyNode->getId());
@@ -196,7 +196,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
             throw Exceptions::RuntimeException("BottomUpStrategy: No node available for further placement of operators");
         }
 
-        candidateTopologyNode->reduceResources(1);
+        topology->reduceResources(candidateTopologyNode->getId(), 1);
     }
 
     operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
