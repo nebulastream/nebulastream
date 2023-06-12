@@ -179,7 +179,7 @@ bool OperatorNode::containAsGrandChild(NodePtr node) {
         ancestors.insert(ancestors.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
     }
     //Check if an operator with the id exists as ancestor
-    return std::ranges::any_of(ancestors, [operatorIdToCheck](const NodePtr& ancestor) {
+    return std::any_of(ancestors.begin(), ancestors.end(), [operatorIdToCheck](const NodePtr& ancestor) {
         return ancestor->as<OperatorNode>()->getId() == operatorIdToCheck;
     });
 }
@@ -193,7 +193,7 @@ bool OperatorNode::containAsGrandParent(NES::NodePtr node) {
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
     //Check if an operator with the id exists as ancestor
-    return std::ranges::any_of(ancestors, [operatorIdToCheck](const NodePtr& ancestor) {
+    return std::any_of(ancestors.begin(), ancestors.end(), [operatorIdToCheck](const NodePtr& ancestor) {
         return ancestor->as<OperatorNode>()->getId() == operatorIdToCheck;
     });
 }
