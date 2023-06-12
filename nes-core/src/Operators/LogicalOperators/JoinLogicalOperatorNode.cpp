@@ -209,5 +209,9 @@ void JoinLogicalOperatorNode::inferStringSignature() {
 const std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
+void JoinLogicalOperatorNode::setOriginId(OriginId originId) {
+    OriginIdAssignmentOperator::setOriginId(originId);
+    joinDefinition->setOriginId(originId);
+}
 
 }// namespace NES

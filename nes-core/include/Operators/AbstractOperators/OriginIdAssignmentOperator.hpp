@@ -43,7 +43,7 @@ class OriginIdAssignmentOperator : public virtual OperatorNode {
      * @brief Sets the origin id, which is used from this operator as an output
      * @param originId
      */
-    void setOriginId(OriginId originId);
+    virtual void setOriginId(OriginId originId);
 
     /**
      * @brief Get the origin id
