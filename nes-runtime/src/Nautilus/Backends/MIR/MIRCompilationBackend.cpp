@@ -22,7 +22,7 @@ namespace NES::Nautilus::Backends::MIR {
 
 std::unique_ptr<Executable>
 MIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&, const DumpHelper& dumpHelper) {
-    Timer timer("MIR Compiler");
+    Timer timer("MIR");
     timer.start();
     MIR_module_t m;
     if (ctx == nullptr) {
@@ -32,17 +32,15 @@ MIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     }
     auto lp = MIR::MIRLoweringProvider();
     auto func = lp.lower(ir, dumpHelper, ctx, &m);
-    timer.snapshot("MIR generation");
+    timer.snapshot("MIRGen");
     //MIR_output(ctx, stderr);
     MIR_load_module(ctx, m);
-    timer.snapshot("MIR loading");
     MIR_gen_set_optimize_level(ctx, 0, 1);
      MIR_gen_set_debug_file(ctx, 0, stderr);
      MIR_gen_set_debug_level(ctx, 0 , 1);
     MIR_link(ctx, MIR_set_lazy_gen_interface, NULL);
-    timer.snapshot("MIR linking");
     auto fun_addr = MIR_gen(ctx, 0, func);
-    timer.snapshot("MIR backend generation");
+    timer.snapshot("MIRComp");
     NES_INFO(timer);
     return std::make_unique<MIRExecutable>(ctx, fun_addr);
 }

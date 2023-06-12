@@ -13,7 +13,6 @@
 */
 
 #include "Nautilus/IR/Types/StampFactory.hpp"
-#include <mir.h>
 #include <Nautilus/Backends/Flounder/FlounderLoweringProvider.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
@@ -34,6 +33,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
 #include <flounder/compilation/compiler.h>
 #include <flounder/executable.h>
 #include <flounder/ir/instructions.h>
@@ -42,6 +42,7 @@
 #include <flounder/program.h>
 #include <flounder/statement.h>
 #include <memory>
+#include <mir.h>
 #include <sstream>
 #include <utility>
 namespace NES::Nautilus::Backends::Flounder {
@@ -60,7 +61,8 @@ FlounderLoweringProvider::LoweringContext::LoweringContext(std::shared_ptr<IR::I
 
 std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext::process(flounder::Compiler& compiler,
                                                                                          const NES::DumpHelper& dumpHelper) {
-
+    Timer timer("Flounder");
+    timer.start();
     auto root = ir->getRootOperation();
     this->process(root);
     auto executable = std::make_unique<flounder::Executable>();
@@ -70,25 +72,34 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
         program << program.clear(reg);
     }
 
-    const auto flounder_code = program.code();
+    timer.snapshot("FlounderGen");
 
-    std::stringstream flounderCode;
-    flounderCode << "\n == Flounder Code == \n";
-    for (const auto& line : flounder_code) {
-        flounderCode << line << std::endl;
-    }
-    dumpHelper.dump("3. flounder.ir", flounderCode.str());
+    dumpHelper.dump("3. flounder.ir", [&]() {
+        const auto flounder_code = program.code();
+        std::stringstream flounderCode;
+        flounderCode << "\n == Flounder Code == \n";
+        for (const auto& line : flounder_code) {
+            flounderCode << line << std::endl;
+        }
+        return flounderCode.str();
+    });
+
     const auto isCompilationSuccessful = compiler.compile(program, *executable.get());
     if (!isCompilationSuccessful) {
         NES_THROW_RUNTIME_ERROR("Flounder compilation failed!");
     }
+
     if (executable->compilate().has_code()) {
-        std::stringstream flounderASM;
-        for (const auto& line : executable->compilate().code()) {
-            flounderASM << line << std::endl;
-        }
-        dumpHelper.dump("3. flounder.asm", flounderASM.str());
+        dumpHelper.dump("4. flounder.asm", [&]() {
+            std::stringstream flounderASM;
+            for (const auto& line : executable->compilate().code()) {
+                flounderASM << line << std::endl;
+            }
+            return flounderASM.str();
+        });
     }
+    timer.snapshot("FlounderComp");
+    NES_INFO(timer);
     return executable;
 }
 
@@ -290,11 +301,11 @@ void FlounderLoweringProvider::LoweringContext::processCmp(
         processOr(left, frame, trueCase, falseCase);
     } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::ConstBooleanOp) {
         auto left = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(opt);
-        auto reg =  createVreg(left->getIdentifier(), IR::Types::StampFactory().createInt64Stamp(), frame);
+        auto reg = createVreg(left->getIdentifier(), IR::Types::StampFactory().createInt64Stamp(), frame);
 
         program << program.mov(reg, program.constant64(left->getValue()));
         program << program.cmp(reg, program.constant64(1));
-    }else {
+    } else {
         NES_THROW_RUNTIME_ERROR("Left is not a compare operation but a " << opt->toString());
     }
 }
@@ -333,11 +344,12 @@ void FlounderLoweringProvider::LoweringContext::processCmp(const std::shared_ptr
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
 
-    if (compOpt->isEquals() && compOpt->getLeftInput()->getStamp()->isAddress() && compOpt->getRightInput()->getStamp()->isInteger()) {
-        program << program.cmp(leftInput, program.constant64(0));    }else{
+    if (compOpt->isEquals() && compOpt->getLeftInput()->getStamp()->isAddress()
+        && compOpt->getRightInput()->getStamp()->isInteger()) {
+        program << program.cmp(leftInput, program.constant64(0));
+    } else {
         program << program.cmp(leftInput, rightInput);
     }
-
 
     switch (compOpt->getComparator()) {
         case IR::Operations::CompareOperation::Comparator::EQ: program << program.jne(falseCase); break;

@@ -31,14 +31,14 @@ namespace NES::Nautilus::Backends::MLIR {
 std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir,
                                                             const CompilationOptions& options,
                                                             const DumpHelper& dumpHelper) {
-    auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
+    auto timer = Timer<>("MLIR");
     timer.start();
 
     // 1. Create the MLIRLoweringProvider and lower the given NESIR. Return an MLIR module.
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
     auto mlirModule = loweringProvider->generateModuleFromIR(ir);
-    timer.snapshot("MLIR generation");
+    timer.snapshot("MLIRGen");
     // 2.a dump MLIR to console or a file
     if (options.isDumpToConsole() || options.isDumpToFile()) {
         mlir::OpPrintingFlags flags;
@@ -65,7 +65,7 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
                                                       dumpHelper);
 
     // 5. Get execution function from engine. Create and return execution context.
-    timer.snapshot("MLIR Module");
+    timer.snapshot("MLIRComp");
     NES_INFO(timer);
     return std::make_unique<MLIRExecutable>(std::move(engine));
 }

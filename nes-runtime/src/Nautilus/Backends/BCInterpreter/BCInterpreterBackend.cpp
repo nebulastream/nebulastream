@@ -26,15 +26,15 @@ namespace NES::Nautilus::Backends::BC {
 
 std::unique_ptr<Executable>
 BCInterpreterBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions&, const DumpHelper& dumpHelper) {
-    auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
+    auto timer = Timer<>("BC");
     timer.start();
-
     auto result = BCLoweringProvider().lower(ir);
-
-    timer.snapshot("ByteCodeGeneration");
-
+    timer.snapshot("BCGen");
     auto code = std::get<0>(result);
-    dumpHelper.dump("3. ByteCode.bc", code.toString());
+    dumpHelper.dump("3. ByteCode.bc", [&]() {
+        return code.toString();
+    });
+    NES_INFO(timer);
     return std::make_unique<BCInterpreter>(std::get<0>(result), std::get<1>(result));
 }
 

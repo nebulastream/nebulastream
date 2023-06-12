@@ -27,13 +27,13 @@ namespace NES::Nautilus::Backends::CPP {
 
 std::unique_ptr<Executable>
 CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) {
-    auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
+    auto timer = Timer<>("CPP");
     timer.start();
 
     auto code = CPPLoweringProvider::lower(ir);
     dumpHelper.dump("code.cpp", code);
 
-    timer.snapshot("CPPCodeGeneration");
+    timer.snapshot("CPPGen");
 
     auto compiler = Compiler::CPPCompiler::create();
     auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code);
@@ -45,7 +45,8 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
                                                         options.isOptimize(),
                                                         options.isDebug());
     auto res = compiler->compile(request);
-    timer.snapshot("CCPCompilation");
+    timer.snapshot("CPPComp");
+    NES_INFO(timer);
     return std::make_unique<CPPExecutable>(res.getDynamicObject());
 }
 
