@@ -153,6 +153,37 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     endif ()
 endif ()
 
+include(ExternalProject)
+set(MIR_PROJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/mir")
+
+ExternalProject_Add(MirProject
+        GIT_REPOSITORY git@github.com:vnmakarov/mir.git
+        GIT_TAG master
+        SOURCE_DIR ${MIR_PROJECT_DIR}
+        INSTALL_COMMAND cmake -E echo "Skipping install step."
+        #CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> # Specify installation directory
+        BUILD_IN_SOURCE true # Build the project in the source directory
+     #   BUILD_BYPRODUCTS ${MIR_PROJECT_DIR}/libmir_static.a # Specify path to the library file that will be built
+      #  INSTALL_DIR ${MIR_PROJECT_DIR} # Install dyncall to the specified directory
+        UPDATE_DISCONNECTED 1
+        )
+
+
+add_library(mir STATIC IMPORTED)
+add_dependencies(mir MirProject)
+
+# Get the installation directory of the external project
+ExternalProject_Get_Property(MirProject install_dir)
+
+# Add the include directory of the external project to the interface of extLib
+target_include_directories(mir INTERFACE ${MIR_PROJECT_DIR})
+
+# Set the imported location of the external library to the installation directory
+set_target_properties(mir PROPERTIES IMPORTED_LOCATION ${MIR_PROJECT_DIR}/libmir.a)
+
+target_link_libraries(nes-runtime PUBLIC mir)
+
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
 
     include(ExternalProject)
@@ -196,6 +227,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
     target_link_libraries(nes-runtime PRIVATE flounder)
     target_include_directories(nes-runtime PRIVATE ${flounder_SOURCE_DIR}/src)
+    target_include_directories(nes-runtime PRIVATE ${flounder_SOURCE_DIR}/lib/static-vector/src/static-vector-external/include)
 endif ()
 
 if (NES_RUNTIME_BENCHMARKS)

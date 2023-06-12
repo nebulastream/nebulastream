@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Common/DataTypes/Decimal.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
@@ -29,6 +30,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <utility>
 
 namespace NES {
@@ -60,7 +62,9 @@ DataTypePtr DataTypeFactory::createInteger(int8_t bits, int64_t lowerBound, int6
 
 DataTypePtr DataTypeFactory::createInteger(int64_t lowerBound, int64_t upperBound) {
     // derive the correct bite size for the correct lower and upper bound
-    auto bits = upperBound <= INT8_MAX ? 8 : upperBound <= INT16_MAX ? 16 : upperBound <= INT32_MAX ? 32 : 64;
+    auto bits = upperBound <= INT8_MAX ? 8 : upperBound <= INT16_MAX ? 16
+        : upperBound <= INT32_MAX                                    ? 32
+                                                                     : 64;
     return createInteger(bits, lowerBound, upperBound);
 }
 
@@ -81,6 +85,10 @@ DataTypePtr DataTypeFactory::createUInt64() {
 DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN, INT32_MAX); };
 
 DataTypePtr DataTypeFactory::createUInt32() { return createInteger(32, 0, UINT32_MAX); };
+
+DataTypePtr DataTypeFactory::createDecimal(int8_t scale){
+    return std::make_shared<Decimal>(scale);
+}
 
 DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& component) {
     return std::make_shared<ArrayType>(length, component);

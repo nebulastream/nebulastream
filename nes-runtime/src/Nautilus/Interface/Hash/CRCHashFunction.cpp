@@ -13,26 +13,11 @@
 */
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-
+#include <Nautilus/Interface/Hash/CRCHashFunction.hpp>
+#include <x86intrin.h>
 namespace NES::Nautilus::Interface {
 
-HashFunction::HashValue MurMur3HashFunction::init() { return SEED; }
-
-/**
- * @brief Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
- * https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
- * @param x
- * @return
- */
-uint64_t hashInt(uint64_t x) {
-    x ^= x >> 33U;
-    x *= UINT64_C(0xff51afd7ed558ccd);
-    x ^= x >> 33U;
-    x *= UINT64_C(0xc4ceb9fe1a85ec53);
-    x ^= x >> 33U;
-    return x;
-}
+HashFunction::HashValue CRCHashFunction::init() { return SEED; }
 
 /**
  * @brief https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L692
@@ -40,7 +25,7 @@ uint64_t hashInt(uint64_t x) {
  * @param length
  * @return
  */
-uint64_t hashBytes(void* data, uint64_t length) {
+uint64_t hashBytesCRC(void* data, uint64_t length) {
     static constexpr uint64_t m = UINT64_C(0xc6a4a7935bd1e995);
     static constexpr uint64_t seed = UINT64_C(0xe17a1465);
     static constexpr unsigned int r = 47;
@@ -97,18 +82,19 @@ uint64_t hashBytes(void* data, uint64_t length) {
 
 template<typename T>
 uint64_t hashValue(uint64_t seed, T value) {
-    // Combine two hashes by XORing them
-    // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashInt(value);
+    uint64_t k = (uint64_t) value;
+    uint64_t result1 = _mm_crc32_u64(seed, k);
+    uint64_t result2 = _mm_crc32_u64(0x04c11db7, k);
+    return ((result2 << 32) | result1) * 0x2545F4914F6CDD1Dull;
 }
 
-uint64_t hashTextValue(uint64_t seed, TextValue* value) {
+uint64_t hashTextValueCRC(uint64_t seed, TextValue* value) {
     // Combine two hashes by XORing them
     // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashBytes((void*) value->c_str(), value->length());
+    return seed ^ hashBytesCRC((void*) value->c_str(), value->length());
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>& value) {
+HashFunction::HashValue CRCHashFunction::calculate(HashValue& hash, Value<>& value) {
     if (value->isType<Int8>()) {
         return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>());
     } else if (value->isType<Int16>()) {
@@ -130,7 +116,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>&
     } else if (value->isType<Double>()) {
         return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>());
     } else if (value->isType<Text>()) {
-        return FunctionCall("hashTextValue", hashTextValue, hash, value.as<Text>()->getReference());
+        return FunctionCall("hashTextValue", hashTextValueCRC, hash, value.as<Text>()->getReference());
     } else if (value->isType<List>()) {
         auto list = value.as<List>();
         for (auto listValue : list.getValue()) {

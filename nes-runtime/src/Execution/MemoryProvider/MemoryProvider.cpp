@@ -14,10 +14,12 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Common/DataTypes/Decimal.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Nautilus/Interface/DataTypes/Numeric/Numeric.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -26,6 +28,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <memory>
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
@@ -66,7 +69,13 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
                 return fieldReference.load<Nautilus::Int32>();
             };
             case BasicPhysicalType::NativeType::INT_64: {
-                return fieldReference.load<Nautilus::Int64>();
+                if (type->type->isDecimal()) {
+                    auto decimal = DataType::as<Decimal>(type->type);
+                    auto rawValue = fieldReference.load<Nautilus::Int64>();
+                    return Nautilus::Value<Nautilus::Numeric>(std::make_shared<Nautilus::Numeric>(decimal->getScale(), rawValue));
+                } else {
+                    return fieldReference.load<Nautilus::Int64>();
+                }
             };
             case BasicPhysicalType::NativeType::UINT_8: {
                 return fieldReference.load<Nautilus::UInt8>();
@@ -124,7 +133,12 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
                 return value;
             };
             default: {
-                fieldReference.store(value);
+                if (value->isType<Nautilus::Numeric>()) {
+                    auto rawValue = value.as<Nautilus::Numeric>()->getValue();
+                    fieldReference.store(rawValue);
+                } else {
+                    fieldReference.store(value);
+                }
                 return value;
             };
         }

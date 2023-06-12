@@ -89,7 +89,7 @@ Value<> evalWithCast(
 Value<> AddOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Add(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::ADD, result.value().ref, left.ref, right.ref);
         }
         return result;
@@ -99,7 +99,7 @@ Value<> AddOp(const Value<>& left, const Value<>& right) {
 Value<> SubOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Sub(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::SUB, result.value().ref, left.ref, right.ref);
         }
         return result;
@@ -109,7 +109,7 @@ Value<> SubOp(const Value<>& left, const Value<>& right) {
 Value<> MulOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Mul(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::MUL, result.value().ref, left.ref, right.ref);
         }
         return result;
@@ -119,7 +119,7 @@ Value<> MulOp(const Value<>& left, const Value<>& right) {
 Value<> DivOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Div(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::DIV, result.value().ref, left.ref, right.ref);
         }
         return result;
@@ -139,7 +139,7 @@ Value<> EqualsOp(const Value<>& left, const Value<>& right) {
 Value<> LessThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->LessThan(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::LESS_THAN,
                                                      result.value().ref,
                                                      left.ref,
@@ -152,7 +152,7 @@ Value<> LessThanOp(const Value<>& left, const Value<>& right) {
 Value<> GreaterThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->GreaterThan(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::GREATER_THAN,
                                                      result.value().ref,
                                                      left.ref,
@@ -165,7 +165,7 @@ Value<> GreaterThanOp(const Value<>& left, const Value<>& right) {
 Value<> OrOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Or(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::OR, result.value().ref, left.ref, right.ref);
         }
         return result;
@@ -175,7 +175,7 @@ Value<> OrOp(const Value<>& left, const Value<>& right) {
 Value<> AndOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->And(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::AND, result.value().ref, left.ref, right.ref);
         }
         return result;

@@ -20,6 +20,7 @@ Operation::Operation(OperationType opType, OperationIdentifier identifier, Types
 Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(""), stamp(stamp) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }
 OperationIdentifier Operation::getIdentifier() { return identifier; }
+OperationIdentifier& Operation::getIdentifierRef() { return identifier; }
 const Types::StampPtr& Operation::getStamp() const { return stamp; }
 
 void Operation::addUsage(const Operation* operation) { usages.emplace_back(operation); }

@@ -14,4 +14,5 @@
 add_source_files(nes-runtime
         HashFunction.cpp
         MurMur3HashFunction.cpp
+        CRCHashFunction.cpp
         )

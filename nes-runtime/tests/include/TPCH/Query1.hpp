@@ -24,6 +24,7 @@
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
+#include <Execution/Expressions/ConstantDecimalExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
@@ -47,10 +48,10 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <PipelinePlan.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 namespace NES::Runtime::Execution {
 using namespace Expressions;
@@ -64,7 +65,9 @@ class TPCH_Query1 {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
         PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+        PhysicalTypePtr decimal2 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(2));
+        PhysicalTypePtr decimal4 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(4));
+        PhysicalTypePtr decimal6 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(6));
 
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
@@ -115,11 +118,11 @@ class TPCH_Query1 {
         // sum(l_extendedprice) as sum_base_price,
         auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
         auto sumAggFunction2 =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
+            std::make_shared<Aggregation::SumAggregationFunction>(decimal2, decimal2, l_extendedpriceField, "sum_base_price");
 
         // disc_price = l_extendedprice * (1 - l_discount)
         auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-        auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
+        auto oneConst = std::make_shared<ConstantDecimalExpression>(2, 1);
         auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
         auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
         auto disc_priceExpression = std::make_shared<WriteFieldExpression>("disc_price", mulExpression);
@@ -129,14 +132,14 @@ class TPCH_Query1 {
         //  sum(disc_price)
         auto disc_price = std::make_shared<ReadFieldExpression>("disc_price");
         auto sumAggFunction3 =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
+            std::make_shared<Aggregation::SumAggregationFunction>(decimal4, decimal4, disc_price, "sum_disc_price");
 
         //  sum(disc_price * (one + l_tax[i]))
         auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
         auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
-        auto mulExpression2 = std::make_shared<AddExpression>(disc_price, addExpression);
+        auto mulExpression2 = std::make_shared<MulExpression>(disc_price, addExpression);
         auto sumAggFunction4 =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulExpression2, "sum_charge");
+            std::make_shared<Aggregation::SumAggregationFunction>(decimal6, decimal6, mulExpression2, "sum_charge");
 
         //   count(*)
         auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType,

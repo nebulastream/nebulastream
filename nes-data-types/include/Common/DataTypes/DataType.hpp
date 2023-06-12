@@ -73,6 +73,11 @@ class DataType {
     * @brief Checks if this data type is Char.
     */
     [[nodiscard]] virtual bool isText() const;
+    /**
+     * @brief
+     * @return
+     */
+    [[nodiscard]] virtual bool isDecimal() const;
 
     template<class DataType>
     static std::shared_ptr<DataType> as(DataTypePtr ptr) {

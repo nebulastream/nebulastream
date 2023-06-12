@@ -64,6 +64,7 @@ class Value : BaseValue {
         Value<ValueType>& inputValue;
     };
     using element_type = ValueType;
+    friend element_type;
 
     /*
      * Creates a Value<Int8> object from an std::int8_t.

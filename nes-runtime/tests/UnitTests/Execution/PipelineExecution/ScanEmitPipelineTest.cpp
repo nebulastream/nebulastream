@@ -138,7 +138,11 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler", "BabelfishPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter",
+                                          "BCInterpreter",
+                                          "PipelineCompiler",
+                                          "CPPPipelineCompiler",
+                                          "BabelfishPipelineCompiler"),
                         [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) {
                             return info.param;
                         });

@@ -12,28 +12,17 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Decimal.hpp>
+#include <memory>
 
 namespace NES {
 
-bool DataType::isBoolean() const { return false; }
+Decimal::Decimal(int8_t scale) : scale(scale) {}
 
-bool DataType::isUndefined() const { return false; }
-
-bool DataType::isArray() const { return false; }
-
-bool DataType::isCharArray() const { return false; }
-
-bool DataType::isFloat() const { return false; }
-
-bool DataType::isInteger() const { return false; }
-
-bool DataType::isNumeric() const { return false; }
-
-bool DataType::isChar() const { return false; }
-
-bool DataType::isText() const { return false; }
-
-bool DataType::isDecimal() const { return false; }
+int8_t Decimal::getScale() const { return scale; }
+bool Decimal::isEquals(DataTypePtr) { return false; }
+DataTypePtr Decimal::join(DataTypePtr) { return std::make_shared<Decimal>(scale); }
+std::string Decimal::toString() { return std::string(); }
+bool Decimal::isDecimal() const { return true; }
 
 }// namespace NES

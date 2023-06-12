@@ -23,6 +23,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
+#include <Execution/Expressions/ConstantDecimalExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -82,8 +83,8 @@ class TPCH_Query6 {
 
         // l_discount between 0.06 - 0.01 and 0.06 + 0.01
         auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
-        auto const_0_05 = std::make_shared<ConstantFloatValueExpression>(0.04);
-        auto const_0_07 = std::make_shared<ConstantFloatValueExpression>(0.08);
+        auto const_0_05 = std::make_shared<ConstantDecimalExpression>(2, 4);
+        auto const_0_07 = std::make_shared<ConstantDecimalExpression>(2, 8);
         auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
         auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
         auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
@@ -104,7 +105,7 @@ class TPCH_Query6 {
         auto l_discount = std::make_shared<Expressions::ReadFieldExpression>("l_discount");
         auto revenue = std::make_shared<Expressions::MulExpression>(l_extendedprice, l_discount);
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
-        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(4));
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
             std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, revenue, "revenue")};
         auto aggregation = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFunctions);

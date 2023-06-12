@@ -139,6 +139,7 @@ class DataTypeFactory {
     * @return DataTypePtr
     */
     static DataTypePtr createUInt64();
+    static DataTypePtr createDecimal(int8_t precision);
 
     /**
      * @brief Creates a new ArrayType data type.

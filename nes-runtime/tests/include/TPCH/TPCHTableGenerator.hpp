@@ -15,6 +15,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TPCHTABLEGENERATOR_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TPCHTABLEGENERATOR_HPP_
 
+#include "Common/DataTypes/DataTypeFactory.hpp"
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Table.hpp>
@@ -103,9 +104,12 @@ class TPCHTableGenerator {
                                          ->addField("l_suppkey", BasicType::INT32)
                                          ->addField("l_lcnt", BasicType::INT32)
                                          ->addField("l_quantity", BasicType::INT32)
-                                         ->addField("l_extendedprice", BasicType::FLOAT32)
-                                         ->addField("l_discount", BasicType::FLOAT32)
-                                         ->addField("l_tax", BasicType::FLOAT32)
+                                         // ->addField("l_extendedprice", BasicType::FLOAT32)
+                                         ->addField("l_extendedprice",DataTypeFactory::createDecimal(2))
+                                         ->addField("l_discount", DataTypeFactory::createDecimal(2))
+                                       //  ->addField("l_discount", BasicType::FLOAT32)
+                                         ->addField("l_tax", DataTypeFactory::createDecimal(2))
+                                         //->addField("l_tax", BasicType::FLOAT32)
                                          ->addField("l_returnflag", BasicType::INT8)
                                          ->addField("l_linestatus", BasicType::INT8)
                                          ->addField("l_shipdate", BasicType::INT32)
@@ -258,9 +262,9 @@ class TPCHTableGenerator {
                                                        (int32_t) lineitem.suppkey,
                                                        (int32_t) lineitem.lcnt,
                                                        (int32_t) lineitem.quantity,
-                                                       convert_money(lineitem.eprice),
-                                                       convert_money(lineitem.discount),
-                                                       convert_money(lineitem.tax),
+                                                       convert_money_decimal(lineitem.eprice),
+                                                       convert_money_decimal(lineitem.discount),
+                                                       convert_money_decimal(lineitem.tax),
                                                        /*write as one char*/ (int8_t) lineitem.rflag[0],
                                                        /*write as one char*/ (int8_t) lineitem.lstatus[0],
                                                        getDate(lineitem.sdate),
@@ -389,6 +393,10 @@ class TPCHTableGenerator {
         const auto dollars = cents / 100;
         cents %= 100;
         return static_cast<float>(dollars) + (static_cast<float>(cents)) / 100.0f;
+    }
+
+    int64_t convert_money_decimal(DSS_HUGE cents) {
+        return cents;
     }
 
     int32_t getDate(const char x[13]) {

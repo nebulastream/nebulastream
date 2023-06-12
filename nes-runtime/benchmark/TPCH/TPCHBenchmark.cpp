@@ -202,6 +202,7 @@ class Query1Runner : public BenchmarkRunner {
     void runQuery(Timer<>& executionTimeTimer) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto pipeline1 = plan.getPipeline(0);
+        aggExecutablePipeline->setup(*pipeline1.ctx);
         executionTimeTimer.start();
         for (auto& chunk : lineitems->getChunks()) {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);

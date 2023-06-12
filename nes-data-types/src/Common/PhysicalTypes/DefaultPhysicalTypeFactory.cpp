@@ -41,6 +41,9 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
         return getPhysicalType(DataType::as<Char>(dataType));
     } else if (dataType->isText()) {
         return getPhysicalType(DataType::as<Text>(dataType));
+    } else if (dataType->isDecimal()) {
+        // use int 64 as native type for all decimals
+        return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::INT_64);
     }
     NES_THROW_RUNTIME_ERROR("DefaultPhysicalTypeFactory: it was not possible to infer a physical type for: "
                             + dataType->toString());

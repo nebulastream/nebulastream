@@ -29,7 +29,7 @@ void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     auto inputValue = inputExpression->execute(inputRecord);
     auto newValue = oldValue + inputValue;
     // put back to the memref
-    state.store(newValue);
+    AggregationFunction::storeFromMemref(state, newValue);
 }
 
 void SumAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {

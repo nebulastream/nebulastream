@@ -23,4 +23,5 @@ add_source_files(nes-data-types
         DataTypeFactory.cpp
         FixedChar.cpp
         Text.cpp
+        Decimal.cpp
         )

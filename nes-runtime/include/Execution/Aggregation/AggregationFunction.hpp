@@ -78,6 +78,7 @@ class AggregationFunction {
      * @return value in the type of physicalType
      */
     static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, const PhysicalTypePtr& physicalType);
+    static void storeFromMemref(Nautilus::Value<Nautilus::MemRef> memref, const Nautilus::Value<>& value);
 
     static Nautilus::Value<> createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
 };

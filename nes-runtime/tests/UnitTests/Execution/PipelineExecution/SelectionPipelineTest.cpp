@@ -59,6 +59,7 @@ class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipeli
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
+        options.setDumpToConsole(true);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -118,7 +119,13 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SelectionPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler", "BabelfishPipelineCompiler"),
+                        ::testing::Values("MIRCompiler",
+                                          "FlounderCompiler",
+                                          "PipelineInterpreter",
+                                          "BCInterpreter",
+                                          "PipelineCompiler",
+                                          "CPPPipelineCompiler",
+                                          "BabelfishPipelineCompiler"),
                         [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) {
                             return info.param;
                         });

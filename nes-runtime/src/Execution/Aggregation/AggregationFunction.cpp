@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Common/DataTypes/Decimal.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Nautilus/Interface/DataTypes/Numeric/Numeric.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -39,7 +41,13 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
                 return memref.load<Nautilus::Int32>();
             };
             case BasicPhysicalType::NativeType::INT_64: {
-                return memref.load<Nautilus::Int64>();
+                if (basicType->type->isDecimal()) {
+                    auto decimal = DataType::as<Decimal>(basicType->type);
+                    auto rawValue = memref.load<Nautilus::Int64>();
+                    return Nautilus::Value<Nautilus::Numeric>(std::make_shared<Nautilus::Numeric>(decimal->getScale(), rawValue));
+                } else {
+                    return memref.load<Nautilus::Int64>();
+                }
             };
             case BasicPhysicalType::NativeType::UINT_8: {
                 return memref.load<Nautilus::UInt8>();
@@ -68,6 +76,14 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
         NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType
                                                                 << " is not a basic type and is currently not supported");
         NES_NOT_IMPLEMENTED();
+    }
+}
+
+void AggregationFunction::storeFromMemref(Nautilus::Value<Nautilus::MemRef> state, const Nautilus::Value<>& value) {
+    if (value->isType<Nautilus::Numeric>()) {
+        state.store(value.as<Nautilus::Numeric>()->getValue());
+    } else {
+        state.store(value);
     }
 }
 Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const PhysicalTypePtr& physicalType) {

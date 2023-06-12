@@ -21,47 +21,53 @@
 
 namespace NES::Nautilus::IR::Types {
 
-StampPtr StampFactory::createVoidStamp() { return std::make_shared<VoidStamp>(); }
+static  StampPtr VOID_STAMP = std::make_shared<VoidStamp>();
+static const StampPtr ADDRESS_STAMP = std::make_shared<AddressStamp>();
+static const StampPtr BOOLEAN_STAMP = std::make_shared<BooleanStamp>();
+static const StampPtr UINT8_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I8, IntegerStamp::SignednessSemantics::Unsigned);
+static const StampPtr UINT16_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I16, IntegerStamp::SignednessSemantics::Unsigned);
+static const StampPtr UINT32_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I32, IntegerStamp::SignednessSemantics::Unsigned);
+static const StampPtr UINT64_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I64, IntegerStamp::SignednessSemantics::Unsigned);
+static const StampPtr INT8_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I8, IntegerStamp::SignednessSemantics::Signed);
+static const StampPtr INT16_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I16, IntegerStamp::SignednessSemantics::Signed);
+static const StampPtr INT32_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I32, IntegerStamp::SignednessSemantics::Signed);
+static const StampPtr INT64_STAMP =
+    std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I64, IntegerStamp::SignednessSemantics::Signed);
+static const StampPtr FLOAT_STAMP = std::make_shared<FloatStamp>(FloatStamp::BitWidth::F32);
+static const StampPtr DOUBLE_STAMP = std::make_shared<FloatStamp>(FloatStamp::BitWidth::F64);
 
-StampPtr StampFactory::createAddressStamp() { return std::make_shared<AddressStamp>(); }
+StampPtr StampFactory::createVoidStamp() { return VOID_STAMP; }
 
-StampPtr StampFactory::createBooleanStamp() { return std::make_shared<BooleanStamp>(); }
+StampPtr StampFactory::createAddressStamp() { return ADDRESS_STAMP; }
 
-StampPtr StampFactory::createUInt8Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I8, IntegerStamp::SignednessSemantics::Unsigned);
-}
+StampPtr StampFactory::createBooleanStamp() { return BOOLEAN_STAMP; }
 
-StampPtr StampFactory::createUInt16Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I16, IntegerStamp::SignednessSemantics::Unsigned);
-}
+StampPtr StampFactory::createUInt8Stamp() { return UINT8_STAMP; }
 
-StampPtr StampFactory::createUInt32Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I32, IntegerStamp::SignednessSemantics::Unsigned);
-}
+StampPtr StampFactory::createUInt16Stamp() { return UINT16_STAMP; }
 
-StampPtr StampFactory::createUInt64Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I64, IntegerStamp::SignednessSemantics::Unsigned);
-}
+StampPtr StampFactory::createUInt32Stamp() { return UINT32_STAMP; }
 
-StampPtr StampFactory::createInt8Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I8, IntegerStamp::SignednessSemantics::Signed);
-}
+StampPtr StampFactory::createUInt64Stamp() { return UINT64_STAMP; }
 
-StampPtr StampFactory::createInt16Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I16, IntegerStamp::SignednessSemantics::Signed);
-}
+StampPtr StampFactory::createInt8Stamp() { return INT8_STAMP; }
 
-StampPtr StampFactory::createInt32Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I32, IntegerStamp::SignednessSemantics::Signed);
-}
+StampPtr StampFactory::createInt16Stamp() { return INT16_STAMP; }
 
-StampPtr StampFactory::createInt64Stamp() {
-    return std::make_shared<IntegerStamp>(IntegerStamp::BitWidth::I64, IntegerStamp::SignednessSemantics::Signed);
-}
+StampPtr StampFactory::createInt32Stamp() { return INT32_STAMP; }
 
-StampPtr StampFactory::createFloatStamp() { return std::make_shared<FloatStamp>(FloatStamp::BitWidth::F32); }
+StampPtr StampFactory::createInt64Stamp() { return INT64_STAMP; }
 
-StampPtr StampFactory::createDoubleStamp() { return std::make_shared<FloatStamp>(FloatStamp::BitWidth::F64); }
+StampPtr StampFactory::createFloatStamp() { return FLOAT_STAMP; }
+
+StampPtr StampFactory::createDoubleStamp() { return DOUBLE_STAMP; }
 
 StampPtr StampFactory::createArrayStamp(uint64_t size, StampPtr component) {
     return std::make_shared<ArrayStamp>(size, component);

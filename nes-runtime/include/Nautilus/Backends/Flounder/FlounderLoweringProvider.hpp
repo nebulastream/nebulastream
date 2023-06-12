@@ -67,6 +67,7 @@ class FlounderLoweringProvider {
         flounder::Program program;
         std::shared_ptr<IR::IRGraph> ir;
         std::set<std::string> activeBlocks;
+        std::unordered_set<std::string> activeRegisters;
         void process(const std::shared_ptr<IR::Operations::AddOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::CastOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::MulOperation>& mulOp, FlounderFrame& frame);

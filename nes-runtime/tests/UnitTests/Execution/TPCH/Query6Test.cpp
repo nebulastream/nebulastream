@@ -79,6 +79,7 @@ class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
+        options.setDumpToConsole(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
         bm = std::make_shared<Runtime::BufferManager>();
@@ -125,15 +126,17 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     NES_INFO("Query Runtime:\n" << timer);
     // compare results
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    resultSchema->addField("revenue", BasicType::FLOAT32);
+    resultSchema->addField("revenue", DataTypeFactory::createDecimal(4));
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, pipeline2.ctx->buffers[0]);
+
+    auto mctx = std::static_pointer_cast<MockedPipelineExecutionContext>(pipeline2.ctx);
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, mctx->buffers[0]);
     if (targetScaleFactor == TPCH_Scale_Factor::F1) {
-        NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
-        EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122817720.0f, 200);
+        NES_INFO2("{:d}", resultDynamicBuffer[0][0].read<int64_t>());
+        EXPECT_NEAR(resultDynamicBuffer[0][0].read<int64_t>(), 1231410782283, 200);
     } else if (targetScaleFactor == TPCH_Scale_Factor::F0_01) {
-        NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
-        EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 1192973.625f, 200);
+        NES_INFO2("{:d}", resultDynamicBuffer[0][0].read<int64_t>());
+        EXPECT_NEAR(resultDynamicBuffer[0][0].read<int64_t>(), 11930532253, 200);
     } else {
         GTEST_FAIL();
     }
@@ -141,7 +144,11 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q6,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "BabelfishPipelineCompiler"),
+                        ::testing::Values(
+                                          "FlounderCompiler",
+                                          "BCInterpreter",
+                                          "PipelineCompiler",
+                                          "BabelfishPipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q6::ParamType>& info) {
                             return info.param;
                         });

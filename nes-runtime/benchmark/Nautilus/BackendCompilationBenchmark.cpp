@@ -46,7 +46,7 @@ std::unique_ptr<Nautilus::Backends::Executable> prepare(std::shared_ptr<Nautilus
     options.setOptimize(true);
     options.setDebug(false);
     options.setDumpToFile(false);
-    auto dumpHelper = DumpHelper::create(compilerName, false, true, "");
+    auto dumpHelper = DumpHelper::create(compilerName, false, false, "");
     auto& compiler = Backends::CompilationBackendRegistry::getPlugin(std::move(compilerName));
     return compiler->compile(ir, options, dumpHelper);
 }
@@ -73,7 +73,7 @@ BENCHMARK_TRACE_FUNCTION(test_1000);*/
 
 #define BENCHMARK_COMPILATION_FUNCTION(TARGET_FUNCTION, COMPILER)                                                                \
     static void _##TARGET_FUNCTION##_##COMPILER##_(benchmark::State& state) {                                                    \
-        NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_FATAL_ERROR);                                      \
+        NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_DEBUG);                                      \
         Value<Int32> x = Value<Int32>((int32_t) 1);                                                                              \
         x.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());                          \
         Value<Int32> y = Value<Int32>((int32_t) 1);                                                                              \
@@ -105,7 +105,8 @@ BENCHMARK_COMPILATION_FUNCTION(test_1, Flounder);
 BENCHMARK_COMPILATION_FUNCTION(test_10, Flounder);
 BENCHMARK_COMPILATION_FUNCTION(test_100, Flounder);
 BENCHMARK_COMPILATION_FUNCTION(test_500, Flounder);*/
-BENCHMARK_COMPILATION_FUNCTION(test_1000, Flounder);
+//BENCHMARK_COMPILATION_FUNCTION(test_1000, Flounder);
+BENCHMARK_COMPILATION_FUNCTION(test_1000, MLIR);
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 /*INSTANTIATE_TEST_CASE_P(testIfCompilation,

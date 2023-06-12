@@ -22,6 +22,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <functional>
 #include <memory>
+#include <mir.h>
+#include <mir-gen.h>
 
 namespace NES::Nautilus {
 
@@ -39,6 +41,79 @@ class ExpressionExecutionTest : public Testing::NESBaseTest, public AbstractComp
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ExpressionExecutionTest test class."); }
 };
+
+MIR_item_t create_mir_func_with_loop(MIR_context_t ctx, MIR_module_t* m) {
+    MIR_item_t func;
+    MIR_label_t fin, cont;
+    MIR_reg_t ARG1, R2;
+    MIR_type_t res_type;
+
+    if (m != NULL)
+        *m = MIR_new_module(ctx, "m");
+    res_type = MIR_T_I64;
+    func = MIR_new_func(ctx, "loop", 1, &res_type, 1, MIR_T_I64, "arg1");
+    R2 = MIR_new_func_reg(ctx, func->u.func, MIR_T_I64, "count");
+    ARG1 = MIR_reg(ctx, "arg1", func->u.func);
+    fin = MIR_new_label(ctx);
+    cont = MIR_new_label(ctx);
+    MIR_append_insn(ctx, func, MIR_new_insn(ctx, MIR_MOV, MIR_new_reg_op(ctx, R2), MIR_new_int_op(ctx, 0)));
+    MIR_append_insn(ctx,
+                    func,
+                    MIR_new_insn(ctx, MIR_BGE, MIR_new_label_op(ctx, fin), MIR_new_reg_op(ctx, R2), MIR_new_reg_op(ctx, ARG1)));
+    MIR_append_insn(ctx, func, cont);
+    MIR_append_insn(ctx,
+                    func,
+                    MIR_new_insn(ctx, MIR_ADD, MIR_new_reg_op(ctx, R2), MIR_new_reg_op(ctx, R2), MIR_new_int_op(ctx, 1)));
+    MIR_append_insn(ctx,
+                    func,
+                    MIR_new_insn(ctx, MIR_BLT, MIR_new_label_op(ctx, cont), MIR_new_reg_op(ctx, R2), MIR_new_reg_op(ctx, ARG1)));
+    MIR_append_insn(ctx, func, fin);
+    MIR_append_insn(ctx, func, MIR_new_ret_insn(ctx, 1, MIR_new_reg_op(ctx, R2)));
+    auto x = MIR_new_func_reg(ctx, func->u.func, MIR_T_I64, "count2");
+    MIR_finish_func(ctx);
+
+    if (m != NULL)
+        MIR_finish_module(ctx);
+    return func;
+}
+
+TEST_P(ExpressionExecutionTest, interpretMIR) {
+    MIR_module_t m;
+    MIR_context_t ctx = MIR_init();
+    auto func = create_mir_func_with_loop(ctx, &m);
+    MIR_output (ctx, stderr);
+    MIR_load_module (ctx, m);
+    MIR_link (ctx, MIR_set_interp_interface, NULL);
+    MIR_output (ctx, stderr);
+    MIR_set_interp_interface (ctx, func);
+    typedef int64_t (*loop_func) (int64_t);
+    //  auto fun_addr = (loop_func) MIR_gen (ctx, 0, func);
+    int64_t res = ((loop_func) func->addr) (10);
+    //MIR_link (ctx, MIR_set_gen_interface, NULL);
+    //int64_t res = fun_addr(10);
+    NES_DEBUG(res);
+    MIR_finish (ctx);
+}
+
+
+TEST_P(ExpressionExecutionTest, compileMIR) {
+    MIR_module_t m;
+    MIR_context_t ctx = MIR_init();
+    auto func = create_mir_func_with_loop(ctx, &m);
+    MIR_output (ctx, stderr);
+    MIR_load_module (ctx, m);
+    MIR_gen_init (ctx, 1);
+    MIR_gen_set_optimize_level (ctx, 0, 3);
+    MIR_gen_set_debug_file (ctx, 0, stderr);
+    MIR_link (ctx, MIR_set_gen_interface, NULL);
+    MIR_output (ctx, stderr);
+
+    typedef int64_t (*loop_func) (int64_t);
+    auto fun_addr = (loop_func) MIR_gen (ctx, 0, func);
+    int64_t res = fun_addr(10);
+    NES_DEBUG(res);
+    MIR_finish (ctx);
+}
 
 Value<> int8AddExpression(Value<Int8> x) {
     Value<Int8> y = (int8_t) 2;

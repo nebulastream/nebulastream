@@ -16,6 +16,7 @@ add_source_files(nes-runtime
         ReadFieldExpression.cpp
         WriteFieldExpression.cpp
         ConstantValueExpression.cpp
+        ConstantNumericExpression.cpp
         )
 
 add_subdirectory(ArithmeticExpressions)

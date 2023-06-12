@@ -40,7 +40,7 @@ void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto outputIndex = emitState->outputIndex;
     memoryProvider->write(outputIndex, emitState->bufferReference, recordBuffer);
-    //emitState->outputIndex = outputIndex + (uint64_t) 1;
+    emitState->outputIndex = outputIndex + (uint64_t) 1;
     // emit buffer if it reached the maximal capacity
     /*if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;

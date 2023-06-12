@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/Numeric.hpp"
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/Interface/DataTypes/Numeric/Numeric.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -466,6 +468,22 @@ TEST_F(DataTypeTest, LoadMemberTest) {
     ASSERT_EQ(getMember(ref, TestS, x).load<UInt64>(), (uint64_t) 10);
     ASSERT_EQ(getMember(ref, TestS, y).load<UInt64>(), (uint64_t) 20);
     ASSERT_EQ(getMember(ref, TestS, z).load<UInt64>(), (uint64_t) 30);
+}
+
+TEST_F(DataTypeTest, NumericTest) {
+    Value<Numeric> num1 = Value<Numeric>(std::make_shared<Numeric>(0, 5));
+    Value<Numeric> num2 = Value<Numeric>(std::make_shared<Numeric>(0, 7));
+
+    ASSERT_EQ(num1 + num2, Value<Numeric>(std::make_shared<Numeric>(0, 12)));
+
+    num1 = Value<Numeric>(std::make_shared<Numeric>(2, 500));
+    num2 = Value<Numeric>(std::make_shared<Numeric>(2, 700));
+    ASSERT_EQ(num1 + num2, Value<Numeric>(std::make_shared<Numeric>(2, 1200)));
+    ASSERT_EQ(num1 * num2, Value<Numeric>(std::make_shared<Numeric>(4, 350000)));
+    ASSERT_EQ(num1 - num2, Value<Numeric>(std::make_shared<Numeric>(2, -200)));
+    ASSERT_EQ(num1 / num2, Value<Numeric>(std::make_shared<Numeric>(2, 71)));
+
+
 }
 
 }// namespace NES::Nautilus

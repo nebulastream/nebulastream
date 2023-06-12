@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Types/StampFactory.hpp"
+#include <mir.h>
 #include <Nautilus/Backends/Flounder/FlounderLoweringProvider.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
@@ -49,7 +51,7 @@ FlounderLoweringProvider::FlounderLoweringProvider() = default;
 std::unique_ptr<flounder::Executable> FlounderLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir,
                                                                       const NES::DumpHelper& dumpHelper) {
     flounder::Compiler compiler = flounder::Compiler{/*do not optimize*/ false,
-                                                     /*collect the asm code to print later*/ false};
+                                                     /*collect the asm code to print later*/ true};
     auto ctx = LoweringContext(std::move(ir));
     return ctx.process(compiler, dumpHelper);
 }
@@ -62,6 +64,11 @@ std::unique_ptr<flounder::Executable> FlounderLoweringProvider::LoweringContext:
     auto root = ir->getRootOperation();
     this->process(root);
     auto executable = std::make_unique<flounder::Executable>();
+
+    for (auto& registerName : activeRegisters) {
+        auto reg = program.vreg(registerName.data());
+        program << program.clear(reg);
+    }
 
     const auto flounder_code = program.code();
 
@@ -95,8 +102,10 @@ void FlounderLoweringProvider::LoweringContext::process(
 
         const auto intStamp = std::static_pointer_cast<IR::Types::IntegerStamp>(argument->getStamp());
         if (intStamp->getBitWidth() != IR::Types::IntegerStamp::BitWidth::I64) {
-            auto tmpArg = program.vreg("temp_" + argument->getIdentifier());
-            program << program.request_vreg64(tmpArg) << program.get_argument(i, tmpArg) << program.mov(arg, tmpArg);
+            //  flounder::Register tmpArg = program.vreg("temp_" + argument->getIdentifier());
+            // activeRegisters.emplace(tmpArg.virtual_name()->data());
+            //program << program.request_vreg64(tmpArg) << program.get_argument(i, arg) << program.mov(arg, tmpArg);
+            program << program.get_argument(i, arg);
         } else {
             program << program.get_argument(i, arg);
         }
@@ -131,6 +140,7 @@ void FlounderLoweringProvider::LoweringContext::processInline(const std::shared_
 
 flounder::VregInstruction FlounderLoweringProvider::LoweringContext::requestVreg(flounder::Register& reg,
                                                                                  const IR::Types::StampPtr& stamp) {
+    activeRegisters.emplace(reg.virtual_name()->data());
     if (stamp->isInteger()) {
         auto intStamp = std::static_pointer_cast<IR::Types::IntegerStamp>(stamp);
         flounder::RegisterWidth registerWidth;
@@ -269,13 +279,22 @@ void FlounderLoweringProvider::LoweringContext::processCmp(
         auto left = std::static_pointer_cast<IR::Operations::CompareOperation>(opt);
         processCmp(left, frame, falseCase);
         program << program.jmp(trueCase);
+    } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::NegateOp) {
+        auto neg = std::static_pointer_cast<IR::Operations::NegateOperation>(opt)->getInput();
+        processCmp(neg, frame, falseCase, trueCase);
     } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::AndOp) {
         auto left = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
         processAnd(left, frame, trueCase, falseCase);
     } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::OrOp) {
         auto left = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
         processOr(left, frame, trueCase, falseCase);
-    } else {
+    } else if (opt->getOperationType() == IR::Operations::Operation::OperationType::ConstBooleanOp) {
+        auto left = std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(opt);
+        auto reg =  createVreg(left->getIdentifier(), IR::Types::StampFactory().createInt64Stamp(), frame);
+
+        program << program.mov(reg, program.constant64(left->getValue()));
+        program << program.cmp(reg, program.constant64(1));
+    }else {
         NES_THROW_RUNTIME_ERROR("Left is not a compare operation but a " << opt->toString());
     }
 }
@@ -313,7 +332,13 @@ void FlounderLoweringProvider::LoweringContext::processCmp(const std::shared_ptr
                                                            flounder::Label& falseCase) {
     auto leftInput = frame.getValue(compOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(compOpt->getRightInput()->getIdentifier());
-    program << program.cmp(leftInput, rightInput);
+
+    if (compOpt->isEquals() && compOpt->getLeftInput()->getStamp()->isAddress() && compOpt->getRightInput()->getStamp()->isInteger()) {
+        program << program.cmp(leftInput, program.constant64(0));    }else{
+        program << program.cmp(leftInput, rightInput);
+    }
+
+
     switch (compOpt->getComparator()) {
         case IR::Operations::CompareOperation::Comparator::EQ: program << program.jne(falseCase); break;
         case IR::Operations::CompareOperation::Comparator::LT: program << program.jge(falseCase); break;
@@ -446,17 +471,20 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
         }
         case IR::Operations::Operation::OperationType::OrOp: {
             auto call = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
-            process(call, frame);
+            // process(call, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::AndOp: {
             auto call = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
-            process(call, frame);
+            // process(call, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::CastOp: {
             auto cast = std::static_pointer_cast<IR::Operations::CastOperation>(opt);
             process(cast, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::NegateOp: {
             return;
         }
         default: {

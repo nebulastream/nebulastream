@@ -90,6 +90,7 @@ class TPCH_Q3 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
+        options.setDumpToConsole(true);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -147,7 +148,7 @@ TEST_P(TPCH_Q3, joinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q3,
-                        ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values( "FlounderCompiler",  "MIRCompiler", "BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q3::ParamType>& info) {
                             return info.param;
                         });

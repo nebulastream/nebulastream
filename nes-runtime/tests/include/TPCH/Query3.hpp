@@ -14,6 +14,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query3_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_Query3_HPP_
 
+#include "Execution/Expressions/ConstantDecimalExpression.hpp"
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -72,6 +73,9 @@ class TPCH_Query3 {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
         PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+        PhysicalTypePtr decimal2 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(2));
+        PhysicalTypePtr decimal4 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(4));
+
         PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
         auto& customers = tables[TPCHTable::Customer];
 
@@ -120,6 +124,8 @@ class TPCH_Query3 {
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
         PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
         PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+        PhysicalTypePtr decimal2 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(2));
+        PhysicalTypePtr decimal4 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(4));
 
         /**
         * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
@@ -193,6 +199,8 @@ class TPCH_Query3 {
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
         PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
         PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+        PhysicalTypePtr decimal2 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(2));
+        PhysicalTypePtr decimal4 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDecimal(4));
 
         /**
    * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
@@ -232,11 +240,11 @@ class TPCH_Query3 {
         //  sum(l_extendedprice * (1 - l_discount)) as revenue,
         auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
         auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-        auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
+        auto oneConst = std::make_shared<ConstantDecimalExpression>(2, 1);
         auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
         auto revenueExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
         auto sumRevenue =
-            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
+            std::make_shared<Aggregation::SumAggregationFunction>(decimal4, decimal4, revenueExpression, "sum_revenue");
         auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
         std::vector<Expressions::ExpressionPtr> keyFields = {l_orderkey,
                                                              readO_orderdate,

@@ -63,6 +63,7 @@ class TPCH_Q1 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
+        options.setDumpToConsole(true);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -102,23 +103,25 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
         aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
     }
     timer.snapshot("execute agg");
-    aggExecutablePipeline->stop(*pipeline1.ctx);
-    timer.snapshot("stop");
-    timer.pause();
-    NES_INFO("Query Runtime:\n" << timer);
+
     // compare results
     auto aggregationHandler = pipeline1.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(0);
     // TODO extend for multi thread support
     auto hashTable = aggregationHandler->getThreadLocalStore(wc->getId());
     auto numberOfKeys = hashTable->getCurrentSize();
     EXPECT_EQ(numberOfKeys, 4);
+    aggExecutablePipeline->stop(*pipeline1.ctx);
+    timer.snapshot("stop");
+    timer.pause();
+    NES_INFO("Query Runtime:\n" << timer);
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        TPCH_Q1,
-                        ::testing::Values("BCInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<TPCH_Q1::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    TPCH_Q1,
+    ::testing::Values("MIRCompiler", "FlounderCompiler", "PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+    [](const testing::TestParamInfo<TPCH_Q1::ParamType>& info) {
+        return info.param;
+    });
 
 }// namespace NES::Runtime::Execution
