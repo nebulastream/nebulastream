@@ -83,26 +83,32 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
 
 nlohmann::json LocationService::requestLocationAndParentDataFromAllMobileNodes() {
     auto nodeVector = locationIndex->getAllNodeLocations();
-    auto locMapJson = nlohmann::json::array();
+    auto locationMapJson = nlohmann::json::array();
     auto mobileEdgesJson = nlohmann::json::array();
     uint32_t count = 0;
     uint32_t edgeCount = 0;
-    for (auto& [nodeId, location] : nodeVector) {
+    for (const auto& [nodeId, location] : nodeVector) {
         auto topologyNode = topology->findNodeWithId(nodeId);
         if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
-            locMapJson[count] = nodeInfo;
-            for (auto& parent : topologyNode->getParents()) {
-                nlohmann::json edge;
+            locationMapJson[count] = nodeInfo;
+            for (const auto& parent : topologyNode->getParents()) {
+                const nlohmann::json edge {
+                    { "source", nodeId },
+                    {"target", parent->as<TopologyNode>()->getId()}
+                };
+                /*
                 edge["source"] = nodeId;
                 edge["target"] = parent->as<TopologyNode>()->getId();
-                mobileEdgesJson[edgeCount++] = edge;
+                 */
+                mobileEdgesJson[edgeCount] = edge;
+                ++edgeCount;
             }
             ++count;
         }
     }
     nlohmann::json response;
-    response["nodes"] = locMapJson;
+    response["nodes"] = locationMapJson;
     response["edges"] = mobileEdgesJson;
     return response;
 }
@@ -110,8 +116,8 @@ nlohmann::json LocationService::requestLocationAndParentDataFromAllMobileNodes()
 nlohmann::json LocationService::convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     nlohmann::json locJson;
     if (geoLocation.isValid()) {
-        locJson[0] = geoLocation.getLatitude();
-        locJson[1] = geoLocation.getLongitude();
+        locJson["latitude"] = geoLocation.getLatitude();
+        locJson["longitude"] = geoLocation.getLongitude();
     }
     return locJson;
 }

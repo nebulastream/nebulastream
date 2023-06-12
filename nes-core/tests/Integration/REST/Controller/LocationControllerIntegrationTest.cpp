@@ -169,9 +169,9 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocation) {
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["id"], workerNodeId1);
-    nlohmann::json::array_t locationData = res["location"];
-    EXPECT_EQ(locationData[0].dump(), latitude);
-    ASSERT_EQ(locationData[1].dump(), longitude);
+    nlohmann::json locationData = res["location"];
+    EXPECT_EQ(locationData["latitude"].dump(), latitude);
+    ASSERT_EQ(locationData["longitude"].dump(), longitude);
     bool stopwrk1 = wrk1->stop(true);
     ASSERT_TRUE(stopwrk1);
     bool stopCrd = coordinator->stopCoordinator(true);
@@ -311,21 +311,22 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     ASSERT_EQ(nodes.size(), 2);
     ASSERT_EQ(edges.size(), 2);
 
-    auto locationData = std::vector<double>(2, 0);
-    for (auto node : nodes) {
+    //auto locationData = std::vector<double>(2, 0);
+    nlohmann::json locationData;
+    for (const auto& node : nodes) {
         if (node["id"] == workerNodeId2) {
-            locationData[0] = 52.5523;
-            locationData[1] = 13.3517;
+            locationData["latitude"] = 52.5523;
+            locationData["longitude"] = 13.3517;
         } else if (node["id"] == workerNodeId3) {
-            locationData[0] = 53.5523;
-            locationData[1] = -13.3517;
+            locationData["latitude"] = 53.5523;
+            locationData["longitude"] = -13.3517;
         } else {
             FAIL();
         }
         EXPECT_TRUE(node.contains("location"));
         EXPECT_EQ(node["location"], nlohmann::json(locationData));
     }
-    for (auto edge : edges) {
+    for (const auto& edge : edges) {
         ASSERT_TRUE(edge["source"] == workerNodeId2 || edge["source"] == workerNodeId3);
         ASSERT_EQ(edge["target"], 1);
     }
