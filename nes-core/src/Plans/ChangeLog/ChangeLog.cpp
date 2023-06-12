@@ -182,29 +182,29 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
             }
         }
 
+        //Add remaining upstream operators to the temp upstream operator set.
         if (!firstUpstreamOperators.empty()) {
             tempUpstreamOperators.insert(firstUpstreamOperators.begin(), firstUpstreamOperators.end());
         }
-
         if (!nextUpstreamOperators.empty()) {
             tempUpstreamOperators.insert(nextUpstreamOperators.begin(), nextUpstreamOperators.end());
         }
 
+        //Reinitialize first Upstream Operators to the temp and clear the temp upstream operator set
         firstUpstreamOperators = tempUpstreamOperators;
         tempUpstreamOperators.clear();
 
         // check if the downstream operators in the temp is also the downstream operator of the change log entry under consideration
         // push the most downstream operator into the new downstream Operator set
-
         std::set<OperatorNodePtr> tempDownstreamOperators;
         std::set<OperatorNodePtr> nextDownstreamOperators = changeLogEntriesToMerge[index].second->downstreamOperators;
+
         for (auto firstItr = firstDownstreamOperators.begin(); firstItr != firstDownstreamOperators.end();) {
             bool incFirstItr = true;
             for (auto nextItr = nextDownstreamOperators.begin(); nextItr != nextDownstreamOperators.end();) {
                 if ((*firstItr)->getId() == (*nextItr)->getId()) {
                     // Insert item in the temp downstream operator list
                     tempDownstreamOperators.insert((*firstItr));
-
                     // It is okay to erase these operators as there won't be any other operators with same id in the change logs entries.
                     firstItr = firstDownstreamOperators.erase(
                         firstItr);// Please note that we are assigning the iterator to the next item
@@ -213,11 +213,13 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
                     break;
                 } else if ((*firstItr)->as<OperatorNode>()->containAsGrandParent((*nextItr))) {
                     tempDownstreamOperators.insert((*nextItr));
+                    // It is okay to erase first operators as there won't be any other operators in the next change log entry that can also be its downstream operator.
                     firstItr = firstDownstreamOperators.erase(
                         firstItr);// Please note that we are assigning the iterator to the next item
                     incFirstItr = false;
                     break;
                 } else if ((*nextItr)->as<OperatorNode>()->containAsGrandParent((*firstItr))) {
+                    // It is okay to erase next operators as there won't be any other operators in the first change log entry that can also be its downstream operator.
                     tempDownstreamOperators.insert((*firstItr));
                     nextItr = nextDownstreamOperators.erase(nextItr);
                 } else {
@@ -225,20 +227,21 @@ ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, Cha
                 }
             }
 
-            // Increment the first iterator
+            // Increment the first iterator only if it was not incremented before
             if (incFirstItr) {
                 firstItr++;
             }
         }
 
+        //Add remaining downstream operators to the temp upstream operator set.
         if (!firstDownstreamOperators.empty()) {
             tempUpstreamOperators.insert(firstDownstreamOperators.begin(), firstDownstreamOperators.end());
         }
-
         if (!nextDownstreamOperators.empty()) {
             tempDownstreamOperators.insert(nextDownstreamOperators.begin(), nextDownstreamOperators.end());
         }
 
+        //Reinitialize first downstream Operators to the temp and clear the temp downstream operator set
         firstDownstreamOperators = tempDownstreamOperators;
         tempDownstreamOperators.clear();
     }
