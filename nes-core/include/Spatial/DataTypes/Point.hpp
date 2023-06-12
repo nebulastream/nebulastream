@@ -70,4 +70,4 @@ class Point {
     double latitude, longitude;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_POINT_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_DATATYPES_POINT_HPP_

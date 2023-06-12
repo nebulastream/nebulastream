@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STREAMHASHJOINOPERATORHANDLER_HPP
-#define NES_STREAMHASHJOINOPERATORHANDLER_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_STREAMHASHJOINOPERATORHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_STREAMHASHJOINOPERATORHANDLER_HPP_
 
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
@@ -242,4 +242,4 @@ class StreamHashJoinOperatorHandler : public OperatorHandler, public Runtime::Bu
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_STREAMHASHJOINOPERATORHANDLER_HPP
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_STREAMHASHJOINOPERATORHANDLER_HPP_

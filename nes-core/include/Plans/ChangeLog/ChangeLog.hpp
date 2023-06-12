@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CHANGELOG_HPP
-#define NES_CHANGELOG_HPP
+#ifndef NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
+#define NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
 
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <absl/container/btree_map.h>
@@ -76,4 +76,4 @@ class ChangeLog {
     absl::btree_map<uint64_t, ChangeLogEntryPtr> changeLogEntries;
 };
 }// namespace NES::Optimizer::Experimental
-#endif//NES_CHANGELOG_HPP
+#endif // NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_

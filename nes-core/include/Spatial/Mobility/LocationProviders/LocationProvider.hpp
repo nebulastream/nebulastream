@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
@@ -85,4 +85,4 @@ class LocationProvider {
 };
 }// namespace Spatial::Mobility::Experimental
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_

@@ -32,4 +32,4 @@ enum class RequestType : uint8_t { Add = 0, Stop, Restart, Fail, Migrate, Update
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_REQUESTTYPE_HPP_

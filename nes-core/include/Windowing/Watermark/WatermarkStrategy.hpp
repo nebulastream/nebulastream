@@ -38,4 +38,4 @@ class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>
     }
 };
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGY_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WATERMARK_WATERMARKSTRATEGY_HPP_

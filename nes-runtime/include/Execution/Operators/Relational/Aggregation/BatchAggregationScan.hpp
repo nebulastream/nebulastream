@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHAGGREGATION_SCAN_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHAGGREGATION_SCAN_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONSCAN_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONSCAN_HPP_
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -37,4 +37,4 @@ class BatchAggregationScan : public Operator {
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_BATCHAGGREGATION_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONSCAN_HPP_

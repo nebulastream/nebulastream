@@ -32,7 +32,7 @@ class ChangeLogEntryTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ChangeLogEntryTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ChangeLogEntryTest test class.");
+        NES_INFO2("Setup ChangeLogEntryTest test class.");
     }
 
     void SetUp() override {
@@ -76,7 +76,7 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntry) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    NES_DEBUG(queryPlan->toString());
+    NES_DEBUG2("{}",queryPlan->toString());
 
     // Initialize change log entry
     auto changelogEntry = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});

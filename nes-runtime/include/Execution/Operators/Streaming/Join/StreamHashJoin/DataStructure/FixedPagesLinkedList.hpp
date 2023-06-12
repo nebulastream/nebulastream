@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_FIXEDPAGESLINKEDLIST_HPP
-#define NES_FIXEDPAGESLINKEDLIST_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGESLINKEDLIST_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGESLINKEDLIST_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
@@ -55,4 +55,4 @@ class FixedPagesLinkedList {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_FIXEDPAGESLINKEDLIST_HPP
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_FIXEDPAGESLINKEDLIST_HPP_

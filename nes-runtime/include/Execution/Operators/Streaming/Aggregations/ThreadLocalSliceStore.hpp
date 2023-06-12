@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_THREADLOCALSLICESTORE_HPP_
-#define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_THREADLOCALSLICESTORE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_THREADLOCALSLICESTORE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_THREADLOCALSLICESTORE_HPP_
 
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
@@ -145,4 +145,4 @@ class ThreadLocalSliceStore {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_THREADLOCALSLICESTORE_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_THREADLOCALSLICESTORE_HPP_

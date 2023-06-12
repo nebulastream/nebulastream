@@ -39,4 +39,4 @@ class BabelfishExecutablePipeline : public ExecutablePipeline {
 
 }// namespace NES::ExecutionEngine::Experimental
 
-#endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHEXECUTABLEPIPELINE_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_BABELFISH_BABELFISHEXECUTABLEPIPELINE_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FIXED2DARRAY_HPP
-#define NES_FIXED2DARRAY_HPP
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
 #include <Runtime/Allocator/MemoryResource.hpp>
 
 #include <cstdint>
@@ -51,4 +51,4 @@ class Fixed2DArray {
 };
 }// namespace NES::Nautilus::Interface
 
-#endif//NES_FIXED2DARRAY_HPP
+#endif // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_

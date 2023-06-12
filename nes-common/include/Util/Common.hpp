@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_HPP
-#define NES_COMMON_HPP
+#ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #include <functional>
 #include <memory>
 #include <string>
@@ -232,4 +232,4 @@ uint64_t murmurHash(uint64_t key);
 
 }// namespace NES::Util
 
-#endif//NES_COMMON_HPP
+#endif // NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

@@ -70,4 +70,4 @@ class GeneratorSource : public DataSource {
 };
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_GENERATORSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_GENERATORSOURCE_HPP_

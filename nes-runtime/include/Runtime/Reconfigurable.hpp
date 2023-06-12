@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
-#define NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 
 #include <Runtime/ReconfigurationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -49,4 +49,4 @@ class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Recon
 
 }// namespace NES::Runtime
 
-#endif// NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
