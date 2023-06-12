@@ -28,6 +28,7 @@ class Int : public TraceableType {
     virtual const std::shared_ptr<Int> add(const Int&) const = 0;
     virtual const std::shared_ptr<Int> sub(const Int&) const = 0;
     virtual const std::shared_ptr<Int> div(const Int&) const = 0;
+    virtual const std::shared_ptr<Int> mod(const Int&) const = 0;
     virtual const std::shared_ptr<Int> mul(const Int&) const = 0;
     virtual const std::shared_ptr<Boolean> equals(const Int&) const = 0;
     virtual const std::shared_ptr<Boolean> lessThan(const Int& other) const = 0;
@@ -49,6 +50,7 @@ class Int8 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& other) const override;
     const std::shared_ptr<Int> div(const Int& other) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& other) const override;
     const std::shared_ptr<Boolean> equals(const Int& other) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -74,6 +76,7 @@ class Int16 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -99,6 +102,7 @@ class Int32 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -124,6 +128,7 @@ class Int64 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -149,6 +154,7 @@ class UInt8 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -174,6 +180,7 @@ class UInt16 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -199,6 +206,7 @@ class UInt32 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;
@@ -224,6 +232,7 @@ class UInt64 : public Int {
     const std::shared_ptr<Int> add(const Int& other) const override;
     const std::shared_ptr<Int> sub(const Int& anInt) const override;
     const std::shared_ptr<Int> div(const Int& anInt) const override;
+    const std::shared_ptr<Int> mod(const Int& anInt) const override;
     const std::shared_ptr<Int> mul(const Int& anInt) const override;
     const std::shared_ptr<Boolean> equals(const Int& anInt) const override;
     const std::shared_ptr<Boolean> lessThan(const Int& other) const override;

@@ -126,6 +126,16 @@ Value<> DivOp(const Value<>& left, const Value<>& right) {
     });
 }
 
+Value<> ModOp(const Value<>& left, const Value<>& right) {
+    return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
+        auto result = plugin->Mod(left, right);
+        if (result.has_value()) {
+            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::MOD, result.value().ref, left.ref, right.ref);
+        }
+        return result;
+    });
+}
+
 Value<> EqualsOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Equals(left, right);

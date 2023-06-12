@@ -209,6 +209,9 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
         case IR::Operations::Operation::OperationType::DivOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::DivOperation>(operation), frame);
             break;
+        case IR::Operations::Operation::OperationType::ModOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::ModOperation>(operation), frame);
+            break;
         case IR::Operations::Operation::OperationType::LoadOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::LoadOperation>(operation), frame);
             break;
@@ -460,6 +463,23 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::DivOpera
             auto mlirDivOp = builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
             frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
         }
+    }
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ModOperation> modIntOp, ValueFrame& frame) {
+    auto leftInput = frame.getValue(modIntOp->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(modIntOp->getRightInput()->getIdentifier());
+    auto resultType = leftInput.getType();
+    if (modIntOp->getStamp()->isInteger()) {
+        if (resultType.isSignedInteger()) {
+            auto mlirModOp = builder->create<mlir::LLVM::SRemOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+            frame.setValue(modIntOp->getIdentifier(), mlirModOp);
+        } else {
+            auto mlirModOp = builder->create<mlir::LLVM::URemOp>(getNameLoc("binOpResult"), resultType, leftInput, rightInput);
+            frame.setValue(modIntOp->getIdentifier(), mlirModOp);
+        }
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
 }
 

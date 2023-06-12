@@ -33,6 +33,10 @@ const std::shared_ptr<Int> UInt32::div(const Int& other) const {
     auto& otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value / otherValue.value);
 }
+const std::shared_ptr<Int> UInt32::mod(const Int& other) const {
+    auto& otherValue = other.staticCast<UInt32>();
+    return create<UInt32>(value % otherValue.value);
+}
 const std::shared_ptr<Int> UInt32::mul(const Int& other) const {
     auto& otherValue = other.staticCast<UInt32>();
     return create<UInt32>(value * otherValue.value);

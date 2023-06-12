@@ -108,6 +108,24 @@ TEST_P(ExpressionExecutionTest, addI64Test) {
     ASSERT_EQ(function(-14), -7);
 }
 
+Value<> int64ModExpression(Value<Int64> x) {
+    Value<Int64> y = (int64_t) 7;
+    return x % y;
+}
+
+TEST_P(ExpressionExecutionTest, modI64Test) {
+    Value<Int64> tempx = (int64_t) 0;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
+        return int64ModExpression(tempx);
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
+    ASSERT_EQ(function(3), 3);
+    ASSERT_EQ(function(14), 0);
+    ASSERT_EQ(function(18), 4);
+}
+
 Value<> floatAddExpression(Value<Float> x) {
     Value<Float> y = 7.0f;
     return x + y;

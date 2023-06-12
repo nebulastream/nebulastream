@@ -21,6 +21,7 @@ enum class OpCode : uint8_t {
     ADD,
     SUB,
     DIV,
+    MOD,
     MUL,
     EQUALS,
     LESS_THAN,

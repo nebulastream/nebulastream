@@ -43,6 +43,7 @@ class Operation {
         CastOp,
         CompareOp,
         DivOp,
+        ModOp,
         FunctionOp,
         IfOp,
         LoopOp,

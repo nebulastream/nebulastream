@@ -14,6 +14,7 @@
 
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
@@ -261,6 +262,10 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         }
         case IR::Operations::Operation::OperationType::DivOp: {
             processBinary<IR::Operations::DivOperation>(opt, "/", blockIndex, frame);
+            return;
+        }
+        case IR::Operations::Operation::OperationType::ModOp: {
+            processBinary<IR::Operations::ModOperation>(opt, "%", blockIndex, frame);
             return;
         }
         case IR::Operations::Operation::OperationType::ReturnOp: {
