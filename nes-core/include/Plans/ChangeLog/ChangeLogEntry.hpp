@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CHANGELOGENTRY_HPP
-#define NES_CHANGELOGENTRY_HPP
+#ifndef NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
+#define NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <memory>
@@ -64,4 +64,4 @@ class ChangeLogEntry {
     std::set<OperatorId> computePoSet();
 };
 }// namespace NES::Optimizer::Experimental
-#endif//NES_CHANGELOGENTRY_HPP
+#endif // NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_

@@ -111,4 +111,4 @@ struct formatter<NES::Network::NesPartition> : formatter<std::string> {
     }
 };
 }//namespace fmt
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_

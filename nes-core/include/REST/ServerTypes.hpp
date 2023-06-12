@@ -21,4 +21,4 @@ namespace NES {
  */
 enum class ServerType : uint8_t { Oatpp, CPPRestSDK };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_
+#endif // NES_CORE_INCLUDE_REST_SERVERTYPES_HPP_

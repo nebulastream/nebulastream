@@ -61,4 +61,4 @@ class TupleView : public MaterializedView {
 
 };// class TupleView
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_CORE_INCLUDE_VIEWS_TUPLEVIEW_HPP_
+#endif // NES_CORE_INCLUDE_VIEWS_TUPLEVIEW_HPP_

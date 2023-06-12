@@ -52,4 +52,4 @@ class JSONParser : public Parser {
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

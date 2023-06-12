@@ -40,4 +40,4 @@ class FlatMapJavaUDFLogicalOperatorNode : public JavaUDFLogicalOperator {
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPJAVAUDFLOGICALOPERATORNODE_HPP_
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_FLATMAPJAVAUDFLOGICALOPERATORNODE_HPP_

@@ -13,8 +13,8 @@
 */
 #include <string>
 
-#ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_
-#define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_
+#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+#define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
 namespace NES::Configurations {
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
@@ -190,4 +190,4 @@ const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
-#endif//NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGS_HPP_
+#endif // NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

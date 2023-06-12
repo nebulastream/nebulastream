@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_JAVAUDFLOGICALOPERATOR_HPP
-#define NES_JAVAUDFLOGICALOPERATOR_HPP
+#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JAVAUDFLOGICALOPERATOR_HPP_
+#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JAVAUDFLOGICALOPERATOR_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -76,4 +76,4 @@ class JavaUDFLogicalOperator : public LogicalUnaryOperatorNode {
 
 }// namespace NES
 
-#endif//NES_JAVAUDFLOGICALOPERATOR_HPP
+#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JAVAUDFLOGICALOPERATOR_HPP_

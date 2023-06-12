@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_HPP_
-#define NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_HPP_
+#ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
@@ -172,4 +172,4 @@ class QueryPlanBuilder {
                                                               NES::QueryPlanPtr rightQueryPlan);
 };
 }// end namespace NES
-#endif//NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_H_
+#endif // NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

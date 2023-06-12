@@ -30,8 +30,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef NEARGYE_MAGIC_ENUM_FORMAT_HPP
-#define NEARGYE_MAGIC_ENUM_FORMAT_HPP
+#ifndef NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FORMAT_HPP_
+#define NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FORMAT_HPP_
 
 #if !defined(__cpp_lib_format)
 #error "Format is not supported"
@@ -77,5 +77,5 @@ struct std::formatter<E, std::enable_if_t<std::is_enum_v<E> && magic_enum::custo
 #undef MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
 #endif// MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
 
-#endif// NEARGYE_MAGIC_ENUM_FORMAT_HPP                                                                                           \
 // clang-format on
+#endif // NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FORMAT_HPP_

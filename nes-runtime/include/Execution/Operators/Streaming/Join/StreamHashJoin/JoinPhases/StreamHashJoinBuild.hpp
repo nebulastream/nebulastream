@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STREAMJOINBUILD_HPP
-#define NES_STREAMJOINBUILD_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINBUILD_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINBUILD_HPP_
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
@@ -66,4 +66,4 @@ class StreamHashJoinBuild : public ExecutableOperator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_STREAMJOINBUILD_HPP
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_JOINPHASES_STREAMHASHJOINBUILD_HPP_

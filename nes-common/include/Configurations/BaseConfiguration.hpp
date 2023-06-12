@@ -76,4 +76,4 @@ class BaseConfiguration : public BaseOption {
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

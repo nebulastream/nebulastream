@@ -70,4 +70,4 @@ class MaterializedViewSource : public DataSource {
 
 };// class MaterializedViewSource
 }// namespace NES::Experimental::MaterializedView
-#endif// NES_CORE_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
+#endif // NES_CORE_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_

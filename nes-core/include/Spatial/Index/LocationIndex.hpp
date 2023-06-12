@@ -143,4 +143,4 @@ class LocationIndex {
 #endif
 };
 }// namespace NES::Spatial::Index::Experimental
-#endif// NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
+#endif // NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_

@@ -27,4 +27,4 @@ class QueryUndeploymentException : public std::runtime_error, public RequestExec
     const char* what() const noexcept override;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

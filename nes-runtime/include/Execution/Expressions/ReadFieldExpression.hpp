@@ -38,4 +38,4 @@ class ReadFieldExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_

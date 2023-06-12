@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTRAINT_HPP
-#define NES_CONSTRAINT_HPP
+#ifndef NES_CORE_INCLUDE_CONSTRAINTS_CONSTRAINT_HPP_
+#define NES_CORE_INCLUDE_CONSTRAINTS_CONSTRAINT_HPP_
 
 namespace NES::Constraint {
 
@@ -24,4 +24,4 @@ class Constraint {};
 
 }// namespace NES::Constraint
 
-#endif//NES_CONSTRAINT_HPP
+#endif // NES_CORE_INCLUDE_CONSTRAINTS_CONSTRAINT_HPP_

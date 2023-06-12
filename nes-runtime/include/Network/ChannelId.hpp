@@ -49,4 +49,4 @@ struct formatter<NES::Network::ChannelId> : formatter<std::string> {
 };
 }// namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_

@@ -84,4 +84,4 @@ class QueryDeploymentPhase {
     QueryCatalogServicePtr queryCatalogService;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
+#endif // NES_CORE_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_

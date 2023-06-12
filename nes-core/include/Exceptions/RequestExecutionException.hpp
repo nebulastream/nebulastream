@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_REQUESTEXECUTIONEXCEPTION_HPP
-#define NES_REQUESTEXECUTIONEXCEPTION_HPP
+#ifndef NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
+#define NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
 
 #include <exception>
 #include <string>
@@ -41,4 +41,4 @@ class RequestExecutionException : public std::exception {
 };
 }// namespace NES
 
-#endif//NES_REQUESTEXECUTIONEXCEPTION_HPP
+#endif // NES_CORE_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

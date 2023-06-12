@@ -86,4 +86,4 @@ class MaterializedViewSink : public SinkMedium {
 };// class MaterializedViewSink
 }// namespace NES::Experimental::MaterializedView
 
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_
+#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_

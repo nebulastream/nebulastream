@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
-#define NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#ifndef NES_CORE_INCLUDE_UTIL_CORE_HPP_
+#define NES_CORE_INCLUDE_UTIL_CORE_HPP_
 
 #include <Common/Identifiers.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -128,4 +128,4 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
 };// namespace Util
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#endif // NES_CORE_INCLUDE_UTIL_CORE_HPP_

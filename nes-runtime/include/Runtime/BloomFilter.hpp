@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_BLOOMFILTER_HPP
-#define NES_BLOOMFILTER_HPP
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_
 
 #include <cstddef>
 #include <cstdint>
@@ -58,4 +58,4 @@ class alignas(64) BloomFilter {
 };
 
 }// namespace NES::Runtime
-#endif//NES_BLOOMFILTER_HPP
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_

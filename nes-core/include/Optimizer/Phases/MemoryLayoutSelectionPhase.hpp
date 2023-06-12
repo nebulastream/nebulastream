@@ -86,4 +86,4 @@ static const std::map<std::string, MemoryLayoutSelectionPhase::MemoryLayoutPolic
 
 }// namespace NES::Optimizer
 
-#endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
+#endif // NES_CORE_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_

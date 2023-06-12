@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_PHYSICALHASHJOINOPERATOR_HPP
-#define NES_PHYSICALHASHJOINOPERATOR_HPP
+#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINOPERATOR_HPP_
+#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINOPERATOR_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
@@ -50,4 +50,4 @@ class PhysicalHashJoinOperator : public AbstractEmitOperator {
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif//NES_PHYSICALHASHJOINOPERATOR_HPP
+#endif // NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINOPERATOR_HPP_

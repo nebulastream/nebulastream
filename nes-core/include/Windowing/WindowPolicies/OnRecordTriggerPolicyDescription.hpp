@@ -29,4 +29,4 @@ class OnRecordTriggerPolicyDescription : public BaseWindowTriggerPolicyDescripto
     OnRecordTriggerPolicyDescription();
 };
 }// namespace NES::Windowing
-#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_ONRECORDTRIGGERPOLICYDESCRIPTION_HPP_
+#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_ONRECORDTRIGGERPOLICYDESCRIPTION_HPP_

@@ -66,4 +66,4 @@ class UnlockDeleter {
     std::unique_lock<std::mutex> lock;
 };
 }// namespace NES
-#endif//NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_UNLOCKDELETER_HPP_
+#endif // NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_UNLOCKDELETER_HPP_

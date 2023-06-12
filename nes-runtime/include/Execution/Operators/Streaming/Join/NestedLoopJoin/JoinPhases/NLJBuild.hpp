@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NLJBUILD_HPP
-#define NES_NLJBUILD_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJBUILD_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJBUILD_HPP_
 
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
@@ -66,4 +66,4 @@ class NLJBuild : public ExecutableOperator {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NLJBUILD_HPP
+#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_JOINPHASES_NLJBUILD_HPP_

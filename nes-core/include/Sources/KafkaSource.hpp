@@ -146,4 +146,4 @@ class KafkaSource : public DataSource {
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#endif
+#endif // NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
