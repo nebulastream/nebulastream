@@ -83,6 +83,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NES_INFO2("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
+    EXPECT_TRUE(topology->existsNodeWithWorkerId(1u)); // worker inside the coordinator
+    EXPECT_TRUE(topology->existsNodeWithWorkerId(2u)); // first worker should get id 2
+    EXPECT_TRUE(topology->existsNodeWithWorkerId(3u)); // second worker should get id 3
 
     TopologyNodePtr rootNode = topology->getRoot();
     //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);

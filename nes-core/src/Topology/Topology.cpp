@@ -318,7 +318,7 @@ std::string Topology::toString() {
 
 void Topology::print() { NES_DEBUG2("Topology print:{}", toString()); }
 
-bool Topology::existsNodeWithWorkerId(uint64_t workerId) {
+bool Topology::existsNodeWithWorkerId(const uint64_t workerId) {
     std::unique_lock lock(topologyLock);
     NES_INFO2("Topology: Finding if a physical node with worker id {} exists.", workerId);
     if (!rootNode) {
