@@ -71,7 +71,6 @@ static void randomizeHistogramOrder(std::map<uint8_t, size_t>& histogram, size_t
 std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
     createdBuffers.reserve(numBuffers);
-    size_t numberOfTuples = 0;
 
     switch (dataDistribution->getName()) {
         case DistributionName::REPEATING_VALUES: {
@@ -96,7 +95,6 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                     while (row < dynamicBuffer.getCapacity()) {
                         while (curRun < repeats[col] && row < dynamicBuffer.getCapacity()) {
                             dynamicBuffer[row][col].write<uint8_t>(value);
-                            numberOfTuples++;
                             curRun++;
                             row++;
                         }
@@ -110,9 +108,8 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                         curRun = 0;
                     }
                 }
-                bufferRef.setNumberOfTuples(numberOfTuples);
+                bufferRef.setNumberOfTuples(dynamicBuffer.getCapacity());
                 createdBuffers.emplace_back(bufferRef);
-                numberOfTuples = 0;
             }
             break;
         }
@@ -137,7 +134,6 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                             for (size_t i = 0; i < count; i++) {
                                 dynamicBuffer[row][col].write<uint8_t>(value);
                                 row++;
-                                numberOfTuples++;
                             }
                         }
                     }
@@ -145,12 +141,10 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                     for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
                         for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
                             dynamicBuffer[row][col].write<uint8_t>(randomValue(gen));
-                        numberOfTuples++;
                     }
                 }
-                bufferRef.setNumberOfTuples(numberOfTuples);
+                bufferRef.setNumberOfTuples(dynamicBuffer.getCapacity());
                 createdBuffers.emplace_back(bufferRef);
-                numberOfTuples = 0;
             }
             break;
         }
@@ -175,20 +169,18 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                             for (size_t i = 0; i < count; i++) {
                                 dynamicBuffer[row][col].write<uint8_t>(value);
                                 row++;
-                                numberOfTuples++;
                             }
                         }
                     }
                 } else {
                     for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
-                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
+                        for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++) {
                             dynamicBuffer[row][col].write<uint8_t>(randomValue(gen) + minValue);
-                        numberOfTuples++;
+                        }
                     }
                 }
-                bufferRef.setNumberOfTuples(numberOfTuples);
+                bufferRef.setNumberOfTuples(dynamicBuffer.getCapacity());
                 createdBuffers.emplace_back(bufferRef);
-                numberOfTuples = 0;
             }
             break;
         }
@@ -213,7 +205,6 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                             for (size_t i = 0; i < count; i++) {
                                 dynamicBuffer[row][col].write<uint8_t>(value);
                                 row++;
-                                numberOfTuples++;
                             }
                         }
                     }
@@ -221,12 +212,10 @@ std::vector<Runtime::TupleBuffer> ByteDataGenerator::createData(size_t numBuffer
                     for (size_t col = 0; col < dynamicBuffer.getOffsets().size(); col++) {
                         for (size_t row = 0; row < dynamicBuffer.getCapacity(); row++)
                             dynamicBuffer[row][col].write<uint8_t>(randomValue(gen));
-                        numberOfTuples++;
                     }
                 }
-                bufferRef.setNumberOfTuples(numberOfTuples);
+                bufferRef.setNumberOfTuples(dynamicBuffer.getCapacity());
                 createdBuffers.emplace_back(bufferRef);
-                numberOfTuples = 0;
             }
             break;
         }

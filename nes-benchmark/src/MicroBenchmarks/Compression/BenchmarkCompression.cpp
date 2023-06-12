@@ -1,8 +1,6 @@
 #include "API/Schema.hpp"
 #include "DataGeneration/ByteDataGenerator.hpp"
 #include "DataGeneration/DefaultDataGenerator.hpp"
-#include "DataGeneration/ZipfianDataGenerator.hpp"
-#include <DataGeneration/YSBDataGenerator.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -11,13 +9,23 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <benchmark/benchmark.h>
 #include <chrono>
+#include <fstream>
 #include <gmock/gmock-matchers.h>
+#include <nlohmann/json.hpp>
 
 using namespace NES::Benchmark::DataGeneration;
 using namespace NES::Runtime::MemoryLayouts;
 
-enum class MemoryLayout_ { ROW, COLUMN };
+enum MemoryLayout_ { ROW, COLUMN };
+
+const char* getMemoryLayoutName(enum MemoryLayout_ ml) {
+    switch (ml) {
+        case ROW: return "Row";
+        case COLUMN: return "Column";
+    }
+}
 
 class ErrorHandler : public NES::Exceptions::ErrorListener {
   public:
@@ -30,26 +38,24 @@ class ErrorHandler : public NES::Exceptions::ErrorListener {
     }
 };
 
-std::initializer_list<CompressionAlgorithm> algorithms;
-
 class BenchmarkCompression {
   public:
-    BenchmarkCompression(size_t bufferSize,
+    BenchmarkCompression(size_t numBuffers,
+                         size_t bufferSize,
                          DataGenerator& dataGenerator,
                          const std::shared_ptr<MemoryLayout>& memoryLayout,
                          CompressionMode cm);
-    const size_t numberOfBuffersToProduce = 10;
-    void run(std::initializer_list<CompressionAlgorithm> cas);
+    size_t getNumberOfBuffers();
+    std::tuple<size_t, double> compress(CompressionAlgorithm ca);
+    void decompress();
 
   private:
-    size_t bufferSize;
+    size_t numBuffers{};
+    size_t bufferSize{};
     std::vector<CompressedDynamicTupleBuffer> buffers;
-    uint8_t* origBuffers[10]{};// TODO dynamic (numberOfBuffersToProduce)
-    double compress(CompressionAlgorithm ca);
-    void decompressAndVerify();
 };
-
-BenchmarkCompression::BenchmarkCompression(const size_t bufferSize,
+BenchmarkCompression::BenchmarkCompression(const size_t numBuffers,
+                                           const size_t bufferSize,
                                            DataGenerator& dataGenerator,
                                            const std::shared_ptr<MemoryLayout>& memoryLayout,
                                            CompressionMode cm) {
@@ -57,341 +63,202 @@ BenchmarkCompression::BenchmarkCompression(const size_t bufferSize,
     auto listener = std::make_shared<ErrorHandler>();
     NES::Exceptions::installGlobalErrorListener(listener);
 
+    this->numBuffers = numBuffers;
     this->bufferSize = bufferSize;
-    NES::Runtime::BufferManagerPtr bufferManager =
-        std::make_shared<NES::Runtime::BufferManager>(bufferSize, numberOfBuffersToProduce);
+    NES::Runtime::BufferManagerPtr bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, numBuffers);
 
     // create data
     dataGenerator.setBufferManager(bufferManager);
-    auto tmpBuffers = dataGenerator.createData(numberOfBuffersToProduce, bufferSize);
+    auto tmpBuffers = dataGenerator.createData(numBuffers, bufferSize);
 
-    buffers.reserve(tmpBuffers.size());
+    buffers.reserve(numBuffers);
     for (const auto& tmpBuffer : tmpBuffers) {
         buffers.emplace_back(memoryLayout, tmpBuffer, cm);
     }
-    for (size_t i = 0; i < tmpBuffers.size(); i++) {
-        auto* bufferOrig = (uint8_t*) malloc(bufferSize);
-        memcpy(bufferOrig, tmpBuffers[i].getBuffer(), bufferSize);
-        origBuffers[i] = bufferOrig;
+}
+size_t BenchmarkCompression::getNumberOfBuffers() { return numBuffers; }
+
+std::tuple<size_t, double> BenchmarkCompression::compress(CompressionAlgorithm ca) {
+    double totalCompressionRatio = 0;
+    size_t totalBufferSize = 0;
+    for (auto& buffer : buffers) {
+        buffer.compress(ca);
+        //std::cout << buffer.getCompressionRatio() << std::endl;
+        totalCompressionRatio += buffer.getCompressionRatio();
+        totalBufferSize += buffer.getTotalCompressedSize();
+    }
+    return std::make_tuple(totalBufferSize, totalCompressionRatio);
+}
+
+void BenchmarkCompression::decompress() {
+    for (auto& buffer : buffers) {
+        buffer.decompress();
     }
 }
 
-void BenchmarkCompression::run(std::initializer_list<CompressionAlgorithm> cas) {
-    std::cout << "------------------------------\n"
-              << "Algo\tRatio\tSpeed\n";
-    for (auto ca : cas) {
+template<class... Args>
+void BM_Binomial(benchmark::State& state, Args&&... args) {
+    // parse arguments
+    std::tuple args_tuple = std::make_tuple(std::move(args)...);
+    MemoryLayout_ memoryLayout_ = std::get<0>(args_tuple);
+    NES::Schema::MemoryLayoutType memoryLayoutType;
+    switch (memoryLayout_) {
+        case MemoryLayout_::ROW: {
+            memoryLayoutType = NES::Schema::MemoryLayoutType::ROW_LAYOUT;
+            break;
+        }
+        case MemoryLayout_::COLUMN: {
+            memoryLayoutType = NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT;
+            break;
+        }
+    }
+    CompressionMode compressionMode = std::get<1>(args_tuple);
+    CompressionAlgorithm compressionAlgorithm = std::get<2>(args_tuple);
+    size_t seed = std::get<3>(args_tuple);
+    bool sort = std::get<4>(args_tuple);
+    size_t numBuffers = std::get<5>(args_tuple);
+    size_t bufferSize = std::get<6>(args_tuple);
+    size_t numCols = std::get<7>(args_tuple);
+    size_t minValue = std::get<7>(args_tuple);
+    size_t maxValue = std::get<9>(args_tuple);
+    double probability = std::get<10>(args_tuple);
+    // write arguments to json
+    nlohmann::json arguments = {{"Distribution", "Binomial"},
+                                {"MemoryLayout", getMemoryLayoutName(memoryLayout_)},
+                                {"CompressionMode", getCompressionModeName(compressionMode)},
+                                {"CompressionAlgorithm", getCompressionAlgorithmName(compressionAlgorithm)},
+                                {"Seed", seed},
+                                {"Sort", sort},
+                                {"NumBuffers", numBuffers},
+                                {"BufferSize", bufferSize},
+                                {"NumCols", numCols},
+                                {"MinValue", minValue},
+                                {"MaxValue", maxValue},
+                                {"Probability", probability}};
+    std::string file_name = "args_binomial_" + std::string(getMemoryLayoutName(memoryLayout_)) + "_"
+        + std::string(getCompressionModeName(compressionMode)) + "_"
+        + std::string(getCompressionAlgorithmName(compressionAlgorithm)) + ".json";
+    std::ofstream o(file_name);
+    o << std::setw(2) << arguments << std::endl;
+
+    Binomial distribution = Binomial(probability);
+    distribution.seed = seed;
+    distribution.sort = sort;
+    ByteDataGenerator dataGenerator = ByteDataGenerator(memoryLayoutType, numCols, minValue, maxValue, &distribution);
+    std::shared_ptr<MemoryLayout> memoryLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
+    if (memoryLayout_ == MemoryLayout_::COLUMN)
+        memoryLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
+
+    size_t compressedSize = 0;
+    double compressionRatio = 0;
+    double compressionTime = 0;
+    double decompressionTime = 0;
+    for (auto _ : state) {// TODO refactor?
+        auto bench = BenchmarkCompression(numBuffers, bufferSize, dataGenerator, memoryLayout, compressionMode);
         try {
-            compress(ca);
-            decompressAndVerify();
+            auto start = std::chrono::high_resolution_clock::now();
+            auto res = bench.compress(compressionAlgorithm);
+            auto end = std::chrono::high_resolution_clock::now();
+            compressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
+            compressedSize += std::get<0>(res) / bench.getNumberOfBuffers();
+            compressionRatio += std::get<1>(res) / (double) bench.getNumberOfBuffers();
+
+            start = std::chrono::high_resolution_clock::now();
+            bench.decompress();
+            end = std::chrono::high_resolution_clock::now();
+            decompressionTime += std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count();
         } catch (NES::Exceptions::RuntimeException const& err) {
             // compressed size might be larger than original
             EXPECT_THAT(err.what(), ::testing::HasSubstr("compression failed: compressed size"));
         }
     }
-    std::cout << "------------------------------\n";
+    state.counters["CompressedSize"] = (double) compressedSize / (double) state.iterations();
+    state.counters["CompressionRatio"] = compressionRatio / (double) state.iterations();
+    state.counters["CompressionTime"] = compressionTime / (double) state.iterations();
+    state.counters["DecompressionTime"] = decompressionTime / (double) state.iterations();
 }
 
-double BenchmarkCompression::compress(CompressionAlgorithm ca) {
-    double totalCompressionRatio = 0;
-    auto start = std::chrono::high_resolution_clock::now();
-    for (auto& buffer : buffers) {
-        buffer.compress(ca);
-        //std::cout << buffer.getCompressionRatio() << std::endl;
-        totalCompressionRatio += buffer.getCompressionRatio();
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> ms_double = end - start;
-    std::cout << getCompressionAlgorithmName(ca) << "\t" << totalCompressionRatio << "\t" << ms_double.count() << " ms"
-              << std::endl;
-    return totalCompressionRatio;
-}
+// ------------------------------------------------------------
+// General parameters
+// ------------------------------------------------------------
+size_t NUM_ITERATIONS = 10;
 
-void BenchmarkCompression::decompressAndVerify() {
-    for (size_t i = 0; i < buffers.size(); i++) {
-        buffers[i].decompress();
-        auto contentOrig = reinterpret_cast<const char*>(origBuffers[i]);
-        auto contentCompressed = reinterpret_cast<const char*>(buffers[i].getBuffer().getBuffer());
-        bool contentIsEqual = memcmp(contentOrig, contentCompressed, bufferSize) == 0;
+CompressionAlgorithm COMPRESSION_ALGORITHM = CompressionAlgorithm::LZ4;// TODO
+size_t SEED_VALUE = 42;
+bool SORT = true;
+size_t NUM_BUFFERS = 10;
+size_t BUFFER_SIZE = 4096;
+size_t NUM_COLS = 3;
+size_t MIN_VALUE = 48;
+size_t MAX_VALUE = 57;
 
-        /*
-        // find unequal position(s)
-        auto startX = contentOrig;
-        auto startY = contentCompressed;
-        for (size_t j = 0; j < bufferSize; j++) {
-            if (memcmp(startX, startY, 1) != 0) {
-                std::cout << i << "," << j << ": \"" << startX << "\" \"" << startY << "\"\n";
-            }
-            startX++;
-            startY++;
-        }
-        */
-        //NES_ASSERT(contentIsEqual, "Decompressed content does not equal original content.");
-        if (!contentIsEqual)
-            NES_WARNING("Decompressed content does not equal original content.")
-    }
-}
+// ------------------------------------------------------------
+// Repeating Values distribution
+// ------------------------------------------------------------
+// TODO
 
-void benchmarkBytes(const MemoryLayout_ ml, const CompressionMode cm, const size_t bufferSize, ByteDataGenerator& dataGenerator) {
-    switch (ml) {
-        case MemoryLayout_::ROW: {
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto rowLayout = RowLayout::create(dataGenerator.getSchema(), bufferSize);
-                    auto b = BenchmarkCompression(bufferSize, dataGenerator, rowLayout, cm);
-                    std::cout << "MemoryLayout: RowLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Distribution: " << getDistributionName(dataGenerator.getDistributionName()) << "\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSize << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    std::initializer_list<CompressionAlgorithm> cas = {CompressionAlgorithm::LZ4};
-                    b.run(cas);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    // TODO
-                    break;
-                }
-            }
-        }
-        case MemoryLayout_::COLUMN:
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
-                    auto b = BenchmarkCompression(bufferSize, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Distribution: " << getDistributionName(dataGenerator.getDistributionName()) << "\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSize << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSize);
-                    auto b = BenchmarkCompression(bufferSize, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Vertical\n"
-                              << "Distribution: " << getDistributionName(dataGenerator.getDistributionName()) << "\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSize << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-            }
-            break;
-    }
-}
+// ------------------------------------------------------------
+// Uniform distribution
+// ------------------------------------------------------------
+// TODO
 
-void benchmarkYsb(const MemoryLayout_ ml, const CompressionMode cm, const size_t numberOfTuples = 10) {
-    YSBDataGenerator dataGenerator;
-    const size_t bufferSizeInBytes = dataGenerator.getSchema().get()->getSchemaSizeInBytes() * numberOfTuples;
+// ------------------------------------------------------------
+// Binomial distribution
+// ------------------------------------------------------------
+double BINOMIAL_PROBABILITY = 0.5;
 
-    switch (ml) {
-        case MemoryLayout_::ROW: {
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto rowLayout = RowLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, rowLayout, cm);
-                    std::cout << "MemoryLayout: RowLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    // TODO
-                    break;
-                }
-            }
-        }
-        case MemoryLayout_::COLUMN:
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Vertical\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-            }
-            break;
-    }
-}
+BENCHMARK_CAPTURE(BM_Binomial,
+                  BinomialRowHori,
+                  MemoryLayout_::ROW,
+                  CompressionMode::HORIZONTAL,
+                  COMPRESSION_ALGORITHM,
+                  SEED_VALUE,
+                  SORT,
+                  NUM_BUFFERS,
+                  BUFFER_SIZE,
+                  NUM_COLS,
+                  MIN_VALUE,
+                  MAX_VALUE,
+                  BINOMIAL_PROBABILITY)
+    ->UseManualTime()
+    ->Iterations(NUM_ITERATIONS);
 
-void benchmarkUniform(const MemoryLayout_ ml,
-                      const CompressionMode cm,
-                      const size_t numberOfTuples = 10,
-                      const size_t min = 0,
-                      const size_t max = 100) {
-    DefaultDataGenerator dataGenerator(min, max);
-    const size_t bufferSizeInBytes = dataGenerator.getSchema().get()->getSchemaSizeInBytes() * numberOfTuples;
+BENCHMARK_CAPTURE(BM_Binomial,
+                  BinomialColHori,
+                  MemoryLayout_::COLUMN,
+                  CompressionMode::HORIZONTAL,
+                  COMPRESSION_ALGORITHM,
+                  SEED_VALUE,
+                  SORT,
+                  NUM_BUFFERS,
+                  BUFFER_SIZE,
+                  NUM_COLS,
+                  MIN_VALUE,
+                  MAX_VALUE,
+                  BINOMIAL_PROBABILITY)
+    ->UseManualTime()
+    ->Iterations(NUM_ITERATIONS);
 
-    switch (ml) {
-        case MemoryLayout_::ROW: {
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto rowLayout = RowLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, rowLayout, cm);
-                    std::cout << "MemoryLayout: RowLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    // TODO throw
-                    break;
-                }
-            }
-            break;
-        }
-        case MemoryLayout_::COLUMN: {
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Vertical\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-            }
-            break;
-        }
-    }
-}
+BENCHMARK_CAPTURE(BM_Binomial,
+                  BinomialColVert,
+                  MemoryLayout_::COLUMN,
+                  CompressionMode::VERTICAL,
+                  COMPRESSION_ALGORITHM,
+                  SEED_VALUE,
+                  SORT,
+                  NUM_BUFFERS,
+                  BUFFER_SIZE,
+                  NUM_COLS,
+                  MIN_VALUE,
+                  MAX_VALUE,
+                  BINOMIAL_PROBABILITY)
+    ->UseManualTime()
+    ->Iterations(NUM_ITERATIONS);
 
-void benchmarkZipf(const MemoryLayout_ ml,
-                   const CompressionMode cm,
-                   const size_t numberOfTuples = 10,
-                   const double alpha = 0.9,
-                   const size_t min = 0,
-                   const size_t max = 100) {
-    ZipfianDataGenerator dataGenerator(alpha, min, max);
-    const size_t bufferSizeInBytes = dataGenerator.getSchema().get()->getSchemaSizeInBytes() * numberOfTuples;
+// ------------------------------------------------------------
+// Zipf distribution
+// ------------------------------------------------------------
+// TODO
 
-    switch (ml) {
-        case MemoryLayout_::ROW: {
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto rowLayout = RowLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, rowLayout, cm);
-                    std::cout << "MemoryLayout: RowLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    // TODO throw
-                    break;
-                }
-            }
-            break;
-        }
-        case MemoryLayout_::COLUMN: {
-            switch (cm) {
-                case CompressionMode::HORIZONTAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Horizontal\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-                case CompressionMode::VERTICAL: {
-                    auto columnLayout = ColumnLayout::create(dataGenerator.getSchema(), bufferSizeInBytes);
-                    auto b = BenchmarkCompression(bufferSizeInBytes, dataGenerator, columnLayout, cm);
-                    std::cout << "MemoryLayout: ColumnLayout\n"
-                              << "CompressionMode: Vertical\n"
-                              << "Num Buffers: " << b.numberOfBuffersToProduce << "\n"
-                              << "Buffer Size: " << bufferSizeInBytes << "\n"
-                              << "Num Tuples: " << numberOfTuples << "\n"
-                              << "Schema Size: " << dataGenerator.getSchema().get()->getSchemaSizeInBytes() << "\n";
-                    b.run(algorithms);
-                    break;
-                }
-            }
-            break;
-        }
-    }
-}
-
-int main() {
-
-    algorithms = {CompressionAlgorithm::NONE,
-                  CompressionAlgorithm::LZ4,
-                  CompressionAlgorithm::SNAPPY,
-                  CompressionAlgorithm::RLE,
-                  //CompressionAlgorithm::BINARY_RLE,
-                  CompressionAlgorithm::FSST,
-                  CompressionAlgorithm::SPRINTZ};
-
-    MemoryLayout_ ml = MemoryLayout_::COLUMN;
-    CompressionMode cm = CompressionMode::VERTICAL;
-
-    //RepeatingValues distribution = RepeatingValues(5, 5, 0.5);
-    //Uniform distribution = Uniform();
-    Binomial distribution = Binomial(0.5);
-    //Zipf distribution = Zipf(0.85);
-    distribution.seed = 42;
-    distribution.sort = true;
-    // data: numbers 0-9
-    ByteDataGenerator dataGenerator = ByteDataGenerator(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT, 3, 48, 57, &distribution);
-    benchmarkBytes(ml, cm, 4096, dataGenerator);
-    /*
-    benchmarkYsb(ml, cm, 100);
-    benchmarkUniform(ml, cm, 100, 0, 10);
-    benchmarkZipf(ml, cm, 100, 0.1);
-     */
-    return 0;
-}
+// ------------------------------------------------------------
+BENCHMARK_MAIN();

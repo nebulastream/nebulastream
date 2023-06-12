@@ -41,6 +41,12 @@ add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES} include/DataGener
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
 add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 
+find_package(benchmark CONFIG REQUIRED)
+if (NOT ${benchmark_FOUND})
+    message(FATAL_ERROR "Unable to find google benchmark")
+endif ()
+
+target_link_libraries(nes-benchmark INTERFACE benchmark::benchmark)
 
 #-------------------------------##################------------------------------
 #-------------------------------#Micro Benchmarks#------------------------------
