@@ -28,6 +28,7 @@ MIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     if (ctx == nullptr) {
         ctx = MIR_init();
         MIR_gen_init(ctx, 1);
+        MIR_link(ctx, MIR_set_lazy_gen_interface, NULL);
     }
     auto lp = MIR::MIRLoweringProvider();
     auto func = lp.lower(ir, dumpHelper, ctx, &m);
@@ -38,7 +39,7 @@ MIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     MIR_gen_set_optimize_level(ctx, 0, 1);
     // MIR_gen_set_debug_file(ctx, 0, stderr);
     // MIR_gen_set_debug_level(ctx, 0 , 1);
-    MIR_link(ctx, MIR_set_gen_interface, NULL);
+    MIR_link(ctx, MIR_set_lazy_gen_interface, NULL);
     timer.snapshot("MIR linking");
     auto fun_addr = MIR_gen(ctx, 0, func);
     timer.snapshot("MIR backend generation");
