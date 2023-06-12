@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BorrowedPort.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -31,6 +32,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
+#include <detail/PortDispatcher.hpp>
 #include <fstream>
 #include <unistd.h>
 
@@ -88,6 +90,16 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
                                  ->addField("time1", BasicType::UINT64)
                                  ->addField("time2", BasicType::UINT64);
 
+    NES::SchemaPtr schema4 = NES::Schema::create()
+                                 ->addField("s", BasicType::UINT64)
+                                 ->addField("t", BasicType::UINT64)
+                                 ->addField("u", BasicType::UINT64)
+                                 ->addField("v", BasicType::UINT64)
+                                 ->addField("w", BasicType::UINT64)
+                                 ->addField("x", BasicType::UINT64)
+                                 ->addField("time1", BasicType::UINT64)
+                                 ->addField("time2", BasicType::UINT64);
+
     //Add the logical and physical stream to the stream catalog
     uint64_t counter = 1;
     for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
@@ -102,6 +114,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             streamCatalog->addLogicalSource("example" + std::to_string(j + 1), schema2);
         } else if (counter == 3) {
             streamCatalog->addLogicalSource("example" + std::to_string(j + 1), schema3);
+        } else if (counter == 4) {
+            streamCatalog->addLogicalSource("example" + std::to_string(j + 1), schema4);
             counter = 0;
         }
         LogicalSourcePtr logicalSource = streamCatalog->getLogicalSource("example" + std::to_string(j + 1));
@@ -135,6 +149,10 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
 void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
+    NES::Testing::BorrowedPortPtr restPort = NES::Testing::detail::getPortDispatcher().getNextPort();
+    NES::Testing::BorrowedPortPtr rpcCoordinatorPort = NES::Testing::detail::getPortDispatcher().getNextPort();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = magic_enum::enum_cast<Optimizer::QueryMergerRule>(queryMergerRule).value();
     optimizerConfiguration.queryBatchSize = batchSize;
@@ -311,12 +329,12 @@ int main(int argc, const char* argv[]) {
                     item.join();
                 }
             }
-
+            std::cout << "Parsed " << queryNum << " queries." << std::endl;
             //Fetch the parsed query from all threads
             for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
                 auto query = futures[futureNum].get();
                 auto queryID = query->getQueryId();
-                queryObjects[queryID - 1] = query;//Add the parsed query to the (queryID - 1)th index
+                queryObjects.insert(queryObjects.begin() + queryID - 1, query);//Add the parsed query to the (queryID - 1)th index
             }
         }
 
@@ -329,6 +347,7 @@ int main(int argc, const char* argv[]) {
         }
 
         // For the input query set run the experiments with different type of query merger rule
+        auto queryIter = 0;
         for (size_t configNum = 0; configNum < queryMergerRules.size(); configNum++) {
             //Number of time the experiments to run
             for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
@@ -352,9 +371,10 @@ int main(int argc, const char* argv[]) {
                 }
 
                 //Fetch the last query for the query catalog
-                auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries);
+                auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries + queryIter);
                 //Wait till the status of the last query is set as running
                 while (lastQuery->getQueryState() != QueryState::RUNNING) {
+                    std::cout << "Query status " << lastQuery->getQueryState() << std::endl;
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
@@ -382,7 +402,9 @@ int main(int argc, const char* argv[]) {
                                 << "," << endTime << "," << endTime - startTime << std::endl;
                 std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
                 //Stop NES coordinator
-                coordinator->stopCoordinator(true);
+                auto coordinatorSopped = coordinator->stopCoordinator(true);
+                std::cout << "Coordinator stopped: " << coordinatorSopped << std::endl;
+                queryIter += numOfQueries;
             }
             benchmarkOutput << std::endl << std::endl;
             std::cout << benchmarkOutput.str();
