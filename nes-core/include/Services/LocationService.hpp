@@ -56,7 +56,7 @@ class LocationService {
     nlohmann::json requestNodeLocationDataAsJson(uint64_t nodeId);
 
     /**
-     * @brief get a list of all mobile nodes in the system with known locations and their current positions as well as their parent nodes
+     * @brief get a list of all mobile nodes in the system with known locations and their current positions as well as their parent nodes. Mobile nodes without known locations will not appear in the list
      * @return a json list in the format:
      * {
      *      "edges":
