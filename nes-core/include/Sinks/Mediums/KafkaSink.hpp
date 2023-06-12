@@ -100,4 +100,4 @@ using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
 }// namespace NES
 #endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#endif // NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

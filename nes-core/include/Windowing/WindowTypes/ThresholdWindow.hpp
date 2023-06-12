@@ -66,4 +66,4 @@ class ThresholdWindow : public ContentBasedWindowType {
 
 }// namespace NES::Windowing
 
-#endif // NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_THRESHOLDWINDOW_HPP_

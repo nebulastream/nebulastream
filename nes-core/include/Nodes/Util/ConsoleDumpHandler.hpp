@@ -64,4 +64,4 @@ class ConsoleDumpHandler : public DumpHandler {
 
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_

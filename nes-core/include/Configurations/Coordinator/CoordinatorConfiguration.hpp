@@ -163,4 +163,4 @@ class CoordinatorConfiguration : public BaseConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

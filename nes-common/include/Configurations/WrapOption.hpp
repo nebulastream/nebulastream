@@ -82,4 +82,4 @@ std::string Configurations::WrapOption<Type, Factory>::toString() {
 
 }// namespace NES::Configurations
 
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_

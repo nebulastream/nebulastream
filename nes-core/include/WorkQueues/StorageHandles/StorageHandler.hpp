@@ -111,4 +111,4 @@ class StorageHandler {
     virtual UDFCatalogHandle getUDFCatalogHandle() = 0;
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_

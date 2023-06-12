@@ -81,4 +81,4 @@ class LockManager {
     std::mutex udfCatalogMutex;
 };
 }// namespace NES
-#endif // NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_LOCKMANAGER_HPP_
+#endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_LOCKMANAGER_HPP_

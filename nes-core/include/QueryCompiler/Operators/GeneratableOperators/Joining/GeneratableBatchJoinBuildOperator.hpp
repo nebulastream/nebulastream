@@ -72,4 +72,4 @@ class GeneratableBatchJoinBuildOperator : public GeneratableBatchJoinOperator {
                                       Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_JOINING_GENERATABLEBATCHJOINBUILDOPERATOR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_JOINING_GENERATABLEBATCHJOINBUILDOPERATOR_HPP_

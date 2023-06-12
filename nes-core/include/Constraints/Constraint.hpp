@@ -24,4 +24,4 @@ class Constraint {};
 
 }// namespace NES::Constraint
 
-#endif // NES_CORE_INCLUDE_CONSTRAINTS_CONSTRAINT_HPP_
+#endif// NES_CORE_INCLUDE_CONSTRAINTS_CONSTRAINT_HPP_

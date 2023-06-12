@@ -71,4 +71,4 @@ class MaterializedViewManager {
 
 };// class MaterializedViewManager
 }// namespace NES::Experimental::MaterializedView
-#endif // NES_CORE_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_

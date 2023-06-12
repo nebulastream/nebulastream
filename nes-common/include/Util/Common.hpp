@@ -232,4 +232,4 @@ uint64_t murmurHash(uint64_t key);
 
 }// namespace NES::Util
 
-#endif // NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

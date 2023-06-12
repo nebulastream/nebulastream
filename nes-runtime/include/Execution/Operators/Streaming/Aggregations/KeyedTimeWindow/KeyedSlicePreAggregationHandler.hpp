@@ -100,4 +100,4 @@ class KeyedSlicePreAggregationHandler : public Runtime::Execution::OperatorHandl
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
