@@ -130,7 +130,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
-    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 131072, "BufferSizeInBytes."};
 
     /**
      * @brief Indicates a list of cpu cores, which are used to pin data sources to specific cores.
