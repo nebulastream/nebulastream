@@ -29,17 +29,17 @@ class ReplacingRegexTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ReplacingRegexTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ReplacingRegexTest test class.");
+        NES_INFO2("Setup ReplacingRegexTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG("Setup ReplacingRegexTest test case.")
+        NES_DEBUG2("Setup ReplacingRegexTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ReplacingRegexTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down ReplacingRegexTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
@@ -54,7 +54,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex1) {
         auto m = Value<Text>("(b|c)");
         auto r = Value<Text>("X");
         auto resultValue = expression.eval(l, m, r);
-        NES_DEBUG(resultValue.as<Text>()->toString());
+        NES_DEBUG2("{}", resultValue.as<Text>()->toString());
         EXPECT_EQ(resultValue, Value<Text>("aXX"));
     }
 }

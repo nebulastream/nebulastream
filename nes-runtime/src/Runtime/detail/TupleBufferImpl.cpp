@@ -170,7 +170,7 @@ bool BufferControlBlock::prepare() {
     if (referenceCounter.compare_exchange_strong(expected, 1)) {
         return true;
     }
-    NES_ERROR("Invalid reference counter: " << expected);
+    NES_ERROR2("Invalid reference counter: {}", expected);
     return false;
 }
 
@@ -189,11 +189,10 @@ BufferControlBlock* BufferControlBlock::retain() {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo() {
     std::unique_lock lock(owningThreadsMutex);
-    NES_FATAL_ERROR("Buffer " << getOwner() << " has " << referenceCounter.load() << " live references");
+    NES_FATAL_ERROR2("Buffer {} has {} live references", getOwner(), referenceCounter.load());
     for (auto& item : owningThreads) {
         for (auto& v : item.second) {
-            NES_FATAL_ERROR("Thread " << v.threadName << " has buffer " << getOwner()
-                                      << " requested on callstack: " << v.callstack);
+            NES_FATAL_ERROR2("Thread {} has buffer {} requested on callstack: {}", v.threadName, getOwner(), v.callstack);
         }
     }
 }

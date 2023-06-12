@@ -75,13 +75,13 @@ class TPCH_Q3 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TPCH_Q3.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("Setup TPCH_Q3 test class.");
+        NES_INFO2("Setup TPCH_Q3 test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup TPCH_Q3 test case.");
+        NES_INFO2("Setup TPCH_Q3 test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -93,7 +93,7 @@ class TPCH_Q3 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TPCH_Q6 test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down TPCH_Q6 test class."); }
 };
 
 TEST_P(TPCH_Q3, joinPipeline) {

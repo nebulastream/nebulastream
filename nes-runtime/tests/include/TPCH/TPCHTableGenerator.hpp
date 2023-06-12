@@ -202,7 +202,7 @@ class TPCHTableGenerator {
         //                            lineitem_column_names,
         //                           ChunkOffset{order_count * 4}};
 
-        NES_DEBUG("Generate lineitem with size " << order_count * 4);
+        NES_DEBUG2("Generate lineitem with size {}", order_count * 4);
 
         Runtime::TableBuilder customerBuilder(bufferManager, layouts[TPCHTable::Customer]);
         Runtime::TableBuilder lineitemBuilder(bufferManager, layouts[TPCHTable::LineItem]);
@@ -355,7 +355,7 @@ class TPCHTableGenerator {
                                                  ));
         }
 
-        NES_DEBUG("Generated line item with size " << l);
+        NES_DEBUG2("Generated line item with size {}", l);
         /**
         * Clean up dbgen every time we finish table generation to avoid memory leaks in dbgen
         */

@@ -94,7 +94,7 @@ void startOrAttachVMWithJarFile(void* state) {
     // Sanity check javaPath
     auto javaPath = handler->getJavaPath().value();
     if (!dirExists(javaPath)) {
-        NES_FATAL_ERROR("jarPath:" << javaPath << " not valid!");
+        NES_FATAL_ERROR2("jarPath:{} not valid!", javaPath);
         exit(EXIT_FAILURE);
     }
 

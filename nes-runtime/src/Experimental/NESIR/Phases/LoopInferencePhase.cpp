@@ -147,7 +147,7 @@ LoopInferencePhase::Context::isCountedLoop(BasicBlockPtr preLoopBlock) {
     countedLoopInfo->loopEndBlock = ifOperation->getFalseBlockInvocation().getBlock();
     countedLoopInfo->loopBodyInductionVariable = loopBodyAddOperation->getLeftInput();
 
-    NES_DEBUG("Found counted loop" << lowerLoopBound << "-" << upperBound << "-" << stepSize);
+    NES_DEBUG2("Found counted loop {}-{}-{}", lowerLoopBound, upperBound, stepSize);
 
     // copy iterator arguments
     for (auto argument : loopBodyBlock->getArguments()) {

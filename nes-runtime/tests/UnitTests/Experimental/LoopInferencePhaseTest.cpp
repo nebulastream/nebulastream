@@ -33,17 +33,17 @@ class LoopInferencePhaseTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LoopInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LoopInferencePhaseTest test class.");
+        NES_INFO2("Setup LoopInferencePhaseTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { NES_INFO("Setup LoopInferencePhaseTest test case."); }
+    void SetUp() override { NES_INFO2("Setup LoopInferencePhaseTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down LoopInferencePhaseTest test case."); }
+    void TearDown() override { NES_INFO2("Tear down LoopInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down LoopInferencePhaseTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down LoopInferencePhaseTest test class."); }
 };
 
 void sumLoop() {
@@ -60,19 +60,19 @@ TEST_F(LoopInferencePhaseTest, sumLoopTest) {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
-    NES_INFO(*execution.get());
+    NES_INFO2("{}", *execution.get());
     auto ir = irCreationPhase.apply(execution);
-    NES_INFO(ir->toString());
+    NES_INFO2("{}", ir->toString());
 
     ir = loopInferencePhase.apply(ir);
-    NES_INFO(ir->toString());
+    NES_INFO2("{}", ir->toString());
 
     auto rootBlock = ir->getRootOperation()->getFunctionBasicBlock();
     ASSERT_TRUE(rootBlock->getTerminatorOp()->getOperationType() == Operations::Operation::LoopOp);
     auto loopOperation = std::static_pointer_cast<Operations::LoopOperation>(rootBlock->getTerminatorOp());
     ASSERT_TRUE(loopOperation->getLoopInfo()->isCountedLoop());
     auto loopInfo = std::dynamic_pointer_cast<Operations::CountedLoopInfo>(loopOperation->getLoopInfo());
-    NES_DEBUG(loopOperation);
+    NES_DEBUG2("{}", loopOperation);
 }
 
 }// namespace NES::Nautilus::IR

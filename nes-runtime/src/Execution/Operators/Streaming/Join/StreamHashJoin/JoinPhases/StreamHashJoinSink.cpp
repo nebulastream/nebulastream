@@ -227,7 +227,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 
     if (joinedTuples > 0) {
-        NES_TRACE("Worker " << workerCtx->getId() << " got partitionId " << partitionId << " joined #tuple=" << joinedTuples);
+        NES_TRACE2("Worker {} got partitionId {} joined #tuple={}", workerCtx->getId(), partitionId, joinedTuples);
         NES_ASSERT2_FMT(joinedTuples <= (leftBucketSize * rightBucketSize),
                         "Something wrong #joinedTuples= " << joinedTuples << " upper bound "
                                                           << (leftBucketSize * rightBucketSize));

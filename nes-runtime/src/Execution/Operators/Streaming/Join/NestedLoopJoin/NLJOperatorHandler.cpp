@@ -49,10 +49,10 @@ NLJOperatorHandler::NLJOperatorHandler(const SchemaPtr& joinSchemaLeft,
                                 StreamJoinOperatorHandler::JoinType::NESTED_LOOP_JOIN) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
-    NES_DEBUG("start HashJoinOperatorHandler");
+    NES_DEBUG2("start HashJoinOperatorHandler");
 }
 
-void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG("stop HashJoinOperatorHandler"); }
+void NLJOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) { NES_DEBUG2("stop HashJoinOperatorHandler"); }
 
 void NLJOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
                                         WorkerContext* workerCtx,

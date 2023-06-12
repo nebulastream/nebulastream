@@ -31,7 +31,7 @@ class ListTypeTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ListTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ListTypeTest test class.");
+        NES_DEBUG2("Setup ListTypeTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -39,11 +39,11 @@ class ListTypeTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
-        NES_DEBUG("Setup ListTypeTest test case.");
+        NES_DEBUG2("Setup ListTypeTest test case.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down ListTypeTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG2("Tear down ListTypeTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };

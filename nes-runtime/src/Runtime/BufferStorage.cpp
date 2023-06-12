@@ -23,7 +23,7 @@ void BufferStorage::insertBuffer(NES::Runtime::TupleBuffer buffer) { this->stora
 
 void BufferStorage::trimBuffer(uint64_t timestamp) {
     while (!this->storage.empty() && this->storage.top().getWatermark() < timestamp) {
-        NES_TRACE("BufferStorage: Delete tuple with watermark" << this->storage.top().getWatermark());
+        NES_TRACE2("BufferStorage: Delete tuple with watermark{}", this->storage.top().getWatermark());
         this->storage.pop();
     }
 }

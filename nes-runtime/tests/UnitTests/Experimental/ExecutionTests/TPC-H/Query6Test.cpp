@@ -89,14 +89,14 @@ class Query6Test : public Testing::NESBaseTest,
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Query6Test.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Query6Test test class.");
+        NES_INFO2("Setup Query6Test test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO("Setup Query6Test test case." << compiler);
+        NES_INFO2("Setup Query6Test test case.{}", compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -121,10 +121,10 @@ class Query6Test : public Testing::NESBaseTest,
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
+    void TearDown() override { NES_INFO2("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down QueryExecutionTest test class."); }
 };
 
 TEST_P(Query6Test, tpchQ6) {
@@ -189,13 +189,13 @@ TEST_P(Query6Test, tpchQ6) {
     }
 #endif
 
-    NES_INFO("Start Execution");
+    NES_INFO2("Start Execution");
     Timer timer("QueryExecutionTime");
     timer.start();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
     timer.snapshot("QueryExecutionTime");
     timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
+    NES_INFO2("QueryExecutionTime: {}", timer);
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
@@ -265,14 +265,14 @@ TEST_P(Query6Test, DISABLED_tpchQ6and) {
     }
 #endif
 
-    NES_INFO("Start Execution");
+    NES_INFO2("Start Execution");
 
     Timer timer("QueryExecutionTime");
     timer.start();
     executablePipeline->execute(*runtimeWorkerContext, buffer);
     timer.snapshot("QueryExecutionTime");
     timer.pause();
-    NES_INFO("QueryExecutionTime: " << timer);
+    NES_INFO2("QueryExecutionTime: {}", timer);
     auto tag = *((int64_t*) aggregation.get());
     auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(tag);
     auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();

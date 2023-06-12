@@ -46,13 +46,13 @@ class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipeli
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SelectionPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SelectionPipelineTest test class.");
+        NES_INFO2("Setup SelectionPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup SelectionPipelineTest test case.");
+        NES_INFO2("Setup SelectionPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -62,7 +62,7 @@ class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipeli
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SelectionPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down SelectionPipelineTest test class."); }
 };
 
 /**

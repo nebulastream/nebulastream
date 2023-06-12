@@ -42,14 +42,14 @@ void BatchKeyedAggregationHandler::setup(Runtime::Execution::PipelineExecutionCo
 }
 
 void BatchKeyedAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
-    NES_DEBUG("start GlobalSlicePreAggregationHandler");
+    NES_DEBUG2("start GlobalSlicePreAggregationHandler");
 }
 
 void BatchKeyedAggregationHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                         Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("shutdown GlobalSlicePreAggregationHandler: " << queryTerminationType);
+    NES_DEBUG2("shutdown GlobalSlicePreAggregationHandler: {}", queryTerminationType);
 }
-BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() { NES_DEBUG("~GlobalSlicePreAggregationHandler"); }
+BatchKeyedAggregationHandler::~BatchKeyedAggregationHandler() { NES_DEBUG2("~GlobalSlicePreAggregationHandler"); }
 
 void BatchKeyedAggregationHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {}
 

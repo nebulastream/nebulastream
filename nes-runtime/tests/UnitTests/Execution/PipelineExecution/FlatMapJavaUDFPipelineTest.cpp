@@ -45,12 +45,12 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FlatMapJavaUDFPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FlatMapJavaUDFPipelineTest test class.");
+        NES_INFO2("Setup FlatMapJavaUDFPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES_INFO("Setup FlatMapJavaUDFPipelineTest test case.");
+        NES_INFO2("Setup FlatMapJavaUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);

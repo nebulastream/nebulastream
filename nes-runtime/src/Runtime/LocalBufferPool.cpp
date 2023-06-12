@@ -53,7 +53,7 @@ LocalBufferPool::~LocalBufferPool() {
 BufferManagerType LocalBufferPool::getBufferManagerType() const { return BufferManagerType::LOCAL; }
 
 void LocalBufferPool::destroy() {
-    NES_DEBUG("Destroying LocalBufferPool");
+    NES_DEBUG2("Destroying LocalBufferPool");
     std::unique_lock lock(mutex);
     if (bufferManager == nullptr) {
         return;// already destroyed
@@ -71,7 +71,7 @@ void LocalBufferPool::destroy() {
                     "one or more buffers were not returned to the pool: " << exclusiveBufferCount << " but expected "
                                                                           << numberOfReservedBuffers);
 
-    NES_DEBUG("buffers before=" << bufferManager->getAvailableBuffers() << " size of local buffers=" << exclusiveBuffers.size());
+    NES_DEBUG2("buffers before={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
@@ -80,7 +80,7 @@ void LocalBufferPool::destroy() {
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
-    NES_DEBUG("buffers after=" << bufferManager->getAvailableBuffers() << " size of local buffers=" << exclusiveBuffers.size());
+    NES_DEBUG2("buffers after={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 #else
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment)) {

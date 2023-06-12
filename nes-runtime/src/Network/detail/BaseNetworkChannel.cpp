@@ -26,7 +26,7 @@ BaseNetworkChannel::BaseNetworkChannel(zmq::socket_t&& zmqSocket,
     : socketAddr(std::move(address)), zmqSocket(std::move(zmqSocket)), channelId(channelId),
       bufferManager(std::move(bufferManager)) {}
 
-void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
+void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR2("{}", errorMsg.getErrorTypeAsString()); }
 
 void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType terminationType) {
     if (isClosed) {
@@ -38,7 +38,7 @@ void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType t
         sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::DataChannel, terminationType);
     }
     zmqSocket.close();
-    NES_DEBUG("Socket(" << socketAddr << ") closed for " << channelId << (isEventOnly ? " Event" : " Data"));
+    NES_DEBUG2("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;
 }
 }// namespace NES::Network::detail

@@ -32,7 +32,7 @@ class FloatInvocationPlugin : public InvocationPlugin {
         if ((isa<Float>(leftValue) && isa<Float>(rightValue)) || (isa<Double>(leftValue) && isa<Double>(rightValue))) {
             return function(leftValue, rightValue);
         }
-        NES_TRACE("FloatInvocationPlugin is not suitable");
+        NES_TRACE2("FloatInvocationPlugin is not suitable");
         return std::nullopt;
     }
 

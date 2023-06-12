@@ -36,11 +36,11 @@ class ProxyFunctionInliningCompilationTest : public Testing::NESBaseTest, public
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProxyFunctionInliningCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ProxyFunctionInliningCompilationTest test class.");
+        NES_DEBUG2("Setup ProxyFunctionInliningCompilationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down TraceTest test class."); }
 };
 
 Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef) {
@@ -63,7 +63,7 @@ void executeFunctionWithOptions(const CompilationOptions& options, const DumpHel
     AbstractCompilationBackendTest abstractCompilationBackendTest{};
     auto result = abstractCompilationBackendTest.prepare(executionTrace, options, dumpHelper);
     auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
-    NES_DEBUG("Function result: " << function((uint8_t*) std::addressof(tupleBuffer)));
+    NES_DEBUG2("Function result: {}", function((uint8_t*) std::addressof(tupleBuffer)));
 }
 
 TEST_P(ProxyFunctionInliningCompilationTest, getNumberOfTuplesInliningTest) {

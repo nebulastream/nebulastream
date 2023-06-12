@@ -25,11 +25,11 @@ class RandomExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RandomExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup RandomExpressionTest test class.");
+        NES_INFO2("Setup RandomExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down RandomExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down RandomExpressionTest test class."); }
 };
 
 TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {

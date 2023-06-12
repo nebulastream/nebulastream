@@ -43,13 +43,13 @@ class SortPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SortPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SortPipelineTest test class.");
+        NES_INFO2("Setup SortPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup SortPipelineTest test case.");
+        NES_INFO2("Setup SortPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -61,7 +61,7 @@ class SortPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SortPipelineTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down SortPipelineTest test class."); }
 };
 
 /**

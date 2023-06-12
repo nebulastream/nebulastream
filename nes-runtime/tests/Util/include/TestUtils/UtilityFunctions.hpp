@@ -106,7 +106,7 @@ Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBe
     for (auto& buffer : buffersToBeMerged) {
         cnt += buffer.getNumberOfTuples();
         if (cnt > maxPossibleTuples) {
-            NES_WARNING("Too many tuples to fit in a single buffer.");
+            NES_WARNING2("Too many tuples to fit in a single buffer.");
             return retBuffer;
         }
 
@@ -139,10 +139,10 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
     }
 
     if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        NES_FATAL_ERROR("Column layout is not support for this function currently!");
+        NES_FATAL_ERROR2("Column layout is not support for this function currently!");
     }
 
-    NES_INFO("Merging buffers together!");
+    NES_INFO2("Merging buffers together!");
 
     std::vector<Runtime::TupleBuffer> retVector;
 
@@ -200,7 +200,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
         return std::vector<Runtime::TupleBuffer>();
     }
     if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
-        NES_FATAL_ERROR("Column layout is not support for this function currently!");
+        NES_FATAL_ERROR2("Column layout is not support for this function currently!");
     }
 
     std::vector<Runtime::TupleBuffer> retVector;

@@ -29,7 +29,7 @@ class AddExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AddExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddExpressionTest test class.");
+        NES_INFO2("Setup AddExpressionTest test class.");
     }
 
     /* Will be called before a test is executed. */
@@ -37,11 +37,11 @@ class AddExpressionTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG("Setup TextTypeTest test case.")
+        NES_DEBUG2("Setup TextTypeTest test case.")
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down AddExpressionTest test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down AddExpressionTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
@@ -121,7 +121,7 @@ TEST_F(AddExpressionTest, addTimeStamps) {
     auto addExpression = BinaryExpressionWrapper<AddExpression>();
     long ms = 1666798551744;// Wed Oct 26 2022 15:35:51
     std::chrono::hours dur(ms);
-    NES_DEBUG(dur.count());
+    NES_DEBUG2("{}", dur.count());
     auto c1 = Value<TimeStamp>(TimeStamp((uint64_t) dur.count()));
     // TimeStamp
     {

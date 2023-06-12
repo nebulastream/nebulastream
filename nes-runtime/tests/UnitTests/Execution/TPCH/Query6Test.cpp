@@ -69,13 +69,13 @@ class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TPCH_Q6.log", NES::LogLevel::LOG_DEBUG);
 
-        NES_INFO("Setup TPCH_Q6 test class.");
+        NES_INFO2("Setup TPCH_Q6 test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup TPCH_Q6 test case.");
+        NES_INFO2("Setup TPCH_Q6 test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
@@ -87,7 +87,7 @@ class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TPCH_Q6 test class."); }
+    static void TearDownTestCase() { NES_INFO2("Tear down TPCH_Q6 test class."); }
 };
 
 /**
@@ -122,7 +122,7 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     emitExecutablePipeline->stop(*pipeline2.ctx);
     timer.snapshot("stop");
     timer.pause();
-    NES_INFO("Query Runtime:\n" << timer);
+    NES_INFO2("Query Runtime:\n{}", timer);
     // compare results
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("revenue", BasicType::FLOAT32);
