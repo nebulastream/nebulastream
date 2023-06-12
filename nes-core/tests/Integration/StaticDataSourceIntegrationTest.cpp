@@ -1799,7 +1799,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             crdConf->worker.numberOfBuffersInGlobalBufferManager = 1000000;
             crdConf->worker.numWorkerThreads = 2;
 
-            NES_INFO("num work {} num buff {}",
+            NES_INFO2("num work {} num buff {}",
                      crdConf->worker.numWorkerThreads.getValue(),
                      crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 

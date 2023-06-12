@@ -38,7 +38,7 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
     NES_TRACE2("Left signature: {}", conditions->to_string());
     NES_TRACE2("Right signature: {}", otherConditions->to_string());
     if (!conditions || !otherConditions) {
-        NES_WARNING("Can't obtain containment relationships for null signatures");
+        NES_WARNING2("Can't obtain containment relationships for null signatures");
         return ContainmentType::NO_CONTAINMENT;
     }
     try {

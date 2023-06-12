@@ -67,7 +67,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
 }
 
 DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType) {
-    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataType.DebugString());
+    NES_TRACE2("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED) {
         return DataTypeFactory::createUndefined();
     }
@@ -152,7 +152,7 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const Value
 
 ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableDataValue& serializedDataValue) {
     // de-serialize data value
-    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataValue.DebugString());
+    NES_TRACE2("DataTypeSerializationUtil:: de-serialized {}", serializedDataValue.DebugString());
     const auto& dataValue = serializedDataValue.value();
     if (dataValue.Is<SerializableDataValue_BasicValue>()) {
         auto serializedBasicValue = SerializableDataValue_BasicValue();

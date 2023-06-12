@@ -64,13 +64,13 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ILPPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ILPPlacementTest test class.");
+        NES_DEBUG2("Setup ILPPlacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
-        NES_DEBUG("Setup ILPPlacementTest test case.");
+        NES_DEBUG2("Setup ILPPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -231,16 +231,16 @@ TEST_F(ILPPlacementTest, Z3Test) {
     while (true) {
         if (sat == opt.check()) {
             model m = opt.get_model();
-            NES_DEBUG(m);
-            NES_DEBUG("-------------------------------");
+            NES_DEBUG2("{}", m);
+            NES_DEBUG2("-------------------------------");
             if (m.eval(P21).get_numeral_int() == 1) {
-                NES_DEBUG("Operator on Node 1");
+                NES_DEBUG2("Operator on Node 1");
             } else if (m.eval(P22).get_numeral_int() == 1) {
-                NES_DEBUG("Operator on Node 2");
+                NES_DEBUG2("Operator on Node 2");
             } else if (m.eval(P23).get_numeral_int() == 1) {
-                NES_DEBUG("Operator on Node 3");
+                NES_DEBUG2("Operator on Node 3");
             }
-            NES_DEBUG("-------------------------------");
+            NES_DEBUG2("-------------------------------");
             break;
         } else {
             break;
@@ -559,7 +559,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     //Assertion to check correct amount of shared query plans to deploy are extracted.
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-    NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+    NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
@@ -757,12 +757,12 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     //Assertion to check correct amount of shared query plans to deploy are extracted.
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
-    NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
+    NES_INFO2("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO2("{}", globalExecutionPlan->getAsString());
 
     //Assertions to check correct placement
     ASSERT_EQ(executionNodes.size(), 3U);
@@ -922,7 +922,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO2("{}", globalExecutionPlan->getAsString());
 
     //Assertions to check correct placement
     ASSERT_EQ(executionNodes.size(), 3U);
