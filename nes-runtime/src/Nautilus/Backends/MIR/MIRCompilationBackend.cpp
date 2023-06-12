@@ -36,8 +36,8 @@ MIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     //MIR_output(ctx, stderr);
     MIR_load_module(ctx, m);
     MIR_gen_set_optimize_level(ctx, 0, 1);
-     MIR_gen_set_debug_file(ctx, 0, stderr);
-     MIR_gen_set_debug_level(ctx, 0 , 1);
+//   MIR_gen_set_debug_file(ctx, 0, stderr);
+ //    MIR_gen_set_debug_level(ctx, 0 , 1);
     MIR_link(ctx, MIR_set_lazy_gen_interface, NULL);
     auto fun_addr = MIR_gen(ctx, 0, func);
     timer.snapshot("MIRComp");
