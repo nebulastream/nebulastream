@@ -954,11 +954,11 @@ TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("start coordinator")
+    NES_INFO2("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0UL);
-    NES_INFO("coordinator started successfully")
+    NES_INFO2("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
@@ -989,7 +989,7 @@ TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
         idCount++;
     }
 
-    NES_INFO("start worker 1");
+    NES_INFO2("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
@@ -1020,7 +1020,7 @@ TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
     while (parentId == 1 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         parentId =
             std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
-        NES_DEBUG("parent id = " << parentId);
+        NES_DEBUG2("parent id = {}", parentId);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

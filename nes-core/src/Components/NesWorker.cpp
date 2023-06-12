@@ -266,7 +266,7 @@ bool NesWorker::stop(bool) {
 
         if (workerMobilityHandler) {
             workerMobilityHandler->stop();
-            NES_TRACE("triggered stopping of location update push thread");
+            NES_TRACE2("triggered stopping of location update push thread");
         }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {

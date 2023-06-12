@@ -269,7 +269,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinSinkOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinSinkOperator>();
 
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        NES_DEBUG2("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
@@ -280,7 +280,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()) {
         auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinBuildOperator>();
 
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        NES_DEBUG2("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
