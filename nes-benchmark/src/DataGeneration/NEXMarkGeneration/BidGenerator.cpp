@@ -39,11 +39,7 @@ std::vector<Runtime::TupleBuffer> BidGenerator::createData(size_t numberOfBuffer
 
         for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedBids < numberOfBids; ++curRecord) {
             auto bidsIndex = processedBids++;
-
-            dynamicBuffer[curRecord]["auctionId"].write<uint64_t>(std::get<0>(bids[bidsIndex]));
-            dynamicBuffer[curRecord]["bidderId"].write<uint64_t>(std::get<1>(bids[bidsIndex]));
-            dynamicBuffer[curRecord]["price"].write<uint64_t>(std::get<2>(bids[bidsIndex]));
-            dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(std::get<3>(bids[bidsIndex]));
+            dynamicBuffer.pushRecordToBuffer(bids[bidsIndex]);
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
