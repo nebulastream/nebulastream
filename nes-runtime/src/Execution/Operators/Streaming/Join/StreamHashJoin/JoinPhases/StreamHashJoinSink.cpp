@@ -142,7 +142,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
 
                         auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
-
+                        NES_WARNING("numberOfTuplesInBuffer=" << numberOfTuplesInBuffer << " j=" << j << " tupleSize=" << sizeOfJoinedTuple << " bufferSize=" << currentTupleBuffer.getBufferSize());
                         // Building the join tuple (winStart | winStop| key | left tuple | right tuple)
                         memcpy(bufferPtr, &windowStart, sizeOfWindowStart);
                         memcpy(bufferPtr + sizeOfWindowStart, &windowEnd, sizeOfWindowEnd);
@@ -168,7 +168,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
         }
     }
     if (currentTupleBuffer.getNumberOfTuples() != 0) {
-        NES_DEBUG("StreamJoinSInk: emit remaining tuples")
+        NES_DEBUG("StreamJoinSInk: emit remaining tuples=" << currentTupleBuffer.getNumberOfTuples())
         pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
     }
     return joinedTuples;

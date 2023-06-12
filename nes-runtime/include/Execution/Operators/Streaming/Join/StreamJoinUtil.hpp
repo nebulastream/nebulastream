@@ -39,7 +39,7 @@ static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 128 * 1024 * 1024;
+static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 16 * 1024 * 1024;
 
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdTWindowIdentifier {
