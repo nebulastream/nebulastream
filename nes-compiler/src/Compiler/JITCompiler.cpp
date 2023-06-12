@@ -47,7 +47,7 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
         auto sourceCode = *request->getSourceCode();
         if (useCache) {
             if (cache->contains(sourceCode)) {
-                NES_DEBUG("Reuse existing binary instead of compiling it");
+                NES_DEBUG2("Reuse existing binary instead of compiling it");
                 return cache->get(sourceCode);
             } else {
                 auto result = compiler->compile(request);
@@ -65,6 +65,6 @@ std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const Compil
     return handleRequest(request);
 }
 
-JITCompiler::~JITCompiler() { NES_DEBUG("~JITCompiler"); }
+JITCompiler::~JITCompiler() { NES_DEBUG2("~JITCompiler"); }
 
 }// namespace NES::Compiler

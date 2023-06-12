@@ -27,7 +27,7 @@ bool CompilationCache::contains(const SourceCode& code) {
 void CompilationCache::insert(const SourceCode& code, CompilationResult& newEntry) {
     std::lock_guard<std::recursive_mutex> lk(mutex);
     if (contains(code)) {
-        NES_WARNING("Compilation Cache: inserted item already exists");
+        NES_WARNING2("Compilation Cache: inserted item already exists");
     } else {
         compilationReuseMap.insert(std::make_pair(code, newEntry));
     }
