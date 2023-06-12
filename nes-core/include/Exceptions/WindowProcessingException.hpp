@@ -38,4 +38,4 @@ class WindowProcessingException : public Exceptions::RuntimeException {
 };
 
 }// namespace NES
-#endif // NES_CORE_INCLUDE_EXCEPTIONS_WINDOWPROCESSINGEXCEPTION_HPP_
+#endif// NES_CORE_INCLUDE_EXCEPTIONS_WINDOWPROCESSINGEXCEPTION_HPP_

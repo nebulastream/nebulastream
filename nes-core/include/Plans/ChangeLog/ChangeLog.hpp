@@ -76,4 +76,4 @@ class ChangeLog {
     absl::btree_map<uint64_t, ChangeLogEntryPtr> changeLogEntries;
 };
 }// namespace NES::Optimizer::Experimental
-#endif // NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
+#endif// NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_

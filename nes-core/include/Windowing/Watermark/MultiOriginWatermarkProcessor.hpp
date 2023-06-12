@@ -80,4 +80,4 @@ class MultiOriginWatermarkProcessor {
 using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
 }// namespace NES::Windowing
 
-#endif // NES_CORE_INCLUDE_WINDOWING_WATERMARK_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_WATERMARK_MULTIORIGINWATERMARKPROCESSOR_HPP_

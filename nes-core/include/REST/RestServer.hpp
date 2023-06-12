@@ -139,4 +139,4 @@ class RestServer {
 };
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_REST_RESTSERVER_HPP_
+#endif// NES_CORE_INCLUDE_REST_RESTSERVER_HPP_

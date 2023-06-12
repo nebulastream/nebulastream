@@ -142,4 +142,4 @@ std::string SequenceOption<T>::toString() {
 
 }// namespace NES::Configurations
 
-#endif // NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
+#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_

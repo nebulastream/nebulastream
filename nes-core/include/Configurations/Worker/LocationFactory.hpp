@@ -46,4 +46,4 @@ class LocationFactory {
     static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
 };
 }// namespace NES::Configurations::Spatial::Index::Experimental
-#endif // NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_
+#endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_

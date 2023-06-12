@@ -46,4 +46,4 @@ using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckS
 
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
+#endif// NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_

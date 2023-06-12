@@ -49,4 +49,4 @@ class BatchJoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition;
 };
 }// namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_

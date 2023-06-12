@@ -68,4 +68,4 @@ class LatestEntriesMetricStore : public AbstractMetricStore {
 
 }// namespace NES::Monitoring
 
-#endif // NES_CORE_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_
+#endif// NES_CORE_INCLUDE_MONITORING_STORAGE_LATESTENTRIESMETRICSTORE_HPP_

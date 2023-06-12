@@ -38,4 +38,4 @@ namespace NES::Experimental {
 enum class MigrationType : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
 
 }//namespace NES::Experimental
-#endif // NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_
+#endif// NES_CORE_INCLUDE_PHASES_MIGRATIONTYPE_HPP_

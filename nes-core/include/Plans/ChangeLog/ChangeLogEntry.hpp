@@ -37,7 +37,6 @@ using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
 class ChangeLogEntry {
 
   public:
-
     /**
      * @param: Create change log entry
      * @param upstreamOperators: upstream operator set
@@ -64,4 +63,4 @@ class ChangeLogEntry {
     std::set<OperatorId> computePoSet();
 };
 }// namespace NES::Optimizer::Experimental
-#endif // NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
+#endif// NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_

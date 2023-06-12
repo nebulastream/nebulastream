@@ -70,9 +70,9 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
                     // If the operator to visit is one of the input downstream operators then add the operator to visit list
                     if (downstreamOperators.find(downStreamOperatorToVisit->as<OperatorNode>()) != downstreamOperators.end()) {
                         visit = true;
-                    } else { // Check if the path is to be explored
-                             // visit only those downstream operators that are connected
-                             // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
+                    } else {// Check if the path is to be explored
+                            // visit only those downstream operators that are connected
+                            // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
                         for (const auto& downstreamOperator : downstreamOperators) {
                             if (downStreamOperatorToVisit->as<OperatorNode>()->containAsGrandParent(downstreamOperator)) {
                                 visit = true;

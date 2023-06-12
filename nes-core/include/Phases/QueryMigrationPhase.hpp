@@ -109,4 +109,4 @@ class QueryMigrationPhase {
 };
 }//namespace Experimental
 }//namespace NES
-#endif // NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_
+#endif// NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_

@@ -41,4 +41,4 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
 
 }// namespace NES::Exceptions
 
-#endif // NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_
+#endif// NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_

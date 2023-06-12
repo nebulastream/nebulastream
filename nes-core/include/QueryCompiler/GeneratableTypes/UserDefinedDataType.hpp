@@ -57,4 +57,4 @@ class UserDefinedDataType final : public GeneratableDataType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_USERDEFINEDDATATYPE_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_USERDEFINEDDATATYPE_HPP_

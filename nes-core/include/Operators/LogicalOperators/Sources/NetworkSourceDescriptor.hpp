@@ -95,4 +95,4 @@ using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 }// namespace Network
 }// namespace NES
 
-#endif // NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
+#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
