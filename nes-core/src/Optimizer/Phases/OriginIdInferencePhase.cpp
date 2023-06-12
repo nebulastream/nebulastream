@@ -14,14 +14,8 @@
 
 #include <Exceptions/RuntimeException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 
 namespace NES::Optimizer {
 
@@ -37,13 +31,6 @@ QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
     // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
     for (auto originIdAssignmentOperators : queryPlan->getOperatorByType<OriginIdAssignmentOperator>()) {
         originIdAssignmentOperators->setOriginId(originIdCounter++);
-        if (originIdAssignmentOperators->instanceOf<WindowLogicalOperatorNode>()) {
-            auto windowDefinition = originIdAssignmentOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition();
-            windowDefinition->setOriginId(originIdCounter - 1);
-        } else if (originIdAssignmentOperators->instanceOf<JoinLogicalOperatorNode>()) {
-            auto joinDefinition = originIdAssignmentOperators->as<JoinLogicalOperatorNode>()->getJoinDefinition();
-            joinDefinition->setOriginId(originIdCounter - 1);
-        }
     }
 
     // propagate origin ids through the complete query plan
