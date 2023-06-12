@@ -49,23 +49,6 @@ class LocationServiceTest : public Testing::NESBaseTest {
     }
     static void TearDownTestCase(){NES_INFO2("Tear down LocationServiceTest test class")}
 
-    nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation loc) {
-        nlohmann::json nodeInfo;
-        nodeInfo["id"] = id;
-        nlohmann::json::array_t locJson;
-        if (loc.isValid()) {
-            locJson.push_back(loc.getLatitude());
-            locJson.push_back((loc.getLongitude()));
-        }
-
-        nodeInfo["location"] = locJson;
-        NES_DEBUG2("{}", nodeInfo.dump());
-        return nodeInfo;
-    }
-
-    std::string location2 = "52.53736960143897, 13.299134894776092";
-    std::string location3 = "52.52025049345923, 13.327886280405611";
-    std::string location4 = "52.49846981391786, 13.514464421192917";
     NES::LocationServicePtr locationService;
     NES::TopologyManagerServicePtr topologyManagerService;
 };
@@ -75,22 +58,27 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     auto rpcPortWrk2 = getAvailablePort();
     auto rpcPortWrk3 = getAvailablePort();
 
-    nlohmann::json cmpJson;
-    nlohmann::json cmpLoc;
+    nlohmann::json nodeLocationInfoJson;
+    nlohmann::json locationJson;
+
+    //create topology and services
     TopologyPtr topology = Topology::create();
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
     topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
+    //create node without location
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto node1Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties);
 
+    //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
     auto node2Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties);
     topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
+    //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties);
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
@@ -99,24 +87,24 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     ASSERT_EQ(locationService->requestNodeLocationDataAsJson(1234), nullptr);
 
     //test getting location of node which does not have a location
-    cmpJson = locationService->requestNodeLocationDataAsJson(node1Id);
-    EXPECT_EQ(cmpJson["id"], node1Id);
-    ASSERT_TRUE(cmpJson["location"].empty());
+    nodeLocationInfoJson = locationService->requestNodeLocationDataAsJson(node1Id);
+    EXPECT_EQ(nodeLocationInfoJson["id"], node1Id);
+    ASSERT_TRUE(nodeLocationInfoJson["location"].empty());
 
     //test getting location of field node
-    cmpJson = locationService->requestNodeLocationDataAsJson(node2Id);
-    auto entry = cmpJson.get<std::map<std::string, nlohmann::json>>();
+    nodeLocationInfoJson = locationService->requestNodeLocationDataAsJson(node2Id);
+    auto entry = nodeLocationInfoJson.get<std::map<std::string, nlohmann::json>>();
     EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
-    cmpLoc["latitude"] = 13.4;
-    cmpLoc["longitude"] = -23;
-    ASSERT_EQ(cmpJson.at("location"), cmpLoc);
+    locationJson = nodeLocationInfoJson.at("location");
+    EXPECT_EQ(locationJson["latitude"], 13.4);
+    EXPECT_EQ(locationJson["longitude"],-23);
 
     //test getting location of a mobile node
-    cmpJson = nullptr;
-    cmpJson = locationService->requestNodeLocationDataAsJson(node3Id);
-    ASSERT_EQ(cmpJson["id"], node3Id);
-    cmpLoc["latitude"] = 52.55227464714949;
-    cmpLoc["longitude"] = 13.351743136322877;
+    nodeLocationInfoJson = locationService->requestNodeLocationDataAsJson(node3Id);
+    ASSERT_EQ(nodeLocationInfoJson["id"], node3Id);
+    locationJson = nodeLocationInfoJson.at("location");
+    EXPECT_EQ(locationJson["latitude"], 52.55227464714949);
+    EXPECT_EQ(locationJson["longitude"], 13.351743136322877);
 }
 
 TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
@@ -125,60 +113,77 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto rpcPortWrk3 = getAvailablePort();
     auto rpcPortWrk4 = getAvailablePort();
 
+    nlohmann::json locationJson;
+    
+    //create topology and services
     TopologyPtr topology = Topology::create();
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
     topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
+    //get mobile node info
     auto response = locationService->requestLocationAndParentDataFromAllMobileNodes()
         .get<allMobileResponse>();
 
+    //check that the json does not contain any nodes or edges
     ASSERT_EQ(response["nodes"].size(), 0);
     ASSERT_EQ(response["edges"].size(), 0);
 
+    //create node without location
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto node1Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties);
 
+    //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
     auto node2Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties);
     topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
+    //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties);
 
+    //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node4Id = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties);
 
+    //get mobile node info
     response = locationService->requestLocationAndParentDataFromAllMobileNodes()
         .get<allMobileResponse>();
 
+    //while no location is known, the mobile nodes should not appear in the list
     ASSERT_EQ(response["nodes"].size(), 0);
     ASSERT_EQ(response["edges"].size(), 0);
 
+    //update the location of node 3
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
+    //get mobile node locations
     auto response1 = locationService->requestLocationAndParentDataFromAllMobileNodes();
     auto getLocResp1 = response1.get<allMobileResponse>();
+
+    //verify that the object contains 2 entries (list of nodes and list of edges)
     ASSERT_TRUE(getLocResp1.size() == 2);
 
-    nlohmann::json cmpLoc;
-    cmpLoc["latitude"] = 52.55227464714949;
-    cmpLoc["longitude"] = 13.351743136322877;
     auto nodes = getLocResp1["nodes"];
     ASSERT_EQ(nodes.size(), 1);
 
+    //verify correctness of the node information
     auto entry = nodes[0];
     EXPECT_EQ(entry.size(), 2);
     EXPECT_TRUE(entry.find("id") != entry.end());
     EXPECT_EQ(entry.at("id"), node3Id);
     EXPECT_TRUE(entry.find("location") != entry.end());
-    ASSERT_EQ(entry.at("location"), cmpLoc);
+    locationJson = entry.at("location");
+    EXPECT_EQ(locationJson["latitude"], 52.55227464714949);
+    EXPECT_EQ(locationJson["longitude"], 13.351743136322877);
 
+    //respone should contain only one edge
     auto edges = getLocResp1["edges"];
     ASSERT_EQ(edges.size(), 1);
 
+    //verify correctness of the provided edge
     const auto& edge = edges[0];
     EXPECT_EQ(edge.size(), 2);
     EXPECT_NE(edge.find("source"), edge.end());
@@ -186,33 +191,38 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     EXPECT_NE(edge.find("target"), edge.end());
     EXPECT_EQ(edge.at("target"), 1);
 
+    //update the location of node 4
     topologyManagerService->updateGeoLocation(node4Id, {53.55227464714949, -13.351743136322877});
 
+    //verify that the object contains 2 entries (list of nodes and list of edges)
     auto response2 = locationService->requestLocationAndParentDataFromAllMobileNodes();
     auto getLocResp2 = response2.get<allMobileResponse>();
     ASSERT_EQ(getLocResp2.size(), 2);
+
+    //verify correct size of node list and edge list
     nodes = getLocResp2["nodes"];
     edges = getLocResp2["edges"];
     ASSERT_EQ(nodes.size(), 2);
     ASSERT_EQ(edges.size(), 2);
 
+    //check correctness of locations
     for (const auto& node : nodes) {
         EXPECT_EQ(node.size(), 2);
-        EXPECT_TRUE(node.find("id") != node.end());
-        NES_DEBUG2("checking element with id {}", node.at("id"));
-        EXPECT_TRUE(node.at("id") == node3Id || node.at("id") == node4Id);
+        EXPECT_TRUE(node.contains("location"));
+        EXPECT_TRUE(node.contains("id"));
+        const auto nodeLocation = node.at("location");
         if (node.at("id") == node3Id) {
-            cmpLoc["latitude"] = 52.55227464714949;
-            cmpLoc["longitude"] = 13.351743136322877;
+            EXPECT_EQ(nodeLocation.at("latitude"), 52.55227464714949);
+            EXPECT_EQ(nodeLocation["longitude"], 13.351743136322877);
+        } else if (node.at("id") == node4Id) {
+            EXPECT_EQ(nodeLocation["latitude"], 53.55227464714949);
+            EXPECT_EQ(nodeLocation["longitude"], -13.351743136322877);
+        } else {
+            FAIL();
         }
-        if (node.at("id") == node4Id) {
-            cmpLoc["latitude"] = 53.55227464714949;
-            cmpLoc["longitude"] = -13.351743136322877;
-        }
-        EXPECT_TRUE(node.find("location") != node.end());
-        EXPECT_EQ(node.at("location"), cmpLoc);
     }
 
+    //check correctness of edges
     std::vector sources = {node3Id, node4Id};
     for (const auto& topologyEdge : edges) {
         ASSERT_EQ(topologyEdge.at("target"), 1);
@@ -265,28 +275,6 @@ TEST_F(LocationServiceTest, DISABLED_testRequestEmptyReconnectSchedule) {
 
     bool retStopWrk3 = wrk3->stop(false);
     ASSERT_TRUE(retStopWrk3);
-}
-
-TEST_F(LocationServiceTest, testConvertingToJson) {
-    double lat = 10.5;
-    double lng = -3.3;
-    auto loc1 = NES::Spatial::DataTypes::Experimental::GeoLocation(lat, lng);
-    auto validLocJson = convertNodeLocationInfoToJson(1, loc1);
-
-    EXPECT_EQ(validLocJson["id"], 1);
-    EXPECT_EQ(validLocJson["location"][0], lat);
-    ASSERT_EQ(validLocJson["location"][1], lng);
-
-    auto invalidLoc = NES::Spatial::DataTypes::Experimental::GeoLocation();
-    auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
-    NES_DEBUG2("Invalid location json: {}", invalidLocJson.dump())
-    EXPECT_EQ(invalidLocJson["id"], 2);
-    ASSERT_TRUE(invalidLocJson["location"].empty());
-
-    NES::Spatial::DataTypes::Experimental::GeoLocation locNullPtr;
-    auto nullLocJson = convertNodeLocationInfoToJson(3, locNullPtr);
-    EXPECT_EQ(nullLocJson["id"], 3);
-    ASSERT_TRUE(nullLocJson["location"].empty());
 }
 }// namespace NES
 #endif
