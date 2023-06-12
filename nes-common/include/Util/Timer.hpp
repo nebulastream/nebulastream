@@ -55,7 +55,7 @@ class Timer {
      */
     void start() {
         if (running) {
-            NES_DEBUG("Timer: Trying to start an already running timer so will skip this operation");
+            NES_DEBUG2("Timer: Trying to start an already running timer so will skip this operation");
         } else {
             running = true;
             start_p = ClockType::now();
@@ -67,7 +67,7 @@ class Timer {
      */
     void pause() {
         if (!running) {
-            NES_DEBUG("Timer: Trying to stop an already stopped timer so will skip this operation");
+            NES_DEBUG2("Timer: Trying to stop an already stopped timer so will skip this operation");
         } else {
             running = false;
             stop_p = ClockType::now();
@@ -95,7 +95,7 @@ class Timer {
      */
     void snapshot(std::string snapshotName) {
         if (!running) {
-            NES_DEBUG("Timer: Trying to take a snapshot of an non-running timer so will skip this operation");
+            NES_DEBUG2("Timer: Trying to take a snapshot of an non-running timer so will skip this operation");
         } else {
             running = true;
             stop_p = ClockType::now();
@@ -116,7 +116,7 @@ class Timer {
      */
     void merge(Timer timer) {
         if (running) {
-            NES_DEBUG("Timer: Trying to merge while timer is running so will skip this operation");
+            NES_DEBUG2("Timer: Trying to merge while timer is running so will skip this operation");
         } else {
             this->runtime += timer.runtime;
             snapshots.emplace_back(Snapshot(componentName + '_' + timer.getComponentName(), timer.runtime, timer.getSnapshots()));
@@ -153,7 +153,7 @@ class Timer {
         if (!running) {
             return runtime.count();
         } else {
-            NES_DEBUG("Timer: Trying get runtime while timer is running so will return zero");
+            NES_DEBUG2("Timer: Trying get runtime while timer is running so will return zero");
             return 0;
         }
     };
