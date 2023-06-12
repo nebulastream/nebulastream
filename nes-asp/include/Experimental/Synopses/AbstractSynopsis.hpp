@@ -104,10 +104,11 @@ class AbstractSynopsis {
     Runtime::Execution::Expressions::ReadFieldExpressionPtr readKeyExpression;
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     Parsing::Aggregation_Type aggregationType;
-    std::string fieldNameAggregation;
-    std::string fieldNameApproximate;
-    SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
+    const std::string fieldNameKey;
+    const std::string fieldNameAggregation;
+    const std::string fieldNameApproximate;
+    const SchemaPtr inputSchema;
+    const SchemaPtr outputSchema;
 
 };
 } // namespace NES::ASP

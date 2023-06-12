@@ -79,7 +79,6 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
     std::vector<Runtime::TupleBuffer> retTupleBuffers;
     Nautilus::Value<UInt64> recordIndex((uint64_t) 0);
 
-    Nautilus::Value<UInt64> maxValueKey(((uint64_t) 1 << (keySizeInB * 8)) - 1);
     for(auto& key : keyValues) {
         // Calculating the position
         auto hashFirstRow = h3HashFunction->calculateWithState(key, h3SeedsMemRef);
@@ -95,7 +94,7 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
 
         // Writing the key and the approximation to the record
         Nautilus::Record retRecord;
-        retRecord.write(keyFieldNameString, key);
+        retRecord.write(fieldNameKey, key);
         aggregationFunctionMergeRows->lower(sketchArray[(uint64_t) 0][colPosFirstRow], retRecord);
 
         // Write the record to the buffer
@@ -150,11 +149,9 @@ bool CountMin::storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Exe
 }
 
 CountMin::CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig, const uint64_t numberOfRows,
-                   const uint64_t numberOfCols, const uint64_t entrySize, const uint64_t keySizeInB,
-                   const std::string &keyFieldNameString)
+                   const uint64_t numberOfCols, const uint64_t entrySize)
                    : AbstractSynopsis(aggregationConfig), numberOfRows(numberOfRows), numberOfCols(numberOfCols),
-                   entrySize(entrySize), keySizeInB(keySizeInB), keyFieldNameString(keyFieldNameString),
-                   h3HashFunction(std::make_unique<Nautilus::Interface::H3Hash>()) {
+                   entrySize(entrySize), h3HashFunction(std::make_unique<Nautilus::Interface::H3Hash>()) {
 
     auto inputType = aggregationConfig.getInputType();
     auto finalType = aggregationConfig.getFinalType();

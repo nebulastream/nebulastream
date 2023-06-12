@@ -89,6 +89,35 @@ class CountMinTest : public Testing::NESBaseTest {
 
 };
 
+
+std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
+    return {
+        Nautilus::Record({
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
+            {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 42)},
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
+        }),
+
+        Nautilus::Record({
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
+            {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 1234)},
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+        }),
+
+        Nautilus::Record({
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+            {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 404)},
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+        }),
+
+        Nautilus::Record({
+            {inputSchema.get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
+            {inputSchema.get(1)->getName(), Nautilus::Value<Nautilus::Double>((double_t) 101)},
+            {inputSchema.get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
+        })
+    };
+}
+
 TEST_F(CountMinTest, countMinTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
     const auto entrySize = sizeof(uint64_t);
@@ -114,41 +143,6 @@ TEST_F(CountMinTest, countMinTestCount) {
     auto opState = std::make_unique<CountMin::LocalCountMinState>(sketch, );
 
 
-    // Creating records
-    Nautilus::Record record1({
-                                 {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)},
-                                 {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 0)},
-                                 {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 0)}
-                             });
-
-    Nautilus::Record record2({
-                                 {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 2)},
-                                 {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 1)},
-                                 {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
-                             });
-
-    Nautilus::Record record3({
-                                 {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
-                                 {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 1)},
-                                 {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
-                             });
-
-    Nautilus::Record record4({
-                                 {inputSchema->get(0)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 4)},
-                                 {inputSchema->get(1)->getName(), Nautilus::Value<Nautilus::Int64>((int64_t) 1)},
-                                 {inputSchema->get(2)->getName(), Nautilus::Value<Nautilus::UInt64>((uint64_t) 1)}
-                             });
-
-    // Inserting records
-    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record1, opState.get());
-    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record2, opState.get());
-    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record3, opState.get());
-    histSynopsis.addToSynopsis(handlerIndex, *executionContext, record4, opState.get());
-
-
-    auto approximateBuffers = histSynopsis.getApproximate(handlerIndex, *executionContext, bufferManager);
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(approximateBuffers[0],
-                                                                                              outputSchema);
 
 }
 

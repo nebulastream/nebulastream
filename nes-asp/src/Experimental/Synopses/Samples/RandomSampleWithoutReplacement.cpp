@@ -75,9 +75,8 @@ void setupOpHandlerProxy(void* opHandlerPtr, uint64_t entrySize) {
 }
 
 RandomSampleWithoutReplacement::RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
-                                                               size_t sampleSize, const std::string& keyFieldName):
-                         AbstractSynopsis(aggregationConfig), sampleSize(sampleSize),
-                         recordSize(inputSchema->getSchemaSizeInBytes()), keyFieldName(keyFieldName) {
+                                                               size_t sampleSize, uint64_t entrySize):
+    AbstractSynopsis(aggregationConfig), sampleSize(sampleSize), entrySize(entrySize) {
 }
 
 void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
@@ -87,7 +86,7 @@ void RandomSampleWithoutReplacement::addToSynopsis(uint64_t handlerIndex, Runtim
     // TODO this can be pulled out of this function and into the open() #3743
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, recordSize);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize);
 
     auto entryMemRef = pagedVectorRef.allocateEntry();
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
@@ -108,7 +107,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
 
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto pagedVectorMemRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, opHandlerMemRef);
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, recordSize);
+    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(pagedVectorMemRef, entrySize);
     auto numberOfRecordsInSample = Nautilus::FunctionCall("createSampleProxy", createSampleProxy, pagedVectorMemRef,
                                                           Nautilus::Value<Nautilus::UInt64>((uint64_t)sampleSize));
 
@@ -122,9 +121,9 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
     auto maxRecordsPerBuffer = bufferManager->getBufferSize() / outputSchema->getSchemaSizeInBytes();
     std::vector<Runtime::TupleBuffer> retTupleBuffers;
     Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
+    auto aggregationValueMemRef = pagedVectorRef.allocateEntry();
     for (auto& key : keyValues) {
         // Approximate over the sample and write the approximation into record
-        auto aggregationValueMemRef = pagedVectorRef.allocateEntry();
         aggregationFunction->reset(aggregationValueMemRef);
 
         // Iterating over the sample and creating the aggregation for all keys
@@ -146,7 +145,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
         // Writing the approximate to the record as well as the key
 
         record.write(fieldNameApproximate, approximatedValue);
-        record.write(keyFieldName, key);
+        record.write(fieldNameKey, key);
 
 
         // Writing the values to the buffer

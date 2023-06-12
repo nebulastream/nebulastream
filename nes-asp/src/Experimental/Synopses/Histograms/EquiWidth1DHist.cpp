@@ -70,11 +70,12 @@ EquiWidth1DHist::getApproximate(uint64_t handlerIndex, Runtime::Execution::Execu
         Nautilus::Record record;
         aggregationFunction->lower(bins[(uint64_t) 0][binDimensionPos], record);
 
-        // Writing the lower and upper value of the current bin
+        // Writing the key, lower and upper value of the current bin
         auto lowerBinBound = binDimensionPos * binWidth;
         auto upperBinBound = (binDimensionPos + 1) * binWidth;
         record.write(lowerBinBoundString, lowerBinBound);
         record.write(upperBinBoundString, upperBinBound);
+        record.write(fieldNameKey, key);
 
         // Writing the values to the buffer
         auto recordBuffer = RecordBuffer(Nautilus::Value<Nautilus::MemRef>((int8_t*) std::addressof(buffer)));

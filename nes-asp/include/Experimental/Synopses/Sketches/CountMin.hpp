@@ -38,8 +38,7 @@ class CountMin : public AbstractSynopsis {
     };
 
     CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig,
-             const uint64_t numberOfRows, const uint64_t numberOfCols, const uint64_t entrySize,
-             const uint64_t keySizeInB, const std::string &keyFieldNameString);
+             const uint64_t numberOfRows, const uint64_t numberOfCols, const uint64_t entrySize);
 
     void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
                        Runtime::Execution::Operators::OperatorState *pState) override;
@@ -59,9 +58,6 @@ class CountMin : public AbstractSynopsis {
     const uint64_t numberOfRows;
     const uint64_t numberOfCols;
     const uint64_t entrySize;
-
-    const uint64_t keySizeInB;
-    const std::string keyFieldNameString;
 
     std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunctionMergeRows;
