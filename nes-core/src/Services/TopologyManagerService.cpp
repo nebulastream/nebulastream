@@ -67,9 +67,7 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
             NES_TRACE2("TopologyManagerService::registerWorker: node with worker id {} is reregistering", workerId);
             id = workerId;
             TopologyNodePtr workerWithOldConfig = healthCheckService->getWorkerByWorkerId(id);
-            if (workerWithOldConfig) {
-                healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
-            }
+            healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
         } else {
             // there is no active worker with workerId and there is no inactive worker with workerId, therefore
             // simply assign next available workerId
