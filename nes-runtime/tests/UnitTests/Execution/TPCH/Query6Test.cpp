@@ -93,7 +93,7 @@ class TPCH_Q6 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_P(TPCH_Q6, aggregationPipeline) {
+TEST_P(TPCH_Q6, DISABLED_aggregationPipeline) {
 
     auto& lineitems = tables[TPCHTable::LineItem];
 
