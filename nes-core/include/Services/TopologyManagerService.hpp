@@ -173,7 +173,7 @@ class TopologyManagerService {
      * @brief method to generate the next (monotonically increasing) topology node id
      * @return next topology node id
      */
-    uint64_t getNextTopologyNodeId();
+    TopologyNodeId getNextTopologyNodeId();
 };
 
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;

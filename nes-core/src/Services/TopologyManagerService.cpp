@@ -57,7 +57,7 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
     // if worker is started with a workerId
     if (workerId != INVALID_TOPOLOGY_NODE_ID) {
         // check if an active worker with workerId already exists
-        if (topology->existsNodeWithWorkerId(workerId)) {
+        if (topology->nodeWithWorkerIdExists(workerId)) {
             NES_ERROR2("TopologyManagerService::registerWorker: node with worker id {} already exists and is running", workerId);
             return INVALID_TOPOLOGY_NODE_ID;
         }
@@ -67,7 +67,9 @@ TopologyNodeId TopologyManagerService::registerWorker(TopologyNodeId workerId,
             NES_TRACE2("TopologyManagerService::registerWorker: node with worker id {} is reregistering", workerId);
             id = workerId;
             TopologyNodePtr workerWithOldConfig = healthCheckService->getWorkerByWorkerId(id);
-            healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
+            if (workerWithOldConfig) {
+                healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
+            }
         } else {
             // there is no active worker with workerId and there is no inactive worker with workerId, therefore
             // simply assign next available workerId
@@ -224,7 +226,7 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
 
 TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->findNodeWithId(nodeId); }
 
-uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
+TopologyNodeId TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of future movement
 std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
