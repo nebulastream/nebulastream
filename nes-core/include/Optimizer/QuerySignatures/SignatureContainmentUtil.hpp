@@ -90,7 +90,7 @@ class SignatureContainmentUtil {
      * equivalence or no containment was detected.
      */
     std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
-    checkContainmentRelationshipFromTopToBottom(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
+    checkContainmentRelationshipTopDown(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
 
   private:
     /**
@@ -238,6 +238,16 @@ class SignatureContainmentUtil {
      * @return true, if no union is present or all unions have an equal amount of filters per attribute, false otherwise
      */
     bool checkFilterContainmentPossible(const QuerySignaturePtr& container, const QuerySignaturePtr& containee);
+
+    /**
+     * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
+     * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
+     * therefore this method returns true, if the container chain has only one parent relationship, false otherwise
+     * @param containedOperator the operator for which we identified a containment relationship
+     * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
+     * @return true, if the container chain has only one parent relationship, false otherwise
+     */
+    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator, const LogicalOperatorNodePtr& extractedContainedOperator);
 
     /**
      * @brief Reset z3 solver

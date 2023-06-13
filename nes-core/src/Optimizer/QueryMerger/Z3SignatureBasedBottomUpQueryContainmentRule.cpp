@@ -102,6 +102,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                 }
                 //Add target sink operator as root to the host query plan.
                 hostQueryPlan->addRootOperator(targetSink);
+                matched = true;
             } else {
                 //create a map of matching target to address operator id map
                 auto matchedTargetToHostOperatorMap = areQueryPlansContained(targetQueryPlan, hostQueryPlan);
@@ -139,10 +140,14 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                         LogicalOperatorNodePtr hostOperator = std::get<0>(hostOperatorAndRelationship);
                         ContainmentType containmentType = std::get<1>(hostOperatorAndRelationship);
                         if (containmentType == ContainmentType::EQUALITY) {
+                            NES_TRACE("Current host sqp {}", hostSharedQueryPlan->getQueryPlan()->toString());
                             NES_TRACE("Output schema equality target {}", targetOperator->getOutputSchema()->toString());
                             NES_TRACE("Output schema equality host {}", hostOperator->getOutputSchema()->toString());
-                            for (const auto& targetParent : targetOperator->getParents()) {
-                                NES_DEBUG("Removing parent {} from {}", targetParent->toString(), targetOperator->toString());
+                            NES_TRACE("Target parent size {}", targetOperator->getParents().size());
+                            auto targetOperatorParents = targetOperator->getParents();
+                            for (const auto& targetParent : targetOperatorParents) {
+                                NES_DEBUG("Removing parent {}", targetParent->toString());
+                                NES_DEBUG("from {}", targetOperator->toString());
                                 bool addedNewParent = hostOperator->addParent(targetParent);
                                 if (!addedNewParent) {
                                     NES_WARNING("Failed to add new parent");
@@ -210,12 +215,12 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                   targetRootOperator->toString(),
                                   hostQueryPlan->toString());
                     }
+                    matched = true;
                 }
             }
             //Update the shared query metadata
             globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
             // exit the for loop as we found a matching address shared query metadata
-            matched = true;
             break;
         }
         if (!matched) {
