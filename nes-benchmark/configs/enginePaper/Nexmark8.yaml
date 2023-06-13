@@ -50,4 +50,4 @@ scalability: scale-up
 logLevel: LOG_ERROR
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect:
+numberOfMeasurementsToCollect: 5
