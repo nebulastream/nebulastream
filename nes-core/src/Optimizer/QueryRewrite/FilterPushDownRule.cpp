@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include "API/Schema.hpp"
+#include "API/AttributeField.hpp"
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -23,6 +27,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -76,7 +81,8 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
 
     if (child->instanceOf<ProjectionLogicalOperatorNode>()) {
         // TODO: implement filter pushdown for projection: https://github.com/nebulastream/nebulastream/issues/3799
-    } else if (child->instanceOf<MapLogicalOperatorNode>()) {
+    }
+    else if (child->instanceOf<MapLogicalOperatorNode>()) {
         std::string mapFieldName = getFieldNameUsedByMapOperator(child);
         bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
         if (!predicateFieldManipulated) {
@@ -84,9 +90,39 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
             child->insertBetweenThisAndChildNodes(filterOperator);
             pushDownFilter(filterOperator);
         }
-    } else if (child->instanceOf<JoinLogicalOperatorNode>()) {
-        // TODO: implement filter pushdown for joins: https://github.com/nebulastream/nebulastream/issues/3765
-    } else if (child->instanceOf<UnionLogicalOperatorNode>()) {
+    }
+    else if (child->instanceOf<JoinLogicalOperatorNode>()) {
+
+        std::vector<NodePtr> childrenOfJoin = child->getChildren();
+
+        for (const NodePtr& grandChild : childrenOfJoin) {
+
+            SchemaPtr grandChildOutputSchema = grandChild->as<LogicalOperatorNode>()->getOutputSchema();
+            std::vector<std::string> predicateFields = getFieldNamesUsedByFilterPredicate(filterOperator);
+
+            bool thisBranchContainsAllPredicates = true;
+            for (const std::string& fieldUsedByFilter: predicateFields){
+                if (!grandChildOutputSchema->contains(fieldUsedByFilter)){
+                    thisBranchContainsAllPredicates = false;
+                }
+            }
+
+            if (thisBranchContainsAllPredicates) {
+
+                filterOperator->removeAndJoinParentAndChildren();
+                // as watermark is not implemented yet as its own condition,
+                // right now I am just pushing directly below the watermark(window) operator below a join
+                if (grandChild->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+                    grandChild->insertBetweenThisAndChildNodes(filterOperator);
+                } else {
+                    grandChild->insertBetweenThisAndParentNodes(filterOperator);
+                }
+                pushDownFilter(filterOperator);
+            }
+        }
+    }
+
+    else if (child->instanceOf<UnionLogicalOperatorNode>()) {
         std::vector<NodePtr> grandChildren = child->getChildren();
 
         if (grandChildren.size() != 2) {
@@ -141,6 +177,24 @@ std::string FilterPushDownRule::getFieldNameUsedByMapOperator(const NodePtr& nod
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
     return field->getFieldName();
+}
+
+std::vector<std::string>  FilterPushDownRule::getFieldNamesUsedByFilterPredicate(const NodePtr& node) {
+    std::vector<std::string> fieldsInPredicate;
+
+    NES_TRACE2("FilterPushDownRule: Find all field names used in filter operator");
+    FilterLogicalOperatorNodePtr filter = node->as<FilterLogicalOperatorNode>();
+    const ExpressionNodePtr predicate = filter->getPredicate();
+
+    DepthFirstNodeIterator depthFirstNodeIterator(predicate);
+    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
+        if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
+            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            fieldsInPredicate.push_back(accessExpressionNode->getFieldName());
+        }
+    }
+
+    return fieldsInPredicate;
 }
 
 }// namespace NES::Optimizer
