@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.106](https://github.com/nebulastream/nebulastream/tree/v0.5.106) (2023-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.105...v0.5.106)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus Modulooperator [\#3843](https://github.com/nebulastream/nebulastream/issues/3843)
+
 ## [v0.5.105](https://github.com/nebulastream/nebulastream/tree/v0.5.105) (2023-06-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.104...v0.5.105)
