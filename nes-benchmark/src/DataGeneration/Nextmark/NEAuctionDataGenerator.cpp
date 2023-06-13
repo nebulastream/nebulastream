@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NexmarkCommon.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <algorithm>
 #include <fstream>
 #include <math.h>
-#include <algorithm>
 #include <utility>
 
 namespace NES::Benchmark::DataGeneration {
@@ -45,7 +45,7 @@ std::vector<Runtime::TupleBuffer> NEAuctionDataGenerator::createData(size_t numb
             } else {
                 offset = NexmarkCommon::AUCTION_EVENT_RATIO - 1;
             }
-            long auctionId =  epoch * NexmarkCommon::AUCTION_EVENT_RATIO + offset;//r.nextLong(minAuctionId, maxAuctionId);
+            long auctionId = epoch * NexmarkCommon::AUCTION_EVENT_RATIO + offset;//r.nextLong(minAuctionId, maxAuctionId);
 
             epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
             offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
@@ -92,4 +92,4 @@ std::string NEAuctionDataGenerator::toString() {
     return oss.str();
 }
 
-}// namespace NES
+}// namespace NES::Benchmark::DataGeneration

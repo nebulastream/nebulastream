@@ -13,15 +13,14 @@
 */
 #include <API/Schema.hpp>
 #include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
-namespace NES::Benchmark::DataGeneration{
-SmartGridDataGenerator::SmartGridDataGenerator()
-    : DataGenerator() {}
+namespace NES::Benchmark::DataGeneration {
+SmartGridDataGenerator::SmartGridDataGenerator() : DataGenerator() {}
 
 std::string SmartGridDataGenerator::getName() { return "SmartGrid"; }
 
@@ -74,4 +73,4 @@ SchemaPtr SmartGridDataGenerator::getSchema() {
         ->addField("house", BasicType::INT16);
 }
 
-}// namespace NES
+}// namespace NES::Benchmark::DataGeneration

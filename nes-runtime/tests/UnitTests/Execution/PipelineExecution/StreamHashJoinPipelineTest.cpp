@@ -296,16 +296,17 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         rightSchema,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsField));
     auto joinSink = std::make_shared<Operators::StreamHashJoinSink>(handlerIndex);
-    auto hashJoinOpHandler = Operators::StreamHashJoinOperatorHandler::create(leftSchema,
-                                                                              rightSchema,
-                                                                              joinFieldNameLeft,
-                                                                              joinFieldNameRight,
-                                                                              std::vector<::OriginId>({1}),
-                                                                              windowSize,
-                                                                              NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                                                              NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
-                                                                              NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                                              NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
+    auto hashJoinOpHandler =
+        Operators::StreamHashJoinOperatorHandler::create(leftSchema,
+                                                         rightSchema,
+                                                         joinFieldNameLeft,
+                                                         joinFieldNameRight,
+                                                         std::vector<::OriginId>({1}),
+                                                         windowSize,
+                                                         NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                                         NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
+                                                         NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+                                                         NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);
@@ -422,7 +423,8 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         HashJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),//CPPPipelineCompiler is currently not working
+                        ::testing::Values("PipelineInterpreter",
+                                          "PipelineCompiler"),//CPPPipelineCompiler is currently not working
 
                         [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;

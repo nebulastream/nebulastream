@@ -73,8 +73,9 @@ class FixedPagesAllocator {
     uint8_t* getNewPage(size_t pageSize) {
         auto ptr = tail.fetch_add(pageSize);
         allocCnt++;
-        NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head) << " total size=" << totalSize
-                        << " allocCnt=" << allocCnt);
+        NES_ASSERT2_FMT(ptr < overrunAddress,
+                        "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head)
+                                           << " total size=" << totalSize << " allocCnt=" << allocCnt);
 
         return reinterpret_cast<uint8_t*>(ptr);
     }
@@ -87,7 +88,6 @@ class FixedPagesAllocator {
     uint64_t overrunAddress;
     uint64_t totalSize;
     uint64_t allocCnt = 0;
-
 };
 
 }// namespace NES::Runtime

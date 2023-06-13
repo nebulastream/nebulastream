@@ -17,10 +17,10 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <ostream>
 #include <vector>
-#include <memory>
 
 namespace NES::Runtime::Execution {
 

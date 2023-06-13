@@ -12,21 +12,20 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NexmarkCommon.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <math.h>
-#include <algorithm>
 #include <utility>
 
 namespace NES::Benchmark::DataGeneration {
 
 NEBitDataGenerator::NEBitDataGenerator() : DataGenerator() {}
-
 
 std::string NEBitDataGenerator::getName() { return "NEBit"; }
 
@@ -45,9 +44,12 @@ std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOf
             long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
 
             if (rand() % 100 > NexmarkCommon::HOT_AUCTIONS_PROB) {
-                auction = (((epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1) / NexmarkCommon::HOT_AUCTION_RATIO) * NexmarkCommon::HOT_AUCTION_RATIO);
+                auction = (((epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1)
+                            / NexmarkCommon::HOT_AUCTION_RATIO)
+                           * NexmarkCommon::HOT_AUCTION_RATIO);
             } else {
-                long a = std::max(0L, epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1 - 20000);
+                long a =
+                    std::max(0L, epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1 - 20000);
                 long b = epoch * NexmarkCommon::AUCTION_EVENT_RATIO + NexmarkCommon::AUCTION_EVENT_RATIO - 1;
                 auction = a + rand() % (b - a + 1 + 100);
             }
@@ -86,4 +88,4 @@ std::string NEBitDataGenerator::toString() {
     return oss.str();
 }
 
-}// namespace NES
+}// namespace NES::Benchmark::DataGeneration

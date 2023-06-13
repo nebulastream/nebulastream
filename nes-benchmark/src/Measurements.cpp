@@ -33,7 +33,7 @@ std::string Measurements::getThroughputAsString() {
         avgCnt++;
         maxValue = std::max(maxValue, actualThroughput);
     }
-    ss << std::endl << " avgThroughput=" << avgValue /avgCnt <<  " maxValue=" << maxValue << std::endl;
+    ss << std::endl << " avgThroughput=" << avgValue / avgCnt << " maxValue=" << maxValue << std::endl;
     return ss.str();
 }
 

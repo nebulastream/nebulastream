@@ -27,5 +27,4 @@ class SmartGridDataGenerator : public DataGenerator {
 
 }// namespace NES::Benchmark::DataGeneration
 
-
 #endif// NES_INCLUDE_DATAGENERATORS_LIGHTSABER_SMARTGRIDDATAGENERATOR_HPP_

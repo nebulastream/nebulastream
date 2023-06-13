@@ -13,16 +13,15 @@
 */
 #include <API/Schema.hpp>
 #include <DataGeneration/LightSaber/ClusterMonitoringDataGenerator.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
-namespace NES::Benchmark::DataGeneration{
+namespace NES::Benchmark::DataGeneration {
 
-ClusterMonitoringDataGenerator::ClusterMonitoringDataGenerator()
-    : DataGenerator() {}
+ClusterMonitoringDataGenerator::ClusterMonitoringDataGenerator() : DataGenerator() {}
 
 std::string ClusterMonitoringDataGenerator::getName() { return "ClusterMonitoring"; }
 
@@ -38,7 +37,7 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(siz
 
     std::string line;
     std::vector<std::vector<std::string>> lines;
-    while(std::getline(file, line)){
+    while (std::getline(file, line)) {
         std::istringstream iss(line);
         std::vector<std::string> words{std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
         lines.emplace_back(words);
@@ -59,14 +58,14 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(siz
             dynamicBuffer[currentRecord]["jobId"].write<int64_t>(std::stol(words[1]));
             dynamicBuffer[currentRecord]["taskId"].write<int64_t>(std::stol(words[2]));
             dynamicBuffer[currentRecord]["machineId"].write<int64_t>(std::stol(words[3]));
-            dynamicBuffer[currentRecord]["eventType"].write<int16_t>((int16_t)std::stoi(words[4]));
-            dynamicBuffer[currentRecord]["userId"].write<int16_t>((int16_t)std::stoi(words[5]));
-            dynamicBuffer[currentRecord]["category"].write<int16_t>((int16_t)std::stoi(words[6]));
-            dynamicBuffer[currentRecord]["priority"].write<int16_t>((int16_t)std::stoi(words[7]));
+            dynamicBuffer[currentRecord]["eventType"].write<int16_t>((int16_t) std::stoi(words[4]));
+            dynamicBuffer[currentRecord]["userId"].write<int16_t>((int16_t) std::stoi(words[5]));
+            dynamicBuffer[currentRecord]["category"].write<int16_t>((int16_t) std::stoi(words[6]));
+            dynamicBuffer[currentRecord]["priority"].write<int16_t>((int16_t) std::stoi(words[7]));
             dynamicBuffer[currentRecord]["cpu"].write<float>(std::stof(words[8]));
             dynamicBuffer[currentRecord]["ram"].write<float>(std::stof(words[9]));
             dynamicBuffer[currentRecord]["disk"].write<float>(std::stof(words[10]));
-            dynamicBuffer[currentRecord]["constraints"].write<int16_t>((int16_t)std::stoi(words[11]));
+            dynamicBuffer[currentRecord]["constraints"].write<int16_t>((int16_t) std::stoi(words[11]));
             currentLineIndex++;
         }
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -90,4 +89,4 @@ SchemaPtr ClusterMonitoringDataGenerator::getSchema() {
         ->addField("constraints", BasicType::INT16);
 }
 
-}// namespace NES
+}// namespace NES::Benchmark::DataGeneration

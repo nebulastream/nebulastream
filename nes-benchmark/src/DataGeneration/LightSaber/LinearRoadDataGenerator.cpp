@@ -13,15 +13,14 @@
 */
 #include <API/Schema.hpp>
 #include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
-namespace NES::Benchmark::DataGeneration{
-LinearRoadDataGenerator::LinearRoadDataGenerator()
-    : DataGenerator() {}
+namespace NES::Benchmark::DataGeneration {
+LinearRoadDataGenerator::LinearRoadDataGenerator() : DataGenerator() {}
 
 std::string LinearRoadDataGenerator::getName() { return "LinearRoad"; }
 
@@ -74,4 +73,4 @@ SchemaPtr LinearRoadDataGenerator::getSchema() {
         ->addField("position", BasicType::INT16);
 }
 
-}// namespace NES
+}// namespace NES::Benchmark::DataGeneration

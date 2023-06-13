@@ -398,16 +398,17 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
 
-        auto joinOperatorHandler = StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
-                                                                         joinOperator->getRightInputSchema(),
-                                                                         joinFieldNameLeft,
-                                                                         joinFieldNameRight,
-                                                                         joinOperator->getAllInputOriginIds(),
-                                                                         windowSize,
-                                                                         options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-                                                                         options->getHashJoinOptions()->getPageSize(),
-                                                                         options->getHashJoinOptions()->getPreAllocPageCnt(),
-                                                                         options->getHashJoinOptions()->getNumberOfPartitions());
+        auto joinOperatorHandler =
+            StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                  joinOperator->getRightInputSchema(),
+                                                  joinFieldNameLeft,
+                                                  joinFieldNameRight,
+                                                  joinOperator->getAllInputOriginIds(),
+                                                  windowSize,
+                                                  options->getHashJoinOptions()->getTotalSizeForDataStructures(),
+                                                  options->getHashJoinOptions()->getPageSize(),
+                                                  options->getHashJoinOptions()->getPreAllocPageCnt(),
+                                                  options->getHashJoinOptions()->getNumberOfPartitions());
 
         auto leftInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
