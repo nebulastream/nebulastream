@@ -14,10 +14,10 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_
+#include <Common/Identifiers.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <cstdint>
-#include <Common/Identifiers.hpp>
 
 namespace NES::Join {
 

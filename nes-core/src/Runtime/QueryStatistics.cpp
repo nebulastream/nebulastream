@@ -76,7 +76,7 @@ void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->pro
 
 void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) { tsToLatencyMap[now].push_back(latency); }
 
-std::map<uint64_t, std::atomic<uint64_t>>& QueryStatistics::getPipelineIdToTaskMap(){return pipelineIdToTaskThroughputMap;};
+std::map<uint64_t, std::atomic<uint64_t>>& QueryStatistics::getPipelineIdToTaskMap() { return pipelineIdToTaskThroughputMap; };
 
 std::map<uint64_t, std::vector<uint64_t>> QueryStatistics::getTsToLatencyMap() { return tsToLatencyMap; }
 

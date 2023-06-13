@@ -74,7 +74,6 @@ class Measurements {
      */
     std::string getThroughputAsString();
 
-
   private:
     /**
      * @brief adds processedTasks

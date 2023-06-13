@@ -15,9 +15,9 @@
 #include <API/Schema.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
-#include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
+#include <DataGeneration/YSBDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -57,9 +57,9 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_unique<DefaultDataGenerator>(minValue, maxValue);
     } else if (type == "NEBit") {
-         return std::make_unique<NEBitDataGenerator>();
+        return std::make_unique<NEBitDataGenerator>();
     } else if (type == "NEAuction") {
-      return std::make_unique<NEAuctionDataGenerator>();
+        return std::make_unique<NEAuctionDataGenerator>();
     } else if (type == "Zipfian") {
         if (generatorNode["alpha"].IsNone() || generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
             NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Zipfian Datagenerator!");

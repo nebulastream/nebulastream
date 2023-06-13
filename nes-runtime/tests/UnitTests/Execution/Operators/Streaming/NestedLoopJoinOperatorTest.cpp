@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
@@ -31,7 +32,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <random>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -338,18 +338,20 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
 
-    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                              leftSchema,
-                                                              joinFieldnameLeft,
-                                                              timestampFieldLeft,
-                                                              /*isLeftSide*/ true,
-                                                              std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
-    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                               rightSchema,
-                                                               joinFieldnameRight,
-                                                               timestampFieldRight,
-                                                               /*isLeftSide*/ false,
-                                                               std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
+    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        leftSchema,
+        joinFieldnameLeft,
+        timestampFieldLeft,
+        /*isLeftSide*/ true,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        rightSchema,
+        joinFieldnameRight,
+        timestampFieldRight,
+        /*isLeftSide*/ false,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
@@ -387,18 +389,20 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(joinFieldnameRight);
 
-    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                              leftSchema,
-                                                              joinFieldnameLeft,
-                                                              timestampFieldLeft,
-                                                              /*isLeftSide*/ true,
-                                                              std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
-    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                               rightSchema,
-                                                               joinFieldnameRight,
-                                                               timestampFieldRight,
-                                                               /*isLeftSide*/ false,
-                                                               std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
+    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        leftSchema,
+        joinFieldnameLeft,
+        timestampFieldLeft,
+        /*isLeftSide*/ true,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        rightSchema,
+        joinFieldnameRight,
+        timestampFieldRight,
+        /*isLeftSide*/ false,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
@@ -435,18 +439,20 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldLeft);
     auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldRight);
 
-    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                              leftSchema,
-                                                              joinFieldnameLeft,
-                                                              timestampFieldLeft,
-                                                              /*isLeftSide*/ true,
-                                                              std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
-    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(handlerIndex,
-                                                               rightSchema,
-                                                               joinFieldnameRight,
-                                                               timestampFieldRight,
-                                                               /*isLeftSide*/ false,
-                                              std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
+    auto nljBuildLeft = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        leftSchema,
+        joinFieldnameLeft,
+        timestampFieldLeft,
+        /*isLeftSide*/ true,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
+    auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
+        handlerIndex,
+        rightSchema,
+        joinFieldnameRight,
+        timestampFieldRight,
+        /*isLeftSide*/ false,
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
     NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
     WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);

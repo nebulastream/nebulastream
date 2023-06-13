@@ -18,9 +18,7 @@
 #include <sstream>
 namespace NES::Runtime::Execution {
 
-NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd)
-    : StreamWindow(windowStart, windowEnd){}
-
+NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : StreamWindow(windowStart, windowEnd) {}
 
 uint8_t* NLJWindow::allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
     //TODO: I am not sure if this resizing is really efficient expecially if we know the tuple sizes
@@ -56,8 +54,8 @@ size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
 
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "NLJWindow(windowState: " << magic_enum::enum_name(windowState.load()) << " windowStart: " << windowStart
-                       << " windowEnd: " << windowEnd << ")";
+    basicOstringstream << "NLJWindow(windowState: " << magic_enum::enum_name(windowState.load())
+                       << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
     return basicOstringstream.str();
 }
 

@@ -293,12 +293,11 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
     sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
-//    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    //    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
     NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
-    if(testSink->getNumberOfResultBuffers() == 2)
-    {
+    if (testSink->getNumberOfResultBuffers() == 2) {
         NES_DEBUG2("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->getResultBuffer(1).getBuffer(), sinkSchema));
     }
 }

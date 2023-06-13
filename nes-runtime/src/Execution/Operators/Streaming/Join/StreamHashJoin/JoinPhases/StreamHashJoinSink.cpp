@@ -142,7 +142,9 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
 
                         auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
-                        NES_WARNING("numberOfTuplesInBuffer=" << numberOfTuplesInBuffer << " j=" << j << " tupleSize=" << sizeOfJoinedTuple << " bufferSize=" << currentTupleBuffer.getBufferSize());
+                        NES_WARNING("numberOfTuplesInBuffer=" << numberOfTuplesInBuffer << " j=" << j
+                                                              << " tupleSize=" << sizeOfJoinedTuple
+                                                              << " bufferSize=" << currentTupleBuffer.getBufferSize());
                         // Building the join tuple (winStart | winStop| key | left tuple | right tuple)
                         memcpy(bufferPtr, &windowStart, sizeOfWindowStart);
                         memcpy(bufferPtr + sizeOfWindowStart, &windowEnd, sizeOfWindowEnd);

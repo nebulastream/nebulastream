@@ -15,8 +15,8 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <atomic>
 #include <Util/Common.hpp>
+#include <atomic>
 #include <cstring>
 
 namespace NES::Runtime::Execution::Operators {
@@ -85,6 +85,6 @@ FixedPage::FixedPage(FixedPage* otherPage)
     : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
       capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {
     otherPage->bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
-//    otherPage->currentPos = 0;
+    //    otherPage->currentPos = 0;
 }
 }// namespace NES::Runtime::Execution::Operators

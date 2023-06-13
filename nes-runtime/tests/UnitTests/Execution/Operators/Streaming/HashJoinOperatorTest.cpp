@@ -189,8 +189,8 @@ struct HashJoinSinkHelper {
                        SchemaPtr rightSchema,
                        const std::string& timeStampField,
                        HashJoinOperatorTest* hashJoinOperatorTest)
-        : pageSize(131072), numPartitions(1), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128),
-          noWorkerThreads(1), numSourcesLeft(1), numSourcesRight(1), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
+        : pageSize(131072), numPartitions(1), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128), noWorkerThreads(1),
+          numSourcesLeft(1), numSourcesRight(1), joinSizeInByte(1 * 1024 * 1024), windowSize(1000),
           joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager),
           leftSchema(leftSchema), rightSchema(rightSchema), timeStampField(timeStampField),
           hashJoinOperatorTest(hashJoinOperatorTest) {}

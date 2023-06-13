@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <iomanip>
 #include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <numeric>
+#include <sstream>
+#include <string>
 #include <vector>
 
 namespace NES::Util {
@@ -56,7 +56,6 @@ std::string trim(std::string str, char trimFor) {
     return str;
 }
 
-
 void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr) {
     // Get the first occurrence
     uint64_t pos = data.find(toSearch);
@@ -91,7 +90,6 @@ std::string toUpperCase(std::string string) {
     return string;
 }
 
-
 void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header) {
     std::ofstream ofstream(csvFileName, std::ios::trunc | std::ios::out);
     ofstream << header << std::endl;
@@ -112,9 +110,9 @@ std::string updateSourceName(std::string queryPlanSourceConsumed, std::string su
     std::sort(sourceNames.begin(), sourceNames.end());
     // accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
     auto updatedSourceName =
-            std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
-                return a + "_" + b;
-            });
+        std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
+            return a + "_" + b;
+        });
     return updatedSourceName;
 }
 
@@ -130,4 +128,4 @@ uint64_t murmurHash(uint64_t key) {
     return hash;
 }
 
-} // namespace NES::Util
+}// namespace NES::Util
