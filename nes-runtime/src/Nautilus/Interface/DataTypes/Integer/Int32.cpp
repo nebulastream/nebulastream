@@ -53,6 +53,26 @@ const std::shared_ptr<Boolean> Int32::greaterThan(const Int& other) const {
     auto& otherValue = other.staticCast<Int32>();
     return create<Boolean>(value > otherValue.value);
 }
+const std::shared_ptr<Int> Int32::bitWiseAnd(const Int& other) const {
+    auto& otherValue = other.staticCast<Int32>();
+    return create<Int32>(value & otherValue.value);
+}
+const std::shared_ptr<Int> Int32::bitWiseOr(const Int& other) const {
+    auto& otherValue = other.staticCast<Int32>();
+    return create<Int32>(value | otherValue.value);
+}
+const std::shared_ptr<Int> Int32::bitWiseXor(const Int& other) const {
+    auto& otherValue = other.staticCast<Int32>();
+    return create<Int32>(value ^ otherValue.value);
+}
+const std::shared_ptr<Int> Int32::bitWiseLeftShift(const Int& other) const {
+    auto& otherValue = other.staticCast<Int32>();
+    return create<Int32>(value << otherValue.value);
+}
+const std::shared_ptr<Int> Int32::bitWiseRightShift(const Int& other) const {
+    auto& otherValue = other.staticCast<Int32>();
+    return create<Int32>(value >> otherValue.value);
+}
 
 int32_t Int32::getValue() const { return value; }
 int64_t Int32::getRawInt() const { return value; }

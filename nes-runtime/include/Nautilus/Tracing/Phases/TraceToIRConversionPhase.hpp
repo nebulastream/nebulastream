@@ -78,6 +78,11 @@ class TraceToIRConversionPhase {
         void processNegate(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         void processAnd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         void processOr(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processBitWiseAnd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processBitWiseOr(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processBitWiseXor(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processBitWiseLeftShift(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processBitWiseRightShift(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         void processLoad(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         void processStore(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
         void processCall(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);

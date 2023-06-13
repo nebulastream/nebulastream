@@ -27,6 +27,11 @@ std::optional<Value<>> InvocationPlugin::GreaterThan(const Value<>&, const Value
 std::optional<Value<>> InvocationPlugin::Negate(const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::And(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::Or(const Value<>&, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::BitWiseAnd(const Value<>&, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::BitWiseOr(const Value<>&, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::BitWiseXor(const Value<>&, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::BitWiseLeftShift(const Value<>&, const Value<>&) const { return std::nullopt; }
+std::optional<Value<>> InvocationPlugin::BitWiseRightShift(const Value<>&, const Value<>&) const { return std::nullopt; }
 std::optional<Value<>> InvocationPlugin::CastTo(const Value<>&, const TypeIdentifier*) const { return std::nullopt; }
 bool InvocationPlugin::IsCastable(const Value<>&, const TypeIdentifier*) const { return false; }
 std::optional<Value<>> InvocationPlugin::WriteArrayIndex(const Value<>&, Value<UInt32>, const Value<>&) const {
