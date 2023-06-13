@@ -101,7 +101,10 @@ class NetworkDataSender : public BaseChannelType {
             zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
             kZmqSendDefault);
         if (!!sentBytesOpt) {
-            NES_TRACE2("DataChannel: Sending buffer with {}/{}-{}", inputBuffer.getNumberOfTuples(), inputBuffer.getBufferSize(), inputBuffer.getOriginId());
+            NES_TRACE2("DataChannel: Sending buffer with {}/{}-{}",
+                       inputBuffer.getNumberOfTuples(),
+                       inputBuffer.getBufferSize(),
+                       inputBuffer.getOriginId());
 
             return true;
         }

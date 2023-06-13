@@ -373,7 +373,9 @@ const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
 }
 
 bool textLike(const TextValue* text, TextValue* pattern, Boolean caseSensitive) {
-    NES_DEBUG2("Checking in textLike if {} and {} are a match.", text->c_str(), pattern);
+    std::stringstream patternAsString;
+    patternAsString << pattern;
+    NES_DEBUG2("Checking in textLike if {} and {} are a match.", text->c_str(), patternAsString.str());
     auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
     auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
     auto addStartChar = textConcat(TextValue::create("^"), addWildcard);

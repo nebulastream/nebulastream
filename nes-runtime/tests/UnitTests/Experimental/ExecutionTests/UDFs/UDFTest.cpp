@@ -329,7 +329,7 @@ TEST_P(UDFTest, crimeIndexUDF) {
     NES_INFO2("{}", timer);
     auto processedTuples = data.size() * memoryLayout->getCapacity() * iterations;
     double recordsPerMs = (double) processedTuples / timer.getPrintTime();
-    NES_INFO2("ProcessedTuple: {} recordsPerMs: {} Throughput: {}",  processedTuples, recordsPerMs, (recordsPerMs * 1000));
+    NES_INFO2("ProcessedTuple: {} recordsPerMs: {} Throughput: {}", processedTuples, recordsPerMs, (recordsPerMs * 1000));
 }
 #ifdef USE_BABELFISH
 INSTANTIATE_TEST_CASE_P(testUDF,

@@ -210,7 +210,9 @@ void E2ESingleRun::runQuery() {
             auto stats = coordinator->getNodeEngine()->getQueryStatistics(id);
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
-                    NES_DEBUG2("Query with id {} not ready with no. tuples = {}. Sleeping for a second now...", id, iter->getProcessedTuple());
+                    NES_DEBUG2("Query with id {} not ready with no. tuples = {}. Sleeping for a second now...",
+                               id,
+                               iter->getProcessedTuple());
                     sleep(1);
                 }
                 NES_INFO2("Query with id {} Ready with no. tuples = {}", id, iter->getProcessedTuple());
@@ -298,7 +300,9 @@ void E2ESingleRun::stopQuery() {
                 NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped", id);
                 break;
             }
-            NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}", id, queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
+            NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}",
+                       id,
+                       queryCatalog->getEntryForQuery(id)->getQueryStatusAsString());
             std::this_thread::sleep_for(stopQuerySleep);
         }
         NES_TRACE2("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -323,7 +327,8 @@ void E2ESingleRun::stopQuery() {
                 case std::future_status::timeout:
                 case std::future_status::deferred: {
                     if (coordinator->isCoordinatorRunning()) {
-                        NES_DEBUG2("Waiting for stop wrk cause #tasks in the queue: {}", coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
+                        NES_DEBUG2("Waiting for stop wrk cause #tasks in the queue: {}",
+                                   coordinator->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueues());
                     } else {
                         NES_DEBUG2("worker stopped");
                     }
@@ -437,7 +442,7 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
             }
             case QueryStatus::FAILED: {
                 NES_ERROR2("Query failed to start. Expected: Running or Optimizing but found {}",
-                          std::string(magic_enum::enum_name(status)));
+                           std::string(magic_enum::enum_name(status)));
                 return false;
             }
             default: {

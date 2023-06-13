@@ -35,7 +35,8 @@ uint64_t textLevenshtein(const TextValue* leftText, const TextValue* rightText) 
     /** This is a variant of the Wagner-Fischer algorithm which computes a matrix with rows and columns corresponding to letters in each string
       An entry matrix[i][j] contains the distance from first i characters of the left string to first j characters of the right string */
     NES_DEBUG2("The left string length is {} and the right string length is {}",
-              std::to_string(leftText->length()), std::to_string(rightText->length()));
+               std::to_string(leftText->length()),
+               std::to_string(rightText->length()));
     auto matrix = new uint64_t[lengthLeft + 1][2];
     /* first column corresponds to i insertions from empty string */
     for (uint64_t i = 0; i <= lengthLeft; i++) {
