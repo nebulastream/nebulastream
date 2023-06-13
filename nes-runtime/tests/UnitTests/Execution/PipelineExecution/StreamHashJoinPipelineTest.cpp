@@ -406,7 +406,9 @@ TEST_P(HashJoinPipelineTest, hashJoinPipeline) {
         auto nljBuffer = sortNLJBuffers[i];
         auto hashJoinBuf = sortedMergedEmittedBuffers[i];
 
-        NES_DEBUG2("Comparing nljBuffer\n{} \n and hashJoinBuf\n{}", Util::printTupleBufferAsCSV(nljBuffer, joinSchema), Util::printTupleBufferAsCSV(hashJoinBuf, joinSchema));
+        NES_DEBUG2("Comparing nljBuffer\n{} \n and hashJoinBuf\n{}",
+                   Util::printTupleBufferAsCSV(nljBuffer, joinSchema),
+                   Util::printTupleBufferAsCSV(hashJoinBuf, joinSchema));
 
         EXPECT_EQ(nljBuffer.getNumberOfTuples(), hashJoinBuf.getNumberOfTuples());
         EXPECT_EQ(nljBuffer.getBufferSize(), hashJoinBuf.getBufferSize());

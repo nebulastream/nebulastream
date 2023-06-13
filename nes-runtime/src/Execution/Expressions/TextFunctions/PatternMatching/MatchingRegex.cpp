@@ -62,9 +62,13 @@ Value<> MatchingRegex::execute(NES::Nautilus::Record& record) const {
                               pattern.as<Text>()->getReference(),
                               caseSensitiveFlag.as<Boolean>());
     } else {
-        NES_DEBUG2("{}", text->getType()->toString())
-        NES_DEBUG2("{}", pattern->getType())
-        NES_DEBUG2("{}", caseSensitiveFlag->getType())
+        NES_DEBUG2("{}", text->getType()->toString());
+        std::stringstream patternType;
+        patternType << pattern->getType();
+        NES_DEBUG2("{}", patternType.str());
+        std::stringstream type;
+        type << caseSensitiveFlag->getType();
+        NES_DEBUG2("{}", type.str());
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for case "
                                 "sensitive pattern matching.");
     }

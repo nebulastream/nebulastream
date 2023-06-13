@@ -192,7 +192,9 @@ bool TraceContext::isExpectedOperation(const OpCode& opCode) {
 
 bool TraceContext::isKnownOperation(const Tag* tag) {
     if (auto ref = checkTag(tag)) {
-        NES_TRACE2("{}", *executionTrace);
+        std::stringstream trace;
+        trace << *executionTrace;
+        NES_TRACE2("{}", trace.str());
         // TODO #3500 Fix handling of repeated operations
         if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
             auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);

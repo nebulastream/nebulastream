@@ -210,7 +210,10 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
                    expectedBuffer.getBuffer(),
                    joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples())
             == 0) {
-            NES_TRACE2("Removing buffer #{} {} of size {}", removedBuffer, Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema), joinSchema->getSchemaSizeInBytes());
+            NES_TRACE2("Removing buffer #{} {} of size {}",
+                       removedBuffer,
+                       Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema),
+                       joinSchema->getSchemaSizeInBytes());
             emittedBuffers.erase(tupleBufferIt);
             foundBuffer = true;
             removedBuffer += 1;
@@ -468,8 +471,8 @@ bool hashJoinSinkAndCheck(HashJoinSinkHelper hashJoinSinkHelper) {
                             NES_ERROR2("Could not find buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
                             //return false;
                         } else {
-                            NES_WARNING("Found buffer buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema)
-                                                               << " in emittedBuffers!");
+                            NES_WARNING2("Found buffer buffer {} in emittedBuffers!", Util::printTupleBufferAsCSV(buffer, joinSchema));
+
                         }
 
                         numberOfTuplesInBuffer = 0;

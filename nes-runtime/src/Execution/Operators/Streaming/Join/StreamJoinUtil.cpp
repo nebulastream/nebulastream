@@ -195,8 +195,9 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                 case NES::BasicPhysicalType::NativeType::CHAR: {
                     //verify that only a single char was transmitted
                     if (inputString.size() > 1) {
-                        NES_FATAL_ERROR2("SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
-                                        inputString.c_str());
+                        NES_FATAL_ERROR2(
+                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}",
+                            inputString.c_str());
                         throw std::invalid_argument("Value " + inputString + " is not a char");
                     }
                     char value = inputString.at(0);
@@ -204,7 +205,9 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE2("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {} to tuple buffer", inputString);
+                    NES_TRACE2("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {} to "
+                               "tuple buffer",
+                               inputString);
 
                     auto sizeOfInputField = inputString.size();
                     auto totalSize = sizeOfInputField + sizeof(uint32_t);
@@ -306,8 +309,8 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
         }
 
         if (!idxFoundInBuffer2) {
-            NES_DEBUG2(
-                "Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
+            NES_DEBUG2("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
+                       idxBuffer1);
             return false;
         }
     }

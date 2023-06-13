@@ -1800,8 +1800,8 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             crdConf->worker.numWorkerThreads = 2;
 
             NES_INFO2("num work {} num buff {}",
-                     crdConf->worker.numWorkerThreads.getValue(),
-                     crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
+                      crdConf->worker.numWorkerThreads.getValue(),
+                      crdConf->worker.numberOfBuffersInGlobalBufferManager.getValue());
 
             crdConf->rpcPort = (*rpcCoordinatorPort);
             crdConf->restPort = *restPort;

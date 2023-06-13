@@ -205,7 +205,9 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
                                                                ValueFrame& frame,
                                                                NES::Nautilus::IR::BasicBlockPtr& block,
                                                                TraceOperation& operation) {
-    NES_DEBUG2("current block {} {}", block->getIdentifier(), operation);
+    std::stringstream operationAsString;
+    operationAsString << operation;
+    NES_DEBUG2("current block {} {}", block->getIdentifier(), operationAsString.str());
     auto blockRef = get<BlockRef>(operation.input[0]);
     NES::Nautilus::IR::Operations::BasicBlockInvocation blockInvocation;
     createBlockArguments(frame, blockInvocation, blockRef);

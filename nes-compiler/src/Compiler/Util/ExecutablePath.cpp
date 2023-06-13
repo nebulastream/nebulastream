@@ -108,8 +108,9 @@ RuntimePathConfig loadRuntimePathConfig() {
             throw CompilerException("Selected lib path dose not exists. Path: " + libDir);
         }
     }
-
-    NES_INFO2("RuntimePathConfig: {}", runtimePathConfig);
+    std::stringstream runtimePath;
+    runtimePath << runtimePathConfig;
+    NES_INFO2("RuntimePathConfig: {}", runtimePath.str());
 
     return runtimePathConfig;
 }
@@ -224,7 +225,9 @@ std::filesystem::path getLibPath(std::string libName) {
     auto libPath = detail::recursiveFindFileReverse(executablePath, "lib").append(libName);
 
     if (std::filesystem::is_regular_file(libPath)) {
-        NES_DEBUG2("Library {} found at: {}", libName, libPath.parent_path());
+        std::stringstream path;
+        path << libPath.parent_path();
+        NES_DEBUG2("Library {} found at: {}", libName, path.str());
         return libPath;
     }
     throw CompilerException("Path to " + libName + " not found. Executable path is: " + executablePath.string());
@@ -236,7 +239,9 @@ std::filesystem::path getPublicIncludes() {
     auto executablePath = getExecutablePath();
     auto includePath = detail::recursiveFindFileReverse(executablePath, "include").append("nebulastream");
     if (exists(includePath)) {
-        NES_DEBUG2("NebulaStream include path found at {}", includePath);
+        std::stringstream path;
+        path << includePath;
+        NES_DEBUG2("NebulaStream include path found at {}", path.str());
         return includePath;
     }
     throw CompilerException("NebulaStream include path found not found. Executable path is: " + executablePath.string());
@@ -249,7 +254,9 @@ std::filesystem::path getClangPath() {
     auto executablePath = getExecutablePath();
     auto nesClangPath = executablePath.parent_path().append("nes-clang");
     if (std::filesystem::exists(nesClangPath)) {
-        NES_DEBUG2("Clang found at: {}", nesClangPath);
+        std::stringstream path;
+        path << nesClangPath;
+        NES_DEBUG2("Clang found at: {}", path.str());
         return std::filesystem::path(nesClangPath);
     } else if (std::filesystem::exists(CLANG_EXECUTABLE)) {
         NES_DEBUG2("Clang found at: {}", CLANG_EXECUTABLE);

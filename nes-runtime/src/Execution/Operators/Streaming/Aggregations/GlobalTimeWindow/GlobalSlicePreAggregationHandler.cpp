@@ -110,7 +110,10 @@ void GlobalSlicePreAggregationHandler::stop(Runtime::QueryTerminationType queryT
                 auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
                 if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                     if (numberOfBuffers != 0) {
-                        NES_DEBUG2("Deploy merge task for slice ({}-{}) with {} buffers.", slice->getStart(), slice->getEnd(), numberOfBuffers);
+                        NES_DEBUG2("Deploy merge task for slice ({}-{}) with {} buffers.",
+                                   slice->getStart(),
+                                   slice->getEnd(),
+                                   numberOfBuffers);
                         auto buffer = pipelineExecutionContext->getBufferManager()->getBufferBlocking();
                         auto task = buffer.getBuffer<SliceMergeTask>();
                         task->startSlice = slice->getStart();

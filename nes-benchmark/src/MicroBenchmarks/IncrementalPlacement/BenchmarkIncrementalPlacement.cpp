@@ -244,7 +244,7 @@ Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
             return config;
         } catch (std::exception& e) {
             NES_ERROR2("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}",
-                      e.what());
+                       e.what());
             throw e;
         }
     }
