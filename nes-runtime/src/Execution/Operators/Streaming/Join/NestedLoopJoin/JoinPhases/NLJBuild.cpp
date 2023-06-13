@@ -26,6 +26,9 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -75,6 +78,7 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
                                               Value<Boolean>(isLeftSide),
                                               timestampVal);
 
+
     // Write Record at entryMemRef
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : schema->fields) {
@@ -89,6 +93,8 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
 void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
+    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+    ctx.setOrigin(recordBuffer.getOriginId());
     // Update the watermark for the nlj operator and trigger windows
     Nautilus::FunctionCall("checkWindowsTriggerProxy",
                            checkWindowsTriggerProxyForNLJBuild,

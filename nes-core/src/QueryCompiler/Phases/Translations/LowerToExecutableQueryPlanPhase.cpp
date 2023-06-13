@@ -257,7 +257,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
-            NES_DEBUG2("Emit buffer to query manager");
+            NES_TRACE2("Emit buffer to query manager");
             queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };

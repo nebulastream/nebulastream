@@ -65,14 +65,6 @@ class StreamWindow {
     uint64_t getWindowEnd() const;
 
     /**
-     * @brief Returns the number of tuples in this window
-     * @param sizeOfTupleInByte
-     * @param leftSide
-     * @return size_t
-     */
-    virtual size_t getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) = 0;
-
-    /**
      * @brief Returns the identifier for this window. For now, the identifier is the windowEnd
      * @return uint64_t
      */

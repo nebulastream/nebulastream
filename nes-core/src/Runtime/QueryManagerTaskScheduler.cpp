@@ -112,6 +112,7 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
             }
             //Finished indicate that the processing is done
             case ExecutionResult::Finished: {
+                completedWork(task, workerContext);
                 return ExecutionResult::Finished;
             }
             default: {
@@ -182,17 +183,6 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING2("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
-        std::stringstream s;
-        s << buffer;
-        std::string bufferString = s.str();
-        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} "
-                   "getQuerySubPlanId={} queueId={}",
-                   (*nextPipeline)->getPipelineId(),
-                   (*nextPipeline)->getSuccessors().size(),
-                   bufferString,
-                   (*nextPipeline)->getQueryId(),
-                   (*nextPipeline)->getQuerySubPlanId(),
-                   queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
@@ -324,7 +314,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
 
-        statistics->incTasksPerPipelineId(pipelineId);
+        statistics->incTasksPerPipelineId(pipelineId, workerContext.getId());
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);

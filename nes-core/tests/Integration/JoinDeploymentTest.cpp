@@ -17,7 +17,8 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
-
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/Operators/Emit.hpp>
 namespace NES::Runtime::Execution {
 
 class JoinDeploymentTest : public Testing::TestWithErrorHandling,
@@ -153,6 +154,8 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 20);
+    NES_DEBUG2("resultBuffer1: {}", NES::Util::printTupleBufferAsCSV(testSink->resultBuffers[0], joinSchema));
+    
     auto resultBuffer = TestUtils::mergeBuffers(testSink->resultBuffers, joinSchema, bufferManager);
 
     NES_DEBUG2("resultBuffer: {}", NES::Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
@@ -192,6 +195,9 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
     auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
     auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
+
+    NES_DEBUG2("leftInputHuffer: {}", NES::Util::printTupleBufferAsCSV(leftBuffer.getBuffer(), leftSchema));
+    NES_DEBUG2("rightInputHuffer: {}", NES::Util::printTupleBufferAsCSV(rightBuffer.getBuffer(), rightSchema));
 
     auto testSink = executionEngine->createDataSink(joinSchema, 20);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);

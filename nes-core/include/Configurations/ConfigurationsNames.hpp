@@ -61,6 +61,10 @@ const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
 const std::string STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";
 const std::string STREAM_HASH_JOIN_PAGE_SIZE_CONFIG = "pageSize";
 const std::string STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG = "preAllocPageCnt";
+const std::string STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSize";
+
+//Configuration for joins
+const std::string JOIN_STRATEGY = "joinStrategy";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";

@@ -16,6 +16,7 @@
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
 #include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
@@ -28,27 +29,22 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This operator is the general join operator handler withh basic functionality
  */
+class StreamJoinOperatorHandler;
+using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
+
 class StreamJoinOperatorHandler : public OperatorHandler {
   public:
-    enum class JoinType : uint8_t { HASH_JOIN, NESTED_LOOP_JOIN };
-
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
-     * @param windowSize
-     * @param joinSchemaLeft
-     * @param joinSchemaRight
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param origins
-     * @param joinType
+     * @param windowSize
+     * @param JoinStrategy
      */
-    StreamJoinOperatorHandler(const SchemaPtr& joinSchemaLeft,
-                              const SchemaPtr& joinSchemaRight,
-                              const std::string& joinFieldNameLeft,
-                              const std::string& joinFieldNameRight,
-                              const std::vector<OriginId>& origins,
+    StreamJoinOperatorHandler(const std::vector<OriginId>& origins,
                               size_t windowSize,
-                              const JoinType joinType);
+                              StreamJoinStrategy joinStrategy,
+                              size_t sizeOfRecordLeft,
+                              size_t sizeOfRecordRight);
 
     virtual ~StreamJoinOperatorHandler() = default;
 
@@ -75,22 +71,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param windowIdentifier
      */
     void deleteWindow(uint64_t windowIdentifier);
-
-    /**
-     * @brief Retrieves the number of tuples for a stream (left or right) and a window
-     * @param windowIdentifier
-     * @param isLeftSide
-     * @return Number of tuples or -1 if no window exists for the window identifier
-     */
-    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
-
-    /**
-     * @brief Retrieves the pointer to the first tuple for a stream (left or right) and a window
-     * @param windowIdentifier
-     * @param isLeftSide
-     * @return Pointer
-     */
-    uint8_t* getFirstTuple(uint64_t windowIdentifier, bool isLeftSide);
 
     /**
      * @brief Retrieves the schema for the left or right stream
@@ -128,30 +108,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
                                 PipelineExecutionContext* pipelineCtx) = 0;
 
     /**
-     * @brief Getter for the left join schema
-     * @return left join schema
-     */
-    SchemaPtr getJoinSchemaLeft() const;
-
-    /**
-     * @brief Getter for the right join schema
-     * @return right join schema
-     */
-    SchemaPtr getJoinSchemaRight() const;
-
-    /**
-     * @brief Getter for the field name of the left join schmea
-     * @return string of the join field name left
-     */
-    const std::string& getJoinFieldNameLeft() const;
-
-    /**
-     * @brief Getter for the field name of the right join schmea
-     * @return string of the join field name right
-     */
-    const std::string& getJoinFieldNameRight() const;
-
-    /**
      * @brief Retrieves the window by a window identifier. If no window exists for the windowIdentifier, the optional has no value.
      * @param windowIdentifier
      * @return optional
@@ -163,7 +119,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param timestamp
      * @return
      */
-    std::optional<StreamWindowPtr> getWindowByTimestamp(uint64_t timestamp);
+    StreamWindowPtr getWindowByTimestampOrCreateIt(uint64_t timestamp);
 
     /**
      * Return the current watermark
@@ -175,7 +131,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @brief Creates a new window that corresponds to this timestamp
      * @param timestamp
      */
-    std::optional<StreamWindowPtr> createNewWindow(uint64_t timestamp);
+    StreamWindowPtr createNewWindow(uint64_t timestamp);
 
     /**
      * @brief get the number of windows
@@ -202,19 +158,37 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      */
     void addOperatorId(OperatorId operatorId);
 
+    /**
+     * @brief get the operator Id of the handler
+     * @return operatorid
+     */
+    OperatorId getOperatorId();
+
+    /**
+     * @brief get the current sequence number of the handler
+     * @return sequenceNumber
+     */
+    uint64_t getNextSequenceNumber();
+
+    /**
+     * @brief get the applied join strategy
+     * @return join strategy
+     */
+    StreamJoinStrategy getJoinStrategy();
+
   protected:
     size_t numberOfWorkerThreads = 1;
     std::list<StreamWindowPtr> windows;
     SliceAssigner sliceAssigner;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    SchemaPtr joinSchemaLeft;
-    SchemaPtr joinSchemaRight;
-    std::string joinFieldNameLeft;
-    std::string joinFieldNameRight;
-    JoinType joinType;
+    StreamJoinStrategy joinStrategy;
     std::atomic<bool> alreadySetup{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
     OperatorId operatorId;
+    std::mutex windowCreateLock;
+    std::atomic<uint64_t> sequenceNumber;
+    size_t sizeOfRecordLeft;
+    size_t sizeOfRecordRight;
 };
 
 }// namespace NES::Runtime::Execution::Operators

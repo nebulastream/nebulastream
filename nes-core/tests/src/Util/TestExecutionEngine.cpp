@@ -23,6 +23,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.queryCompilerType = compiler;
+    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy =
         QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;

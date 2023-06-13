@@ -42,6 +42,7 @@ class LogicalJoinDefinition {
      *
      */
     enum class JoinType : uint8_t { INNER_JOIN, CARTESIAN_PRODUCT };
+
     static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,
