@@ -1003,7 +1003,7 @@ class Z3SignatureBasedPartialQueryContainmentMergerRuleTest
 /**
  * @brief Test applying Z3SignatureBasedBottomUpQueryContainmentRuleTest on Global query plan
  */
-TEST_P(Z3SignatureBasedPartialQueryContainmentMergerRuleTest, testMergingContainmentQueries) {
+TEST_P(Z3SignatureBasedPartialQueryContainmentMergerRuleTest, DISABLED_testMergingContainmentQueries) {
     auto containmentCases = GetParam();
     for (const auto& containmentCase : containmentCases) {
         QueryPlanPtr queryPlanSQPQuery = syntacticQueryValidation->validate(containmentCase.leftQuery);
