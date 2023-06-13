@@ -37,8 +37,14 @@ StreamHashJoinWindow* lastHashWindow;
 void* LastlocalHashTablePointer;
 class LocalGlobalJoinState : public Operators::OperatorState {
   public:
-    explicit LocalGlobalJoinState(const Value<MemRef>& operatorHandler) : joinOperaatorHandler(operatorHandler){};
-    const Value<MemRef> joinOperaatorHandler;
+    LocalGlobalJoinState(Value<MemRef>& operatorHandler, Value<MemRef>& hashTableReference, Value<MemRef>& windowReference)
+        : joinOperatorHandler(operatorHandler), hashTableReference(hashTableReference), windowReference(windowReference),
+          windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
+    Value<MemRef> joinOperatorHandler;
+    Value<MemRef> hashTableReference;
+    Value<MemRef> windowReference;
+    Value<UInt64> windowStart;
+    Value<UInt64> windowEnd;
 };
 
 void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
@@ -112,27 +118,32 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     //        auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto joinState = static_cast<LocalGlobalJoinState*>(ctx.getLocalState(this));
-    auto operatorHandlerMemRef = joinState->joinOperaatorHandler;
-
+    auto operatorHandlerMemRef = joinState->joinOperatorHandler;
     Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
 
-    auto localHashWindowRef = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
-                                                     getStreamHashJoinWindowProxy,
-                                                     operatorHandlerMemRef,
-                                                     Value<UInt64>(tsValue));
+    //check if we can resuse window
+    if (!(joinState->windowStart <= tsValue && tsValue < joinState->windowEnd)) {
+        //we need a new window
+        auto localHashWindowRef = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
+                                                         getStreamHashJoinWindowProxy,
+                                                         operatorHandlerMemRef,
+                                                         Value<UInt64>(tsValue));
+        joinState->windowReference = localHashWindowRef;
 
-    auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableProxy",
-                                                       getLocalHashTableProxy,
-                                                       localHashWindowRef,
-                                                       ctx.getWorkerId(),
-                                                       Value<Boolean>(isLeftSide));
+        auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableProxy",
+                                                           getLocalHashTableProxy,
+                                                           localHashWindowRef,
+                                                           ctx.getWorkerId(),
+                                                           Value<Boolean>(isLeftSide));
 
-        //get position in the HT where to write to
-        auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-        auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
-                                                  insertFunctionProxy,
-                                                  localHashTableMemRef,
-                                                  record.read(joinFieldName).as<UInt64>());
+        joinState->hashTableReference = localHashWindowRef;
+    }
+
+    //    get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    //    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
+    //                                              insertFunctionProxy,
+    //                                              localHashTableMemRef,
+    //                                              record.read(joinFieldName).as<UInt64>());
     //    //write data
     //    for (auto& field : schema->fields) {
     //        auto const fieldName = field->getName();
@@ -151,6 +162,7 @@ void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                            checkWindowsTriggerProxyForJoinBuild,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
+
                            ctx.getWorkerContext(),
                            ctx.getWatermarkTs(),
                            ctx.getSequenceNumber(),
@@ -169,7 +181,8 @@ void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
 
 void StreamHashJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto joinState = std::make_unique<LocalGlobalJoinState>(operatorHandlerMemRef);
+    Value<MemRef> dummyRef(operatorHandlerMemRef);
+    auto joinState = std::make_unique<LocalGlobalJoinState>(operatorHandlerMemRef, dummyRef, dummyRef);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }
 

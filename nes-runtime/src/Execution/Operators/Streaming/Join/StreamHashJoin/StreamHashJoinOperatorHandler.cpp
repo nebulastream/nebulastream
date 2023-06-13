@@ -71,7 +71,7 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
             sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
             //push actual bucket from local to global hash table for right side
-            auto localHashTableRight = hashWindow->getLocalHashTable(workerCtx->getId(), false);
+            auto localHashTableRight = hashWindow->getLocalHashTable(wrkerCtx->getId(), false);
             sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
 
             //create task for current window and current partition
@@ -84,6 +84,12 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
             NES_TRACE2("Emitted windowIdentifier {}", windowIdentifier);
         }
     }
+}
+
+void StreamHashJoinOperatorHandler::triggerWindowsOld(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                                                   WorkerContext* workerCtx,
+                                                   PipelineExecutionContext* pipelineCtx) {
+
 }
 
 StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const SchemaPtr& joinSchemaLeft,

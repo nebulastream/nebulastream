@@ -144,6 +144,9 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
+    void triggerWindowsOld(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+                        WorkerContext* workerCtx,
+                        PipelineExecutionContext* pipelineCtx);
   private:
     size_t totalSizeForDataStructures;
     size_t preAllocPageSizeCnt;
