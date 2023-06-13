@@ -59,6 +59,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
      * @param record
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void executeOld(ExecutionContext& ctx, Record& record) const;
 
     /**
      * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
