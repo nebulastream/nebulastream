@@ -157,16 +157,12 @@ void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     OptimizerConfiguration optimizerConfiguration;
-    std::cout << "where do you fail? " << std::endl;
     optimizerConfiguration.queryMergerRule = magic_enum::enum_cast<Optimizer::QueryMergerRule>(queryMergerRule).value();
-    std::cout << "where do you fail?1 " << std::endl;
     optimizerConfiguration.queryBatchSize = batchSize;
     coordinatorConfig->optimizer = optimizerConfiguration;
     coordinatorConfig->logLevel = magic_enum::enum_cast<LogLevel>(logLevel).value();
     coordinator = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
-    std::cout << "where do you fail?2 " << std::endl;
     coordinator->startCoordinator(/**blocking**/ false);
-    std::cout << "where do you fail?3 " << std::endl;
     setupSources(coordinator, noOfPhysicalSources);
 }
 

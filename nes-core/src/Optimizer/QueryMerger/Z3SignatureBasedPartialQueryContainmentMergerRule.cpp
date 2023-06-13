@@ -121,8 +121,7 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
 
                             //Match the target and host operator signatures to see if a match is present
                             relationshipAndOperators =
-                                SignatureContainmentUtil->checkContainmentRelationshipFromTopToBottom(hostOperator,
-                                                                                                      targetOperator);
+                                SignatureContainmentUtil->checkContainmentRelationshipTopDown(hostOperator, targetOperator);
                             if (get<0>(relationshipAndOperators) != ContainmentType::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
@@ -246,14 +245,13 @@ bool Z3SignatureBasedPartialQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
         }
     }
     for (const auto& item : globalQueryPlan->getAllSharedQueryPlans()) {
-        NES_DEBUG2("Shared Query Plans after merging: {}", item->getQueryPlan()->toString());
+        NES_TRACE2("Shared Query Plans after merging: {}", item->getQueryPlan()->toString());
     }
     //Remove all empty shared query metadata
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-//todo: this algorithm needs to be changed for if left sig is contained, because we are loosing upstream operators
 void Z3SignatureBasedPartialQueryContainmentMergerRule::addContainmentOperatorChain(
     SharedQueryPlanPtr& containerQueryPlan,
     const OperatorNodePtr& containerOperator,
