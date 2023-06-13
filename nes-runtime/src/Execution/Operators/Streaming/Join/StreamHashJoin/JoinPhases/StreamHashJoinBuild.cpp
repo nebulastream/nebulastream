@@ -121,10 +121,6 @@ void StreamHashJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
 }
 
 void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
-    //void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
-    // Get the global state
-    //        auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-//    return executeOld(ctx, record);
     auto joinState = static_cast<LocalGlobalJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
     Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
@@ -163,39 +159,6 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
-}
-
-void StreamHashJoinBuild::executeOld(ExecutionContext& ctx, Record& record) const {
-    // Get the global state
-    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-
-    Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
-
-    auto localHashWindowRef = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
-                                                     getStreamHashJoinWindowProxy,
-                                                     operatorHandlerMemRef,
-                                                     Value<UInt64>(tsValue));
-
-    auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableProxy",
-                                                       getLocalHashTableProxy,
-                                                       localHashWindowRef,
-                                                       ctx.getWorkerId(),
-                                                       Value<Boolean>(isLeftSide));
-
-    //get position in the HT where to write to
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
-                                              insertFunctionProxy,
-                                              localHashTableMemRef,
-                                              record.read(joinFieldName).as<UInt64>());
-    //write data
-//    for (auto& field : schema->fields) {
-//        auto const fieldName = field->getName();
-//        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-//
-//        entryMemRef.store(record.read(fieldName));
-//        entryMemRef = entryMemRef + fieldType->size();
-//    }
 }
 
 void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {

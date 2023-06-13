@@ -29,7 +29,7 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t hash) {
+uint8_t* FixedPage::append(const uint64_t ) {
     if (currentPos >= capacity) {
         return nullptr;
     }
@@ -37,7 +37,7 @@ uint8_t* FixedPage::append(const uint64_t hash) {
     if (bloomFilter == nullptr) {
         NES_ERROR("Bloomfilter become empty")
     }
-    bloomFilter->add(hash);
+//    bloomFilter->add(hash);
     uint8_t* ptr = &data[currentPos * sizeOfRecord];
     currentPos++;
     return ptr;
