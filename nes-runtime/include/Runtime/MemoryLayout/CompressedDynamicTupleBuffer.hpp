@@ -39,6 +39,24 @@ const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
     }
 }
 
+CompressionAlgorithm getCompressionAlgorithmByName(char* name) {
+    if (strcmp(name, "None") == 0)
+        return CompressionAlgorithm::NONE;
+    if (strcmp(name, "LZ4") == 0)
+        return CompressionAlgorithm::LZ4;
+    if (strcmp(name, "Snappy") == 0)
+        return CompressionAlgorithm::SNAPPY;
+    if (strcmp(name, "RLE") == 0)
+        return CompressionAlgorithm::RLE;
+    if (strcmp(name, "Binary RLE") == 0)
+        return CompressionAlgorithm::BINARY_RLE;
+    if (strcmp(name, "FSST") == 0)
+        return CompressionAlgorithm::FSST;
+    if (strcmp(name, "Sprintz") == 0)
+        return CompressionAlgorithm::SPRINTZ;
+    NES_THROW_RUNTIME_ERROR("Invalid CompressionAlgorithm name.");
+}
+
 const char* getCompressionModeName(enum CompressionMode cm) {
     switch (cm) {
         case HORIZONTAL: return "Horizontal";
