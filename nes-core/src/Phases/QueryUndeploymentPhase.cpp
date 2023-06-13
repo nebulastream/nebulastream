@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
+#include <Exceptions/QueryUndeploymentRpcException.hpp>
+#include <Exceptions/RpcException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -49,12 +52,13 @@ void QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
 
     if (executionNodes.empty()) {
         NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
-        throw QueryUndeploymentException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
+        throw ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query " + std::to_string(queryId)
                                          + " is deployed");
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
     bool successStop = stopQuery(queryId, executionNodes, sharedQueryPlanStatus);
+    //todo: this query returns always true if there is no exception, so the following block is astually obsolete
     if (successStop) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful for  {}", queryId);
     } else {
@@ -91,6 +95,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
     NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId= {}", queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
 
     for (auto&& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -113,6 +118,8 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
             NES_NOT_IMPLEMENTED();
         }
 
+       //todo: this function als oalways returns true if there is no exception thrown
+        //todo: make this retunr the fialed nodes
         bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, queryTerminationType, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::markQueryForStop {} to {} successful", queryId, rpcAddress);
@@ -121,11 +128,22 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
             return false;
         }
         completionQueues[queueForExecutionNode] = 1;
+        mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();
     }
 
     // activate below for async calls
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Stop);
-    NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
+    try {
+        //todo: this function returns always true: change that
+        bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Stop);
+        NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
+    } catch (Exceptions::RpcException& e) {
+        std::vector<uint64_t> failedRpcsExecutionNodeIds;
+        for (const auto& failedRpcInfo : e.getFailedRpcNodeIds()) {
+            failedRpcsExecutionNodeIds.push_back(mapQueueToExecutionNodeId.at(failedRpcInfo.completionQueue));
+        }
+        throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Stop);
+    }
+    //todo: what about this return value?
     return true;
 }
 
@@ -133,6 +151,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
     NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId= {}", queryId);
 
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
 
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -142,9 +161,8 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
-                  executionNode->getId(),
-                  rpcAddress);
-        //        bool success = workerRPCClient->unregisterQuery(rpcAddress, queryId);
+                   executionNode->getId(),
+                   rpcAddress);
         bool success = workerRPCClient->unregisterQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::undeployQuery query {} to {} successful", queryId, rpcAddress);
@@ -154,9 +172,19 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         }
 
         completionQueues[queueForExecutionNode] = 1;
+        mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();
     }
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Unregister);
-    NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
-    return result;
+    try {
+        bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Unregister);
+        NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
+        return result;
+    } catch (Exceptions::RpcException& e) {
+        std::vector<uint64_t> failedRpcsExecutionNodeIds;
+        for (const auto& failedRpcInfo : e.getFailedRpcNodeIds()) {
+            failedRpcsExecutionNodeIds.push_back(mapQueueToExecutionNodeId.at(failedRpcInfo.completionQueue));
+        }
+        throw Exceptions::QueryUndeploymentRpcException(e.what(), failedRpcsExecutionNodeIds, RpcClientModes::Stop);
+    }
+    return false;
 }
 }// namespace NES
