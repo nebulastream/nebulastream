@@ -492,7 +492,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
     EXPECT_EQ(dynamicBuffer[0][lowerBoundBinName].read<int64_t>(), 0);
     EXPECT_EQ(dynamicBuffer[0][upperBoundBinName].read<int64_t>(), 1);
 
-    EXPECT_EQ(dynamicBuffer[1][approximateString].read<double_t>(), 0);
+    EXPECT_TRUE(std::isnan(dynamicBuffer[1][approximateString].read<double_t>()));
     EXPECT_EQ(dynamicBuffer[1][lowerBoundBinName].read<int64_t>(), 1);
     EXPECT_EQ(dynamicBuffer[1][upperBoundBinName].read<int64_t>(), 2);
 
@@ -500,7 +500,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
     EXPECT_EQ(dynamicBuffer[2][lowerBoundBinName].read<int64_t>(), 2);
     EXPECT_EQ(dynamicBuffer[2][upperBoundBinName].read<int64_t>(), 3);
 
-    EXPECT_EQ(dynamicBuffer[3][approximateString].read<double_t>(), 0);
+    EXPECT_TRUE(std::isnan(dynamicBuffer[3][approximateString].read<double_t>()));
     EXPECT_EQ(dynamicBuffer[3][lowerBoundBinName].read<int64_t>(), 3);
     EXPECT_EQ(dynamicBuffer[3][upperBoundBinName].read<int64_t>(), 4);
 

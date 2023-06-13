@@ -80,9 +80,6 @@ void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nau
     // TODO #3602: If inputType is an integer then the result is also an integer
     // (specifically UINT64 because that is the count type).
     // However, it should be a float.
-    if (count == 0) {
-        count = count + 1;
-    }
     auto finalVal = sum / count;
     sumMemref.store(finalVal);
 
