@@ -552,7 +552,7 @@ TEST_F(FailQueryRequestTest, testUndeploymentFailure) {
         std::this_thread::sleep_for(std::chrono::seconds(defaultTimeout));
         //fail the test if exception was not thrown within timeout
         FAIL();
-    } catch (QueryUndeploymentException& e) {
+    } catch (Exceptions::St& e) {
         NES_DEBUG2("Caught query undeployment exception: {}", e.what());
     }
     bool stopCrd = crd->stopCoordinator(true);

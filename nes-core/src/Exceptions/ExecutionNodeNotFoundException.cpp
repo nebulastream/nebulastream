@@ -11,15 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include "Exceptions/QueryPlacementException.hpp"
-
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 namespace NES {
-QueryPlacementException::QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message)
-    : std::runtime_error(message), sharedQueryId(sharedQueryId) {}
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(std::string message, NodeId id)
+    : QueryUndeploymentException(message), id(id) {}
 
-SharedQueryId QueryPlacementException::getSharedQueryId() const { return sharedQueryId; }
+ExecutionNodeNotFoundException::ExecutionNodeNotFoundException(std::string message)
+    : QueryUndeploymentException(message), id(INVALID_TOPOLOGY_NODE_ID) {}
 
-const char* QueryPlacementException::what() const noexcept { return RequestExecutionException::what(); }
-
+NodeId ExecutionNodeNotFoundException::getNodeId() { return id; }
 }// namespace NES
