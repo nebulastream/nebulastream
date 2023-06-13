@@ -36,6 +36,11 @@
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseOrOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseRightShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseLeftShiftOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
@@ -131,6 +136,11 @@ class MLIRLoweringProvider {
     void generateMLIR(std::shared_ptr<IR::Operations::OrOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::AndOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseAndOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseOrOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseXorOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseLeftShiftOperation> yieldOperation, ValueFrame& frame);
+    void generateMLIR(std::shared_ptr<IR::Operations::BitWiseRightShiftOperation> yieldOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::CastOperation> castOperation, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame);
 

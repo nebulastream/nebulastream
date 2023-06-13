@@ -284,6 +284,11 @@ Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> GreaterThanOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> BitWiseAndOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> BitWiseOrOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> BitWiseXorOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> BitWiseLeftShiftOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> BitWiseRightShiftOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> CastToOp(const Value<>& leftExp, Nautilus::IR::Types::StampPtr toStamp);
 Value<> ReadArrayIndexOp(const Value<>& input, Value<UInt32>& index);
 void WriteArrayIndexOp(const Value<>& input, Value<UInt32>& index, const Value<>& value);
@@ -538,6 +543,96 @@ auto inline operator||(const LHS& left, const RHS& right) {
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator||(const LHS& left, const RHS& right) {
     return OrOp(left, right);
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator&(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left));
+    return leftValue & right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator&(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right));
+    return left & rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator&(const LHS& left, const RHS& right) {
+    return BitWiseAndOp(left, right);
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator|(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left));
+    return leftValue | right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator|(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right));
+    return left | rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator|(const LHS& left, const RHS& right) {
+    return BitWiseOrOp(left, right);
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator^(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left));
+    return leftValue ^ right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator^(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right));
+    return left ^ rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator^(const LHS& left, const RHS& right) {
+    return BitWiseXorOp(left, right);
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator<<(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left));
+    return leftValue << right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator<<(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right));
+    return left << rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator<<(const LHS& left, const RHS& right) {
+    return BitWiseLeftShiftOp(left, right);
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator>>(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left));
+    return leftValue >> right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator>>(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right));
+    return left >> rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator>>(const LHS& left, const RHS& right) {
+    return BitWiseRightShiftOp(left, right);
+};
+
+template<IsValueType LHS>
+auto inline operator~(const LHS& left) {
+    return BitWiseXorOp(left, -1);
 };
 
 template<typename T>

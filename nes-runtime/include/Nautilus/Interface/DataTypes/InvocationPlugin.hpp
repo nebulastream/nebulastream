@@ -34,6 +34,11 @@ class InvocationPlugin {
     virtual std::optional<Value<>> Negate(const Value<>& left) const;
     virtual std::optional<Value<>> And(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> Or(const Value<>& left, const Value<>& right) const;
+    virtual std::optional<Value<>> BitWiseAnd(const Value<>& left, const Value<>& right) const;
+    virtual std::optional<Value<>> BitWiseOr(const Value<>& left, const Value<>& right) const;
+    virtual std::optional<Value<>> BitWiseXor(const Value<>& left, const Value<>& right) const;
+    virtual std::optional<Value<>> BitWiseLeftShift(const Value<>& left, const Value<>& right) const;
+    virtual std::optional<Value<>> BitWiseRightShift(const Value<>& left, const Value<>& right) const;
     virtual std::optional<Value<>> CastTo(const Value<>& left, const TypeIdentifier* toType) const;
     virtual std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<UInt32> index) const;
     virtual std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const;

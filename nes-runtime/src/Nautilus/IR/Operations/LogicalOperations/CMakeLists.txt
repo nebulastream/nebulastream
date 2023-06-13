@@ -15,4 +15,9 @@ add_source_files(nes-runtime
         OrOperation.cpp
         NegateOperation.cpp
         CompareOperation.cpp
+        BitWiseAndOperation.cpp
+        BitWiseOrOperation.cpp
+        BitWiseLeftShiftOperation.cpp
+        BitWiseRightShiftOperation.cpp
+        BitWiseXorOperation.cpp
         )
