@@ -251,13 +251,13 @@ void StreamHashJoinBuild::executeOld(ExecutionContext& ctx, Record& record) cons
                                               localHashTableMemRef,
                                               record.read(joinFieldName).as<UInt64>());
     //write data
-    for (auto& field : schema->fields) {
-        auto const fieldName = field->getName();
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-
-        entryMemRef.store(record.read(fieldName));
-        entryMemRef = entryMemRef + fieldType->size();
-    }
+//    for (auto& field : schema->fields) {
+//        auto const fieldName = field->getName();
+//        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+//
+//        entryMemRef.store(record.read(fieldName));
+//        entryMemRef = entryMemRef + fieldType->size();
+//    }
 }
 
 void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
