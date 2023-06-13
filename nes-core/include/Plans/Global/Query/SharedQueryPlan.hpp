@@ -39,6 +39,16 @@ using SharedQueryPlanChangeLogPtr = std::shared_ptr<SharedQueryPlanChangeLog>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
+namespace Optimizer::Experimental {
+class ChangeLog;
+using ChangeLogPtr = std::unique_ptr<ChangeLog>;
+
+class ChangeLogEntry;
+using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
+}// namespace Optimizer::Experimental
+
+using Timestamp = uint64_t;
+
 /**
  * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
  * the queryIdAndCatalogEntryMapping participating in the shared query plan. A Global Query Plan can consists of multiple Shared Query Plans.
@@ -154,16 +164,16 @@ class SharedQueryPlan {
 
     /**
      * @brief Add the query id and sink operators from the query plan to the Shared Query Plan
-     * @param queryPlan: the source query plan
-     * @return true if successful else false
+     * @param queryPlanToAdd: the source query plan
      */
-    bool addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan);
+    void addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlanToAdd);
 
     /**
-     * @brief Get the shared query plan change log since the last time the shared query plan was deployed.
-     * @return the change log
+     * @brief Get the change log entries of the shared query plan change until the timestamp.
+     * @param timestamp: the timestamp until the change log entries need to be retrieved
+     * @return the change log entries with timestamp of their creation
      */
-    SharedQueryPlanChangeLogPtr getChangeLog();
+    std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>> getChangeLogEntries(Timestamp timestamp);
 
     /**
      * @brief Get the hash based signature for the shared query plan
@@ -200,22 +210,22 @@ class SharedQueryPlan {
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
-     * @brief Recursively remove the operator and all its children operators that have no other downstream operator
+     * @brief Recursively remove the operator and all its subsequent upstream operators. The function terminates upon encountering
+     * an upstream operator that is connected to another downstream operator and returns it as output.
      * @param operatorToRemove : the operator to remove
-     * @return true if successful else false
+     * @return last upstream operators that are not removed
      */
-    bool removeOperator(const OperatorNodePtr& operatorToRemove);
+    std::set<OperatorNodePtr> removeOperator(const OperatorNodePtr& operatorToRemove);
 
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
     std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> queryIds;
-    std::vector<OperatorNodePtr> sinkOperators;
-    SharedQueryPlanChangeLogPtr changeLog;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     PlacementStrategy placementStrategy;
+    Optimizer::Experimental::ChangeLogPtr changeLog;
 };
 }// namespace NES
 
