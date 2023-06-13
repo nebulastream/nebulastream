@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Common/Identifiers.hpp"
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -78,7 +77,13 @@ bool AbstractHealthCheckService::isWorkerInactive(TopologyNodeId workerId) {
 }
 
 TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(TopologyNodeId workerId) {
-    return nodeIdToTopologyNodeMap.find(workerId);
+    for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
+        if (node.first == workerId) {
+            NES_DEBUG2("AbstractHealthCheckService: Found worker with id {}", workerId);
+            return node.second;
+        }
+    }
+    return nullptr;
 }
 
 }// namespace NES

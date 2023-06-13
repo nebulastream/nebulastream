@@ -21,6 +21,7 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#include <Common/Identifiers.hpp>
 
 namespace NES {
 
@@ -94,7 +95,7 @@ class Topology {
      * @param workerId: workerId of the node
      * @return true if exists, false otherwise
      */
-    bool existsNodeWithWorkerId(uint64_t workerId);
+    bool nodeWithWorkerIdExists(TopologyNodeId workerId);
 
     /**
      * @brief Print the current topology information
