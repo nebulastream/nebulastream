@@ -22,7 +22,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <algorithm>
 #include <utility>
 
 namespace NES {
@@ -45,13 +44,13 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     changeLog = Optimizer::Experimental::ChangeLog::create();
 
     //Compute first change log entry
-    std::set<OperatorNodePtr> upstreamOperators;
-    for (const auto& sourceOperator : rootOperators) {
-        upstreamOperators.insert(sourceOperator);
-    }
     std::set<OperatorNodePtr> downstreamOperators;
-    for (const auto& sinkOperator : this->queryPlan->getLeafOperators()) {
+    for (const auto& sinkOperator : rootOperators) {
         downstreamOperators.insert(sinkOperator);
+    }
+    std::set<OperatorNodePtr> upstreamOperators;
+    for (const auto& sourceOperator : this->queryPlan->getLeafOperators()) {
+        upstreamOperators.insert(sourceOperator);
     }
     long epochInMilliSec =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -59,8 +58,8 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
                                  Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
 }
 
-SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
-    return std::make_shared<SharedQueryPlan>(SharedQueryPlan(std::move(queryPlan)));
+SharedQueryPlanPtr SharedQueryPlan::create(const QueryPlanPtr& queryPlan) {
+    return std::make_shared<SharedQueryPlan>(SharedQueryPlan(queryPlan));
 }
 
 bool SharedQueryPlan::removeQuery(QueryId queryId) {
