@@ -105,7 +105,7 @@ using Timestamp = uint64_t;
 class SharedQueryPlan {
 
   public:
-    static SharedQueryPlanPtr create(QueryPlanPtr queryPlan);
+    static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors
