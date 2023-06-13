@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.105](https://github.com/nebulastream/nebulastream/tree/v0.5.105) (2023-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.104...v0.5.105)
+
+#### Operators 
+
+- \[Feature\] \[Experimental\] Global join [\#3679](https://github.com/nebulastream/nebulastream/issues/3679)
+
 ## [v0.5.104](https://github.com/nebulastream/nebulastream/tree/v0.5.104) (2023-06-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.103...v0.5.104)
