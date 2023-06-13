@@ -150,8 +150,8 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
     size_t pageSize;
     size_t numPartitions;
     std::vector<OperatorId> joinOperatorsId;
-    std::mutex windowCreateLock;
 };
 
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_STREAMHASHJOINOPERATORHANDLER_HPP_
+

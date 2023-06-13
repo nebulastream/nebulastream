@@ -52,7 +52,7 @@ class FixedPagesLinkedList {
     /**
      * @brief debug method to print the statistics of the Linked list
      */
-    void printStatistics();
+    std::string getStatistics();
 
   private:
     size_t pos;

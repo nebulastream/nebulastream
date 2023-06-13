@@ -58,6 +58,7 @@ class StreamHashJoinBuild : public ExecutableOperator {
      * @param record
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void executeOld(ExecutionContext& ctx, Record& record) const;
 
     /**
      * @brief Updates the watermark and if needed, pass some windows to the second join phase (NLJSink) for further processing
@@ -65,6 +66,12 @@ class StreamHashJoinBuild : public ExecutableOperator {
      * @param recordBuffer
      */
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
+    /**
+     * @brief Open is called for each record buffer and is used to initializes execution local state.
+     * @param recordBuffer
+     */
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   private:
     uint64_t handlerIndex;

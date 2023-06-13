@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <atomic>
@@ -31,31 +31,49 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 namespace NES::Runtime::Execution::Operators {
+//
+//uint64_t lastTimeStamp = std::numeric_limits<uint64_t>::max();
+//StreamHashJoinWindow* lastHashWindow;
+//void* LastlocalHashTablePointer;
+class LocalGlobalJoinState : public Operators::OperatorState {
+  public:
+    LocalGlobalJoinState(Value<MemRef>& operatorHandler, Value<MemRef>& hashTableReference, Value<MemRef>& windowReference)
+        : joinOperatorHandler(operatorHandler), hashTableReference(hashTableReference), windowReference(windowReference),
+          windowStart((uint64_t) 0), windowEnd((uint64_t) 0){};
+    Value<MemRef> joinOperatorHandler;
+    Value<MemRef> hashTableReference;
+    Value<MemRef> windowReference;
+    Value<UInt64> windowStart;
+    Value<UInt64> windowEnd;
+};
 
 void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
     NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
     StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto currentWindow = opHandler->getWindowByTimestamp(timeStamp);
+    auto currentWindow = opHandler->getWindowByTimestampOrCreateIt2(timeStamp);
+    NES_ASSERT2_FMT(currentWindow != nullptr, "invalid window");
+    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow);
+    return static_cast<void*>(hashWindow);
+}
 
-    //create window because it does not exists
-    if (!currentWindow.has_value()) {
-        opHandler->createNewWindow(timeStamp);
-    }
-    currentWindow = opHandler->getWindowByTimestamp(timeStamp);
-    NES_ASSERT(currentWindow.has_value(), "Window could not be created");
-    if (currentWindow.has_value()) {
-        StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
-        return static_cast<void*>(hashWindow);
-    } else {
-        return nullptr;
-    }
+uint64_t getWindowStartProxy(void* ptrHashWindow) {
+    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
+    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+    return hashWindow->getWindowStart();
+}
+
+uint64_t getWindowEndProxy(void* ptrHashWindow) {
+    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
+    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+    return hashWindow->getWindowEnd();
 }
 
 void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
     StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
     NES_DEBUG2("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(), isLeftSide, workerIdx);
-    auto localHashTablePointer = static_cast<void*>(hashWindow->getLocalHashTable(workerIdx, isLeftSide));
+    auto ptr = hashWindow->getLocalHashTable(workerIdx, isLeftSide);
+    auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
 }
 
@@ -66,8 +84,8 @@ void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
 }
 
 /**
- * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
- */
+* @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
+*/
 void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
                                           void* ptrPipelineCtx,
                                           void* ptrWorkerCtx,
@@ -92,18 +110,62 @@ void checkWindowsTriggerProxyForJoinBuild(void* ptrOpHandler,
         opHandler->triggerWindows(windowIdentifiersToBeTriggered, workerCtx, pipelineCtx);
     }
 }
+void* getDefaultMemRef() { return nullptr; }
 
-void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
-
-    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
-
-    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
+void StreamHashJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    Value<MemRef> dummyRef1 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
+    Value<MemRef> dummyRef2 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
+    auto joinState = std::make_unique<LocalGlobalJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
+    ctx.setLocalOperatorState(this, std::move(joinState));
 }
 
 void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
+    //void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
+    // Get the global state
+    //        auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+//    return executeOld(ctx, record);
+    auto joinState = static_cast<LocalGlobalJoinState*>(ctx.getLocalState(this));
+    auto operatorHandlerMemRef = joinState->joinOperatorHandler;
+    Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
+
+    //check if we can resuse window
+    if (!(joinState->windowStart <= tsValue && tsValue < joinState->windowEnd)) {
+        //we need a new window
+        joinState->windowReference = Nautilus::FunctionCall("getStreamHashJoinWindowProxy",
+                                                            getStreamHashJoinWindowProxy,
+                                                            operatorHandlerMemRef,
+                                                            Value<UInt64>(tsValue));
+
+        joinState->hashTableReference = Nautilus::FunctionCall("getLocalHashTableProxy",
+                                                               getLocalHashTableProxy,
+                                                               joinState->windowReference,
+                                                               ctx.getWorkerId(),
+                                                               Value<Boolean>(isLeftSide));
+
+        joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
+
+        joinState->windowEnd = Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, joinState->windowReference);
+        NES_ERROR("reinit join state");
+    }
+
+    //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
+                                              insertFunctionProxy,
+                                              joinState->hashTableReference,
+                                              record.read(joinFieldName).as<UInt64>());
+    //write data
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (auto& field : schema->fields) {
+        auto const fieldName = field->getName();
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+
+        entryMemRef.store(record.read(fieldName));
+        entryMemRef = entryMemRef + fieldType->size();
+    }
+}
+
+void StreamHashJoinBuild::executeOld(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
 
@@ -138,16 +200,27 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
 void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-
+    NES_DEBUG(isLeftSide);
     // Update the watermark and trigger windows
     Nautilus::FunctionCall("checkWindowsTriggerProxy",
                            checkWindowsTriggerProxyForJoinBuild,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
+
                            ctx.getWorkerContext(),
                            ctx.getWatermarkTs(),
                            ctx.getSequenceNumber(),
                            ctx.getOriginId());
+}
+
+void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+
+    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
 }
 
 void StreamHashJoinBuild::setup(ExecutionContext& ctx) const {
@@ -165,3 +238,37 @@ StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,
       schema(schema), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators
+
+//
+//
+//void* getStreamHashJoinWindowProxy(void* ptrOpHandler, uint64_t timeStamp) {
+//    if (timeStamp == lastTimeStamp) {
+//        return static_cast<void*>(lastHashWindow);
+//    } else {
+//        NES_DEBUG2("getStreamHashJoinWindowProxy with ts={}", timeStamp);
+//        StreamHashJoinOperatorHandler* opHandler = static_cast<StreamHashJoinOperatorHandler*>(ptrOpHandler);
+//        auto currentWindow = opHandler->getWindowByTimestampOrCreateIt(timeStamp);
+//        StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow.get());
+//
+//        lastTimeStamp = timeStamp;
+//        lastHashWindow = hashWindow;
+//        return static_cast<void*>(hashWindow);
+//    }
+//}
+//
+//void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftSide) {
+//    NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
+//    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+//    if (hashWindow == lastHashWindow) {
+//        return LastlocalHashTablePointer;
+//    } else {
+//        NES_DEBUG2("Insert into HT for window={} is left={} workerIdx={}",
+//                   hashWindow->getWindowIdentifier(),
+//                   isLeftSide,
+//                   workerIdx);
+//        auto localHashTablePointer = static_cast<void*>(hashWindow->getLocalHashTable(workerIdx, isLeftSide));
+//        lastHashWindow = hashWindow;
+//        LastlocalHashTablePointer = localHashTablePointer;
+//        return localHashTablePointer;
+//    }
+//}

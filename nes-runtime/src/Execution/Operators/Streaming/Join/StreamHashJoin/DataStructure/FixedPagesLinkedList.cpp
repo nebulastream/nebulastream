@@ -50,11 +50,11 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
     }
 }
 
-void FixedPagesLinkedList::printStatistics() {
-    NES_DEBUG2(" FixPagesLinkedList reports pageFullCnt={} allocateNewPageCnt={} emptyPageStillExistsCnt={}",
-               pageFullCnt,
-               allocateNewPageCnt,
-               emptyPageStillExistsCnt)
+std::string FixedPagesLinkedList::getStatistics() {
+    std::stringstream ss;
+    ss << "FixPagesLinkedList reports pageFullCnt=" << pageFullCnt << " allocateNewPageCnt=" << allocateNewPageCnt
+       << " emptyPageStillExistsCnt=" << emptyPageStillExistsCnt;
+    return ss.str();
 }
 
 }// namespace NES::Runtime::Execution::Operators

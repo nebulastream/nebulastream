@@ -75,8 +75,9 @@ class LocalHashTable {
 
     /**
      * @brief debug mehtod to print the statistics of the hash table
+     * @return
      */
-    void printStatistics();
+    std::string getStatistics();
 
     /**
      * @brief get number of tuples in hash table

@@ -23,7 +23,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-std::optional<StreamWindowPtr> StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
+StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
+    std::unique_lock lock(windowCreateLock);
     for (auto& curWindow : windows) {
         if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
             return curWindow;
@@ -37,18 +38,20 @@ std::optional<StreamWindowPtr> StreamJoinOperatorHandler::createNewWindow(uint64
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd));
     } else {
         StreamHashJoinOperatorHandler* ptr = static_cast<StreamHashJoinOperatorHandler*>(this);
-        windows.emplace_back(std::make_unique<StreamHashJoinWindow>(numberOfWorkerThreads,
-                                                                    joinSchemaLeft->getSchemaSizeInBytes(),
-                                                                    joinSchemaRight->getSchemaSizeInBytes(),
-                                                                    windowStart,
-                                                                    windowEnd,
-                                                                    ptr->getTotalSizeForDataStructures(),
-                                                                    ptr->getPageSize(),
-                                                                    ptr->getPreAllocPageSizeCnt(),
-                                                                    ptr->getNumPartitions()));
+        auto newWindow = std::make_shared<StreamHashJoinWindow>(numberOfWorkerThreads,
+                                                                joinSchemaLeft->getSchemaSizeInBytes(),
+                                                                joinSchemaRight->getSchemaSizeInBytes(),
+                                                                windowStart,
+                                                                windowEnd,
+                                                                ptr->getTotalSizeForDataStructures(),
+                                                                ptr->getPageSize(),
+                                                                ptr->getPreAllocPageSizeCnt(),
+                                                                ptr->getNumPartitions());
+        windows.emplace_back(newWindow);
         NES_DEBUG2("Create Hash Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
+        return newWindow;
     }
-    return getWindowByTimestamp(timestamp);
+    return getWindowByTimestampOrCreateIt(timestamp);
 }
 
 const std::string& StreamJoinOperatorHandler::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
@@ -65,13 +68,25 @@ void StreamJoinOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
     }
 }
 
-std::optional<StreamWindowPtr> StreamJoinOperatorHandler::getWindowByTimestamp(uint64_t timestamp) {
+StreamWindowPtr StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt(uint64_t timestamp) {
+    size_t i = 0;
     for (auto& curWindow : windows) {
         if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
             return curWindow;
         }
     }
     return createNewWindow(timestamp);
+}
+
+StreamWindow* StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt2(uint64_t timestamp) {
+    size_t i = 0;
+    for (auto& curWindow : windows) {
+        if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
+            return curWindow.get();
+        }
+    }
+    auto newWindow = createNewWindow(timestamp);
+    return newWindow.get();
 }
 
 uint64_t StreamJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide) {

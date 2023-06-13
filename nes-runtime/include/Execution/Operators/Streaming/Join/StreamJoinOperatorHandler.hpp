@@ -163,7 +163,9 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param timestamp
      * @return
      */
-    std::optional<StreamWindowPtr> getWindowByTimestamp(uint64_t timestamp);
+    StreamWindowPtr getWindowByTimestampOrCreateIt(uint64_t timestamp);
+
+    StreamWindow* getWindowByTimestampOrCreateIt2(uint64_t timestamp);
 
     /**
      * Return the current watermark
@@ -175,7 +177,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @brief Creates a new window that corresponds to this timestamp
      * @param timestamp
      */
-    std::optional<StreamWindowPtr> createNewWindow(uint64_t timestamp);
+    StreamWindowPtr createNewWindow(uint64_t timestamp);
 
     /**
      * @brief get the number of windows
@@ -215,6 +217,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     std::atomic<bool> alreadySetup{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
     OperatorId operatorId;
+    std::mutex windowCreateLock;
 };
 
 }// namespace NES::Runtime::Execution::Operators

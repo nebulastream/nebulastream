@@ -62,12 +62,13 @@ uint64_t LocalHashTable::getNumberOfTuples() {
     return cnt;
 }
 
-void LocalHashTable::printStatistics() {
+std::string LocalHashTable::getStatistics() {
     size_t cnt = 0;
+    std::stringstream ss;
     for (auto& bucket : buckets) {
-        NES_TRACE2("BUCKET ", cnt++);
-        bucket->printStatistics();
+        ss << "BUCKET " << cnt++ << bucket->getStatistics();
     }
+    return ss.str();
 }
 
 }// namespace NES::Runtime::Execution::Operators
