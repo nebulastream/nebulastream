@@ -17,7 +17,7 @@
 namespace NES::Nautilus::IR::Operations {
 
 BitWiseLeftShiftOperation::BitWiseLeftShiftOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::BitWiseLeftShift, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
+    : Operation(OperationType::BitWiseLeftShift, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
     leftInput->addUsage(this);
     rightInput->addUsage(this);
