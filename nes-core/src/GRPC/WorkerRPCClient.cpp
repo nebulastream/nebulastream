@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -102,6 +103,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
     bool result = true;
+    std::vector<Exceptions::RpcFailureInformation> failed;
     for (const auto& queue : queues) {
         //wait for all deploys to come back
         void* got_tag = nullptr;
@@ -135,17 +137,20 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             }
 
             if (!status) {
-                NES_THROW_RUNTIME_ERROR("RPC failed, a scheduled async call for mode" << magic_enum::enum_name(mode)
-                                                                                      << " failed");
+                failed.push_back({queue.first, cnt});
             }
 
             // Once we're complete, deallocate the call object.
             cnt++;
         }
     }
+    if (!failed.empty()) {
+        throw Exceptions::RpcException("Some RPCs did not succeed", failed, mode);
+    }
     NES_DEBUG("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
     return result;
 }
+
 bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, queryId);
 
