@@ -12,21 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINBUILDOPERATOR_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINBUILDOPERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALNESTEDLOOPJOINBUILDOPERATOR_HPP_
+#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALNESTEDLOOPJOINBUILDOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
- * @brief This class represents the physical stream join build operator and gets translated to a StreamJoinBuild operator
+ * @brief This class represents the physical stream join build operator and gets translated to a StreamJoinBuild operator for the nested loop join
  */
-class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
+class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperator, public PhysicalUnaryOperator {
   public:
     /**
-     * @brief creates a PhysicalHashJoinBuildOperator with a provided operatorId
+     * @brief creates a PhysicalNestedLoopJoinBuildOperator with a provided operatorId
      * @param id
      * @param leftSchema
      * @param rightSchema
@@ -34,19 +34,19 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      * @param operatorHandler
      * @param buildSide
      * @param timeStampFieldName
-     * @param joinFieldName
+     * @param timeStampFieldName
      * @return PhysicalStreamJoinSinkOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id,
+    static PhysicalOperatorPtr create(const OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
+                                      const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler,
                                       const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName);
 
     /**
-     * @brief creates a PhysicalHashJoinBuildOperator that retrieves a new operatorId by calling method
+     * @brief creates a PhysicalNestedLoopJoinBuildOperator that retrieves a new operatorId by calling method
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -58,13 +58,13 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
+                                      const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler,
                                       const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName);
 
     /**
-     * @brief Constructor for PhysicalHashJoinBuildOperator
+     * @brief Constructor for PhysicalNestedLoopJoinBuildOperator
      * @param id
      * @param inputSchema
      * @param outputSchema
@@ -73,18 +73,18 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
      * @param timeStampFieldName
      * @param joinFieldName
      */
-    explicit PhysicalHashJoinBuildOperator(const OperatorId id,
-                                           const SchemaPtr& inputSchema,
-                                           const SchemaPtr& outputSchema,
-                                           const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler,
-                                           const JoinBuildSideType buildSide,
-                                           const std::string& timeStampFieldName,
-                                           const std::string& joinFieldName);
+    explicit PhysicalNestedLoopJoinBuildOperator(OperatorId id,
+                                                 SchemaPtr inputSchema,
+                                                 SchemaPtr outputSchema,
+                                                 Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler,
+                                                 JoinBuildSideType buildSide,
+                                                 std::string timeStampFieldName,
+                                                 std::string joinFieldName);
 
     /**
      * @brief Deconstructor
      */
-    ~PhysicalHashJoinBuildOperator() noexcept override = default;
+    ~PhysicalNestedLoopJoinBuildOperator() noexcept override = default;
 
     /**
      * @brief Returns a string containing the name of this physical operator
@@ -124,4 +124,4 @@ class PhysicalHashJoinBuildOperator : public PhysicalHashJoinOperator, public Ph
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINBUILDOPERATOR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALNESTEDLOOPJOINBUILDOPERATOR_HPP_

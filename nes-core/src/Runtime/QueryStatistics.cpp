@@ -67,7 +67,9 @@ void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
 void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
-void QueryStatistics::incTasksPerPipelineId(uint64_t pipelineId) { this->pipelineIdToTaskThroughputMap[pipelineId]++; }
+void QueryStatistics::incTasksPerPipelineId(uint64_t pipelineId, uint64_t workerId) {
+    this->pipelineIdToTaskThroughputMap[pipelineId][workerId]++;
+}
 void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
 void QueryStatistics::incAvailableGlobalBufferSum(uint64_t size) { this->availableGlobalBufferSum += size; }
 void QueryStatistics::incAvailableFixedBufferSum(uint64_t size) { this->availableFixedBufferSum += size; }
@@ -76,8 +78,9 @@ void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->pro
 
 void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) { tsToLatencyMap[now].push_back(latency); }
 
-std::map<uint64_t, std::atomic<uint64_t>>& QueryStatistics::getPipelineIdToTaskMap() { return pipelineIdToTaskThroughputMap; };
-
+std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>& QueryStatistics::getPipelineIdToTaskMap() {
+    return pipelineIdToTaskThroughputMap;
+};
 std::map<uint64_t, std::vector<uint64_t>> QueryStatistics::getTsToLatencyMap() { return tsToLatencyMap; }
 
 std::string QueryStatistics::getQueryStatisticsAsString() {

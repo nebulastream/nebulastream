@@ -11,8 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
+        StreamJoinHashTable.cpp
+        GlobalHashTableLockFree.cpp
+        GlobalHashTableLocking.cpp
         FixedPage.cpp
         FixedPagesLinkedList.cpp
         LocalHashTable.cpp
-        SharedJoinHashTable.cpp
+        MergingHashTable.cpp
         StreamHashJoinWindow.cpp)

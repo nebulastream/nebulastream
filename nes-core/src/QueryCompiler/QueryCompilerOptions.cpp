@@ -44,7 +44,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     hashOptions->setPageSize(NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE);
     hashOptions->setPreAllocPageCnt(NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
     hashOptions->setTotalSizeForDataStructures(NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
-
+    options.setStreamJoinStratgy(StreamJoinStrategy::HASH_JOIN_LOCAL);
     options.setHashJoinOptions(hashOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
@@ -85,6 +85,9 @@ QueryCompilerOptions::NautilusBackend QueryCompilerOptions::getNautilusBackend()
 void QueryCompilerOptions::setNautilusBackend(const NautilusBackend nautilusBackend) {
     QueryCompilerOptions::nautilusBackend = nautilusBackend;
 }
+
+void QueryCompilerOptions::setStreamJoinStratgy(StreamJoinStrategy strategy) { this->joinStrategy = strategy; }
+QueryCompilerOptions::StreamJoinStrategy QueryCompilerOptions::getStreamJoinStratgy() const { return joinStrategy; }
 
 QueryCompilerOptions::StreamHashJoinOptionsPtr QueryCompilerOptions::getHashJoinOptions() { return hashJoinOptions; }
 

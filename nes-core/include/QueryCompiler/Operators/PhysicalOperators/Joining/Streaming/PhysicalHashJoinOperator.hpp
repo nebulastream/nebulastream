@@ -23,7 +23,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class is the parent class of the PhysicalHashJoinBuild and PhysicalHashJoinSink operators.
  */
-class PhysicalHashJoinOperator : public AbstractEmitOperator {
+class PhysicalHashJoinOperator {
   public:
     /**
      * @brief Getter for the HashJoinOperatorHandler

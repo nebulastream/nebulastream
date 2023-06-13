@@ -28,14 +28,14 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This class represents a hash map that is thread safe. It consists of multiple buckets each
  * consisting of a linked list of FixedPages
  */
-class SharedJoinHashTable {
+class MergingHashTable {
   private:
     /**
      * @brief class that stores all pages for a single bucket
      */
     class InternalNode {
       public:
-        FixedPage dataPage;
+        std::unique_ptr<FixedPage> dataPage;
         std::atomic<InternalNode*> next{nullptr};
     };
 
@@ -44,7 +44,7 @@ class SharedJoinHashTable {
      * @brief Constructor for a hash table that supports insertion simultaneously  of multiple threads
      * @param numBuckets
      */
-    explicit SharedJoinHashTable(size_t numBuckets);
+    explicit MergingHashTable(size_t numBuckets);
 
     /**
      * @brief inserts the pages into the bucket at the bucketPos
@@ -58,7 +58,7 @@ class SharedJoinHashTable {
      * @param bucket
      * @return vector of fixed pages
      */
-    std::vector<FixedPage> getPagesForBucket(size_t bucketPos) const;
+    const std::vector<std::unique_ptr<FixedPage>> getPagesForBucket(size_t bucketPos) const;
 
     /**
      * @brief retrieves the number of items in the bucket
@@ -79,6 +79,24 @@ class SharedJoinHashTable {
      * @return number of buckets
      */
     size_t getNumBuckets() const;
+
+    /**
+     * @brief get the bucket at pos
+     * @return pointer to bucket
+     */
+    uint8_t* getTupleFromBucketAtPos(size_t bucket, size_t page, size_t pos);
+
+    /**
+     * @brief get number of tuples for a page
+     * @return number of tuples
+     */
+    uint64_t getNumberOfTuplesForPage(size_t bucket, size_t page);
+
+    /**
+     * @brief this methods returnds the content of the page as a string
+     * @return string
+     */
+    std::string getContentAsString(SchemaPtr schema) const;
 
   private:
     std::vector<std::atomic<InternalNode*>> bucketHeads;

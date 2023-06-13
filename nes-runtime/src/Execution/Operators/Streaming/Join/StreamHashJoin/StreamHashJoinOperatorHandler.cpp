@@ -12,33 +12,30 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
-
 namespace NES::Runtime::Execution::Operators {
 
-StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchemaLeft,
-                                                             SchemaPtr joinSchemaRight,
-                                                             std::string joinFieldNameLeft,
-                                                             std::string joinFieldNameRight,
-                                                             const std::vector<OriginId>& origins,
+StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(const std::vector<OriginId>& origins,
                                                              size_t windowSize,
+                                                             size_t sizeOfRecordLeft,
+                                                             size_t sizeOfRecordRight,
                                                              size_t totalSizeForDataStructures,
                                                              size_t pageSize,
                                                              size_t preAllocPageSizeCnt,
-                                                             size_t numPartitions)
-    : StreamJoinOperatorHandler(joinSchemaLeft,
-                                joinSchemaRight,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
-                                origins,
-                                windowSize,
-                                StreamJoinOperatorHandler::JoinType::HASH_JOIN),
+                                                             size_t numPartitions,
+                                                             StreamJoinStrategy joinStrategy)
+    : StreamJoinOperatorHandler(origins, windowSize, joinStrategy, sizeOfRecordLeft, sizeOfRecordRight),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
@@ -62,17 +59,23 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
         auto currentWindow = getWindowByWindowIdentifier(windowIdentifier);
         NES_ASSERT2_FMT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
         auto hashWindow = static_cast<StreamHashJoinWindow*>(currentWindow->get());
-        auto& sharedJoinHashTableLeft = hashWindow->getSharedJoinHashTable(true);
-        auto& sharedJoinHashTableRight = hashWindow->getSharedJoinHashTable(false);
+        auto& sharedJoinHashTableLeft = hashWindow->getMergingHashTable(/* isLeftSide=*/true);
+        auto& sharedJoinHashTableRight = hashWindow->getMergingHashTable(/* isLeftSide=*/false);
 
         for (auto i = 0UL; i < getNumPartitions(); ++i) {
-            //push actual bucket from local to global hash table for left side
-            auto localHashTableLeft = hashWindow->getLocalHashTable(workerCtx->getId(), true);
-            sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
+            //for local we have to merge the tables first
+            if (joinStrategy == StreamJoinStrategy::HASH_JOIN_LOCAL) {
+                //push actual bucket from local to global hash table for left side
 
-            //push actual bucket from local to global hash table for right side
-            auto localHashTableRight = hashWindow->getLocalHashTable(workerCtx->getId(), false);
-            sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+                //page before merging:
+
+                auto localHashTableLeft = hashWindow->getHashTable(workerCtx->getId(), /* isLeftSide=*/true);
+                sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
+
+                //push actual bucket from local to global hash table for right side
+                auto localHashTableRight = hashWindow->getHashTable(workerCtx->getId(), /* isLeftSide=*/false);
+                sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
+            }
 
             //create task for current window and current partition
             auto buffer = workerCtx->allocateTupleBuffer();
@@ -86,28 +89,37 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
     }
 }
 
-StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const SchemaPtr& joinSchemaLeft,
-                                                                       const SchemaPtr& joinSchemaRight,
-                                                                       const std::string& joinFieldNameLeft,
-                                                                       const std::string& joinFieldNameRight,
-                                                                       const std::vector<OriginId>& origins,
+uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, bool isLeftSide) {
+    const auto window = getWindowByWindowIdentifier(windowIdentifier);
+    if (window.has_value()) {
+        auto hashWindow = static_cast<StreamHashJoinWindow*>(window.value().get());
+        return hashWindow->getNumberOfTuples(workerId, isLeftSide);
+    }
+
+    return -1;
+}
+
+StreamHashJoinOperatorHandlerPtr StreamHashJoinOperatorHandler::create(const std::vector<OriginId>& origins,
                                                                        size_t windowSize,
+                                                                       size_t sizeOfRecordLeft,
+                                                                       size_t sizeOfRecordRight,
                                                                        size_t totalSizeForDataStructures,
                                                                        size_t pageSize,
                                                                        size_t preAllocPageSizeCnt,
-                                                                       size_t numPartitions) {
+                                                                       size_t numPartitions,
+                                                                       StreamJoinStrategy joinStrategy) {
 
-    return std::make_shared<StreamHashJoinOperatorHandler>(joinSchemaLeft,
-                                                           joinSchemaRight,
-                                                           joinFieldNameLeft,
-                                                           joinFieldNameRight,
-                                                           origins,
+    return std::make_shared<StreamHashJoinOperatorHandler>(origins,
                                                            windowSize,
+                                                           sizeOfRecordLeft,
+                                                           sizeOfRecordRight,
                                                            totalSizeForDataStructures,
                                                            pageSize,
                                                            preAllocPageSizeCnt,
-                                                           numPartitions);
+                                                           numPartitions,
+                                                           joinStrategy);
 }
+
 size_t StreamHashJoinOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 size_t StreamHashJoinOperatorHandler::getPageSize() const { return pageSize; }
 size_t StreamHashJoinOperatorHandler::getNumPartitions() const { return numPartitions; }

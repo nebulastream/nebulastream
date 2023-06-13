@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKFREE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKFREE_HPP_
 
 #include <atomic>
-
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/FixedPagesLinkedList.hpp>
@@ -28,31 +27,30 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
- * consisting of a FixedPagesLinkedList.
+ * @brief This class represents a hash map and ensures thread safety by compare and swaps
  */
-class LocalHashTable : public StreamJoinHashTable {
+class GlobalHashTableLockFree : public StreamJoinHashTable {
 
   public:
     /**
-     * @brief Constructor for a LocalHashTable
+     * @brief Constructor for a GlobalHashTableLockFree that
      * @param sizeOfRecord
      * @param numPartitions
      * @param fixedPagesAllocator
      * @param pageSize
      * @param preAllocPageSizeCnt
      */
-    explicit LocalHashTable(size_t sizeOfRecord,
+    explicit GlobalHashTableLockFree(size_t sizeOfRecord,
                             size_t numPartitions,
                             FixedPagesAllocator& fixedPagesAllocator,
                             size_t pageSize,
                             size_t preAllocPageSizeCnt);
 
-    LocalHashTable(const LocalHashTable&) = delete;
+    GlobalHashTableLockFree(const GlobalHashTableLockFree&) = delete;
 
-    LocalHashTable& operator=(const LocalHashTable&) = delete;
+    GlobalHashTableLockFree& operator=(const GlobalHashTableLockFree&) = delete;
 
-    virtual ~LocalHashTable() = default;
+    virtual ~GlobalHashTableLockFree() = default;
 
     /**
      * @brief Inserts the key into this hash table by returning a pointer to a free memory space
@@ -62,4 +60,4 @@ class LocalHashTable : public StreamJoinHashTable {
     virtual uint8_t* insert(uint64_t key) const override;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKFREE_HPP_

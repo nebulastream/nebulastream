@@ -106,11 +106,15 @@ class QueryCompilerOptions {
         BITMASK
     };
 
+    enum class StreamJoinStrategy : uint8_t {
+        HASH_JOIN_LOCAL,
+        HASH_JOIN_GLOBAL_LOCKING,
+        HASH_JOIN_GLOBAL_LOCK_FREE,
+        NESTED_LOOP_JOIN
+    };
+
     class StreamHashJoinOptions {
       public:
-        StreamHashJoinOptions()
-            : numberOfPartitions(1), pageSize(4096), preAllocPageCnt(1), totalSizeForDataStructures(1024 * 1024) {}
-
         /**
          * @brief getter for max hash table size
          * @return
@@ -187,6 +191,7 @@ class QueryCompilerOptions {
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
+
     [[nodiscard]] QueryCompilerOptions::FilterProcessingStrategy getFilterProcessingStrategy() const;
 
     /**
@@ -214,6 +219,18 @@ class QueryCompilerOptions {
     WindowingStrategy getWindowingStrategy() const;
 
     /**
+     * @brief Sets the strategy for the stream join
+     * @param strategy
+     */
+    void setStreamJoinStratgy(StreamJoinStrategy strategy);
+
+    /**
+     * @brief gets the stream join strategy.
+     * @return
+     */
+    [[nodiscard]] StreamJoinStrategy getStreamJoinStratgy() const;
+
+    /**
      * @brief Return hash join options
      * @return
      */
@@ -229,6 +246,7 @@ class QueryCompilerOptions {
 
     [[nodiscard]] NautilusBackend getNautilusBackend() const;
     void setNautilusBackend(const NautilusBackend nautilusBackend);
+
     [[nodiscard]] const DumpMode& getDumpMode() const;
     void setDumpMode(DumpMode dumpMode);
 
@@ -255,6 +273,7 @@ class QueryCompilerOptions {
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
     std::string cudaSdkPath;
+    StreamJoinStrategy joinStrategy;
 };
 }// namespace NES::QueryCompilation
 

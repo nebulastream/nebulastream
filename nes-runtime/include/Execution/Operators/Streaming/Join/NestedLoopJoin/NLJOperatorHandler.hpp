@@ -32,19 +32,15 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
   public:
     /**
      * @brief Constructor for a NLJOperatorHandler
-     * @param windowSize
-     * @param joinSchemaLeft
-     * @param joinSchemaRight
-     * @param joinFieldNameLeft
-     * @param joinFieldNameRight
      * @param origins
+     * @param windowSize
+     * @param sizeOfTupleInByteLeft
+     * @param sizeOfTupleInByteRight
      */
-    explicit NLJOperatorHandler(const SchemaPtr& joinSchemaLeft,
-                                const SchemaPtr& joinSchemaRight,
-                                const std::string& joinFieldNameLeft,
-                                const std::string& joinFieldNameRight,
-                                const std::vector<OriginId>& origins,
-                                size_t windowSize);
+    explicit NLJOperatorHandler(const std::vector<OriginId>& origins,
+                                size_t windowSize,
+                                uint64_t sizeOfTupleInByteLeft,
+                                uint64_t sizeOfTupleInByteRight);
 
     ~NLJOperatorHandler() = default;
     /**
@@ -73,6 +69,14 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     uint8_t* allocateNewEntry(uint64_t timestamp, bool isLeftSide);
 
     /**
+     * @brief Retrieves the number of tuples for a stream (left or right) and a window
+     * @param windowIdentifier
+     * @param isLeftSide
+     * @return Number of tuples or -1 if no window exists for the window identifier
+     */
+    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
+
+    /**
      * @brief method to trigger the finished windows
      * @param windowIdentifiersToBeTriggered
      * @param workerCtx
@@ -82,12 +86,27 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
-    static NLJOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
-                                        const SchemaPtr& joinSchemaRight,
-                                        const std::string& joinFieldNameLeft,
-                                        const std::string& joinFieldNameRight,
-                                        const std::vector<OriginId>& origins,
-                                        size_t windowSize);
+    /**
+     * @brief method to get the first tuple
+     * @param windowIdentifier
+     * @param isLeftSide
+     * @return
+     */
+    uint8_t* getFirstTuple(uint64_t windowIdentifier, bool isLeftSide);
+
+    /**
+     * Create NLJ Operator handler
+     * @param origins
+     * @param windowSize
+     * @param sizeOfTupleInByteLeft
+     * @param sizeOfTupleInByteRight
+     * @return
+     */
+    static NLJOperatorHandlerPtr create(const std::vector<OriginId>& origins,
+                                        size_t windowSize,
+                                        uint64_t sizeOfTupleInByteLeft,
+                                        uint64_t sizeOfTupleInByteRight);
+
 };
 }// namespace NES::Runtime::Execution::Operators
 

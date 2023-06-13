@@ -12,22 +12,24 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINSINKOPERATOR_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINSINKOPERATOR_HPP_
+#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALNESTEDLOOPJOINSINKOPERATOR_HPP_
+#define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALNESTEDLOOPJOINSINKOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 /**
- * @brief This class represents the physical hash stream join sink operator and gets translated to a HashJoinSink operator
+ * @brief This class represents the physical NLP stream join sink operator and gets translated to a NestedLoopJoinSink operator
  */
-class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
+class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator,
+                                           public PhysicalBinaryOperator,
+                                           public AbstractScanOperator {
 
   public:
     /**
-     * @brief creates a PhysicalHashJoinSinkOperator with a provided operatorId
+     * @brief creates a PhysicalNestedLoopJoinSinkOperator with a provided operatorId
      * @param id
      * @param leftSchema
      * @param rightSchema
@@ -35,35 +37,35 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      * @param operatorHandler
-     * @return PhysicalHashJoinSinkOperator
+     * @return PhysicalNestedLoopJoinSinkOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const std::string& joinFieldNameLeft,
-                                      const std::string& joinFieldNameRight,
-                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
+                                      std::string joinFieldNameLeft,
+                                      std::string joinFieldNameRight,
+                                      const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler);
 
     /**
-     * @brief creates a PhysicalHashJoinSinkOperator that retrieves a new operatorId by calling method
+     * @brief creates a PhysicalNestedLoopJoinSinkOperator that retrieves a new operatorId by calling method
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      * @param operatorHandler
-     * @return PhysicalHashJoinSinkOperator
+     * @return PhysicalNestedLoopJoinSinkOperator
      */
     static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
-                                      const std::string& joinFieldNameLeft,
-                                      const std::string& joinFieldNameRight,
-                                      const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
+                                      std::string joinFieldNameLeft,
+                                      std::string joinFieldNameRight,
+                                      const Runtime::Execution::Operators::NLJOperatorHandlerPtr& operatorHandler);
 
     /**
-     * @brief Constructor for a PhysicalHashJoinSinkOperator
+     * @brief Constructor for a PhysicalNestedLoopJoinSinkOperator
      * @param id
      * @param leftSchema
      * @param rightSchema
@@ -72,13 +74,13 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
      * @param joinFieldNameRight
      * @param operatorHandler
      */
-    PhysicalHashJoinSinkOperator(OperatorId id,
-                                 const SchemaPtr& leftSchema,
-                                 const SchemaPtr& rightSchema,
-                                 const SchemaPtr& outputSchema,
-                                 const std::string& joinFieldNameLeft,
-                                 const std::string& joinFieldNameRight,
-                                 const Runtime::Execution::Operators::StreamHashJoinOperatorHandlerPtr& operatorHandler);
+    PhysicalNestedLoopJoinSinkOperator(OperatorId id,
+                                       SchemaPtr leftSchema,
+                                       SchemaPtr rightSchema,
+                                       SchemaPtr outputSchema,
+                                       std::string joinFieldNameLeft,
+                                       std::string joinFieldNameRight,
+                                       Runtime::Execution::Operators::NLJOperatorHandlerPtr operatorHandler);
 
     /**
      * @brief Creates a string containing the name of this physical operator
@@ -111,4 +113,4 @@ class PhysicalHashJoinSinkOperator : public PhysicalHashJoinOperator, public Phy
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALHASHJOINSINKOPERATOR_HPP_
+#endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PhysicalNestedLoopJoinSinkOperator_HPP_
