@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.107](https://github.com/nebulastream/nebulastream/tree/v0.5.107) (2023-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.106...v0.5.107)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement 1-D equi-width histogram [\#3784](https://github.com/nebulastream/nebulastream/issues/3784)
+
 ## [v0.5.106](https://github.com/nebulastream/nebulastream/tree/v0.5.106) (2023-06-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.105...v0.5.106)
