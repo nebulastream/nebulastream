@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include "Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp"
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
@@ -81,16 +85,16 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
 }
 
 std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
-SignatureContainmentUtil::checkContainmentRelationshipFromTopToBottom(const LogicalOperatorNodePtr& leftOperator,
-                                                            const LogicalOperatorNodePtr& rightOperator) {
+SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOperatorNodePtr& leftOperator,
+                                                                      const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     try {
         auto otherConditions = leftOperator->getZ3Signature()->getConditions();
+        NES_TRACE("Left signature: {}", otherConditions->to_string());
         auto conditions = rightOperator->getZ3Signature()->getConditions();
-        NES_TRACE("Left signature: {}", conditions->to_string());
-        NES_TRACE("Right signature: {}", otherConditions->to_string());
+        NES_TRACE("Right signature: {}", conditions->to_string());
         if (!conditions || !otherConditions) {
             NES_WARNING("Can't obtain containment relationships for null signatures");
             return {};
@@ -374,6 +378,9 @@ SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNod
             NES_TRACE("Window containment possible.");
         }
     }
+    if (!checkDownstreamOperatorChainForSingleParent(containedOperator, containmentOperators.back())) {
+        return {};
+    }
     return containmentOperators;
 }
 
@@ -381,6 +388,9 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
     auto projectionOperators = containedOperator->getNodesByType<ProjectionLogicalOperatorNode>();
     //get the most downstream projection operator
     if (!projectionOperators.empty()) {
+        if (!checkDownstreamOperatorChainForSingleParent(containedOperator, projectionOperators.at(0))) {
+            return {};
+        }
         return projectionOperators.at(0);
     }
     return nullptr;
@@ -388,26 +398,31 @@ LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const 
 
 std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
                                                                                     const LogicalOperatorNodePtr& containee) {
-    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     //check if there was a map function applied to the filter attribute
     //if that was the case, we cannot safely extract the filter anymore and therefore return an empty set
     for (const auto& [attributeName, isMapFunctionApplied] :
          containee->getZ3Signature()->getFilterAttributesAndIsMapFunctionApplied()) {
         NES_TRACE("Check if a map function {} was applied to {}.", isMapFunctionApplied, attributeName);
+        //if a map function was applied to the attribute after the filter operation, we cannot safely extract the filters anymore
+        //since their transformations might have changed. Therefore, we return an empty set.
         if (!isMapFunctionApplied) {
             auto attributeStillPresent = std::binary_search(container->getZ3Signature()->getColumns().begin(),
                                                             container->getZ3Signature()->getColumns().end(),
                                                             attributeName);
-            //if the attribute is still present in the container's output schema and there was no map function applied,
-            //we extract the upstream filter operators and add them to the containment operators
-            if (attributeStillPresent) {
-                for (const auto& item : containee->getNodesByType<FilterLogicalOperatorNode>()) {
-                    containmentOperators.push_back(item);
-                }
-                return containmentOperators;
+            //if the attribute is not present in the container's output schema anymore we return an empty set
+            if (!attributeStillPresent) {
+                return {};
             }
         }
-        return containmentOperators;
+        return {};
+    }
+    //if all checks pass, we extract the filter operators
+    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
+    for (const auto& filter : containee->getNodesByType<FilterLogicalOperatorNode>()) {
+        containmentOperators.push_back(filter);
+    }
+    if (!checkDownstreamOperatorChainForSingleParent(containee, containmentOperators.back())) {
+        return {};
     }
     return containmentOperators;
 }
@@ -563,6 +578,23 @@ bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignatu
             if (containerConditions->to_string() != containeeConditions->to_string()) {
                 return false;
             }
+        }
+    }
+    return true;
+}
+
+bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
+    const LogicalOperatorNodePtr& containedOperator,
+    const LogicalOperatorNodePtr& extractedContainedOperator) {
+    if (extractedContainedOperator->getParents().size() != 1) {
+        return false;
+    }
+    auto parent = extractedContainedOperator->getParents()[0];
+    while (!parent->equal(containedOperator)) {
+        if (parent->getParents().size() != 1) {
+            return false;
+        } else {
+            parent = parent->getParents()[0];
         }
     }
     return true;
