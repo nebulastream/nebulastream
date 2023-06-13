@@ -17,7 +17,7 @@
 namespace NES::Nautilus::IR::Operations {
 
 BitWiseXorOperation::BitWiseXorOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::BitWiseXor, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
+    : Operation(OperationType::BitWiseXor, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
     leftInput->addUsage(this);
     rightInput->addUsage(this);

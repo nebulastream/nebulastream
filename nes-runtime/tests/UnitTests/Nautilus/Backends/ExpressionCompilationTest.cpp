@@ -139,9 +139,9 @@ TEST_P(ExpressionExecutionTest, bitWiseAndI64Test) {
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
-    ASSERT_EQ(function(3),  ((int64_t)3 & 7));
-    ASSERT_EQ(function(14), ((int64_t)14 & 7));
-    ASSERT_EQ(function(18), ((int64_t)18 & 7));
+    ASSERT_EQ(function(3),  3);
+    ASSERT_EQ(function(14), 6);
+    ASSERT_EQ(function(18), 2);
 }
 
 Value<> int64BitWiseOrExpression(Value<Int64> x) {
@@ -199,7 +199,7 @@ TEST_P(ExpressionExecutionTest, BitWiseLeftShiftI64Test) {
 }
 
 Value<> int64BitWiseRightShiftExpression(Value<Int64> x) {
-    Value<Int64> y = (int64_t) 7;
+    Value<Int64> y = (int64_t) 2;
     return x >> y;
 }
 
@@ -211,9 +211,9 @@ TEST_P(ExpressionExecutionTest, BitWiseRightShiftI64Test) {
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
-    ASSERT_EQ(function(3),  ((int64_t)3 >> 7));
-    ASSERT_EQ(function(14), ((int64_t)14 >> 7));
-    ASSERT_EQ(function(18), ((int64_t)18 >> 7));
+    ASSERT_EQ(function(3),  ((int64_t)3 >> 2));
+    ASSERT_EQ(function(14), ((int64_t)14 >> 2));
+    ASSERT_EQ(function(18), ((int64_t)18 >> 2));
 }
 
 Value<> int64BitWiseNotExpression(Value<Int64> x) {
