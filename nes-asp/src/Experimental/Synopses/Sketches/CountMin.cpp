@@ -88,7 +88,7 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
         for (Nautilus::Value<> row = 1; row < numberOfRows; row = row + 1) {
             auto h3SeedsCurRow = (h3SeedsMemRef + row * numberOfCols * entrySize).as<Nautilus::MemRef>();
             auto hash = h3HashFunction->calculateWithState(key, h3SeedsCurRow);
-            auto colPos = hash % numberOfCols; <-- das Hier ist das Problem. Da es kein Modulo gibt, sowei ich weiß
+            auto colPos = hash % numberOfCols;
             aggregationFunctionMergeRows->combine(sketchArray[(uint64_t) 0][colPosFirstRow], sketchArray[row][colPos]);
         }
 
