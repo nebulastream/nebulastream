@@ -3,7 +3,7 @@ from collections import defaultdict
 
 # regex patterns
 value_pattern = re.compile(r'(\d+.\d+)\s+ms$')
-task_patterns = ["Trace Generation", "IR Generation", "MIR backend generation"]
+task_patterns = ["Trace Generation", "IR Generation", "MIR_MIRGen", "MIR_MIRComp", "Flounder_FlounderGen", "Flounder_FlounderComp", "MLIR_MLIRGen", "[22:14", "CPP_CPPGen", "CPP_CPPComp", "BC_BCGen"]
 
 def extract_info(file_name):
     task_times = defaultdict(list)
@@ -17,8 +17,7 @@ def extract_info(file_name):
                         task_times[task].append(value_in_ms)
 
     for task, times in task_times.items():
-        average_time = sum(times) / len(times)
-        print(f"Task: {task}")
-        print(f"Average time in milliseconds: {average_time}")
+        average_time = sum(times) / 15
+        print(f"{task},{average_time}")
 
 extract_info("test.log")
