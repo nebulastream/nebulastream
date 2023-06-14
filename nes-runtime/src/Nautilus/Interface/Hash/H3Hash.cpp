@@ -14,6 +14,7 @@
 
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
+#include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
@@ -48,33 +49,58 @@ HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
 
-    if (value->isType<Int8>()) {
-        return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>(), state);
-    } else if (value->isType<Int16>()) {
-        return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>(), state);
-    } else if (value->isType<Int32>()) {
-        return FunctionCall("hashValueI32", hashValue<typename Int32::RawType>, hash, value.as<Int32>(), state);
-    } else if (value->isType<Int64>()) {
-        return FunctionCall("hashValueI64", hashValue<typename Int64::RawType>, hash, value.as<Int64>(), state);
-    } else if (value->isType<UInt8>()) {
-        return FunctionCall("hashValueUI8", hashValue<typename UInt8::RawType>, hash, value.as<UInt8>(), state);
-    } else if (value->isType<UInt16>()) {
-        return FunctionCall("hashValueUI16", hashValue<typename UInt16::RawType>, hash, value.as<UInt16>(), state);
-    } else if (value->isType<UInt32>()) {
-        return FunctionCall("hashValueUI32", hashValue<typename UInt32::RawType>, hash, value.as<UInt32>(), state);
-    } else if (value->isType<UInt64>()) {
-        return FunctionCall("hashValueUI64", hashValue<typename UInt64::RawType>, hash, value.as<UInt64>(), state);
+    // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
+    // This is okay, as we are only interested in the bits as-is and not the represented value
+    Nautilus::Value<> tmpValue(0);
+    if (value->isType<Double>()) {
+        tmpValue = value.as<UInt64>();
     } else if (value->isType<Float>()) {
-        return FunctionCall("hashValueF", hashValue<typename Float::RawType>, hash, value.as<Float>(), state);
-    } else if (value->isType<Double>()) {
-        return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>(), state);
+        tmpValue = value.as<UInt32>();
+    } else {
+        tmpValue = value;
     }
 
-    NES_NOT_IMPLEMENTED();
+
+    Fixed2DArrayRef fixed2dArray(state, entrySizeH3HashSeed, numberOfKeyBits);
+
+    for (Value<UInt8> i((uint8_t) 0); i < numberOfKeyBits; i = i + 1) {
+        auto isBitSet = (tmpValue >> i) & 1;
+        auto fixed2DArrayVal = fixed2dArray[0][i];
+        auto h3Seed = Value<UInt64>(fixed2DArrayVal.load<UInt64>());
+        hash = hash ^ (isBitSet * h3Seed);
+    }
+
+    return hash;
+
+
+//    if (value->isType<Int8>()) {
+//        return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>(), state);
+//    } else if (value->isType<Int16>()) {
+//        return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>(), state);
+//    } else if (value->isType<Int32>()) {
+//        return FunctionCall("hashValueI32", hashValue<typename Int32::RawType>, hash, value.as<Int32>(), state);
+//    } else if (value->isType<Int64>()) {
+//        return FunctionCall("hashValueI64", hashValue<typename Int64::RawType>, hash, value.as<Int64>(), state);
+//    } else if (value->isType<UInt8>()) {
+//        return FunctionCall("hashValueUI8", hashValue<typename UInt8::RawType>, hash, value.as<UInt8>(), state);
+//    } else if (value->isType<UInt16>()) {
+//        return FunctionCall("hashValueUI16", hashValue<typename UInt16::RawType>, hash, value.as<UInt16>(), state);
+//    } else if (value->isType<UInt32>()) {
+//        return FunctionCall("hashValueUI32", hashValue<typename UInt32::RawType>, hash, value.as<UInt32>(), state);
+//    } else if (value->isType<UInt64>()) {
+//        return FunctionCall("hashValueUI64", hashValue<typename UInt64::RawType>, hash, value.as<UInt64>(), state);
+//    } else if (value->isType<Float>()) {
+//        return FunctionCall("hashValueF", hashValue<typename Float::RawType>, hash, value.as<Float>(), state);
+//    } else if (value->isType<Double>()) {
+//        return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>(), state);
+//    }
+//
+//    NES_NOT_IMPLEMENTED();
 }
 
 HashFunction::HashValue H3Hash::calculate(HashFunction::HashValue&, Value<>&) {
     NES_THROW_RUNTIME_ERROR("Wrong function call! Please use calculateWithState() as H3 requires a seed vector");
 }
+H3Hash::H3Hash() : entrySizeH3HashSeed(sizeof(uint64_t)), numberOfKeyBits(entrySizeH3HashSeed * 8) {}
 
 }// namespace NES::Nautilus::Interface
