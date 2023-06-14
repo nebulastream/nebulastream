@@ -21,11 +21,42 @@ namespace NES::Nautilus::IR::Operations {
 
 class BitWiseAndOperation : public Operation {
   public:
+    /**
+     * @brief Constructor for a BitWiseAndOperation
+     * @param identifier
+     * @param leftInput
+     * @param rightInput
+     */
     BitWiseAndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
+
+    /**
+     * @brief Default deconstructor
+     */
     ~BitWiseAndOperation() override = default;
+
+    /**
+     * @brief Retrieves the left input
+     * @return OperationPtr
+     */
     OperationPtr getLeftInput();
+
+    /**
+     * @brief Retrieves the left input
+     * @return OperationPtr
+     */
     OperationPtr getRightInput();
+
+    /**
+     * @brief Creates a string representation of this operation
+     * @return std::string
+     */
     std::string toString() override;
+
+    /**
+     * @brief Checks if the operation (Op) is of the same class
+     * @param Op
+     * @return boolean
+     */
     bool classof(const Operation* Op);
 
   private:
