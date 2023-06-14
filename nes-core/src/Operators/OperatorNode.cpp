@@ -170,8 +170,8 @@ bool OperatorNode::hasProperty(const std::string& key) { return properties.find(
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
-bool OperatorNode::containAsGrandChild(NodePtr node) {
-    auto operatorIdToCheck = node->as<OperatorNode>()->getId();
+bool OperatorNode::containAsGrandChild(NodePtr operatorNode) {
+    auto operatorIdToCheck = operatorNode->as<OperatorNode>()->getId();
     // populate all ancestors
     std::vector<NodePtr> ancestors{};
     for (auto& child : children) {
@@ -184,8 +184,8 @@ bool OperatorNode::containAsGrandChild(NodePtr node) {
     });
 }
 
-bool OperatorNode::containAsGrandParent(NES::NodePtr node) {
-    auto operatorIdToCheck = node->as<OperatorNode>()->getId();
+bool OperatorNode::containAsGrandParent(NES::NodePtr operatorNode) {
+    auto operatorIdToCheck = operatorNode->as<OperatorNode>()->getId();
     // populate all ancestors
     std::vector<NodePtr> ancestors{};
     for (auto& parent : parents) {

@@ -20,24 +20,24 @@ namespace NES::Optimizer::Experimental {
 
 ChangeLogPtr ChangeLog::create() { return std::make_unique<ChangeLog>(ChangeLog()); }
 
-void ChangeLog::addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& changeLogEntry) {
+void ChangeLog::addChangeLogEntry(Timestamp timestamp, ChangeLogEntryPtr&& changeLogEntry) {
     changeLogEntries[timestamp] = changeLogEntry;
 }
 
-std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> ChangeLog::getCompressedChangeLogEntriesBefore(uint64_t timestamp) {
+std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> ChangeLog::getCompressedChangeLogEntriesBefore(Timestamp timestamp) {
     performChangeLogCompaction(timestamp);
     return getChangeLogEntriesBefore(timestamp);
 }
 
-void ChangeLog::updateProcessedChangeLogTimestamp(uint64_t timestamp) {
+void ChangeLog::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     this->lastProcessedChangeLogTimestamp = timestamp;
     removeChangeLogsBefore(lastProcessedChangeLogTimestamp);
 }
 
-void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
+void ChangeLog::performChangeLogCompaction(Timestamp timestamp) {
 
     //Get all change log entries to compact
-    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEntriesToCompact = getChangeLogEntriesBefore(timestamp);
+    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> changeLogEntriesToCompact = getChangeLogEntriesBefore(timestamp);
 
     // Repeat this process till all change log entries within the timestamp are non-overlapping or are compacted.
     bool repeat = true;
@@ -107,9 +107,9 @@ void ChangeLog::performChangeLogCompaction(uint64_t timestamp) {
     }
 }
 
-std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> ChangeLog::getChangeLogEntriesBefore(uint64_t timestamp) {
+std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> ChangeLog::getChangeLogEntriesBefore(Timestamp timestamp) {
 
-    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> changeLogEntriesToReturn;
+    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> changeLogEntriesToReturn;
     //Find the range of keys to be fetched
     auto firstElement = changeLogEntries.lower_bound(0);
     auto lastElement = changeLogEntries.lower_bound(timestamp);
@@ -122,7 +122,7 @@ std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> ChangeLog::getChangeLogEntri
     return changeLogEntriesToReturn;
 }
 
-void ChangeLog::removeChangeLogsBefore(uint64_t timestamp) {
+void ChangeLog::removeChangeLogsBefore(Timestamp timestamp) {
 
     //Find the range of keys to be removed
     auto firstElement = changeLogEntries.lower_bound(0);
@@ -132,7 +132,7 @@ void ChangeLog::removeChangeLogsBefore(uint64_t timestamp) {
     changeLogEntries.erase(firstElement, lastElement);
 }
 
-ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<uint64_t, ChangeLogEntryPtr>>& changeLogEntriesToMerge) {
+ChangeLogEntryPtr ChangeLog::mergeChangeLogs(std::vector<std::pair<Timestamp, ChangeLogEntryPtr>>& changeLogEntriesToMerge) {
 
     ChangeLogEntryPtr firstChangeLogEntry = changeLogEntriesToMerge.at(0).second;
     std::set<OperatorNodePtr> firstUpstreamOperators = firstChangeLogEntry->upstreamOperators;
