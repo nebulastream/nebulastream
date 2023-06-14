@@ -181,10 +181,14 @@ std::filesystem::path getLibPath(std::string libName) {
     auto libPath = detail::recursiveFindFileReverse(executablePath, libName);
 
     if (std::filesystem::is_regular_file(libPath)) {
-        NES_DEBUG2("Library {} found at: {}", libName, libPath.parent_path());
+        std::stringstream pathAsString;
+        pathAsString << libPath.parent_path();
+        NES_DEBUG2("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     } else {
-        NES_DEBUG2("Invalid {} file found at {}. Searching next in DYLD_LIBRARY_PATH.", libName, libPath);
+        std::stringstream libpathStr;
+        libpathStr << libPath.parent_path();
+        NES_DEBUG2("Invalid {} file found at {}. Searching next in DYLD_LIBRARY_PATH.", libName, libPathStr.str());
 
         std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
         std::string path;
@@ -195,7 +199,9 @@ std::filesystem::path getLibPath(std::string libName) {
             }
             libPath = detail::recursiveFindFileReverse(path, libName);
             if (std::filesystem::is_regular_file(libPath)) {
-                NES_DEBUG2("Library {} found at: {}", libName, libPath.parent_path());
+                std::stringstream pathStr;
+                pathStr << libPath.parent_path();
+                NES_DEBUG2("Library {} found at: {}", libName, pathStr.str());
                 return libPath;
             }
         }
@@ -225,9 +231,9 @@ std::filesystem::path getLibPath(std::string libName) {
     auto libPath = detail::recursiveFindFileReverse(executablePath, "lib").append(libName);
 
     if (std::filesystem::is_regular_file(libPath)) {
-        std::stringstream path;
-        path << libPath.parent_path();
-        NES_DEBUG2("Library {} found at: {}", libName, path.str());
+        std::stringstream pathAsString;
+        pathAsString << libPath.parent_path();
+        NES_DEBUG2("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     }
     throw CompilerException("Path to " + libName + " not found. Executable path is: " + executablePath.string());

@@ -84,7 +84,9 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest) {
 
     auto c3 = c1 + c2;
     c1 = c2;
-    NES_DEBUG2("{}", c3.value);
+    std::stringstream value;
+    value << c3.value;
+    NES_DEBUG2("{}", value.str());
 }
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeBaseTest) {
