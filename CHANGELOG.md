@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.5.108](https://github.com/nebulastream/nebulastream/tree/v0.5.108) (2023-06-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.107...v0.5.108)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add bitwise operations to nautilus [\#3648](https://github.com/nebulastream/nebulastream/issues/3648)
+
+### Bug Fixes 🐛
+
+- location-controller-integration-tests randomly fails [\#3349](https://github.com/nebulastream/nebulastream/issues/3349)
+- projection-test randomly fails [\#3348](https://github.com/nebulastream/nebulastream/issues/3348)
+- \[BUG\] source-tests fails randomly [\#3292](https://github.com/nebulastream/nebulastream/issues/3292)
+- \[BUG\] Union deployment test fails randomly [\#3267](https://github.com/nebulastream/nebulastream/issues/3267)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Create a design document to support variable-sized binary blobs [\#2955](https://github.com/nebulastream/nebulastream/issues/2955)
+
 ## [v0.5.107](https://github.com/nebulastream/nebulastream/tree/v0.5.107) (2023-06-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.106...v0.5.107)
