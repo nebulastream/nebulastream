@@ -211,6 +211,12 @@ class SignatureContainmentUtil {
                                         const QuerySignaturePtr& leftSignature,
                                         const QuerySignaturePtr& rightSignature);
 
+    /**
+     * @brief checks whether for the remaining attributes all map and aggregation functions are equal
+     * @param leftSignature left query signature for transformation check
+     * @param rightSignature right query signature for transformation check
+     * @return true if same transformations, false otherwise
+     */
     bool checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
                                                                 const QuerySignaturePtr& rightSignature);
 
