@@ -16,6 +16,7 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
@@ -322,11 +323,12 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
         }
         return targetHostOperatorMap;
     } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
-        NES_DEBUG2("Target and host operators are contained. Target: {}, Host: {}, ContainmentType: {}",
-                   targetOperator->toString(),
+        NES_DEBUG2("Target and host operators are contained. Host (leftSig): {}, Target (rightSig): {}, ContainmentType: {}",
                    hostOperator->toString(),
+                   targetOperator->toString(),
                    magic_enum::enum_name(containmentType));
-        if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
+        if ((targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>())
+            || (targetOperator->instanceOf<MapLogicalOperatorNode>() && hostOperator->instanceOf<MapLogicalOperatorNode>())) {
             return targetHostOperatorMap;
         }
         targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
