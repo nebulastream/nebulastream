@@ -64,7 +64,9 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest) {
 
     // findOrCreate entry
     auto hash = hf->calculate(f1);
-    NES_INFO2("Hash: {}", hash);
+    std::stringstream hashStr;
+    hashStr << hash;
+    NES_INFO2("Hash: {}", hashStr.str());
     hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
     auto res2 = hashMapRef.findOne(hash, {f1});
