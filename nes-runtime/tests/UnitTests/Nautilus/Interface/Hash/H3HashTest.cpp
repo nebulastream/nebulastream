@@ -23,7 +23,6 @@
 namespace NES::Nautilus::Interface {
 class H3HashTest : public Testing::NESBaseTest {
   public:
-    static constexpr auto H3_SEED = 42;
     static constexpr auto NUMBER_OF_KEYS_TO_TEST = 5;
     static constexpr auto NUMBER_OF_ROWS = 3;
     std::array<std::vector<uint64_t>, NUMBER_OF_ROWS> allH3Seeds;
@@ -38,7 +37,7 @@ class H3HashTest : public Testing::NESBaseTest {
         NESBaseTest::SetUp();
 
         std::random_device rd;
-        std::mt19937 gen(H3_SEED);
+        std::mt19937 gen(H3Hash::H3_SEED);
         std::uniform_int_distribution<uint64_t> distribution;
         auto numberOfBitsInKey = sizeof(uint64_t) * 8;
 

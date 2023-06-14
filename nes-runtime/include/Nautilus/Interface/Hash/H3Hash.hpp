@@ -27,6 +27,10 @@ namespace NES::Nautilus::Interface {
  */
 class H3Hash : public HashFunction {
   public:
+    static constexpr auto H3_SEED = 42;
+
+    H3Hash();
+
     /**
      * @brief Initializes the hash by just returning zero
      * @return HashValue
@@ -53,7 +57,8 @@ class H3Hash : public HashFunction {
     HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
 
   private:
-    std::vector<uint64_t> h3Seeds;
+    uint64_t entrySizeH3HashSeed;
+    uint64_t numberOfKeyBits;
 };
 
 }// namespace NES::Nautilus::Interface
