@@ -172,16 +172,22 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
     //create the projection conditions for each signature
     createProjectionFOL(leftSignature, leftQueryProjectionFOL);
     createProjectionFOL(rightSignature, rightQueryProjectionFOL);
-    // We first check if the first order logic (FOL) is equal for projections, if not we move on to check for containment relationships.
-    // We added heuristic checks to prevent unnecessary calls to the SMT solver
-    // if (!rightFOL && leftFOL == unsat, aka leftFOL ⊆ rightFOL
-    //      && filters are equal)
-    //        if (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+    // We first check if the left query signature's projection first order logic (FOL) is contained by the right signature's projections FOL,
+    // if yes, we check for equal transformations
+    // then we move on to check for equality and attribute order equality
+    // if those checks passed, we return equality
+    // else if that check failed, we check for filter equality and return left signature contained if we have equal filters
+    // Otherwise, we check the other containment relationship in the same manner but exclude the equality check
+    // if (!rightProjectionFOL && leftProjectionFOL == unsat, aka rightProjectionFOL ⊆ leftProjectionFOL
+    //      && rightTransformationFOL != leftTransformationFOL == unsat, aka rightTransformationFOL == leftTransformationFOL
+    //        if (rightProjectionFOL && !leftProjectionFOL == unsat, aka rightProjectionFOL ⊆ leftProjectionFOL)
     //            true: return Equality
-    //      true: return Right sig contained
-    // else if (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+    //        if (checkFilterContainment(leftSignature, rightSignature) == ContainmentType::EQUALITY)
+    //            true: return Right sig contained
+    // else if (rightProjectionFOL && !leftProjectionFOL == unsat, aka leftProjectionFOL ⊆ rightProjectionFOL)
+    //      && rightTransformationFOL != leftTransformationFOL == unsat, aka rightTransformationFOL == leftTransformationFOL
     //      && filters are equal
-    //      true: return Left sig contained
+    //          true: return Left sig contained
     // else: No_Containment
     if (checkContainmentConditionsUnsatisfied(rightQueryProjectionFOL, leftQueryProjectionFOL)
         && checkForEqualTransformations(leftSignature, rightSignature)) {
@@ -430,10 +436,10 @@ std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperat
 }
 
 void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
-    //check projection containment
-    // if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
-    // else we indicate that the attribute is involved in the projection as attributeStingName == true
-    // all FOL are added to the projectionCondition vector
+    //create projection FOL
+    //We create a boolean value that we set to true for each attribute present in the schemaFieldToExprMaps
+    //We create an and expression for those values
+    //in case there is a union present, we create an or expression for each schemaFieldToExprMap in the vector
     z3::expr_vector orFOlForUnion(*context);
     NES_TRACE("Length of schemaFieldToExprMaps: {}", signature->getSchemaFieldToExprMaps().size());
     for (auto schemaFieldToExpressionMap : signature->getSchemaFieldToExprMaps()) {
@@ -486,14 +492,14 @@ bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignature
                 resetSolver();
             }
 
-            //If schema is matched then remove the other schema from the list to avoid duplicate matching
+            //If the transformations are equal then remove the other schema from the list to avoid duplicate matching
             if (schemaMatched) {
                 otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
                 break;
             }
         }
 
-        //If a matching schema doesn't exist in other signature then two signatures are different
+        //If the transformations are not equal two signatures are different and cannot be contained or equal
         if (!schemaMatched) {
             NES_WARNING2("QuerySignature: Both signatures have different column entries");
             return false;
