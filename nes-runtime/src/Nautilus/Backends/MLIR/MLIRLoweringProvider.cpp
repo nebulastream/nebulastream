@@ -314,14 +314,16 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseX
     frame.setValue(xorOperation->getIdentifier(), mlirBitwiseXorOp);
 }
 
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseLeftShiftOperation> leftShiftOperation, ValueFrame& frame) {
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseLeftShiftOperation> leftShiftOperation,
+                                        ValueFrame& frame) {
     auto leftInput = frame.getValue(leftShiftOperation->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(leftShiftOperation->getRightInput()->getIdentifier());
     auto mlirBitwiseLeftShiftOp = builder->create<mlir::arith::ShLIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
     frame.setValue(leftShiftOperation->getIdentifier(), mlirBitwiseLeftShiftOp);
 }
 
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseRightShiftOperation> rightShiftOperation, ValueFrame& frame) {
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseRightShiftOperation> rightShiftOperation,
+                                        ValueFrame& frame) {
     auto leftInput = frame.getValue(rightShiftOperation->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(rightShiftOperation->getRightInput()->getIdentifier());
     auto mlirBitwiseRightShiftOp = builder->create<mlir::arith::ShRSIOp>(getNameLoc("binOpResult"), leftInput, rightInput);
