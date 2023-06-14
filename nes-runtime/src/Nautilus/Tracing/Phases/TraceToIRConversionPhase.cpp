@@ -20,14 +20,14 @@
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseLeftShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseOrOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseRightShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseOrOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseRightShiftOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseLeftShiftOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
@@ -131,28 +131,23 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             processNegate(scope, frame, currentIrBlock, operation);
             return;
         };
-        case OpCode::BITWISE_AND:
-        {
+        case OpCode::BITWISE_AND: {
             processBitWiseAnd(scope, frame, currentIrBlock, operation);
             return;
         };
-        case OpCode::BITWISE_OR:
-        {
+        case OpCode::BITWISE_OR: {
             processBitWiseOr(scope, frame, currentIrBlock, operation);
             return;
         };
-        case OpCode::BITWISE_XOR:
-        {
+        case OpCode::BITWISE_XOR: {
             processBitWiseXor(scope, frame, currentIrBlock, operation);
             return;
         };
-        case OpCode::BITWISE_LEFT_SHIFT:
-        {
+        case OpCode::BITWISE_LEFT_SHIFT: {
             processBitWiseLeftShift(scope, frame, currentIrBlock, operation);
             return;
         };
-        case OpCode::BITWISE_RIGHT_SHIFT:
-        {
+        case OpCode::BITWISE_RIGHT_SHIFT: {
             processBitWiseRightShift(scope, frame, currentIrBlock, operation);
             return;
         };
@@ -448,57 +443,62 @@ void TraceToIRConversionPhase::IRConversionContext::processOr(int32_t,
     currentBlock->addOperation(orOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processBitWiseAnd(int32_t,
-                                                              ValueFrame& frame,
-                                                              NES::Nautilus::IR::BasicBlockPtr& currentBlock,
-                                                              TraceOperation& operation) {
+                                                                      ValueFrame& frame,
+                                                                      NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                                      TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto orOperation = std::make_shared<NES::Nautilus::IR::Operations::BitWiseAndOperation>(resultIdentifier, leftInput, rightInput);
+    auto orOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::BitWiseAndOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, orOperation);
     currentBlock->addOperation(orOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processBitWiseOr(int32_t,
-                                                              ValueFrame& frame,
-                                                              NES::Nautilus::IR::BasicBlockPtr& currentBlock,
-                                                              TraceOperation& operation) {
+                                                                     ValueFrame& frame,
+                                                                     NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                                     TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto orOperation = std::make_shared<NES::Nautilus::IR::Operations::BitWiseOrOperation>(resultIdentifier, leftInput, rightInput);
+    auto orOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::BitWiseOrOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, orOperation);
     currentBlock->addOperation(orOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processBitWiseXor(int32_t,
-                                                              ValueFrame& frame,
-                                                              NES::Nautilus::IR::BasicBlockPtr& currentBlock,
-                                                              TraceOperation& operation) {
+                                                                      ValueFrame& frame,
+                                                                      NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                                      TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto orOperation = std::make_shared<NES::Nautilus::IR::Operations::BitWiseXorOperation>(resultIdentifier, leftInput, rightInput);
+    auto orOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::BitWiseXorOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, orOperation);
     currentBlock->addOperation(orOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processBitWiseLeftShift(int32_t,
-                                                              ValueFrame& frame,
-                                                              NES::Nautilus::IR::BasicBlockPtr& currentBlock,
-                                                              TraceOperation& operation) {
+                                                                            ValueFrame& frame,
+                                                                            NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                                            TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto orOperation = std::make_shared<NES::Nautilus::IR::Operations::BitWiseLeftShiftOperation>(resultIdentifier, leftInput, rightInput);
+    auto orOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::BitWiseLeftShiftOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, orOperation);
     currentBlock->addOperation(orOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processBitWiseRightShift(int32_t,
-                                                              ValueFrame& frame,
-                                                              NES::Nautilus::IR::BasicBlockPtr& currentBlock,
-                                                              TraceOperation& operation) {
+                                                                             ValueFrame& frame,
+                                                                             NES::Nautilus::IR::BasicBlockPtr& currentBlock,
+                                                                             TraceOperation& operation) {
     auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
     auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
     auto resultIdentifier = createValueIdentifier(operation.result);
-    auto orOperation = std::make_shared<NES::Nautilus::IR::Operations::BitWiseRightShiftOperation>(resultIdentifier, leftInput, rightInput);
+    auto orOperation =
+        std::make_shared<NES::Nautilus::IR::Operations::BitWiseRightShiftOperation>(resultIdentifier, leftInput, rightInput);
     frame.setValue(resultIdentifier, orOperation);
     currentBlock->addOperation(orOperation);
 }

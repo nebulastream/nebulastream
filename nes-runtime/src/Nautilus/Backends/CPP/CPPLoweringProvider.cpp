@@ -17,12 +17,12 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/BitWiseAndOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseOrOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/BitWiseRightShiftOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/BitWiseLeftShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseOrOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseRightShiftOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/BitWiseXorOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
