@@ -14,5 +14,5 @@ def doTest(size):
         print(f'return value + 42;\n    return value;}}', file=out)
         print('}', file=out)
 
-for size in [1, 10, 100, 500, 1000]:
+for size in [1, 10, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]:
     doTest(size)
