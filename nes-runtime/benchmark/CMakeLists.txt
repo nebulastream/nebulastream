@@ -43,6 +43,7 @@ target_link_libraries(stream-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
 
 add_executable(udf-benchmark "UDFs/UDFBenchmark.cpp")
 target_link_libraries(udf-benchmark PUBLIC nes-runtime-benchmark)
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/../tests/testData/")
 
 set(SHELL_SCRIPT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/path/to/shell/file")
 

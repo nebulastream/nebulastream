@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_UPPERCASE_MAP_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_UPPERCASE_MAP_HPP_
+#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_FILTER_HPP_
+#define NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_FILTER_HPP_
 
 #include "Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
@@ -54,40 +54,47 @@
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
-class UppercaseMap {
+class FilterUDF {
   public:
     static PipelinePlan getPipelinePlan(std::unique_ptr<NES::Runtime::Table>& table, Runtime::BufferManagerPtr bm) {
         std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
-      //  std::string testDataPath =
-      //      "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
+        //  std::string testDataPath =
+        //     "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
         auto schema = table->getLayout()->getSchema();
         PipelinePlan plan;
+        std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {"value"};
         auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(table->getLayout()));
-
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(table->getLayout()),
+            projections);
         auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        std::shared_ptr<Operators::ExecutableOperator> mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
+        auto UDFResultSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::BOOLEAN);
+        std::shared_ptr<Operators::ExecutableOperator> mapOperator =
+            std::make_shared<Operators::MapJavaUDF>(0, schema, UDFResultSchema);
         scan->setChild(mapOperator);
-        auto resultLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+        auto resultLayout = Runtime::MemoryLayouts::ColumnLayout::create(UDFResultSchema, bm->getBufferSize());
         auto emitMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(resultLayout));
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        mapOperator->setChild(emitOperator);
 
+        auto value = std::make_shared<Expressions::ReadFieldExpression>("value");
+        std::shared_ptr<Operators::ExecutableOperator> filterOperator = std::make_shared<Operators::Selection>(value);
+        mapOperator->setChild(filterOperator);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        filterOperator->setChild(emitOperator);
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scan);
         std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
         std::vector<char> serializedInstance = {};
-        auto handler = std::make_shared<Operators::JavaUDFOperatorHandler>("stream/nebula/UppercaseFunction",
+        auto handler = std::make_shared<Operators::JavaUDFOperatorHandler>("stream/nebula/CrimeIndexFunction",
                                                                            "map",
-                                                                           "java/lang/String",
-                                                                           "java/lang/String",
+                                                                           "java/lang/Integer",
+                                                                           "java/lang/Boolean",
                                                                            byteCodeList,
                                                                            serializedInstance,
                                                                            schema,
-                                                                           schema,
+                                                                           UDFResultSchema,
                                                                            testDataPath);
+
         std::vector<OperatorHandlerPtr> handlers = {handler};
         auto pipelineContext = std::make_shared<BlackholePipelineExecutionContext>(handlers);
         plan.appendPipeline(pipeline, pipelineContext);
@@ -96,4 +103,4 @@ class UppercaseMap {
 };
 
 }// namespace NES::Runtime::Execution
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_UPPERCASE_MAP_HPP_
+#endif//NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_FILTER_HPP_

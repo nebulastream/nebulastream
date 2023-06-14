@@ -57,14 +57,15 @@ using namespace Operators;
 class SimpleMap {
   public:
     static PipelinePlan getPipelinePlan(std::unique_ptr<NES::Runtime::Table>& table, Runtime::BufferManagerPtr bm) {
-        std::string testDataPath =
-            "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
+        std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
+      //  std::string testDataPath =
+       //     "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
         auto schema = table->getLayout()->getSchema();
         PipelinePlan plan;
+        std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {"value"};
         auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(table->getLayout()));
-        std::vector<std::string> projections = {"value"};
-        auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(table->getLayout()), projections);
+        auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
         std::shared_ptr<Operators::ExecutableOperator> mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
         scan->setChild(mapOperator);

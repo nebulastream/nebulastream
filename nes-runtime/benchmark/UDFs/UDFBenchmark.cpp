@@ -13,6 +13,7 @@
 */
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
 #include "Table.hpp"
+#include "UDF/FilterMap.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -48,7 +49,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
+#include <UDF/CrimeIndexMap.hpp>
 #include <UDF/DistanceMap.hpp>
+#include <UDF/FilterMap.hpp>
 #include <UDF/SimpleMap.hpp>
 #include <UDF/UppercaseMap.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -244,7 +247,7 @@ class UppercaseMapRunner : public BenchmarkRunner {
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024*10) / sizeof(int32_t);
+        int32_t integers = (1024 * 10) / sizeof(int32_t);
         for (int32_t i = 0; i < integers; i++) {
             auto text = TextValue::create("hello");
             tb.append(std::make_tuple(text));
@@ -253,6 +256,108 @@ class UppercaseMapRunner : public BenchmarkRunner {
 
         table = tb.finishTable();
         plan = NES::Runtime::Execution::UppercaseMap::getPipelinePlan(table, bm);
+    }
+    void compileQuery(Timer<>& compileTimeTimer) override {
+
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
+
+        compileTimeTimer.start();
+        auto pipeline1 = plan.getPipeline(0);
+        aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
+        // we call setup here to force compilation
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        compileTimeTimer.snapshot("compilation");
+        compileTimeTimer.pause();
+    }
+    void runQuery(Timer<>& executionTimeTimer) override {
+        auto pipeline1 = plan.getPipeline(0);
+        executionTimeTimer.start();
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        for (auto& chunk : table->getChunks()) {
+            aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
+        }
+        executionTimeTimer.snapshot("execute emit");
+        executionTimeTimer.pause();
+        aggExecutablePipeline->stop(*pipeline1.ctx);
+    }
+};
+
+class FilterUDFRunner : public BenchmarkRunner {
+  public:
+    FilterUDFRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
+    PipelinePlan plan;
+    std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
+    std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
+    std::unique_ptr<Table> table;
+    void setup() override {
+        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::INT32);
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, table_bm->getBufferSize());
+        auto tb = TableBuilder(table_bm, memoryLayout);
+
+        // create 100MB of data
+        int32_t integers = (1024 * 100) / sizeof(int32_t);
+        for (int32_t i = 0; i < integers; i++) {
+            tb.append(std::make_tuple((int32_t) i));
+        }
+
+        table = tb.finishTable();
+        plan = NES::Runtime::Execution::FilterUDF::getPipelinePlan(table, bm);
+    }
+    void compileQuery(Timer<>& compileTimeTimer) override {
+
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
+
+        compileTimeTimer.start();
+        auto pipeline1 = plan.getPipeline(0);
+        aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
+        // we call setup here to force compilation
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        compileTimeTimer.snapshot("compilation");
+        compileTimeTimer.pause();
+    }
+    void runQuery(Timer<>& executionTimeTimer) override {
+        auto pipeline1 = plan.getPipeline(0);
+        executionTimeTimer.start();
+        aggExecutablePipeline->setup(*pipeline1.ctx);
+        for (auto& chunk : table->getChunks()) {
+            aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
+        }
+        executionTimeTimer.snapshot("execute emit");
+        executionTimeTimer.pause();
+        aggExecutablePipeline->stop(*pipeline1.ctx);
+    }
+};
+
+class CrimeIndexUDFRunner : public BenchmarkRunner {
+  public:
+    CrimeIndexUDFRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
+    PipelinePlan plan;
+    std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
+    std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
+    std::unique_ptr<Table> table;
+    void setup() override {
+
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("total_population", BasicType::INT64)
+                          ->addField("total_adult_population", BasicType::INT64)
+                          ->addField("number_of_robberies", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, table_bm->getBufferSize());
+        auto tb = TableBuilder(table_bm, memoryLayout);
+
+        // create 100MB of data
+        int32_t integers = (1024 * 100) / sizeof(int32_t);
+        for (int32_t i = 0; i < integers; i++) {
+            auto total_population = i % 100 == 0 ? 100000 : 255;
+            total_population = (total_population * (i%42)) / 2;
+            auto total_adult_population = (int64_t)(total_population * 0.7);
+            auto number_of_robberies = (int64_t)(total_population * 0.01);
+            tb.append(std::make_tuple((int64_t) total_population, total_adult_population, number_of_robberies));
+        }
+
+        table = tb.finishTable();
+        plan = NES::Runtime::Execution::CrimeIndexMap::getPipelinePlan(table, bm);
     }
     void compileQuery(Timer<>& compileTimeTimer) override {
 
@@ -307,6 +412,10 @@ int main(int argc, char** argv) {
         NES::Runtime::Execution::DistanceMapRunner(options).run();
     } else if (query == "uppercase") {
         NES::Runtime::Execution::UppercaseMapRunner(options).run();
+    } else if (query == "filter") {
+        NES::Runtime::Execution::FilterUDFRunner(options).run();
+    } else if (query == "crime") {
+        NES::Runtime::Execution::CrimeIndexUDFRunner(options).run();
     }
     return 0;
 }

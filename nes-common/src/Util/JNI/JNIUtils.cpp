@@ -81,7 +81,7 @@ jobject createByte(int8_t value) { return createObjectType(value, "java/lang/Byt
 jstring createString(const std::string_view& value) {
     auto env = getEnv();
     jstring string = env->NewStringUTF(value.data());
-    return static_cast<jstring>(getEnv()->NewGlobalRef((jobject) string));
+    return static_cast<jstring>(string);
 }
 
 template<typename T>

@@ -65,7 +65,7 @@ Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handl
     if (operatorOutputSchema->fields.size() == 1) {
         // 1. Simple, the output schema contains only one field
         const auto field = operatorOutputSchema->fields[0];
-        const auto fieldName = field->getName();
+        const auto& fieldName = field->getName();
 
         if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
             Value<> val = FunctionCall<>("getBooleanObjectValue", getBooleanObjectValue, outputPojoPtr);

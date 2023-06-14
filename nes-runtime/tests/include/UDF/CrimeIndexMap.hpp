@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_UPPERCASE_MAP_HPP_
-#define NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_UPPERCASE_MAP_HPP_
+#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_CRIME_INDEX_MAP_HPP_
+#define NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_CRIME_INDEX_MAP_HPP_
 
 #include "Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
@@ -54,41 +54,57 @@
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
-class UppercaseMap {
+class CrimeIndexMap {
   public:
-    static PipelinePlan getPipelinePlan(std::unique_ptr<NES::Runtime::Table>& table, Runtime::BufferManagerPtr bm) {
+    static PipelinePlan getPipelinePlan(std::unique_ptr<NES::Runtime::Table>& table, Runtime::BufferManagerPtr) {
         std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
-      //  std::string testDataPath =
-      //      "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
+        //     "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
         auto schema = table->getLayout()->getSchema();
-        PipelinePlan plan;
-        auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(table->getLayout()));
 
+        auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("crimeIndex", BasicType::FLOAT64);
+        PipelinePlan plan;
+        auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(table->getLayout()));
         auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        std::shared_ptr<Operators::ExecutableOperator> mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
+        //auto value = std::make_shared<Expressions::ReadFieldExpression>("total_population");
+        //std::shared_ptr<Operators::ExecutableOperator> filterOperator = std::make_shared<Operators::Selection>(value);
+        //scan->setChild(filterOperator);
+
+        std::shared_ptr<Operators::ExecutableOperator> mapOperator =
+            std::make_shared<Operators::MapJavaUDF>(0, schema, resultSchema);
         scan->setChild(mapOperator);
-        auto resultLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
-        auto emitMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(resultLayout));
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        mapOperator->setChild(emitOperator);
+
+        auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+        PhysicalTypePtr doubleType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
+        auto crimeIndexField = std::make_shared<Expressions::ReadFieldExpression>("crimeIndex");
+
+        //  replace with max
+        Nautilus::Record::RecordFieldIdentifier resultField = "crimeIndex";
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
+            std::make_shared<Aggregation::SumAggregationFunction>(doubleType, doubleType, crimeIndexField, resultField)};
+        auto aggregation = std::make_shared<Operators::BatchAggregation>(1 /*handler index*/, aggregationFunctions);
+        mapOperator->setChild(aggregation);
+
+       // auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+       // auto emitMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(resultLayout);
+       // auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+       // mapOperator->setChild(emitOperator);
 
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scan);
         std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
         std::vector<char> serializedInstance = {};
-        auto handler = std::make_shared<Operators::JavaUDFOperatorHandler>("stream/nebula/UppercaseFunction",
+        auto handler = std::make_shared<Operators::JavaUDFOperatorHandler>("stream/nebula/CrimeIndexFunction",
                                                                            "map",
-                                                                           "java/lang/String",
-                                                                           "java/lang/String",
+                                                                           "stream/nebula/CityDataPojo",
+                                                                           "java/lang/Double",
                                                                            byteCodeList,
                                                                            serializedInstance,
                                                                            schema,
-                                                                           schema,
+                                                                           resultSchema,
                                                                            testDataPath);
-        std::vector<OperatorHandlerPtr> handlers = {handler};
+        std::vector<OperatorHandlerPtr> handlers = {handler, std::make_shared<Operators::BatchAggregationHandler>()};
         auto pipelineContext = std::make_shared<BlackholePipelineExecutionContext>(handlers);
         plan.appendPipeline(pipeline, pipelineContext);
         return plan;
@@ -96,4 +112,4 @@ class UppercaseMap {
 };
 
 }// namespace NES::Runtime::Execution
-#endif//NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_UPPERCASE_MAP_HPP_
+#endif//NES_NES_RUNTIME_TESTS_INCLUDE_UDFS_CRIME_INDEX_MAP_HPP_

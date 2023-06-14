@@ -57,16 +57,15 @@ using namespace Operators;
 class DistanceMap {
   public:
     static PipelinePlan getPipelinePlan(std::unique_ptr<NES::Runtime::Table>& table, Runtime::BufferManagerPtr bm) {
-        std::string testDataPath =
-            "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
+        std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUDFTestData/";
+       //     "/home/pgrulich/projects/nes/nebulastream/cmake-build-release/nes-runtime/tests/testData/JavaUDFTestData";
         auto schema = table->getLayout()->getSchema();
 
         auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("distance", BasicType::FLOAT64);
         PipelinePlan plan;
         auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(table->getLayout()));
-        std::vector<std::string> projections = {};
-        auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
+        auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
         std::shared_ptr<Operators::ExecutableOperator> mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, resultSchema);
         scan->setChild(mapOperator);
