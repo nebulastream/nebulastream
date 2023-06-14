@@ -103,17 +103,17 @@ class OperatorNode : public Node {
 
     /**
      * Check if a node with the id is either a child or a grandchild of this operator
-     * @param operatorId : the operator id to look up
+     * @param operatorNode : the operator node whose id need to be looked up
      * @return true if operator with the input id is a child or grand child
      */
-    bool containAsGrandChild(NodePtr node) override;
+    bool containAsGrandChild(NodePtr operatorNode) override;
 
     /**
      * Check if a node with the id is either a parent or a grandparent of this operator
-     * @param operatorId : the operator id to look up
+     * @param operatorNode : the operator node whose id need to be looked up
      * @return true if operator with the input id is a child or grand child
      */
-    bool containAsGrandParent(NodePtr node) override;
+    bool containAsGrandParent(NodePtr operatorNode) override;
 
     /**
      * @brief Method to get the output schema of the operator

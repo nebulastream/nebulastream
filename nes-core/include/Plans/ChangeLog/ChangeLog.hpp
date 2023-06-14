@@ -25,6 +25,8 @@ namespace NES::Optimizer::Experimental {
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
 
+using Timestamp = uint64_t;
+
 /**
  * @brief: ChangeLog records changes occurring to a shared query plan due to dynamism in the underlying topology, or due to incoming and outgoing stream queries.
  * For each external event we create a @see ChangeLogEntry with a timestamp when the change occurred. We store this information in a B-Tree where key is the timestamp when he change log entry was created.
@@ -39,20 +41,20 @@ class ChangeLog {
      * @param timestamp: the timestamp of the change log entry
      * @param changeLogEntry: the change log entry
      */
-    void addChangeLogEntry(uint64_t timestamp, ChangeLogEntryPtr&& changeLogEntry);
+    void addChangeLogEntry(Timestamp timestamp, ChangeLogEntryPtr&& changeLogEntry);
 
     /**
      * @brief Get non-overlapping change log entries before the timestamp
      * @param timestamp: the timestamp before which the changelog entries need to be sent
      * @return vector of non-overlapping change log entries
      */
-    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> getCompressedChangeLogEntriesBefore(uint64_t timestamp);
+    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getCompressedChangeLogEntriesBefore(Timestamp timestamp);
 
     /**
      * @brief: Update the timestamp till which the change log entries are processed
      * @param timestamp: the timestamp after which the change log entries need to be retrieved
      */
-    void updateProcessedChangeLogTimestamp(uint64_t timestamp);
+    void updateProcessedChangeLogTimestamp(Timestamp timestamp);
 
   protected:
     /**
@@ -60,14 +62,14 @@ class ChangeLog {
      * @param timestamp : the timestamp after which the change log entries need to be retrieved
      * @return a vector of change log entries
      */
-    std::vector<std::pair<uint64_t, ChangeLogEntryPtr>> getChangeLogEntriesBefore(uint64_t timestamp);
+    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getChangeLogEntriesBefore(Timestamp timestamp);
 
   private:
     ChangeLog() = default;
 
     /**
      * @brief: Compact change log by combining overlapping change log entries into a single changelog entry.
-     * @note: Overlapping change log entry means that the sub-query plans represented by thew change log entries are overlapping
+     * @note: Overlapping change log entry means that the sub-query plans represented by the change log entries are overlapping
      * with each other.
      * @param timestamp: the timestamp till which the log is to be compacted
      */
@@ -78,17 +80,17 @@ class ChangeLog {
      * @param changeLogEntriesToMerge: entries to be merged
      * @return merged change log entry
      */
-    ChangeLogEntryPtr mergeChangeLogs(std::vector<std::pair<uint64_t, ChangeLogEntryPtr>>& changeLogEntriesToMerge);
+    ChangeLogEntryPtr mergeChangeLogs(std::vector<std::pair<Timestamp, ChangeLogEntryPtr>>& changeLogEntriesToMerge);
 
     /**
      * @brief Clean up the change log entries created before the provided timestamp
      * @param timestamp : the timestamp before which the change log entries need to be removed
      */
-    void removeChangeLogsBefore(uint64_t timestamp);
+    void removeChangeLogsBefore(Timestamp timestamp);
 
     // time stamp till which all change log entries are processed
-    uint64_t lastProcessedChangeLogTimestamp;
-    absl::btree_map<uint64_t, ChangeLogEntryPtr> changeLogEntries;
+    Timestamp lastProcessedChangeLogTimestamp;
+    absl::btree_map<Timestamp, ChangeLogEntryPtr> changeLogEntries;
 };
 }// namespace NES::Optimizer::Experimental
 #endif// NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
