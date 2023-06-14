@@ -8,7 +8,8 @@ namespace NES::Runtime::Execution::Expressions {
 ConstantDecimalExpression::ConstantDecimalExpression(int8_t precision, int64_t value) : precision(precision), value(value) {}
 
 Value<> ConstantDecimalExpression::execute(NES::Nautilus::Record&) const {
-    return Value<Numeric>(std::make_shared<Numeric>(precision, value));
+    auto valueField = Value<Int64>(value);
+    return Value<Numeric>(std::make_shared<Numeric>(precision, valueField));
 }
 
 }// namespace NES::Runtime::Execution::Expressions

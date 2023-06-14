@@ -47,6 +47,7 @@ KeyedThreadLocalSliceStore& KeyedThreadLocalPreAggregationOperatorHandler::getTh
 
 void KeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                                           NES::Experimental::HashMapFactoryPtr hashmapFactory) {
+    this->threadLocalSliceStores.clear();
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto threadLocalSliceStore = std::make_unique<KeyedThreadLocalSliceStore>(hashmapFactory, windowSize, windowSlide);
         threadLocalSliceStores.emplace_back(std::move(threadLocalSliceStore));
@@ -139,6 +140,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
             }
         }
     }
+    this->threadLocalSliceStores.clear();
 }
 
 KeyedThreadLocalPreAggregationOperatorHandler::~KeyedThreadLocalPreAggregationOperatorHandler() {

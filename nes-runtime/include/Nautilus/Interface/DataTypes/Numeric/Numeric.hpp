@@ -17,8 +17,8 @@ class Numeric : public Any {
   public:
     static const inline auto type = TypeIdentifier::create<Numeric>();
 
-    Numeric(int8_t precision, int64_t value);
-    Numeric(int8_t precision, Value<Int64> value);
+    explicit Numeric(int8_t precision, int64_t value);
+    explicit Numeric(int8_t precision, Value<Int64> value);
 
     Value<Numeric> add(Value<Numeric>& other);
     Value<Numeric> sub(Value<Numeric>& other);

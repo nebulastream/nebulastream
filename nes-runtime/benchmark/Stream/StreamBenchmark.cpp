@@ -46,11 +46,11 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Stream/Nexmark1.hpp>
+#include <Stream/Nexmark2.hpp>
+#include <Stream/YSB.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
-#include <UDF/DistanceMap.hpp>
-#include <UDF/SimpleMap.hpp>
-#include <UDF/UppercaseMap.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <benchmark/benchmark.h>
@@ -69,17 +69,32 @@ struct BenchmarkOptions {
     std::string identifier;
     std::string query;
 };
+static constexpr long PERSON_EVENT_RATIO = 1;
+static constexpr long AUCTION_EVENT_RATIO = 4;
+static constexpr long BID_EVENT_RATIO = 4;
+static constexpr long TOTAL_EVENT_RATIO = PERSON_EVENT_RATIO + AUCTION_EVENT_RATIO + BID_EVENT_RATIO;
+
+static constexpr int MAX_PARALLELISM = 50;
+
+static constexpr long MAX_PERSON_ID = 540000000L;
+static constexpr long MAX_AUCTION_ID = 540000000000L;
+static constexpr long MAX_BID_ID = 540000000000L;
+
+static constexpr int HOT_SELLER_RATIO = 100;
+static constexpr int HOT_AUCTIONS_PROB = 85;
+static constexpr int HOT_AUCTION_RATIO = 100;
 
 class BenchmarkRunner {
   public:
     BenchmarkRunner(BenchmarkOptions bmOptions) : bmOptions(bmOptions) {
         NES::Logger::setupLogging("BenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(bmOptions.compiler).get();
-        table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
+        table_bm = std::make_shared<Runtime::BufferManager>(1024 * 1024, 10000);
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        wc = std::make_shared<WorkerContext>(0, bm, 1000);
         options.setOptimize(true);
-        options.setDumpToFile(true);
+        options.setDumpToFile(false);
+        options.setDumpToConsole(true);
     }
     void run() {
         setup();
@@ -112,8 +127,7 @@ class BenchmarkRunner {
         std::ofstream file(bmOptions.identifier, std::ios::app);
         if (file.is_open()) {
             // Append the file: query, compiler, compiletime, execution time
-            file << fmt::format("{},{},{},{}", bmOptions.query, bmOptions.compiler, avgCompilationTime, avgExecutionTime)
-                 << std::endl;
+            file << fmt::format("{},{},{},{}", bmOptions.query, bmOptions.compiler, 0, avgExecutionTime) << std::endl;
             file.flush();
             file.close();
         } else {
@@ -134,26 +148,96 @@ class BenchmarkRunner {
     BenchmarkOptions bmOptions;
 };
 
-class NX1 : public BenchmarkRunner {
-  public:
-    SimpleMapRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
-    PipelinePlan plan;
-    std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
-    std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
+class AbstractNexmarkBenchmark : public BenchmarkRunner {
+  protected:
+    AbstractNexmarkBenchmark(BenchmarkOptions options) : BenchmarkRunner(options){};
+
     std::unique_ptr<Table> table;
     void setup() override {
-        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::INT32);
+        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                          ->addField("auctionId", BasicType::INT64)
+                          ->addField("bidderId", BasicType::INT64)
+                          ->addField("price", DataTypeFactory::createDecimal(2));
+
         auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, table_bm->getBufferSize());
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024 * 1024 * 5) / sizeof(int32_t);
-        for (int32_t i = 0; i < integers; i++) {
-            tb.append(std::make_tuple((int32_t) i));
+        int32_t records = (1024 * 1024 * 5) / sizeof(int32_t);
+        for (int32_t i = 0; i < records; i++) {
+
+            long auction, bidder;
+            long epoch = i / TOTAL_EVENT_RATIO;
+
+            if (rand() % 100 > HOT_AUCTIONS_PROB) {
+                auction = (((epoch * AUCTION_EVENT_RATIO + AUCTION_EVENT_RATIO - 1) / HOT_AUCTION_RATIO) * HOT_AUCTION_RATIO);
+            } else {
+                long a = std::max(0L, epoch * AUCTION_EVENT_RATIO + AUCTION_EVENT_RATIO - 1 - 20000);
+                long b = epoch * AUCTION_EVENT_RATIO + AUCTION_EVENT_RATIO - 1;
+                auction = a + rand() % (b - a + 1 + 100);
+            }
+
+            if (rand() % 100 > 85) {
+                long personId = epoch * PERSON_EVENT_RATIO + PERSON_EVENT_RATIO - 1;
+                bidder = (personId / HOT_SELLER_RATIO) * HOT_SELLER_RATIO;
+            } else {
+                long personId = epoch * PERSON_EVENT_RATIO + PERSON_EVENT_RATIO - 1;
+                long activePersons = std::min(personId, 60000L);
+                long n = rand() % (activePersons + 100);
+                bidder = personId + activePersons - n;
+            }
+
+            tb.append(std::make_tuple((int64_t) auction, (int64_t) bidder, /*writes a decimal for 0.1*/ (int64_t) 10));
         }
 
         table = tb.finishTable();
-        plan = NES::Runtime::Execution::SimpleMap::getPipelinePlan(table, bm);
+    }
+};
+
+class NX1 : public AbstractNexmarkBenchmark {
+  public:
+    NX1(BenchmarkOptions options) : AbstractNexmarkBenchmark(options){};
+    PipelinePlan plan;
+    std::unique_ptr<ExecutablePipelineStage> piepeline;
+    void setup() override {
+        AbstractNexmarkBenchmark::setup();
+        plan = NES::Runtime::Execution::Nexmark1::getPipelinePlan(table, bm);
+    }
+    void compileQuery(Timer<>& compileTimeTimer) override {
+
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
+        std::shared_ptr<MockedPipelineExecutionContext> ctx;
+
+        compileTimeTimer.start();
+        auto pipeline1 = plan.getPipeline(0);
+        piepeline = provider->create(pipeline1.pipeline, options);
+        // we call setup here to force compilation
+        piepeline->setup(*pipeline1.ctx);
+        compileTimeTimer.snapshot("compilation");
+        compileTimeTimer.pause();
+    }
+    void runQuery(Timer<>& executionTimeTimer) override {
+        auto pipeline1 = plan.getPipeline(0);
+        executionTimeTimer.start();
+        piepeline->setup(*pipeline1.ctx);
+        for (auto& chunk : table->getChunks()) {
+            piepeline->execute(chunk, *pipeline1.ctx, *wc);
+        }
+        executionTimeTimer.snapshot("execute emit");
+        executionTimeTimer.pause();
+        piepeline->stop(*pipeline1.ctx);
+    }
+};
+
+class NX2 : public AbstractNexmarkBenchmark {
+  public:
+    NX2(BenchmarkOptions options) : AbstractNexmarkBenchmark(options){};
+    PipelinePlan plan;
+    std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
+    std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
+    void setup() override {
+        AbstractNexmarkBenchmark::setup();
+        plan = NES::Runtime::Execution::Nexmark2::getPipelinePlan(table, bm);
     }
     void compileQuery(Timer<>& compileTimeTimer) override {
 
@@ -181,26 +265,60 @@ class NX1 : public BenchmarkRunner {
     }
 };
 
-class NX2 : public BenchmarkRunner {
+class YSBRunner : public BenchmarkRunner {
   public:
-    SimpleMapRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
+    YSBRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
     PipelinePlan plan;
     std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
     std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
     std::unique_ptr<Table> table;
     void setup() override {
-        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::INT32);
+        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+                          ->addField("user_id", BasicType::UINT64)
+                          ->addField("page_id", BasicType::UINT64)
+                          ->addField("campaign_id", BasicType::UINT64)
+                          ->addField("ad_type", BasicType::UINT64)
+                          ->addField("event_type", BasicType::UINT64)
+                          ->addField("current_ms", BasicType::UINT64)
+                          ->addField("ip", BasicType::UINT64)
+                          ->addField("d1", BasicType::UINT64)
+                          ->addField("d2", BasicType::UINT64)
+                          ->addField("d3", BasicType::UINT32)
+                          ->addField("d4", BasicType::UINT16);
         auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, table_bm->getBufferSize());
         auto tb = TableBuilder(table_bm, memoryLayout);
 
         // create 100MB of data
-        int32_t integers = (1024 * 1024 * 5) / sizeof(int32_t);
-        for (int32_t i = 0; i < integers; i++) {
-            tb.append(std::make_tuple((int32_t) i));
-        }
+        int32_t records = (1024 * 1024 * 5) / sizeof(int32_t);
+        for (int32_t i = 0; i < records; i++) {
 
+            auto campaign_id = rand() % 1000;
+            auto event_type = i % 3; /*
+            dynamicBuffer[currentRecord]["user_id"].write<uint64_t>(1);
+            dynamicBuffer[currentRecord]["page_id"].write<uint64_t>(0);
+            dynamicBuffer[currentRecord]["campaign_id"].write<uint64_t>(campaign_id);
+            dynamicBuffer[currentRecord]["ad_type"].write<uint64_t>(0);
+            dynamicBuffer[currentRecord]["event_type"].write<uint64_t>(event_type);
+            dynamicBuffer[currentRecord]["current_ms"].write<uint64_t>(ts);
+            dynamicBuffer[currentRecord]["ip"].write<uint64_t>(0x01020304);
+            dynamicBuffer[currentRecord]["d1"].write<uint64_t>(1);
+            dynamicBuffer[currentRecord]["d2"].write<uint64_t>(1);
+            dynamicBuffer[currentRecord]["d3"].write<uint32_t>(1);
+            dynamicBuffer[currentRecord]["d4"].write<uint16_t>(1);*/
+            tb.append(std::make_tuple((uint64_t) 1,
+                                      (uint64_t) 0,
+                                      (uint64_t) campaign_id,
+                                      (uint64_t) 0,
+                                      (uint64_t) event_type,
+                                      (uint64_t) 1,
+                                      (uint64_t) 0x01020304,
+                                      (uint64_t) 1,
+                                      (uint64_t) 1,
+                                      (uint32_t) 1,
+                                      (uint16_t) 1));
+        }
         table = tb.finishTable();
-        plan = NES::Runtime::Execution::SimpleMap::getPipelinePlan(table, bm);
+        plan = NES::Runtime::Execution::YSB::getPipelinePlan(table, bm);
     }
     void compileQuery(Timer<>& compileTimeTimer) override {
 
@@ -214,11 +332,13 @@ class NX2 : public BenchmarkRunner {
         aggExecutablePipeline->setup(*pipeline1.ctx);
         compileTimeTimer.snapshot("compilation");
         compileTimeTimer.pause();
+        aggExecutablePipeline->stop(*pipeline1.ctx);
     }
     void runQuery(Timer<>& executionTimeTimer) override {
         auto pipeline1 = plan.getPipeline(0);
-        executionTimeTimer.start();
+
         aggExecutablePipeline->setup(*pipeline1.ctx);
+        executionTimeTimer.start();
         for (auto& chunk : table->getChunks()) {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
@@ -227,55 +347,6 @@ class NX2 : public BenchmarkRunner {
         aggExecutablePipeline->stop(*pipeline1.ctx);
     }
 };
-
-class YSB : public BenchmarkRunner {
-  public:
-    SimpleMapRunner(BenchmarkOptions options) : BenchmarkRunner(options){};
-    PipelinePlan plan;
-    std::unique_ptr<ExecutablePipelineStage> aggExecutablePipeline;
-    std::unique_ptr<ExecutablePipelineStage> emitExecutablePipeline;
-    std::unique_ptr<Table> table;
-    void setup() override {
-        auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)->addField("value", BasicType::INT32);
-        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, table_bm->getBufferSize());
-        auto tb = TableBuilder(table_bm, memoryLayout);
-
-        // create 100MB of data
-        int32_t integers = (1024 * 1024 * 5) / sizeof(int32_t);
-        for (int32_t i = 0; i < integers; i++) {
-            tb.append(std::make_tuple((int32_t) i));
-        }
-
-        table = tb.finishTable();
-        plan = NES::Runtime::Execution::SimpleMap::getPipelinePlan(table, bm);
-    }
-    void compileQuery(Timer<>& compileTimeTimer) override {
-
-        std::shared_ptr<PhysicalOperatorPipeline> pipeline;
-        std::shared_ptr<MockedPipelineExecutionContext> ctx;
-
-        compileTimeTimer.start();
-        auto pipeline1 = plan.getPipeline(0);
-        aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
-        // we call setup here to force compilation
-        aggExecutablePipeline->setup(*pipeline1.ctx);
-        compileTimeTimer.snapshot("compilation");
-        compileTimeTimer.pause();
-    }
-    void runQuery(Timer<>& executionTimeTimer) override {
-        auto pipeline1 = plan.getPipeline(0);
-        executionTimeTimer.start();
-        aggExecutablePipeline->setup(*pipeline1.ctx);
-        for (auto& chunk : table->getChunks()) {
-            aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
-        }
-        executionTimeTimer.snapshot("execute emit");
-        executionTimeTimer.pause();
-        aggExecutablePipeline->stop(*pipeline1.ctx);
-    }
-};
-
-
 
 }// namespace NES::Runtime::Execution
 int main(int argc, char** argv) {
@@ -298,12 +369,12 @@ int main(int argc, char** argv) {
                                                          .query = commandLineParams["query"]};
 
     auto query = commandLineParams["query"];
-    if (query == "simpleMap") {
-        NES::Runtime::Execution::SimpleMapRunner(options).run();
-    } else if (query == "distance") {
-        NES::Runtime::Execution::DistanceMapRunner(options).run();
-    } else if (query == "uppercase") {
-        NES::Runtime::Execution::UppercaseMapRunner(options).run();
+    if (query == "NX1") {
+        NES::Runtime::Execution::NX1(options).run();
+    } else if (query == "NX2") {
+        NES::Runtime::Execution::NX2(options).run();
+    } else if (query == "YSB") {
+        NES::Runtime::Execution::YSBRunner(options).run();
     }
     return 0;
 }

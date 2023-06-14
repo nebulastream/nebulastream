@@ -38,6 +38,9 @@ add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
 add_executable(tpch-benchmark "TPCH/TPCHBenchmark.cpp")
 target_link_libraries(tpch-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
 
+add_executable(stream-benchmark "Stream/StreamBenchmark.cpp")
+target_link_libraries(stream-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
+
 add_executable(udf-benchmark "UDFs/UDFBenchmark.cpp")
 target_link_libraries(udf-benchmark PUBLIC nes-runtime-benchmark)
 

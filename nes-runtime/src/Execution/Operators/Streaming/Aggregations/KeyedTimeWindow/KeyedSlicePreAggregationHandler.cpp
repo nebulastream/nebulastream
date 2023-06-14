@@ -41,6 +41,7 @@ KeyedThreadLocalSliceStore* KeyedSlicePreAggregationHandler::getThreadLocalSlice
 void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                             uint64_t keySize,
                                             uint64_t valueSize) {
+    threadLocalSliceStores.clear();
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         auto threadLocal = std::make_unique<KeyedThreadLocalSliceStore>(keySize, valueSize, windowSize, windowSlide);
         threadLocalSliceStores.emplace_back(std::move(threadLocal));
