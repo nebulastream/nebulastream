@@ -186,8 +186,8 @@ std::filesystem::path getLibPath(std::string libName) {
         NES_DEBUG2("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     } else {
-        std::stringstream libpathStr;
-        libpathStr << libPath.parent_path();
+        std::stringstream libPathStr;
+        libPathStr << libPath.parent_path();
         NES_DEBUG2("Invalid {} file found at {}. Searching next in DYLD_LIBRARY_PATH.", libName, libPathStr.str());
 
         std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
