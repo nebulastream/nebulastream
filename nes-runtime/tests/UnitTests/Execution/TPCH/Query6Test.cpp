@@ -122,7 +122,9 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     emitExecutablePipeline->stop(*pipeline2.ctx);
     timer.snapshot("stop");
     timer.pause();
-    NES_INFO2("Query Runtime:\n{}", timer);
+    std::stringstream = timerAsString;F
+    timerAsString << timer;
+    NES_INFO2("Query Runtime:\n{}", timerAsString.str());
     // compare results
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("revenue", BasicType::FLOAT32);
