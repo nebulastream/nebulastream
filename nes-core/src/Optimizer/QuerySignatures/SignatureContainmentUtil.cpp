@@ -86,7 +86,7 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
 
 std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
 SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOperatorNodePtr& leftOperator,
-                                                                      const LogicalOperatorNodePtr& rightOperator) {
+                                                              const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
@@ -183,7 +183,8 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
     //      && filters are equal
     //      true: return Left sig contained
     // else: No_Containment
-    if (checkContainmentConditionsUnsatisfied(rightQueryProjectionFOL, leftQueryProjectionFOL)) {
+    if (checkContainmentConditionsUnsatisfied(rightQueryProjectionFOL, leftQueryProjectionFOL)
+        && checkForEqualTransformations(leftSignature, rightSignature)) {
         if (checkContainmentConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)
             && checkAttributeOrder(leftSignature, rightSignature)) {
             NES_TRACE("Equal projection.");
@@ -192,6 +193,7 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
             return ContainmentType::RIGHT_SIG_CONTAINED;
         }
     } else if (checkContainmentConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)
+               && checkForEqualTransformations(leftSignature, rightSignature)
                && checkFilterContainment(leftSignature, rightSignature) == ContainmentType::EQUALITY) {
         return ContainmentType::LEFT_SIG_CONTAINED;
     }
@@ -432,29 +434,72 @@ void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& sign
     // if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
     // else we indicate that the attribute is involved in the projection as attributeStingName == true
     // all FOL are added to the projectionCondition vector
-    z3::expr_vector createSourceFOL(*context);
+    z3::expr_vector orFOlForUnion(*context);
     NES_TRACE("Length of schemaFieldToExprMaps: {}", signature->getSchemaFieldToExprMaps().size());
     for (auto schemaFieldToExpressionMap : signature->getSchemaFieldToExprMaps()) {
+        z3::expr_vector createSourceFOL(*context);
         for (auto [attributeName, z3Expression] : schemaFieldToExpressionMap) {
             NES_TRACE("SignatureContainmentUtil::createProjectionFOL: strings: {}", attributeName);
             NES_TRACE("SignatureContainmentUtil::createProjectionFOL: z3 expressions: {}", z3Expression->to_string());
-            z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const((attributeName.c_str())));
-            if (z3Expression->to_string() != attributeName) {
-                if (z3Expression->is_int()) {
-                    expr = std::make_shared<z3::expr>(context->int_const(attributeName.c_str()));
-                } else if (z3Expression->is_fpa()) {
-                    expr = std::make_shared<z3::expr>(context->fpa_const<64>(attributeName.c_str()));
-                } else if (z3Expression->is_string_value()) {
-                    expr = std::make_shared<z3::expr>(context->string_const(attributeName.c_str()));
-                }
-                createSourceFOL.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *z3Expression)));
-            } else {
-                z3::ExprPtr columnIsUsed = std::make_shared<z3::expr>(context->bool_val(true));
-                createSourceFOL.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *columnIsUsed)));
+            z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const(attributeName.c_str()));
+            z3::ExprPtr columnIsUsed = std::make_shared<z3::expr>(context->bool_val(true));
+            createSourceFOL.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *columnIsUsed)));
+        }
+        orFOlForUnion.push_back(to_expr(*context, mk_and(createSourceFOL)));
+    }
+    if (signature->getSchemaFieldToExprMaps().size() > 1) {
+        projectionFOL.push_back(to_expr(*context, mk_or(orFOlForUnion)));
+    } else {
+        projectionFOL = orFOlForUnion;
+    }
+    NES_TRACE2("Projection FOL: {}", projectionFOL.to_string());
+}
+
+bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
+                                                            const QuerySignaturePtr& rightSignature) {
+    auto schemaFieldToExprMaps = leftSignature->getSchemaFieldToExprMaps();
+    auto otherSchemaFieldToExprMaps = rightSignature->getSchemaFieldToExprMaps();
+    auto columns = leftSignature->getColumns();
+    auto otherColumns = rightSignature->getColumns();
+    auto containedAttributes = columns;
+    if (containedAttributes.size() > otherColumns.size()) {
+        containedAttributes = otherColumns;
+    }
+    for (auto schemaFieldToExprMap : schemaFieldToExprMaps) {
+        bool schemaMatched = false;
+        for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
+             otherSchemaMapItr++) {
+            z3::expr_vector colChecks(*context);
+            for (uint64_t index = 0; index < containedAttributes.size(); index++) {
+                auto colExpr = schemaFieldToExprMap[containedAttributes[index]];
+                auto otherColExpr = (*otherSchemaMapItr)[containedAttributes[index]];
+                auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
+                colChecks.push_back(equivalenceCheck);
+            }
+
+            solver->push();
+            solver->add(!z3::mk_and(colChecks).simplify());
+            schemaMatched = solver->check() == z3::unsat;
+            solver->pop();
+            counter++;
+            if (counter >= RESET_SOLVER_THRESHOLD) {
+                resetSolver();
+            }
+
+            //If schema is matched then remove the other schema from the list to avoid duplicate matching
+            if (schemaMatched) {
+                otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
+                break;
             }
         }
+
+        //If a matching schema doesn't exist in other signature then two signatures are different
+        if (!schemaMatched) {
+            NES_WARNING2("QuerySignature: Both signatures have different column entries");
+            return false;
+        }
     }
-    projectionFOL.push_back(to_expr(*context, mk_and(createSourceFOL)));
+    return true;
 }
 
 bool SignatureContainmentUtil::checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition,

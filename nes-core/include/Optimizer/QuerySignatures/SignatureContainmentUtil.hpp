@@ -211,6 +211,9 @@ class SignatureContainmentUtil {
                                         const QuerySignaturePtr& leftSignature,
                                         const QuerySignaturePtr& rightSignature);
 
+    bool checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
+                                                                const QuerySignaturePtr& rightSignature);
+
     /**
      * @brief combines window and projection FOLs
      * @param leftSignature left query signature
