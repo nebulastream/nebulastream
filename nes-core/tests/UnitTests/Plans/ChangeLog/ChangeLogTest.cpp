@@ -81,11 +81,11 @@ TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry) {
     changeLog->addChangeLogEntry(1, std::move(changelogEntry));
 
     // Fetch change log entries before timestamp 1
-    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(1);
+    auto extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(1);
     EXPECT_EQ(extractedChangeLogEntries.size(), 0);
 
     // Fetch change log entries before timestamp 2
-    extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(2);
+    extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(2);
     EXPECT_EQ(extractedChangeLogEntries.size(), 1);
 }
 
@@ -114,7 +114,7 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
+    auto extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(4);
     EXPECT_EQ(1, extractedChangeLogEntries.size());
 
     const auto actualUpstreamOperators = extractedChangeLogEntries[0].second->upstreamOperators;
@@ -159,7 +159,7 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
+    auto extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(4);
     EXPECT_EQ(1, extractedChangeLogEntries.size());
 
     const auto actualUpstreamOperators = extractedChangeLogEntries[0].second->upstreamOperators;
@@ -174,11 +174,11 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     changeLog->updateProcessedChangeLogTimestamp(4);
 
     // Fetch change log entries before timestamp 4
-    extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(4);
+    extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(4);
     EXPECT_EQ(extractedChangeLogEntries.size(), 0);
 
     // Fetch change log entries before timestamp 7
-    extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(7);
+    extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(7);
     //Will return one change log entry as it will merge change logs between 4 till 6
     EXPECT_EQ(1, extractedChangeLogEntries.size());
 
@@ -222,7 +222,7 @@ TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyOverlappingChangeLogs) {
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(3);
+    auto extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(3);
     //Will return one change log entry as it will merge change logs between 1 till 2
     EXPECT_EQ(1, extractedChangeLogEntries.size());
 
@@ -267,7 +267,7 @@ TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyNonOverlappingChangeLogs) 
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
     // Fetch change log entries before timestamp 4
-    auto extractedChangeLogEntries = changeLog->getCompressedChangeLogEntriesBefore(3);
+    auto extractedChangeLogEntries = changeLog->getCompactChangeLogEntriesBeforeTimestamp(3);
     //Will return one change log entry as it will merge change logs between 1 till 2
     EXPECT_EQ(2, extractedChangeLogEntries.size());
 

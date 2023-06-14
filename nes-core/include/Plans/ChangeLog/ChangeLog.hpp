@@ -44,15 +44,15 @@ class ChangeLog {
     void addChangeLogEntry(Timestamp timestamp, ChangeLogEntryPtr&& changeLogEntry);
 
     /**
-     * @brief Get non-overlapping change log entries before the timestamp
-     * @param timestamp: the timestamp before which the changelog entries need to be sent
-     * @return vector of non-overlapping change log entries
+     * @brief Compact change log entries before the time stamp and return all compacted change log entries
+     * @param timestamp: the timestamp before which the changelog entries need to be compacted and returned
+     * @return vector of non-overlapping and compacted change log entries
      */
-    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getCompressedChangeLogEntriesBefore(Timestamp timestamp);
+    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getCompactChangeLogEntriesBeforeTimestamp(Timestamp timestamp);
 
     /**
      * @brief: Update the timestamp till which the change log entries are processed
-     * @param timestamp: the timestamp after which the change log entries need to be retrieved
+     * @param timestamp: the new timestamp till which the change log entries are processed
      */
     void updateProcessedChangeLogTimestamp(Timestamp timestamp);
 
@@ -62,7 +62,7 @@ class ChangeLog {
      * @param timestamp : the timestamp after which the change log entries need to be retrieved
      * @return a vector of change log entries
      */
-    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getChangeLogEntriesBefore(Timestamp timestamp);
+    std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getChangeLogEntriesBeforeTimestamp(Timestamp timestamp);
 
   private:
     ChangeLog() = default;
@@ -73,14 +73,14 @@ class ChangeLog {
      * with each other.
      * @param timestamp: the timestamp till which the log is to be compacted
      */
-    void performChangeLogCompaction(uint64_t timestamp);
+    void performChangeLogCompactionTillTimestamp(uint64_t timestamp);
 
     /**
      * @brief Merge all change log entries together
-     * @param changeLogEntriesToMerge: entries to be merged
+     * @param changeLogEntriesToCompact: entries to be merged
      * @return merged change log entry
      */
-    ChangeLogEntryPtr mergeChangeLogs(std::vector<std::pair<Timestamp, ChangeLogEntryPtr>>& changeLogEntriesToMerge);
+    ChangeLogEntryPtr compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEntryPtr>>& changeLogEntriesToCompact);
 
     /**
      * @brief Clean up the change log entries created before the provided timestamp
