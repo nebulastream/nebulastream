@@ -39,13 +39,19 @@ using SharedQueryPlanChangeLogPtr = std::shared_ptr<SharedQueryPlanChangeLog>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
-namespace Optimizer::Experimental {
+namespace Optimizer {
+
+class MatchedOperatorPair;
+using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
+
+namespace Experimental {
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
-}// namespace Optimizer::Experimental
+}// namespace Experimental
+}// namespace Optimizer
 
 using Timestamp = uint64_t;
 
@@ -107,19 +113,22 @@ class SharedQueryPlan {
   public:
     static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
 
+/*    *//**
+     * @brief Add the addition information to the change log
+     * @param upstreamOperator: the upstream operator to which operator needs to be added
+     * @param newOperator : the newly added operator
+     *//*
+    void addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator);*/
+
+
+    void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPair>& matchedOperatorPairs);
+
     /**
      * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors
      * @param queryId : the original query Id
      * @return true if successful
      */
     bool removeQuery(QueryId queryId);
-
-    /**
-     * @brief Add the addition information to the change log
-     * @param upstreamOperator: the upstream operator to which operator needs to be added
-     * @param newOperator : the newly added operator
-     */
-    void addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator);
 
     /**
      * @brief Clear all MetaData information
@@ -148,7 +157,7 @@ class SharedQueryPlan {
      * @brief Get the collection of registered query ids and their sink operators
      * @return map of registered query ids and their sink operators
      */
-    std::map<QueryId, std::vector<OperatorNodePtr>> getQueryIdToSinkOperatorMap();
+    std::map<QueryId, std::set<OperatorNodePtr>> getQueryIdToSinkOperatorMap();
 
     /**
      * @brief Get the shared query id
@@ -162,11 +171,11 @@ class SharedQueryPlan {
      */
     std::vector<QueryId> getQueryIds();
 
-    /**
+/*    *//**
      * @brief Add the query id and sink operators from the query plan to the Shared Query Plan
      * @param queryPlanToAdd: the source query plan
-     */
-    void addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlanToAdd);
+     *//*
+    void addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlanToAdd);*/
 
     /**
      * @brief Get the change log entries of the shared query plan change until the timestamp.
@@ -220,7 +229,7 @@ class SharedQueryPlan {
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
-    std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
+    std::map<QueryId, std::set<OperatorNodePtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> queryIds;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
