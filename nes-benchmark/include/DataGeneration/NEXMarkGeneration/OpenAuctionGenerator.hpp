@@ -21,19 +21,9 @@
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-/**
- * @brief struct of an OpenAuctionRecord
- */
-typedef struct OpenAuctionRecordStruct {
-    uint64_t reserve;
-    bool privacy;
-    uint64_t sellerId;
-    uint16_t category;
-    uint8_t quantity;
-    Runtime::TupleBuffer::NestedTupleBufferKey type;
-    uint64_t startTime;
-    uint64_t endTime;
-} OpenAuctionRecord;
+class OpenAuctionGenerator;
+using OpenAuctionRecord = std::tuple<uint64_t, uint64_t, bool, uint64_t, uint16_t, uint8_t,
+                                     Runtime::TupleBuffer::NestedTupleBufferKey, uint64_t, uint64_t>;
 
 class OpenAuctionGenerator : public DataGenerator {
   public:

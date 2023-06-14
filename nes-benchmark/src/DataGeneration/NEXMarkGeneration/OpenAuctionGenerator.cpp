@@ -13,6 +13,7 @@
 */
 
 #include <DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.hpp>
+#include <DataGeneration/NEXMarkGeneration/UniformIntDistributions.hpp>
 #include <Util/Core.hpp>
 #include <cmath>
 
@@ -40,16 +41,7 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
         for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity() && processedAuctions < auctionsToProcess; ++curRecord) {
             auto auctionsIndex = processedAuctions++;
             auto record = generateOpenAuctionRecord(auctions, auctionsIndex, dynamicBuffer);
-
-            dynamicBuffer[curRecord]["id"].write<uint64_t>(auctionsIndex);
-            dynamicBuffer[curRecord]["reserve"].write<uint64_t>(record.reserve);
-            dynamicBuffer[curRecord]["privacy"].write<bool>(record.privacy);
-            dynamicBuffer[curRecord]["sellerId"].write<uint64_t>(record.sellerId);
-            dynamicBuffer[curRecord]["category"].write<uint16_t>(record.category);
-            dynamicBuffer[curRecord]["quantity"].write<uint8_t>(record.quantity);
-            dynamicBuffer[curRecord]["type"].write<Runtime::TupleBuffer::NestedTupleBufferKey>(record.type);
-            dynamicBuffer[curRecord]["startTime"].write<uint64_t>(record.startTime);
-            dynamicBuffer[curRecord]["endTime"].write<uint64_t>(record.endTime);
+            dynamicBuffer.pushRecordToBuffer(record);
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -61,45 +53,43 @@ std::vector<Runtime::TupleBuffer> OpenAuctionGenerator::createData(size_t number
 
 OpenAuctionRecord OpenAuctionGenerator::generateOpenAuctionRecord(std::vector<std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>>& auctions,
                                                                   uint64_t auctionsIndex, Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer) {
-    static std::mt19937 generator(42);
-    static std::uniform_int_distribution<uint16_t> uniformReserveDistribution(1000, 2000);
-    static std::uniform_int_distribution<uint8_t> uniformBooleanDistribution(0, 1);
-    static std::uniform_int_distribution<uint16_t> uniformCategoryDistribution(0, 302);
-    static std::uniform_int_distribution<uint8_t> uniformQuantityDistribution(1, 10);
+    auto uniformIntDistributions = UniformIntDistributions();
 
-    OpenAuctionRecord record;
-
-    // create random data
-    record.reserve = 0UL;
-    if (uniformBooleanDistribution(generator)) {
-        record.reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + uniformReserveDistribution(generator) / 1000.0));
+    // create random reserve
+    auto reserve = 0UL;
+    if (uniformIntDistributions.generateRandomBoolean()) {
+        reserve = (uint64_t) round(std::get<1>(auctions[auctionsIndex]) * (1.2 + uniformIntDistributions.generateRandomReserve() / 1000.0));
     }
-    record.privacy = false;
-    if (uniformBooleanDistribution(generator)) {
-        record.privacy = true;
-    }
-    record.category = uniformCategoryDistribution(generator);
-    record.quantity = uniformQuantityDistribution(generator);
 
+    // create random privacy
+    auto privacy = false;
+    if (uniformIntDistributions.generateRandomBoolean()) {
+        privacy = true;
+    }
+
+    // create random category and quantity
+    auto category = uniformIntDistributions.generateRandomCategory();
+    auto quantity = uniformIntDistributions.generateRandomQuantity();
+
+    // create random type
     std::ostringstream oss;
-    if (uniformBooleanDistribution(generator)) {
+    if (uniformIntDistributions.generateRandomBoolean()) {
         oss << "Regular";
     }
     else {
         oss << "Featured";
     }
-    if (record.quantity > 1 && uniformBooleanDistribution(generator)) {
+    if (quantity > 1 && uniformIntDistributions.generateRandomBoolean()) {
         oss << "; Dutch";
     }
-    // write type string to childBuffer in order to store it in TupleBuffer
-    record.type = Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), oss.str());
+    auto type = Util::writeStringToTupleBuffer(dynamicBuffer.getBuffer(), allocateBuffer(), oss.str());
 
-    // write auction dependencies to record
-    record.sellerId = std::get<0>(auctions[auctionsIndex]);
-    record.startTime = std::get<2>(auctions[auctionsIndex]);
-    record.endTime = std::get<3>(auctions[auctionsIndex]);
+    // get auction dependencies
+    auto sellerId = std::get<0>(auctions[auctionsIndex]);
+    auto startTime = std::get<2>(auctions[auctionsIndex]);
+    auto endTime = std::get<3>(auctions[auctionsIndex]);
 
-    return record;
+    return std::make_tuple(auctionsIndex, reserve, privacy, sellerId, category, quantity, type, startTime, endTime);
 }
 
 SchemaPtr OpenAuctionGenerator::getSchema() {

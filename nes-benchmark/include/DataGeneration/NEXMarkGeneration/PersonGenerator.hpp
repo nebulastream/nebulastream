@@ -18,32 +18,19 @@
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/DependencyGenerator.hpp>
 #include <DataGeneration/NEXMarkGeneration/PersonDataPool.hpp>
+#include <DataGeneration/NEXMarkGeneration/UniformIntDistributions.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 
 namespace NES::Benchmark::DataGeneration::NEXMarkGeneration {
 
-/**
- * @brief struct of a PersonRecord
- */
-typedef struct PersonRecordStruct {
-    Runtime::TupleBuffer::NestedTupleBufferKey name;
-    Runtime::TupleBuffer::NestedTupleBufferKey email;
-    Runtime::TupleBuffer::NestedTupleBufferKey phone;
-    Runtime::TupleBuffer::NestedTupleBufferKey street;
-    Runtime::TupleBuffer::NestedTupleBufferKey city;
-    Runtime::TupleBuffer::NestedTupleBufferKey country;
-    Runtime::TupleBuffer::NestedTupleBufferKey province;
-    uint32_t zipcode;
-    Runtime::TupleBuffer::NestedTupleBufferKey homepage;
-    Runtime::TupleBuffer::NestedTupleBufferKey creditcard;
-    double income;
-    Runtime::TupleBuffer::NestedTupleBufferKey interest;
-    Runtime::TupleBuffer::NestedTupleBufferKey education;
-    Runtime::TupleBuffer::NestedTupleBufferKey gender;
-    bool business;
-    uint8_t age;
-    uint64_t timestamp;
-} PersonRecord;
+class PersonGenerator;
+using PersonRecord = std::tuple<uint64_t, Runtime::TupleBuffer::NestedTupleBufferKey, Runtime::TupleBuffer::NestedTupleBufferKey,
+                                Runtime::TupleBuffer::NestedTupleBufferKey, Runtime::TupleBuffer::NestedTupleBufferKey,
+                                Runtime::TupleBuffer::NestedTupleBufferKey, Runtime::TupleBuffer::NestedTupleBufferKey,
+                                Runtime::TupleBuffer::NestedTupleBufferKey, uint32_t, Runtime::TupleBuffer::NestedTupleBufferKey,
+                                Runtime::TupleBuffer::NestedTupleBufferKey, double, Runtime::TupleBuffer::NestedTupleBufferKey,
+                                Runtime::TupleBuffer::NestedTupleBufferKey, Runtime::TupleBuffer::NestedTupleBufferKey,
+                                bool, uint8_t, uint64_t>;
 
 class PersonGenerator : public DataGenerator {
   public:
@@ -85,6 +72,22 @@ class PersonGenerator : public DataGenerator {
      */
     PersonRecord generatePersonRecord(std::vector<uint64_t>& persons, uint64_t personsIndex,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer dynamicBuffer);
+
+    /**
+     * @brief generates an address
+     * @param uniformIntDistributions
+     * @param fields
+     * @return zipcode
+     */
+    uint32_t generatePersonAddress(UniformIntDistributions uniformIntDistributions, std::vector<std::string>& fields);
+
+    /**
+     * @brief generates a profile
+     * @param uniformIntDistributions
+     * @param fields
+     * @return income, business, age
+     */
+    std::tuple<double, bool, uint8_t> generatePersonProfile(UniformIntDistributions uniformIntDistributions, std::vector<std::string>& fields);
 };
 } //namespace NES::Benchmark::DataGeneration::NEXMarkGeneration
 
