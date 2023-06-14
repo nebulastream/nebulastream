@@ -20,6 +20,7 @@ add_source_files(nes-benchmark
         DataGeneration/NEXMarkGeneration/DependencyGenerator.cpp
         DataGeneration/NEXMarkGeneration/OpenAuctionGenerator.cpp
         DataGeneration/NEXMarkGeneration/PersonGenerator.cpp
+        DataGeneration/NEXMarkGeneration/UniformIntDistributions.cpp
         DataGeneration/DataGenerator.cpp
         DataGeneration/DefaultDataGenerator.cpp
         DataGeneration/ZipfianDataGenerator.cpp
