@@ -16,6 +16,7 @@
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
@@ -49,42 +50,48 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
 
 bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO2("QueryPlacementPhase: Perform query placement phase for shared query plan {}",
-              std::to_string(sharedQueryPlan->getSharedQueryId()));
+              std::to_string(sharedQueryPlan->getId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
     auto placementStrategyPtr =
         PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase);
 
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
     auto lineageType = queryPlan->getLineageType();
     NES_DEBUG2("QueryPlacementPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
-    //1. Fetch all upstream pinned operators
-    auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
+    for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(1)) {
 
-    //2. Fetch all downstream pinned operators
-    auto downStreamPinnedOperators = getDownStreamPinnedOperators(upStreamPinnedOperators);
+        //1. Fetch all upstream pinned operators
+        auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
 
-    //3. Check if all operators are pinned
-    if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
-        throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
+        //2. Fetch all downstream pinned operators
+        auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
+
+        //3. Check if all operators are pinned
+        if (!checkPinnedOperators(pinnedDownStreamOperators) || !checkPinnedOperators(pinnedUpstreamOperators)) {
+            throw QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
+        }
+
+        bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
+                                                                       faultToleranceType,
+                                                                       lineageType,
+                                                                       pinnedUpstreamOperators,
+                                                                       pinnedDownStreamOperators);
+        if (!success) {
+            return false;
+        }
     }
-
-    bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
-                                                                   faultToleranceType,
-                                                                   lineageType,
-                                                                   upStreamPinnedOperators,
-                                                                   downStreamPinnedOperators);
     NES_DEBUG2("QueryPlacementPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
-    return success;
+    return true;
 }
 
-bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementPhase::checkPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators) {
 
-    for (auto pinnedOperator : pinnedOperators) {
+    for (const auto& pinnedOperator : pinnedOperators) {
         if (!pinnedOperator->hasProperty(PINNED_NODE_ID)) {
             return false;
         }
@@ -92,14 +99,14 @@ bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr
     return true;
 }
 
-std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan) {
+/*std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan) {
     std::vector<OperatorNodePtr> upStreamPinnedOperators;
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     if (!queryReconfiguration || SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
         //Fetch all Source operators
         upStreamPinnedOperators = queryPlan->getLeafOperators();
     } else {
-        auto changeLogs = sharedQueryPlan->getChangeLog();
+        auto changeLogs = sharedQueryPlan->getChangeLogEntries(1);
         for (auto& addition : changeLogs->getAddition()) {
             //Only consider selecting already placed and pinned upstream operator
             if (addition.first->hasProperty(PINNED_NODE_ID) && addition.first->hasProperty(PLACED)) {
@@ -141,5 +148,5 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
         }
     }
     return downStreamPinnedOperators;
-}
+}*/
 }// namespace NES::Optimizer

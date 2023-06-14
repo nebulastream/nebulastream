@@ -63,8 +63,8 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
     }
 }
 
-void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
-                                                 const std::vector<OperatorNodePtr>& downStreamPinnedOperators) {
+void BasePlacementStrategy::performPathSelection(const std::set<OperatorNodePtr>& upStreamPinnedOperators,
+                                                 const std::set<OperatorNodePtr>& downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
 
@@ -351,8 +351,8 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
 }
 
 void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
-                                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                             const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_INFO2("{}", globalExecutionPlan->getAsString());
 
@@ -365,7 +365,7 @@ void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
 
 void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                                  const OperatorNodePtr& upStreamOperator,
-                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_TRACE2("BasePlacementStrategy::placeNetworkOperator: Get execution node where operator is placed");
     // 1. Fetch the execution node containing the input operator

@@ -121,7 +121,7 @@ class SharedQueryPlan {
     void addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator);*/
 
 
-    void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPair>& matchedOperatorPairs);
+    void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs);
 
     /**
      * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors
@@ -163,7 +163,7 @@ class SharedQueryPlan {
      * @brief Get the shared query id
      * @return shared query id
      */
-    [[nodiscard]] SharedQueryId getSharedQueryId() const;
+    [[nodiscard]] SharedQueryId getId() const;
 
     /**
      * @brief Get all query ids part of the SharedQueryPlan

@@ -115,7 +115,7 @@ void RequestProcessorService::start() {
                         if (!queryReconfiguration) {
 
                             //3.1. Fetch the shared query plan id
-                            SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
+                            SharedQueryId sharedQueryId = sharedQueryPlan->getId();
                             NES_DEBUG2("QueryProcessingService: Updating Query Plan with global query id : {}", sharedQueryId);
 
                             //3.2. If the shared query plan is newly created

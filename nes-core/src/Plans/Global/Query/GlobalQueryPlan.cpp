@@ -108,7 +108,7 @@ SharedQueryId GlobalQueryPlan::getSharedQueryId(QueryId queryId) {
 
 bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO2("GlobalQueryPlan: updating the shared query metadata information");
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     //Mark the shared query plan as updated post merging new queries
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
@@ -171,7 +171,7 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     NES_INFO2("Create new shared query plan");
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    SharedQueryId sharedQueryId = sharedQueryPlan->getId();
     queryIdToSharedQueryIdMap[inputQueryPlanId] = sharedQueryId;
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
     std::string sourceNameAndPlacementStrategy =

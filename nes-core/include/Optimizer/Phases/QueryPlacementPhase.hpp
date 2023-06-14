@@ -18,6 +18,7 @@
 #include <Common/Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace z3 {
@@ -88,27 +89,27 @@ class QueryPlacementPhase {
                                  TypeInferencePhasePtr typeInferencePhase,
                                  bool queryReconfiguration);
 
-    /**
+    /*    *//**
      * This method extracts the upstream pinned operators from the shared query plan. IF the reconfiguration is enabled then the
      * method brows through the change log to extract the upstream operators
      * @param sharedQueryPlan : shared query plan to investigate
      * @return collection of upstream operators
-     */
-    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan);
+     *//*
+    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan);
 
-    /**
+    *//**
      * This method extracts the downstream pinned operators connected to the collection of upstream operators.
      * @param upStreamPinnedOperators : collection of upstream pinned operators
      * @return collection of downstream operators
-     */
-    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);
+     *//*
+    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);*/
 
     /**
      * This method checks if the operators in the list are pinned or not
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
+    bool checkPinnedOperators(const std::set<OperatorNodePtr>& pinnedOperators);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

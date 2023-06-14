@@ -46,8 +46,8 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
     FaultToleranceType faultToleranceType /*faultToleranceType*/,
     LineageType lineageType /*lineageType*/,
-    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
-    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+    const std::set<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
+    const std::set<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
 
     try {
         // 1. Find the path where operators need to be placed

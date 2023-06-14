@@ -239,7 +239,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyNoMerge) {
     //run the placement
     runNemoPlacement(optimizerConfig);
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG2("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG2("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
@@ -270,7 +270,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyMerge) {
     //run the placement
     runNemoPlacement(optimizerConfig);
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG2("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG2("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
@@ -301,7 +301,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementThreeLevelsTopology) {
     //run the placement
     runNemoPlacement(optimizerConfig);
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG2("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG2("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
@@ -341,7 +341,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
     //run the placement
     runNemoPlacement(optimizerConfig);
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG2("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG2("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
@@ -386,7 +386,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsDenseTopology) {
     //run the placement
     runNemoPlacement(optimizerConfig);
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG2("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG2("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
