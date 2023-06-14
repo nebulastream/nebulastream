@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.109](https://github.com/nebulastream/nebulastream/tree/v0.5.109) (2023-06-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.108...v0.5.109)
+
+**Implemented enhancements:**
+
+- \[TASK\]  Add logic to perform change log compaction  [\#3797](https://github.com/nebulastream/nebulastream/issues/3797)
+
 ## [v0.5.108](https://github.com/nebulastream/nebulastream/tree/v0.5.108) (2023-06-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.107...v0.5.108)
