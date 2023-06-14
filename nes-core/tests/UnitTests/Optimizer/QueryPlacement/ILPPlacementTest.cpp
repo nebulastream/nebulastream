@@ -268,7 +268,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     }
     queryPlan->setPlacementStrategy(NES::PlacementStrategy::ILP);
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
@@ -334,7 +334,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
@@ -400,7 +400,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
@@ -514,7 +514,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                                                                       typeInferencePhase,
                                                                       true /*query reconfiguration*/);
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     //Assertions to check correct placement
@@ -561,7 +561,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
     NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     //Assertions to check correct placement
@@ -711,7 +711,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                                                                       typeInferencePhase,
                                                                       true /*query reconfiguration*/);
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     //Assertions to check correct placement
@@ -759,7 +759,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
 
     NES_INFO(sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     NES_INFO(globalExecutionPlan->getAsString());
@@ -923,7 +923,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                                                                       typeInferencePhase,
                                                                       true /*query reconfiguration*/);
     queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getSharedQueryId();
+    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
     NES_INFO(globalExecutionPlan->getAsString());

@@ -42,7 +42,7 @@ QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr glob
 bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     NES_DEBUG2("QueryDeploymentPhase: deploy the query");
 
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     if (executionNodes.empty()) {

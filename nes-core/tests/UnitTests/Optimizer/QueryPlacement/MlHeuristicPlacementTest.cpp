@@ -171,7 +171,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);

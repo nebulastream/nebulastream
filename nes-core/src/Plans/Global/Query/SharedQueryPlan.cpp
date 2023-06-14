@@ -35,9 +35,10 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     this->queryPlan = queryPlan->copy();
     this->queryPlan->setQueryId(sharedQueryId);//overwrite the query id with shared query plan id
 
-    const auto& rootOperators = this->queryPlan->getRootOperators();
     auto queryId = queryPlan->getQueryId();
-    queryIdToSinkOperatorMap[queryId] = rootOperators;
+    const auto& rootOperators = this->queryPlan->getRootOperators();
+    std::set<OperatorNodePtr> sinkOperators(rootOperators.begin(), rootOperators.end());
+    queryIdToSinkOperatorMap[queryId] = sinkOperators;
     hashBasedSignatures = rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
     queryIds = {queryId};
     placementStrategy = queryPlan->getPlacementStrategy();
@@ -64,7 +65,7 @@ SharedQueryPlanPtr SharedQueryPlan::create(const QueryPlanPtr& queryPlan) {
     return std::make_shared<SharedQueryPlan>(SharedQueryPlan(queryPlan));
 }
 
-void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPair>& matchedOperatorPairs) {
+void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs) {
 
     NES_DEBUG2("SharedQueryPlan: Add the matched operators of query with id {} to the shared query plan.", queryId);
 
@@ -75,8 +76,8 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
 
     for (const auto& matchedOperatorPair : matchedOperatorPairs) {
 
-        auto hostOperator = matchedOperatorPair.hostOperator;
-        auto targetOperator = matchedOperatorPair.targetOperator;
+        auto hostOperator = matchedOperatorPair->hostOperator;
+        auto targetOperator = matchedOperatorPair->targetOperator;
 
         //initialize sets for change log entry
         std::set<OperatorNodePtr> clEntryUpstreamOperators;
@@ -191,7 +192,7 @@ std::vector<OperatorNodePtr> SharedQueryPlan::getSinkOperators() {
 
 std::map<QueryId, std::set<OperatorNodePtr>> SharedQueryPlan::getQueryIdToSinkOperatorMap() { return queryIdToSinkOperatorMap; }
 
-SharedQueryId SharedQueryPlan::getSharedQueryId() const { return sharedQueryId; }
+SharedQueryId SharedQueryPlan::getId() const { return sharedQueryId; }
 
 void SharedQueryPlan::clear() {
     NES_DEBUG2("SharedQueryPlan: clearing all metadata information.");

@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
@@ -24,6 +23,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -121,8 +121,8 @@ class BasePlacementStrategy {
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
                                            FaultToleranceType faultToleranceType,
                                            LineageType lineageType,
-                                           const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
+                                           const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                           const std::set<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
     /**
      * @brief Sets pinned node to the operator's property
@@ -138,8 +138,8 @@ class BasePlacementStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
-                              const std::vector<OperatorNodePtr>& downStreamPinnedOperators);
+    void performPathSelection(const std::set<OperatorNodePtr>& upStreamPinnedOperators,
+                              const std::set<OperatorNodePtr>& downStreamPinnedOperators);
 
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the
@@ -149,8 +149,8 @@ class BasePlacementStrategy {
      * @param pinnedDownStreamOperators the downstream operators succeeding operators to place
      */
     void placePinnedOperators(QueryId queryId,
-                              const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                              const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                              const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Get Execution node for the input topology node
@@ -171,8 +171,8 @@ class BasePlacementStrategy {
      * @param queryPlan: the original query plan
      */
     void addNetworkSourceAndSinkOperators(QueryId queryId,
-                                          const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                          const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                          const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                          const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id

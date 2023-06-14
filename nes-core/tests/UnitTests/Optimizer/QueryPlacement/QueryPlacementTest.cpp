@@ -221,7 +221,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -280,7 +280,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -351,7 +351,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -426,7 +426,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -503,7 +503,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -733,7 +733,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    auto sharedQueryPlanId = updatedSharedQMToDeploy[0]->getSharedQueryId();
+    auto sharedQueryPlanId = updatedSharedQMToDeploy[0]->getId();
 
     queryPlacementPhase->execute(updatedSharedQMToDeploy[0]);
 
@@ -792,7 +792,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, true);
     queryPlacementPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -854,7 +854,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
 
     NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
                                                      {false, true, true, false, false},
@@ -916,7 +916,7 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
 
     NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
                                                      {false, true, true, false, false},
@@ -977,7 +977,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
     typeInferencePhase->execute(queryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
 
     NES::Optimizer::PlacementMatrix binaryMapping = {{true, true, false, true, false},
                                                      {false, false, true, false, false},
@@ -1098,7 +1098,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     assignDataModificationFactor(testQueryPlan);
 
     auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     // Execute the placement
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
@@ -1371,7 +1371,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     // Execute the placement
     auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, true);
     queryPlacementPhase->execute(sharedQueryPlan);
     NES_DEBUG2("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
@@ -1490,7 +1490,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     // Execute the placement
     auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
-    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(sharedQueryPlan);
 
