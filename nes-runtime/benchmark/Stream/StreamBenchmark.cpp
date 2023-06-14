@@ -127,7 +127,7 @@ class BenchmarkRunner {
         std::ofstream file(bmOptions.identifier, std::ios::app);
         if (file.is_open()) {
             // Append the file: query, compiler, compiletime, execution time
-            file << fmt::format("{},{},{},{}", bmOptions.query, bmOptions.compiler, 0, avgExecutionTime) << std::endl;
+            file << fmt::format("1,{},{},{},{}", bmOptions.query, bmOptions.compiler, 0, avgExecutionTime) << std::endl;
             file.flush();
             file.close();
         } else {
