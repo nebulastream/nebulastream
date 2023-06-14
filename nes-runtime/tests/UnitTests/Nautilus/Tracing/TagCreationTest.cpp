@@ -38,9 +38,13 @@ class TagCreationTest : public Testing::NESBaseTest {
 TEST_F(TagCreationTest, tagCreation) {
     auto tr = TagRecorder::createTagRecorder();
     auto tag1 = tr.createTag();
-    NES_INFO2("{}", tag1);
+    std::stringstream tag1string;
+    tag1string << tag1;
+    NES_INFO2("{}", tag1string.str());
     auto tag2 = tr.createTag();
-    NES_INFO2("{}", tag2);
+    std::stringstream tag2string;
+    tag2string << tag2;
+    NES_INFO2("{}", tag2string.str());
     ASSERT_NE(tag1, tag2);
 }
 
