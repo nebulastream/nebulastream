@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_DATASTRUCTURE_NLJWINDOW_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <atomic>
 #include <cstdint>
 #include <mutex>
@@ -40,21 +41,11 @@ class NLJWindow : public StreamWindow {
     ~NLJWindow() = default;
 
     /**
-     * @brief Makes sure that enough space is available for writing the tuple. This method returns a pointer to the start
-     * of the newly space
-     * @param sizeOfTupleInByte
-     * @return Pointer to start of memory space
-     */
-    uint8_t* allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide);
-
-    /**
-     * @brief Returns the tuple
-     * @param sizeOfTupleInByte
-     * @param tuplePos
+     * @brief Retrieves the pointer to paged vector for the left or right side
      * @param leftSide
-     * @return Pointer to the start of the memory for the
+     * @return Void pointer to the pagedVector
      */
-    uint8_t* getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide);
+    void* getPagedVectorRef(bool leftSide);
 
     /**
      * @brief Returns the number of tuples in this window
@@ -71,11 +62,8 @@ class NLJWindow : public StreamWindow {
     std::string toString() override;
 
   private:
-    std::atomic<WindowState> windowState;
-    std::vector<uint8_t> leftTuples;
-    std::vector<uint8_t> rightTuples;
-    std::mutex leftTuplesMutex;
-    std::mutex rightTuplesMutex;
+    std::unique_ptr<Nautilus::Interface::PagedVector> leftTuples;
+    std::unique_ptr<Nautilus::Interface::PagedVector> rightTuples;
 };
 }// namespace NES::Runtime::Execution
 

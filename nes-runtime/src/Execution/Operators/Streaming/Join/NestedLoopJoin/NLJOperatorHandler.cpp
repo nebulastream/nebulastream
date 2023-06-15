@@ -22,11 +22,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-uint8_t* NLJOperatorHandler::allocateNewEntry(uint64_t timestamp, bool isLeftSide) {
+void* NLJOperatorHandler::getPagedVectorRef(uint64_t timestamp, bool leftSide) {
     auto currentWindow = getWindowByTimestampOrCreateIt(timestamp);
-    auto sizeOfTupleInByte = isLeftSide ? sizeOfRecordLeft : sizeOfRecordRight;
-    NLJWindow* ptr = static_cast<NLJWindow*>(currentWindow.get());
-    return ptr->allocateNewTuple(sizeOfTupleInByte, isLeftSide);
+    auto* windowPtr = static_cast<NLJWindow*>(currentWindow.get());
+    return windowPtr->getPagedVectorRef(leftSide);
 }
 
 NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& origins,
@@ -87,5 +86,4 @@ uint8_t* NLJOperatorHandler::getFirstTuple(uint64_t windowIdentifier, bool isLef
     }
     return std::nullptr_t();
 }
-
 }// namespace NES::Runtime::Execution::Operators

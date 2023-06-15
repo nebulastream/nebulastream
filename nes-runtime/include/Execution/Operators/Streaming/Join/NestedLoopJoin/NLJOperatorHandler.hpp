@@ -17,6 +17,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <list>
 #include <optional>
@@ -30,6 +32,21 @@ class NLJOperatorHandler;
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 class NLJOperatorHandler : public StreamJoinOperatorHandler {
   public:
+    /**
+     * @brief This class acts as a simple storage container for the paged vectors of the left and right tuples for a given window
+     */
+    class LocalNestedLoopJoinState : public Runtime::Execution::Operators::OperatorState {
+      public:
+        LocalNestedLoopJoinState(const Interface::PagedVectorRef &leftTuples,
+                                 const Interface::PagedVectorRef &rightTuples, uint64_t windowStart, uint64_t windowEnd)
+            : leftTuples(leftTuples), rightTuples(rightTuples), windowStart(windowStart), windowEnd(windowEnd) {}
+
+        Nautilus::Interface::PagedVectorRef leftTuples;
+        Nautilus::Interface::PagedVectorRef rightTuples;
+        uint64_t windowStart;
+        uint64_t windowEnd;
+    };
+
     /**
      * @brief Constructor for a NLJOperatorHandler
      * @param origins
@@ -61,12 +78,12 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
-     * @brief Creates an entry for a new tuple by first getting the responsible window for the timestamp. This method is thread safe.
+     * @brief Retrieves the pointer to paged vector for the left or right side
      * @param timestamp
-     * @param isLeftSide
-     * @return Pointer
+     * @param leftSide
+     * @return Void pointer to the pagedVector
      */
-    uint8_t* allocateNewEntry(uint64_t timestamp, bool isLeftSide);
+    void* getPagedVectorRef(uint64_t timestamp, bool leftSide);
 
     /**
      * @brief Retrieves the number of tuples for a stream (left or right) and a window
