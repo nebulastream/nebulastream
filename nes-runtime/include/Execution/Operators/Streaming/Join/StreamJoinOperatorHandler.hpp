@@ -37,21 +37,14 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
      * @param origins
-<<<<<<< HEAD
      * @param windowSize
-=======
->>>>>>> 186cc4a969 ([#3848] for nils)
      * @param JoinStrategy
      */
     StreamJoinOperatorHandler(const std::vector<OriginId>& origins,
                               size_t windowSize,
-<<<<<<< HEAD
                               StreamJoinStrategy joinStrategy,
                               size_t sizeOfRecordLeft,
                               size_t sizeOfRecordRight);
-=======
-                              JoinStrategy joinStrategy);
->>>>>>> 186cc4a969 ([#3848] for nils)
 
     virtual ~StreamJoinOperatorHandler() = default;
 
@@ -164,9 +157,6 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param operatorId
      */
     void addOperatorId(OperatorId operatorId);
-    OperatorId getOperatorId();
-
-    uint64_t getNextSequenceNumber();
 
     /**
      * @brief get the operator Id of the handler

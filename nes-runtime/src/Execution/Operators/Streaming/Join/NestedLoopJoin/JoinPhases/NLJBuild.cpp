@@ -39,6 +39,13 @@ void* insertEntryMemRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t times
     return opHandler->allocateNewEntry(timestampRecord, isLeftSide);
 }
 
+void* getPagedVectorRefProxy(void* ptrOpHandler, bool isLeftSide, uint64_t timestampRecord) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+
+    auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    return opHandler->getPagedVectorRef(timestampRecord, isLeftSide);
+}
+
 /**
  * @brief Updates the windowState of all windows and emits buffers, if the windows can be emitted
  */
@@ -67,8 +74,11 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // TODO for now, this is okay but we have to fix this with issue #3652
-    //TODO change to timestampfunction
+    check here if the state is nullptr;
+    if it is null, then store the window of the current timestampVal in the state
+    this is only necessary for the first buffer as afterwards, the state is always set through the close call
+    but we have still have to check if the timestamp lies in the current state
+
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
 
     // Get the memRef to the new entry
@@ -88,6 +98,19 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
+}
+
+void NLJBuild::open(ExecutionContext &ctx, RecordBuffer&) const {
+    auto opHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    think here about what pagedvectorRefs to store actually in the localoperatorstate...maybe assume that the timestamp is monotenous and therefore we only have a single window that we require
+
+    maybe also get in the close the new window/pagedvectorref, as the close contains the largest timestamp
+
+
+
+    auto leftTuplesPagedVectorRef = Nautilus::FunctionCall()
+
+    ctx.setLocalOperatorState()
 }
 
 void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {

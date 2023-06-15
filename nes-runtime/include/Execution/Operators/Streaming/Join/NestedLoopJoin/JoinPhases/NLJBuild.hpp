@@ -46,6 +46,9 @@ class NLJBuild : public ExecutableOperator {
              bool isLeftSide,
              std::shared_ptr<TimeFunction> timeFunction);
 
+
+    void open(ExecutionContext& ctx, RecordBuffer &recordBuffer) const override;
+
     /**
      * @brief Stores the record in the corresponding window
      * @param ctx

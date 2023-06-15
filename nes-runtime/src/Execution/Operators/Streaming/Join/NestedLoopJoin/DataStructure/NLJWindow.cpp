@@ -20,43 +20,27 @@ namespace NES::Runtime::Execution {
 
 NLJWindow::NLJWindow(uint64_t windowStart, uint64_t windowEnd) : StreamWindow(windowStart, windowEnd) {}
 
-uint8_t* NLJWindow::allocateNewTuple(size_t sizeOfTupleInByte, bool leftSide) {
-    //TODO: I am not sure if this resizing is really efficient expecially if we know the tuple sizes
-    // maybe we should preallocate here too
-    if (leftSide) {
-        std::lock_guard<std::mutex> lock(leftTuplesMutex);
-        auto currentSize = leftTuples.size();
-        leftTuples.resize(currentSize + sizeOfTupleInByte);
-        return &leftTuples[currentSize];
-    } else {
-        std::lock_guard<std::mutex> lock(rightTuplesMutex);
-        auto currentSize = rightTuples.size();
-        rightTuples.resize(currentSize + sizeOfTupleInByte);
-        return &rightTuples[currentSize];
-    }
-}
-
-uint8_t* NLJWindow::getTuple(size_t sizeOfTupleInByte, size_t tuplePos, bool leftSide) {
-    if (leftSide) {
-        return &leftTuples[sizeOfTupleInByte * tuplePos];
-    } else {
-        return &rightTuples[sizeOfTupleInByte * tuplePos];
-    }
-}
 
 size_t NLJWindow::getNumberOfTuples(size_t sizeOfTupleInByte, bool leftSide) {
     if (leftSide) {
-        return leftTuples.size() / sizeOfTupleInByte;
+        return leftTuples.getNumberOfEntries();
     } else {
-        return rightTuples.size() / sizeOfTupleInByte;
+        return rightTuples.getNumberOfEntries();
     }
 }
 
 std::string NLJWindow::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "NLJWindow(windowState: " << magic_enum::enum_name(windowState.load())
-                       << " windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
+    basicOstringstream << "NLJWindow(windowStart: " << windowStart << " windowEnd: " << windowEnd << ")";
     return basicOstringstream.str();
+}
+
+void* NLJWindow::getPagedVectorRef(bool leftSide) {
+    if (leftSide) {
+        return leftTuples.get();
+    } else {
+        return rightTuples.get();
+    }
 }
 
 }// namespace NES::Runtime::Execution
