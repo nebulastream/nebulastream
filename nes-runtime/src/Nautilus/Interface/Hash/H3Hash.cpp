@@ -38,8 +38,7 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
     } else if (value->isType<Float>()) {
         value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Float::RawType, typename UInt32::RawType>, value.as<Float>());
     }
-
-
+    
     for (Value<UInt8> i((uint8_t) 0); i < numberOfKeyBits; i = i + 1) {
         auto isBitSet = (value >> i) & 1;
         auto h3SeedMemRef = (state + (entrySizeH3HashSeed * i)).as<MemRef>();
