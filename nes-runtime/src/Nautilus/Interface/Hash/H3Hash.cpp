@@ -35,7 +35,7 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
     // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
     // This is okay, as we are only interested in the bits as-is and not the represented value
     if (value->isType<Double>()) {
-        value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Double::RawType, typename UInt64::RawType>, value.as<UInt64>());
+        value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Double::RawType, typename UInt64::RawType>, value.as<Double>());
     } else if (value->isType<Float>()) {
         value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Float::RawType, typename UInt32::RawType>, value.as<Float>());
     }
