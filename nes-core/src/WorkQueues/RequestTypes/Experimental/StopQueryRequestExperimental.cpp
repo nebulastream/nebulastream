@@ -31,11 +31,12 @@
 
 namespace NES {
 
-StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
+StopQueryRequestExperimental::StopQueryRequestExperimental(RequestId requestId, QueryId queryId,
                                                            size_t maxRetries,
                                                            WorkerRPCClientPtr workerRpcClient,
                                                            Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : AbstractRequest(
+        requestId,
         {
             ResourceType::QueryCatalogService,
             ResourceType::GlobalExecutionPlan,
@@ -48,23 +49,23 @@ StopQueryRequestExperimental::StopQueryRequestExperimental(QueryId queryId,
       workerRpcClient(std::move(workerRpcClient)), queryId(queryId),
       coordinatorConfiguration(std::move(coordinatorConfiguration)) {}
 
-StopQueryRequestPtr StopQueryRequestExperimental::create(QueryId queryId,
+StopQueryRequestPtr StopQueryRequestExperimental::create(RequestId requestId, QueryId queryId,
                                                          size_t maxRetries,
                                                          WorkerRPCClientPtr workerRpcClient,
                                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
     return std::make_shared<StopQueryRequestExperimental>(
-        StopQueryRequestExperimental(queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
+        StopQueryRequestExperimental(requestId, queryId, maxRetries, std::move(workerRpcClient), std::move(coordinatorConfiguration)));
 }
 
 void StopQueryRequestExperimental::preExecution(StorageHandler& storageHandler) {
     NES_TRACE("Acquire Resources.");
     try {
-        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle();
-        topology = storageHandler.getTopologyHandle();
-        queryCatalogService = storageHandler.getQueryCatalogServiceHandle();
-        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle();
-        udfCatalog = storageHandler.getUDFCatalogHandle();
-        sourceCatalog = storageHandler.getSourceCatalogHandle();
+        globalExecutionPlan = storageHandler.getGlobalExecutionPlanHandle(requestId);
+        topology = storageHandler.getTopologyHandle(requestId);
+        queryCatalogService = storageHandler.getQueryCatalogServiceHandle(requestId);
+        globalQueryPlan = storageHandler.getGlobalQueryPlanHandle(requestId);
+        udfCatalog = storageHandler.getUDFCatalogHandle(requestId);
+        sourceCatalog = storageHandler.getSourceCatalogHandle(requestId);
         NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
@@ -141,7 +142,10 @@ void StopQueryRequestExperimental::executeRequestLogic(StorageHandler& storageHa
     }
 }
 
-void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) { NES_TRACE("Release locks."); }
+void StopQueryRequestExperimental::postExecution([[maybe_unused]] StorageHandler& storageHandler) {
+    NES_TRACE("Release locks.");
+    storageHandler.releaseResources(requestId);
+}
 
 std::string StopQueryRequestExperimental::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 

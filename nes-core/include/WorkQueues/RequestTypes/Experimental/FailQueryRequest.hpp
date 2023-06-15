@@ -25,6 +25,7 @@ class FailQueryRequest : public AbstractRequest {
   public:
     /**
      * @brief Constructor
+     * @param requestId: the id assigned to this request
      * @param queryId: The id of the query that failed
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request

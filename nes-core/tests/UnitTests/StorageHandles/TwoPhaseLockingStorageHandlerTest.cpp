@@ -13,7 +13,6 @@
 */
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
-#include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -41,21 +40,12 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    /*
-    auto lockManager = std::make_shared<LockManager>(globalExecutionPlan,
-                                                     topology,
-                                                     queryCatalogService,
-                                                     globalQueryPlan,
-                                                     sourceCatalog,
-                                                     udfCatalog);
-                                                     */
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(globalExecutionPlan,
                                                      topology,
                                                      queryCatalogService,
                                                      globalQueryPlan,
                                                      sourceCatalog,
                                                      udfCatalog);
-    //auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
 
     //test if we can obtain the resource we passed to the constructor
     ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(1).get(), std::exception);
@@ -80,7 +70,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
                                                                    globalQueryPlan,
                                                                    sourceCatalog,
                                                                    udfCatalog);
-    //todo: add check for invalid request id
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {}));
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {}));
 }
@@ -129,9 +118,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     thread->join();
 
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {}));
-    //twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(1);
-    //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(2);
 
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology}));
@@ -151,9 +138,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     });
     thread->join();
 
-    //twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(1);
-    //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(2);
 
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology, ResourceType::GlobalExecutionPlan}));
@@ -172,9 +157,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     });
     thread->join();
 
-    //twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(1);
-    //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(2);
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources( 1,
         {ResourceType::Topology, ResourceType::GlobalExecutionPlan, ResourceType::QueryCatalogService}));
@@ -190,9 +173,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     });
     thread->join();
 
-    //twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(1);
-    //twoPLAccessHandle2 = TwoPhaseLockingStorageHandler::create(lockManager);
     twoPLAccessHandle->releaseResources(2);
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(1, {ResourceType::Topology,
                                                          ResourceType::GlobalExecutionPlan,
@@ -279,18 +260,17 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
     std::vector<std::thread> threads;
     threads.reserve(numThreads);
     for (uint64_t i = 1; i < numThreads; ++i) {
-        //auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(lockManager);
         threads.emplace_back([i, &lockHolder, &resourceVector, &reverseResourceVector, twoPLAccessHandle]() {
             if (i % 2 == 0) {
                 ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, resourceVector));
-                NES_DEBUG("Previous lock holder {}", lockHolder)
+                NES_TRACE("Previous lock holder {}", lockHolder)
                 lockHolder = i;
-                NES_DEBUG("Locked using resource vector in thread {}", i)
+                NES_TRACE("Locked using resource vector in thread {}", i)
             } else {
                 ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, reverseResourceVector));
-                NES_DEBUG("Previous lock holder {}", lockHolder)
+                NES_TRACE("Previous lock holder {}", lockHolder)
                 lockHolder = i;
-                NES_DEBUG("Locked using reverse resource vector in thread {}", i)
+                NES_TRACE("Locked using reverse resource vector in thread {}", i)
             }
             ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(i).get());
             ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(i).get());
@@ -300,7 +280,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
             ASSERT_NO_THROW(twoPLAccessHandle->getUDFCatalogHandle(i).get());
             EXPECT_EQ(lockHolder, i);
             twoPLAccessHandle->releaseResources(i);
-            NES_DEBUG2("Thread {} released all resources", i);
+            NES_DEBUG("Thread {} released all resources", i);
         });
     }
     for (auto& thread : threads) {
