@@ -25,7 +25,9 @@
 namespace NES::ASP {
 class CountMin : public AbstractSynopsis {
   public:
-
+    /**
+     * @brief This class acts as a simple storage container for the sketch array and the h3Seeds
+     */
     class LocalCountMinState : public Runtime::Execution::Operators::OperatorState {
       public:
         LocalCountMinState(const Nautilus::Interface::Fixed2DArrayRef &sketchArray,
@@ -37,18 +39,53 @@ class CountMin : public AbstractSynopsis {
         Nautilus::Value<Nautilus::MemRef> h3SeedsMemRef;
     };
 
+    /**
+     * @brief Constructor for a count-min sketch
+     * @param aggregationConfig: Config related to the aggregation
+     * @param numberOfRows: Number of rows for the sketch, the larger the less the probability for an error
+     * @param numberOfCols: Number of columns for the sketch, the larger the less relativ error
+     * @param entrySize: Datatype size of an entry
+     */
     CountMin(Parsing::SynopsisAggregationConfig &aggregationConfig,
              const uint64_t numberOfRows, const uint64_t numberOfCols, const uint64_t entrySize);
 
+    /**
+     * @brief Adds the record to the sketch by selecting a column for each row and executing the
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: The RuntimeExecutionContext
+     * @param record: Input record
+     * @param pState: State that contains the sketch array and the h3 seeds
+     */
     void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
                        Runtime::Execution::Operators::OperatorState *pState) override;
 
+    /**
+     * @brief Retrieves the approximated value by iterating over each row and combining the values of all rows
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: Execution context that stores the bins
+     * @param bufferManager: Buffermanager to allocate return buffers
+     * @param keys: Keys for which to approximate
+     * @return Vector of TupleBuffers, which contain the approximation for the keys
+     */
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
                                                      std::vector<Nautilus::Value<>>& keyValues,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
+    /**
+     * @brief Sets the count-min sketch up, by calling the setup method of the operator handler, as well as resetting the
+     * values in the cells with the aggregation function
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: Execution context that stores the bins
+     */
     void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx) override;
 
+    /**
+     * @brief Allows the count-min to store a memRef to the sketch array and a memref to the h3 seed
+     * @param handlerIndex: Index for the operator handler
+     * @param op: Synopses operator that should contain the local state
+     * @param ctx: Execution context that stores the bins
+     * @param buffer: Current record buffer
+     */
     bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                  Runtime::Execution::ExecutionContext &ctx,
                                  Runtime::Execution::RecordBuffer buffer) override;

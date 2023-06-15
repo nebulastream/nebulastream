@@ -42,10 +42,13 @@ static inline std::map<std::string, SchemaPtr> inputFileSchemas = {
 /**
  * @brief Retrieves the output schema from the aggregation type and input schema. The data type of the output field is the same
  * as of the input schema, except for AGGREGATION_TYPE::AVERAGE, where it is a BasicType::FLOAT64
- * @param type
- * @param inputSchema
- * @param fieldNameAgg
- * @return Output schema
+ * @param type of the aggregation type
+ * @param inputSchema inputSchema that gets used for creating the output schema
+ * @param fieldNameKey name of the key field
+ * @param fieldNameAgg name of the field over which to aggregate
+ * @param fieldNameKeyOutput name of the key field in the output schema
+ * @param fieldNameApproximateOutput name of the field that contains the approximation
+ * @return Output schema for the given aggregation
  */
 static inline SchemaPtr getOutputSchemaFromTypeAndInputSchema(Parsing::Aggregation_Type type, Schema& inputSchema,
                                                               const std::string& fieldNameKey,
