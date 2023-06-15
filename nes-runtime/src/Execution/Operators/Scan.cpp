@@ -17,6 +17,7 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -30,7 +31,6 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setOrigin(recordBuffer.getOriginId());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
-
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer
