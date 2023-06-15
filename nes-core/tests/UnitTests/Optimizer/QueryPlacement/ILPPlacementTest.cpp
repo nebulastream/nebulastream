@@ -231,7 +231,9 @@ TEST_F(ILPPlacementTest, Z3Test) {
     while (true) {
         if (sat == opt.check()) {
             model m = opt.get_model();
-            NES_DEBUG2("{}", m);
+            std::stringstream mString;
+            mString << m;
+            NES_DEBUG2("{}", mString.str());
             NES_DEBUG2("-------------------------------");
             if (m.eval(P21).get_numeral_int() == 1) {
                 NES_DEBUG2("Operator on Node 1");

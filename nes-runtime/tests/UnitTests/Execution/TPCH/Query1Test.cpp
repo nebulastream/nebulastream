@@ -105,7 +105,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
     aggExecutablePipeline->stop(*pipeline1.ctx);
     timer.snapshot("stop");
     timer.pause();
-    std::stringstream = timerAsString;
+    std::stringstream timerAsString;
     timerAsString << timer;
     NES_INFO2("Query Runtime:\n{}", timerAsString.str());
     // compare results
