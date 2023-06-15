@@ -16,8 +16,17 @@
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <bit>
+
 namespace NES::Nautilus::Interface {
+
+template<typename IN, typename OUT>
+OUT custom_bit_cast(IN f)
+{
+    OUT ret;
+    std::memcpy(&ret, &f, sizeof(IN));
+    return ret;
+}
+
 
 HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
 
@@ -26,9 +35,9 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
     // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
     // This is okay, as we are only interested in the bits as-is and not the represented value
     if (value->isType<Double>()) {
-        value = Value<UInt64>(std::bit_cast<uint64_t>(value.as<Double>().getValue().getValue()));
+        value = Value<UInt64>(custom_bit_cast<double, uint64_t>(value.as<Double>().getValue().getValue()));
     } else if (value->isType<Float>()) {
-        value = Value<UInt32>(std::bit_cast<uint32_t>(value.as<Float>().getValue().getValue()));
+        value = Value<UInt32>(custom_bit_cast<float, uint32_t>(value.as<Float>().getValue().getValue()));
     }
 
 
