@@ -24,7 +24,7 @@ namespace NES::ASP {
 /**
  * @brief Operator handler for a 1-D equi-width histogram, which just stores the bins
  */
-class EquiWidth1DHistOperatorHandler : public Runtime::Execution::OperatorHandler {
+class EquiWidthOneDimensionalHistogramOperatorHandler : public Runtime::Execution::OperatorHandler {
 public:
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;

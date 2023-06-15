@@ -21,20 +21,35 @@
 
 namespace NES::ASP {
 
+/**
+ * @brief This class acts as the operator handler for the Count-Min sketch and stores the h3Seeds as well as the sketch array.
+ */
 class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
-
   public:
-
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType terminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief Allocates memory for the sketch array and creates the seeds for H3
+     * @param numberOfRows: Number of rows for the sketch, the larger the less the probability for an error
+     * @param numberOfCols: Number of columns for the sketch, the larger the less relativ error
+     * @param entrySize: Datatype size of an entry
+     */
     void setup(uint64_t entrySize, uint64_t numberOfRows, uint64_t numberOfCols);
 
+    /**
+     * @brief Getter for the sketch array
+     * @return Void pointer to the sketch array
+     */
     void* getSketchRef();
 
+    /**
+     * @brief Getter for the h3 seeds
+     * @return Void pointer to the seeds
+     */
     void* getH3SeedsRef();
 
 private:

@@ -23,6 +23,9 @@
 
 
 namespace NES::ASP {
+/**
+ * @brief This class implements a Count-Min sketch as explained in http://dimacs.rutgers.edu/~graham/pubs/papers/cmencyc.pdf
+ */
 class CountMin : public AbstractSynopsis {
   public:
     /**
@@ -68,7 +71,7 @@ class CountMin : public AbstractSynopsis {
      * @return Vector of TupleBuffers, which contain the approximation for the keys
      */
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
-                                                     std::vector<Nautilus::Value<>>& keyValues,
+                                                     std::vector<Nautilus::Value<>>& keys,
                                                      Runtime::BufferManagerPtr bufferManager) override;
 
     /**
@@ -90,14 +93,12 @@ class CountMin : public AbstractSynopsis {
                                  Runtime::Execution::ExecutionContext &ctx,
                                  Runtime::Execution::RecordBuffer buffer) override;
 
-
   private:
     const uint64_t numberOfRows;
     const uint64_t numberOfCols;
     const uint64_t entrySize;
-
     std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
-    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunctionMergeRows;
+    Runtime::Execution::Aggregation::AggregationFunctionPtr combineRowsApproximate;
 };
 } // namespace NES::ASP
 

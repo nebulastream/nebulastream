@@ -22,9 +22,9 @@
 namespace NES::ASP {
 
 /**
- * @brief Implementation of a 1-D equi-width histogram
+ * @brief Implementation of an one-dimensional equi-width histogram
  */
-class EquiWidth1DHist : public AbstractSynopsis {
+class EquiWidthOneDimensionalHistogram : public AbstractSynopsis {
 public:
     /**
      * @brief This class acts as a simple storage container for the local state, which contains the memref to the bins
@@ -45,7 +45,7 @@ public:
      * @param lowerBinBoundString: Name of the lower bound field, which stores the lower bound of the bin corresponding to a key query
      * @param upperBinBoundString: Name of the upper bound field, which stores the upper bound of the bin corresponding to a key query
      */
-    EquiWidth1DHist(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
+    EquiWidthOneDimensionalHistogram(Parsing::SynopsisAggregationConfig& aggregationConfig, const uint64_t entrySize,
                     const int64_t minValue, const int64_t maxValue, const uint64_t numberOfBins,
                     const std::string& lowerBinBoundString, const std::string& upperBinBoundString);
 

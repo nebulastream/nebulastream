@@ -63,7 +63,7 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
      */
     std::vector<Runtime::TupleBuffer> getApproximate(uint64_t handlerIndex,
                                                      Runtime::Execution::ExecutionContext& ctx,
-                                                     std::vector<Nautilus::Value<>>& keyValues,
+                                                     std::vector<Nautilus::Value<>>& keys,
                                                      Runtime::BufferManagerPtr bufferManager) override;
     /**
      * @brief For now this does not store any local state and therefore returns False #3743
