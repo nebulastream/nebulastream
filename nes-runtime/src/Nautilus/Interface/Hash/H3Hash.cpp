@@ -25,18 +25,15 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
 
     // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
     // This is okay, as we are only interested in the bits as-is and not the represented value
-    Nautilus::Value<> tmpValue(0);
     if (value->isType<Double>()) {
-        tmpValue = Value<UInt64>(std::bit_cast<uint64_t>(value.as<Double>().getValue().getValue()));
+        value = Value<UInt64>(std::bit_cast<uint64_t>(value.as<Double>().getValue().getValue()));
     } else if (value->isType<Float>()) {
-        tmpValue = Value<UInt32>(std::bit_cast<uint32_t>(value.as<Float>().getValue().getValue()));
-    } else {
-        tmpValue = value;
+        value = Value<UInt32>(std::bit_cast<uint32_t>(value.as<Float>().getValue().getValue()));
     }
 
 
     for (Value<UInt8> i((uint8_t) 0); i < numberOfKeyBits; i = i + 1) {
-        auto isBitSet = (tmpValue >> i) & 1;
+        auto isBitSet = (value >> i) & 1;
         auto h3SeedMemRef = (state + (entrySizeH3HashSeed * i)).as<MemRef>();
         auto h3Seed = h3SeedMemRef.load<UInt64>();
         hash = hash ^ (isBitSet * (h3Seed));
