@@ -34,24 +34,14 @@ class RandomSampleWithoutReplacementOperatorHandler : public Runtime::Execution:
 
     /**
      * @brief Initializes the pagedVector
-     * @param entrySize
+     * @param entrySize: Size of a single tuple/entry
      */
     void setup(uint64_t entrySize);
 
-    /**
-     * @brief Starts the operator handler.
-     * @param pipelineExecutionContext
-     * @param localStateVariableId
-     * @param stateManager
-     */
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    /**
-     * @brief Stops the operator handler.
-     * @param pipelineExecutionContext
-     */
     void stop(Runtime::QueryTerminationType terminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 

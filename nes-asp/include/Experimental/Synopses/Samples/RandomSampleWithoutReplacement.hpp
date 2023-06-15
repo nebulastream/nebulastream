@@ -32,10 +32,9 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
   public:
     /**
      * @brief Constructor for a SampleRandomWithReplacement
-     * @param aggregationConfig
-     * @param sampleSize
-     * @param entrySize
-     * @param keyFieldName
+     * @param aggregationConfig: Configuration for the aggregation
+     * @param sampleSize: Size of the tuples in the sample
+     * @param entrySize: Size of a single entry/tuple
      */
     explicit RandomSampleWithoutReplacement(Parsing::SynopsisAggregationConfig& aggregationConfig,
                                             size_t sampleSize, uint64_t entrySize);
@@ -47,7 +46,10 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
     /**
      * @brief Adds the record to this sample
-     * @param record
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: The RuntimeExecutionContext
+     * @param record: The record that should be processed.
+     * @param pState: State that stores the local state
      */
     void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx, Nautilus::Record record,
                        Runtime::Execution::Operators::OperatorState *pState) override;
@@ -63,7 +65,14 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
                                                      Runtime::Execution::ExecutionContext& ctx,
                                                      std::vector<Nautilus::Value<>>& keyValues,
                                                      Runtime::BufferManagerPtr bufferManager) override;
-
+    /**
+     * @brief For now this does not store any local state and therefore returns False #3743
+     * @param handlerIndex:Index for the operator handler
+     * @param op: Operator for which to store the local state
+     * @param ctx: The RuntimeExecutionContext
+     * @param buffer: RecordBuffer for this state
+     * @return False
+     */
     bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
                                  Runtime::Execution::ExecutionContext &ctx,
                                  Runtime::Execution::RecordBuffer buffer) override;
@@ -84,8 +93,8 @@ class RandomSampleWithoutReplacement : public AbstractSynopsis {
 
     /**
      * @brief Multiplies the approximatedValue with the scalingFactor
-     * @param approximatedValue
-     * @param scalingFactor
+     * @param approximatedValue: Current approximated value
+     * @param scalingFactor: Value to scale the approximatedValue by
      * @return Multiplied approximated value
      */
     Nautilus::Value<>

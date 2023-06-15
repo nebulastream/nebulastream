@@ -46,17 +46,17 @@ class AbstractSynopsis {
 
     /**
      * @brief This is the first step of performing an approximation. This method adds the record to the underlying synopsis
-     * @param handlerIndex
-     * @param ctx
-     * @param record
-     * @param pState
+     * @param handlerIndex: Index for the operator handler
+     * @param ctx: The RuntimeExecutionContext
+     * @param record: Record that should be added to the
+     * @param pState: State that contains some saved memRef or other object
      */
     virtual void addToSynopsis(uint64_t handlerIndex, Runtime::Execution::ExecutionContext &ctx,
                                Nautilus::Record record, Runtime::Execution::Operators::OperatorState* pState) = 0;
 
     /**
      * @brief Once all records have been inserted, we can ask for an approximation
-     * @param ctx
+     * @param ctx: The RuntimeExecutionContext
      * @param bufferManager
      * @return Record that stores the approximation
      */
@@ -70,16 +70,18 @@ class AbstractSynopsis {
      * can be done. Couple examples are:
      *  - removing all drawn samples for a sampling algorithm
      *  - resetting and writing zeros to the 2D array for a Count-min sketch
+     *  @param handlerIndex: Index for the operator handler
+     *  @param ctx: The RuntimeExecutionContext
      */
     virtual void setup(uint64_t handlerIndex, Runtime::Execution::ExecutionContext& ctx) = 0;
 
     /**
      * @brief This method gets called in open() of the synopses operator class and gives the synopses a possibility
      * to store a local state, for example a reference to a data structure
-     * @param handlerIndex
-     * @param op
-     * @param ctx
-     * @param buffer
+     * @param handlerIndex:Index for the operator handler
+     * @param op: Operator for which to store the local state
+     * @param ctx: The RuntimeExecutionContext
+     * @param buffer: RecordBuffer for this state
      * @return True if a state has been added
      */
     virtual bool storeLocalOperatorState(uint64_t handlerIndex, const Runtime::Execution::Operators::Operator* op,
@@ -88,8 +90,8 @@ class AbstractSynopsis {
 
     /**
      * @brief Creates the synopsis from the SynopsisArguments
-     * @param arguments
-     * @param aggregationConfig
+     * @param arguments: Configuration related to the synopsis, for example the type
+     * @param aggregationConfig: Configuration related to the aggregation
      * @return AbstractSynopsesPtr
      */
     static AbstractSynopsesPtr create(Parsing::SynopsisConfiguration& arguments,

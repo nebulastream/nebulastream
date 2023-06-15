@@ -63,12 +63,12 @@ class SynopsisAggregationConfig {
 
     /**
      * @brief Creates an aggregation config for a synopsis
-     * @param type
-     * @param fieldNameAggregation
-     * @param fieldNameApproximate
-     * @param timestampFieldName
-     * @param inputSchema
-     * @param outputSchema
+     * @param type: Aggregation type of this synopsis
+     * @param fieldNameAggregation: Name of the field over which to perform the approximation
+     * @param fieldNameApproximate: Name of the field, where to store the approximation
+     * @param timestampFieldName: Name of the timestamp field
+     * @param inputSchema: Input schema
+     * @param outputSchema: Output schema
      * @return SynopsisAggregationConfig
      */
     static SynopsisAggregationConfig create(const Aggregation_Type& type,
@@ -135,12 +135,12 @@ class SynopsisAggregationConfig {
 
     /**
      * @brief Custom constructor
-     * @param type
-     * @param fieldNameAggregation
-     * @param fieldNameApproximate
-     * @param timestampFieldName
-     * @param inputSchema
-     * @param outputSchema
+     * @param type: Aggregation type of this synopsis
+     * @param fieldNameAggregation: Name of the field over which to perform the approximation
+     * @param fieldNameApproximate: Name of the field, where to store the approximation
+     * @param timestampFieldName: Name of the timestamp field
+     * @param inputSchema: Input schema
+     * @param outputSchema: Output schema
      */
     explicit SynopsisAggregationConfig(const Aggregation_Type& type,
                                        const std::string& fieldNameKey,
