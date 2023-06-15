@@ -1,11 +1,18 @@
 //
 // Created by Kasper Hjort Berthelsen on 10/11/2022.
+// Designed in a modular way to support multiple different network stacks.
+// We define a base class of a network server and then two implementations - one for each network stack
+// Network stacks are responsible for any communication with lorawan network servers. Often through mqtt, however this
+// is not standard. Which is why the mqtt is hidden away in these implementation classes. This causes some code duplication.
+// The only thing we assume applies to all network stacks is that they have an address, a user and a password. They also
+// need a list of deviceids and and application id. device and app ids are from the lorawan spec. I dont believe it requires
+// usernames and passwords.
 //
 
 #ifndef NES_LORAWANPROXYSOURCE_HPP
 #define NES_LORAWANPROXYSOURCE_HPP
-#include "Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp"
 #include "EndDeviceProtocol.pb.h"
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <mqtt/client.h>
@@ -60,7 +67,7 @@ class LoRaWANProxySource : public DataSource {
     //Classes to handle network communication
     class NetworkServer {
       public:
-        NetworkServer(const std::string&, const std::string&, const std::string&, std::vector<std::string>&);
+        NetworkServer(const std::string&, const std::string&, const std::string&, const std::string&, std::vector<std::string>&);
         virtual ~NetworkServer() = default;
         virtual bool connect() = 0;
         virtual bool isConnected() = 0;
@@ -71,6 +78,7 @@ class LoRaWANProxySource : public DataSource {
       protected:
         std::string url;
         std::string user;
+        std::string password;
         std::string appId;
         std::vector<std::string>& deviceEUIs;
     };
@@ -90,6 +98,7 @@ class LoRaWANProxySource : public DataSource {
       public:
         ChirpStackServer(const std::string& url,
                          const std::string& user,
+                         const std::string& password,
                          const std::string& appId,
                          std::vector<std::string>& deviceEUIs);
         ~ChirpStackServer() override;
@@ -99,21 +108,46 @@ class LoRaWANProxySource : public DataSource {
         EndDeviceProtocol::Output receiveData() override;
         bool sendMessage(EndDeviceProtocol::Message) override;
     };
-    class TheThingsNetworkServer : NetworkServer {};
+
+    class TheThingsNetworkServer : public NetworkServer {
+        mqtt::client client;
+
+        std::string topicBase;
+        std::string topicAll;
+        std::string topicDevice;
+        std::string topicReceiveSuffix;
+        std::string topicSendSuffix;
+        std::string topicAllDevicesReceive;
+
+      public:
+        TheThingsNetworkServer(const std::string& url,
+                               const std::string& user,
+                               const std::string& password,
+                               const std::string& appId,
+                               std::vector<std::string>& deviceEUIs);
+        ~TheThingsNetworkServer() override;
+
+        bool connect() override;
+        bool isConnected() override;
+        bool disconnect() override;
+        EndDeviceProtocol::Output receiveData() override;
+        bool sendMessage(EndDeviceProtocol::Message) override;
+    };
+
     LoRaWANProxySourceTypePtr sourceConfig;
-    std::string url;
-    std::string user;
-    std::string appId;
-    std::vector<std::string> deviceEUIs;
-    std::string topicBase;
-    std::string topicAll;
-    std::string topicDevice;
-    std::string topicReceiveSuffix;
-    std::string topicSendSuffix;
-    std::string topicAllDevicesReceive;
-    std::string capath;
-    std::string certpath;
-    std::string keypath;
+    //    std::string url;
+    //    std::string user;
+    //    std::string appId;
+    //    std::vector<std::string> deviceEUIs;
+    //    std::string topicBase;
+    //    std::string topicAll;
+    //    std::string topicDevice;
+    //    std::string topicReceiveSuffix;
+    //    std::string topicSendSuffix;
+    //    std::string topicAllDevicesReceive;
+    //    std::string capath;
+    //    std::string certpath;
+    //    std::string keypath;
 
     NetworkServer& server;
 

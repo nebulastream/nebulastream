@@ -27,17 +27,17 @@
 physicalSources:
   - logicalSourceName: ls
     physicalSourceName: ps
-    type: LoRaWANProxySource
+    type: LORAWAN_SOURCE
     configuration:
-      networkStack: ChirpStack
+      networkStack: TheThingsStack
       ## set url to MQTT endpoint of networkstack. This is to send and receive packets
-      url: tcp://192.168.202.1:1883
-      ## Set userName for LoRaWANProxySource
-      userName: admin
+      url: eu1.cloud.thethings.network:1883
+      ## Set userName for LoRaWANProxySource. for ttn we just include tenantId in the username
+      userName: nes-test-application@ttn
       ## Set password for LoRaWANProxySource
-      password: admin
+      password: NNSXS.UEAM4RY7WNUXDNJHWYHPBR5CN74XILHKAEMIWPQ.GJD3UQ5EOA5VWHTBTXWPJ3N64XT7OQ4HIAJSDFGC7U2LCV5WCY6Q
       ## Set appId for the configured application for the LoRaWANProxySource
-      appId: 8ca540c3-0e8b-4786-8504-683afc86e855
+      appId: nes-test-application
       ## Files needed for secure mqtt connection
       ## Path to folder containing ca file
       CAPath: /Users/flapkap/Desktop/
@@ -47,10 +47,36 @@ physicalSources:
       keyPath: /Users/flapkap/Desktop/key.pem
       ## configure known devices
       deviceEUIs:
-        - 70b3d549938ea1ee
+        - eui-70b3d57ed005e88a
       ## configure which fields the sensors on the ED corresponds to in the schema
       ## for example if config on sensor has 'sensors: ["ESP32Temperature"]'
       ## then the value from that sensor will be mapped to the "temperature" field in the logical schema
       sensorFields:
         - temperature
         - acceleration
+#
+#      networkStack: ChirpStack
+#      ## set url to MQTT endpoint of networkstack. This is to send and receive packets
+#      url: tcp://192.168.202.1:1883
+#      ## Set userName for LoRaWANProxySource
+#      userName: admin
+#      ## Set password for LoRaWANProxySource
+#      password: admin
+#      ## Set appId for the configured application for the LoRaWANProxySource
+#      appId: 8ca540c3-0e8b-4786-8504-683afc86e855
+#      ## Files needed for secure mqtt connection
+#      ## Path to folder containing ca file
+#      CAPath: /Users/flapkap/Desktop/
+#      ## Path for certificate
+#      certPath: /Users/flapkap/Desktop/cert.pem
+#      ## Path for host
+#      keyPath: /Users/flapkap/Desktop/key.pem
+#      ## configure known devices
+#      deviceEUIs:
+#        - 70b3d549938ea1ee
+#      ## configure which fields the sensors on the ED corresponds to in the schema
+#      ## for example if config on sensor has 'sensors: ["ESP32Temperature"]'
+#      ## then the value from that sensor will be mapped to the "temperature" field in the logical schema
+#      sensorFields:
+#        - temperature
+#        - acceleration

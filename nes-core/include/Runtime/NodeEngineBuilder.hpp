@@ -17,6 +17,7 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <vector>
 
 namespace NES {
 namespace Compiler {

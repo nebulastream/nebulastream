@@ -16,15 +16,18 @@ namespace NES {
 
 LoRaWANProxySource::NetworkServer::NetworkServer(const std::string& url,
                                                  const std::string& user,
+                                                 const std::string& password,
                                                  const std::string& appId,
                                                  std::vector<std::string>& deviceEUIs)
-    : url(url), user(user), appId(appId), deviceEUIs(deviceEUIs) {}
+    : url(url), user(user), password(password), appId(appId), deviceEUIs(deviceEUIs) {}
 
+#pragma region chirpstack
 LoRaWANProxySource::ChirpStackServer::ChirpStackServer(const std::string& url,
                                                        const std::string& user,
+                                                       const std::string& password,
                                                        const std::string& appId,
                                                        std::vector<std::string>& deviceEUIs)
-    : NetworkServer(url, user, appId, deviceEUIs), client(url, "LoRaWANProxySource"), topicBase("application/" + appId),
+    : NetworkServer(url, user,password, appId, deviceEUIs), client(url, "LoRaWANProxySource"), topicBase("application/" + appId),
       topicAll(topicBase + "/#"), topicDevice(topicBase + "/device"), topicReceiveSuffix("/event/up"),
       topicSendSuffix("/command/down"), topicAllDevicesReceive(topicDevice + "/+" + topicReceiveSuffix) {}
 bool LoRaWANProxySource::ChirpStackServer::isConnected() { return client.is_connected(); }
@@ -43,6 +46,8 @@ bool LoRaWANProxySource::ChirpStackServer::connect() {
             //            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
             auto connOpts = mqtt::connect_options_builder()
                                 //.ssl(sslopt)
+                                .user_name(user)
+                                .password(password)
                                 .automatic_reconnect(true)
                                 .clean_session(true)
                                 .finalize();
@@ -156,7 +161,167 @@ bool LoRaWANProxySource::ChirpStackServer::sendMessage(EndDeviceProtocol::Messag
     return true;//TODO: Handle errors
 }
 LoRaWANProxySource::ChirpStackServer::~ChirpStackServer() {}
-LoRaWANProxySource::ChirpStackServer::ChirpStackEvent LoRaWANProxySource::ChirpStackServer::strToEvent(const std::string& s) { return magic_enum::enum_cast<ChirpStackEvent>(s).value(); }
+LoRaWANProxySource::ChirpStackServer::ChirpStackEvent LoRaWANProxySource::ChirpStackServer::strToEvent(const std::string& s) {
+    return magic_enum::enum_cast<ChirpStackEvent>(s).value();
+}
+#pragma endregion chirpstack
+
+#pragma region ttnstack
+LoRaWANProxySource::TheThingsNetworkServer::TheThingsNetworkServer(const std::string& url,
+                                                                   const std::string& user,
+                                                                   const std::string& password,
+                                                                   const std::string& appId,
+                                                                   std::vector<std::string>& deviceEUIs,
+                                                                   const std::string& tenantId)
+    : NetworkServer(url, user, password, appId, deviceEUIs), client(url, "LoRaWANProxySource"), topicBase("v3/" + appId + "@" + tenantId),
+      topicAll(topicBase + "/#"), topicDevice(topicBase + "/devices"), topicReceiveSuffix("/up"), topicSendSuffix("/down/push"),
+      topicAllDevicesReceive(topicDevice + "/+" + topicReceiveSuffix) {}
+LoRaWANProxySource::TheThingsNetworkServer::~TheThingsNetworkServer() {}
+//might be refactored out
+bool LoRaWANProxySource::TheThingsNetworkServer::isConnected() { return client.is_connected(); }
+bool LoRaWANProxySource::TheThingsNetworkServer::connect() {
+    if (!client.is_connected()) {
+        //open();
+        try {
+            //TODO: actually get authentication to work
+            //            auto sslopt = mqtt::ssl_options_builder()
+            //                              .ca_path(capath)
+            //                              .trust_store(certpath)
+            //                              .private_key(keypath)
+            //                              .verify(false)
+            //                              .enable_server_cert_auth(false)
+            //                              .finalize();
+            //            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
+            auto connOpts = mqtt::connect_options_builder()
+                                //.ssl(sslopt)
+                                .user_name(user)
+                                .password(password)
+                                .automatic_reconnect(true)
+                                .clean_session(true)
+                                .finalize();
+
+            // Start consumer before connecting to make sure to not miss messages
+            client.start_consuming();
+
+            // Connect to the server
+            NES_DEBUG("LoRaWANProxySource::connect Connecting to the MQTT server...");
+            auto rsp = client.connect(connOpts);
+
+            // If there is no session present, then we need to subscribe, but if
+            // there is a session, then the server remembers us and our
+            // subscriptions.
+            if (!rsp.is_session_present()) {
+                auto resp = client.subscribe(topicAllDevicesReceive, 0);
+                //TODO: handle errors
+            }
+        } catch (const mqtt::exception& error) {
+            NES_ERROR("LoRaWANProxySource::connect: " << error);
+            return false;
+        }
+    }
+    return true;
+}
+bool LoRaWANProxySource::TheThingsNetworkServer::disconnect() {
+    NES_DEBUG("LoRaWANProxySource::disconnect connected=" << client.is_connected());
+    if (client.is_connected()) {
+        //close();
+        NES_DEBUG("LoRaWANProxySource: Shutting down and disconnecting from the MQTT server.");
+
+        client.unsubscribe(topicAllDevicesReceive);
+        //TODO: Handle Errors
+        client.disconnect();
+        NES_DEBUG("LoRaWANProxySource::disconnect: disconnected.");
+    } else {
+        NES_DEBUG("LoRaWANProxySource::disconnect: Client was already disconnected");
+    }
+
+    if (!client.is_connected()) {
+        NES_DEBUG("LoRaWANProxySource::disconnect:  " << this << ": disconnected");
+    } else {
+        NES_DEBUG("LoRaWANProxySource::disconnect:  " << this << ": NOT disconnected");
+        return false;
+    }
+    return true;
+}
+EndDeviceProtocol::Output LoRaWANProxySource::TheThingsNetworkServer::receiveData() {
+    NES_DEBUG("LoRaWANProxySource " << this << ": receiveData");
+
+    if (!isConnected()) {//connects if not connected, or return true if already connected. Might be bad design
+        connect();
+    }
+    NES_TRACE("Connected and listening for mqtt messages for 1 sec")
+    auto output = EndDeviceProtocol::Output();
+    auto count = 0;
+    while (true) {
+        mqtt::const_message_ptr msg;
+        auto msgReceived = client.try_consume_message_for(&msg, std::chrono::seconds(1));
+        if (!msgReceived) {
+            NES_TRACE("no messages received")
+            break;//Exit if no new messages
+        }
+        ++count;
+        auto rcvStr = msg->get_payload_str();
+        std::string rcvTopic = msg->get_topic();
+        NES_TRACE("Received msg no. " << count << " on topic: \"" << rcvTopic << "\" with payload: \"" << rcvStr << "\"")
+
+        // v3/{application id}@{tenant id}/devices/{device id}/EVENT
+        auto substrings = Util::splitWithStringDelimiter<std::string>(rcvTopic, "/");
+        auto devEUI = substrings[3];
+        auto event = substrings[5];
+
+        //rcvStr should be formatted as shown here: https://www.thethingsindustries.com/docs/integrations/mqtt/#example under "show uplink message example"
+        //most important is data which is placed on the "data" field
+        try {
+            auto js = nlohmann::json::parse(rcvStr);
+            if (!js.contains("uplink_message")) {
+                NES_WARNING("LoRaWANProxySource: parsed json does not contain uplink_message field");
+            } else if (!js["uplink_message"].contains("frm_payload")) {
+                NES_WARNING("LoRaWANProxySource: parsed json does not contain uplink_message.frm_payload field");
+            } else {
+                output.ParseFromString(Util::base64Decode(js["uplink_message"]["frm_payload"]));
+            }
+
+        } catch (nlohmann::json::parse_error& ex) {
+            NES_WARNING("LoRaWANProxySource: JSON parse error " << ex.what());
+        }
+    }
+
+    return output;
+}
+
+bool LoRaWANProxySource::TheThingsNetworkServer::sendMessage(EndDeviceProtocol::Message message) {
+    auto pbEncoded = Util::base64Encode(message.SerializeAsString());
+
+    for (const auto& devEUI : deviceEUIs) {
+        //JSON payload must conform to:
+        //        {
+        //            "downlinks": [{
+        //                "f_port": 15,
+        //                "frm_payload": "vu8=",
+        //                "priority": "HIGH",
+        //                "confirmed": true,
+        //                "correlation_ids": ["my-correlation-id"]
+        //            }]
+        //        }
+
+        nlohmann::json payload{{"downlinks",
+                                nlohmann::json::array({{
+                                    {"f_port", 1},
+                                    {"frm_payload", pbEncoded},
+                                    //{"priority", "HIGH"},
+                                    {"confirmed", true},
+                                    //{"correlation_ids": ["my-correlation-id"]}
+                                }})}};
+        auto topic = topicDevice + "/" + devEUI + topicSendSuffix;
+        auto payload_dump = payload.dump();
+        NES_DEBUG("sending data: " + message.DebugString() + " to topic: " + topic + " with payload " + payload.dump());
+        client.publish(mqtt::make_message(topic, payload_dump));
+    }
+    return true;//TODO: Handle errors
+}
+
+#pragma endregion ttnstack
+
 LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                                        const Runtime::BufferManagerPtr& bufferManager,
                                        const Runtime::QueryManagerPtr& queryManager,
@@ -174,8 +339,8 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  executableSuccessors),
-      sourceConfig(sourceConfig), url(sourceConfig->getUrl()->getValue()), user(sourceConfig->getUserName()->getValue()),
-      appId(sourceConfig->getAppId()->getValue()), deviceEUIs(sourceConfig->getDeviceEUIs()->getValue()), server(*new ChirpStackServer(url, user, appId, deviceEUIs)) {
+      sourceConfig(sourceConfig),
+      server(*new TheThingsNetworkServer(sourceConfig->getUrl()->getValue(), sourceConfig->getUserName()->getValue(), sourceConfig->getPassword()->getValue(), sourceConfig->getAppId()->getValue(), sourceConfig->getDeviceEUIs()->getValue())) {
     topicBase = "application/" + sourceConfig->getAppId()->getValue();
     topicAll = topicBase + "/#";
     topicDevice = topicBase + "/device";
@@ -222,43 +387,43 @@ bool LoRaWANProxySource::connect() {
     if (!server.isConnected()) {
         server.connect();
         open();
-//        try {
-//            //TODO: actually get authentication to work
-//            //            auto sslopt = mqtt::ssl_options_builder()
-//            //                              .ca_path(capath)
-//            //                              .trust_store(certpath)
-//            //                              .private_key(keypath)
-//            //                              .verify(false)
-//            //                              .enable_server_cert_auth(false)
-//            //                              .finalize();
-//            //            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
-//            auto connOpts = mqtt::connect_options_builder()
-//                                //.ssl(sslopt)
-//                                .automatic_reconnect(true)
-//                                .clean_session(true)
-//                                .finalize();
-//
-//            // Start consumer before connecting to make sure to not miss messages
-//            client->start_consuming();
-//
-//            // Connect to the server
-//            NES_DEBUG("LoRaWANProxySource::connect Connecting to the MQTT server...");
-//            auto tok = client->connect(connOpts);
-//
-//            // Getting the connect response will block waiting for the
-//            // connection to complete.
-//            auto rsp = tok->get_connect_response();
-//
-//            // If there is no session present, then we need to subscribe, but if
-//            // there is a session, then the server remembers us and our
-//            // subscriptions.
-//            if (!rsp.is_session_present()) {
-//                client->subscribe(topicAllDevicesReceive, 0)->wait();
-//            }
-//        } catch (const mqtt::exception& error) {
-//            NES_ERROR("LoRaWANProxySource::connect: " << error);
-//            return false;
-//        }
+        //        try {
+        //            //TODO: actually get authentication to work
+        //            //            auto sslopt = mqtt::ssl_options_builder()
+        //            //                              .ca_path(capath)
+        //            //                              .trust_store(certpath)
+        //            //                              .private_key(keypath)
+        //            //                              .verify(false)
+        //            //                              .enable_server_cert_auth(false)
+        //            //                              .finalize();
+        //            //            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
+        //            auto connOpts = mqtt::connect_options_builder()
+        //                                //.ssl(sslopt)
+        //                                .automatic_reconnect(true)
+        //                                .clean_session(true)
+        //                                .finalize();
+        //
+        //            // Start consumer before connecting to make sure to not miss messages
+        //            client->start_consuming();
+        //
+        //            // Connect to the server
+        //            NES_DEBUG("LoRaWANProxySource::connect Connecting to the MQTT server...");
+        //            auto tok = client->connect(connOpts);
+        //
+        //            // Getting the connect response will block waiting for the
+        //            // connection to complete.
+        //            auto rsp = tok->get_connect_response();
+        //
+        //            // If there is no session present, then we need to subscribe, but if
+        //            // there is a session, then the server remembers us and our
+        //            // subscriptions.
+        //            if (!rsp.is_session_present()) {
+        //                client->subscribe(topicAllDevicesReceive, 0)->wait();
+        //            }
+        //        } catch (const mqtt::exception& error) {
+        //            NES_ERROR("LoRaWANProxySource::connect: " << error);
+        //            return false;
+        //        }
 
         if (server.isConnected()) {
             NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topicAll);
@@ -296,44 +461,44 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
     int count = 0;
     if (connect()) {//connects if not connected, or return true if already connected. Might be bad design
         NES_TRACE("Connected and listening for mqtt messages for 1 sec")
-    auto output = server.receiveData();
-                    for (const auto& queryResponse : output.responses()) {
-                        auto id = queryResponse.id();
-                        auto query = sourceConfig->getSerializedQueries()->at(runningQueries[id]);
-                        //TODO: actually use the resulttype
-                        auto resultArray = queryResponse.response();
-                        auto tupCount = buffer.getNumberOfTuples();
-                        for (int i = 0; i < resultArray.size(); ++i) {
-                            auto result = resultArray[i];
-                            auto bufferCell = buffer[tupCount][i];
-                            if (result.has__int8())
-                                bufferCell.write<int8_t>(result._int8());
-                            if (result.has__int16())
-                                bufferCell.write<int16_t>(result._int16());
-                            if (result.has__int32())
-                                bufferCell.write<int32_t>(result._int32());
-                            if (result.has__int64())
-                                bufferCell.write<int64_t>(result._int64());
+        auto output = server.receiveData();
+        for (const auto& queryResponse : output.responses()) {
+            auto id = queryResponse.id();
+            auto query = sourceConfig->getSerializedQueries()->at(runningQueries[id]);
+            //TODO: actually use the resulttype
+            auto resultArray = queryResponse.response();
+            auto tupCount = buffer.getNumberOfTuples();
+            for (int i = 0; i < resultArray.size(); ++i) {
+                auto result = resultArray[i];
+                auto bufferCell = buffer[tupCount][i];
+                if (result.has__int8())
+                    bufferCell.write<int8_t>(result._int8());
+                if (result.has__int16())
+                    bufferCell.write<int16_t>(result._int16());
+                if (result.has__int32())
+                    bufferCell.write<int32_t>(result._int32());
+                if (result.has__int64())
+                    bufferCell.write<int64_t>(result._int64());
 
-                            if (result.has__uint8())
-                                bufferCell.write<u_int8_t>(result._uint8());
-                            if (result.has__uint16())
-                                bufferCell.write<u_int16_t>(result._uint16());
-                            if (result.has__uint32())
-                                bufferCell.write<u_int32_t>(result._uint32());
-                            if (result.has__uint64())
-                                bufferCell.write<u_int64_t>(result._uint64());
+                if (result.has__uint8())
+                    bufferCell.write<u_int8_t>(result._uint8());
+                if (result.has__uint16())
+                    bufferCell.write<u_int16_t>(result._uint16());
+                if (result.has__uint32())
+                    bufferCell.write<u_int32_t>(result._uint32());
+                if (result.has__uint64())
+                    bufferCell.write<u_int64_t>(result._uint64());
 
-                            if (result.has__float())
-                                bufferCell.write<float_t>(result._float());
-                            if (result.has__double())
-                                bufferCell.write<float_t>(result._double());
-                        }
-                        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
-                    }
-                    ++count;
+                if (result.has__float())
+                    bufferCell.write<float_t>(result._float());
+                if (result.has__double())
+                    bufferCell.write<float_t>(result._double());
+            }
+            buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
         }
-        buffer.setNumberOfTuples(count);
+        ++count;
+    }
+    buffer.setNumberOfTuples(count);
     return buffer.getBuffer();
 }
 

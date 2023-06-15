@@ -10,13 +10,15 @@
 //     limitations under the License.
 // *
 
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Util/TestUtils.hpp>
-#include <boost/process/spawn.hpp>
 #include <gtest/gtest.h>
 #include <mqtt/client.h>
 constexpr int OPERATORID = 1;
@@ -41,6 +43,11 @@ class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
         {Configurations::USER_NAME_CONFIG, CONSUMER_CLIENT_ID},
         {Configurations::PASSWORD_CONFIG, "hellothere"},
         {Configurations::LORAWAN_APP_ID_CONFIG, APP_ID},
+        {Configurations::LORAWAN_CA_PATH, ""},
+        {Configurations::LORAWAN_CERT_PATH,""},
+        {Configurations::LORAWAN_KEY_PATH, ""},
+        {Configurations::LORAWAN_DEVICE_EUIS, {"70b3d549938ea1ee",}},
+        {Configurations::LORAWAN_SENSOR_FIELDS,{"temperature","acceleration"}}
     };
     LoRaWANProxySourceTypePtr loRaWANProxySourceType;
 
@@ -57,7 +64,7 @@ class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
         client.connect();
         ASSERT_TRUE(client.is_connected()) << "client setup failed";
 
-        schema = Schema::create()->addField("var", UINT32);
+        schema = Schema::create()->addField("var", BasicType::UINT32);
         loRaWANProxySourceType = LoRaWANProxySourceType::create(sourceConfig);
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
