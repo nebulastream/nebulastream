@@ -327,7 +327,7 @@ int main(int argc, const char* argv[]) {
     //If no available thread then set number of threads to 1
     uint64_t numThreads = std::thread::hardware_concurrency();
     if (numThreads == 0) {
-        NES_WARNING2"No available threads. Going to use only 1 thread for parsing input queries.");
+        NES_WARNING2("No available threads. Going to use only 1 thread for parsing input queries.");
         numThreads = 1;
     }
     std::cout << "Using " << numThreads << " of threads for parallel parsing." << std::endl;
