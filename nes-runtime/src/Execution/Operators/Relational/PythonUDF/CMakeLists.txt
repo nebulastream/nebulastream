@@ -10,14 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregation)
-add_subdirectory(Join)
-add_subdirectory(Sort)
-add_subdirectory(PythonUDF)
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JavaUDF)
-endif ()
 add_source_files(nes-runtime
-        Map.cpp
-        Selection.cpp
+        MapPythonUDF.cpp
         )
