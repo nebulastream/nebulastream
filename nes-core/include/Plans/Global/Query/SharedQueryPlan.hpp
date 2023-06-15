@@ -113,14 +113,6 @@ class SharedQueryPlan {
   public:
     static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
 
-/*    *//**
-     * @brief Add the addition information to the change log
-     * @param upstreamOperator: the upstream operator to which operator needs to be added
-     * @param newOperator : the newly added operator
-     *//*
-    void addAdditionToChangeLog(const OperatorNodePtr& upstreamOperator, const OperatorNodePtr& newOperator);*/
-
-
     void addQuery(QueryId queryId, const std::vector<Optimizer::MatchedOperatorPairPtr>& matchedOperatorPairs);
 
     /**
@@ -170,12 +162,6 @@ class SharedQueryPlan {
      * @return vector of query ids
      */
     std::vector<QueryId> getQueryIds();
-
-/*    *//**
-     * @brief Add the query id and sink operators from the query plan to the Shared Query Plan
-     * @param queryPlanToAdd: the source query plan
-     *//*
-    void addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlanToAdd);*/
 
     /**
      * @brief Get the change log entries of the shared query plan change until the timestamp.
