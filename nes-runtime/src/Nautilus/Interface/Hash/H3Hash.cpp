@@ -19,32 +19,6 @@
 
 namespace NES::Nautilus::Interface {
 
-uint64_t hashInt(uint64_t value, uint64_t h3Seeds[]) {
-    uint64_t hash = 0;
-    auto numberOfKeyBits = sizeof(uint64_t) * 8;
-    for (auto i = 0UL; i < numberOfKeyBits; ++i) {
-        bool isBitSet = (value >> i) & 1;
-        if (isBitSet) {
-            hash = hash ^ h3Seeds[i];
-        }
-    }
-
-    return hash;
-}
-
-template<typename T>
-uint64_t hashValue(uint64_t seed, T value, void* h3SeedsPtr) {
-    NES_ASSERT2_FMT(h3SeedsPtr != nullptr, "h3SeedsPtr can not be NULL!");
-
-    // We do not want to cast, but rather just copy the bytes as-is
-    uint64_t newValue = 0;
-    std::memcpy(&newValue, &value, sizeof(T));
-
-    // Combine two hashes by XORing them
-    // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashInt(newValue, static_cast<uint64_t*>(h3SeedsPtr));
-}
-
 HashFunction::HashValue H3Hash::init() { return (uint64_t) 0UL; }
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state) {
