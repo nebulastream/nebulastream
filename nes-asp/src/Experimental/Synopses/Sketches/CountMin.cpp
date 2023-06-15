@@ -79,7 +79,7 @@ std::vector<Runtime::TupleBuffer> CountMin::getApproximate(uint64_t handlerIndex
     std::vector<Runtime::TupleBuffer> retTupleBuffers;
     Nautilus::Value<UInt64> recordIndex((uint64_t) 0);
 
-    for(auto& key : keyValues) {
+    for(auto& key : keys) {
         // Calculating the position
         auto hashFirstRow = h3HashFunction->calculateWithState(key, h3SeedsMemRef);
         auto colPosFirstRow = hashFirstRow % numberOfCols;

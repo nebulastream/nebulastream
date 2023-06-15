@@ -122,7 +122,7 @@ std::vector<Runtime::TupleBuffer> RandomSampleWithoutReplacement::getApproximate
     std::vector<Runtime::TupleBuffer> retTupleBuffers;
     Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
     auto aggregationValueMemRef = pagedVectorRef.allocateEntry();
-    for (auto& key : keyValues) {
+    for (auto& key : keys) {
         // Approximate over the sample and write the approximation into record
         aggregationFunction->reset(aggregationValueMemRef);
 

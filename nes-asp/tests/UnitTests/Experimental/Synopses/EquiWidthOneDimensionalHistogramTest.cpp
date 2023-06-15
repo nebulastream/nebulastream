@@ -43,18 +43,18 @@ public:
             handlers){};
 };
 
-class EquiWidth1DHistTest : public Testing::NESBaseTest {
+class EquiWidthOneDimensionalHistogramTest : public Testing::NESBaseTest {
 public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("EquiWidth1DHistTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO2("Setup EquiWidth1DHistTest test class.");
+        NES::Logger::setupLogging("EquiWidthOneDimensionalHistogramTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO2("Setup EquiWidthOneDimensionalHistogramTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NESBaseTest::SetUp();
-        NES_INFO2("Setup EquiWidth1DHistTest test case.");
+        NES_INFO2("Setup EquiWidthOneDimensionalHistogramTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
 
         // Creating the worker context and the pipeline necessary for testing the sampling
@@ -120,7 +120,7 @@ std::vector<Nautilus::Record> getInputData(Schema& inputSchema) {
     };
 }
 
-TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
+TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestCount) {
     auto aggregationType = Parsing::Aggregation_Type::COUNT;
     const auto entrySize = sizeof(double_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
@@ -186,7 +186,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestCount) {
     EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
 }
 
-TEST_F(EquiWidth1DHistTest, simpleHistTestSum) {
+TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestSum) {
     auto aggregationType = Parsing::Aggregation_Type::SUM;
     const auto entrySize = sizeof(double_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
@@ -250,7 +250,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestSum) {
     EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
 }
 
-TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
+TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMin) {
     auto aggregationType = Parsing::Aggregation_Type::MIN;
     const auto entrySize = sizeof(double_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
@@ -315,7 +315,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMin) {
     EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
 }
 
-TEST_F(EquiWidth1DHistTest, simpleHistTestMax) {
+TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestMax) {
     auto aggregationType = Parsing::Aggregation_Type::MAX;
     const auto entrySize = sizeof(double_t);
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,
@@ -379,7 +379,7 @@ TEST_F(EquiWidth1DHistTest, simpleHistTestMax) {
     EXPECT_EQ(dynamicBuffer[4][upperBoundBinName].read<int64_t>(), 5);
 }
 
-TEST_F(EquiWidth1DHistTest, simpleHistTestAverage) {
+TEST_F(EquiWidthOneDimensionalHistogramTest, simpleHistTestAverage) {
     auto aggregationType = Parsing::Aggregation_Type::AVERAGE;
     const auto entrySize = sizeof(double_t) * 2; // one for the count and one for the sum
     auto outputSchema = Benchmarking::getOutputSchemaFromTypeAndInputSchema(aggregationType, *inputSchema,

@@ -65,7 +65,7 @@ std::vector<Runtime::TupleBuffer> EquiWidthOneDimensionalHistogram::getApproxima
     std::vector<Runtime::TupleBuffer> retTupleBuffers;
     Nautilus::Value<Nautilus::UInt64> recordIndex((uint64_t) 0);
 
-    for (auto& key : keyValues) {
+    for (auto& key : keys) {
         auto binDimensionPos = ((key - minValue) / binWidth);
         Nautilus::Record record;
         aggregationFunction->lower(bins[(uint64_t) 0][binDimensionPos], record);
