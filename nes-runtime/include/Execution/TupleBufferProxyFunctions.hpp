@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Runtime/TupleBuffer.hpp>
+#include <iostream>
 namespace NES::Runtime::ProxyFunctions {
 void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;

@@ -29,7 +29,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     pageSize = ConfigurationOption<uint32_t>::create("pageSize", 4096, "pageSize in HT");
     preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
-    maxHashTableSize = ConfigurationOption<uint32_t>::create("maxHashTableSize", 0, ",max hash table size");
+    maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, ",max hash table size");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -77,7 +77,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     auto numberOfPartitions = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfPartitions"].As<std::string>(),
                                                                   configPerRun.numberOfPartitions->getDefaultValue());
 
-    auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
+    auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint64_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
                                                                   configPerRun.maxHashTableSize->getDefaultValue());
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
@@ -111,7 +111,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(pageSizes, totalBenchmarkRuns, pageSizes.back());
     Util::padVectorToSize<uint32_t>(preAllocPageCnts, totalBenchmarkRuns, preAllocPageCnts.back());
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
-    Util::padVectorToSize<uint32_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
+    Util::padVectorToSize<uint64_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());

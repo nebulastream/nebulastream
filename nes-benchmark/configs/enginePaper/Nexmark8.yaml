@@ -6,7 +6,7 @@ outputFile: nexmark8.csv
 #numberOfWorkerThreads: 1,2,3,4,5,6,7,8
 #numberOfSources: 1,1,1,1,2,2,2,2
 #numberOfWorkerThreads: 1,2,4,8,16
-numberOfWorkerThreads: 1
+numberOfWorkerThreads: 1,2,4,8
 numberOfSources: 1
 
 # engine configuration parameter
@@ -20,9 +20,12 @@ pageSize: 65536
 #pageSize: 8192
 numberOfPartitions: 16
 preAllocPageCnt: 32
-#joinStrategy: HASH_JOIN_LOCAL
-joinStrategy: NESTED_LOOP_JOIN
 
+maxHashTableSize: 34359738368
+#maxHashTableSize: 17179869184
+joinStrategy: HASH_JOIN_LOCAL
+#joinStrategy: NESTED_LOOP_JOIN
+#
 logicalSources:
   - name: bit
     type: NEBit
@@ -48,8 +51,8 @@ gatheringValues: 50000
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
 scalability: scale-up
-logLevel: LOG_DEBUG
-#logLevel: LOG_ERROR
+#logLevel: LOG_DEBUG
+logLevel: LOG_ERROR
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 5
+numberOfMeasurementsToCollect: 2

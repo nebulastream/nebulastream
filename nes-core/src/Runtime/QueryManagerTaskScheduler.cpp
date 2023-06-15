@@ -112,6 +112,7 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
             }
             //Finished indicate that the processing is done
             case ExecutionResult::Finished: {
+                completedWork(task, workerContext);
                 return ExecutionResult::Finished;
             }
             default: {
