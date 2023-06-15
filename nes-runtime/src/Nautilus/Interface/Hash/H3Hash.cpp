@@ -20,7 +20,7 @@
 namespace NES::Nautilus::Interface {
 
 template<typename IN, typename OUT>
-OUT custom_bit_cast(IN f)
+OUT customBitCastProxy(IN f)
 {
     OUT ret;
     std::memcpy(&ret, &f, sizeof(IN));
@@ -35,9 +35,9 @@ HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash
     // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
     // This is okay, as we are only interested in the bits as-is and not the represented value
     if (value->isType<Double>()) {
-        value = Value<UInt64>(custom_bit_cast<double, uint64_t>(value.as<Double>().getValue().getValue()));
+        value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Double::RawType, typename UInt64::RawType>, value.as<UInt64>());
     } else if (value->isType<Float>()) {
-        value = Value<UInt32>(custom_bit_cast<float, uint32_t>(value.as<Float>().getValue().getValue()));
+        value = FunctionCall("customBitCastProxy", customBitCastProxy<typename Float::RawType, typename UInt32::RawType>, value.as<Float>());
     }
 
 
