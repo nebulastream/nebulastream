@@ -124,7 +124,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
     EnumOption<QueryCompilation::QueryCompilerOptions::StreamJoinStrategy> joinStrategy = {
         JOIN_STRATEGY,
-        QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::HASH_JOIN_LOCAL,
+        QueryCompilation::QueryCompilerOptions::StreamJoinStrategy::NESTED_LOOP_JOIN,
         "Indicates the windowingStrategy"
         "[HASH_JOIN_LOCAL, HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 

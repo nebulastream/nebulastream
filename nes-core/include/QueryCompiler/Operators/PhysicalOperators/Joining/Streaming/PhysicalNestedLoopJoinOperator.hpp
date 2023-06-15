@@ -23,7 +23,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class is the parent class of the PhysicalNestedLoopJoinBuild and PhysicalNestedLoopJoinSink operators.
  */
-class PhysicalNestedLoopJoinOperator : public AbstractEmitOperator {
+class PhysicalNestedLoopJoinOperator {
   public:
     /**
      * @brief Getter for the NLJOperatorHandlerPtr

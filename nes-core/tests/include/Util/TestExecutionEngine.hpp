@@ -66,7 +66,8 @@ class TestExecutionEngine {
   public:
     TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
                         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode =
-                            QueryCompilation::QueryCompilerOptions::DumpMode::NONE);
+                            QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
+                        const NES::Runtime::Execution::JoinStrategy& joinStrategy = NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN);
 
     std::shared_ptr<TestSink> createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1);
 

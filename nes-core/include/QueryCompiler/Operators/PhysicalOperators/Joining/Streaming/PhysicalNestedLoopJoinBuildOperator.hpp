@@ -23,7 +23,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical stream join build operator and gets translated to a StreamJoinBuild operator for the nested loop join
  */
-class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperator, public PhysicalUnaryOperator {
+class PhysicalNestedLoopJoinBuildOperator : public PhysicalNestedLoopJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     /**
      * @brief creates a PhysicalNestedLoopJoinBuildOperator with a provided operatorId
