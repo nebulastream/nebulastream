@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef PYTHON_UDF_ENABLED
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/UDFException.hpp>
@@ -45,3 +45,4 @@ TEST_F(PythonUDFDescriptorTest, returnTypeMustBeDefined) {
 }
 
 }// namespace NES::Catalogs::UDF
+#endif

@@ -239,6 +239,18 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                                                    OperatorId id = Util::getNextOperatorId());
+
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+    /**
+     * @brief create a new MapPythonUDFLogicalOperatorNode
+     * @param descriptor python udf descriptor
+     * @param id operator id
+     * @return logical operator for the map python udf operator
+     */
+    static LogicalUnaryOperatorNodePtr
+    createMapPythonUDFLogicalOperator(const Catalogs::UDF::PythonUDFDescriptorPtr pythonUDFDescriptor,
+                                    OperatorId id = Util::getNextOperatorId());
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 };
 
 }// namespace NES

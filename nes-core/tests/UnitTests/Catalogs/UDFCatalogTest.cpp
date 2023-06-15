@@ -28,13 +28,14 @@ namespace NES::Catalogs::UDF {
 class UDFCatalogTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
-
+#ifdef PYTHON_UDF_ENABLED
     static PythonUDFDescriptorPtr createPythonDescriptor() {
         auto methodName = "python_udf_method"s;
         int numberOfArgs = 2;
         DataTypePtr returnType = DataTypeFactory::createInt32();
         return PythonUDFDescriptor::create(methodName, numberOfArgs, returnType);
     }
+#endif
 
   protected:
     UDFCatalog udfCatalog{};
@@ -52,7 +53,7 @@ TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
     // then
     ASSERT_EQ(udfDescriptor, UDFDescriptor::as<JavaUDFDescriptor>(udfCatalog.getUDFDescriptor(udfName)));
 }
-
+#ifdef PYTHON_UDF_ENABLED
 /**
  * @brief Test the behavior of registering and retrieving Python UDF descriptors.
  */
@@ -65,7 +66,7 @@ TEST_F(UDFCatalogTest, RetrieveRegisteredPythonUdfDescriptor) {
     // then
     ASSERT_EQ(udfDescriptor, udfCatalog.getUDFDescriptor(udfName));
 }
-
+#endif
 /**
  * @brief Test that a null UDF descriptor cannot be registered.
  */

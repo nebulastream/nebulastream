@@ -30,6 +30,8 @@ add_source_files(nes-core
         LogicalUnaryOperatorNode.cpp
         InferModelOperatorHandler.cpp
         JavaUDFLogicalOperator.cpp
+        MapPythonUDFLogicalOperatorNode.cpp
+        PythonUDFLogicalOperator.cpp
         OpenCLLogicalOperatorNode.cpp
         LimitLogicalOperatorNode.cpp
         )

@@ -93,6 +93,14 @@ NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDesc
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+NES::QueryPlanPtr QueryPlanBuilder::addMapPythonUDF(const Catalogs::UDF::PythonUDFDescriptorPtr& descriptor, NES::QueryPlanPtr queryPlan){
+    NES_DEBUG("QueryPlanBuilder: add map python udf operator to query plan");
+    auto op = LogicalOperatorFactory::createMapPythonUDFLogicalOperator(descriptor);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map operator to query plan");

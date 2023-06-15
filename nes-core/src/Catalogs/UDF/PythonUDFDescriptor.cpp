@@ -11,24 +11,35 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
 
 namespace NES::Catalogs::UDF {
 
-PythonUDFDescriptor::PythonUDFDescriptor(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType)
-    : UDFDescriptor(methodName), numberOfArgs(numberOfArgs), returnType(returnType) {
-    if (methodName.empty()) {
-        throw UDFException("The method name of a Python UDF must not be empty");
+PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName, std::string& functionString, const SchemaPtr inputSchema,  const SchemaPtr outputSchema)
+    : UDFDescriptor(functionName), functionString(functionString), inputSchema(inputSchema), outputSchema(outputSchema) {
+
+    if (functionName.empty()) {
+        throw UDFException("The function name of a Python UDF must not be empty");
     }
-    // Note: For python >= 3.7 there is no limit on the number of arguments
-    if (numberOfArgs < 0 || numberOfArgs > 255) {
-        throw UDFException("The number of arguments of a Python UDF must be between 0 and 255");
+    if (functionString.empty()){
+        throw UDFException("Function String of Python UDF must not be empty");
     }
-    if (returnType == nullptr || returnType->isUndefined()) {
-        throw UDFException("A defined return type for a Python UDF must be set");
+    if (inputSchema->empty()) {
+        throw UDFException("The input schema of a Python UDF must not be empty");
+    }
+    if (inputSchema->empty()) {
+        throw UDFException("The output schema of a Python UDF must not be empty");
     }
 }
+bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
+    return functionString == other.functionString && getMethodName() == other.getMethodName()
+        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true);
+}
+
+void PythonUDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { PythonUDFDescriptor::inputSchema = inputSchema; }
+
 
 }// namespace NES::Catalogs::UDF
+#endif// NAUTILUS_PYTHON_UDF_ENABLED

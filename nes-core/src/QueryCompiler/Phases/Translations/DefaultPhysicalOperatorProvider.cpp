@@ -103,6 +103,10 @@
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapPythonUDFOperator.hpp>
+#include <Operators/LogicalOperators/MapPythonUDFLogicalOperatorNode.hpp>
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 namespace NES::QueryCompilation {
 
@@ -206,6 +210,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+    } else if (operatorNode->instanceOf<MapPythonUDFLogicalOperatorNode>()){
+        lowerPythonUDFMapOperator(queryPlan, operatorNode);
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -284,6 +292,16 @@ void DefaultPhysicalOperatorProvider::lowerJavaUDFFlatMapOperator(const QueryPla
                                                                   flatMapJavaUDFOperator->getJavaUDFDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
+
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+void DefaultPhysicalOperatorProvider::lowerPythonUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto mapPythonUDFOperator = operatorNode->as<MapPythonUDFLogicalOperatorNode>();
+    auto physicalPythonUDFlMapOperator = PhysicalOperators::PhysicalMapPythonUDFOperator::create(mapPythonUDFOperator->getInputSchema(),
+                                                                                                mapPythonUDFOperator->getOutputSchema(),
+                                                                                                mapPythonUDFOperator->getPythonUDFDescriptor());
+    operatorNode->replace(physicalPythonUDFlMapOperator);
+}
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
