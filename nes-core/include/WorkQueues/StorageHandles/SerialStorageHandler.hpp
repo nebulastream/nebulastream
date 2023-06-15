@@ -51,44 +51,55 @@ class SerialStorageHandler : public StorageHandler {
 
     /**
      * @brief This function does nothing because no special actions are needed to acquire resources for serial execution
+     * @param requestId The id of the request making the call
      * @param requiredResources The resources required for request execution
      */
     void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
 
+    /**
+     * @brief This function does nothing. Because no the serial storage handler does not acquire resources, none need to be released
+     * @param requestId The id of the request making the call
+     */
     void releaseResources(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable topology handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the topology
      */
     TopologyHandle getTopologyHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable query catalog handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the query catalog.
      */
     QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable source catalog handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the source catalog.
      */
     SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the global execution plan.
      */
     GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global query plan handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the global query plan.
      */
     GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable udf catalog handle.
+     * @param requestId The id of the request making the call
      * @return a handle to the udf catalog.
      */
     UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;

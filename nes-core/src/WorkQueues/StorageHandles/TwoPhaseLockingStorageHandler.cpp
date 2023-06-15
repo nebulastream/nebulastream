@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Util/Logger/Logger.hpp>
-#include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <algorithm>
 #include <utility>
@@ -46,53 +45,30 @@ void TwoPhaseLockingStorageHandler::acquireResources(RequestId requestId, std::v
 void TwoPhaseLockingStorageHandler::releaseResources(RequestId requestId) {
     for (uint8_t i = 0; i <= (uint8_t) ResourceType::Last; ++i) {
         auto& holder = getHolder((ResourceType) i);
-        /*
-        if (holder == requestId) {
-            holder = INVALID_REQUEST_ID;
-            NES_DEBUG2("Request {}: release resource {}", requestId, i);
-        }
-         */
-        auto expected = requestId;
-        if (holder.compare_exchange_strong(expected, INVALID_REQUEST_ID)) {
+        if (holder.id == requestId) {
+            holder.id = INVALID_REQUEST_ID;
+            holder.mutex.unlock();
             NES_DEBUG2("Request {}: release resource {}", requestId, i);
         }
     }
 }
 
-void TwoPhaseLockingStorageHandler::lockResource(std::atomic<uint64_t>& holder, RequestId requestId) {
-    auto expected = INVALID_REQUEST_ID;
-    while (!holder.compare_exchange_weak(expected, requestId)) {
-        NES_DEBUG2("Request {} could not acquire lock because resource is held by {}", requestId, expected);
-        if (expected == INVALID_REQUEST_ID) {
-            continue;
-        }
-        holder.wait(expected);
-        expected = INVALID_REQUEST_ID;
-    }
+void TwoPhaseLockingStorageHandler::lockResource(ResourceLockInfo& holder, RequestId requestId) {
+    holder.mutex.lock();
+    holder.id = requestId;
     NES_DEBUG2("Request {} acquired resource", requestId);
-}
-
-//todo: define a function starting at a certain type only
-std::vector<ResourceType> TwoPhaseLockingStorageHandler::getResourcesHeldByRequest(RequestId requestId) {
-    std::vector<ResourceType> resourcesTypes;
-    for (uint8_t i = 0; i <= (uint8_t) ResourceType::Last; ++i) {
-        if (getHolder((ResourceType) i) == requestId) {
-            resourcesTypes.push_back((ResourceType) i);
-        }
-    }
-    return resourcesTypes;
 }
 
 bool TwoPhaseLockingStorageHandler::isLockHolder(RequestId requestId) {
     for (uint8_t i = 0; i <= (uint8_t) ResourceType::Last; ++i) {
-        if (getHolder((ResourceType) i) == requestId) {
+        if (getHolder((ResourceType) i).id == requestId) {
             return true;
         }
     }
     return false;
 }
 
-std::atomic<RequestId>& TwoPhaseLockingStorageHandler::getHolder(ResourceType resourceType) {
+ResourceLockInfo& TwoPhaseLockingStorageHandler::getHolder(ResourceType resourceType) {
     switch (resourceType) {
         case ResourceType::Topology:
             return topologyHolder;
@@ -112,32 +88,10 @@ std::atomic<RequestId>& TwoPhaseLockingStorageHandler::getHolder(ResourceType re
 
 void TwoPhaseLockingStorageHandler::lockResource(ResourceType resourceType, RequestId requestId) {
     lockResource(getHolder(resourceType), requestId);
-    /*
-    switch (resourceType) {
-        case ResourceType::Topology:
-            lockResource(topologyHolder, requestId);
-            break;
-        case ResourceType::QueryCatalogService:
-            lockResource(queryCatalogServiceHolder, requestId);
-            break;
-        case ResourceType::SourceCatalog:
-            lockResource(sourceCatalogHolder, requestId);
-            break;
-        case ResourceType::GlobalExecutionPlan:
-            lockResource(globalExecutionPlanHolder, requestId);
-            break;
-        case ResourceType::GlobalQueryPlan:
-            lockResource(globalQueryPlanHolder, requestId);
-            break;
-        case ResourceType::UdfCatalog:
-            lockResource(udfCatalogHolder, requestId);
-            break;
-    }
-     */
 }
 
 GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(RequestId requestId) {
-    if (globalExecutionPlanHolder != requestId) {
+    if (globalExecutionPlanHolder.id != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
@@ -145,7 +99,7 @@ GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanH
 }
 
 TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(RequestId requestId) {
-    if (topologyHolder != requestId) {
+    if (topologyHolder.id != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
@@ -153,7 +107,7 @@ TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(RequestId reques
 }
 
 QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle(RequestId requestId) {
-    if (queryCatalogServiceHolder != requestId) {
+    if (queryCatalogServiceHolder.id != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
@@ -161,7 +115,7 @@ QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceH
 }
 
 GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(RequestId requestId) {
-    if (globalQueryPlanHolder != requestId) {
+    if (globalQueryPlanHolder.id != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
@@ -169,7 +123,7 @@ GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(Re
 }
 
 SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(RequestId requestId) {
-    if (sourceCatalogHolder != requestId) {
+    if (sourceCatalogHolder.id != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
@@ -177,7 +131,7 @@ SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(Reques
 }
 
 UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(RequestId requestId) {
-    if (udfCatalogHolder != requestId) {
+    if (udfCatalogHolder.id != requestId) {
         //todo #3611: write custom exception for this case
         throw std::exception();
     }
