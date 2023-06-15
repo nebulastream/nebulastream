@@ -100,9 +100,6 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                 clEntryUpstreamOperators.insert(hostUpstreamOperator->as<OperatorNode>());
             }
 
-            //add the copied target operator to the root of the plan
-            queryPlan->addRootOperator(targetOperatorCopy);
-
             //set target operator as the downstream operator in the change log
             clEntryDownstreamOperators.insert(targetOperatorCopy);
 

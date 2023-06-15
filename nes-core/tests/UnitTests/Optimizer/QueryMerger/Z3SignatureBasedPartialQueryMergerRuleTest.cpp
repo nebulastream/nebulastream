@@ -417,7 +417,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_EQ(updatedRootOperators1.size(), 3U);
     EXPECT_EQ(updatedSharedQueryPlan1->getSourceOperators().size(), 2U);
 
-    auto changeLog = updatedSharedQueryPlansDeploy[0]->getChangeLog();
+    auto changeLog = updatedSharedQueryPlansDeploy[0]->getChangeLogEntries();
     EXPECT_EQ(changeLog->getAddition().size(), 2U);
 
     for (const auto& addition : changeLog->getAddition()) {
@@ -499,7 +499,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     EXPECT_TRUE(updatedSharedPlanAfterStopToDeploy.size() == 1);
 
     auto updatedSharedPlanAfterStop = updatedSharedPlanAfterStopToDeploy[0]->getQueryPlan();
-    auto changeLog = updatedSharedPlanAfterStopToDeploy[0]->getChangeLog();
+    auto changeLog = updatedSharedPlanAfterStopToDeploy[0]->getChangeLogEntries();
 
     EXPECT_TRUE(updatedSharedPlanAfterStop);
     NES_INFO2("{}", updatedSharedPlanAfterStop->toString());

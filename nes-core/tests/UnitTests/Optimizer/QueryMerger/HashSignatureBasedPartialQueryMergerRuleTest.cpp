@@ -65,7 +65,7 @@ class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErr
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
-        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+        udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
     /* Will be called before a test is executed. */
