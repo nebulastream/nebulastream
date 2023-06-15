@@ -55,8 +55,8 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             FaultToleranceType faultToleranceType,
                                             LineageType lineageType,
-                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                            const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                            const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_INFO2("ILPStrategy: Performing placement of the input query plan with id {}", queryId);
 
@@ -245,7 +245,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }
 
-std::map<uint64_t, double> ILPStrategy::computeMileage(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
+std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<OperatorNodePtr>& pinnedUpStreamOperators) {
     std::map<uint64_t, double> mileageMap;// (topologyId, M)
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {

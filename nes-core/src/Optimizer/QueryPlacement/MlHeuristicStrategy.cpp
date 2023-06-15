@@ -55,8 +55,8 @@ MlHeuristicStrategy::MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionP
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                     FaultToleranceType faultToleranceType,
                                                     LineageType lineageType,
-                                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                    const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                    const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {
         NES_DEBUG2("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
@@ -133,8 +133,8 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
 }
 
 void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
-                                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_DEBUG2("MlHeuristicStrategy: Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
@@ -192,7 +192,7 @@ bool MlHeuristicStrategy::pushUpBasedOnFilterSelectivity(const OperatorNodePtr& 
 void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                                                   const OperatorNodePtr& operatorNode,
                                                   TopologyNodePtr candidateTopologyNode,
-                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                  const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
         NES_DEBUG2("Operator is already placed and thus skipping placement of this and its down stream operators.");

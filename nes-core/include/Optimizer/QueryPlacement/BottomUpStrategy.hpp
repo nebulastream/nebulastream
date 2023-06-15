@@ -41,8 +41,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -57,8 +57,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @throws exception if the operator can't be placed.
      */
     void pinOperators(QueryId queryId,
-                      const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                      const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                      const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
@@ -70,7 +70,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
     void identifyPinningLocation(QueryId queryId,
                                  const OperatorNodePtr& operatorNode,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators);
 };
 }// namespace NES::Optimizer
 

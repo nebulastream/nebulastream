@@ -125,8 +125,8 @@ void BasePlacementStrategy::performPathSelection(const std::set<OperatorNodePtr>
 }
 
 void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
-                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                 const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                 const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_DEBUG2("BasePlacementStrategy: Place all pinned upstream operators.");
     //0. Iterate over all pinned upstream operators and place them
@@ -250,11 +250,11 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
         //4. Check if this operator is not in the list of pinned downstream operators then recursively call this function for its downstream operators.
         if (isOperatorAPinnedDownStreamOperator == pinnedDownStreamOperators.end()) {
             //4.1 Prepare next set of pinned upstream operators to place.
-            std::vector<OperatorNodePtr> nextPinnedUpstreamOperators;
+            std::set<OperatorNodePtr> nextPinnedUpstreamOperators;
             for (const auto& downStreamOperator : pinnedOperator->getParents()) {
                 //4.1.1 Only select the operators that are not placed.
                 if (!downStreamOperator->as_if<OperatorNode>()->hasProperty(PLACED)) {
-                    nextPinnedUpstreamOperators.emplace_back(downStreamOperator->as<OperatorNode>());
+                    nextPinnedUpstreamOperators.insert(downStreamOperator->as<OperatorNode>());
                 }
             }
             //4.2 Recursively call this function for next set of pinned upstream operators.
@@ -652,7 +652,7 @@ bool BasePlacementStrategy::isSourceAndDestinationConnected(const OperatorNodePt
 }
 
 bool BasePlacementStrategy::operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
-                                                        const std::vector<OperatorNodePtr>& operatorCollection) {
+                                                        const std::set<OperatorNodePtr>& operatorCollection) {
 
     auto isPresent = std::find_if(operatorCollection.begin(),
                                   operatorCollection.end(),

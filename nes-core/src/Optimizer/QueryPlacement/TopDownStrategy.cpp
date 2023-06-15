@@ -46,8 +46,8 @@ TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 FaultToleranceType faultToleranceType,
                                                 LineageType lineageType,
-                                                const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                                const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
     try {
         NES_DEBUG2("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
@@ -70,8 +70,8 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
 }
 
 void TopDownStrategy::pinOperators(QueryId queryId,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                   const std::set<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::set<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_TRACE2("TopDownStrategy: Place all sink operators.");
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
@@ -106,7 +106,7 @@ void TopDownStrategy::pinOperators(QueryId queryId,
 void TopDownStrategy::identifyPinningLocation(QueryId queryId,
                                               const OperatorNodePtr& operatorNode,
                                               TopologyNodePtr candidateTopologyNode,
-                                              const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
+                                              const std::set<OperatorNodePtr>& pinnedUpStreamOperators) {
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
         NES_DEBUG2("Operator is already placed and thus skipping placement of this and its down stream operators.");
