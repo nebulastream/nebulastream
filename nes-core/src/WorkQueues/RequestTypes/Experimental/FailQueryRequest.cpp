@@ -46,7 +46,9 @@ void FailQueryRequest::postRollbackHandle(RequestExecutionException&, NES::Stora
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(NES::StorageHandler&) {}
+void FailQueryRequest::postExecution(NES::StorageHandler& storageHandler) {
+    storageHandler.releaseResources(queryId);
+}
 
 void NES::Experimental::FailQueryRequest::executeRequestLogic(NES::StorageHandler& storageHandle) {
     globalQueryPlan = storageHandle.getGlobalQueryPlanHandle(requestId);

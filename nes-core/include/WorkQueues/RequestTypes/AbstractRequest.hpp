@@ -26,14 +26,11 @@ using Exceptions::RequestExecutionException;
 namespace Configurations {
 class OptimizerConfiguration;
 }
-using RequestId = uint64_t;
 
 class StorageHandler;
-using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class AbstractRequest;
-using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
@@ -58,11 +55,10 @@ class AbstractRequest {
   public:
     /**
      * @brief constructor
-     * @param requestId: this requests id
+     * @param requestId: the id of this request
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      */
-     //todo: at what point in the lifecyclye shoud the request id be assigned?
     explicit AbstractRequest(RequestId requestId, const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**

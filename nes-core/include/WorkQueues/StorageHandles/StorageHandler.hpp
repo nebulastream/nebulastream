@@ -71,44 +71,55 @@ class StorageHandler {
 
     /**
      * Performs tasks necessary before request execution and locks resources if necessary
+     * @param requestId The id of the request which calls this function
      * @param requiredResources The resources required for executing the request.
      */
     virtual void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) = 0;
 
+    /**
+     * Performs tasks necessary after request execution, releases resources if necessary
+     * @param requestId The id of the request which calls this function
+     */
     virtual void releaseResources(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the global execution plan.
      */
     virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable topology handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the topology
      */
     virtual TopologyHandle getTopologyHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable query catalog handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the query catalog.
      */
     virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable global query plan handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the global query plan.
      */
     virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable source catalog handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the source catalog.
      */
     virtual SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) = 0;
 
     /**
      * @brief Obtain a mutable udf catalog handle.
+     * @param requestId The id of the request which calls this function
      * @return a handle to the udf catalog.
      */
     virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) = 0;

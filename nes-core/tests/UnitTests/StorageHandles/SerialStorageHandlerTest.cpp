@@ -49,12 +49,12 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
                                                            udfCatalog);
 
     //test if we can obtain the resource we passed to the constructor
-    ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle().get());
-    ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle().get());
-    ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogServiceHandle().get());
-    ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle().get());
-    ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle().get());
-    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle().get());
+    ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(1).get());
+    ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle(1).get());
+    ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogServiceHandle(1).get());
+    ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle(1).get());
+    ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle(1).get());
+    ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(1).get());
 }
 
 }// namespace NES
