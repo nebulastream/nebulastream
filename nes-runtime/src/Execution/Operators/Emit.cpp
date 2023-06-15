@@ -36,17 +36,18 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
 }
 
-void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
+void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto outputIndex = emitState->outputIndex;
-    memoryProvider->write(outputIndex, emitState->bufferReference, recordBuffer);
+    memoryProvider->write(outputIndex, emitState->bufferReference, record);
     emitState->outputIndex = outputIndex + (uint64_t) 1;
-    // emit buffer if it reached the maximal capacity
+
+    //    // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;
         resultBuffer.setNumRecords(emitState->outputIndex);
-        resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
-        resultBuffer.setOriginId(ctx.getOriginId());
+//        resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
+//        resultBuffer.setOriginId(ctx.getOriginId());
         ctx.emitBuffer(resultBuffer);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);

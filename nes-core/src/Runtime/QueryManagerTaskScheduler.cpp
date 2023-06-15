@@ -182,17 +182,17 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING2("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
-        std::stringstream s;
-        s << buffer;
-        std::string bufferString = s.str();
-        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} "
-                   "getQuerySubPlanId={} queueId={}",
-                   (*nextPipeline)->getPipelineId(),
-                   (*nextPipeline)->getSuccessors().size(),
-                   bufferString,
-                   (*nextPipeline)->getQueryId(),
-                   (*nextPipeline)->getQuerySubPlanId(),
-                   queueId);
+        //        std::stringstream s;
+        //        s << buffer;
+        //        std::string bufferString = s.str();
+        //        NES_ERROR2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} "
+        //                   "getQuerySubPlanId={} queueId={}",
+        //                   (*nextPipeline)->getPipelineId(),
+        //                   (*nextPipeline)->getSuccessors().size(),
+        //                   bufferString,
+        //                   (*nextPipeline)->getQueryId(),
+        //                   (*nextPipeline)->getQuerySubPlanId(),
+        //                   queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 

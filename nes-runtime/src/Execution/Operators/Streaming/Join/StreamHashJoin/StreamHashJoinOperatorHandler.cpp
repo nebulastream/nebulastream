@@ -38,7 +38,7 @@ StreamHashJoinOperatorHandler::StreamHashJoinOperatorHandler(SchemaPtr joinSchem
                                 joinFieldNameRight,
                                 origins,
                                 windowSize,
-                                StreamJoinOperatorHandler::JoinType::HASH_JOIN),
+                                NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL),
       totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize),
       numPartitions(numPartitions) {
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);

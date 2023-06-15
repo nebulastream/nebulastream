@@ -13,8 +13,10 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
 #include <cstdint>
 #include <string>
 namespace NES::QueryCompilation {
@@ -109,7 +111,8 @@ class QueryCompilerOptions {
     class StreamHashJoinOptions {
       public:
         StreamHashJoinOptions()
-            : numberOfPartitions(1), pageSize(4096), preAllocPageCnt(1), totalSizeForDataStructures(1024 * 1024) {}
+        //            : numberOfPartitions(1), pageSize(4096), preAllocPageCnt(1), totalSizeForDataStructures(1024 * 1024)
+        {}
 
         /**
          * @brief getter for max hash table size
@@ -175,15 +178,12 @@ class QueryCompilerOptions {
     static QueryCompilerOptionsPtr createDefaultOptions();
 
     [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
-
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
     [[nodiscard]] QueryCompiler getQueryCompiler() const;
-
     void setQueryCompiler(QueryCompiler pipeliningStrategy);
 
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
-
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
@@ -212,6 +212,9 @@ class QueryCompilerOptions {
     uint64_t getNumSourceLocalBuffers() const;
 
     WindowingStrategy getWindowingStrategy() const;
+
+    void setJoinStratgy(NES::Runtime::Execution::JoinStrategy strategy);
+    [[nodiscard]] NES::Runtime::Execution::JoinStrategy getJoinStratgy() const;
 
     /**
      * @brief Return hash join options
@@ -243,6 +246,7 @@ class QueryCompilerOptions {
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
+    NES::Runtime::Execution::JoinStrategy joinStrategy;
 };
 }// namespace NES::QueryCompilation
 

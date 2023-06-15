@@ -46,8 +46,11 @@
 #include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJSink.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/UnkeyedThresholdWindow/UnkeyedThresholdWindowOperatorHandler.hpp>
@@ -60,6 +63,8 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
@@ -269,18 +274,34 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinSinkOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinSinkOperator>();
 
-        NES_DEBUG2("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamHashJoinSink>(handlerIndex);
         pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinSinkOperator>()) {
+        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinSinkOperator>();
 
+        operatorHandlers.push_back(sinkOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+        //TODO: we need to change this here as all these parameters the sink can get by its own form the handler
+        auto joinSchema = Runtime::Execution::Util::createJoinSchema(sinkOperator->getOperatorHandler()->getJoinSchemaLeft(),
+                                                 sinkOperator->getOperatorHandler()->getJoinSchemaRight(),
+                                                 sinkOperator->getOperatorHandler()->getJoinFieldNameLeft());
+        auto joinSinkNautilus =
+            std::make_shared<Runtime::Execution::Operators::NLJSink>(handlerIndex,
+                                                                     sinkOperator->getOperatorHandler()->getJoinSchemaLeft(),
+                                                                     sinkOperator->getOperatorHandler()->getJoinSchemaRight(),
+                                                                     joinSchema,
+                                                                     sinkOperator->getOperatorHandler()->getJoinFieldNameLeft(),
+                                                                     sinkOperator->getOperatorHandler()->getJoinFieldNameRight());
+        pipeline.setRootOperator(joinSinkNautilus);
+        return joinSinkNautilus;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinBuildOperator>()) {
         auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinBuildOperator>();
 
-        NES_DEBUG2("Added streamJoinOpHandler to operatorHandlers!");
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(buildOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
@@ -315,13 +336,51 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>()) {
+        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalNestedLoopJoinBuildOperator>();
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
+        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
+        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft()
+                                        : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
+        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
+                                     : buildOperator->getOperatorHandler()->getJoinSchemaRight();
+
+        auto tsField = buildOperator->getTimeStampFieldName();
+        std::shared_ptr<Runtime::Execution::Operators::NLJBuild> joinBuildNautilus;
+        if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
+            auto timeFunction = std::make_shared<Runtime::Execution::Operators::IngestionTimeFunction>();
+            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
+                                                                                          joinSchema,
+                                                                                          joinFieldName,
+                                                                                          tsField,
+                                                                                          isLeftSide,
+                                                                                          timeFunction);
+        } else {
+            auto timeStampFieldRecord =
+                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
+            auto timeFunction = std::make_shared<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+            joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(handlerIndex,
+                                                                                          joinSchema,
+                                                                                          joinFieldName,
+                                                                                          buildOperator->getTimeStampFieldName(),
+                                                                                          isLeftSide,
+                                                                                          timeFunction);
+        }
+
+        parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
+        return joinBuildNautilus;
+    }
 #ifdef TFDEF
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
+    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
         auto inferModel = lowerInferModelOperator(operatorNode, operatorHandlers);
         parentOperator->setChild(inferModel);
         return inferModel;
-#endif
     }
+#endif
     NES_NOT_IMPLEMENTED();
 }
 

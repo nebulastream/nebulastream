@@ -75,6 +75,7 @@ void NLJBuild::execute(ExecutionContext& ctx, Record& record) const {
                                               Value<Boolean>(isLeftSide),
                                               timestampVal);
 
+
     // Write Record at entryMemRef
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : schema->fields) {
@@ -101,11 +102,11 @@ void NLJBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 }
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
-                   const SchemaPtr& schema,
+                   const SchemaPtr schema,
                    const std::string& joinFieldName,
                    const std::string& timeStampField,
                    bool isLeftSide,
-                   TimeFunctionPtr timeFunction)
+                   std::shared_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), timeStampField(timeStampField),
       isLeftSide(isLeftSide), timeFunction(std::move(timeFunction)) {}
 

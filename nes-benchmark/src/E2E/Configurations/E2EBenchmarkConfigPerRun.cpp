@@ -29,6 +29,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     pageSize = ConfigurationOption<uint32_t>::create("pageSize", 4096, "pageSize in HT");
     preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
+    maxHashTableSize = ConfigurationOption<uint32_t>::create("maxHashTableSize", 0, ",max hash table size");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -42,7 +43,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- numberOfBuffersInGlobalBufferManager: " << numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
         << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString()
         << "- pageSize: " << pageSize->getValueAsString() << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString()
-        << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl;
+        << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
+        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -75,6 +77,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     auto numberOfPartitions = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfPartitions"].As<std::string>(),
                                                                   configPerRun.numberOfPartitions->getDefaultValue());
 
+    auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
+                                                                  configPerRun.maxHashTableSize->getDefaultValue());
+
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
@@ -90,6 +95,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, pageSizes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, preAllocPageCnts.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfPartitions.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, maxHashTableSizes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
 
     /* Padding all vectors to the desired size */
@@ -105,6 +111,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(pageSizes, totalBenchmarkRuns, pageSizes.back());
     Util::padVectorToSize<uint32_t>(preAllocPageCnts, totalBenchmarkRuns, preAllocPageCnts.back());
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
+    Util::padVectorToSize<uint32_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -120,6 +127,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.pageSize->setValue(pageSizes[i]);
         e2EBenchmarkConfigPerRun.preAllocPageCnt->setValue(preAllocPageCnts[i]);
         e2EBenchmarkConfigPerRun.numberOfPartitions->setValue(numberOfPartitions[i]);
+        e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);

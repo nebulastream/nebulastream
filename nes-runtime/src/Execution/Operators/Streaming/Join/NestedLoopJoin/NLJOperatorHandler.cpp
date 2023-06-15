@@ -42,7 +42,7 @@ NLJOperatorHandler::NLJOperatorHandler(const SchemaPtr& joinSchemaLeft,
                                 joinFieldNameRight,
                                 origins,
                                 windowSize,
-                                StreamJoinOperatorHandler::JoinType::NESTED_LOOP_JOIN) {}
+                                NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN) {}
 
 void NLJOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG2("start HashJoinOperatorHandler");

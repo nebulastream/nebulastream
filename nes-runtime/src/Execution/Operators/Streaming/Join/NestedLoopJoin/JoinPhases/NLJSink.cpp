@@ -77,6 +77,19 @@ uint64_t getWindowEndProxy(void* ptrOpHandler, void* windowIdentifierPtr) {
     return opHandler->getWindowStartEnd(windowIdentifier).second;
 }
 
+uint64_t getSequenceNumberProxy(void* ptrOpHandler) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+
+    auto opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
+    return opHandler->getNextSequenceNumber();
+}
+uint64_t getOriginIdProxy(void* ptrOpHandler) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+
+    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    return opHandler->getOperatorId();
+}
+
 void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     if (hasChild()) {
         child->open(ctx, recordBuffer);
@@ -113,6 +126,12 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Value<Any> windowEnd =
         Nautilus::FunctionCall("getWindowEndProxy", getWindowEndProxy, operatorHandlerMemRef, windowIdentifierMemRef);
 
+    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    auto sequenceNumber = Nautilus::FunctionCall("getSequenceNumberProxy", getSequenceNumberProxy, operatorHandlerMemRef);
+    ctx.setSequenceNumber(sequenceNumber);
+    auto originId = Nautilus::FunctionCall("getOriginIdProxy", getOriginIdProxy, operatorHandlerMemRef);
+    ctx.setOrigin(originId);
+
     // As we know that the data is of type rowLayout, we do not have to provide a buffer size
     auto leftMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, leftSchema);
     auto rightMemProvider = Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, rightSchema);
@@ -122,7 +141,7 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
             auto leftRecord = leftMemProvider->read({}, firstTupleLeft, leftPos);
             auto rightRecord = rightMemProvider->read({}, firstTupleRight, rightPos);
 
-            /* This can be later replaced by an interface that returns bool and gets passed the
+            /* This can be later replaced by an interface that returns bool and getys passed the
                  * two Nautilus::Records (left and right) #3691 */
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
                 Record joinedRecord;
@@ -144,8 +163,10 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                     joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                 }
 
-                // Calling the child operator for this joinedRecord
-                child->execute(ctx, joinedRecord);
+                if (hasChild()) {
+                    // Calling the child operator for this joinedRecord
+                    child->execute(ctx, joinedRecord);
+                }
             }
         }
     }
@@ -161,6 +182,6 @@ NLJSink::NLJSink(uint64_t operatorHandlerIndex,
                  std::string joinFieldNameLeft,
                  std::string joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
-      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
+      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight){}
 
 }// namespace NES::Runtime::Execution::Operators

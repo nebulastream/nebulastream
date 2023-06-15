@@ -69,6 +69,17 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
     coordinatorConf->worker.queryCompiler.preAllocPageCnt = configPerRun.preAllocPageCnt->getValue();
+    coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
+
+    if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL;
+    } else if (configOverAllRuns.joinStrategy->getValue() == "NESTED_LOOP_JOIN") {
+        coordinatorConf->worker.queryCompiler.joinStrategy = NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
+    }
 
     if (configOverAllRuns.sourceSharing->getValue() == "on") {
         coordinatorConf->worker.enableSourceSharing = true;

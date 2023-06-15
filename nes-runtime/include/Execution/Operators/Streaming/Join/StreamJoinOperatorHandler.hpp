@@ -16,6 +16,7 @@
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_H_
 #include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Join/StreamWindow.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
@@ -28,10 +29,11 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This operator is the general join operator handler withh basic functionality
  */
+class StreamJoinOperatorHandler;
+using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
+
 class StreamJoinOperatorHandler : public OperatorHandler {
   public:
-    enum class JoinType : uint8_t { HASH_JOIN, NESTED_LOOP_JOIN };
-
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
      * @param windowSize
@@ -40,7 +42,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
      * @param origins
-     * @param joinType
+     * @param JoinStrategy
      */
     StreamJoinOperatorHandler(const SchemaPtr& joinSchemaLeft,
                               const SchemaPtr& joinSchemaRight,
@@ -48,7 +50,7 @@ class StreamJoinOperatorHandler : public OperatorHandler {
                               const std::string& joinFieldNameRight,
                               const std::vector<OriginId>& origins,
                               size_t windowSize,
-                              const JoinType joinType);
+                              JoinStrategy joinStrategy);
 
     virtual ~StreamJoinOperatorHandler() = default;
 
@@ -203,6 +205,9 @@ class StreamJoinOperatorHandler : public OperatorHandler {
      * @param operatorId
      */
     void addOperatorId(OperatorId operatorId);
+    OperatorId getOperatorId();
+
+    uint64_t getNextSequenceNumber();
 
   protected:
     size_t numberOfWorkerThreads = 1;
@@ -213,11 +218,12 @@ class StreamJoinOperatorHandler : public OperatorHandler {
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
-    JoinType joinType;
+    JoinStrategy joinStrategy;
     std::atomic<bool> alreadySetup{false};
     std::map<uint64_t, uint64_t> workerIdToWatermarkMap;
     OperatorId operatorId;
     std::mutex windowCreateLock;
+    std::atomic<uint64_t> sequenceNumber;
 };
 
 }// namespace NES::Runtime::Execution::Operators

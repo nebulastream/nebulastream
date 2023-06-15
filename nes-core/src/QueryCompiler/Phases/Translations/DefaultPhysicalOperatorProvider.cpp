@@ -19,7 +19,9 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -49,6 +51,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
@@ -385,61 +389,89 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                 }
             }
             NES_ASSERT(found, " left schema does not contain a timestamp attribute");
-
             NES_DEBUG("leftSchema: " << leftSchema->toString() << " rightSchema: " << rightSchema->toString());
-
             NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
                        "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
-
-            NES_DEBUG2("timeStampFieldNameLeft: {} timeStampFieldNameRight: {}", timeStampFieldNameLeft, timeStampFieldNameRight);
+            NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft
+                                                 << " timeStampFieldNameRight: " << timeStampFieldNameRight);
         }
         auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
-
-        auto joinOperatorHandler =
-            StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
-                                                  joinOperator->getRightInputSchema(),
-                                                  joinFieldNameLeft,
-                                                  joinFieldNameRight,
-                                                  joinOperator->getAllInputOriginIds(),
-                                                  windowSize,
-                                                  options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-                                                  options->getHashJoinOptions()->getPageSize(),
-                                                  options->getHashJoinOptions()->getPreAllocPageCnt(),
-                                                  options->getHashJoinOptions()->getNumberOfPartitions());
 
         auto leftInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
         auto rightInputOperator =
             getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
 
-        auto leftJoinBuildOperator = PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+        NodePtr leftJoinBuildOperator;
+        NodePtr rightJoinBuildOperator;
+        auto joinStrategy = options->getJoinStratgy();
+        if (joinStrategy == NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL) {
+            auto joinOperatorHandler =
+                StreamHashJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                      joinOperator->getRightInputSchema(),
+                                                      joinFieldNameLeft,
+                                                      joinFieldNameRight,
+                                                      joinOperator->getAllInputOriginIds(),
+                                                      windowSize,
+                                                      options->getHashJoinOptions()->getTotalSizeForDataStructures(),
+                                                      options->getHashJoinOptions()->getPageSize(),
+                                                      options->getHashJoinOptions()->getPreAllocPageCnt(),
+                                                      options->getHashJoinOptions()->getNumberOfPartitions());
+
+            leftJoinBuildOperator = PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                             joinOperator->getOutputSchema(),
+                                                                                             joinOperatorHandler,
+                                                                                             JoinBuildSideType::Left,
+                                                                                             timeStampFieldNameLeft);
+            rightJoinBuildOperator = PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                               joinOperator->getOutputSchema(),
                                                                                               joinOperatorHandler,
-                                                                                              JoinBuildSideType::Left,
-                                                                                              timeStampFieldNameLeft);
-        auto rightJoinBuildOperator =
-            PhysicalOperators::PhysicalHashJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                     joinOperator->getOutputSchema(),
-                                                                     joinOperatorHandler,
-                                                                     JoinBuildSideType::Right,
-                                                                     timeStampFieldNameRight);
+                                                                                              JoinBuildSideType::Right,
+                                                                                              timeStampFieldNameRight);
 
-        auto joinSinkOperator = PhysicalOperators::PhysicalHashJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                                        joinOperator->getRightInputSchema(),
-                                                                                        joinOperator->getOutputSchema(),
-                                                                                        joinOperatorHandler);
+            auto joinSinkOperator = PhysicalOperators::PhysicalHashJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                            joinOperator->getRightInputSchema(),
+                                                                                            joinOperator->getOutputSchema(),
+                                                                                            joinOperatorHandler);
+            leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+            rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+            operatorNode->replace(joinSinkOperator);
+        } else if (joinStrategy == NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN) {
+            auto joinOperatorHandler = NLJOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                                  joinOperator->getRightInputSchema(),
+                                                                  joinFieldNameLeft,
+                                                                  joinFieldNameRight,
+                                                                  joinOperator->getAllInputOriginIds(),
+                                                                  windowSize);
 
-        leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
-        rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
-        operatorNode->replace(joinSinkOperator);
+            leftJoinBuildOperator =
+                PhysicalOperators::PhysicalNestedLoopJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
+                                                                               joinOperator->getOutputSchema(),
+                                                                               joinOperatorHandler,
+                                                                               JoinBuildSideType::Left,
+                                                                               timeStampFieldNameLeft);
+            rightJoinBuildOperator =
+                PhysicalOperators::PhysicalNestedLoopJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                               joinOperator->getOutputSchema(),
+                                                                               joinOperatorHandler,
+                                                                               JoinBuildSideType::Right,
+                                                                               timeStampFieldNameRight);
 
-    } else {
-        NES_NOT_IMPLEMENTED();
+            auto joinSinkOperator =
+                PhysicalOperators::PhysicalNestedLoopJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                              joinOperator->getRightInputSchema(),
+                                                                              joinOperator->getOutputSchema(),
+                                                                              joinOperatorHandler);
+            leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+            rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+            operatorNode->replace(joinSinkOperator);
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
     }
 }
-
 OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
     const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
     SchemaPtr outputSchema,

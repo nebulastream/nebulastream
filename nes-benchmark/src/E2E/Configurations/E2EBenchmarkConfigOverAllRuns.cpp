@@ -51,6 +51,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
         ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
     customValues = ConfigurationOption<std::string>::create("customValues", "50000", "A vector of custom ingestion rates");
     dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
+    joinStrategy = ConfigurationOption<std::string>::create("joinStrategy", "HASH_JOIN_LOCAL", "Applied Join Algorithm");
 }
 
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
@@ -74,6 +75,7 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- numberOfPeriods: " << numberOfPeriods->getValueAsString() << std::endl
         << "- ingestionRateDistribution: " << ingestionRateDistribution->getValue() << std::endl
         << "- customValues: " << customValues->getValue() << std::endl
+        << "- joinStrategy: " << joinStrategy->getValue() << std::endl
         << "- dataProvider: " << dataProvider->getValue() << std::endl;
 
     return oss.str();
@@ -89,6 +91,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.benchmarkName->setValueIfDefined(yamlConfig["benchmarkName"]);
     configOverAllRuns.query->setValueIfDefined(yamlConfig["query"]);
     configOverAllRuns.dataProviderMode->setValueIfDefined(yamlConfig["dataProviderMode"]);
+    configOverAllRuns.joinStrategy->setValueIfDefined(yamlConfig["joinStrategy"]);
     configOverAllRuns.connectionString->setValueIfDefined(yamlConfig["connectionString"]);
     configOverAllRuns.inputType->setValueIfDefined(yamlConfig["inputType"]);
     configOverAllRuns.sourceSharing->setValueIfDefined(yamlConfig["sourceSharing"]);

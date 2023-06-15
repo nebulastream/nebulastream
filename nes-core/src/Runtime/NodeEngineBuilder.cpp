@@ -289,6 +289,13 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
         queryCompilerConfiguration.numberOfPartitions.getValue());
     queryCompilationOptions->getHashJoinOptions()->setPageSize(queryCompilerConfiguration.pageSize.getValue());
     queryCompilationOptions->getHashJoinOptions()->setPreAllocPageCnt(queryCompilerConfiguration.preAllocPageCnt.getValue());
+    //zero indicate that it has not been set in the yaml config
+    if (queryCompilerConfiguration.maxHashTableSize.getValue() != 0) {
+        queryCompilationOptions->getHashJoinOptions()->setTotalSizeForDataStructures(
+            queryCompilerConfiguration.maxHashTableSize.getValue());
+    }
+
+    queryCompilationOptions->setJoinStratgy(queryCompilerConfiguration.joinStrategy);
 
     return queryCompilationOptions;
 }

@@ -33,7 +33,7 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
 
     auto windowStart = sliceAssigner.getSliceStartTs(timestamp);
     auto windowEnd = sliceAssigner.getSliceEndTs(timestamp);
-    if (joinType == JoinType::NESTED_LOOP_JOIN) {
+    if (joinStrategy == JoinStrategy::NESTED_LOOP_JOIN) {
         NES_DEBUG2("Create NLJ Window for window start={} windowend={} for ts={}", windowStart, windowEnd, timestamp);
         windows.emplace_back(std::make_unique<NLJWindow>(windowStart, windowEnd));
     } else {
@@ -104,7 +104,7 @@ uint8_t* StreamJoinOperatorHandler::getFirstTuple(uint64_t windowIdentifier, boo
     const auto sizeOfTupleInByte = isLeftSide ? joinSchemaLeft->getSchemaSizeInBytes() : joinSchemaRight->getSchemaSizeInBytes();
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
-        if (joinType == JoinType::NESTED_LOOP_JOIN) {
+        if (joinStrategy == JoinStrategy::NESTED_LOOP_JOIN) {
             return static_cast<NLJWindow*>(window->get())->getTuple(sizeOfTupleInByte, 0, isLeftSide);
         }
         //TODO For hash window it is not clear what this would be
@@ -143,10 +143,10 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const SchemaPtr& joinSchema
                                                      const std::string& joinFieldNameRight,
                                                      const std::vector<OriginId>& origins,
                                                      size_t windowSize,
-                                                     const JoinType joinType)
+                                                     const JoinStrategy joinStrategy)
     : sliceAssigner(windowSize, windowSize), watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)),
       joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight), joinFieldNameLeft(joinFieldNameLeft),
-      joinFieldNameRight(joinFieldNameRight), joinType(joinType) {}
+      joinFieldNameRight(joinFieldNameRight), joinStrategy(joinStrategy), sequenceNumber(0) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_DEBUG2("start HashJoinOperatorHandler");
@@ -155,6 +155,8 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerP
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_DEBUG2("stop HashJoinOperatorHandler");
 }
+
+uint64_t StreamJoinOperatorHandler::getNextSequenceNumber() { return sequenceNumber++; }
 
 void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     if (alreadySetup) {
@@ -174,6 +176,8 @@ void StreamJoinOperatorHandler::updateWatermarkForWorker(uint64_t watermark, uin
 }
 
 void StreamJoinOperatorHandler::addOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
+
+OperatorId StreamJoinOperatorHandler::getOperatorId() { return operatorId; }
 
 uint64_t StreamJoinOperatorHandler::getMinWatermarkForWorker() {
     auto minVal =

@@ -88,6 +88,7 @@ class LocalHashTable {
   private:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
+    size_t numPartitions;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_LOCALHASHTABLE_HPP_
