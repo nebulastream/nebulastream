@@ -42,6 +42,7 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     std::unique_lock lock(m);
 
     resultBuffers.emplace_back(std::move(inputBuffer));
+    NES_DEBUG2("Already saw {} buffers and expects a total of {}", resultBuffers.size(), expectedBuffer);
     if (resultBuffers.size() == expectedBuffer) {
         completed.set_value(expectedBuffer);
     } else if (resultBuffers.size() > expectedBuffer) {

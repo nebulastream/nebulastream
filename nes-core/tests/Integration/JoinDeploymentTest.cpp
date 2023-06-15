@@ -23,7 +23,7 @@
 namespace NES::Runtime::Execution {
 
 class JoinDeploymentTest : public Testing::TestWithErrorHandling,
-                           public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+                           public ::testing::WithParamInterface<NES::Runtime::Execution::JoinStrategy> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
@@ -33,8 +33,11 @@ class JoinDeploymentTest : public Testing::TestWithErrorHandling,
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
         Testing::TestWithErrorHandling::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler);
+        auto joinStrategy = this->GetParam();
+        auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        auto queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode,
+                                                                         joinStrategy);
     }
 
     /* Will be called before a test is executed. */
@@ -574,7 +577,9 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
 
 INSTANTIATE_TEST_CASE_P(testJoinQueries,
                         JoinDeploymentTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(NES::Runtime::Execution::JoinStrategy::NESTED_LOOP_JOIN,
+                                          NES::Runtime::Execution::JoinStrategy::HASH_JOIN_GLOBAL,
+                                          NES::Runtime::Execution::JoinStrategy::HASH_JOIN_LOCAL),
                         [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

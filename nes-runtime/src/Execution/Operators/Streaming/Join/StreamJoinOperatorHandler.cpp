@@ -57,15 +57,15 @@ StreamWindowPtr StreamJoinOperatorHandler::createNewWindow(uint64_t timestamp) {
 }
 
 void StreamJoinOperatorHandler::deleteWindow(uint64_t windowIdentifier) {
-    NES_DEBUG("StreamJoinOperatorHandler deletes window with id={}", windowIdentifier);
+    NES_DEBUG2("StreamJoinOperatorHandler trying to delete window with id={}", windowIdentifier);
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
+        NES_DEBUG2("StreamJoinOperatorHandler deletes window with id={}", windowIdentifier);
         windows.remove(window.value());
     }
 }
 
 StreamWindowPtr StreamJoinOperatorHandler::getWindowByTimestampOrCreateIt(uint64_t timestamp) {
-    size_t i = 0;
     for (auto& curWindow : windows) {
         if (curWindow->getWindowStart() <= timestamp && timestamp < curWindow->getWindowEnd()) {
             return curWindow;

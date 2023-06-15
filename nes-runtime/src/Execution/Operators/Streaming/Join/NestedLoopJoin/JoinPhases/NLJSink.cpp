@@ -91,7 +91,6 @@ uint64_t getOriginIdProxyForNestedLoopJoin(void* ptrOpHandler) {
 }
 
 void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    std::cout << "triger sink" << std::endl;
     if (hasChild()) {
         child->open(ctx, recordBuffer);
     }
