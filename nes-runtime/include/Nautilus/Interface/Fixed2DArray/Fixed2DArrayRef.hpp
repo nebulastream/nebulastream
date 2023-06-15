@@ -43,7 +43,7 @@ class Fixed2DArrayRef {
     Fixed2DArrayRowRef operator[](const Value<>& rowIndex) const;
 
   private:
-    const Value<MemRef>& fixed2DArrayRef;
+    Value<MemRef> fixed2DArrayRef;
     const uint64_t entrySize;
     const uint64_t sizeOfOneRow;
 };
