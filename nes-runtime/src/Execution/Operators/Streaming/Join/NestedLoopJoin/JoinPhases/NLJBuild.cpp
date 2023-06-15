@@ -26,6 +26,9 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+
 
 namespace NES::Runtime::Execution::Operators {
 
