@@ -296,7 +296,6 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     }
 
     queryCompilationOptions->setStreamJoinStratgy(queryCompilerConfiguration.joinStrategy);
-
     queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
 
     return queryCompilationOptions;

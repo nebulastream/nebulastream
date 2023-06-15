@@ -26,7 +26,6 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalNestedLoopJoinSinkOperator : public PhysicalNestedLoopJoinOperator,
                                            public PhysicalBinaryOperator,
                                            public AbstractScanOperator {
-
   public:
     /**
      * @brief creates a PhysicalNestedLoopJoinSinkOperator with a provided operatorId

@@ -13,8 +13,10 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
 #include <cstdint>
 #include <string>
 namespace NES::QueryCompilation {
@@ -179,15 +181,12 @@ class QueryCompilerOptions {
     static QueryCompilerOptionsPtr createDefaultOptions();
 
     [[nodiscard]] PipeliningStrategy getPipeliningStrategy() const;
-
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
     [[nodiscard]] QueryCompiler getQueryCompiler() const;
-
     void setQueryCompiler(QueryCompiler pipeliningStrategy);
 
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
-
     void setCompilationStrategy(CompilationStrategy compilationStrategy);
 
     void setFilterProcessingStrategy(FilterProcessingStrategy filterProcessingStrategy);
@@ -217,6 +216,10 @@ class QueryCompilerOptions {
     uint64_t getNumSourceLocalBuffers() const;
 
     WindowingStrategy getWindowingStrategy() const;
+
+    void setJoinStratgy(StreamJoinStrategy strategy);
+
+    [[nodiscard]] StreamJoinStrategy getJoinStratgy() const;
 
     /**
      * @brief Sets the strategy for the stream join

@@ -170,8 +170,10 @@ void NLJSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                     joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                 }
 
-                // Calling the child operator for this joinedRecord
-                child->execute(ctx, joinedRecord);
+                if (hasChild()) {
+                    // Calling the child operator for this joinedRecord
+                    child->execute(ctx, joinedRecord);
+                }
             }
         }
     }
@@ -190,6 +192,6 @@ NLJSink::NLJSink(uint64_t operatorHandlerIndex,
                  std::string joinFieldNameLeft,
                  std::string joinFieldNameRight)
     : operatorHandlerIndex(operatorHandlerIndex), leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)),
-      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight) {}
+      joinSchema(std::move(joinSchema)), joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight){}
 
 }// namespace NES::Runtime::Execution::Operators

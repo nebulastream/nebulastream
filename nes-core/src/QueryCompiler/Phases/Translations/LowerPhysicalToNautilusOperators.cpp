@@ -273,7 +273,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return parentOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHashJoinSinkOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalHashJoinSinkOperator>();
-
+        NES_DEBUG2("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
 
@@ -291,7 +291,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         operatorHandlers.push_back(sinkOperator->getOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
-
         auto joinSinkNautilus =
             std::make_shared<Runtime::Execution::Operators::NLJSink>(handlerIndex,
                                                                      sinkOperator->getLeftInputSchema(),

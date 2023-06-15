@@ -159,13 +159,11 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
 void StreamHashJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    NES_DEBUG(isLeftSide);
     // Update the watermark and trigger windows
     Nautilus::FunctionCall("checkWindowsTriggerProxy",
                            checkWindowsTriggerProxyForJoinBuild,
                            operatorHandlerMemRef,
                            ctx.getPipelineContext(),
-
                            ctx.getWorkerContext(),
                            ctx.getWatermarkTs(),
                            ctx.getSequenceNumber(),
